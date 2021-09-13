@@ -1,0 +1,458 @@
+alpha1([node]v)=
+COMBINE COMBINE -21.48064183151964,
+                COMBINE COMBINE 5.929561253043475,
+                                blue(v)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 5.951667443556689,
+                                green(v)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 5.9306600866214545,
+                                red(v)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 5.928164920177928,
+                                yellow(v)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 5.923911221423015,
+                                purple(v)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 2.623222393468065,
+                                COMBINE blue(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE(edge(v,v1)|edge(v1,v))
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.022969626476145026,
+                                COMBINE green(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE(edge(v,v1)|edge(v1,v))
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.01663624633249498,
+                                COMBINE red(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE(edge(v,v1)|edge(v1,v))
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.023440964789199693,
+                                COMBINE yellow(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE(edge(v,v1)|edge(v1,v))
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.02447162424632004,
+                                COMBINE purple(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE(edge(v,v1)|edge(v1,v))
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE -2.515263903616802,
+                                COMBINE blue(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE node(v1)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.07288919756319787,
+                                COMBINE green(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE node(v1)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.07669787078532346,
+                                COMBINE red(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE node(v1)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.07122437962865849,
+                                COMBINE yellow(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE node(v1)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.07269704563722244,
+                                COMBINE purple(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE node(v1)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        9.667812399397862
+                WITH l-reg
+                FORALL 
+                WHERE true
+        WITH prod
+        FORALL 
+        WHERE true,
+        COMBINE 18.78114799644666,
+                COMBINE COMBINE 5.781838005988207,
+                                blue(v)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 5.783278832382481,
+                                green(v)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 5.767832251907194,
+                                red(v)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 5.7705940887336125,
+                                yellow(v)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 5.779947897186744,
+                                purple(v)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 2.048558384006889,
+                                COMBINE blue(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE(edge(v,v1)|edge(v1,v))
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.015309193870072775,
+                                COMBINE green(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE(edge(v,v1)|edge(v1,v))
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.012942187767042397,
+                                COMBINE red(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE(edge(v,v1)|edge(v1,v))
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.017104192897652137,
+                                COMBINE yellow(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE(edge(v,v1)|edge(v1,v))
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.010021940348557317,
+                                COMBINE purple(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE(edge(v,v1)|edge(v1,v))
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE -1.878870718398428,
+                                COMBINE blue(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE node(v1)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.04411845750033822,
+                                COMBINE green(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE node(v1)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.04679890803802963,
+                                COMBINE red(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE node(v1)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.05483260185854433,
+                                COMBINE yellow(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE node(v1)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.04972546990913799,
+                                COMBINE purple(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE node(v1)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        11.560005381962108
+                WITH l-reg
+                FORALL 
+                WHERE true
+        WITH prod
+        FORALL 
+        WHERE true,
+        COMBINE -5.037941854633903,
+                COMBINE COMBINE -0.809922243700115,
+                                blue(v)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.12374341615297309,
+                                green(v)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 1.0825165557360987,
+                                red(v)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE -0.43905698517681313,
+                                yellow(v)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.26685941975906013,
+                                purple(v)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE -0.43698214574469185,
+                                COMBINE blue(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE(edge(v,v1)|edge(v1,v))
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.19275406034870493,
+                                COMBINE green(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE(edge(v,v1)|edge(v1,v))
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE -0.14767303115844035,
+                                COMBINE red(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE(edge(v,v1)|edge(v1,v))
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE -0.14798604871669466,
+                                COMBINE yellow(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE(edge(v,v1)|edge(v1,v))
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.41903427448080877,
+                                COMBINE purple(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE(edge(v,v1)|edge(v1,v))
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.6104337763503472,
+                                COMBINE blue(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE node(v1)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.4341090548785587,
+                                COMBINE green(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE node(v1)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.7765490013714008,
+                                COMBINE red(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE node(v1)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE -0.13259378564940213,
+                                COMBINE yellow(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE node(v1)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.7801406323123626,
+                                COMBINE purple(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE node(v1)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        0.19991434790807128
+                WITH l-reg
+                FORALL 
+                WHERE true
+        WITH prod
+        FORALL 
+        WHERE true,
+        COMBINE 1.2566133736342822,
+                COMBINE COMBINE 0.7699370987995856,
+                                blue(v)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.6325954227962683,
+                                green(v)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.7794984756246818,
+                                red(v)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 1.125926382503627,
+                                yellow(v)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.14262870147481718,
+                                purple(v)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE -4.31664540840092,
+                                COMBINE blue(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE(edge(v,v1)|edge(v1,v))
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE -0.07524970548973195,
+                                COMBINE green(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE(edge(v,v1)|edge(v1,v))
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.03723492107924285,
+                                COMBINE red(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE(edge(v,v1)|edge(v1,v))
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.10252040859372993,
+                                COMBINE yellow(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE(edge(v,v1)|edge(v1,v))
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE -0.10004684362830517,
+                                COMBINE purple(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE(edge(v,v1)|edge(v1,v))
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE -0.33046792919633816,
+                                COMBINE blue(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE node(v1)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.37620076198419106,
+                                COMBINE green(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE node(v1)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.3511943548552561,
+                                COMBINE red(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE node(v1)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.09780850541361312,
+                                COMBINE yellow(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE node(v1)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        COMBINE 0.18162286800357558,
+                                COMBINE purple(v1)
+                                WITH sum
+                                FORALL v1
+                                WHERE node(v1)
+                        WITH prod
+                        FORALL 
+                        WHERE true,
+                        0.6588633495909059
+                WITH l-reg
+                FORALL 
+                WHERE true
+        WITH prod
+        FORALL 
+        WHERE true,
+        -3.5191695400017617
+WITH l-reg
+FORALL 
+WHERE true;
+

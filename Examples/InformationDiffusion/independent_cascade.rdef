@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<root>
+   <Relations>
+      <Rel name="node" arity="1" argtypes="Domain" valtype="boolean" default="false" type="predefined" color="(0,10,210)"/>
+      <Rel name="time" arity="1" argtypes="Domain" valtype="boolean" default="false" type="predefined" color="(102,102,0)"/>
+      <Rel name="source" arity="1" argtypes="node" valtype="boolean" default="false" type="predefined" color="(198,17,16)"/>
+      <Rel name="timeord" arity="2" argtypes="time,time" valtype="boolean" default="false" type="predefined" color="(50,195,66)"/>
+      <Rel name="initial" arity="1" argtypes="time" valtype="boolean" default="false" type="predefined" color="(255,145,0)"/>
+      <Rel name="link" arity="2" argtypes="node,node" valtype="numeric" default="0.5" min="0.0" max="1.0" type="predefined" color="(185,155,60)"/>
+      <Rel name="receiveinfo" arity="2" argtypes="node,time" valtype="boolean" default="?" type="probabilistic" color="(198,17,16)"/>
+      <Rel name="hasinfo" arity="2" argtypes="node,time" valtype="boolean" default="?" type="probabilistic" color="(198,17,16)"/>
+   </Relations>
+   <Data>
+      <DataForInputDomain>
+         <Domain>
+            <obj ind="0" name="a0" coords="1470,1590"/>
+            <obj ind="1" name="a1" coords="1486,1518"/>
+            <obj ind="2" name="a2" coords="1590,1590"/>
+            <obj ind="3" name="a3" coords="1581,1486"/>
+            <obj ind="4" name="a4" coords="1749,1541"/>
+            <obj ind="5" name="a5" coords="1649,1541"/>
+            <obj ind="6" name="t0" coords="1350,1650"/>
+            <obj ind="7" name="t1" coords="1410,1650"/>
+            <obj ind="8" name="t2" coords="1470,1650"/>
+            <obj ind="9" name="t3" coords="1530,1650"/>
+            <obj ind="10" name="a7" coords="1558,1425"/>
+            <obj ind="11" name="a6" coords="1467,1441"/>
+            <obj ind="12" name="t4" coords="1590,1650"/>
+         </Domain>
+         <PredefinedRels>
+            <d rel="node" args="(a0)(a1)(a2)(a3)(a4)(a5)(a7)(a6)" val="true"/>
+            <d rel="time" args="(t0)(t1)(t2)(t3)(t4)" val="true"/>
+            <d rel="source" args="(a0)" val="true"/>
+            <d rel="timeord" args="(t0,t1)(t1,t2)(t2,t3)(t3,t4)" val="true"/>
+            <d rel="initial" args="(t0)" val="true"/>
+            <d rel="link" args="(a1,a2)" val="0.4"/>
+            <d rel="link" args="(a7,a1)" val="0.5"/>
+            <d rel="link" args="(a2,a5)" val="0.1"/>
+            <d rel="link" args="(a2,a3)" val="0.8"/>
+            <d rel="link" args="(a2,a1)" val="0.6"/>
+            <d rel="link" args="(a3,a4)" val="0.9"/>
+            <d rel="link" args="(a1,a6)" val="0.3"/>
+            <d rel="link" args="(a1,a7)" val="0.4"/>
+            <d rel="link" args="(a4,a2)" val="0.3"/>
+            <d rel="link" args="(a0,a2)" val="0.6"/>
+            <d rel="link" args="(a0,a1)" val="0.1"/>
+            <d rel="link" args="(a5,a3)" val="0.4"/>
+         </PredefinedRels>
+      </DataForInputDomain>
+   </Data>
+</root>

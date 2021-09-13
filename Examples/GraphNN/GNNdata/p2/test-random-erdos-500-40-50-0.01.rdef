@@ -1,0 +1,270 @@
+<root> 
+<Relations>
+      <Rel name="node" arity="1" argtypes="Domain" valtype="boolean" default="false" type="predefined" color="(100,100,100)"/>
+      <Rel name="edge" arity="2" argtypes="node,node" valtype="boolean" default="false" type="predefined" color="(0,70,0)"/>
+      <Rel name="green" arity="1" argtypes="node" valtype="boolean" default="false" type="predefined" color="(51,204,0)"/>
+      <Rel name="red" arity="1" argtypes="node" valtype="boolean" default="false" type="predefined" color="(255,0,51)"/>
+      <Rel name="blue" arity="1" argtypes="node" valtype="boolean" default="false" type="predefined" color="(0,0,200)"/>
+      <Rel name="yellow" arity="1" argtypes="node" valtype="boolean" default="false" type="predefined" color="(255,255,0)"/>
+      <Rel name="purple" arity="1" argtypes="node" valtype="boolean" default="false" type="predefined" color="(204,0,204)"/>
+      <Rel name="alpha2" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic" color="(51,255,255)"/>
+</Relations>
+<Data> 
+<DataForInputDomain> 
+<!--212--> 
+<Domain> 
+<obj ind='0' name='n0' coords='739,324' /> 
+<obj ind='1' name='n1' coords='770,755' /> 
+<obj ind='2' name='n2' coords='595,161' /> 
+<obj ind='3' name='n3' coords='402,103' /> 
+<obj ind='4' name='n4' coords='47,524' /> 
+<obj ind='5' name='n5' coords='552,872' /> 
+<obj ind='6' name='n6' coords='929,712' /> 
+<obj ind='7' name='n7' coords='736,758' /> 
+<obj ind='8' name='n8' coords='508,511' /> 
+<obj ind='9' name='n9' coords='933,539' /> 
+<obj ind='10' name='n10' coords='892,278' /> 
+<obj ind='11' name='n11' coords='819,66' /> 
+<obj ind='12' name='n12' coords='195,400' /> 
+<obj ind='13' name='n13' coords='16,930' /> 
+<obj ind='14' name='n14' coords='313,713' /> 
+<obj ind='15' name='n15' coords='836,165' /> 
+<obj ind='16' name='n16' coords='432,265' /> 
+<obj ind='17' name='n17' coords='423,15' /> 
+<obj ind='18' name='n18' coords='205,968' /> 
+<obj ind='19' name='n19' coords='442,95' /> 
+<obj ind='20' name='n20' coords='222,184' /> 
+<obj ind='21' name='n21' coords='99,877' /> 
+<obj ind='22' name='n22' coords='54,703' /> 
+<obj ind='23' name='n23' coords='756,160' /> 
+<obj ind='24' name='n24' coords='478,393' /> 
+<obj ind='25' name='n25' coords='953,830' /> 
+<obj ind='26' name='n26' coords='343,205' /> 
+<obj ind='27' name='n27' coords='138,222' /> 
+<obj ind='28' name='n28' coords='586,900' /> 
+<obj ind='29' name='n29' coords='123,560' /> 
+<obj ind='30' name='n30' coords='811,298' /> 
+<obj ind='31' name='n31' coords='525,132' /> 
+<obj ind='32' name='n32' coords='139,984' /> 
+<obj ind='33' name='n33' coords='20,16' /> 
+<obj ind='34' name='n34' coords='219,534' /> 
+<obj ind='35' name='n35' coords='835,644' /> 
+<obj ind='36' name='n36' coords='862,331' /> 
+<obj ind='37' name='n37' coords='183,863' /> 
+<obj ind='38' name='n38' coords='385,711' /> 
+<obj ind='39' name='n39' coords='103,936' /> 
+<obj ind='40' name='n40' coords='994,7' /> 
+<obj ind='41' name='n41' coords='765,409' /> 
+<obj ind='42' name='n42' coords='802,445' /> 
+</Domain> 
+<PredefinedRels> 
+<d rel='node' args='(n0)(n1)(n2)(n3)(n4)(n5)(n6)(n7)(n8)(n9)(n10)(n11)(n12)(n13)(n14)(n15)(n16)(n17)(n18)(n19)(n20)(n21)(n22)(n23)(n24)(n25)(n26)(n27)(n28)(n29)(n30)(n31)(n32)(n33)(n34)(n35)(n36)(n37)(n38)(n39)(n40)(n41)(n42)' val='true'/> 
+<d rel='blue' args='(n1)(n5)(n6)(n8)(n10)(n15)(n22)(n25)(n26)(n33)(n42)' val='true'/> 
+<d rel='green' args='(n0)(n7)(n12)(n18)(n23)(n29)(n31)(n38)' val='true'/> 
+<d rel='red' args='(n9)(n11)(n13)(n16)(n34)(n39)' val='true'/> 
+<d rel='yellow' args='(n3)(n14)(n17)(n19)(n27)(n28)(n30)(n41)' val='true'/> 
+<d rel='purple' args='(n2)(n4)(n20)(n21)(n24)(n32)(n35)(n36)(n37)(n40)' val='true'/> 
+<d rel='edge' args='(n0,n26)(n0,n34)(n0,n22)(n0,n5)(n0,n24)(n0,n32)(n0,n12)(n0,n37)(n0,n36)(n0,n9)(n0,n21)(n0,n10)(n0,n3)(n0,n29)(n26,n31)(n34,n38)(n22,n32)(n22,n25)(n22,n33)(n22,n35)(n22,n28)(n22,n24)(n5,n38)(n5,n18)(n5,n30)(n5,n36)(n5,n25)(n5,n27)(n5,n39)(n5,n31)(n5,n10)(n5,n34)(n5,n9)(n5,n33)(n5,n22)(n5,n11)(n5,n8)(n5,n19)(n5,n13)(n5,n23)(n5,n26)(n5,n17)(n24,n37)(n24,n32)(n24,n39)(n24,n31)(n24,n41)(n24,n30)(n24,n25)(n24,n29)(n24,n27)(n32,n42)(n32,n40)(n32,n36)(n12,n41)(n12,n31)(n12,n36)(n12,n39)(n12,n25)(n12,n28)(n12,n14)(n12,n32)(n37,n39)(n37,n38)(n37,n42)(n36,n39)(n36,n40)(n9,n19)(n9,n38)(n9,n41)(n9,n33)(n9,n15)(n9,n36)(n9,n28)(n9,n39)(n9,n27)(n9,n14)(n9,n22)(n9,n18)(n9,n12)(n9,n32)(n21,n24)(n21,n30)(n21,n40)(n21,n27)(n21,n32)(n21,n35)(n21,n33)(n10,n24)(n10,n14)(n10,n40)(n10,n29)(n10,n16)(n10,n30)(n10,n19)(n10,n22)(n10,n21)(n10,n33)(n10,n31)(n10,n27)(n10,n37)(n3,n5)(n3,n28)(n3,n19)(n3,n35)(n3,n33)(n3,n4)(n3,n21)(n3,n18)(n3,n25)(n3,n20)(n3,n17)(n3,n39)(n3,n6)(n29,n39)(n29,n33)(n29,n34)(n29,n41)(n29,n37)(n1,n12)(n1,n37)(n1,n4)(n1,n18)(n1,n6)(n1,n42)(n1,n41)(n1,n10)(n1,n2)(n1,n35)(n1,n8)(n4,n9)(n4,n37)(n4,n22)(n4,n19)(n4,n7)(n4,n39)(n4,n31)(n4,n36)(n4,n34)(n4,n15)(n4,n24)(n4,n13)(n4,n42)(n18,n40)(n18,n29)(n18,n19)(n18,n30)(n18,n42)(n18,n36)(n18,n33)(n6,n14)(n6,n40)(n6,n36)(n6,n30)(n6,n20)(n6,n7)(n6,n8)(n6,n35)(n6,n42)(n6,n29)(n6,n13)(n2,n31)(n2,n38)(n2,n33)(n2,n39)(n2,n12)(n2,n24)(n2,n21)(n2,n28)(n2,n5)(n2,n8)(n2,n36)(n2,n3)(n2,n19)(n35,n42)(n35,n38)(n35,n37)(n8,n23)(n8,n12)(n8,n26)(n8,n20)(n8,n35)(n8,n9)(n8,n10)(n8,n36)(n8,n27)(n8,n34)(n8,n30)(n8,n14)(n8,n33)(n8,n21)(n8,n18)(n31,n39)(n31,n35)(n31,n32)(n38,n41)(n38,n39)(n33,n40)(n33,n39)(n28,n42)(n28,n41)(n28,n38)(n28,n39)(n28,n40)(n28,n36)(n28,n31)(n28,n30)(n19,n20)(n19,n36)(n19,n29)(n19,n26)(n19,n24)(n19,n21)(n19,n34)(n19,n28)(n19,n25)(n19,n37)(n25,n37)(n25,n34)(n20,n32)(n20,n33)(n20,n35)(n20,n34)(n20,n41)(n17,n32)(n17,n39)(n17,n26)(n17,n38)(n17,n40)(n17,n23)(n7,n29)(n7,n19)(n7,n20)(n7,n16)(n7,n24)(n7,n39)(n7,n27)(n7,n26)(n7,n21)(n7,n38)(n7,n40)(n7,n32)(n7,n12)(n7,n18)(n7,n17)(n7,n28)(n7,n8)(n15,n27)(n15,n16)(n15,n23)(n15,n31)(n15,n20)(n15,n36)(n15,n24)(n13,n40)(n13,n37)(n13,n30)(n13,n34)(n13,n33)(n13,n41)(n30,n42)(n30,n34)(n27,n35)(n27,n37)(n27,n30)(n11,n16)(n11,n21)(n11,n24)(n11,n29)(n11,n35)(n11,n22)(n11,n14)(n11,n12)(n11,n19)(n11,n30)(n23,n30)(n23,n38)(n23,n39)(n23,n33)(n23,n34)(n23,n32)(n14,n15)(n14,n19)(n14,n24)(n14,n32)(n14,n33)(n14,n34)(n14,n41)(n14,n26)(n14,n20)(n16,n21)(n16,n37)(n16,n39)(n16,n31)(n16,n38)(n16,n36)(n16,n33)(n16,n26)(n16,n42)(n16,n17)(n16,n29)' val='true'/> 
+</PredefinedRels> 
+<ProbabilisticRelsCase> 
+<d rel='alpha2' args='(n0)(n1)(n2)(n3)(n4)(n5)(n6)(n8)(n9)(n10)(n11)(n12)(n13)(n14)(n15)(n17)(n18)(n19)(n20)(n21)(n22)(n23)(n24)(n25)(n26)(n27)(n28)(n29)(n30)(n31)(n32)(n33)(n34)(n35)(n36)(n37)(n38)(n39)(n40)(n41)(n42)' val='true'/> 
+<d rel='alpha2' args='(n7)(n16)' val='false'/> 
+</ProbabilisticRelsCase> 
+</DataForInputDomain> 
+<DataForInputDomain> 
+<!--295--> 
+<Domain> 
+<obj ind='0' name='n0' coords='418,219' /> 
+<obj ind='1' name='n1' coords='349,833' /> 
+<obj ind='2' name='n2' coords='777,524' /> 
+<obj ind='3' name='n3' coords='980,797' /> 
+<obj ind='4' name='n4' coords='551,191' /> 
+<obj ind='5' name='n5' coords='257,343' /> 
+<obj ind='6' name='n6' coords='218,956' /> 
+<obj ind='7' name='n7' coords='86,293' /> 
+<obj ind='8' name='n8' coords='180,373' /> 
+<obj ind='9' name='n9' coords='218,586' /> 
+<obj ind='10' name='n10' coords='5,518' /> 
+<obj ind='11' name='n11' coords='961,765' /> 
+<obj ind='12' name='n12' coords='85,882' /> 
+<obj ind='13' name='n13' coords='498,999' /> 
+<obj ind='14' name='n14' coords='2,150' /> 
+<obj ind='15' name='n15' coords='993,359' /> 
+<obj ind='16' name='n16' coords='213,246' /> 
+<obj ind='17' name='n17' coords='996,30' /> 
+<obj ind='18' name='n18' coords='59,769' /> 
+<obj ind='19' name='n19' coords='846,293' /> 
+<obj ind='20' name='n20' coords='266,543' /> 
+<obj ind='21' name='n21' coords='967,29' /> 
+<obj ind='22' name='n22' coords='763,620' /> 
+<obj ind='23' name='n23' coords='561,749' /> 
+<obj ind='24' name='n24' coords='116,878' /> 
+<obj ind='25' name='n25' coords='303,386' /> 
+<obj ind='26' name='n26' coords='368,174' /> 
+<obj ind='27' name='n27' coords='912,862' /> 
+<obj ind='28' name='n28' coords='238,784' /> 
+<obj ind='29' name='n29' coords='809,128' /> 
+<obj ind='30' name='n30' coords='525,671' /> 
+<obj ind='31' name='n31' coords='842,569' /> 
+<obj ind='32' name='n32' coords='594,301' /> 
+<obj ind='33' name='n33' coords='542,246' /> 
+<obj ind='34' name='n34' coords='202,996' /> 
+<obj ind='35' name='n35' coords='93,188' /> 
+<obj ind='36' name='n36' coords='375,36' /> 
+<obj ind='37' name='n37' coords='161,155' /> 
+<obj ind='38' name='n38' coords='873,724' /> 
+<obj ind='39' name='n39' coords='204,581' /> 
+<obj ind='40' name='n40' coords='856,901' /> 
+</Domain> 
+<PredefinedRels> 
+<d rel='node' args='(n0)(n1)(n2)(n3)(n4)(n5)(n6)(n7)(n8)(n9)(n10)(n11)(n12)(n13)(n14)(n15)(n16)(n17)(n18)(n19)(n20)(n21)(n22)(n23)(n24)(n25)(n26)(n27)(n28)(n29)(n30)(n31)(n32)(n33)(n34)(n35)(n36)(n37)(n38)(n39)(n40)' val='true'/> 
+<d rel='blue' args='(n0)(n7)(n11)(n21)(n22)(n23)(n28)(n32)(n39)' val='true'/> 
+<d rel='green' args='(n1)(n6)(n16)(n27)(n31)(n37)(n40)' val='true'/> 
+<d rel='red' args='(n4)(n10)(n15)(n18)(n24)(n25)(n29)(n34)(n35)(n36)(n38)' val='true'/> 
+<d rel='yellow' args='(n3)(n5)(n12)(n13)(n17)(n19)(n20)(n30)' val='true'/> 
+<d rel='purple' args='(n2)(n8)(n9)(n14)(n26)(n33)' val='true'/> 
+<d rel='edge' args='(n0,n34)(n0,n18)(n0,n14)(n0,n9)(n0,n27)(n0,n23)(n0,n36)(n0,n4)(n0,n13)(n0,n33)(n0,n20)(n0,n40)(n0,n29)(n0,n26)(n0,n8)(n0,n10)(n34,n38)(n34,n36)(n34,n37)(n18,n24)(n18,n30)(n18,n25)(n18,n31)(n18,n33)(n18,n40)(n18,n26)(n18,n23)(n18,n37)(n14,n25)(n14,n23)(n14,n37)(n14,n16)(n14,n36)(n14,n28)(n14,n15)(n14,n18)(n14,n39)(n14,n31)(n14,n19)(n9,n39)(n9,n40)(n9,n33)(n9,n13)(n9,n37)(n9,n15)(n9,n21)(n9,n32)(n9,n20)(n9,n29)(n9,n10)(n9,n27)(n27,n30)(n27,n39)(n27,n36)(n27,n29)(n23,n37)(n23,n39)(n23,n32)(n23,n25)(n23,n26)(n23,n24)(n23,n31)(n23,n35)(n23,n27)(n36,n40)(n36,n39)(n4,n32)(n4,n16)(n4,n9)(n4,n17)(n4,n28)(n4,n19)(n4,n7)(n4,n21)(n4,n25)(n4,n5)(n4,n30)(n4,n11)(n4,n15)(n4,n22)(n13,n20)(n13,n26)(n13,n29)(n13,n28)(n13,n37)(n33,n35)(n33,n34)(n33,n39)(n20,n35)(n20,n31)(n20,n33)(n20,n38)(n20,n39)(n20,n25)(n20,n27)(n20,n37)(n20,n40)(n20,n29)(n29,n31)(n29,n32)(n26,n29)(n26,n33)(n26,n30)(n8,n9)(n8,n26)(n8,n34)(n8,n33)(n8,n22)(n8,n12)(n8,n10)(n8,n21)(n8,n17)(n10,n12)(n10,n30)(n10,n32)(n10,n34)(n10,n21)(n10,n17)(n10,n16)(n10,n25)(n10,n15)(n10,n33)(n1,n17)(n1,n6)(n1,n15)(n1,n19)(n1,n26)(n1,n30)(n1,n12)(n1,n18)(n1,n8)(n1,n39)(n1,n16)(n1,n31)(n17,n33)(n17,n39)(n17,n23)(n17,n27)(n17,n30)(n17,n28)(n17,n38)(n6,n9)(n6,n16)(n6,n40)(n6,n28)(n6,n30)(n6,n11)(n6,n23)(n6,n34)(n6,n37)(n6,n24)(n6,n27)(n15,n20)(n15,n22)(n15,n31)(n15,n40)(n15,n32)(n15,n17)(n15,n26)(n15,n16)(n15,n30)(n15,n21)(n15,n23)(n19,n26)(n19,n33)(n19,n32)(n19,n28)(n19,n25)(n19,n29)(n19,n31)(n19,n30)(n30,n32)(n30,n34)(n12,n27)(n12,n21)(n12,n15)(n12,n23)(n12,n28)(n12,n19)(n12,n20)(n12,n39)(n12,n24)(n12,n18)(n12,n35)(n12,n31)(n12,n32)(n12,n37)(n16,n39)(n16,n30)(n16,n34)(n16,n35)(n16,n18)(n16,n25)(n16,n27)(n31,n35)(n31,n38)(n2,n10)(n2,n27)(n2,n28)(n2,n20)(n2,n13)(n2,n22)(n2,n40)(n2,n21)(n28,n38)(n28,n36)(n28,n40)(n28,n33)(n22,n25)(n22,n24)(n22,n28)(n21,n39)(n21,n31)(n21,n36)(n21,n24)(n21,n29)(n21,n33)(n21,n40)(n21,n38)(n21,n30)(n21,n27)(n3,n13)(n3,n25)(n3,n15)(n3,n32)(n3,n6)(n3,n20)(n3,n23)(n3,n37)(n3,n18)(n3,n31)(n3,n28)(n3,n38)(n3,n11)(n3,n29)(n3,n40)(n3,n7)(n25,n40)(n25,n31)(n25,n26)(n25,n28)(n25,n30)(n25,n39)(n32,n37)(n37,n39)(n11,n31)(n11,n32)(n11,n18)(n11,n20)(n11,n33)(n11,n35)(n11,n13)(n11,n19)(n11,n29)(n11,n14)(n11,n38)(n11,n40)(n7,n9)(n7,n31)(n7,n37)(n7,n22)(n7,n36)(n7,n26)(n7,n39)(n5,n24)(n5,n14)(n5,n33)(n5,n11)(n5,n31)(n5,n36)(n5,n35)(n5,n10)(n5,n16)(n5,n29)(n5,n22)(n5,n26)(n5,n19)(n5,n23)(n5,n28)(n5,n17)(n5,n8)(n24,n26)(n24,n38)(n24,n25)(n24,n32)(n35,n39)(n35,n37)' val='true'/> 
+</PredefinedRels> 
+<ProbabilisticRelsCase> 
+<d rel='alpha2' args='' val='true'/> 
+<d rel='alpha2' args='(n0)(n1)(n2)(n3)(n4)(n5)(n6)(n7)(n8)(n9)(n10)(n11)(n12)(n13)(n14)(n15)(n16)(n17)(n18)(n19)(n20)(n21)(n22)(n23)(n24)(n25)(n26)(n27)(n28)(n29)(n30)(n31)(n32)(n33)(n34)(n35)(n36)(n37)(n38)(n39)(n40)' val='false'/> 
+</ProbabilisticRelsCase> 
+</DataForInputDomain> 
+<DataForInputDomain> 
+<!--429--> 
+<Domain> 
+<obj ind='0' name='n0' coords='402,371' /> 
+<obj ind='1' name='n1' coords='31,290' /> 
+<obj ind='2' name='n2' coords='92,209' /> 
+<obj ind='3' name='n3' coords='459,827' /> 
+<obj ind='4' name='n4' coords='709,406' /> 
+<obj ind='5' name='n5' coords='996,475' /> 
+<obj ind='6' name='n6' coords='689,395' /> 
+<obj ind='7' name='n7' coords='61,2' /> 
+<obj ind='8' name='n8' coords='616,563' /> 
+<obj ind='9' name='n9' coords='686,482' /> 
+<obj ind='10' name='n10' coords='149,488' /> 
+<obj ind='11' name='n11' coords='289,821' /> 
+<obj ind='12' name='n12' coords='939,216' /> 
+<obj ind='13' name='n13' coords='897,805' /> 
+<obj ind='14' name='n14' coords='860,894' /> 
+<obj ind='15' name='n15' coords='651,563' /> 
+<obj ind='16' name='n16' coords='236,765' /> 
+<obj ind='17' name='n17' coords='658,920' /> 
+<obj ind='18' name='n18' coords='114,573' /> 
+<obj ind='19' name='n19' coords='109,845' /> 
+<obj ind='20' name='n20' coords='522,575' /> 
+<obj ind='21' name='n21' coords='771,799' /> 
+<obj ind='22' name='n22' coords='129,915' /> 
+<obj ind='23' name='n23' coords='364,912' /> 
+<obj ind='24' name='n24' coords='311,38' /> 
+<obj ind='25' name='n25' coords='680,818' /> 
+<obj ind='26' name='n26' coords='188,533' /> 
+<obj ind='27' name='n27' coords='530,487' /> 
+<obj ind='28' name='n28' coords='1,209' /> 
+<obj ind='29' name='n29' coords='331,850' /> 
+<obj ind='30' name='n30' coords='578,823' /> 
+<obj ind='31' name='n31' coords='420,1' /> 
+<obj ind='32' name='n32' coords='392,913' /> 
+<obj ind='33' name='n33' coords='632,50' /> 
+<obj ind='34' name='n34' coords='830,578' /> 
+<obj ind='35' name='n35' coords='699,818' /> 
+<obj ind='36' name='n36' coords='307,644' /> 
+<obj ind='37' name='n37' coords='893,318' /> 
+<obj ind='38' name='n38' coords='312,714' /> 
+<obj ind='39' name='n39' coords='97,581' /> 
+<obj ind='40' name='n40' coords='738,310' /> 
+<obj ind='41' name='n41' coords='462,822' /> 
+<obj ind='42' name='n42' coords='932,510' /> 
+<obj ind='43' name='n43' coords='47,126' /> 
+<obj ind='44' name='n44' coords='104,230' /> 
+<obj ind='45' name='n45' coords='545,801' /> 
+<obj ind='46' name='n46' coords='635,684' /> 
+<obj ind='47' name='n47' coords='6,908' /> 
+<obj ind='48' name='n48' coords='291,79' /> 
+<obj ind='49' name='n49' coords='629,895' /> 
+</Domain> 
+<PredefinedRels> 
+<d rel='node' args='(n0)(n1)(n2)(n3)(n4)(n5)(n6)(n7)(n8)(n9)(n10)(n11)(n12)(n13)(n14)(n15)(n16)(n17)(n18)(n19)(n20)(n21)(n22)(n23)(n24)(n25)(n26)(n27)(n28)(n29)(n30)(n31)(n32)(n33)(n34)(n35)(n36)(n37)(n38)(n39)(n40)(n41)(n42)(n43)(n44)(n45)(n46)(n47)(n48)(n49)' val='true'/> 
+<d rel='blue' args='(n1)(n3)(n8)(n10)(n11)(n12)(n15)(n17)(n19)(n29)(n41)(n44)(n46)(n47)(n48)' val='true'/> 
+<d rel='green' args='(n0)(n18)(n23)(n25)(n27)(n28)(n30)(n37)' val='true'/> 
+<d rel='red' args='(n7)(n9)(n14)(n16)(n20)(n24)(n26)(n33)(n36)(n39)(n43)' val='true'/> 
+<d rel='yellow' args='(n2)(n4)(n6)(n22)(n32)(n34)(n35)(n38)(n45)' val='true'/> 
+<d rel='purple' args='(n5)(n13)(n21)(n31)(n40)(n42)(n49)' val='true'/> 
+<d rel='edge' args='(n0,n13)(n0,n6)(n0,n1)(n0,n28)(n0,n37)(n0,n38)(n0,n27)(n0,n41)(n0,n15)(n0,n17)(n0,n33)(n0,n43)(n0,n25)(n0,n45)(n0,n14)(n0,n22)(n13,n47)(n13,n31)(n13,n29)(n13,n32)(n13,n46)(n13,n41)(n13,n28)(n13,n48)(n13,n25)(n13,n24)(n13,n33)(n13,n49)(n13,n18)(n6,n7)(n6,n13)(n6,n37)(n6,n30)(n6,n24)(n6,n26)(n6,n35)(n6,n33)(n6,n25)(n6,n21)(n6,n19)(n6,n40)(n6,n31)(n6,n10)(n1,n24)(n1,n44)(n1,n48)(n1,n10)(n1,n6)(n1,n21)(n1,n2)(n1,n12)(n1,n11)(n1,n8)(n28,n41)(n28,n31)(n28,n33)(n28,n43)(n28,n45)(n37,n40)(n37,n44)(n37,n39)(n38,n47)(n38,n46)(n27,n49)(n27,n30)(n27,n36)(n27,n41)(n27,n42)(n27,n47)(n41,n46)(n15,n28)(n15,n47)(n15,n20)(n15,n38)(n15,n31)(n17,n36)(n17,n22)(n17,n27)(n17,n21)(n17,n35)(n17,n26)(n17,n45)(n17,n46)(n17,n20)(n17,n32)(n17,n25)(n33,n44)(n33,n49)(n33,n42)(n33,n47)(n33,n37)(n33,n34)(n43,n46)(n43,n47)(n43,n44)(n25,n27)(n25,n37)(n25,n35)(n25,n38)(n25,n39)(n25,n40)(n25,n30)(n25,n28)(n25,n31)(n25,n26)(n25,n42)(n25,n48)(n25,n29)(n45,n49)(n45,n47)(n14,n46)(n14,n35)(n14,n23)(n14,n47)(n14,n43)(n14,n25)(n14,n39)(n14,n38)(n22,n24)(n22,n26)(n22,n30)(n22,n25)(n22,n36)(n22,n48)(n22,n40)(n22,n41)(n22,n34)(n24,n45)(n24,n44)(n24,n31)(n24,n29)(n24,n41)(n24,n46)(n24,n37)(n24,n47)(n44,n48)(n10,n38)(n10,n25)(n10,n17)(n10,n42)(n10,n20)(n10,n28)(n10,n32)(n10,n14)(n10,n40)(n21,n45)(n21,n27)(n21,n31)(n21,n46)(n21,n33)(n21,n44)(n21,n30)(n21,n28)(n2,n3)(n2,n5)(n2,n41)(n2,n15)(n2,n36)(n2,n7)(n2,n9)(n2,n12)(n2,n8)(n2,n20)(n2,n23)(n2,n33)(n12,n39)(n12,n28)(n12,n30)(n12,n33)(n12,n47)(n12,n44)(n12,n35)(n11,n46)(n11,n27)(n11,n36)(n11,n28)(n11,n32)(n11,n29)(n11,n25)(n11,n19)(n11,n31)(n11,n20)(n11,n47)(n11,n15)(n11,n18)(n8,n10)(n8,n37)(n8,n14)(n8,n46)(n8,n9)(n8,n40)(n8,n36)(n8,n43)(n8,n15)(n8,n39)(n8,n47)(n8,n28)(n8,n44)(n8,n31)(n3,n35)(n3,n37)(n3,n27)(n3,n25)(n3,n6)(n3,n16)(n3,n15)(n3,n14)(n3,n7)(n3,n23)(n3,n45)(n3,n47)(n3,n11)(n3,n38)(n3,n31)(n3,n5)(n3,n4)(n3,n44)(n5,n12)(n5,n36)(n5,n7)(n5,n48)(n5,n19)(n5,n11)(n5,n30)(n5,n23)(n5,n47)(n5,n18)(n5,n43)(n5,n37)(n5,n20)(n5,n39)(n36,n45)(n36,n38)(n36,n37)(n36,n43)(n36,n46)(n7,n45)(n7,n23)(n7,n47)(n7,n44)(n7,n14)(n7,n16)(n7,n9)(n7,n34)(n7,n10)(n7,n42)(n9,n36)(n9,n33)(n9,n21)(n9,n23)(n9,n30)(n9,n22)(n9,n42)(n9,n38)(n9,n31)(n9,n18)(n9,n14)(n9,n47)(n9,n27)(n9,n44)(n9,n25)(n9,n12)(n20,n49)(n20,n33)(n20,n23)(n20,n40)(n20,n24)(n23,n37)(n23,n43)(n23,n46)(n23,n26)(n23,n30)(n23,n44)(n23,n29)(n23,n48)(n23,n47)(n23,n41)(n35,n47)(n35,n48)(n16,n34)(n16,n33)(n16,n27)(n16,n23)(n16,n42)(n16,n19)(n16,n37)(n16,n45)(n16,n39)(n16,n48)(n16,n29)(n16,n44)(n16,n43)(n16,n32)(n31,n35)(n31,n40)(n31,n37)(n31,n41)(n31,n42)(n4,n17)(n4,n41)(n4,n16)(n4,n46)(n4,n42)(n4,n45)(n4,n22)(n4,n8)(n4,n49)(n4,n47)(n4,n35)(n4,n37)(n42,n46)(n19,n37)(n19,n32)(n19,n40)(n19,n38)(n19,n41)(n30,n45)(n18,n36)(n18,n42)(n18,n47)(n18,n46)(n18,n38)(n18,n31)(n18,n33)(n18,n49)(n18,n24)(n18,n27)(n39,n43)(n26,n49)(n26,n45)(n26,n29)(n26,n32)(n26,n44)(n26,n31)(n26,n42)(n40,n48)(n40,n44)(n40,n47)(n40,n46)(n34,n41)(n34,n47)(n32,n46)(n32,n45)(n29,n37)(n29,n38)(n29,n42)(n29,n48)(n29,n43)(n29,n35)(n29,n30)' val='true'/> 
+</PredefinedRels> 
+<ProbabilisticRelsCase> 
+<d rel='alpha2' args='(n0)(n1)(n2)(n4)(n5)(n6)(n7)(n8)(n9)(n10)(n11)(n12)(n13)(n14)(n15)(n16)(n17)(n18)(n19)(n20)(n21)(n22)(n23)(n24)(n25)(n26)(n27)(n28)(n29)(n30)(n31)(n32)(n33)(n35)(n36)(n37)(n38)(n39)(n40)(n41)(n42)(n43)(n44)(n45)(n46)(n47)(n48)(n49)' val='true'/> 
+<d rel='alpha2' args='(n3)(n34)' val='false'/> 
+</ProbabilisticRelsCase> 
+</DataForInputDomain> 
+<DataForInputDomain> 
+<!--478--> 
+<Domain> 
+<obj ind='0' name='n0' coords='784,205' /> 
+<obj ind='1' name='n1' coords='803,57' /> 
+<obj ind='2' name='n2' coords='440,473' /> 
+<obj ind='3' name='n3' coords='14,769' /> 
+<obj ind='4' name='n4' coords='703,784' /> 
+<obj ind='5' name='n5' coords='181,578' /> 
+<obj ind='6' name='n6' coords='874,869' /> 
+<obj ind='7' name='n7' coords='847,627' /> 
+<obj ind='8' name='n8' coords='273,613' /> 
+<obj ind='9' name='n9' coords='747,64' /> 
+<obj ind='10' name='n10' coords='358,782' /> 
+<obj ind='11' name='n11' coords='179,804' /> 
+<obj ind='12' name='n12' coords='741,562' /> 
+<obj ind='13' name='n13' coords='288,68' /> 
+<obj ind='14' name='n14' coords='105,64' /> 
+<obj ind='15' name='n15' coords='236,442' /> 
+<obj ind='16' name='n16' coords='408,730' /> 
+<obj ind='17' name='n17' coords='53,344' /> 
+<obj ind='18' name='n18' coords='408,723' /> 
+<obj ind='19' name='n19' coords='815,944' /> 
+<obj ind='20' name='n20' coords='60,762' /> 
+<obj ind='21' name='n21' coords='155,939' /> 
+<obj ind='22' name='n22' coords='963,347' /> 
+<obj ind='23' name='n23' coords='266,537' /> 
+<obj ind='24' name='n24' coords='626,558' /> 
+<obj ind='25' name='n25' coords='460,3' /> 
+<obj ind='26' name='n26' coords='287,126' /> 
+<obj ind='27' name='n27' coords='788,243' /> 
+<obj ind='28' name='n28' coords='246,680' /> 
+<obj ind='29' name='n29' coords='847,442' /> 
+<obj ind='30' name='n30' coords='39,365' /> 
+<obj ind='31' name='n31' coords='335,428' /> 
+<obj ind='32' name='n32' coords='122,328' /> 
+<obj ind='33' name='n33' coords='678,366' /> 
+<obj ind='34' name='n34' coords='461,163' /> 
+<obj ind='35' name='n35' coords='443,549' /> 
+<obj ind='36' name='n36' coords='545,389' /> 
+<obj ind='37' name='n37' coords='37,432' /> 
+<obj ind='38' name='n38' coords='477,475' /> 
+<obj ind='39' name='n39' coords='727,608' /> 
+<obj ind='40' name='n40' coords='611,258' /> 
+<obj ind='41' name='n41' coords='299,650' /> 
+<obj ind='42' name='n42' coords='879,683' /> 
+<obj ind='43' name='n43' coords='960,972' /> 
+<obj ind='44' name='n44' coords='904,28' /> 
+<obj ind='45' name='n45' coords='656,458' /> 
+<obj ind='46' name='n46' coords='604,480' /> 
+<obj ind='47' name='n47' coords='675,616' /> 
+<obj ind='48' name='n48' coords='426,521' /> 
+<obj ind='49' name='n49' coords='688,523' /> 
+</Domain> 
+<PredefinedRels> 
+<d rel='node' args='(n0)(n1)(n2)(n3)(n4)(n5)(n6)(n7)(n8)(n9)(n10)(n11)(n12)(n13)(n14)(n15)(n16)(n17)(n18)(n19)(n20)(n21)(n22)(n23)(n24)(n25)(n26)(n27)(n28)(n29)(n30)(n31)(n32)(n33)(n34)(n35)(n36)(n37)(n38)(n39)(n40)(n41)(n42)(n43)(n44)(n45)(n46)(n47)(n48)(n49)' val='true'/> 
+<d rel='blue' args='(n0)(n2)(n4)(n5)(n16)(n18)(n24)(n32)(n37)(n43)' val='true'/> 
+<d rel='green' args='(n8)(n10)(n13)(n17)(n21)(n29)(n31)(n48)(n49)' val='true'/> 
+<d rel='red' args='(n7)(n28)(n38)(n39)(n40)(n41)(n42)(n45)' val='true'/> 
+<d rel='yellow' args='(n3)(n6)(n11)(n12)(n14)(n19)(n22)(n25)(n33)(n34)(n36)(n44)(n46)(n47)' val='true'/> 
+<d rel='purple' args='(n1)(n9)(n15)(n20)(n23)(n26)(n27)(n30)(n35)' val='true'/> 
+<d rel='edge' args='(n0,n17)(n0,n25)(n0,n33)(n0,n8)(n0,n22)(n0,n27)(n0,n28)(n0,n10)(n0,n26)(n0,n46)(n0,n23)(n0,n19)(n0,n48)(n17,n34)(n17,n25)(n17,n46)(n17,n41)(n17,n48)(n17,n37)(n17,n19)(n17,n28)(n17,n38)(n17,n31)(n17,n30)(n25,n32)(n25,n34)(n25,n38)(n25,n28)(n25,n27)(n25,n48)(n25,n39)(n25,n29)(n25,n36)(n33,n44)(n33,n49)(n33,n39)(n33,n36)(n8,n45)(n8,n14)(n8,n15)(n8,n19)(n8,n31)(n8,n44)(n8,n38)(n8,n9)(n8,n40)(n8,n17)(n8,n18)(n8,n37)(n22,n27)(n22,n24)(n22,n48)(n22,n25)(n22,n28)(n22,n37)(n22,n23)(n27,n45)(n27,n47)(n27,n31)(n27,n36)(n27,n49)(n28,n29)(n28,n39)(n28,n34)(n28,n31)(n28,n45)(n28,n36)(n10,n49)(n10,n36)(n10,n17)(n10,n48)(n10,n46)(n10,n15)(n10,n14)(n10,n21)(n10,n33)(n10,n26)(n10,n20)(n10,n37)(n10,n22)(n10,n12)(n10,n44)(n10,n23)(n10,n16)(n10,n39)(n26,n41)(n26,n36)(n26,n34)(n26,n28)(n26,n47)(n46,n49)(n23,n36)(n23,n25)(n23,n28)(n23,n24)(n23,n26)(n23,n37)(n23,n38)(n23,n27)(n19,n42)(n19,n38)(n19,n33)(n19,n49)(n19,n39)(n19,n20)(n19,n30)(n19,n48)(n19,n23)(n1,n30)(n1,n6)(n1,n15)(n1,n39)(n1,n2)(n1,n48)(n1,n9)(n1,n38)(n1,n23)(n1,n49)(n1,n29)(n1,n24)(n1,n27)(n1,n28)(n1,n43)(n1,n10)(n1,n45)(n1,n7)(n1,n4)(n30,n39)(n30,n34)(n30,n35)(n30,n37)(n30,n47)(n30,n49)(n30,n38)(n30,n33)(n6,n39)(n6,n7)(n6,n8)(n6,n20)(n6,n28)(n6,n11)(n6,n10)(n6,n9)(n6,n27)(n6,n49)(n6,n18)(n6,n37)(n15,n25)(n15,n21)(n15,n17)(n15,n33)(n15,n37)(n15,n16)(n15,n36)(n15,n34)(n15,n47)(n15,n35)(n15,n29)(n39,n46)(n2,n44)(n2,n33)(n2,n31)(n2,n37)(n2,n23)(n2,n18)(n2,n16)(n2,n45)(n2,n9)(n2,n43)(n2,n5)(n2,n28)(n2,n6)(n9,n16)(n9,n12)(n9,n11)(n9,n48)(n9,n19)(n9,n40)(n9,n35)(n9,n30)(n9,n33)(n9,n47)(n9,n29)(n9,n43)(n9,n22)(n38,n44)(n38,n49)(n38,n39)(n29,n42)(n29,n45)(n29,n32)(n29,n46)(n29,n43)(n29,n47)(n29,n31)(n24,n42)(n24,n41)(n24,n30)(n24,n40)(n45,n46)(n7,n36)(n7,n47)(n7,n17)(n7,n43)(n7,n21)(n7,n27)(n7,n37)(n7,n33)(n7,n41)(n7,n20)(n7,n14)(n7,n38)(n7,n12)(n7,n29)(n7,n16)(n4,n13)(n4,n34)(n4,n20)(n4,n21)(n4,n12)(n4,n24)(n4,n30)(n4,n42)(n4,n44)(n31,n33)(n31,n38)(n31,n37)(n37,n42)(n37,n43)(n37,n47)(n18,n35)(n18,n48)(n18,n46)(n18,n25)(n18,n19)(n18,n29)(n18,n41)(n18,n40)(n16,n35)(n16,n26)(n16,n23)(n16,n31)(n5,n41)(n5,n24)(n5,n8)(n5,n39)(n5,n35)(n5,n46)(n5,n13)(n5,n14)(n5,n33)(n5,n12)(n5,n40)(n5,n43)(n5,n10)(n3,n20)(n3,n26)(n3,n48)(n3,n31)(n3,n35)(n3,n32)(n3,n30)(n3,n44)(n3,n22)(n3,n18)(n3,n14)(n3,n42)(n3,n34)(n3,n10)(n3,n19)(n3,n16)(n20,n49)(n20,n25)(n20,n29)(n20,n45)(n20,n47)(n20,n35)(n20,n42)(n35,n46)(n35,n38)(n35,n47)(n32,n38)(n32,n47)(n32,n40)(n14,n17)(n14,n27)(n14,n29)(n14,n31)(n14,n42)(n14,n40)(n14,n44)(n14,n36)(n14,n32)(n14,n37)(n14,n18)(n14,n47)(n14,n16)(n42,n49)(n42,n43)(n34,n40)(n34,n37)(n34,n38)(n34,n43)(n34,n36)(n34,n41)(n13,n48)(n13,n14)(n13,n41)(n13,n49)(n13,n33)(n13,n32)(n21,n27)(n21,n49)(n21,n45)(n21,n44)(n21,n29)(n21,n46)(n21,n38)(n21,n26)(n12,n34)(n12,n25)(n12,n35)(n12,n40)(n12,n17)(n12,n24)(n12,n39)(n12,n41)(n41,n47)(n41,n45)(n40,n46)(n40,n49)(n11,n43)(n11,n22)(n11,n12)(n11,n25)(n11,n23)(n11,n34)(n11,n16)(n11,n15)(n11,n49)(n11,n29)(n11,n27)(n11,n44)(n11,n21)(n11,n37)(n36,n41)(n36,n39)(n36,n46)(n36,n47)(n47,n49)' val='true'/> 
+</PredefinedRels> 
+<ProbabilisticRelsCase> 
+<d rel='alpha2' args='(n0)(n1)(n2)(n3)(n4)(n6)(n7)(n8)(n9)(n10)(n11)(n12)(n13)(n14)(n15)(n17)(n19)(n20)(n21)(n22)(n23)(n25)(n26)(n27)(n28)(n29)(n30)(n31)(n33)(n34)(n35)(n36)(n37)(n38)(n39)(n40)(n41)(n42)(n44)(n45)(n46)(n47)(n48)(n49)' val='true'/> 
+<d rel='alpha2' args='(n5)(n16)(n18)(n24)(n32)(n43)' val='false'/> 
+</ProbabilisticRelsCase> 
+</DataForInputDomain> 
+</Data> 
+</root> 

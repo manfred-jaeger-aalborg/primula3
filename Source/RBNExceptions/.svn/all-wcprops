@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 36
+/svn/!svn/ver/20/trunk/RBNExceptions
+END
+RBNRuntimeException.java
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/2/trunk/RBNExceptions/RBNRuntimeException.java
+END
+RBNInconsistentEvidenceException.java
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/2/trunk/RBNExceptions/RBNInconsistentEvidenceException.java
+END
+RBNSyntaxException.java
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/2/trunk/RBNExceptions/RBNSyntaxException.java
+END
+RBNCyclicException.java
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/2/trunk/RBNExceptions/RBNCyclicException.java
+END
+RBNioException.java
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/2/trunk/RBNExceptions/RBNioException.java
+END
+RBNBadSampleException.java
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/2/trunk/RBNExceptions/RBNBadSampleException.java
+END
+RBNCompatibilityException.java
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/2/trunk/RBNExceptions/RBNCompatibilityException.java
+END
+RBNIllegalArgumentException.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/2/trunk/RBNExceptions/RBNIllegalArgumentException.java
+END

@@ -1,0 +1,19 @@
+package RBNLearning;
+
+import java.util.Hashtable;
+
+/* Node in GGT containing information about all 
+ * parameters (rbn parameters and numeric relation
+ * parameters)
+ */
+public class GGTParamNode extends GGTNode {
+	
+	/* Maps parameter strings to indices */
+	private Hashtable<String,Short> paramindx;
+	
+	public GGTParamNode(GradientGraphT ggt){
+		super(ggt);
+		paramindx = new Hashtable<String,Short>();
+	}
+
+}

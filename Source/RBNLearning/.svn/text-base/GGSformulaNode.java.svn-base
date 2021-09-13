@@ -1,0 +1,69 @@
+package RBNLearning;
+
+import java.util.Hashtable;
+import java.util.Vector;
+
+import RBNExceptions.RBNCompatibilityException;
+import RBNgui.Primula;
+import RBNpackage.*;
+
+/* Unused and unfinished class */
+public class GGSformulaNode extends GGProbFormNode{
+	
+	/** pf must be a ground ProbForm ! */
+	public GGSformulaNode(GradientGraph gg,
+			ProbForm pf, 
+			Hashtable<String,GGProbFormNode> allnodes, 
+			RelStruc A, 
+			OneStrucData I,
+			int inputcaseno,
+			int observcaseno,
+			String[] parameterrels,
+			boolean useCurrentPvals)
+					throws RBNCompatibilityException
+					{
+		super(gg,pf,A,I);
+
+		children = new Vector<GGProbFormNode>();
+
+		/* Construct array of all numerical relation atoms
+		 * where the relation belongs to parameterrels, and 
+		 * this Sformula depends on it
+		 */
+
+		String[] mychildatoms = ((ProbFormSFormula)pf).parameters();
+		
+		for (int i=0;i<mychildatoms.length;i++){
+			/* turn mychildatoms[i] into a probform representing this as a parameter*/
+			ProbFormConstant nextpf = new ProbFormConstant(mychildatoms[i]);
+			GGProbFormNode nextchild = GGProbFormNode.constructGGPFN(gg,
+					nextpf,
+					allnodes, 
+					A, 
+					I,
+					inputcaseno,observcaseno,
+					parameterrels,
+					false,
+					false,
+					"");
+			children.add(nextchild);
+			nextchild.addToParents(this);
+		}
+
+
+		if (!(pf instanceof ProbFormSFormula)){
+			System.out.println("Cannot create GGSformulaNode from ProbForm " + pf.asString(Primula.OPTION_CLASSICSYNTAX,0,null));
+		}
+					}
+
+	public  double evaluate(){
+		return 0;
+	}
+
+	public  double evaluateGrad(int param){
+		return 0;
+	}
+
+	public  void evaluateBounds(){}
+	
+}

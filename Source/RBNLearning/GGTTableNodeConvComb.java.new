@@ -1,0 +1,25 @@
+package RBNLearning;
+
+import RBNpackage.*;
+import java.util.Vector;
+
+
+
+public class GGTTableNodeConvComb extends GGTTableNode {
+
+	GGTTableNode[] children;
+	
+	public GGTTableNodeConvComb(GradientGraphT ggt, boolean uga, Rel r, short att, ProbForm pf){
+		super(ggt,uga,r,att,pf);
+		children = new GGTTableNode[3];
+	}
+	
+//	public  Vector<GGTTableNode> makeChildren(ProbFormConvComb pfcc, GradientGraphT ggt){
+//		return this.makeChildrenStatic(pfcc, ggt);
+//	}
+	
+	/* computes the children vector. creates new GGTTableNodes if
+	 * node for a given sub-formula does not already exist
+	 */
+
+}

@@ -1,0 +1,83 @@
+/*
+* randomGenerators.java 
+* 
+* Copyright (C) 2009 Aalborg University
+*
+* contact:
+* jaeger@cs.aau.dk   http://www.cs.aau.dk/~jaeger/Primula.html
+*
+* This program is free software; you can redistribute it and/or
+* modify it under the terms of the GNU General Public License
+* as published by the Free Software Foundation; either version 2
+* of the License, or (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+*/
+
+package RBNutilities;
+
+public  class randomGenerators {
+	
+	/** Returns a random integer between min and max (inclusive)
+	 * 
+	 * @param min
+	 * @param max
+	 * @return
+	 */
+	public static int randInt(int min, int max){
+		double rand = Math.random();
+		double diff = max-min+1;
+		double ddiff = 1/diff;
+		int offset = (int)Math.floor(rand/ddiff);
+		return min+offset;
+	}
+	
+	/** Returns an array of num random integers between min and
+	 * max without repetitions
+	 * 
+	 * Very inefficient implementation unless num << max-min
+	 * 
+	 * @param min
+	 * @param max
+	 * @param num
+	 * @return
+	 */
+	public static int[] multRandInt(int min, int max, int num){
+		int[] result = new int[num];
+		boolean newint;
+		int ri=0;
+		for (int i=0;i<num;i++){
+			newint = false;
+			while (!newint){
+				ri = randInt(min,max);
+				//System.out.print(" " + ri);
+				newint = true;
+				for (int h=0;h<i;h++)
+					if (ri == result[h])
+						newint =false;
+			}
+			result[i]=ri;
+		}
+		return result;
+	}
+	
+	public static double getRandom(double min, double max){
+		double result = Math.random();
+		if (min==Double.NEGATIVE_INFINITY && max != Double.POSITIVE_INFINITY)
+			result = max-result;
+		if (min!=Double.NEGATIVE_INFINITY && max == Double.POSITIVE_INFINITY)
+			result = min + result;
+		if (min!=Double.NEGATIVE_INFINITY && max != Double.POSITIVE_INFINITY)
+			result = min + result*(max-min);
+		return result;
+	}
+
+
+}

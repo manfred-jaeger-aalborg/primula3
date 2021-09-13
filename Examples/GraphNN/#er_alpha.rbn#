@@ -1,0 +1,23 @@
+% to construct "undirected" edges with probability p, we first generate directed
+% edges with probability 1-sqrt(1-p)
+% E.g. p=1/70, 1-sqrt(1-p) = 0.007168
+
+baseedge([node]x,[node]y)= WIF x=y
+			   THEN 0
+			   ELSE 0.007168;
+
+eredge([node]x,[node]y)= WIF baseedge(x,y)
+                         THEN 1
+			 ELSE baseedge(y,x);
+
+red([node]x) = 0.4;
+
+alpha([node]x)= WIF red(x)
+		 THEN COMBINE blue(y)
+		      WITH n-or
+		      FORALL y
+		 ELSE 0;
+
+alpha0([node]x)=blue(x);
+
+alpha1([node]x)=

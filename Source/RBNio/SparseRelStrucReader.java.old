@@ -1,0 +1,321 @@
+/*
+ * SparseRelStrucReader.java 
+ * 
+ * Copyright (C) 2003 Max-Planck-Institut fuer Informatik,
+ *                    Helsinki Institute for Information Technology
+ *
+ * contact:
+ * jaeger@cs.auc.dk    www.cs.auc.dk/~jaeger/Primula.html
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
+
+package RBNio;
+
+import java.io.*;
+import java.util.*;
+import RBNpackage.*;
+import RBNgui.*;
+
+import java.awt.Color;
+
+public class SparseRelStrucReader extends java.lang.Object {
+
+	/**
+	 * @uml.property  name="currentfile"
+	 */
+	public String currentfile; 
+
+	/** Creates new SparseRelStrucReader */
+	public SparseRelStrucReader() {
+	}
+
+	public SparseRelStruc readSparseRelStrucFromFile(String filename)
+	throws IOException
+	{
+		currentfile = filename;
+		Vector domain = new Vector();
+		OneStrucData data = new OneStrucData();
+		Vector coords = new Vector();
+		boolean coordsdefined = false;
+
+		int numrels =0 ;
+
+		BufferedReader bf = FileIO.openInputFile(filename);
+		StreamTokenizer filetknizer = new StreamTokenizer(bf);
+
+		filetknizer.commentChar(37);  // %
+		filetknizer.whitespaceChars(58,59); // :,;
+		filetknizer.wordChars(00,36);
+		filetknizer.wordChars(40,41); // (,)
+		filetknizer.wordChars(44,45); // , -
+		filetknizer.wordChars(47,57); // /,0-9
+		filetknizer.wordChars(95,95); // _
+		filetknizer.wordChars(123,125); // {,|,} 
+
+		String declarationtype;
+		while (filetknizer.nextToken() != filetknizer.TT_EOF){
+			declarationtype = filetknizer.sval;
+			if (declarationtype.equals("DOMAIN"))
+			{
+				if (filetknizer.nextToken() != filetknizer.TT_EOF){
+					domain = parseDomainDeclaration(filetknizer.sval);
+					if (coordsdefined == false) 
+						coords = new Vector(domain.size());
+				}
+			}
+			if (declarationtype.equals("COORDINATES"))
+			{
+				if (filetknizer.nextToken() != filetknizer.TT_EOF){
+					coords = parseCoordsDeclaration(filetknizer.sval);
+					coordsdefined = true;
+				}
+			}
+			if (declarationtype.equals("RELATION"))
+			{
+				if (filetknizer.nextToken() != filetknizer.TT_EOF){
+					data.add(parseRelationDeclaration(filetknizer.sval));
+				}
+			}
+
+		}
+		return  new SparseRelStruc(domain,data,coords);
+
+	}
+
+	private Vector parseDomainDeclaration(String dstr)
+	throws IOException
+	{
+		Vector result = new Vector();
+
+		StreamTokenizer domtknizer = new StreamTokenizer(new StringReader(dstr));
+		domtknizer.resetSyntax();
+		domtknizer.wordChars(65,90); // A-Z
+		domtknizer.wordChars(97,122); // a-z
+		domtknizer.wordChars(47,57); // 0-9
+		domtknizer.wordChars(46,46); // .
+		domtknizer.wordChars(45,45); // -
+		domtknizer.wordChars(95,95); // _
+		domtknizer.whitespaceChars(44,44); // ,
+
+		String nextstring;
+
+		while (domtknizer.nextToken() != domtknizer.TT_EOF){
+			nextstring = domtknizer.sval;
+			if (nextstring != null){
+				result.add(nextstring);
+			}
+		}
+
+		return result;
+	}
+
+	private Vector parseCoordsDeclaration(String coordstr)
+	throws IOException
+	{
+		Vector result = new Vector();
+		StreamTokenizer coordtknizer = new StreamTokenizer(new StringReader(coordstr));
+		coordtknizer.resetSyntax();
+		coordtknizer.wordChars(47,57); // 0-9
+		coordtknizer.wordChars(44,44); // ,
+		coordtknizer.whitespaceChars(40,41); // ( )
+		while (coordtknizer.nextToken() != coordtknizer.TT_EOF){
+			if (coordtknizer.sval != null)
+				result.add(parseRelTuple(coordtknizer.sval,2));
+		}
+		return result;
+	}
+
+
+	private OneBoolRelData parseRelationDeclaration(String relstr)
+	throws IOException
+	{
+
+		String relname = "";
+		int arity = 0;
+		//LinkedList temptuples = new LinkedList();
+
+		StreamTokenizer reltknizer = new StreamTokenizer(new StringReader(relstr));
+		reltknizer.resetSyntax();
+		reltknizer.wordChars(65,90); // A-Z
+		reltknizer.wordChars(97,122); // a-z
+		reltknizer.wordChars(48,57); // 0-9
+		reltknizer.wordChars(45,45); // -
+		reltknizer.wordChars(95,95); // _
+		reltknizer.whitespaceChars(47,47); // /
+
+
+		if (reltknizer.nextToken() != reltknizer.TT_EOF){
+			relname = reltknizer.sval;
+			//System.out.println("Relname: " + relname);
+			if (reltknizer.nextToken() != reltknizer.TT_EOF){
+				arity = Integer.parseInt(reltknizer.sval);
+				//System.out.println("Arity: " + arity);
+			}
+			else throwUnexpectedEOF();
+		}
+		else throwUnexpectedEOF();
+
+
+		BoolRel thisrel = new BoolRel(relname,arity);
+		OneBoolRelData result = new OneBoolRelData(thisrel,"false");
+
+		reltknizer.resetSyntax();
+		reltknizer.wordChars(97,122); // a-z
+		reltknizer.wordChars(47,57); // 0-9
+		reltknizer.wordChars(45,45); // -
+		reltknizer.wordChars(44,44); // ,
+		reltknizer.whitespaceChars(40,41); // ( )        
+
+		while (reltknizer.nextToken() != reltknizer.TT_EOF){
+			if (reltknizer.sval != null){
+				if(reltknizer.sval.equals("color")){
+					reltknizer.nextToken();
+					reltknizer.nextToken();
+					int col = new Integer(reltknizer.sval).intValue();
+					thisrel.setColor(new Color(col));
+				}
+				else if (reltknizer.sval.equals("true")){
+					int truetup[] = {0};
+					result.add(truetup,true);
+				}
+				else if (reltknizer.sval.equals("false")){
+					// nothing needs to be done
+				}
+
+				else{
+					result.add(parseRelTuple(reltknizer.sval,arity),true);
+				}
+			}
+		}
+
+		return result;
+	}
+
+
+
+	private int[] parseRelTuple(String tupstring, int ar)
+	throws IOException
+	{
+		// System.out.println(tupstring);
+		int[] result = new int[ar];
+		StreamTokenizer tuptknizer = new StreamTokenizer(new StringReader(tupstring));
+		tuptknizer.whitespaceChars(44,44); // ,
+		for (int i=0;i<ar;i++){
+			if (tuptknizer.nextToken() != tuptknizer.TT_EOF){
+				result[i]=(int)tuptknizer.nval;
+			}
+			else throwUnexpectedEOF();
+		}
+		return result;
+	}
+
+	private void throwUnexpectedEOF()
+	{
+		throw new IllegalArgumentException("Unexpected end of input while parsing " + currentfile);
+	}
+
+
+
+
+	public static void saveFile(SparseRelStruc struc, File savefile, Primula myprimula){
+
+		Vector names = struc.getNames();
+		Vector coords = struc.getCoords();
+		OneStrucData	data = struc.getData();
+		
+		System.out.println("Warning: saving in rst format: Boolean relations only!");
+
+		try{
+			PrintWriter writer = new PrintWriter(new FileOutputStream(savefile));
+
+			writer.print("DOMAIN: {");
+			for (int i=0; i<names.size(); ++i){
+				writer.print((String)names.elementAt(i));
+				if (i+1 < names.size())
+					writer.print(", ");
+			}
+			writer.println("};");
+
+			writer.print("COORDINATES: {");
+			for (int i=0; i<coords.size(); ++i){
+				int[] xy = (int[])coords.elementAt(i);
+				writer.print("("+ xy[0] +","+ xy[1] +")");
+				if (i+1 < names.size())
+					writer.print(" ");
+			}
+			writer.println("};");
+
+
+			for (int i=0; i<data.boolsize(); ++i){
+				OneBoolRelData ord = data.booldataAt(i);
+				writer.print("RELATION: "+ ord.rel().name.name);
+				writer.print("/"+ ord.rel().arity);
+				Vector<int[]> interpretation = ord.allTrue();
+				if(ord.rel().arity == 1){
+					writer.print( " color "+ord.rel().getColor().getRGB());
+					writer.print(" {");
+					for (int j=0; j<interpretation.size(); ++j){
+						int[] temp = (int[])interpretation.elementAt(j);
+						if (j+1 < interpretation.size()){
+							writer.print(temp[0]+" ");
+						}
+						else{
+							writer.print(temp[0]);
+						}
+					}
+				}
+				if(ord.rel().arity >=2){
+					Color color = ord.rel().getColor();
+					if( color != null ){
+						writer.print( " color "+color.getRGB());
+					}
+					writer.print(" {");
+					for (int j=0; j<interpretation.size(); ++j){
+						int[] temp = (int[])interpretation.elementAt(j);
+						if (j+1 < interpretation.size()){
+							writer.print("(");
+							for(int k=0; k<temp.length-1; ++k){
+								writer.print(temp[k]+",");
+								if(k+1==temp.length-1){
+									writer.print(temp[k+1]+") ");
+								}
+							}
+						}
+						else{
+							writer.print("(");
+							for(int k=0; k<temp.length-1; ++k){
+								writer.print(temp[k]+",");
+								if(k+1==temp.length-1){
+									writer.print(temp[k+1]+")");
+								}
+							}
+						}
+					}
+				}
+				writer.println("};");
+			}
+
+			writer.close();
+
+		}catch (Exception ex){
+			if (myprimula != null)
+				myprimula.showMessage("error happened during saving");
+			else 
+				System.out.println("error happened during saving");
+		}
+	}
+
+}

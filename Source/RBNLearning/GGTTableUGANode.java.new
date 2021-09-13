@@ -1,0 +1,27 @@
+package RBNLearning;
+
+import RBNpackage.ProbForm;
+import RBNpackage.Rel;
+import java.util.Vector;
+
+public class GGTTableUGANode extends GGTTableNode {
+
+	public GGTTableUGANode(GradientGraphT ggt, boolean uga, Rel r, short att, ProbForm pf){
+		super(ggt,uga,r,att,pf);
+	}
+	
+//	@Override
+//	protected Vector<GGTTableNode> makeChildren() {
+//		Vector<GGTTableNode> result;
+//		
+//		int pftype = ProbForm.typeOfPf(mypf);	
+//		switch (pftype){
+//		case ProbForm.PFCOMBFUNC:
+//			result = GGTTableNodeCombFunc.makeChildren(mypf, thisgg);
+//			break;
+//		case ProbForm.PFCONVCOMB:
+//			result = new GGTTableNodeConvComb(thisgg,false,null,(short)0,pf);
+//			break;
+//	}
+
+}

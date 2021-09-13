@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<root>
+   <Relations>
+      <Rel name="node" arity="1" argtypes="Domain" valtype="boolean" default="false" type="predefined" color="(100,100,100)"/>
+      <Rel name="blue" arity="1" argtypes="node" valtype="boolean" default="false" type="predefined" color="(0,0,200)"/>
+      <Rel name="red" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic" color="(0,0,200)"/>
+      <Rel name="alpha1" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic" color="(0,0,200)"/>
+      <Rel name="baseedge" arity="2" argtypes="node,node" valtype="boolean" default="?" type="probabilistic" color="(0,200,50)"/>
+      <Rel name="eredge" arity="2" argtypes="node,node" valtype="boolean" default="?" type="probabilistic" color="(50,50,200)"/>
+   </Relations>
+   <Data>
+      <DataForInputDomain>
+         <Domain>
+            <obj ind="0" name="l01" coords="1382,1449"/>
+            <obj ind="1" name="l02" coords="1417,1433"/>
+            <obj ind="2" name="l03" coords="1359,1486"/>
+            <obj ind="3" name="l04" coords="1458,1457"/>
+            <obj ind="4" name="l05" coords="1404,1546"/>
+            <obj ind="5" name="l06" coords="1295,1421"/>
+            <obj ind="6" name="l07" coords="1568,1459"/>
+            <obj ind="7" name="l08" coords="1576,1353"/>
+            <obj ind="8" name="l09" coords="1265,1345"/>
+            <obj ind="9" name="l10" coords="1565,1502"/>
+            <obj ind="10" name="l11" coords="1531,1397"/>
+            <obj ind="11" name="l12" coords="1629,1421"/>
+            <obj ind="12" name="l13" coords="1595,1645"/>
+            <obj ind="13" name="l14" coords="1297,1633"/>
+            <obj ind="14" name="l15" coords="1468,1538"/>
+            <obj ind="15" name="l16" coords="1392,1403"/>
+            <obj ind="16" name="l17" coords="1286,1562"/>
+            <obj ind="17" name="l18" coords="1234,1509"/>
+            <obj ind="18" name="l19" coords="1224,1438"/>
+            <obj ind="19" name="l20" coords="1324,1351"/>
+            <obj ind="20" name="l21" coords="1498,1354"/>
+            <obj ind="21" name="l22" coords="1506,1435"/>
+            <obj ind="22" name="l23" coords="1531,1526"/>
+            <obj ind="23" name="l24" coords="1366,1564"/>
+            <obj ind="24" name="l25" coords="1447,1565"/>
+            <obj ind="25" name="l26" coords="1450,1402"/>
+            <obj ind="26" name="l27" coords="1343,1407"/>
+            <obj ind="27" name="l28" coords="1333,1477"/>
+            <obj ind="28" name="l29" coords="1238,1631"/>
+            <obj ind="29" name="l30" coords="1218,1383"/>
+            <obj ind="30" name="l31" coords="1622,1351"/>
+            <obj ind="31" name="l32" coords="1424,1341"/>
+            <obj ind="32" name="l33" coords="1433,1475"/>
+            <obj ind="33" name="l34" coords="1532,1640"/>
+            <obj ind="34" name="l35" coords="1232,1542"/>
+            <obj ind="35" name="l36" coords="1595,1491"/>
+            <obj ind="36" name="l37" coords="1385,1499"/>
+            <obj ind="37" name="l38" coords="1247,1371"/>
+            <obj ind="38" name="l39" coords="1379,1348"/>
+            <obj ind="39" name="l40" coords="1596,1381"/>
+            <obj ind="40" name="l41" coords="1594,1614"/>
+            <obj ind="41" name="l42" coords="1319,1565"/>
+            <obj ind="42" name="l43" coords="1410,1631"/>
+            <obj ind="43" name="l44" coords="1608,1447"/>
+            <obj ind="44" name="l45" coords="1237,1463"/>
+            <obj ind="45" name="l46" coords="1262,1419"/>
+            <obj ind="46" name="l47" coords="1339,1608"/>
+            <obj ind="47" name="l48" coords="1442,1424"/>
+            <obj ind="48" name="l49" coords="1550,1600"/>
+            <obj ind="49" name="l50" coords="1552,1362"/>
+            <obj ind="50" name="l51" coords="1535,1472"/>
+            <obj ind="51" name="l52" coords="1460,1361"/>
+            <obj ind="52" name="l53" coords="1303,1377"/>
+            <obj ind="53" name="l54" coords="1277,1513"/>
+            <obj ind="54" name="l55" coords="1482,1617"/>
+            <obj ind="55" name="l56" coords="1266,1591"/>
+            <obj ind="56" name="l57" coords="1401,1583"/>
+            <obj ind="57" name="l58" coords="1485,1499"/>
+            <obj ind="58" name="l59" coords="1557,1420"/>
+            <obj ind="59" name="l60" coords="1288,1476"/>
+            <obj ind="60" name="l61" coords="1353,1381"/>
+            <obj ind="61" name="l62" coords="1415,1384"/>
+            <obj ind="62" name="l63" coords="1324,1435"/>
+            <obj ind="63" name="l64" coords="1428,1522"/>
+            <obj ind="64" name="l65" coords="1348,1524"/>
+            <obj ind="65" name="l66" coords="1483,1459"/>
+            <obj ind="66" name="l67" coords="1499,1395"/>
+            <obj ind="67" name="l68" coords="1584,1538"/>
+            <obj ind="68" name="l69" coords="1503,1551"/>
+            <obj ind="69" name="l70" coords="1618,1548"/>
+         </Domain>
+         <PredefinedRels>
+            <d rel="node" args="(l01)(l02)(l03)(l04)(l05)(l06)(l07)(l08)(l09)(l10)(l11)(l12)(l13)(l14)(l15)(l16)(l17)(l18)(l19)(l20)(l21)(l22)(l23)(l24)(l25)(l26)(l27)(l28)(l29)(l30)(l31)(l32)(l33)(l34)(l35)(l36)(l37)(l38)(l39)(l40)(l41)(l42)(l43)(l44)(l45)(l46)(l47)(l48)(l49)(l50)(l51)(l52)(l53)(l54)(l55)(l56)(l57)(l58)(l59)(l60)(l61)(l62)(l63)(l64)(l65)(l66)(l67)(l68)(l69)(l70)" val="true"/>
+            <d rel="blue" args="(l01)(l02)(l03)(l04)" val="true"/>
+         </PredefinedRels>
+      </DataForInputDomain>
+   </Data>
+</root>

@@ -1,0 +1,380 @@
+/*
+* LearnThread.java 
+* 
+* Copyright (C) 2009 Aalborg University
+*
+* contact:
+* jaeger@cs.aau.dk   http://www.cs.aau.dk/~jaeger/Primula.html
+*
+* This program is free software; you can redistribute it and/or
+* modify it under the terms of the GNU General Public License
+* as published by the Free Software Foundation; either version 2
+* of the License, or (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+*/
+
+package RBNLearning;
+
+import RBNExceptions.RBNCompatibilityException;
+import RBNpackage.*;
+import RBNgui.*;
+import RBNutilities.*;
+import RBNinference.*;
+import java.util.*;
+
+import javax.swing.*;
+
+import myio.StringOps;
+
+import java.text.*;
+
+public class LearnThread extends GGThread {
+	
+	Primula myprimula;
+	LearnModule myLearnModule;
+	RelData[] databatches;
+	RelData alldata;
+	ParameterTableModel parammodel;
+	JTable parametertable;
+	JTextField numrestartsfield;
+	DecimalFormat timeformat = new DecimalFormat("#.##");
+
+	
+	public LearnThread(Primula mypr,
+			RelData ad,
+			RelData[] d, 
+			ParameterTableModel parmod,
+			JTable partab,
+			JTextField nrest,
+			LearnModule mylm){
+		myprimula = mypr;
+		myLearnModule = mylm;
+		databatches = d;
+		alldata = ad;
+		parammodel = parmod;
+		parametertable = partab;
+		numrestartsfield = nrest;
+	}
+	
+	public void run()
+	{
+		if (databatches != null){
+			
+				double timestart,timediff,timeperrs;
+				
+				
+				/* Determines the parameters contained in the rbn model. */
+				String[] rbnparameters = myprimula.getRBN().parameters();
+				String[] parameternumrels = myprimula.getParamNumRels();
+				String[] parameters = new String[0];
+				
+				
+				/* Construct the parameters corresponding to ground numrel atoms */
+				String[] nrparams = new String[0];
+				RelDataForOneInput rdoi = databatches[0].caseAt(0);
+				RelStruc A = rdoi.inputDomain();
+							
+				for (int i=0;i<parameternumrels.length;i++){
+						Vector<String[]> alltuples = A.allTrue(parameternumrels[i],A);
+						String[] nextparams = new String[alltuples.size()];
+						for (int k=0;k<nextparams.length;k++)
+							nextparams[k]=parameternumrels[i]+StringOps.arrayToString(alltuples.elementAt(k),"(",")");	
+						nrparams = rbnutilities.arraymerge(nrparams,nextparams);
+				}
+				parameters = rbnutilities.arrayConcatenate(rbnparameters, nrparams);
+				Arrays.sort(parameters);
+				
+				parammodel.setParameters(parameters);
+				parammodel.fireTableDataChanged();
+				parametertable.updateUI();
+				// boolean computeLikOnly = (parameters.length == 0);
+				
+				numrestartsfield.setText("" );
+				double[] paramvals = new double[parameters.length+1];
+				
+				
+				/* Divide parameters into blocks for block gradient descent */
+				int numparamblocks = myLearnModule.getNumblocks(); 
+				
+				String[][] paramblocks = new String[numparamblocks][];
+				int blocklength = parameters.length/numparamblocks;
+				
+				for (int i=0;i<numparamblocks-1;i++){
+					paramblocks[i]=new String[blocklength];
+					for (int j=0;j<blocklength;j++)
+						paramblocks[i][j]=parameters[i*blocklength+j];
+				}
+				paramblocks[numparamblocks-1]=new String[parameters.length-(numparamblocks-1)*blocklength];
+				for (int j=0;j<parameters.length-(numparamblocks-1)*blocklength;j++)
+					paramblocks[numparamblocks-1][j]=parameters[(numparamblocks-1)*blocklength+j];
+				
+
+				/* Now we are really getting started */
+				timestart = System.currentTimeMillis();
+				GradientGraphO gg = null;
+				
+				if (numparamblocks==1 && databatches.length ==1) /* Can build one GG once and for all */
+					gg = buildGGO(parameters,true,databatches[0],myLearnModule.ggloglikInt());
+
+				/* Current best log-likelihoods represented as pairs of 
+				 * doubles (for use with SmallDouble methods)
+				 */
+				double currentbestlik = Double.NEGATIVE_INFINITY;
+				double newlik;
+				
+				/* The sum of likelihood values obtained in several restarts.
+				 * Used for pure likelihood computation only (computeLikOnly = true)
+				 */
+//				double[] liksum = new double[2];
+				
+				/* rest is the number of completed restarts */
+				int rest = 0;
+				double[] results;
+				
+				while (!isstopped() && (rest < myLearnModule.getRestarts() 
+						|| myLearnModule.getRestarts() == -1)){
+					
+						System.out.println("***** RESTART **********");
+						if (myLearnModule.getNumBatches() > 1)
+							results = doOneRestartStochGrad(gg,A,parameternumrels,parameters,blocklength,paramblocks,rest==0);
+						else
+							results = doOneRestart(gg,A,parameternumrels,parameters,blocklength,paramblocks,rest==0);
+						newlik = results[results.length-1];
+						System.out.println("Likelihood: " + newlik);
+						
+						if (newlik > currentbestlik){
+							currentbestlik = newlik;
+							for (int i=0;i<parameters.length;i++)
+								paramvals[i] = results[i];
+							paramvals[paramvals.length-1]=results[results.length-1];
+							parammodel.setEstimates(paramvals);
+						}
+						rest++;
+						numrestartsfield.setText(""+rest);					
+						parametertable.updateUI();
+				}
+				
+				
+				
+
+				
+				timediff = System.currentTimeMillis()-timestart;
+				timeperrs = timediff/(1000*(rest+1));
+				myprimula.showMessageThis("done. Time per restart: " + timeformat.format(timeperrs) +"s");
+			
+		}	
+	}
+
+	/* Perform a 'pure' stochastic gradient ascent where gradient graphs are 
+	 * constructed to compute one gradient only
+	 * 
+	 */
+	private double[] doOneRestartStochGrad(GradientGraph gg,
+			RelStruc A,
+			String[] parameternumrels,
+			String[] parameters,
+			int blocksize,
+			String[][] paramblocks,
+			Boolean isfirstrestart){
+		myprimula.getRBN().setRandomParameterVals();
+		if (myLearnModule.ggrandominit())
+			A.setRandom(parameternumrels);
+		
+		Boolean isfirstloop = true;
+		double[] paramvals = new double[parameters.length+4];
+		double[] newparamvals = new double[parameters.length+4];
+		double currlik = Double.NEGATIVE_INFINITY;
+		double lastlik = Double.NEGATIVE_INFINITY;
+		
+		boolean terminate = false;
+
+
+		double[] oldparamvals = paramvals.clone();
+		int itcount = 0;
+		double learnrate = 0.9;
+		double combfactor = 0.5;
+		while (!terminate && !isstopped()){
+			for (int i=0;i<databatches.length;i++){
+				gg = buildGGO(parameters,isfirstrestart && isfirstloop,databatches[i], myLearnModule.ggloglikInt());
+				paramvals = gg.learnParameters(this,GradientGraph.StochUpdate);
+
+				newparamvals = rbnutilities.arrayConvComb(oldparamvals, paramvals, combfactor);
+				oldparamvals = newparamvals;
+
+				myprimula.setParameters(parameters,Arrays.copyOfRange(newparamvals,0,newparamvals.length-4));
+			}
+
+			currlik = getDataLikelihood(alldata)[1];
+			System.out.println("Iteration " + itcount + " Combfactor " + combfactor + "  currlik: " + currlik);
+			itcount++;
+			combfactor = 1-Math.pow(learnrate, itcount)/2;
+			if (lastlik/currlik < 1+myLearnModule.getStochGradLikThresh()){
+				terminate = true; 
+				System.out.println("Termination ratio: " + lastlik/currlik);
+			}
+			lastlik = currlik;
+			isfirstloop = false;
+		}
+		/* Now get the likelihood for the full data. For this construct a gradient graph
+		 * without parameters to learn.
+		 */
+
+		double[] lhood = getDataLikelihood(alldata);
+		newparamvals[newparamvals.length-2]=lhood[0];
+		newparamvals[newparamvals.length-1]=lhood[1];
+		return newparamvals;
+
+	}
+	
+	private double[] doOneRestart(GradientGraph gg,
+			RelStruc A,
+			String[] parameternumrels,
+								String[] parameters,
+								int blocksize,
+								String[][] paramblocks,
+								Boolean isfirstrestart){
+		
+	myprimula.getRBN().setRandomParameterVals();
+	if (myLearnModule.ggrandominit())
+		A.setRandom(parameternumrels);
+	
+	/* The following applies when neither stochastic nor block-gradient descent are chosen*/
+	if (gg != null){
+		gg.setParametersFromAandRBN();
+		return gg.learnParameters(this,GradientGraph.FullLearn);
+	}
+	
+	/* The following applies when block-gradient descent is chosen */
+	Boolean isfirstloop = true;
+	double[] paramvals = new double[parameters.length+4];
+	double[] newparamvals = new double[parameters.length+4];
+	double currlik = Double.NEGATIVE_INFINITY;
+	double lastlik = Double.NEGATIVE_INFINITY;
+//	if (paramblocks.length > 1) /* Block gradient descent */
+//	{	
+		Boolean terminate = false;
+		double[] blockresult = new double[0];
+		while (!terminate && !isstopped()){
+			for (int i=0;i<paramblocks.length;i++){
+				gg = buildGGO(paramblocks[i],isfirstrestart && isfirstloop,databatches[0],myLearnModule.ggloglikInt());
+				blockresult = gg.learnParameters(this,GradientGraph.FullLearn);
+				myprimula.setParameters(paramblocks[i], 
+										Arrays.copyOfRange(blockresult,0,blockresult.length-4));
+				
+				/* Insert learned block of values in full array*/
+				for (int j=0; j<paramblocks[i].length; j++)
+					paramvals[i*blocksize+j]=blockresult[j];
+				System.out.println("blocklik " + i + " : " + blockresult[blockresult.length-1]);
+			}
+			currlik = blockresult[blockresult.length-1];
+			System.out.println("currlik: " + currlik);
+			if (lastlik/currlik < myLearnModule.getLLikThresh())
+				terminate = true; 
+			lastlik = currlik;
+			isfirstloop = false;
+		}
+		System.out.println();
+		for (int i=0;i<4;i++)
+			paramvals[parameters.length+i]=blockresult[blockresult.length-4+i];
+		return paramvals;
+	}
+//	else {    /* Stochastic gradient descent */
+//		Boolean terminate = false;
+//		double[] oldparamvals = paramvals.clone();
+//		int itcount = 0;
+//		double learnrate = 0.5;
+//		double combfactor = learnrate;
+//		while (!terminate && !isstopped()){
+//			for (int i=0;i<databatches.length;i++){
+//				gg = buildGGO(parameters,isfirstrestart && isfirstloop,databatches[i]);
+//				paramvals = gg.learnParameters(this,GradientGraph.FullLearn);
+//				
+//				/* Caution: this makes no particular sense for the last 4 entries of 
+//				 * the paramvals arrays 
+//				 */
+//				newparamvals = rbnutilities.arrayConvComb(oldparamvals, paramvals, combfactor);
+//				oldparamvals = newparamvals;
+//				System.out.println("batch:" + i + " params: " + StringOps.arrayToString(paramvals, "[", "]"));
+//				System.out.println("batchlik: " + getDataLikelihood(alldata)[1]);
+//				myprimula.setParameters(parameters,Arrays.copyOfRange(newparamvals,0,newparamvals.length-4));
+//			}
+//			
+//			currlik = getDataLikelihood(alldata)[1];
+//			System.out.println("Iteration " + itcount + " Combfactor " + combfactor + "  currlik: " + currlik);
+//			itcount++;
+//			combfactor = 1-Math.pow(learnrate, itcount);
+//			if (lastlik/currlik < 1.01)
+//				terminate = true; 
+//			lastlik = currlik;
+//			isfirstloop = false;
+//		}
+//		/* Now get the likelihood for the full data. For this construct a gradient graph
+//		 * without parameters to learn.
+//		 */
+//		
+//		double[] lhood = getDataLikelihood(alldata);
+//		newparamvals[newparamvals.length-2]=lhood[0];
+//		newparamvals[newparamvals.length-1]=lhood[1];
+//		return newparamvals;
+//	}
+//}
+
+
+private GradientGraphO buildGGO(String[] parameters,Boolean showInfoInPrimula,RelData datafold,int logmode){
+	GradientGraphO gg = null;
+	if (showInfoInPrimula)
+		myprimula.showMessageThis("Building Gradient Graph ...");
+	double timestart=System.currentTimeMillis();
+	try{
+		gg = new GradientGraphO(myprimula,
+			datafold,
+			parameters,
+			myLearnModule, 
+			null,
+			GradientGraphO.LEARNMODE,
+			logmode,
+			showInfoInPrimula);
+	}
+	catch (RBNCompatibilityException ex){System.out.println(ex);}
+	double timediff = (System.currentTimeMillis()-timestart)/1000;
+	
+	if (showInfoInPrimula)
+		myprimula.showMessageThis("Construction time: " + timeformat.format(timediff) +"s");
+	return gg;
+}
+
+private GradientGraphT buildGGT(String[] parameters,Boolean showInfoInPrimula,RelData datafold){
+	GradientGraphT gg = null;
+	if (showInfoInPrimula)
+		myprimula.showMessageThis("Building Gradient Graph ...");
+	double timestart=System.currentTimeMillis();
+	try{
+		gg = new GradientGraphT(myprimula,
+			datafold,
+			parameters,
+			myLearnModule, 
+			null,
+			GradientGraphO.LEARNMODE,
+			showInfoInPrimula);
+	}
+	catch (RBNCompatibilityException ex){System.out.println(ex);}
+	double timediff = (System.currentTimeMillis()-timestart)/1000;
+	
+	if (showInfoInPrimula)
+		myprimula.showMessageThis("Construction time: " + timeformat.format(timediff) +"s");
+	return gg;
+}
+
+private double[] getDataLikelihood(RelData data){
+	GradientGraphO gg = buildGGO(new String[0], false, data,myLearnModule.ggloglikInt());
+	return gg.computeLikelihood(this);
+}
+}

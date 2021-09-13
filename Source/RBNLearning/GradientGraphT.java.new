@@ -1,0 +1,263 @@
+package RBNLearning;
+
+import java.util.Vector;
+import java.util.Hashtable;
+
+import myio.StringOps;
+import RBNExceptions.RBNCompatibilityException;
+import RBNgui.GradientGraphOptions;
+import RBNgui.Primula;
+import RBNinference.GGThread;
+import RBNpackage.*;
+import RBNutilities.*;
+
+public class GradientGraphT extends GradientGraph {
+
+	private static short DATAATOMS=0;
+	private static short SUMATOMS=0;
+	private static short MAPATOMS=0;
+	
+	private GGTLikelihoodNode llnode;
+	
+	/* Hashtable for all GGTTables in this graph that are 
+	 * not UGA tables
+	 */
+	private Hashtable<String,GGTTableNode> allPfTables;
+	
+	public GradientGraphT(Primula mypr, 
+			RelData data, 
+			String[] params,
+			GradientGraphOptions gs, 
+			GroundAtomList mapats, 
+			int m,
+			Boolean showInfoInPrimula)
+	throws RBNCompatibilityException
+	{   
+		super(mypr,data,params,gs,mapats,m,showInfoInPrimula);
+		
+		llnode = new GGTLikelihoodNode(this);
+		allPfTables = new Hashtable<String,GGTTableNode>();
+		
+		RBN rbn = myPrimula.getRBN();
+		
+		ProbForm nextpf;
+		BoolRel nextrel;
+		GGTTableNode tnode;
+		
+		/* Start by constructing tables for the map-query atoms
+		 * 
+		 */
+		
+		if (mode == MAPMODE || mode == LEARNANDMAPMODE){
+			GroundAtom nextatom;
+			
+			int[] naargs;
+			GGAtomMaxNode ggmn;
+
+			for (int qano=0; qano<mapatoms.size(); qano++){
+				nextatom = mapatoms.atomAt(qano);
+				nextrel = (BoolRel)nextatom.rel();
+				naargs = nextatom.args();
+				nextpf = rbn.probForm(nextrel);
+
+				tnode=llnode.getMaxTable(nextrel);
+				if (tnode == null){
+					tnode = new GGTTableNode(this,true,nextrel,MAPATOMS,nextpf);
+					llnode.addMaxTable(tnode,nextrel);
+				}
+
+				tnode.addTupleToHash(rbnutilities.castToShort(naargs));
+			}
+		}
+		
+		/* Now construct the tables for the data/evidence atoms 
+		 * 
+		 */
+		int inputcaseno;
+		int observcaseno;
+		RelDataForOneInput rdoi;
+		RelStruc A;
+		OneStrucData osd;
+		String[] vars; /* The argument list for nextpf */
+		ProbForm groundnextpf;
+		Vector<int[]> inrel;
+		double pfeval;
+		boolean dependsonmissing = false;
+		int[] nexttup;
+		short[] caseid = new short[2];
+		
+		for (inputcaseno=0; inputcaseno<data.size(); inputcaseno++){
+			caseid[0]=(short)inputcaseno;
+			rdoi = data.caseAt(inputcaseno);
+			A = rdoi.inputDomain();
+			for (observcaseno=0; observcaseno<rdoi.numObservations(); observcaseno++){
+				caseid[1]=(short)observcaseno;
+				osd = rdoi.oneStrucDataAt(observcaseno);
+				
+				for (int i=0; i<rbn.NumPFs(); i++){
+					nextpf = rbn.ProbFormAt(i);
+					vars = rbn.argumentsAt(i);
+					nextrel = rbn.relAt(i);
+					for (int ti = 0; ti <= 1 ; ti++) {
+						if (ti == 0)
+							inrel = osd.allFalse(nextrel);
+						else
+							inrel = osd.allTrue(nextrel);
+						for (int k=0;k<inrel.size();k++){
+							nexttup = inrel.elementAt(k);
+							groundnextpf = nextpf.substitute(vars,nexttup);
+							
+							pfeval = groundnextpf.evaluate(A,osd,new String[0],new int[0],false,parameters,false);
+							
+							if (learnmodule.aca()){
+								dependsonmissing = groundnextpf.dependsOn("unknown_atom",A,osd);
+							}
+							
+							if (Double.isNaN(pfeval) && !(learnmodule.aca() && dependsonmissing)){
+								/* if pfeval != Double.NaN, then this groundnextpf has a constant value
+								 * independent of parameter settings or instantiation of unknown
+								 * atoms. For the correct numeric value of the likelihood this value
+								 * is added to likelihoodconst below, but for maximizing the likelihood
+								 * it is irrelevant
+								 */
+								
+								tnode=llnode.getDataTable(nextrel);
+								if (tnode == null){
+									tnode = new GGTTableNode(this,true,nextrel,DATAATOMS,nextpf);
+									llnode.addDataTable(tnode,nextrel);
+								}
+
+									
+								tnode.addTupleToHash(rbnutilities.arrayConcatenate(rbnutilities.castToShort(nexttup), caseid));
+							}
+							else{
+								if (ti==0)
+									likelihoodconst = likelihoodconst + Math.log(1-pfeval);
+								else
+									likelihoodconst = likelihoodconst + Math.log(pfeval);
+							}
+						}
+					}/* for  truefalse  */
+				} /* for int i; i<rbn.NumPFs()*/
+			} /* int j=0; j<rdoi.numObservations(); */
+		}
+		
+	}
+
+	
+	
+	@Override
+	public double[] currentLikelihood() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public double[] currentParameters() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void evaluateLikelihoodAndPartDerivs(boolean likelihoodonly) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void evaluateBounds() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public boolean initIndicators(Thread mythread) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void gibbsSample(Thread mythread) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void setTruthVals(int sno) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void showLikelihoodNode(RelStruc A) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	protected double[] thetasearch(double[] currenttheta, GGThread mythread) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public double[] learnParameters(GGThread mythread) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected double[] linesearch(double[] oldthetas, double[] gradient,
+			GGThread mythread) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected void setParameters(double[] thetas) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public double[] getParameters() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected void setParametersRandom() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void setParametersFromAandRBN() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public double[] computeLikelihood(GGThread mythread) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public int[] getMapVals() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public void print(){
+		llnode.showTables();
+	}
+	
+	public Hashtable<String,GGTTableNode> getpftables(){
+		return allPfTables;
+	}
+	
+	public void addToPfHashT(String key, GGTTableNode ggt){
+		allPfTables.put(key, ggt);
+	}
+}

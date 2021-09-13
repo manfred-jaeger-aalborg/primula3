@@ -1,0 +1,77 @@
+K 25
+svn:wc:ra_dav:version-url
+V 29
+/svn/!svn/ver/20/trunk/mymath
+END
+Distance.java
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/!svn/ver/2/trunk/mymath/Distance.java
+END
+IntVector.java
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/!svn/ver/2/trunk/mymath/IntVector.java
+END
+Averages.java
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/!svn/ver/2/trunk/mymath/Averages.java
+END
+DoubleVector.java
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/2/trunk/mymath/DoubleVector.java
+END
+Normalize.java
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/!svn/ver/2/trunk/mymath/Normalize.java
+END
+.classpath
+K 25
+svn:wc:ra_dav:version-url
+V 39
+/svn/!svn/ver/2/trunk/mymath/.classpath
+END
+MyMathOps.java
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/!svn/ver/2/trunk/mymath/MyMathOps.java
+END
+.project
+K 25
+svn:wc:ra_dav:version-url
+V 37
+/svn/!svn/ver/2/trunk/mymath/.project
+END
+BinaryOptimizable.java
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/2/trunk/mymath/BinaryOptimizable.java
+END
+MyRandom.java
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/!svn/ver/2/trunk/mymath/MyRandom.java
+END
+BinaryOptimizer.java
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/2/trunk/mymath/BinaryOptimizer.java
+END
+RandomGenerator.java
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/2/trunk/mymath/RandomGenerator.java
+END

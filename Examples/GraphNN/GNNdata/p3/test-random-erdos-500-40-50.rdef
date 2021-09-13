@@ -1,0 +1,73 @@
+<root> 
+<Relations>
+      <Rel name="node" arity="1" argtypes="Domain" valtype="boolean" default="false" type="predefined" color="(100,100,100)"/>
+      <Rel name="edge" arity="2" argtypes="node,node" valtype="boolean" default="false" type="predefined" color="(0,70,0)"/>
+      <Rel name="green" arity="1" argtypes="node" valtype="boolean" default="false" type="predefined" color="(51,204,0)"/>
+      <Rel name="red" arity="1" argtypes="node" valtype="boolean" default="false" type="predefined" color="(255,0,51)"/>
+      <Rel name="blue" arity="1" argtypes="node" valtype="boolean" default="false" type="predefined" color="(0,0,200)"/>
+      <Rel name="yellow" arity="1" argtypes="node" valtype="boolean" default="false" type="predefined" color="(255,255,0)"/>
+      <Rel name="purple" arity="1" argtypes="node" valtype="boolean" default="false" type="predefined" color="(204,0,204)"/>
+      <Rel name="alpha1" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic" color="(51,255,255)"/>
+</Relations>
+<Data> 
+<DataForInputDomain> 
+<Domain> 
+<obj ind='0' name='n0' coords='752,269' /> 
+<obj ind='1' name='n1' coords='841,247' /> 
+<obj ind='2' name='n2' coords='776,442' /> 
+<obj ind='3' name='n3' coords='331,772' /> 
+<obj ind='4' name='n4' coords='895,854' /> 
+<obj ind='5' name='n5' coords='502,198' /> 
+<obj ind='6' name='n6' coords='668,594' /> 
+<obj ind='7' name='n7' coords='949,6' /> 
+<obj ind='8' name='n8' coords='207,782' /> 
+<obj ind='9' name='n9' coords='589,628' /> 
+<obj ind='10' name='n10' coords='231,404' /> 
+<obj ind='11' name='n11' coords='237,490' /> 
+<obj ind='12' name='n12' coords='284,958' /> 
+<obj ind='13' name='n13' coords='966,945' /> 
+<obj ind='14' name='n14' coords='311,135' /> 
+<obj ind='15' name='n15' coords='90,265' /> 
+<obj ind='16' name='n16' coords='425,291' /> 
+<obj ind='17' name='n17' coords='45,766' /> 
+<obj ind='18' name='n18' coords='48,102' /> 
+<obj ind='19' name='n19' coords='462,65' /> 
+<obj ind='20' name='n20' coords='133,899' /> 
+<obj ind='21' name='n21' coords='769,518' /> 
+<obj ind='22' name='n22' coords='350,340' /> 
+<obj ind='23' name='n23' coords='583,969' /> 
+<obj ind='24' name='n24' coords='789,661' /> 
+<obj ind='25' name='n25' coords='498,698' /> 
+<obj ind='26' name='n26' coords='474,516' /> 
+<obj ind='27' name='n27' coords='460,928' /> 
+<obj ind='28' name='n28' coords='156,985' /> 
+<obj ind='29' name='n29' coords='0,259' /> 
+<obj ind='30' name='n30' coords='935,314' /> 
+<obj ind='31' name='n31' coords='258,682' /> 
+<obj ind='32' name='n32' coords='643,181' /> 
+<obj ind='33' name='n33' coords='869,198' /> 
+<obj ind='34' name='n34' coords='978,360' /> 
+<obj ind='35' name='n35' coords='567,190' /> 
+<obj ind='36' name='n36' coords='122,212' /> 
+<obj ind='37' name='n37' coords='784,858' /> 
+<obj ind='38' name='n38' coords='568,766' /> 
+<obj ind='39' name='n39' coords='73,361' /> 
+<obj ind='40' name='n40' coords='499,182' /> 
+<obj ind='41' name='n41' coords='181,424' /> 
+</Domain> 
+<PredefinedRels> 
+<d rel='node' args='(n0)(n1)(n2)(n3)(n4)(n5)(n6)(n7)(n8)(n9)(n10)(n11)(n12)(n13)(n14)(n15)(n16)(n17)(n18)(n19)(n20)(n21)(n22)(n23)(n24)(n25)(n26)(n27)(n28)(n29)(n30)(n31)(n32)(n33)(n34)(n35)(n36)(n37)(n38)(n39)(n40)(n41)' val='true'/> 
+<d rel='green' args='(n0)(n3)(n5)(n9)(n12)(n16)(n21)(n23)(n29)(n30)(n34)(n35)(n36)' val='true'/> 
+<d rel='red' args='(n2)(n4)(n6)(n7)(n11)(n20)(n28)' val='true'/> 
+<d rel='blue' args='(n8)(n18)(n24)(n27)(n32)(n37)(n41)' val='true'/> 
+<d rel='yellow' args='(n13)(n14)(n17)(n33)(n39)(n40)' val='true'/> 
+<d rel='purple' args='(n1)(n10)(n15)(n19)(n22)(n25)(n26)(n31)(n38)' val='true'/> 
+<d rel='edge' args='(n0,n28)(n0,n1)(n0,n22)(n0,n32)(n0,n41)(n0,n2)(n0,n10)(n0,n29)(n0,n6)(n0,n30)(n0,n3)(n0,n37)(n0,n15)(n0,n39)(n28,n29)(n28,n34)(n28,n36)(n1,n6)(n1,n8)(n1,n37)(n1,n39)(n1,n28)(n1,n13)(n1,n22)(n1,n14)(n1,n17)(n1,n27)(n1,n31)(n1,n34)(n1,n29)(n1,n36)(n22,n36)(n22,n24)(n22,n28)(n22,n26)(n22,n34)(n22,n29)(n32,n35)(n32,n41)(n32,n37)(n2,n8)(n2,n26)(n2,n14)(n2,n22)(n2,n7)(n2,n10)(n2,n20)(n2,n6)(n2,n27)(n2,n12)(n2,n21)(n2,n28)(n2,n29)(n10,n40)(n10,n21)(n10,n32)(n10,n18)(n10,n35)(n10,n36)(n10,n41)(n10,n23)(n10,n13)(n10,n19)(n10,n31)(n10,n28)(n10,n37)(n10,n20)(n29,n34)(n29,n41)(n29,n38)(n29,n31)(n29,n35)(n6,n35)(n6,n39)(n6,n20)(n6,n16)(n6,n21)(n6,n38)(n6,n22)(n30,n34)(n30,n39)(n30,n36)(n3,n13)(n3,n4)(n3,n5)(n3,n19)(n3,n32)(n3,n36)(n3,n38)(n3,n12)(n3,n39)(n3,n34)(n3,n33)(n3,n17)(n3,n28)(n15,n37)(n15,n28)(n15,n39)(n15,n19)(n15,n29)(n15,n22)(n15,n25)(n15,n18)(n15,n30)(n39,n40)(n39,n41)(n8,n22)(n8,n28)(n8,n19)(n8,n37)(n8,n39)(n8,n29)(n8,n24)(n8,n31)(n8,n25)(n8,n27)(n8,n10)(n8,n23)(n8,n32)(n13,n14)(n13,n38)(n13,n28)(n13,n41)(n13,n15)(n13,n39)(n13,n35)(n13,n27)(n13,n26)(n14,n35)(n14,n33)(n14,n17)(n14,n21)(n14,n38)(n14,n39)(n14,n37)(n14,n22)(n14,n15)(n17,n20)(n17,n29)(n17,n38)(n17,n40)(n17,n23)(n27,n28)(n27,n32)(n27,n34)(n31,n39)(n31,n32)(n31,n40)(n31,n34)(n34,n36)(n34,n41)(n34,n38)(n34,n39)(n36,n41)(n36,n37)(n26,n41)(n26,n35)(n26,n34)(n26,n32)(n26,n31)(n26,n39)(n7,n10)(n7,n24)(n7,n25)(n7,n14)(n7,n16)(n7,n27)(n7,n36)(n7,n11)(n7,n12)(n7,n19)(n20,n25)(n20,n39)(n20,n26)(n20,n40)(n20,n36)(n12,n33)(n12,n27)(n12,n39)(n12,n35)(n12,n20)(n12,n34)(n12,n17)(n12,n23)(n12,n28)(n12,n40)(n12,n22)(n12,n26)(n21,n27)(n21,n39)(n21,n37)(n21,n34)(n21,n35)(n21,n31)(n21,n23)(n21,n24)(n21,n41)(n21,n22)(n4,n9)(n4,n39)(n4,n38)(n4,n6)(n4,n27)(n4,n13)(n4,n29)(n4,n23)(n4,n41)(n4,n21)(n4,n28)(n4,n11)(n5,n35)(n5,n41)(n5,n25)(n5,n38)(n5,n28)(n5,n24)(n5,n22)(n5,n29)(n5,n7)(n5,n39)(n5,n36)(n5,n32)(n5,n11)(n19,n40)(n19,n33)(n19,n30)(n19,n41)(n19,n26)(n19,n22)(n19,n20)(n38,n39)(n38,n40)(n38,n41)(n33,n35)(n33,n38)(n33,n41)(n9,n11)(n9,n15)(n9,n16)(n9,n14)(n9,n23)(n9,n32)(n9,n20)(n9,n36)(n9,n19)(n9,n10)(n9,n18)(n23,n30)(n23,n29)(n23,n36)(n23,n26)(n23,n35)(n23,n27)(n11,n16)(n11,n27)(n11,n37)(n11,n29)(n11,n19)(n11,n12)(n11,n40)(n11,n34)(n11,n13)(n11,n20)(n11,n15)(n35,n37)(n35,n38)(n25,n38)(n25,n31)(n25,n36)(n25,n30)(n25,n27)(n25,n39)(n25,n35)(n24,n40)(n24,n32)(n24,n29)(n24,n28)(n24,n27)(n16,n24)(n16,n17)(n16,n35)(n16,n28)(n16,n29)(n16,n21)(n16,n23)(n18,n41)(n18,n27)(n18,n25)(n18,n30)(n18,n24)(n18,n39)(n18,n31)(n18,n19)(n18,n23)' val='true'/> 
+</PredefinedRels> 
+<ProbabilisticRelsCase> 
+<d rel='alpha1' args='(n0)(n1)(n2)(n3)(n4)(n5)(n6)(n7)(n8)(n9)(n10)(n11)(n12)(n13)(n14)(n15)(n16)(n17)(n18)(n19)(n20)(n21)(n22)(n23)(n24)(n25)(n26)(n27)(n28)(n29)(n30)(n31)(n32)(n33)(n34)(n35)(n36)(n37)(n38)(n39)(n40)(n41)' val='true'/> 
+<d rel='alpha1' args='' val='false'/> 
+</ProbabilisticRelsCase> 
+</DataForInputDomain> 
+</Data> 
+</root> 

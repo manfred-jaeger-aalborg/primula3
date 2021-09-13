@@ -1,0 +1,107 @@
+/**
+* @author 
+*
+*
+*/
+options {
+      STATIC = false ;
+}
+
+PARSER_BEGIN(DBParser)
+package MLNParser.DBParser;
+
+import MLNParser.*;
+
+public class DBParser{
+	private RSTCreator creator;
+	
+}
+
+PARSER_END(DBParser)
+
+
+//Comments starting with "//":
+SKIP :
+{
+  "//" : WithinComment
+}
+
+<WithinComment> SKIP :
+{
+  "\n": DEFAULT
+}
+<WithinComment> SKIP :
+{
+  "\r\n": DEFAULT
+}
+<WithinComment> SKIP :
+{
+  "\r": DEFAULT
+}
+
+<WithinComment> MORE :
+{
+  <~[]>
+}
+
+
+void ReadDBFile():
+{//variables	
+}
+{//grammar
+	(Relation() (<EOL>)+ )*
+}
+
+void Relation():
+{//variables
+	Token tok;
+	ParsedRelation relation;
+	boolean possitive=true, unknown=false;
+}
+{//grammar
+// TODO: add not to the relation. 
+	[<Not>
+		{possitive=false;}
+	|<Unknown>
+		{unknown=true;}
+	]
+	tok=<Variable>
+	{
+		relation = new ParsedRelation(tok.image);
+	}
+	<OpenPar>
+	tok=<Constant>
+	{
+		relation.addArgument(tok.image);
+	}
+	( "," tok=<Constant>
+	{
+		relation.addArgument(tok.image);
+	}
+	)* <ClosePar>
+	{
+		if(!unknown)
+			creator.newRelation(relation,possitive);
+	}
+	
+}
+
+TOKEN:{
+	<EOL: "\n" | "\r" | "\r\n">
+}
+TOKEN:{
+	<Variable: ["a"-"z"] (["a"-"z", "A"-"Z","0"-"9","-", "_", "'"])* >
+}
+TOKEN:{
+	<Constant: ["A"-"Z"] (["a"-"z", "A"-"Z","0"-"9","-", "_", "'"])* >
+}
+TOKEN: {<OpenPar: "(">}
+TOKEN: {<ClosePar: ")">}
+TOKEN:{<Not: "!">}
+TOKEN:{<Unknown:"?">}
+
+void addCreator(RSTCreator cr):
+{}
+{
+	{creator=cr;}
+}

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<editmodel:ClassDiagramEditModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:editmodel="editmodel.xmi" xmlns:options="options.xmi" name="OneBoolRelData" size="1194,1484" id="RBNpackage" metadata="uml2-1.0" initialized="true" tag="10" key="32303037303533312D3130207072696D756C61">
+  <children xsi:type="editmodel:ClassEditModel" name="OneBoolRelData" location="210,60" size="231,374" id="RBNpackage/OneBoolRelData" runTimeClassModel="numtrue(),defaultval,addRelData(Lorg.dom4j.Element;LRBNpackage.RelStruc;),delete([[IZ),add([[IZ),setGlobal(Z),allTrue(),rel(),allTrue(LRBNpackage.RelStruc;),allUnInstantiated(I),delete(I),delete([IZ),add([IZ),allFalse(LRBNpackage.RelStruc;),truthValueOf([I),numfalse(),OneBoolRelData(LRBNpackage.BoolRel;Ljava.lang.String;),printAsString(LRBNpackage.RelStruc;Ljava.lang.String;),shiftArgs(I),allFalse(),dv(),OneBoolRelData(),falseAtoms,trueAtoms,isEmpty(),getBinDirs(I),rel">
+    <children xsi:type="editmodel:CompartmentEditModel" size="189,72">
+      <children xsi:type="editmodel:AttributeEditModel" name="rel" id="RBNpackage/BoolRel@rel+RBNpackage/OneBoolRelData@|RBNpackage/BoolRel#rel"/>
+      <children xsi:type="editmodel:AttributeEditModel" name="defaultval" id="RBNpackage/OneBoolRelData#defaultval"/>
+      <children xsi:type="editmodel:AttributeEditModel" name="trueAtoms" id="RBNpackage/OneBoolRelData#trueAtoms"/>
+      <children xsi:type="editmodel:AttributeEditModel" name="falseAtoms" id="RBNpackage/OneBoolRelData#falseAtoms"/>
+    </children>
+    <children xsi:type="editmodel:CompartmentEditModel" size="124,252">
+      <children xsi:type="editmodel:MethodEditModel" name="OneBoolRelData" id="RBNpackage/OneBoolRelData#OneBoolRelData()"/>
+      <children xsi:type="editmodel:MethodEditModel" name="OneBoolRelData" id="RBNpackage/OneBoolRelData#OneBoolRelData(LRBNpackage.BoolRel;Ljava.lang.String;)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="add" id="RBNpackage/OneBoolRelData#add([[IZ)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="add" id="RBNpackage/OneBoolRelData#add([IZ)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="allTrue" id="RBNpackage/OneBoolRelData#allTrue()"/>
+      <children xsi:type="editmodel:MethodEditModel" name="allFalse" id="RBNpackage/OneBoolRelData#allFalse()"/>
+      <children xsi:type="editmodel:MethodEditModel" name="allUnInstantiated" id="RBNpackage/OneBoolRelData#allUnInstantiated(I)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="allTrue" id="RBNpackage/OneBoolRelData#allTrue(LRBNpackage.RelStruc;)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="allFalse" id="RBNpackage/OneBoolRelData#allFalse(LRBNpackage.RelStruc;)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="delete" id="RBNpackage/OneBoolRelData#delete(I)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="dv" id="RBNpackage/OneBoolRelData#dv()"/>
+      <children xsi:type="editmodel:MethodEditModel" name="isEmpty" id="RBNpackage/OneBoolRelData#isEmpty()"/>
+      <children xsi:type="editmodel:MethodEditModel" name="getBinDirs" id="RBNpackage/OneBoolRelData#getBinDirs(I)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="addRelData" id="RBNpackage/OneBoolRelData#addRelData(Lorg.dom4j.Element;LRBNpackage.RelStruc;)"/>
+    </children>
+    <children xsi:type="editmodel:CompartmentEditModel" size="0,0"/>
+    <classifierPreferences xsi:type="editmodel:UMLClassDiagramClassifierPreference" showStereotype="true" attributeSorter="Natural" methodSorter="Natural" innerClassSorter="Natural" showPrivateAttributes="true" showProtectedAttributes="true" showPublicAttributes="true" showPackageAttributes="true" showStaticAttributes="true" showPublicMethods="true" showPackageMethods="true" showStaticMethods="true" showPublicInnerClasses="true" showPackageInnerClasses="true" showStaticInnerClasses="true" packageIndication="3" showAttributeProperty="true" showAssociationMember="true"/>
+  </children>
+  <diagramOptions xsi:type="options:ClassDiagramOptions" interactive="false" showScope="InPackage" properties="open=RBNpackage/OneBoolRelData;wireOptions=7;Product=eUML2"/>
+  <boardSetting snapToGeometry="true" gridEnabled="true" gridSpacing="15,15" gridOrigin="0,0" rulerUnit="pixel" gridVisibility="false">
+    <leftRuler/>
+    <topRuler/>
+  </boardSetting>
+  <classDiagramPreferences xsi:type="editmodel:UMLClassDiagramPreference" showPopupBars="true" showConnectionHandles="true" attributeSorter="Natural" methodSorter="Natural" showClassStereotype="true" showPackageStereotype="true" showDependencyStereotype="true" showInterfaceStereotype="true" innerClassSorter="Natural" showPublicAttributes="true" showPackageAttributes="true" showStaticAttributes="true" showPublicMethods="true" showPackageMethods="true" showStaticMethods="true" showPublicInnerClasses="true" showPackageInnerClasses="true" showStaticInnerClasses="true" packageIndication="3" showAttributeProperty="true"/>
+</editmodel:ClassDiagramEditModel>

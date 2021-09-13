@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<editmodel:ClassDiagramEditModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:editmodel="editmodel.xmi" xmlns:options="options.xmi" name="Rel" size="1194,409" id="RBNpackage" metadata="uml2-1.0" initialized="true" tag="10" key="32303037303533312D3130207072696D756C61">
+  <children xsi:type="editmodel:ClassEditModel" name="BoolRel" location="615,210" size="131,140" id="RBNpackage/BoolRel" runTimeClassModel="BoolRel(Ljava.lang.String;ILjava.util.Vector;),addRelHeader(Lorg.dom4j.Element;Ljava.lang.String;Ljava.lang.String;),BoolRel(),BoolRel(Ljava.lang.String;I),BoolRel(Ljava.lang.String;I[LRBNpackage.Type;)">
+    <children xsi:type="editmodel:CompartmentEditModel" size="0,0"/>
+    <children xsi:type="editmodel:CompartmentEditModel" size="108,90">
+      <children xsi:type="editmodel:MethodEditModel" name="BoolRel" id="RBNpackage/BoolRel#BoolRel(Ljava.lang.String;I[LRBNpackage.Type;)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="BoolRel" id="RBNpackage/BoolRel#BoolRel(Ljava.lang.String;ILjava.util.Vector;)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="BoolRel" id="RBNpackage/BoolRel#BoolRel()"/>
+      <children xsi:type="editmodel:MethodEditModel" name="BoolRel" id="RBNpackage/BoolRel#BoolRel(Ljava.lang.String;I)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="addRelHeader" id="RBNpackage/BoolRel#addRelHeader(Lorg.dom4j.Element;Ljava.lang.String;Ljava.lang.String;)"/>
+    </children>
+    <children xsi:type="editmodel:CompartmentEditModel" size="0,0"/>
+    <sourceConnections xsi:type="editmodel:GeneralizationEditModel" id="RBNpackage/Rel&lt;-RBNpackage/BoolRel" source="//@children.0" target="//@children.2" targetEnd="//@children.0/@sourceConnections.0/@children.1" sourceEnd="//@children.0/@sourceConnections.0/@children.0" connectionRouterKind="GeneralizationManhattan">
+      <children xsi:type="editmodel:AssociationEndEditModel" location="0,70" anchorKind="FixedAtEdge" attachSource="true"/>
+      <children xsi:type="editmodel:AssociationEndEditModel" location="179,184" anchorKind="FixedAtEdge"/>
+    </sourceConnections>
+    <classifierPreferences xsi:type="editmodel:UMLClassDiagramClassifierPreference" showStereotype="true" attributeSorter="Natural" methodSorter="Natural" innerClassSorter="Natural" showPublicAttributes="true" showPackageAttributes="true" showStaticAttributes="true" showPublicMethods="true" showPackageMethods="true" showStaticMethods="true" showPublicInnerClasses="true" showPackageInnerClasses="true" showStaticInnerClasses="true" packageIndication="3" showAttributeProperty="true"/>
+  </children>
+  <children xsi:type="editmodel:ClassEditModel" name="NumRel" location="615,45" size="131,140" id="RBNpackage/NumRel" runTimeClassModel="addRelHeader(Lorg.dom4j.Element;Ljava.lang.String;Ljava.lang.String;),NumRel(),NumRel(Ljava.lang.String;I[LRBNpackage.Type;),NumRel(Ljava.lang.String;I),NumRel(Ljava.lang.String;ILjava.util.Vector;)">
+    <children xsi:type="editmodel:CompartmentEditModel" size="0,0"/>
+    <children xsi:type="editmodel:CompartmentEditModel" size="108,90">
+      <children xsi:type="editmodel:MethodEditModel" name="NumRel" id="RBNpackage/NumRel#NumRel(Ljava.lang.String;I[LRBNpackage.Type;)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="NumRel" id="RBNpackage/NumRel#NumRel(Ljava.lang.String;ILjava.util.Vector;)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="NumRel" id="RBNpackage/NumRel#NumRel(Ljava.lang.String;I)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="NumRel" id="RBNpackage/NumRel#NumRel()"/>
+      <children xsi:type="editmodel:MethodEditModel" name="addRelHeader" id="RBNpackage/NumRel#addRelHeader(Lorg.dom4j.Element;Ljava.lang.String;Ljava.lang.String;)"/>
+    </children>
+    <children xsi:type="editmodel:CompartmentEditModel" size="0,0"/>
+    <sourceConnections xsi:type="editmodel:GeneralizationEditModel" autoLocated="true" id="RBNpackage/Rel&lt;-RBNpackage/NumRel" source="//@children.1" target="//@children.2" targetEnd="//@children.1/@sourceConnections.0/@children.1" sourceEnd="//@children.1/@sourceConnections.0/@children.0" connectionRouterKind="GeneralizationManhattan">
+      <children xsi:type="editmodel:AssociationEndEditModel" location="0,70" anchorKind="FixedAtEdge" attachSource="true"/>
+      <children xsi:type="editmodel:AssociationEndEditModel" location="179,100" anchorKind="FixedAtEdge"/>
+    </sourceConnections>
+    <classifierPreferences xsi:type="editmodel:UMLClassDiagramClassifierPreference" showStereotype="true" attributeSorter="Natural" methodSorter="Natural" innerClassSorter="Natural" showPublicAttributes="true" showPackageAttributes="true" showStaticAttributes="true" showPublicMethods="true" showPackageMethods="true" showStaticMethods="true" showPublicInnerClasses="true" showPackageInnerClasses="true" showStaticInnerClasses="true" packageIndication="3" showAttributeProperty="true"/>
+  </children>
+  <children xsi:type="editmodel:ClassEditModel" targetConnections="//@children.1/@sourceConnections.0 //@children.0/@sourceConnections.0" name="Rel" location="375,15" size="179,374" id="RBNpackage/Rel" runTimeClassModel="getTypes(),Rel(Ljava.lang.String;ILjava.util.Vector;),addRelHeader(Lorg.dom4j.Element;Ljava.lang.String;Ljava.lang.String;),valtype,equals(LRBNpackage.Rel;),Rel(),toStringWArity(),getTypesAsString(),toString(),chooseAttributeColor(),arity,color,printname(),getVAltype(),Rel(Ljava.lang.String;I[LRBNpackage.Type;),Rel(Ljava.lang.String;I),chooseBinaryColor(),resetTheColorCounters()">
+    <children xsi:type="editmodel:CompartmentEditModel" size="98,54">
+      <children xsi:type="editmodel:AttributeEditModel" name="arity" id="RBNpackage/Rel#arity"/>
+      <children xsi:type="editmodel:AttributeEditModel" name="color" id="RBNpackage/Rel#color"/>
+      <children xsi:type="editmodel:AttributeEditModel" name="valtype" id="RBNpackage/Rel#valtype"/>
+    </children>
+    <children xsi:type="editmodel:CompartmentEditModel" size="156,270">
+      <children xsi:type="editmodel:MethodEditModel" name="Rel" id="RBNpackage/Rel#Rel()"/>
+      <children xsi:type="editmodel:MethodEditModel" name="Rel" id="RBNpackage/Rel#Rel(Ljava.lang.String;I)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="Rel" id="RBNpackage/Rel#Rel(Ljava.lang.String;ILjava.util.Vector;)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="Rel" id="RBNpackage/Rel#Rel(Ljava.lang.String;I[LRBNpackage.Type;)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="addRelHeader" id="RBNpackage/Rel#addRelHeader(Lorg.dom4j.Element;Ljava.lang.String;Ljava.lang.String;)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="chooseAttributeColor" id="RBNpackage/Rel#chooseAttributeColor()"/>
+      <children xsi:type="editmodel:MethodEditModel" name="chooseBinaryColor" id="RBNpackage/Rel#chooseBinaryColor()"/>
+      <children xsi:type="editmodel:MethodEditModel" name="equals" id="RBNpackage/Rel#equals(LRBNpackage.Rel;)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="getTypes" id="RBNpackage/Rel#getTypes()"/>
+      <children xsi:type="editmodel:MethodEditModel" name="getTypesAsString" id="RBNpackage/Rel#getTypesAsString()"/>
+      <children xsi:type="editmodel:MethodEditModel" name="getVAltype" id="RBNpackage/Rel#getVAltype()"/>
+      <children xsi:type="editmodel:MethodEditModel" name="printname" id="RBNpackage/Rel#printname()"/>
+      <children xsi:type="editmodel:MethodEditModel" name="resetTheColorCounters" id="RBNpackage/Rel#resetTheColorCounters()"/>
+      <children xsi:type="editmodel:MethodEditModel" name="toString" id="RBNpackage/Rel#toString()"/>
+      <children xsi:type="editmodel:MethodEditModel" name="toStringWArity" id="RBNpackage/Rel#toStringWArity()"/>
+    </children>
+    <children xsi:type="editmodel:CompartmentEditModel" size="0,0"/>
+    <classifierPreferences xsi:type="editmodel:UMLClassDiagramClassifierPreference" showStereotype="true" attributeSorter="Natural" methodSorter="Natural" innerClassSorter="Natural" showPublicAttributes="true" showPackageAttributes="true" showStaticAttributes="true" showPublicMethods="true" showPackageMethods="true" showStaticMethods="true" showPublicInnerClasses="true" showPackageInnerClasses="true" showStaticInnerClasses="true" packageIndication="3" showAttributeProperty="true"/>
+  </children>
+  <diagramOptions xsi:type="options:ClassDiagramOptions" interactive="false" properties="open=RBNpackage/Rel;wireOptions=1;Product=eUML2"/>
+  <boardSetting snapToGeometry="true" gridEnabled="true" gridSpacing="15,15" gridOrigin="0,0" rulerUnit="pixel" gridVisibility="false">
+    <leftRuler/>
+    <topRuler/>
+  </boardSetting>
+  <classDiagramPreferences xsi:type="editmodel:UMLClassDiagramPreference" showPopupBars="true" showConnectionHandles="true" attributeSorter="Natural" methodSorter="Natural" showClassStereotype="true" showPackageStereotype="true" showDependencyStereotype="true" showInterfaceStereotype="true" innerClassSorter="Natural" showPublicAttributes="true" showPackageAttributes="true" showStaticAttributes="true" showPublicMethods="true" showPackageMethods="true" showStaticMethods="true" showPublicInnerClasses="true" showPackageInnerClasses="true" showStaticInnerClasses="true" packageIndication="3" showAttributeProperty="true"/>
+</editmodel:ClassDiagramEditModel>

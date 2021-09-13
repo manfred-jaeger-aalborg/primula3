@@ -1,0 +1,185 @@
+/**
+* @author 
+*
+*
+*/
+options {
+      STATIC = false ;
+}
+
+PARSER_BEGIN(AtomListParser)
+package RBNio;
+import RBNpackage.*;
+import java.util.*;
+
+public class AtomListParser{
+	private int parseno = 1;
+	
+}
+
+PARSER_END(AtomListParser)
+
+
+//Comments starting with "//":
+SKIP :
+{
+  "//" : WithinComment
+}
+
+<WithinComment> SKIP :
+{
+  "\n": DEFAULT
+}
+<WithinComment> SKIP :
+{
+  "\r\n": DEFAULT
+}
+<WithinComment> SKIP :
+{
+  "\r": DEFAULT
+}
+
+<WithinComment> MORE :
+{
+  <~[]>
+}
+
+SKIP:{
+" "
+}
+
+TOKEN:{
+	<EOL: "\n" | "\r" | "\r\n">
+}
+TOKEN:{
+	<Name: (["a"-"z", "A"-"Z","0"-"9","-", "_", "'"])+ >
+}
+TOKEN:{
+	<Relation: (["a"-"z", "A"-"Z","0"-"9","-", "_", "'"])+ >
+}
+TOKEN:{
+	<Constant: (["a"-"z", "A"-"Z","0"-"9","-", "_", "'"])+ >
+}
+TOKEN: {<OpenPar: "(">}
+TOKEN: {<ClosePar: ")">}
+TOKEN:{<Not: "!">}
+TOKEN: {<EndLiteral: ".">}
+
+// parse 1: find unary relations as candidate for types
+// parse 2: construct domain and extensions of type relations 
+// parse 3: construct typed probabilistic relations
+
+void readALFile(AtomListReader mr):
+{
+AtomListReader myreader = mr;
+}
+{//grammar
+	(Literal(myreader) (<EOL>)+ )*
+}
+
+void Literal(AtomListReader mr):
+{//variables
+	Token tok;
+	boolean positive=true;
+	AtomListReader myreader = mr;
+	int arity = 0;
+	Rel newrel = new Rel();
+	String relname ="";
+	Vector<String> tupleargs = new Vector<String>();
+}
+{//grammar
+        [<Not>
+                {positive=false;}
+        ]
+        tok=<Name>
+        {       switch (parseno){
+		case 1: 
+			relname = tok.image;
+			arity = 0;
+			break;
+                case 2: 
+			relname = tok.image;
+			arity = 0;
+			break;
+		case 3: 
+			relname = tok.image;
+			arity = 0;
+			break;
+		case 4:
+			relname = tok.image;
+			arity = 0;
+			tupleargs = new Vector<String>();
+			break;
+
+			
+                }
+        }
+        <OpenPar>
+        tok=<Name>
+        {       switch (parseno){
+		case 1: arity++;
+			break;
+                case 2: 
+			myreader.addElement(tok.image,relname);
+			arity++;
+			break;
+		case 3: 
+			arity++;
+			tupleargs.add(tok.image);
+			break;
+		case 4: 
+			arity++;
+			tupleargs.add(tok.image);
+			break;
+                }
+        }
+        ("," tok=<Name>
+        {       switch (parseno){ 
+		case 1: 
+			arity++;
+			break;
+                case 2: 
+			myreader.addElement(tok.image,relname);
+			arity++;
+			break;
+		case 3:  
+			arity++;
+			tupleargs.add(tok.image);
+			break;
+		case 4:  
+			arity++;
+			tupleargs.add(tok.image);
+			break;
+                }
+        }
+	)*
+         <ClosePar>
+	{
+		switch (parseno){ 
+		case 1: 
+			if (arity==1){
+				newrel = new Rel(relname,arity);
+				myreader.addCandidateType(newrel);
+			}
+			break;
+                case 2:
+			break;
+		case 3: 
+			myreader.addRelation(relname,tupleargs);
+			break;
+		case 4: 
+			myreader.addTuple(relname,tupleargs,positive);
+		}
+	}
+	[<EndLiteral>]
+}
+
+
+void setParseNo(int i):
+{
+}
+{
+	{parseno = i;}
+}
+
+

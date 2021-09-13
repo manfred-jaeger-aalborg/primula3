@@ -1,0 +1,365 @@
+K 25
+svn:wc:ra_dav:version-url
+V 34
+/svn/!svn/ver/27/trunk/RBNLearning
+END
+GradientGraphCombFuncNode.html
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/2/trunk/RBNLearning/GradientGraphCombFuncNode.html
+END
+SampleMain.java
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/2/trunk/RBNLearning/SampleMain.java
+END
+LearnMain.html
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/2/trunk/RBNLearning/LearnMain.html
+END
+GGConvCombNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/26/trunk/RBNLearning/GGConvCombNode.java
+END
+GradientGraphProbFormNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/9/trunk/RBNLearning/GradientGraphProbFormNode.java
+END
+RelDataCase.class
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/2/trunk/RBNLearning/RelDataCase.class
+END
+GradientGraphConstantNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/2/trunk/RBNLearning/GradientGraphConstantNode.java
+END
+RelData.class
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/28/trunk/RBNLearning/RelData.class
+END
+GradientGraphConvCombNode.class
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/9/trunk/RBNLearning/GradientGraphConvCombNode.class
+END
+GradientGraph.html
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/2/trunk/RBNLearning/GradientGraph.html
+END
+GradientGraphCombFuncNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/9/trunk/RBNLearning/GradientGraphCombFuncNode.java
+END
+GradientGraph.class
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/28/trunk/RBNLearning/GradientGraph.class
+END
+GradientGraphIndicatorNode.html
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/2/trunk/RBNLearning/GradientGraphIndicatorNode.html
+END
+GradientGraphIndicatorSumNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/6/trunk/RBNLearning/GradientGraphIndicatorSumNode.java
+END
+GradientGraphNode.html
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/2/trunk/RBNLearning/GradientGraphNode.html
+END
+GradientGraphNode.class
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/2/trunk/RBNLearning/GradientGraphNode.class
+END
+GGAtomSumNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/!svn/ver/23/trunk/RBNLearning/GGAtomSumNode.java
+END
+GGProbFormNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/23/trunk/RBNLearning/GGProbFormNode.java
+END
+SampleMain.class
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/23/trunk/RBNLearning/SampleMain.class
+END
+GradientGraphLikelihoodNode.html
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/2/trunk/RBNLearning/GradientGraphLikelihoodNode.html
+END
+GGConstantNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/23/trunk/RBNLearning/GGConstantNode.java
+END
+LearnThread.class
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/28/trunk/RBNLearning/LearnThread.class
+END
+GradientGraphLikelihoodNode.class
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/6/trunk/RBNLearning/GradientGraphLikelihoodNode.class
+END
+GradientGraph.java
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/!svn/ver/28/trunk/RBNLearning/GradientGraph.java
+END
+GGCombFuncNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/26/trunk/RBNLearning/GGCombFuncNode.java
+END
+GradientGraphProbFormNode.class
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/9/trunk/RBNLearning/GradientGraphProbFormNode.class
+END
+GradientGraphIndicatorNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/10/trunk/RBNLearning/GradientGraphIndicatorNode.java
+END
+GGAtomNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/!svn/ver/23/trunk/RBNLearning/GGAtomNode.java
+END
+GGIndicatorSumNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/14/trunk/RBNLearning/GGIndicatorSumNode.java
+END
+GradientGraphNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/2/trunk/RBNLearning/GradientGraphNode.java
+END
+GradientGraphCombFuncNode.class
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/9/trunk/RBNLearning/GradientGraphCombFuncNode.class
+END
+Sampler.html
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/2/trunk/RBNLearning/Sampler.html
+END
+Sampler.class
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/23/trunk/RBNLearning/Sampler.class
+END
+GradientGraphIndicatorMaxNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/9/trunk/RBNLearning/GradientGraphIndicatorMaxNode.java
+END
+RelDataForOneInput.class
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/28/trunk/RBNLearning/RelDataForOneInput.class
+END
+LearnThread.java
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/28/trunk/RBNLearning/LearnThread.java
+END
+GradientGraphLikelihoodNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/6/trunk/RBNLearning/GradientGraphLikelihoodNode.java
+END
+GGAtomMaxNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/!svn/ver/23/trunk/RBNLearning/GGAtomMaxNode.java
+END
+GGIndicatorMaxNodeComparator.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/23/trunk/RBNLearning/GGIndicatorMaxNodeComparator.java
+END
+GradientGraphConvCombNode.html
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/2/trunk/RBNLearning/GradientGraphConvCombNode.html
+END
+GGIndicatorNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/14/trunk/RBNLearning/GGIndicatorNode.java
+END
+Sampler.java
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/23/trunk/RBNLearning/Sampler.java
+END
+GGNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/23/trunk/RBNLearning/GGNode.java
+END
+RelDataForOneInput.java
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/28/trunk/RBNLearning/RelDataForOneInput.java
+END
+GradientGraphIndicatorNode.class
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/10/trunk/RBNLearning/GradientGraphIndicatorNode.class
+END
+package-frame.html
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/2/trunk/RBNLearning/package-frame.html
+END
+GGIndicatorMaxNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/14/trunk/RBNLearning/GGIndicatorMaxNode.java
+END
+GGLikelihoodNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/26/trunk/RBNLearning/GGLikelihoodNode.java
+END
+RelDataCase.java
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/!svn/ver/2/trunk/RBNLearning/RelDataCase.java
+END
+package-summary.html
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/2/trunk/RBNLearning/package-summary.html
+END
+SampleMain.html
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/2/trunk/RBNLearning/SampleMain.html
+END
+package-tree.html
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/2/trunk/RBNLearning/package-tree.html
+END
+RelData.java
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/28/trunk/RBNLearning/RelData.java
+END
+GradientGraphConvCombNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/9/trunk/RBNLearning/GradientGraphConvCombNode.java
+END
+GGSformulaNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/14/trunk/RBNLearning/GGSformulaNode.java
+END
+primularc.xml
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/2/trunk/RBNLearning/primularc.xml
+END
+GGUpperGroundAtomNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/23/trunk/RBNLearning/GGUpperGroundAtomNode.java
+END
+GradientGraphProbFormNode.html
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/2/trunk/RBNLearning/GradientGraphProbFormNode.html
+END
+GradientGraphConstantNode.html
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/2/trunk/RBNLearning/GradientGraphConstantNode.html
+END
+GradientGraphConstantNode.class
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/2/trunk/RBNLearning/GradientGraphConstantNode.class
+END

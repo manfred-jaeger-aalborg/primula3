@@ -1,0 +1,274 @@
+/*
+* SampleMain.java 
+* 
+* Copyright (C) 2009 Aalborg University
+*
+* contact:
+* jaeger@cs.aau.dk   http://www.cs.aau.dk/~jaeger/Primula.html
+*
+* This program is free software; you can redistribute it and/or
+* modify it under the terms of the GNU General Public License
+* as published by the Free Software Foundation; either version 2
+* of the License, or (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+*/
+
+package RBNLearning;
+
+import java.util.*;
+import java.io.*;
+import java.text.*;
+import RBNpackage.*;
+import RBNgui.*;
+import RBNio.*;
+import RBNExceptions.*;
+import RBNLearning.Sampler;
+//import RBNutilities.*;
+
+public class SampleMain{
+
+
+//	private static  String model = "noisy_or";
+	private static String model ="customDisSynthData" ;
+	//private static  String struc = "td_actor_movie_writer_22012008_194102";
+	//private static  String struc = "td_actor_movie_17012008_112903";
+	private static  String struc = "stratifiedGraph_multin500r3t3";
+//	private static  String struc = "rg_n1000e3c2na";
+	
+	private static boolean userbnmodel = false;
+	private static boolean makerandomcoloredgraph = false;
+	private static boolean makerandomgraph = false;
+	private static boolean makerandompedigree = false;
+	private static boolean makeslotchainbase = false;
+	private static boolean makestratifiedgraph = false;
+	private static boolean maketypeddomain = false;
+	private static boolean makecitationgraph = false;	
+	private static boolean makebagofbags = true;
+	
+	private static boolean outputrdef = true;
+	private static boolean outputrst = false;
+	private static boolean outputmysql = false;
+	private static boolean outputproximity = false;
+	private static boolean outputtilde = false;
+	private static boolean outputatomfile = false;
+	
+	
+	private static void loadInputs(Primula pr){
+		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Examples2.2/RBNinputs/"+model+".rbn";
+		File rbnfile = new File(rbninputfilestring);
+		pr.loadRBNFunction(rbnfile);
+		if (!struc.equals("")){
+			String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Examples2.2/RDEFinputs/"+struc+".rdef";
+			File srsfile = new File(rstinputfilestring);
+			pr.loadSparseRelFile(srsfile);
+		}
+	}
+
+
+	public static  void main(String[] Args){
+		Primula thisprimula;
+		Sampler thissampler;
+
+		thisprimula = new Primula();
+		thissampler = new Sampler();
+		
+		SparseRelStruc sampledstruc = null;
+
+		Calendar mycal = new GregorianCalendar();
+		SimpleDateFormat mydateform = new SimpleDateFormat("ddMMyyyy'_'HHmmss");
+		String timestamp = mydateform.format(mycal.getTime());
+
+		String output = "";
+
+		/** Make a model based on a random generator implemented in Sampler: **/
+		/** option  **/
+		
+		if (makerandomcoloredgraph)
+			sampledstruc = thissampler.makeRandomColoredGraph(5000,10.0/5000.0,0.33,0.33);
+
+		/** option  **/
+		if (makerandomgraph){
+			int numnodes = 1000;
+			double expedges = 3.0;
+			boolean acyclic = false;
+			int numcomps = 2;
+			sampledstruc = thissampler.makeRandomGraph(numnodes,
+					expedges/numnodes,acyclic,numcomps);
+			output = "rg_n"+numnodes+"e"+(int)expedges+"c"+(int)numcomps;
+			if (!acyclic)
+				output = output+"n";
+			output = output+"a";
+		}
+
+		/** option  **/
+		if (makerandompedigree)
+			sampledstruc = thissampler.makeRandomPedigree(500, 0.3);
+
+		/** option  **/
+		if (makeslotchainbase){
+			int numoftype = 150;
+			int numrels = 3;
+			int numsuccs = 2;
+			int numtypes = 5;
+			int numcomps = 1;
+			sampledstruc = thissampler.makeSlotchainBase(numoftype,numrels,
+					numsuccs,numtypes,numcomps);
+			output = "slotchainbase_n" + numoftype + "r" + numrels + "s"+ numsuccs + "t" + numtypes;
+
+		}
+		
+		
+		/** option  **/
+		if (makestratifiedgraph){
+			int numoftype = 500;
+			int numrels = 3;
+//			double poissonparams[] = {3,5};
+			int numtypes = 3;
+			int numsuccs[][] = {{1,2,4},{1,4,16}};
+			double numsuccprobs[][] = {{0.4,0.4,0.2},{0.4,0.3,0.3}};
+//			sampledstruc = thissampler.makeStratifiedGraph(numoftype,numrels,
+//					poissonparams,numtypes);
+			sampledstruc = thissampler.makeStratifiedGraph(numoftype,numrels,
+					numsuccs,numsuccprobs,numtypes);
+			output = "stratifiedGraph_multin" + numoftype + "r" + numrels + "t" + numtypes;
+
+		}
+		
+		/** option  **/
+		if (maketypeddomain){
+			String[] types = new String[4];
+			types[0]="type1";
+			types[1]="type2";
+			types[2]="type3";
+			types[3]="type4";
+			double probs[] = {0.25,0.25,0.25,0.25};
+			sampledstruc = thissampler.makeRandomTypedDomain(1000,types,probs);
+			output = "td_";
+			for (int i=0;i<types.length;i++){
+				output = output + types[i] +  "_" ;
+			}
+			output = output+timestamp;
+		}
+
+		/** Make a model based on a RBN: **/
+		/* This part disabled because Sampler.sampleOneStruc() has been
+		 * disabled (should here be replaced by call to Sampler.sampleOneStrucData)
+		 */
+		if (userbnmodel){
+			thisprimula= new Primula();
+			loadInputs(thisprimula);
+			thissampler.makeSampleStruc(thisprimula);
+			OneStrucData sampleddat = thissampler.sampleOneStrucData(0.0);
+			sampledstruc = new SparseRelStruc(thisprimula.getRels().getNames(),sampleddat,null);
+			sampledstruc.addOneStrucData(thisprimula.getRels().getData());
+			output = model + "_" + struc + timestamp;
+		}
+
+		/** option **/
+		if (makebagofbags){
+			int numtopbagstrain = 100;
+			int numtopbagstest = 50;
+			int numsubbags = 300;
+			int maxcomponents = 7;
+			int numinstances = 5000;
+			int numfeatures = 64;
+			
+			sampledstruc = thissampler.makeBagOfBagOfInstance(numtopbagstrain,numtopbagstest,numsubbags,maxcomponents,
+						numinstances,numfeatures);
+			output = "mybags"+ "." + numtopbagstrain +"." + numtopbagstest +"." 
+					+ numsubbags +"." 
+			+ maxcomponents +"." 
+			+ numinstances +"." 
+			+ numfeatures ;
+		}
+//		if (makecitationgraph){
+//			try{
+//			sampledstruc = thissampler.makeCitationGraph(100,0.5,3.0,2.0);
+//			}
+//			catch (RBNCompatibilityException e){
+//				System.out.println(e);
+//			}
+//			catch (RBNSyntaxException e){
+//				System.out.println(e);
+//			}
+//			
+//			output = "citations_" + timestamp;
+//		}
+//		
+		/** Output sampled structure: **/
+		/** Output an RST file: **/
+		if (outputrst){
+			System.out.println("saving rst");
+			String rstoutfile="/home/jaeger/B/Primula-Develop/New/Primula-beta/Examples/RSTinputs/" + output + ".rst";
+			SparseRelStrucReader.saveFile(sampledstruc,new File(rstoutfile),null);
+			System.out.println("...done");
+		}
+		
+		/** Output an RDEF file: **/
+		if (outputrdef){
+			System.out.println("saving rdef");
+			String rdefoutfile="/home/jaeger/B/Primula-Develop/New/Primula-beta/ExamplesTET/MyBagOBags/" + output + ".rdef";
+			sampledstruc.saveToRDEF(new File(rdefoutfile));
+			System.out.println("...done");
+		}
+
+		/** Output an Atom file: **/
+		if (outputatomfile){
+			String atomoutpath="/home/jaeger/TET/Examples/learning/TOY/" + output + "/";
+			boolean proxsuccess = (new File(atomoutpath)).mkdirs();
+			sampledstruc.saveToAtomFile(atomoutpath+output+".db",RelStruc.MLN_FORMAT);
+		}
+
+		/** Output a MYSQL database: **/	
+		if (outputmysql){
+			System.out.println("saving mysql");
+			sampledstruc.saveToMysql(output);
+			System.out.println("...done");
+		}
+		/** Output a Proximity Text File collection: **/
+//		if (outputproximity){
+//			System.out.println("saving proximity");	
+//			String proxpath="/home/jaeger/proximity/mydata/" + output +"/";
+//			boolean proxsuccess = (new File(proxpath)).mkdirs();
+//			sampledstruc.saveToProximityText(proxpath);
+//			System.out.println("...done");
+//		}
+
+		/** Output a Tilde Text File collection: **/
+		if (outputtilde){
+			System.out.println("saving tilde");
+			String path="/home/jaeger/TET/Examples/learning/TOY/" + output +"/Data/";
+			boolean success = (new File(path)).mkdirs();
+			sampledstruc.saveToTextFiles(path);
+			System.out.println("...done");
+		}
+
+		thisprimula.exitProgram();
+
+	}
+
+
+
+/** TODO: this method still  needs to be done **/
+//	private static void animateSampling(Primula thisprimula,Sampler thissampler){
+//		SparseRelStruc sampledstruc;
+//		Primula displayprimula = new Primula();
+//		Bavaria mybavaria = displayprimula.openBavaria();
+//		while (true){
+//			sampledstruc = thissampler.sampleOneStruc();
+//			System.out.println(((int[])sampledstruc.getCoords().elementAt(0))[0]+ " " + ((int[])sampledstruc.getCoords().elementAt(0))[1]);
+//			//thisprimula.setRelStruc(sampledstruc);
+//			mybavaria.setRelStruc(sampledstruc);
+//		}
+//
+//
+//	}
+}

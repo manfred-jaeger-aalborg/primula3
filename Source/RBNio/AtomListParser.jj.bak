@@ -1,0 +1,101 @@
+/**
+* @author Alberto García Collado
+*
+*
+*/
+options {
+      STATIC = false ;
+}
+
+PARSER_BEGIN(AtomListParser)
+package RBNio;
+
+
+
+public class AtomListParser{
+	private int parseno = 1;
+	
+}
+
+PARSER_END(AtomListParser)
+
+
+//Comments starting with "//":
+SKIP :
+{
+  "//" : WithinComment
+}
+
+<WithinComment> SKIP :
+{
+  "\n": DEFAULT
+}
+<WithinComment> SKIP :
+{
+  "\r\n": DEFAULT
+}
+<WithinComment> SKIP :
+{
+  "\r": DEFAULT
+}
+
+<WithinComment> MORE :
+{
+  <~[]>
+}
+SKIP :
+{
+  " "
+}
+
+void readALFile():
+{
+}
+{//grammar
+	(Literal() (<EOL>)+ )*
+}
+
+void Literal():
+{//variables
+	Token tok;
+	boolean positive=true;
+}
+{//grammar
+	[<Not>
+		{positive=false;}
+	]
+	tok=<Relation>
+	{	switch (parseno){
+		case 1: System.out.println("found relation " + tok.image);
+		}
+	}
+	<OpenPar>
+	tok=<Constant>
+	{	switch (parseno){
+		case 1: System.out.println("found constant " + tok.image);
+		}
+	}
+	"," tok=<Constant>
+	{	switch (parseno){
+		case 1: System.out.println("found constant " + tok.image);
+		}
+	}
+	 <ClosePar>
+}
+
+
+
+TOKEN:{
+	<EOL: "\n" | "\r" | "\r\n">
+}
+TOKEN:{
+	<Relation: ["a"-"z"] (["a"-"z", "A"-"Z","0"-"9","-", "_", "'"])* >
+}
+TOKEN:{
+	<Constant: ["A"-"Z"] (["a"-"z", "A"-"Z","0"-"9","-", "_", "'"])* >
+}
+TOKEN: {<OpenPar: "(">}
+TOKEN: {<ClosePar: ")">}
+TOKEN:{<Not: "!">}
+
+

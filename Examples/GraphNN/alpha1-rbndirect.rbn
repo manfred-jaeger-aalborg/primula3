@@ -1,0 +1,18 @@
+@body([node]v,[node]w) = (blue(w)& ~(edge(v,w)|edge(w,v)));
+ 
+@count([node]v) = COMBINE  @body(v,w)
+		  WITH sum
+		  FORALL w
+		  WHERE node(w);
+
+@lowerbound([node]v)=  COMBINE (14*@count(v)),-103
+		       WITH l-reg
+		       FORALL;
+		  
+@upperbound([node]v)=  COMBINE (-14*@count(v)),145
+		       WITH l-reg
+		       FORALL;
+			
+
+
+alpha1([node]v)= (@lowerbound(v) * @upperbound(v));

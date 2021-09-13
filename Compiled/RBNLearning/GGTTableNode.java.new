@@ -1,0 +1,136 @@
+package RBNLearning;
+
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.Vector;
+
+import RBNgui.Primula;
+import RBNpackage.*;
+import RBNutilities.rbnutilities;
+
+public abstract class GGTTableNode extends GGTNode {
+	
+	
+	
+	/* The probability formula in normal form */
+	ProbForm mypf;
+	
+	/* Mapping ground tuples to table indices
+	 * The hashkey of atom r(i,j,k) is [i,j,k,icn,ocn] where
+	 * icn and ocn are the input domain number and observed case 
+	 * number to which this r(i,j,k) belongs
+	 */
+	Hashtable<short[],Short> tupleindx;
+	
+	
+	/* The following arrays have one row for each ground instance
+	 * of reloftable for which this AtomTable contains an entry.
+	 * All arrays have the same length, and the same index for the 
+	 * same ground instance.
+	 */
+	
+	/* The (current) instantiation values (for DATA and MAX type) */
+	Boolean[] instvals;
+	
+	/* Sampled instantiations (for SUM type) */
+	Boolean[][] samplevals;
+	
+	double[] value;
+	
+	public GGTTableNode(GradientGraphT ggt, boolean uga, Rel r, short att, ProbForm pf){
+		super(ggt);
+		if (pf instanceof ProbFormBoolComposite)
+			mypf = ((ProbFormBoolComposite) pf).toStandardPF(true);
+		else 
+			mypf = pf;
+		
+		tupleindx = new Hashtable<short[],Short>();
+	}
+
+	public void addTupleToHash(short[] tup){
+		if (!tupleindx.containsKey(tup))
+			tupleindx.put(tup, (short)(tupleindx.size()+1));
+	}
+	
+	private short getIndex(short[] tup){
+		return tupleindx.get(tup);
+	}
+	
+	public void print(){
+
+		short[] nextkey;
+		short nextindx;
+		for (Enumeration<short[]> e = tupleindx.keys(); e.hasMoreElements();){
+			nextkey = e.nextElement();
+			nextindx=tupleindx.get(nextkey);
+			System.out.println(nextindx + ": " + rbnutilities.arrayToString(nextkey));
+		}
+	}
+	
+//	protected abstract Vector<GGTTableNode> makeChildren(ProbForm pf, GradientGraphT ggt);
+	
+	protected  static GGTTableNode makeChild(ProbForm pf, GradientGraphT ggt){
+		String hashforpf = pf.asString(Primula.CLASSICSYNTAX, 0, null);
+		GGTTableNode result = ggt.getpftables().get(hashforpf);
+		if (result == null){
+			int pftype = ProbForm.typeOfPf(pf);	
+			switch (pftype){
+			case ProbForm.PFCOMBFUNC:
+				result = new GGTTableNodeCombFunc(ggt,false,null,(short)0,pf);
+				result.setChildren(GGTTableNode.makeChildren(((ProbFormCombFunc)pf),ggt));
+				break;
+			case ProbForm.PFCONVCOMB:
+				result = new GGTTableNodeConvComb(ggt,false,null,(short)0,pf);
+				result.setChildren(GGTTableNode.makeChildren(((ProbFormConvComb)pf),ggt));
+				break;
+			default: System.out.println("Unhandled case in GGTTableNode.makeChildren");
+
+			ggt.addToPfHashT(hashforpf,result);
+			}
+			/* Recursively construct children of this node:*/
+			
+			
+		}
+		return result;
+	}
+	
+	public static Vector<GGTTableNode> makeChildren(ProbFormConvComb pfcc, GradientGraphT ggt){
+		ProbForm nextsubpf;
+		Vector<GGTTableNode> result = new Vector<GGTTableNode>();
+		
+		for (int i=0;i<3;i++){
+			nextsubpf = pfcc.subPF(i+1);
+			int typeofpf = ProbForm.typeOfPf(nextsubpf);
+			switch (typeofpf){
+			case ProbForm.PFATOM:
+				break;
+			case ProbForm.PFBOOL:
+				result.add(null);
+				break;
+			case ProbForm.PFCOMBFUNC:
+				result.add(GGTTableNode.makeChild(nextsubpf,ggt));
+				break;
+			case ProbForm.PFCONVCOMB:
+				result.add(GGTTableNode.makeChild(nextsubpf,ggt));
+				break;
+			case ProbForm.PFCONST:
+				result.add(null);
+				break;
+			}
+		}
+		return result;
+		
+	}
+	
+	/* computes the children vector. creates new GGTTableNodes if
+	 * node for a given sub-formula does not already exist
+	 */
+	public static Vector<GGTTableNode> makeChildren(ProbFormCombFunc pfcf, GradientGraphT ggt){
+		Vector<GGTTableNode> result = new Vector<GGTTableNode>();
+		for (int i=0; i< pfcf.numPFargs(); i++)
+			result.add(GGTTableNode.makeChild(pfcf.probformAt(i).normalForm(),ggt));
+		return result;
+	}
+	
+
+}

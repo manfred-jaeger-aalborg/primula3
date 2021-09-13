@@ -1,0 +1,1175 @@
+/*
+ * rbnutilities.java
+ * 
+ * Copyright (C) 2005 Aalborg University
+ *
+ * contact:
+ * jaeger@cs.aau.dk   www.cs.aau.dk/~jaeger/Primula.html
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
+
+package RBNutilities;
+
+import java.lang.*;
+import java.util.*;
+import RBNpackage.*;
+import mymath.*;
+
+public class rbnutilities extends java.lang.Object
+{
+    public static boolean IsInteger(String argentry)
+        /* returns true of argentry is a string
+         * representing an integer. Needed in freevars()
+         */
+    {
+    	if (argentry.length()==0) return false;
+    	for (int i = 0; i < argentry.length(); i++)
+    	{
+    		if (!Character.isDigit(argentry.charAt(i)))
+    		{
+    			return false;
+    		}
+    	}
+    	return true;
+    }
+
+    public static boolean IsInteger(String[] args){
+    	boolean result = true;
+    	for (int i=0;i<args.length;i++)
+    		if (!IsInteger(args[i]))
+    			result = false;
+    	return result;
+    }
+    
+    public static int IntPow(int k, int l)
+        // returns k to the power of l
+    {
+	int result =1;
+	for (int i =0 ; i<l; i++) result = result*k;
+	return result;
+    }
+        
+        
+
+    
+    
+    public static boolean arrayEquals(int[] arr1, int[] arr2){
+        boolean result = true;
+        if (arr1.length != arr2.length)
+            result = false;
+        else{
+            for (int i=0;i<arr1.length;i++)
+                if (arr1[i] != arr2[i]) result = false;
+        }
+        return result;
+    }
+    
+    
+    public static boolean inArray(Rel[] relarr, Rel thisrel)
+	/* checks wheter thisrel appears in relarr */
+    {
+        
+        boolean result = false;
+        for (int i = 0; i<relarr.length; i++)
+            if (relarr[i].equals(thisrel))  result = true;
+        return result;
+    }
+    
+    public static void arrayShiftArgs(int[] array, int a){
+        // replaces all components b>a in array with b-1
+        for (int i=0;i<array.length;i++){
+            if (array[i]>a) array[i]--;
+        }
+    }
+    
+    public static  boolean inArray(int[] intarr, int a){
+        boolean result = false;
+        for (int i = 0; i<intarr.length; i++)
+            if (intarr[i] == a)  result = true;
+        return result;
+    }
+    
+
+    public static String[] arraymerge(String[] stringarg1, String[]stringarg2)
+	/* takes two arrays stringarg1 and stringarg2 
+	 * and returns an array that contains 
+	 * their elements without repetitions
+	 */
+    {
+        String[] result;
+        String[] prelimarray = new String[stringarg1.length+stringarg2.length];
+        int counter = 0;
+        int i,j;
+        boolean isnew;
+        
+        for (i=0; i<stringarg1.length; i++)
+	    {
+		isnew = true;
+		j = 0; 
+		while (j<counter && isnew) 
+		    {
+			if (prelimarray[j].equals(stringarg1[i])) isnew = false;
+			j++;
+		    }
+		if (isnew) 
+		    {
+			prelimarray[counter] = stringarg1[i];
+			counter++;
+		    }
+	    }
+        for (i=0; i<stringarg2.length; i++)
+	    {
+		isnew = true;
+		j = 0; 
+		while (j<counter && isnew) 
+		    {
+			if (prelimarray[j].equals(stringarg2[i])) isnew = false;
+			j++;
+		    }
+		if (isnew) 
+		    {
+			prelimarray[counter] = stringarg2[i];
+			counter++;
+		    }
+	    }
+        
+        result = new String[counter];
+	for (i=0; i<counter; i++)
+	    {
+		result[i] = prelimarray[i];
+	    }
+        return result;
+    }
+    
+    
+    /* Returns 0 if arr1 and arr2 are equal
+     *         -1 if arr1 and arr2 are of equal length and arr1 > arr2 in lexical order
+     *          1 if arr1 and arr2 are of equal length and arr1 < arr2 in lexical order
+     *          2 else
+     */
+    public static int arrayCompare(int[] arr1, int[] arr2){
+
+	int result = 2;
+	boolean done = false;
+	
+	if (arr1.length != arr2.length){
+	    done = true;
+	}
+	int i =0;    
+	while (!done){
+	    if (arr1[i]>arr2[i]){
+		result = -1;
+		done = true;
+	    }
+	    if (arr1[i]<arr2[i]){
+		result = 1;
+		done = true;
+	    }
+	    if (i == arr1.length-1 && arr1[i]==arr2[i]){
+		result = 0;
+		done = true;
+	    }
+	    if (!done)
+		i++;
+	}
+	return result;
+    }
+
+    public static boolean arrayContains(int[] arr, int ii){
+	boolean result = false;
+	for (int i=0;i<arr.length;i++){
+	    if (arr[i]==ii) result = true;
+	}
+	return result;
+    }
+    
+    public static boolean arrayContains(String[] arr, String ii){
+    	boolean result = false;
+    	for (int i=0;i<arr.length;i++){
+    	    if (arr[i].equals(ii)) result = true;
+    	}
+    	return result;
+        }
+    
+    public static double[] arrayAdd(double[] arg1, double[] arg2){
+    	if (arg1.length != arg2.length)
+    		System.out.println("Cannot add arrays of unequal length!");
+    	double[] result = new double[arg1.length];
+    	for (int i=0;i<result.length;i++)
+    		result[i]=arg1[i]+arg2[i];
+    	return result;
+    }
+    
+    public static double[] arrayScalMult(double[] arg1, double s){
+    	double[] result = new double[arg1.length];
+    	for (int i=0;i<result.length;i++)
+    		result[i]=s*arg1[i];
+    	return result;
+    }
+    
+    
+    public static String[] arrayConcatenate(String[] stringarg1, String[] stringarg2){
+    	String[] result = new String[stringarg1.length + stringarg2.length];
+    	for (int i=0;i<stringarg1.length;i++)
+    		result[i]=stringarg1[i];
+    	for (int i=0;i<stringarg2.length;i++)
+    		result[stringarg1.length + i]=stringarg2[i];
+    	return result;
+    }
+    public static String[] arraysubstraction(String[] stringarg1, String[]stringarg2)
+	/* takes two arrays stringarg1 and stringarg2 
+	 * and returns an array that contains 
+	 * the elements of stringarg1 that do not 
+	 * occur in stringarg2. In the result the elements
+	 * occur in the order of their first appearance 
+	 * in stringarg1 
+	 */
+    {
+        //System.out.println("Entered arraysubstraction with arguments "+ rbnutilities.arrayToString(stringarg1) + " and "+ rbnutilities.arrayToString(stringarg2)); 
+        String[] result;
+        String[] prelimarray = new String[stringarg1.length];
+        int counter = 0;
+        int i,j;
+        boolean insert;
+        
+        for (i=0; i<stringarg1.length; i++)
+	    {
+		insert = true;
+		j = 0; 
+		while (j<stringarg2.length && insert) 
+		    {
+			if (stringarg1[i].equals(stringarg2[j])) insert = false;
+			j++;
+		    }
+		// if string1[i] does not appear in string2, also check
+		// whether it already is in  prelimarray
+		if (insert)
+		    {
+			while (j<counter && insert)
+			    {
+				if (stringarg1[i].equals(prelimarray[j])) insert = false;
+				j++;
+			    }
+		    }
+		if (insert)
+		    {
+			prelimarray[counter]=stringarg1[i];
+			counter++;
+		    }
+	    }
+       
+        result = new String[counter];
+        for (i=0; i<counter; i++)
+            result[i] = prelimarray[i];
+        //System.out.println("Returned "+ rbnutilities.arrayToString(result) ); 
+      
+        return result;
+    }
+    
+    public static Rel[] arraysubstraction(Rel[] relarg1, Rel[]relarg2)
+	/* takes two arrays relarg1 and relarg2 
+	 * and returns an array that contains 
+	 * the elements of relarg1 that do not 
+	 * occur in relarg2. In the result the elements
+	 * occur in the order of their first appearance 
+	 * in relarg1 
+	 */
+    {
+        //System.out.println("Entered arraysubstraction with arguments "+ rbnutilities.arrayToString(relarg1) + " and "+ rbnutilities.arrayToString(relarg2)); 
+        Rel[] result;
+        Rel[] prelimarray = new Rel[relarg1.length];
+        int counter = 0;
+        int i,j;
+        boolean insert;
+        
+        for (i=0; i<relarg1.length; i++)
+	    {
+		insert = true;
+		j = 0; 
+		while (j<relarg2.length && insert) 
+		    {
+			if (relarg1[i].equals(relarg2[j])) insert = false;
+			j++;
+		    }
+		// if string1[i] does not appear in string2, also check
+		// whether it already is in  prelimarray
+		if (insert)
+		    {
+			while (j<counter && insert)
+			    {
+				if (relarg1[i].equals(prelimarray[j])) insert = false;
+				j++;
+			    }
+		    }
+		if (insert)
+		    {
+			prelimarray[counter]=relarg1[i];
+			counter++;
+		    }
+	    }
+       
+        result = new Rel[counter];
+        for (i=0; i<counter; i++)
+            result[i] = prelimarray[i];
+        //System.out.println("Returned "+ rbnutilities.arrayToString(result) ); 
+      
+        return result;
+    }
+
+
+    public static NumRel[] arraymerge(NumRel[] relarg1, NumRel[] relarg2)
+	/* takes two arrays relarg1 and relarg2 
+	 * and returns an array that contains 
+	 * their elements without repetitions
+	 */
+    {
+    	NumRel[] result;
+    	NumRel[] prelimarray = new NumRel[relarg1.length+relarg2.length];
+        int counter = 0;
+        int i,j;
+        boolean isnew;
+        
+        for (i=0; i<relarg1.length; i++)
+	    {
+		isnew = true;
+		j = 0; 
+		while (j<counter && isnew) 
+		    {
+			if (prelimarray[j].equals(relarg1[i])) isnew = false;
+			j++;
+		    }
+		if (isnew) 
+		    {
+			prelimarray[counter] = relarg1[i];
+			counter++;
+		    }
+	    }
+        for (i=0; i<relarg2.length; i++)
+	    {
+		isnew = true;
+		j = 0; 
+		while (j<counter && isnew) 
+		    {
+			if (prelimarray[j].equals(relarg2[i])) isnew = false;
+			j++;
+		    }
+		if (isnew) 
+		    {
+			prelimarray[counter] = relarg2[i];
+			counter++;
+		    }
+	    }
+        
+        result = new NumRel[counter];
+	for (i=0; i<counter; i++)
+	    {
+		result[i] = prelimarray[i];
+	    }
+        return result;
+    }
+    public static Rel[] arraymerge(Rel[] relarg1, Rel[] relarg2)
+	/* takes two arrays relarg1 and relarg2 
+	 * and returns an array that contains 
+	 * their elements without repetitions
+	 */
+    {
+    	Rel[] result;
+    	Rel[] prelimarray = new Rel[relarg1.length+relarg2.length];
+        int counter = 0;
+        int i,j;
+        boolean isnew;
+        
+        for (i=0; i<relarg1.length; i++)
+	    {
+		isnew = true;
+		j = 0; 
+		while (j<counter && isnew) 
+		    {
+			if (prelimarray[j].equals(relarg1[i])) isnew = false;
+			j++;
+		    }
+		if (isnew) 
+		    {
+			prelimarray[counter] = relarg1[i];
+			counter++;
+		    }
+	    }
+        for (i=0; i<relarg2.length; i++)
+	    {
+		isnew = true;
+		j = 0; 
+		while (j<counter && isnew) 
+		    {
+			if (prelimarray[j].equals(relarg2[i])) isnew = false;
+			j++;
+		    }
+		if (isnew) 
+		    {
+			prelimarray[counter] = relarg2[i];
+			counter++;
+		    }
+	    }
+        
+        result = new Rel[counter];
+	for (i=0; i<counter; i++)
+	    {
+		result[i] = prelimarray[i];
+	    }
+        return result;
+    }
+
+
+    public static String arrayToString (String arr[])
+    {
+        String result = "";
+        for (int i = 0; i<arr.length-1; i++)
+            result = result + arr[i] + ",";
+        if (arr.length > 0) 
+            result = result + arr[arr.length-1];
+        return result;
+    }
+    
+    public static String arrayToString (int arr[])
+    {
+        String result = "";
+        for (int i = 0; i<arr.length-1; i++)
+            result = result + arr[i] + ",";
+        if (arr.length > 0) 
+            result = result + arr[arr.length-1];
+        return result;
+    }
+    
+    /** prefixes every integer in the tuple with 'prefix' 
+     */
+    public static String arrayToString (int arr[], String prefix)
+    {
+        String result = "";
+        for (int i = 0; i<arr.length-1; i++)
+            result = result + prefix + arr[i] + ",";
+        if (arr.length > 0) 
+            result = result + prefix + arr[arr.length-1];
+        return result;
+    }
+    
+    public static String arrayToString (double arr[])
+    {
+        String result = "";
+        for (int i = 0; i<arr.length-1; i++)
+            result = result + arr[i] + ",";
+        if (arr.length > 0) 
+            result = result + arr[arr.length-1];
+        return result;
+    }
+
+
+    
+    public static String arrayToString (Rel arr[])
+    {
+        String result = "";
+        for (int i = 0; i<arr.length-1; i++)
+            result = result + arr[i].name+"/"+arr[i].arity+",";
+        if (arr.length > 0) 
+            result = result + arr[arr.length-1].name+"/"+arr[arr.length-1].arity;
+        return result;
+    }
+    
+    public static int[][] cartesProd(Vector<int[]> factors){
+    	/** factors is vector of int[]. Returns the
+    	 * cartesian product of int[] arrays. Example:
+    	 * factors = {[0,4,2],[6],[9,3]}
+    	 * result = [[0,6,9],
+    	 *           [0,6,3],
+    	 *           [4,6,9],
+    	 *           [4,6,3],
+    	 *           [2,6,9],
+    	 *           [2,6,3]]
+    	 **/
+    	//System.out.println("cartesProd for");
+    	if (factors.size()==0){
+    		return new int[1][0];
+    	}
+        //Check if one of the factors is empty. Then return 
+    	// empty result
+    	boolean isempty = false;
+    	for (int i=0;i<factors.size();i++){
+    		if (factors.elementAt(i).length ==0)
+    			isempty = true;
+    	}
+    	if (isempty)
+    		return new int[1][0];
+    	
+    	if (factors.size()==1){
+    		int fl = ((int[])factors.elementAt(0)).length;
+    		int[][] result = new int[fl][1];
+    		for (int i=0;i<fl;i++)
+    			result[i][0]=((int[])factors.elementAt(0))[i];
+    		return result;
+    	}
+    	else{
+    		int[] firstelement = (int[])factors.remove(0);
+    		//System.out.println("firstelement: " + rbnutilities.arrayToString(firstelement));
+    		int[][] restProd = cartesProd(factors);
+    		//System.out.println("restProd: " + rbnutilities.MatrixToString(restProd));
+    		//System.out.println("restProd.length: " + restProd.length);
+    		int[][] result = new int[restProd.length*firstelement.length][restProd[0].length+1];
+    		int row = 0;
+    		for (int i=0;i<firstelement.length;i++){
+    			for (int j=0;j<restProd.length;j++){
+    				result[row][0]=firstelement[i];
+    				for (int h=0;h<restProd[j].length;h++){
+    					result[row][h+1]=restProd[j][h];
+    				}
+    				row++;
+    			}
+
+    		}
+    		//System.out.println("cartes Prod: " + rbnutilities.MatrixToString(result));
+    		return result;
+    	}
+    }
+
+
+    public static int[] clonearray(int[] clonethis){
+	int[] result = new int[clonethis.length];
+	for (int i=0;i<clonethis.length;i++)
+	    result[i]=clonethis[i];
+	return result;
+    }
+    
+    public static double[] clonearray(double[] clonethis){
+	double[] result = new double[clonethis.length];
+	for (int i=0;i<clonethis.length;i++)
+	    result[i]=clonethis[i];
+	return result;
+    }
+    
+    /** Clones  vector vec without cloning the components of the vector */
+    public static Vector clonevector(Vector vec){
+	Vector result = new Vector();
+	for (int i=0;i<vec.size();i++)
+	    result.add(vec.elementAt(i));
+	return result;
+    }
+
+    public static Vector<Atom> combineAtomVecs(Vector<Atom> atoms1, Vector<Atom> atoms2){
+	/* atoms1 and atoms2 are vectors of Atoms
+	 * without repetitions
+	 * Construct new vector that contains all of 
+	 * the atoms in atoms1 and atoms2 combined,
+	 * again without repetitions
+	 */
+	Vector <Atom>result = new Vector<Atom>();
+	boolean newatom = true;
+
+	for (int i=0;i<atoms1.size();i++)
+	    result.add(atoms1.elementAt(i));
+	for (int j=0;j<atoms2.size();j++){
+	    newatom = true;
+	    for (int i=0;i<atoms1.size();i++){
+		if (((Atom)atoms1.elementAt(i)).equals((Atom)atoms2.elementAt(j)))
+		    newatom = false;
+	    }
+	    if (newatom) result.add(atoms2.elementAt(j));
+	}
+	return result;
+    }
+    
+    /**  computes index of 0,1-vector in list of all 
+	 *  0,1-vectors of length 'size' that has the same components 
+	 *  as vector at 'index', except in coordinate 'pos'
+	 *  0 <= pos < size
+	 *  Example: 000   0
+	 *           001   1
+	 *           010   2
+	 *           011   3
+	 *           100   4
+	 *           101   5
+	 *           110   6 
+	 *           111   7
+	 *  computeCorrespondingIndex(3,1,4)=6
+	 */
+    public static int computeCorrespondingIndex(int size, int pos,  int index)
+
+    {
+	int result;
+	//System.out.print("Corresponding index for size " + size + " position " + pos + " index " + index + " : ");
+	int[] thistuple = indexToTuple(index,size,2);
+	if (thistuple[pos]==0) result = index+(int)Math.pow(2,size-pos-1);
+	else result =  index-(int)Math.pow(2,size-pos-1);
+	//System.out.println(result);
+	return result;
+	
+    }
+
+    /** computes the index of permutation of tuple with index ind
+     *  Example perm = (2,3,1), ind=5, range =2, dim = 3:
+     *  tuple represented by index: (1,0,0)
+     *  Permuted tuple: (0,0,1)
+     *  Index: 2
+     */
+    public static int computePermutedIndex(int ind, int[] perm, int range, int dim){
+        int[] oldtuple = indexToTuple(ind,dim,range);
+        int[] newtuple = permuteTuple(oldtuple,perm);
+        int newind = tupleToIndex(newtuple,range);
+        return newind;
+    }
+
+
+
+    
+    /** Tests whether ar1 and ar2 are equivalent modulo base in the following sense:
+     * ar1 and ar2 have the same length, and
+     * every number appearing in base appear only in identical places in 
+     * ar1 and ar2. Example: 
+     * ar1 = [1,4,8,2,1]
+     * ar2 = [1,4,7,2,1]
+     * ar3 = [2,4,7,2,1]
+     * base = [1,4]
+     * Then equivArray(ar1,ar2,base)=true
+     * and  equivArray(ar1,ar2,base)=false
+     * 
+     * Result does not depend on order of elements in base
+     */
+    public static boolean equivArray(int[] ar1, int[] ar2, int[] base){
+	boolean result = true;
+	if (ar1.length!=ar2.length)
+	    result = false;
+	int ind = 0;
+	while (result && ind<ar1.length){
+	    if (arrayContains(base,ar1[ind]) && ar1[ind]!=ar2[ind])
+		result = false;
+	    if (arrayContains(base,ar2[ind]) && ar1[ind]!=ar2[ind])
+		result = false;
+	    ind++;
+	}
+	return result;
+    }
+
+    public static boolean equivAtoms(Atom at1, Atom at2, int[] base){
+	boolean result;
+	//System.out.print("equivAtoms for " + at1.asString() +" "+ at2.asString() +" " + arrayToString(base));
+	if (at1.rel != at2.rel)
+	    result = false;
+	else result = equivArray(at1.args,at2.args,base);
+	//System.out.println(" return: " + result);
+	return result;
+    }
+
+
+    public static int[] CorrArraySubstraction(String[] vars1, String[] vars2, int[] args)
+	/* vars2 and args represent a substitution (arrays have 
+	 * the same length). vars1 contains a subset of vars2.  Method returns 
+	 * array of the args-values that correspond to vars1-entries 
+	 * of vars2
+	 */
+    {
+	int[] result = new int[vars1.length];
+	int j = 0;
+	boolean found;
+	for (int i = 0; i<vars1.length; i++)
+	    {
+		// find the position of vars1[i] in the 
+		// original array and copy corresponding 
+		// args - value to subsargs
+		found = false;
+		while (!found)
+		    {
+			if (vars1[i].equals(vars2[j]))
+			    {
+				result[i]=args[j];
+				found = true;
+			    }
+			j++;
+		    }
+	    }
+	return result;
+    }
+    
+    public static String[] CorrArraySubstraction(String[] vars1, String[] vars2, String[] args)
+	/* vars2 and args represent a substitution (arrays have 
+	 * the same length). vars1 contains a subset of vars2.  Method returns 
+	 * array of the args-values that correspond to vars1-entries 
+	 * of vars2
+	 */
+    {
+	String[] result = new String[vars1.length];
+	int j = 0;
+	boolean found;
+	for (int i = 0; i<vars1.length; i++)
+	    {
+		// find the position of vars1[i] in the 
+		// original array and copy corresponding 
+		// args - value to subsargs
+		found = false;
+		while (!found)
+		    {
+			if (vars1[i].equals(vars2[j]))
+			    {
+				result[i]=args[j];
+				found = true;
+			    }
+			j++;
+		    }
+	    }
+	return result;
+    }
+    
+    
+
+    
+    
+
+    /** bv is a 0-1 vector representing integer n
+	 * Method turns it into vector representing n+1
+	 * (if n+1 < 2^bv.length, otherwise throws exception)
+	 */
+    public static void incrementBitVector(int[] bv)
+    {
+	int ind = bv.length-1;
+	while (bv[ind]==1 && ind>0){
+	    bv[ind]=0;
+	    ind--;
+	}
+	if (ind==0 && bv[ind]==1)
+	    throw new RuntimeException("Trying to increment maximal bit vector");
+	else{
+	    bv[ind]=1;
+	}
+    }
+
+    /** returns the tuple i_0,i_2,...,i_(dim-1) 
+	 * that occurs in place 'ind' in a 
+	 * lexicographic enumeration of all 
+	 * 'dim'-tuples of integers in the range 
+	 * [0..range-1]
+	 * 0 <= ind <= range^dim 
+	 */
+    public static int[] indexToTuple(int ind, int dim, int range)
+    {
+        int [] result = new int[dim];
+        for (int i=0; i<dim; i++)
+	    {
+		result[dim-1-i] = ind % range;
+		ind = ind/range;
+	    }
+        
+        return result;
+    }
+
+
+    /** Formats a vector of int[] as String */
+    public static String intArrVecToString(Vector vec){
+	String result = "";
+	for (int i=0;i<vec.size();i++){
+	    result = result + "[" + arrayToString((int[])vec.elementAt(i))+ "]" ;
+	}
+	return result;
+    }
+
+    public static Vector linkedListToVector(LinkedList lli){
+	Vector result = new Vector();
+	ListIterator li = lli.listIterator();
+	while (li.hasNext()){
+	    result.add(li.next());
+	}
+	return result;
+    }
+
+    public static String MatrixToString (int arr[][])
+    {   
+        String result = "";
+        if (arr.length>0)
+	    {
+		result = arrayToString(arr[0]);
+		for (int i = 1; i<arr.length; i++)
+		    result = result + "\n" + arrayToString(arr[i]);
+	    }
+        return result;
+    }
+    
+    public static String[] NewVariables(String[] vars1, int k)
+	// returns an array of k new variable names 
+	// v<int+1>,v<int+2>,...,v<int+k>
+	// where int is the largest integer such that
+	// v<int> appears in either vars1 or vars2
+    {
+        int max = 0;
+        char first;
+        String rest;
+        for (int i=0;i<vars1.length;i++)
+	    {
+		if (vars1[i].length()==0)
+		    throw new IllegalArgumentException("Empty variable string in NewVariables");
+		first = vars1[i].charAt(0);
+		if (first == 'v')
+		    {
+			rest = vars1[i].substring(1,vars1[i].length());
+			if (rbnutilities.IsInteger(rest))
+			    max = Math.max(max,Integer.parseInt(rest));
+		    }
+	    }
+        
+        String[] result = new String[k];
+        for (int i=0;i<k;i++)
+            result[i]="v"+(max+1+i);
+        return result;
+    }
+    
+    public static String[] NonIntOnly(String[] arguments)
+        /* returns an array containing all the 
+         * non-integer strings of arguments 
+         * without repetitions.
+         * Used in base cases of freevars()
+         */
+    {
+        String[] prelimarray;
+        String[] result;
+        
+        int numfv = 0; // number of proper strings
+        
+        /* initialize prelimarray to array of length 
+         * arguments.length 
+         */
+        prelimarray = new String[arguments.length];
+        for (int i = 0; i<arguments.length; i++)
+            prelimarray[i] = "0";
+        /* now go through the arguments of the 
+         * indicator and add every new variable
+         * to prelimarray
+         */
+        for (int i = 0; i<arguments.length; i++)
+	    {
+		if (!IsInteger(arguments[i]))
+		    {
+			// check whether variable is new
+			boolean isnew = true;
+			for (int j = 0; j < numfv; j++)
+			    {
+				if(arguments[i].equals(prelimarray[j]))
+				    isnew = false;
+			    }
+			// append to prelimarrays
+			if (isnew)
+			    {
+				numfv++;
+				prelimarray[numfv-1]=arguments[i];
+			    }
+		    }
+	    }
+        
+        result = new String[numfv];
+        for (int i = 0; i<numfv; i++) result[i]=prelimarray[i];
+        return result;
+    }
+
+
+    /** Example: tup=(4,2,9), perm=(3,1,2) 
+     * returns (9,4,2)
+     */
+    public static int[] permuteTuple(int[] tup, int[] perm){
+        int[] result = new int[tup.length];
+        for (int i=0;i<tup.length;i++)
+            result[i] = tup[perm[i]];
+        return result;
+    }
+
+
+    public static void printarray (String arr[])
+    {
+        System.out.print("[");
+        for (int i = 0; i<arr.length-1; i++)
+            System.out.print(arr[i]+",");
+        System.out.print(arr[arr.length-1]+"]");
+    }
+    
+    public static void printarray (int arr[])
+    {
+        System.out.print("[");
+        for (int i = 0; i<arr.length-1; i++)
+            System.out.print(arr[i]+",");
+        System.out.print(arr[arr.length-1]+"]");
+    }
+    
+    public static void printarray (double arr[])
+    {
+        System.out.print("[");
+        for (int i = 0; i<arr.length-1; i++)
+            System.out.print(arr[i]+",");
+        System.out.print(arr[arr.length-1]+"]");
+    }
+    
+    public static void printarray (Rel arr[])
+    {
+        if (arr.length>0)
+	    {
+		System.out.print("[");
+		for (int i = 0; i<arr.length-1; i++)
+		    System.out.print(arr[i].name+"/"+arr[i].arity+",");
+		System.out.print(arr[arr.length-1].name+"/"+arr[arr.length-1].arity+"]");
+	    }
+        else System.out.print("[]");
+    }
+    
+    public static int[] stringArrayToIntArray(String[] arr)
+	/* Turn a String array all of whose elements 
+	 * can be parsed as integers into an integer array
+	 */
+    {
+    	int[] result = new int[arr.length];
+    	for (int i=0;i<result.length;i++){
+    		if (IsInteger(arr[i]))
+    			result[i]=Integer.parseInt(arr[i]);
+    		else return null;
+    	}
+    	return result;     
+    }
+
+    public static int tupleToIndex(int[] tuple, int range)
+	/* returns the index of 'tuple': i_0,i_2,...,i_(tuple.length-1)
+	 * in an enumeration of all tuples over range [0..range-1]
+	 * Error if i_j>range-1 for some j
+	 */
+    {
+        int result = 0;
+        int k = tuple.length;
+        int factor = 1;
+        
+        
+	for (int i = 0; i < k  ; i++)
+            {
+                result = result + (tuple[k-1-i])*factor;
+                factor = factor * range;
+            }
+        
+        return result;
+    }
+
+    public static int tupleToIndex(int[] tuple, int[] ranges)
+	/* returns the index of 'tuple': i_0,i_2,...,i_(tuple.length-1)
+	 * in an enumeration of all tuples over 
+	 * [0..ranges[0]-1] x [0..ranges[1]-1] x ... x [0..ranges[ranges.length-1]-1]
+	 * Error if i_j>ranges[j]-1 for some j
+	 * or ranges.length != tuple.length
+	 */
+    {
+        int result = 0;
+        int k = tuple.length;
+        int factor = 1;
+        if (ranges.length != tuple.length){
+	    throw new IllegalArgumentException("Illegal arguments in tupleToIndex");
+        }
+	for (int i = 0; i < k  ; i++)
+            {
+		if (tuple[k-1-i]<0 || tuple[k-1-i] > ranges[k-1-i]-1){
+		    throw new IllegalArgumentException("Illegal arguments in tupleToIndex");
+		}
+		else{
+		    result = result + (tuple[k-1-i])*factor;
+		    factor = factor * ranges[k-1-i];
+		}
+            }
+        
+        return result;
+    }
+
+
+    /** Checks whether all the components in sarray that are integers match the
+     * integers in iarray at the same position */
+    public static boolean integerMatch(String[] sarray, int[] iarray){
+	boolean result = true;
+	for (int i = 0; i < sarray.length  ; i++)
+	    if (IsInteger(sarray[i]) && Integer.parseInt(sarray[i])!=iarray[i])
+		result = false;
+	return result;
+	    
+    }
+
+    /** Returns the index of the (first occurrence) of s in sarray;
+     * Returns -1 if s not in sarray
+     */
+    public static int indexInArray(String[] sarray,String s){
+	boolean found = false;
+	int result = -1;
+	for (int i = 0; i < sarray.length && !found  ; i++){
+	    if (sarray[i].equals(s)){
+		result = i;
+		found = true;
+	    }
+	}
+	return result;	    
+    }
+  
+
+
+    /** Inserts into ts all integer tuples 'ints' of length vars.length, such that
+     *  mixedvec[vars/ints]=intvec.
+     *
+     * Example: mixedvec is (2,x,y,x), intvec is (2,3,4,3), vars is 
+     * (y,x). Then method will insert the tuple (4,3) into ts.
+     * 
+     * If mixedvec is (2,x,y,x), tup is (2,3,4,3), vars is 
+     * (y,x,z), then method will insert all tuples (4,3,i) with i=0,...,d-1
+     * into ts.
+     * 
+     * If mixedvec is (2,x,y,x), tup is (1,3,4,3), vars is 
+     * (y,x,z), then method will not insert any tuples into ts.
+     */
+    public static void  allSatisfyingTuples(String[] mixedvec, int[] intvec, String[] vars, TreeSet ts, int d){
+    	//	System.out.println("allSatisfyingTuples(" + arrayToString(mixedvec) + " "  + 
+    	//			   arrayToString(intvec) + " "  + arrayToString(vars) ); 
+    	if (intvec.length != mixedvec.length)
+    		throw new IllegalArgumentException("Tuple of wrong length!");
+    	/* Test whether the integer components in mixedvec match with
+    	 * intvec */
+    	if (!rbnutilities.integerMatch(mixedvec,intvec))
+    		return;
+    	/* Construct an array indexInVars of size intvec.length that for each variable 
+    	 * argument of mixedvec gives the index of this variable
+    	 * in vars. Example: mixedvec = (1,x,y,x), vars = (y,x)
+    	 * then indexInVars = (-1,2,1,2) (-1 represents a vacuous entry).
+    	 *
+    	 * Throws IllegalArgumentException if not all variables in mixedvec
+    	 * appear in vars
+    	 */
+    	int[] indexInVars = new int[intvec.length];
+    	int nextindex;
+    	for (int i = 0; i<indexInVars.length; i++)
+    		indexInVars[i]=-1;
+    	for (int i = 0; i<mixedvec.length; i++){
+    		if (!rbnutilities.IsInteger(mixedvec[i])){
+    			nextindex = rbnutilities.indexInArray(vars,mixedvec[i]);
+    			if (nextindex == -1)
+    				throw new IllegalArgumentException();
+    			else
+    				indexInVars[i]=nextindex;
+    		}		
+    	}
+    	//System.out.println("    indexInVars: (" + rbnutilities.arrayToString(indexInVars) + ")");
+    	/* Now construct the 'pattern' of all tuples to be inserted into
+    	 * ts. If mixedvec = (1,x,y,x), vars = (y,x), and intvec=(1,3,4,3)
+    	 * then pattern = (4,3); if mixedvec = (1,x,y,x), vars = (y,x), and intvec=(1,3,4,5),
+    	 * then the construction of pattern fails, and the method terminates.
+    	 * If mixedvec = (1,x,y,x), vars = (y,x,z), and intvec=(1,3,4,3), 
+    	 * then pattern=(4,3,-1).
+    	 */
+    	int[] pattern = new int[vars.length];
+    	int wildCardCount = pattern.length;
+    	for (int i = 0; i<pattern.length; i++)
+    		pattern[i]=-1;
+    	for (int i = 0; i<intvec.length; i++){
+    		if (indexInVars[i] != -1){
+    			if (pattern[indexInVars[i]]!= -1 && pattern[indexInVars[i]]!= intvec[i])
+    				return;
+    			else {
+    				if (pattern[indexInVars[i]]==-1)
+    					wildCardCount--;
+    				pattern[indexInVars[i]]=intvec[i];
+    			}
+    		}
+    	}
+    	//System.out.println("    pattern (" + rbnutilities.arrayToString(pattern) + ")");
+    	/* Fill in all possible substitutions for the wildcards (-1 entries) 
+    	 * in pattern, and add to ts
+    	 */
+    	// int[] wildCardPositions = new int[wildCardCount];
+    	// 	int nextpos = 0;
+    	// 	for (int i = 0; i<pattern.length; i++)
+    	// 	    if (pattern[i]==-1){
+    	// 		wildCardPostions[nextpos]=i;
+    	// 		nextpos++;
+    	// 	    }
+    	int[] nextsmalltuple;
+    	int[] nextbigtuple;
+    	for (int i = 0; i<MyMathOps.intPow(d,wildCardCount); i++){
+    		nextsmalltuple = rbnutilities.indexToTuple(i,wildCardCount,d);
+    		nextbigtuple = new int[pattern.length];
+    		nextindex=0;
+    		for (int j = 0; j< nextbigtuple.length; j++){
+    			if (pattern[j]==-1){
+    				nextbigtuple[j]=nextsmalltuple[nextindex];
+    				nextindex++;
+    			}
+    			else
+    				nextbigtuple[j]=pattern[j];
+    		}
+    		//System.out.println("     add (" + rbnutilities.arrayToString(nextbigtuple) + ")");
+    		ts.add(nextbigtuple);
+    	}
+
+    }
+
+    public static double[] normalizeDoubleArray(double[] ar){
+    	double[] result = new double[ar.length];
+    	double length =0;
+    	for (int i=0;i<ar.length;i++)
+    		length = length + Math.pow(ar[i],2);
+    	length = Math.sqrt(length);
+    	for (int i=0;i<ar.length;i++)
+    		if (length > 0)
+    			result[i]=ar[i]/length;
+    		else
+    			result[i]=ar[i];
+    	return result;
+    }
+
+    /* Performs an integer-valued min-max normalization of v, where
+     * minmax[0] contains the minimum and minmax[1] the maximum value.
+     * 
+     * Parameter 'curve' gives a non-linear fit
+     */
+    public static int minMaxNormalize(double v, double[] minmax){
+    	//System.out.print("in: " + myio.StringOps.arrayToString(minmax,"[","]")+ " " + v  );
+    	
+    	double curve=2;
+    	if (minmax[0]==minmax[1])
+    		return 255;
+    	else {
+    		double nv = (v-minmax[0])/(minmax[1]-minmax[0]);
+    		nv=(Math.exp(curve*(nv))-1)/(Math.exp(curve));
+    		int result = (int)(255*nv);
+    		//System.out.println("   out: " + result);
+    		return result;
+    	}
+    }
+    
+    /* Turns a vector of int[] into an int[]. Intended for 
+     * input where each array in intvec is of length 1. Then:
+     * [2],[5],...,[3] -> [2,5,...,3]
+     */
+    public static int[] intArrVecToArr(Vector<int[]> intvec){
+    	int[] result = new int[intvec.size()];
+    	for (int i=0;i<result.length;i++)
+    		result[i]=intvec.elementAt(i)[0];
+    	return result;
+    }
+    
+    
+    /* at is a string representing a ground atom r(x,y) 
+     * returns "(x,y)"
+     */
+    public static String getRelnameFromAtom(String at){
+    	return at.substring(0,at.indexOf("("));
+    }
+    
+    /* at is a string representing a ground atom r(x,y) 
+     * returns "(x,y)"
+     */
+    public static String getArgsFromAtom(String at){
+    	return at.substring(at.indexOf("("), at.length());
+    }
+    
+    
+}

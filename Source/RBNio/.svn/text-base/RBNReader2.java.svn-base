@@ -1,0 +1,211 @@
+package RBNio;
+
+import RBNpackage.*;
+import RBNExceptions.*;
+import RBNLearning.GGNode;
+import myio.StringOps;
+import java.io.*;
+import java.util.*;
+
+public class RBNReader2{
+
+	class ProbRelDef{
+		BoolRel rel;
+		Vector<String> args;
+		ProbForm pf;
+		
+		ProbRelDef(ParsedTypedAtom pta, ProbForm f){
+			rel = pta.rel();
+			rel.setInout(Rel.PROBABILISTIC);
+			args = pta.args();
+			pf =f;
+		}
+		
+		protected Rel rel(){
+			return rel;
+		}
+		
+		protected ProbForm pf(){
+			return pf;
+		}
+		
+		protected Vector<String> args(){
+			return args;
+		}
+		
+		protected void setPF(ProbForm f){
+			pf = f;
+		}
+	}
+	
+	class ParsedTypedAtom{
+		BoolRel rel;
+		ParsedTypedArguments pargs;
+		
+		ParsedTypedAtom(BoolRel r, ParsedTypedArguments pa){
+			rel = r;
+			pargs = pa;
+		}
+		
+		int arity(){
+			return pargs.arity();
+		}
+		
+		BoolRel rel(){
+			return rel;
+		}
+		
+		Vector<String> args(){
+			return pargs.args();
+		}
+	}
+	
+	class ParsedUnTypedAtom{
+		Rel rel;
+		Vector<String> args;;
+		
+		ParsedUnTypedAtom(Rel r, Vector<String> a){
+			rel = r;
+			args = a;
+		}
+		
+		Rel rel(){
+			return rel;
+		}
+		
+		Vector<String> args(){
+			return args;
+		}
+		
+	}
+	
+	class ParsedTypedArguments{
+		Vector<Type> types;
+		Vector<String> args;
+		
+		ParsedTypedArguments(Vector<Type> typ, Vector<String> ar){
+			types = typ;
+			args = ar;
+		}
+		
+		int arity(){
+			if (types.size()==args.size())
+				return types.size();
+			else throw new RBNioException("Inconsistent arities in ParsedTypedArguments");
+		}
+		
+		Type[] types(){
+			Type[] result = new Type[types.size()];
+			for (int i=0;i<result.length;i++)
+				result[i]=types.elementAt(i);
+			return result;
+		}
+		
+		Vector<String> args(){
+			return args;
+		}
+	}
+	
+
+	/**
+	 * Contains the probabilistic relations defined in the RBN	
+	 * 
+	 * The key of a probrel is its name
+	 **/
+	Hashtable<String, ProbRelDef> probrelsdefined = new Hashtable<String, ProbRelDef>();
+	
+	/**
+	 * Contains the macros defined in the RBN	
+	 * 
+	 * The key of a macro is its name
+	 **/
+	Hashtable<String, ProbRelDef> macrosdefined = new Hashtable<String, ProbRelDef>();
+	
+	
+	/**
+	 * Contains all the relations found either as probrels being defined,
+	 * or probabilistic/predefined relations found in the probability formulas
+	 */
+	Hashtable<String,Rel> allrels = new Hashtable<String,Rel>();
+	
+	/**
+	 * Contains the types referenced in the RBN	
+	 * 
+	 * The key of a type is the string <name>
+	 **/
+	Hashtable<String, Rel> typesreferenced = new Hashtable<String, Rel>();
+	
+	public RBN ReadRBNfromFile(File input_file)
+	throws RBNSyntaxException,IOException{
+
+
+//		System.out.println("constructing parser");
+		RBNParser2 parser = 
+			new RBNParser2(new java.io.FileInputStream(input_file));
+		try{
+			parser.setReader(this);
+			parser.ReadRBN();
+			
+			RBN parsedrbn = new RBN(probrelsdefined.size());
+			
+		
+			parser.setParseno(2);
+			parser.ReInit(new java.io.FileInputStream(input_file));
+			parser.ReadRBN();
+		}
+		catch (ParseException ex){System.out.println(ex);}
+
+
+		RBN result = new RBN(probrelsdefined.size());
+		Enumeration<ProbRelDef> e = probrelsdefined.elements();
+		ProbRelDef nextprdef;
+		int index = 0;
+		while (e.hasMoreElements()){
+			nextprdef = e.nextElement();
+			result.insertRel((BoolRel)nextprdef.rel(),index);
+			result.insertArguments(StringOps.stringVectorToArray(nextprdef.args()),index);
+			result.insertProbForm(nextprdef.pf(),index);
+			index++;
+		}
+		return result;
+		
+	}
+
+	protected void addProbRelDefined(ProbRelDef prdef){
+		probrelsdefined.put(prdef.rel().toStringWArity(), prdef);
+	}
+	
+	protected void addMacroDefined(ProbRelDef prdef){
+		macrosdefined.put(prdef.rel().toStringWArity(), prdef);
+	}
+	
+	protected void addAllRel(Rel r){
+		allrels.put(r.toStringWArity(), r);
+	}
+	
+	protected Rel getProbRel(Rel r){
+		ProbRelDef prdef = probrelsdefined.get(r.toStringWArity());
+		if (prdef != null)
+			return prdef.rel();
+		else return null;
+	}
+	
+	protected Rel getAllRel(Rel r){
+		return allrels.get(r.toStringWArity());
+	}
+	
+	
+	protected ProbRelDef getMacroDef(Rel r){
+		return macrosdefined.get(r.toStringWArity());
+	}
+	
+	protected void setMacroPF(Rel r, ProbForm pf){
+		ProbRelDef prdef = macrosdefined.get(r.toStringWArity());
+		prdef.setPF(pf);
+	}
+	
+	protected void setProbRelPF(Rel r, ProbForm pf){
+		ProbRelDef prdef = probrelsdefined.get(r.toStringWArity());
+		prdef.setPF(pf);
+	}
+}

@@ -1,0 +1,95 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+% A small Mendelian inheritance model for a gene with two alleles: A and a.   %
+% The random variable AFather(v) is true if individual v has inherited        %
+% allele A from his/her father. If v has inherited allele a from his/her      %
+% father, AFather(v) is false. Similarly, AMother(v) represents the allele    %
+% inherited from the mother.                                                  %
+%                                                                             %
+% According to the model, allele A has a population frequency of 0.3, i.e.    %
+% when a parent is not given in the pedigree, then the probability that       %
+% v has inherited allele A from that parent is set to 0.3.                    %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+% Start by defining two macros: @fatherInTree(w) evaluates to 1 if w's        %
+% father is in the pedigree; else it evaluates to 0                           %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+@motherInTree(v) =  COMBINE mother(w,v)
+		    WITH n-or
+		    FORALL w
+  		    WHERE true;
+
+@fatherInTree(v) =  COMBINE father(w,v)
+     		    WITH n-or
+                    FORALL w
+                    WHERE true;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+% Now define the model for the two key relations AFather and AMother          %
+%                                                                             %
+% The subformula                                                              %
+%                       COMBINE AFather(u),AMother(u)                         %
+%           	  	WITH mean                                             %
+%           		FORALL u                                              %
+%           		WHERE mother(u,v)                                     %
+%                                                                             %
+% evaluates to 1 if AFather(u) and AMother(u) are both true, to 1/2 if        %
+% exactly one of the two is true, and to 0 if neither is true.                %
+%                                                                             %
+% With a probability of 0.01, the paternal (maternal) allele of offspring v   %
+% is not determined by a random selection from the alleles of v's father      %
+% (mother), but by a random mutation which results in an A with probability   %
+% 0.6 (and a with probability 0.4).                                           %
+%                                                                             %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+AMother(v)= WIF @motherInTree(v)
+	    THEN  WIF  0.01
+      	    	  THEN  0.6
+      		  ELSE  COMBINE AFather(u),AMother(u)
+            	  	WITH mean
+            		FORALL u
+            		WHERE mother(u,v)
+	    ELSE  0.3;
+
+
+AFather(v)= WIF @fatherInTree(v)
+	    THEN  WIF  0.01
+      	    	  THEN  0.6
+      		  ELSE  COMBINE AFather(u),  AMother(u)
+            	  	WITH mean
+            		FORALL u
+            		WHERE father(u,v)
+	    ELSE  0.3;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+% Finally, the two random variables defining the ordered genotype of v        %
+% determine the unordered genotype: AA(v) is true if v has two A alleles,     %
+% Aa(v) is true if v has one A and one a, aa(v) is true if v has two a alleles%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+AA(v)= WIF  AFather(v)
+       THEN  AMother(v)
+       ELSE  0.0;
+
+aa(v)= WIF  AFather(v)
+       THEN  0.0
+       ELSE  WIF  AMother(v)
+       	     THEN  0.0
+      	     ELSE  1.0;
+	     
+Aa(v)= WIF  AFather(v)
+       THEN  WIF  AMother(v)
+       	     THEN  0.0
+      	     ELSE  1.0
+       ELSE  AMother(v);
+
+
+
+
+
+
+
+

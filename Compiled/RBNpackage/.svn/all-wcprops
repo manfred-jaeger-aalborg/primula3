@@ -1,0 +1,569 @@
+K 25
+svn:wc:ra_dav:version-url
+V 33
+/svn/!svn/ver/27/trunk/RBNpackage
+END
+RelUtilities.java
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/!svn/ver/2/trunk/RBNpackage/RelUtilities.java
+END
+RBNelement.class
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/!svn/ver/28/trunk/RBNpackage/RBNelement.class
+END
+CombFuncSum.java
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/!svn/ver/19/trunk/RBNpackage/CombFuncSum.java
+END
+SparseRelStruc.java
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/!svn/ver/23/trunk/RBNpackage/SparseRelStruc.java
+END
+TypeRel.java
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/!svn/ver/2/trunk/RBNpackage/TypeRel.java
+END
+ProbFormBoolComposite.java
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/28/trunk/RBNpackage/ProbFormBoolComposite.java
+END
+CombFuncESum.java
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/18/trunk/RBNpackage/CombFuncESum.java
+END
+OneStrucData.ucd
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/2/trunk/RBNpackage/OneStrucData.ucd
+END
+OneBoolRelData.java
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/!svn/ver/28/trunk/RBNpackage/OneBoolRelData.java
+END
+OneStrucData.java
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/28/trunk/RBNpackage/OneStrucData.java
+END
+CombFunc.java
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/24/trunk/RBNpackage/CombFunc.java
+END
+TypeDomain.class
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/2/trunk/RBNpackage/TypeDomain.class
+END
+BoolRel.java
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/23/trunk/RBNpackage/BoolRel.java
+END
+CombFuncInvsum.java
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/2/trunk/RBNpackage/CombFuncInvsum.java
+END
+OneNumRelData.java
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/28/trunk/RBNpackage/OneNumRelData.java
+END
+CConstr.class
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/2/trunk/RBNpackage/CConstr.class
+END
+Atom.java
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/!svn/ver/15/trunk/RBNpackage/Atom.java
+END
+RelUtilities.class
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/2/trunk/RBNpackage/RelUtilities.class
+END
+RelName.class
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/18/trunk/RBNpackage/RelName.class
+END
+TypeDomain.java
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/2/trunk/RBNpackage/TypeDomain.java
+END
+CombFuncESum.class
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/2/trunk/RBNpackage/CombFuncESum.class
+END
+CombFuncNOr.java
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/2/trunk/RBNpackage/CombFuncNOr.java
+END
+OneBoolRelData.class
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/28/trunk/RBNpackage/OneBoolRelData.class
+END
+OneRelData.java
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/15/trunk/RBNpackage/OneRelData.java
+END
+CConstrPlus.java
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/!svn/ver/19/trunk/RBNpackage/CConstrPlus.java
+END
+AtomList.class
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/2/trunk/RBNpackage/AtomList.class
+END
+CConstrAtom.class
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/15/trunk/RBNpackage/CConstrAtom.class
+END
+CombFuncProd.java
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/25/trunk/RBNpackage/CombFuncProd.java
+END
+OneNumRelData.class
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/!svn/ver/28/trunk/RBNpackage/OneNumRelData.class
+END
+Rel.java
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/!svn/ver/23/trunk/RBNpackage/Rel.java
+END
+CombFuncInvsum.class
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/!svn/ver/2/trunk/RBNpackage/CombFuncInvsum.class
+END
+BoolRel.class
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/23/trunk/RBNpackage/BoolRel.class
+END
+ProbFormIndicator.java
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/13/trunk/RBNpackage/ProbFormIndicator.java
+END
+ProbFormBoolAtom.java
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/28/trunk/RBNpackage/ProbFormBoolAtom.java
+END
+CConstrEq.class
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/13/trunk/RBNpackage/CConstrEq.class
+END
+RelStruc.class
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/28/trunk/RBNpackage/RelStruc.class
+END
+CConstrNeg.class
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/2/trunk/RBNpackage/CConstrNeg.class
+END
+InstAtom.java
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/2/trunk/RBNpackage/InstAtom.java
+END
+CConstrAnd.java
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/13/trunk/RBNpackage/CConstrAnd.java
+END
+TypeInteger.java
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/2/trunk/RBNpackage/TypeInteger.java
+END
+ProbFormSFormula.java
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/13/trunk/RBNpackage/ProbFormSFormula.java
+END
+CConstrOr.class
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/2/trunk/RBNpackage/CConstrOr.class
+END
+CConstrEq.java
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/13/trunk/RBNpackage/CConstrEq.java
+END
+ProbFormBool.java
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/28/trunk/RBNpackage/ProbFormBool.java
+END
+OneRelData.class
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/!svn/ver/15/trunk/RBNpackage/OneRelData.class
+END
+ProbFormCombFunc.java
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/28/trunk/RBNpackage/ProbFormCombFunc.java
+END
+CConstrNeg.java
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/13/trunk/RBNpackage/CConstrNeg.java
+END
+Type.class
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/!svn/ver/2/trunk/RBNpackage/Type.class
+END
+Rel.class
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/!svn/ver/23/trunk/RBNpackage/Rel.class
+END
+CombFuncSize.java.notused
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/2/trunk/RBNpackage/CombFuncSize.java.notused
+END
+ProbFormAtom.java
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/28/trunk/RBNpackage/ProbFormAtom.java
+END
+ProbFormBoolEquality.java
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/28/trunk/RBNpackage/ProbFormBoolEquality.java
+END
+Type.java
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/!svn/ver/2/trunk/RBNpackage/Type.java
+END
+InstAtom.class
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/2/trunk/RBNpackage/InstAtom.class
+END
+CConstrAnd.class
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/2/trunk/RBNpackage/CConstrAnd.class
+END
+ProbFormConstant.class
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/28/trunk/RBNpackage/ProbFormConstant.class
+END
+OneBoolRelData.ucd
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/2/trunk/RBNpackage/OneBoolRelData.ucd
+END
+MultLinCombFunc.class
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/2/trunk/RBNpackage/MultLinCombFunc.class
+END
+ProbForm.java
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/28/trunk/RBNpackage/ProbForm.java
+END
+OneNumRelData.ucd
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/!svn/ver/2/trunk/RBNpackage/OneNumRelData.ucd
+END
+CConstrEmpty.java
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/13/trunk/RBNpackage/CConstrEmpty.java
+END
+AtomList.java
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/2/trunk/RBNpackage/AtomList.java
+END
+CConstrAtom.java
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/!svn/ver/15/trunk/RBNpackage/CConstrAtom.java
+END
+CombFuncNOr.class
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/!svn/ver/2/trunk/RBNpackage/CombFuncNOr.class
+END
+ProbFormConvComb.class
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/28/trunk/RBNpackage/ProbFormConvComb.class
+END
+MultLinCombFunc.java
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/!svn/ver/2/trunk/RBNpackage/MultLinCombFunc.java
+END
+NumRel.java
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/!svn/ver/23/trunk/RBNpackage/NumRel.java
+END
+RBN.class
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/!svn/ver/28/trunk/RBNpackage/RBN.class
+END
+CombFuncLReg.java
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/23/trunk/RBNpackage/CombFuncLReg.java
+END
+ProbFormIndicator.class
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/13/trunk/RBNpackage/ProbFormIndicator.class
+END
+TypeRel.class
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/2/trunk/RBNpackage/TypeRel.class
+END
+ProbForm.class
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/28/trunk/RBNpackage/ProbForm.class
+END
+CConstr.java
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/13/trunk/RBNpackage/CConstr.java
+END
+CConstrOr.java
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/13/trunk/RBNpackage/CConstrOr.java
+END
+ProbFormBoolConstant.java
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/28/trunk/RBNpackage/ProbFormBoolConstant.java
+END
+Rel.ucd
+K 25
+svn:wc:ra_dav:version-url
+V 40
+/svn/!svn/ver/2/trunk/RBNpackage/Rel.ucd
+END
+ProbFormConvComb.java
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/28/trunk/RBNpackage/ProbFormConvComb.java
+END
+CConstrEmpty.class
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/13/trunk/RBNpackage/CConstrEmpty.class
+END
+OneStrucData.class
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/28/trunk/RBNpackage/OneStrucData.class
+END
+CombFunc.class
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/24/trunk/RBNpackage/CombFunc.class
+END
+RBN.java
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/!svn/ver/28/trunk/RBNpackage/RBN.java
+END
+CombFuncMean.class
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/2/trunk/RBNpackage/CombFuncMean.class
+END
+CombFuncLLReg.java
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/16/trunk/RBNpackage/CombFuncLLReg.java
+END
+TypeInteger.class
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/!svn/ver/2/trunk/RBNpackage/TypeInteger.class
+END
+RelName.java
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/18/trunk/RBNpackage/RelName.java
+END
+ProbFormSFormula.class
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/13/trunk/RBNpackage/ProbFormSFormula.class
+END
+Atom.class
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/!svn/ver/15/trunk/RBNpackage/Atom.class
+END
+NumRel.class
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/23/trunk/RBNpackage/NumRel.class
+END
+ProbFormCombFunc.class
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/28/trunk/RBNpackage/ProbFormCombFunc.class
+END
+CombFuncLReg.class
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/23/trunk/RBNpackage/CombFuncLReg.class
+END
+CombFuncMean.java
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/!svn/ver/2/trunk/RBNpackage/CombFuncMean.java
+END
+ProbFormConstant.java
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/28/trunk/RBNpackage/ProbFormConstant.java
+END
+RelStruc.java
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/28/trunk/RBNpackage/RelStruc.java
+END
+SparseRelStruc.class
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/23/trunk/RBNpackage/SparseRelStruc.class
+END

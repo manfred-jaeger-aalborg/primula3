@@ -1,0 +1,18 @@
+package RBNLearning;
+
+import RBNpackage.ProbForm;
+import RBNpackage.ProbFormCombFunc;
+import RBNpackage.Rel;
+import java.util.Vector;
+
+public class GGTTableNodeCombFunc extends GGTTableNode {
+	
+	Vector<GGTTableNode> children;
+	
+	public GGTTableNodeCombFunc(GradientGraphT ggt, boolean uga, Rel r, short att, ProbForm pf){
+		super(ggt,uga,r,att,pf);
+	}
+	
+
+
+}

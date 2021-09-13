@@ -1,0 +1,377 @@
+/*
+* GradientGraphLikelihoodNode.java 
+* 
+* Copyright (C) 2009 Aalborg University
+*
+* contact:
+* jaeger@cs.aau.dk   http://www.cs.aau.dk/~jaeger/Primula.html
+*
+* This program is free software; you can redistribute it and/or
+* modify it under the terms of the GNU General Public License
+* as published by the Free Software Foundation; either version 2
+* of the License, or (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+*/
+
+package RBNLearning;
+
+import java.util.*;
+import java.io.*;
+import RBNpackage.*;
+import RBNgui.*;
+import RBNExceptions.*;
+import RBNutilities.*;
+import RBNinference.*;
+import myio.StringOps;
+
+public  class GradientGraphLikelihoodNode extends GradientGraphNode{
+
+
+
+	/** Encode the possible instantiation values for observed atoms */
+	private Integer trueint;
+	private Integer falseint;
+
+
+	/** Represents the instantiation values of the atoms corresponding to the top-level
+	 * probability formulas. instvals has the same size as children. If children.elementAt(i)
+	 * repesents an atom which is instantiated to true (false) in the data, then
+	 * instvals.elementAt(i)=this.trueint (this.falseint). If children.elementAt(i)
+	 * represents an atom which is not instantiated in the data, then 
+	 * instvals.elementAt(i) is the indicator node for this atom
+	 */
+//	private Vector instvals;
+
+
+	/** The current (likelihood) value represented 
+	 * as a pair of doubles to be handled by class SmallDouble
+	 */ 
+	double[] likelihood;
+
+//	/** Likelihood values for all samples, at current parameter settings */
+//	double[][] samplelikelihoods;
+	
+	/** The sum of likelihoods for a current set of samples */
+	private double[] likelihoodsum;
+
+	/** Used instead of the standard gradient vector in GradientGraphNode class --
+	 * for the likelihood node need gradient as small doubles!*/
+	private double[][] smallgradient;
+
+	/** The sum of gradients for a current set of samples. Array of small doubles */
+	private double[][] gradientsum;
+
+	/** True if the current likelihood values represent the the correct
+	 * values for the current settings of parameter and instantiation
+	 * values. isEvaluated=false corresponds to value=null for other
+	 * GradientGraphNode's
+	 */
+	private boolean isEvaluated;
+
+	/* Upper and lower bounds as small doubles on the value of this node given
+	 * a current partial evaluation.
+	 * Set to [-1,-1] if these bounds have not been evaluated
+	 * for the current setting at the indicator nodes
+	 */
+	double[][] bounds;
+
+
+	public GradientGraphLikelihoodNode(GradientGraph gg){
+		super(gg);
+		trueint = new Integer(1);
+		falseint = new Integer(0);
+		//instvals = new Vector();
+		likelihood = new double[2];
+		likelihoodsum = new double[2];
+		smallgradient = new double[gg.numberOfParameters()][2];
+		gradientsum = new double[gg.numberOfParameters()][2];
+		isEvaluated = false;
+		bounds = new double[2][2];
+	}
+
+//	public void addToChildren(GradientGraphProbFormNode ggpfn, boolean tv){
+//		children.add(ggpfn);
+//		ggpfn.setIsuga(true);
+//		if (tv)
+//			instvals.add(trueint);
+//		else 
+//			instvals.add(falseint);
+//	}
+
+//	public void addToChildren(GradientGraphProbFormNode ggpfn, GradientGraphIndicatorNode ggin){
+//		children.add(ggpfn);
+//		ggpfn.setIsuga(true);
+//		instvals.add(ggin);
+//		ggpfn.setMyindicator(ggin);
+//		ggin.setUGA(ggpfn);
+//	}
+
+	/** Computes the likelihood (ignoring those terms that are not dependent
+	 * on unknown atoms or parameters)
+	 * 
+	 * Returns the likelihood[0] component. 
+	 * 
+	 * THE RETURN VALUE IS MEANINGLESS! (it is there only for compatibility
+	 * with other subclasses of GradientGraphNode, where evaluate returns 
+	 * a meaningful double value).  
+	 */
+	public double evaluate(){
+
+
+		likelihood[0]=1.0;
+		likelihood[1]=0.0;
+		double childlik;
+
+		for (int i=0;i<children.size();i++){
+			if (getInstVal(i)==1){
+				childlik = children.elementAt(i).evaluate();
+				likelihood = SmallDouble.multiply(likelihood,childlik);
+			}
+			else{
+				childlik = children.elementAt(i).evaluate();
+				likelihood = SmallDouble.multiply(likelihood,(1-childlik));
+			}
+		}
+		isEvaluated = true;
+		value = likelihood[0];
+		return value;
+	}
+
+
+	/** for compatibility with GradientGraphNode .... */
+	public double evaluateGrad(int param){
+		System.out.println("do not call this method!");
+		return 0;
+	}
+
+	public void evaluateBounds(){
+		if (bounds[0][0]==-1){
+			//	    System.out.println("likelihoodnode.evaluateBounds");
+			/* Evaluate bounds at children: */
+			for (int i=0;i<children.size();i++)
+				children.elementAt(i).evaluateBounds();
+			double lowbound[] = {1,0};
+			double uppbound[] = {1,0};
+			for (int i=0;i<children.size();i++){
+				if (getInstVal(i)==1){
+					lowbound= SmallDouble.multiply(lowbound,children.elementAt(i).lowerBound());
+					uppbound= SmallDouble.multiply(uppbound,children.elementAt(i).upperBound());
+				}
+				else{
+					lowbound= SmallDouble.multiply(lowbound,(1-children.elementAt(i).upperBound()));
+					uppbound= SmallDouble.multiply(uppbound,(1-children.elementAt(i).lowerBound()));					}
+			}
+			bounds[0]=lowbound;
+			bounds[1]=uppbound;
+		}
+	}
+
+
+
+
+	public void evaluateGradients(){
+		for (int i=0;i<smallgradient.length;i++){
+			smallgradient[i]=evaluateSmallGrad(i);
+		}
+	}
+
+
+
+	private double[] evaluateSmallGrad(int param){
+		if (!isEvaluated){
+			this.evaluate();
+		}
+		
+		double[] relevantlikelihood;
+//		if (samplelikelihoods.length>0)
+//			relevantlikelihood = likelihoodsum.clone();
+//		else
+//			relevantlikelihood = likelihood.clone();
+		
+		relevantlikelihood = likelihood.clone();
+		double smallgrad[] = {0,0};
+		if (relevantlikelihood[0]!=0){
+			for (int i=0;i<children.size();i++){
+				if (children.elementAt(i).dependsOn(param))
+					if (getInstVal(i)==1)
+						smallgrad = SmallDouble.add(smallgrad,
+								SmallDouble.multiply(SmallDouble.divide(relevantlikelihood,
+										children.elementAt(i).value()),
+										children.elementAt(i).evaluateGrad(param)
+								));
+					else smallgrad = SmallDouble.subtract(smallgrad,
+							SmallDouble.multiply(SmallDouble.divide(relevantlikelihood,
+									1-children.elementAt(i).value()),
+									children.elementAt(i).evaluateGrad(param)
+							));
+		   		if (Double.isNaN(smallgrad[0]) || Double.isInfinite(smallgrad[0])){
+	    			
+	    			boolean breaknow = true;
+	    			System.out.println("relevantlik: " + StringOps.arrayToString(relevantlikelihood,"[","]")+ " value: "+ children.elementAt(i).value());
+		   		}
+			}
+		}
+		else {
+			System.out.println("likelihood[0]=0 in evaluateSmallGrad");
+		}
+
+		return smallgrad;	    
+	}
+
+
+	private int getInstVal(int i){
+		Object ival = children.elementAt(i).getInstval();
+		if (ival instanceof Integer)
+			return (Integer)ival;
+		else{
+			if (((GradientGraphIndicatorNode)ival).getCurrentInst()==-1)
+				System.out.println("Illegal instantiation value!");
+			return ((GradientGraphIndicatorNode)ival).getCurrentInst();
+		}
+	}
+
+	public double[] gradientsumAsDouble(){
+		return SmallDouble.toStandardDoubleArray(gradientsum);
+	}
+	
+	public double[] gradientsumAsDouble(int partial){
+		double[] result = SmallDouble.toStandardDoubleArray(gradientsum);
+		for (int i=0;i<result.length;i++)
+			if (i!=partial)
+				result[i]=0;
+		return result;
+	}
+
+	
+	public double[] gradientAsDouble(){
+		return SmallDouble.toStandardDoubleArray(smallgradient);
+	}
+
+	/** Returns the gradient (scaled to fit double precision) 
+	 * with all components where zeros[i]=1 set to 0
+	 * 
+	 * Corresponds to taking partial derivatives, ignoring
+	 * parameters with index i.
+	 * 
+	 * @param zeros
+	 * @return
+	 */ 
+	public double[] gradientAsDouble(int partial){
+		double[] result = SmallDouble.toStandardDoubleArray(smallgradient);
+		for (int i=0;i<result.length;i++)
+			if (i!=partial)
+				result[i]=0;
+		return result;
+	}
+
+	
+//	public void initSampleLikelihoods(int size){
+//		samplelikelihoods = new double[size][2];
+//	}
+
+	public double[] likelihood(){
+		return likelihood.clone();
+	}
+
+	public double[] likelihoodsum(){
+		return likelihoodsum.clone();
+	}
+
+
+	public double[] lowerBound(){
+		return bounds[0].clone();
+	}
+
+	public double[] upperBound(){
+		return bounds[1].clone();
+	}
+
+	/** The name of this node. The name identifies the function represented
+	 * by a node. 
+	 */
+	public String name(){
+		return "Likelihood";
+	}
+
+//	public String name(RelStruc A){
+//		return name();
+//	}
+
+	public int numChildren(){
+		return children.size();
+	}
+
+	public void resetValue(){
+		value = null;
+		likelihood[0]=0;
+		likelihood[1]=0;
+		isEvaluated = false;
+	}
+
+	public void resetLikelihoodSum(){
+		likelihoodsum[0] = 0;
+		likelihoodsum[1] = 0;
+	}
+
+	public void resetGradientSum(){
+		for (int i=0;i<gradientsum.length;i++){
+			gradientsum[i][0]=0.0;
+			gradientsum[i][1]=0.0;
+		}
+	}
+
+	public void resetBounds(){
+		bounds[0][0]=-1;
+		bounds[0][1]=-1;
+		bounds[1][0]=-1;
+		bounds[1][1]=-1;
+
+	}
+
+//	/** Sets the current likelihood value as the likelihood value for the i'th sample */
+//	public void setSampleLikelihood(int i){
+//		samplelikelihoods[i][0]=likelihood[0];
+//		samplelikelihoods[i][1]=likelihood[1];
+//	}
+
+//	public double[][] getSampleLikelihoods(){
+//		return samplelikelihoods;
+//	}
+
+//	public double[] getSampleLikelihood(int sno){
+//		return samplelikelihoods[sno];
+//	}
+
+
+//	public void showChildren(RelStruc A){
+//		System.out.println("***** children :" );
+//		for (int i=0;i<children.size();i++)
+//			System.out.println(children.elementAt(i).name(A));
+//	}
+
+	/** updates the likelihoodsum field by adding value
+	 */
+	public void updateLikelihoodSum(){
+		//System.out.print("add " + StringOps.arrayToString(likelihoodsum) + " " + StringOps.arrayToString(likelihood));
+		likelihoodsum=SmallDouble.add(likelihoodsum,likelihood);
+		//System.out.println(" is " + StringOps.arrayToString(likelihoodsum));
+	}
+
+	public void updateGradSum(){
+		for (int i=0; i<gradientsum.length; i++){
+			gradientsum[i]=SmallDouble.add(gradientsum[i],smallgradient[i]);
+		}
+	}
+	
+	public double[][] getSmallgradient(){
+		return smallgradient;
+	}
+}

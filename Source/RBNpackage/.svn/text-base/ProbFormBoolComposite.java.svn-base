@@ -1,0 +1,310 @@
+package RBNpackage;
+
+import java.util.Hashtable;
+import java.util.Vector;
+
+import RBNExceptions.RBNCompatibilityException;
+import RBNutilities.rbnutilities;
+
+/* A conjunction or disjunction of subformulas contained in the
+ * array components
+ */
+
+public class ProbFormBoolComposite extends ProbFormBool {
+	
+	int operator; // as defined in ProbFormBool
+	ProbFormBool[] components;
+	
+	public ProbFormBoolComposite(Vector<ProbFormBool> con, int op, boolean s){
+		super();
+		
+		components = new ProbFormBool[con.size()];
+		for (int i=0;i<components.length;i++){
+			components[i]=con.elementAt(i);
+		}
+		operator = op;
+		sign =s;
+	}
+
+	public ProbFormBoolComposite(ProbFormBool[] con, int op, boolean s){
+		components = con;
+		operator = op;
+		sign =s;
+	}
+	
+	@Override
+	public String asString(int syntax, int depth, RelStruc A) {
+		String result ="";
+		if (!sign) 
+			result = result + "!";
+		result = result + "[" + components[0].asString(syntax,depth,A);
+		for (int i=1; i< components.length; i++){
+			switch (operator){
+			case ProbFormBool.OPERATORAND:
+				result = result + "&";
+				break;
+			case ProbFormBool.OPERATOROR:
+				result = result + "||";
+			}
+			result = result + components[i].asString(syntax,depth,A);
+		}
+		result = result + "]";
+		return result;
+	}
+
+	@Override
+	public ProbFormBool conditionEvidence(RelStruc A, OneStrucData inst)
+			throws RBNCompatibilityException {
+		ProbFormBool[] condarray = new ProbFormBool[components.length];
+		for (int i=0;i<components.length;i++)
+			condarray[i]=(ProbFormBool)components[i].conditionEvidence(A, inst);
+		return new ProbFormBoolComposite(condarray,operator,sign);
+	}
+
+	@Override
+	public double evaluate(RelStruc A, OneStrucData inst, String[] vars,
+			int[] tuple, boolean useCurrentCvals, String[] numrelparameters,
+			boolean useCurrentPvals) throws RBNCompatibilityException {
+		double result =0;
+		switch (operator){
+		case ProbFormBool.OPERATORAND:
+			result=1;
+			for (int i=0;i<components.length;i++)
+				result = result*components[i].evaluate(A, inst, vars, tuple, useCurrentCvals, numrelparameters, useCurrentPvals);
+		case ProbFormBool.OPERATOROR:
+			result=0;
+			for (int i=0;i<components.length;i++)
+				result = Math.max(result,components[i].evaluate(A, inst, vars, tuple, useCurrentCvals, numrelparameters, useCurrentPvals));
+		}
+		if (sign)
+			return result;
+		else return 1-result;
+	}
+
+	public double evalSample(RelStruc A, Hashtable atomhasht,
+			OneStrucData inst, long[] timers) throws RBNCompatibilityException {
+		double result =0;
+		switch (operator){
+		case ProbFormBool.OPERATORAND:
+			result=1;
+			for (int i=0;i<components.length;i++)
+				result = result*components[i].evalSample(A, atomhasht, inst, timers);
+		case ProbFormBool.OPERATOROR:
+			result=0;
+			for (int i=0;i<components.length;i++)
+				result = Math.max(result,components[i].evalSample(A, atomhasht, inst, timers));
+		}
+		if (sign)
+			return result;
+		else return 1-result;
+	}
+
+	@Override
+	public int evaluatesTo(RelStruc A, OneStrucData inst,
+			boolean usesampleinst, Hashtable atomhasht)
+					throws RBNCompatibilityException {
+		boolean evalTo0 = false;
+		boolean evalTo1 = false;
+
+		switch (operator){
+		case ProbFormBool.OPERATORAND:
+			evalTo0 = false;
+			evalTo1 = true;
+			for (int i=0;i<components.length;i++){
+				int eval = components[i].evaluatesTo(A, inst, usesampleinst, atomhasht);
+				if (eval == 0)
+					evalTo0=true;
+				if (eval != 1)
+					evalTo1=false;
+			}
+		case ProbFormBool.OPERATOROR:
+			evalTo0 = true;
+			evalTo1 = false;
+			for (int i=0;i<components.length;i++){
+				int eval = components[i].evaluatesTo(A, inst, usesampleinst, atomhasht);
+				if (eval == 1)
+					evalTo1=true;
+				if (eval != 0)
+					evalTo0=false;
+			}
+		}
+		if (evalTo0){
+			if (sign)
+				return 0;
+			else return 1;
+		}
+		if (evalTo1){
+			if (sign)
+				return 1;
+			else return 0;
+		}
+		return -1;
+	}
+
+	@Override
+	public int evaluatesTo(RelStruc A) throws RBNCompatibilityException {
+		boolean evalTo0 = false;
+		boolean evalTo1 = false;
+
+		switch (operator){
+		case ProbFormBool.OPERATORAND:
+			evalTo0 = false;
+			evalTo1 = true;
+			for (int i=0;i<components.length;i++){
+				int eval = components[i].evaluatesTo(A);
+				if (eval == 0)
+					evalTo0=true;
+				if (eval != 1)
+					evalTo1=false;
+			}
+		case ProbFormBool.OPERATOROR:
+			evalTo0 = true;
+			evalTo1 = false;
+			for (int i=0;i<components.length;i++){
+				int eval = components[i].evaluatesTo(A);
+				if (eval == 1)
+					evalTo1=true;
+				if (eval != 0)
+					evalTo0=false;
+			}
+		}
+		if (evalTo0){
+			if (sign)
+				return 0;
+			else return 1;
+		}
+		if (evalTo1){
+			if (sign)
+				return 1;
+			else return 0;
+		}
+		return -1;
+	}
+
+	@Override
+	public String[] freevars() {
+		String[] result = components[0].freevars();
+		for (int i=1;i<components.length;i++)
+			result = rbnutilities.arraymerge(result,components[i].freevars());
+		return result;
+	}
+
+	@Override
+	public Vector<Atom> makeParentVec(RelStruc A) throws RBNCompatibilityException {
+		
+		return makeParentVec(A, new OneStrucData());
+	}
+
+	@Override
+	public Vector<Atom> makeParentVec(RelStruc A, OneStrucData inst)
+			throws RBNCompatibilityException {
+		int evalto = evaluatesTo(A,inst,false,null);
+		
+		if (evalto != -1)
+			return new Vector<Atom>();
+		
+		Vector<Atom> result = components[0].makeParentVec(A, inst);
+		for (int i=1;i<components.length;i++)
+			result = rbnutilities.combineAtomVecs(result,components[i].makeParentVec(A, inst));
+		return result;
+	}
+
+
+
+	@Override
+	public ProbForm sEval(RelStruc A) 
+			throws RBNCompatibilityException {
+
+		int evalto = evaluatesTo(A);
+
+		switch (evalto){
+		case 0:
+			if (sign)
+				return new ProbFormBoolConstant(false);
+			else return new ProbFormBoolConstant(true);
+		case 1: 
+			if (sign)
+				return new ProbFormBoolConstant(true);
+			else return new ProbFormBoolConstant(false);
+		case -1:
+			ProbFormBool[] sevalarray = new ProbFormBool[components.length];
+			for (int i=0;i<components.length;i++)
+				sevalarray[i]=(ProbFormBool)components[i].sEval(A);
+			return new ProbFormBoolComposite(sevalarray,operator,sign);
+		default: 
+			return this;
+		}
+	}
+
+	@Override
+	public ProbForm substitute(String[] vars, int[] args) {
+		ProbFormBool[] substarray = new ProbFormBool[components.length];
+		for (int i=0;i<components.length;i++)
+			substarray[i]=(ProbFormBool)components[i].substitute(vars,args);
+		return new ProbFormBoolComposite(substarray,operator,sign);
+	}
+
+	@Override
+	public ProbForm substitute(String[] vars, String[] args) {
+		ProbFormBool[] substarray = new ProbFormBool[components.length];
+		for (int i=0;i<components.length;i++)
+			substarray[i]=(ProbFormBool)components[i].substitute(vars,args);
+		return new ProbFormBoolComposite(substarray,operator,sign);
+	}
+
+	public int numComponents(){
+		return components.length;
+	}
+	
+	public ProbFormBool componentAt(int i){
+		return components[i];
+	}
+	
+	public int operator(){
+		return operator;
+	}
+	
+	public ProbForm toStandardPF(boolean recursive){
+		/* returns a ProbFormCombFunc or ProbFormConvComb
+		 * If sign == true:
+		 *     operator == and: return (n-or{negated components}:0,1)
+		 *     operator == or : return n-or{components}
+		 *    sign == false:
+		 *     operator == and: return n-or{negated components}
+		 *     operator == or : return (n-or{components:0,1) 
+		 *     
+		 *  If recursive == true, then components are recursively cast
+		 *  as standard (non ProbFormBool) formulas   
+		 */
+		ProbForm[] pfargs = new ProbForm[components.length];
+		for (int i=0;i<components.length;i++){
+			if (operator==ProbFormBool.OPERATORAND){
+				if (recursive)
+					pfargs[i]= new ProbFormConvComb(components[i].toStandardPF(true),new ProbFormConstant(0),new ProbFormConstant(1));
+				else{
+					pfargs[i] = components[i].clone();
+					((ProbFormBool)pfargs[i]).toggleSign();
+				}
+		
+			}
+			if (operator==ProbFormBool.OPERATOROR){
+				if (recursive)
+					pfargs[i]= components[i].toStandardPF(true);
+				else 
+					pfargs[i]= components[i].clone();   
+			}
+		}
+		ProbFormCombFunc pfcomb = new ProbFormCombFunc("n-or",pfargs,new String[0],new ProbFormBoolConstant(true));
+		if ( (sign && operator==ProbFormBool.OPERATOROR) || ( !sign && operator==ProbFormBool.OPERATORAND))
+			return pfcomb;		
+		else 
+			return new ProbFormConvComb(pfcomb,new ProbFormConstant(0),new ProbFormConstant(1));
+	}
+	
+	public ProbFormBoolComposite clone(){
+		ProbFormBool[] clonedcomps = new ProbFormBool[components.length];
+		for (int i=0;i<components.length; i++)
+			clonedcomps[i]=components[i].clone();
+		return new ProbFormBoolComposite(clonedcomps,operator,sign);
+	}
+}

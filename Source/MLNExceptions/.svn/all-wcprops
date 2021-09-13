@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 36
+/svn/!svn/ver/20/trunk/MLNExceptions
+END
+BadArityException.java
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/2/trunk/MLNExceptions/BadArityException.java
+END
+DifferentTypesException.java
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/2/trunk/MLNExceptions/DifferentTypesException.java
+END
+NoSuchRelationException.java
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/2/trunk/MLNExceptions/NoSuchRelationException.java
+END
+InvalidTypeArgumentsException.java
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/!svn/ver/2/trunk/MLNExceptions/InvalidTypeArgumentsException.java
+END

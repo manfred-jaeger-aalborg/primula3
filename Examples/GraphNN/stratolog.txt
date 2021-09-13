@@ -1,0 +1,14 @@
+# /home/ubuntu/P3/Examples/Expressivity/alpha2-4-4-4.rbn
+# /home/ubuntu/P3/Examples/Expressivity/GNNdata/p2/test-random-erdos-500-40-50.rdef
+# Restarts: 1
+# NumBatches: 20
+# alpha: 0.01
+# beta1: 0.9
+# beta2: 0.999
+# maxIts: 200
+# nodecounts: 1093,1111,1121,1118,1094,1149,1112,1124,1105,1136,1154,1134,1108,1117,1148,1096,1144,1144,1137,1094
+# ***** RESTART **********
+# Try init with scale 1.0
+# epsilon: 1.0E-8  alpha: 0.01
+# Iteration	stepsize	objective	accuracy
+1	0.1252656224623418	-877.7497291322135	0.26715462031107046

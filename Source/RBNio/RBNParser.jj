@@ -1,0 +1,569 @@
+
+
+options {
+      STATIC = false ;
+      FORCE_LA_CHECK = true;
+	DEBUG_PARSER = false;
+}
+
+
+PARSER_BEGIN(RBNParser)
+
+package RBNio;
+
+import RBNpackage.*;
+import java.util.*;
+import myio.StringOps;
+import RBNExceptions.RBNSyntaxException;
+
+public class RBNParser{
+	private int parseno = 1;
+	private RBNReader reader;
+
+}
+
+PARSER_END(RBNParser)
+
+
+SKIP:{" " | "\t" | <EOLtoken:<EOL>>} // ignores blank spaces, tabs and end of lines
+
+SKIP :
+{
+  "%" : WithinComment
+}
+
+<WithinComment> SKIP :
+{
+  "\n": DEFAULT
+}
+<WithinComment> SKIP :
+{
+  "\r\n": DEFAULT
+}
+<WithinComment> SKIP :
+{
+  "\r": DEFAULT
+}
+
+<WithinComment> MORE :
+{
+  <~[]>
+}
+
+
+void ReadRBN():
+{}
+{// grammar
+	( MacroDefinition() | ProbRelDefinition() )+
+}
+
+
+void MacroDefinition():
+{RBNReader.ParsedTypedAtom parsedat;
+ ProbForm parsedprobform;
+}
+{// grammar
+	"@" parsedat = TypedAtom() "=" parsedprobform = ProbForm() ";"
+	{switch  (parseno){
+	case 1:
+		reader.addMacroDefined(reader.new ProbRelDef(parsedat,null));
+		break;
+	case 2: 
+		reader.setMacroPF(parsedat.rel(),parsedprobform);
+	}
+	}
+}
+
+void ProbRelDefinition():
+{RBNReader.ParsedTypedAtom parsedat;
+ ProbForm parsedprobform;
+}
+{// grammar
+	parsedat = TypedAtom() "=" parsedprobform = ProbForm() ";"
+	{switch  (parseno){
+		case 1:
+			reader.addProbRelDefined(reader.new ProbRelDef(parsedat,null));
+			break;
+		case 2: 
+		reader.setProbRelPF(parsedat.rel(),parsedprobform);
+	}
+	}
+}
+
+ProbForm ProbForm():
+{ProbForm parsedpf;
+}
+{// grammar
+	( parsedpf=Constant() 
+	| LOOKAHEAD(Indicator()) parsedpf=Indicator()
+	| parsedpf=ConvCombination()
+	| parsedpf=CombinationFunc()
+	| parsedpf=SFormula()
+	| parsedpf=MacroCall()
+	)
+	{return parsedpf;}
+}
+
+RBNReader.ParsedUnTypedAtom  UntypedAtom():
+{ String relname;
+  Vector<String> args;
+  Token tok;
+  BoolRel rel;
+}
+{// grammar
+	tok = <Name> args = UntypedArguments()
+	{rel = new BoolRel(tok.image,args.size());
+	 return reader.new ParsedUnTypedAtom(rel,args);
+	}
+}
+
+RBNReader.ParsedTypedAtom TypedAtom():
+{
+	Token tok;
+	RBNReader.ParsedTypedArguments args;
+	BoolRel rel;
+	int arity;
+	String relname;
+}
+{// grammar
+	tok=<Name>
+		{relname = tok.image;}
+	args = TypedArguments()
+	{arity = args.arity();
+	 rel = new BoolRel(relname,arity,args.types());
+	 return  reader.new ParsedTypedAtom(rel,args);
+	}
+	
+}
+
+
+
+Vector<String> UntypedArguments():
+{Vector<String> parsedargs;
+}
+{// grammar
+	"(" parsedargs = ArgList() ")"
+	{return parsedargs;}
+}
+
+
+Vector<String> ArgList():
+{Vector<String> parsedargs = new Vector<String>();
+ Token tok;
+}
+{// grammar
+	 ( tok = <Name> 
+		{parsedargs.add(tok.image);}
+	 ("," tok = <Name>
+		{parsedargs.add(tok.image);}
+	 )*  )? 
+	{return parsedargs;}
+}
+
+
+RBNReader.ParsedTypedArguments TypedArguments():
+{
+	Token tok;
+	Vector<String> args = new Vector<String>();
+	Vector<Type> types = new Vector<Type>();
+	String typename = null;
+}
+{// grammar
+	"(" 
+	( (typename = TypeDeclaration())?
+		{ if (typename != null)
+			{types.add(new TypeRel(typename));
+			 typename = null;
+			}
+		  else types.add(new TypeDomain());
+		}
+	tok=<Name>
+		{args.add(tok.image);}
+	( "," (typename = TypeDeclaration())?
+		{ if (typename != null)
+			{types.add(new TypeRel(typename));
+			 typename = null;
+			}
+		  else types.add(new TypeDomain());
+		}
+	tok=<Name>
+		{args.add(tok.image);}
+	)* 
+	) ? 
+	")"
+	{return reader.new ParsedTypedArguments(types,args);}
+}
+
+String TypeDeclaration():
+{Token tok;}
+{// grammar
+	"[" tok = <Name> "]"
+	{return tok.image;}
+}
+
+
+ProbForm Constant():
+{ProbForm parsedpf;
+}
+{// grammar
+	(parsedpf=NumericConstant() | parsedpf=Parameter())
+	{return parsedpf;}
+}
+
+ProbFormConstant NumericConstant():
+{ProbFormConstant parsedpfconst;
+ Token tok;
+}
+{// grammar
+	tok = <ProbabilityValue>
+	{parsedpfconst = new ProbFormConstant(Double.parseDouble(tok.image));
+	 return parsedpfconst;
+	}
+}
+
+ProbFormConstant  Parameter():
+{ProbFormConstant parsedpfconst;
+ Token tok;}
+{// grammar
+	"#" tok = <Name>
+	{return new ProbFormConstant("#" + tok.image);}
+}
+
+ProbFormIndicator Indicator():
+{
+ ProbFormIndicator parsedpfindicator;
+ RBNReader.ParsedUnTypedAtom parsedutat;
+ Rel parsedrel;
+ Rel oldrel;	
+}
+{// grammar
+	parsedutat = UntypedAtom()
+	{
+	switch(parseno){
+	case 1: 
+		return null;
+		break;
+	case 2: 
+	 	parsedrel = parsedutat.rel();
+         	oldrel = reader.getRel(parsedrel);
+	 	if (oldrel != null)
+			parsedrel = oldrel;
+	 	else throw new ParseException("Probabilistic relation " + parsedrel.name.name + " not defined");
+	 	return new ProbFormIndicator(parsedrel,StringOps.stringVectorToArray(parsedutat.args()));
+	}
+	}
+}
+
+
+ProbFormConvComb ConvCombination():
+{ProbFormConvComb pf;
+}
+{
+	(  LOOKAHEAD("(" ProbForm() ":" ) pf = ConvCombinationClassic()
+	| pf = ConvCombinationLuc()
+	| pf = ConvCombinationProd()
+	)
+	{switch(parseno){
+	case 1: 
+		return null;
+		break;
+	case 2: return pf;
+	}}	
+}
+
+ProbFormConvComb ConvCombinationClassic():
+{ProbForm pf1;
+ ProbForm pf2;
+ ProbForm pf3;
+}
+{// grammar
+	"(" pf1 = ProbForm() ":" pf2 = ProbForm() "," pf3 = ProbForm() ")"
+	{switch(parseno){
+	case 1: 
+		return null;
+		break;
+	case 2: return new ProbFormConvComb(pf1,pf2,pf3);
+	}
+	}
+}
+
+ProbFormConvComb ConvCombinationLuc():
+{ProbForm pf1;
+ ProbForm pf2;
+ ProbForm pf3;
+}
+{// grammar
+	<WIFWIF>  pf1 = ProbForm() <WIFTHEN> pf2 = ProbForm() <WIFELSE> pf3 = ProbForm() 
+	{switch(parseno){
+	case 1: 
+		return null;
+		break;
+	case 2: return new ProbFormConvComb(pf1,pf2,pf3);
+	}
+	}
+}
+
+ProbFormConvComb ConvCombinationProd():
+{ProbForm pf1;
+ ProbForm pf2;
+ ProbForm pf3;
+}
+{// grammar
+	"(" pf1 = ProbForm() <MULT>  pf2 = ProbForm() ")"  
+	{switch(parseno){
+	case 1: 
+		return null;
+		break;
+	case 2: return new ProbFormConvComb(pf1,pf2, new ProbFormConstant(0.0));
+	}
+	}
+}
+
+
+ProbFormCombFunc CombinationFunc():
+{ProbFormCombFunc pf;
+}
+{
+	( pf = CombinationFuncClassic()
+	| pf = CombinationFuncLuc()
+	)
+	{switch(parseno){
+	case 1: 
+		return null;
+		break;
+	case 2: return pf;
+	}}	
+}
+
+ProbFormCombFunc CombinationFuncClassic():
+{ Token tok;
+  Vector<ProbForm> pflist;
+  Vector<String> arglist;
+  ProbForm[] pfarr;
+  CConstr cc = new CConstrEmpty();
+}
+{// grammar
+	tok = <CombinationFunction> "{" 
+	pflist = ProbFormList() "|" 
+	arglist = ArgList() ":" 
+	(cc=CConstraint())? "}"
+	
+	{switch(parseno){
+	case 1: 
+		return null;
+		break;
+	case 2: 
+	 pfarr = new ProbForm[pflist.size()];
+	 for (int i=0;i<pfarr.length;i++)
+		pfarr[i]=pflist.elementAt(i);
+	return new ProbFormCombFunc(tok.image,pfarr,StringOps.stringVectorToArray(arglist),cc);}
+	}
+}
+
+
+ProbFormCombFunc CombinationFuncLuc():
+{ Token tok;
+  Vector<ProbForm> pflist;
+  Vector<String> arglist;
+  ProbForm[] pfarr;
+  CConstr cc = new CConstrEmpty();
+}
+{// grammar
+	<COMBCOMB>
+	pflist = ProbFormList()
+	<COMBWITH>
+	tok = <CombinationFunction> 
+	<COMBFORALL>
+	arglist = ArgList()  
+	(<COMBWHERE> cc=CConstraint())? 
+	
+	{switch(parseno){
+	case 1: 
+		return null;
+		break;
+	case 2: 
+	 pfarr = new ProbForm[pflist.size()];
+	 for (int i=0;i<pfarr.length;i++)
+		pfarr[i]=pflist.elementAt(i);
+	return new ProbFormCombFunc(tok.image,pfarr,StringOps.stringVectorToArray(arglist),cc);}
+	}
+}
+
+
+
+Vector<ProbForm> ProbFormList():
+{Vector<ProbForm> pflist = new Vector<ProbForm>();
+ ProbForm nextpf;
+}
+{// grammar
+	( nextpf = ProbForm()
+	  {pflist.add(nextpf);} 
+	("," nextpf = ProbForm() 
+	  {pflist.add(nextpf);} 
+	)*  )? 
+	{return pflist;}
+}
+
+ProbFormSFormula SFormula():
+{CConstr cc;
+}
+{// grammar
+ 	"sformula(" cc=CConstraint() ")" 
+	{return new ProbFormSFormula(cc);}
+}
+
+CConstr CConstraint():
+{CConstr cc;
+}
+{// grammar
+	( LOOKAHEAD(<Name> "=") cc = CConstraintEq()
+	| cc = CConstraintAtom()
+	| cc = CConstraintNeg()
+	| LOOKAHEAD("("  CConstraint() "|") cc = CConstraintOr()
+	| cc = CConstraintAnd()
+	)
+	{return cc;}
+}
+
+CConstrEq CConstraintEq():
+{
+ Token tok1;
+ Token tok2;
+}
+{// grammar
+	tok1= <Name> "=" tok2 = <Name>
+	{return new CConstrEq(tok1.image,tok2.image);}
+}
+
+CConstrAtom CConstraintAtom():
+{RBNReader.ParsedUnTypedAtom parsedat;
+}
+{// grammar
+	parsedat = UntypedAtom()
+	{return new CConstrAtom(parsedat.rel(),StringOps.stringVectorToArray(parsedat.args()));}
+}
+
+CConstrNeg CConstraintNeg():
+{CConstr cc;
+}
+{// grammar
+	"~" cc = CConstraint()
+	{return new CConstrNeg(cc);}
+}
+
+CConstrOr CConstraintOr():
+{
+ CConstr cc1;
+ CConstr cc2;
+}
+{// grammar
+	"("  cc1 = CConstraint() "|" cc2 = CConstraint() ")"
+	{return new CConstrOr(cc1,cc2);}
+}
+
+CConstrAnd CConstraintAnd():
+{
+ CConstr cc1;
+ CConstr cc2;
+}
+{// grammar
+	"("  cc1 = CConstraint() "&" cc2 = CConstraint() ")"
+	{return new CConstrAnd(cc1,cc2);}
+}
+
+
+ProbForm MacroCall():
+{
+ RBNReader.ParsedUnTypedAtom parsedat;
+ RBNReader.ProbRelDef macrodef;
+}
+{// grammar
+	"@" parsedat =  UntypedAtom()
+	{	
+	switch(parseno){
+		case 1: 
+			return null;
+			break;
+		case 2: 
+	  		macrodef = reader.getMacroDef(parsedat.rel());
+	  		if (macrodef != null)
+			return macrodef.pf().substitute(StringOps.stringVectorToArray(macrodef.args()),StringOps.stringVectorToArray(parsedat.args()));
+	  else throw new ParseException("Macro @" + parsedat.rel().name.name + " undefined");	
+		}
+	}
+	
+}
+
+
+
+TOKEN:{
+	<EOL: "\n" | "\r" | "\r\n">
+}
+
+
+TOKEN:{
+	<CombinationFunction: "n-or"|"mean"|"esum"|"invsum"|"l-reg"|"ll-reg"|"sum" >
+}
+
+TOKEN:{ 
+	<WIFWIF: "WIF" | "wif" | "Wif" >
+}
+
+TOKEN:{ 
+	<WIFTHEN: "THEN" | "then" | "Then" >
+}
+
+TOKEN:{ 
+	<WIFELSE: "ELSE" | "else" | "Else" >
+}
+
+TOKEN:{ 
+	<COMBCOMB: "COMBINE" | "combine" | "Combine" >
+}
+
+TOKEN:{ 
+	<COMBWITH: "WITH" | "with" | "With" >
+}
+
+TOKEN:{ 
+	<COMBFORALL: "FORALL" | "forall" | "Forall" >
+}
+
+TOKEN:{ 
+	<COMBWHERE: "WHERE" | "where" | "Where" >
+}
+
+
+
+
+
+TOKEN:{ 
+	<MULT: "*" >
+}
+
+TOKEN: {<ProbabilityValue: ("0"|"1") ("." (["0"-"9"])*)? 
+			   | "." (["0"-"9"])+ >
+}
+
+
+
+TOKEN:{
+	<Name: ["a"-"z","A"-"Z"] (["a"-"z", "A"-"Z","0"-"9","-", "_" ])* >
+}
+
+
+
+
+// Java functions
+
+void setReader(RBNReader rdr):
+{}
+{
+	{reader = rdr;}
+}
+
+void setParseno(int pn):
+{}
+{
+	{parseno = pn;}
+}

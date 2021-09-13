@@ -1,0 +1,48 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  The independent cascade model for information diffusion %
+%                                                          %
+%  Here we use a version of the model where the            %
+%  propagation probability between a pair of nodes i,j     %
+%  is a constant                                           %
+%                                                          %
+%                                                          %
+%  The link(node_1,node_2) relation here is directed, and  %
+%  information can only be propagated in the direction     %
+%  of the edge. To model undirected edges, both            %
+%  link(node_1,node_2) and link(node_2,node_1) must be     %
+%  included in the 'link' relation                         %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                          %
+%                                                          %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+@oldinfo(a,t) = COMBINE hasinfo(a,tt)
+	        WITH n-or
+		FORALL tt
+		WHERE timeord(tt,t);
+
+
+@initinfo([node]a,[time]t) = (initial(t) & source(a));
+
+@getsinfo([node]a,[time]t) = WIF @oldinfo(a,t)
+				  THEN 0.0
+				  ELSE COMBINE (link(aa,a)*receiveinfo(aa,tt))
+				   	WITH n-or
+					FORALL aa,tt
+					WHERE (link(aa,a) & timeord(tt,t));
+
+
+
+receiveinfo([node]a,[time]t) =  WIF @initinfo(a,t)
+			      	THEN 1.0
+			      	ELSE @getsinfo(a,t);
+
+
+
+hasinfo([node]a,[time]t) = WIF @oldinfo(a,t)
+			   THEN 1.0
+			   ELSE receiveinfo(a,t);

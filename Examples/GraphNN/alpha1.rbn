@@ -1,0 +1,52 @@
+@layer_0_0([node]v)= blue(v);
+@layer_0_1([node]v)= green(v);
+@layer_0_2([node]v)= red(v);
+@layer_0_3([node]v)= yellow(v);
+@layer_0_4([node]v)= purple(v);
+
+
+@read_0() = COMBINE ($r_0_0*@layer_0_0(w)),
+	    	    ($r_0_1*@layer_0_1(w)),
+		    ($r_0_2*@layer_0_2(w)),
+		    ($r_0_3*@layer_0_3(w)),
+		    ($r_0_4*@layer_0_4(w))
+	    WITH sum
+	    FORALL w
+	    WHERE node(w);
+
+@agg_0([node]v)= COMBINE ($c_0_0*@layer_0_0(w)),
+	    	    	 ($c_0_1*@layer_0_1(w)),
+		    	 ($c_0_2*@layer_0_2(w)),
+		    	 ($c_0_3*@layer_0_3(w)),
+		    	 ($c_0_4*@layer_0_4(w))
+	    WITH sum
+	    FORALL w
+	    WHERE (edge(v,w)|edge(w,v));
+	    
+@layer_1_1([node]v)= COMBINE ($C_1_1_1*@layer_0_0(v)),
+		     	     ($C_1_1_2*@layer_0_1(v)),
+			     ($C_1_1_3*@layer_0_2(v)),
+			     ($C_1_1_4*@layer_0_3(v)),
+			     ($C_1_1_5*@layer_0_4(v)),
+			     ($A_1_1*@agg_0(v)) ,
+			     ($R_1_1*@read_0()),
+			     $b_1_1
+		    WITH l-reg
+		    FORALL;
+
+@layer_1_2([node]v)= COMBINE ($C_1_2_1*@layer_0_0(v)),
+		     	     ($C_1_2_2*@layer_0_1(v)),
+			     ($C_1_2_3*@layer_0_2(v)),
+			     ($C_1_2_4*@layer_0_3(v)),
+			     ($C_1_2_5*@layer_0_4(v)),
+			     ($A_1_2*@agg_0(v)) ,
+			     ($R_1_2*@read_0()),
+			     $b_1_1
+		    WITH l-reg
+		    FORALL;
+
+alpha1([node]v)= COMBINE ($w1*@layer_1_1(v)),
+		 	 ($w2*@layer_1_2(v)),
+		 	 $w3
+		WITH l-reg
+		FORALL ;

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<root>
+   <Relations>
+      <Rel name="father" arity="2" argtypes="Domain,Domain" valtype="boolean" default="false" type="predefined" color="java.awt.Color[r=185,g=155,b=60]"/>
+      <Rel name="mother" arity="2" argtypes="Domain,Domain" valtype="boolean" default="false" type="predefined" color="java.awt.Color[r=50,g=195,b=66]"/>
+      <Rel name="AMother" arity="1" argtypes="Domain" valtype="boolean" default="?" type="probabilistic"/>
+      <Rel name="AFather" arity="1" argtypes="Domain" valtype="boolean" default="?" type="probabilistic"/>
+      <Rel name="AA" arity="1" argtypes="Domain" valtype="boolean" default="?" type="probabilistic"/>
+      <Rel name="Aa" arity="1" argtypes="Domain" valtype="boolean" default="?" type="probabilistic"/>
+      <Rel name="aa" arity="1" argtypes="Domain" valtype="boolean" default="?" type="probabilistic"/>      
+   </Relations>
+   <Data>
+      <DataForInputDomain>
+         <Domain>
+            <obj ind="0" name="Paul" coords="126,132"/>
+            <obj ind="1" name="Mary" coords="240,135"/>
+            <obj ind="2" name="Susan" coords="348,141"/>
+            <obj ind="3" name="Mike" coords="180,232"/>
+            <obj ind="4" name="Betty" coords="297,224"/>
+            <obj ind="5" name="Paul.jun" coords="115,323"/>
+            <obj ind="6" name="Katie" coords="236,326"/>
+         </Domain>
+         <PredefinedRels>
+           <d rel="father" args="(Paul,Mike)(Mike,Paul.jun)(Mike,Katie)" val="true"/>
+           <d rel="mother" args="(Susan,Betty)(Mary,Mike)(Betty,Katie)" val="true"/>
+         </PredefinedRels>
+      </DataForInputDomain>
+   </Data>
+</root>

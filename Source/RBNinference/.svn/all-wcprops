@@ -1,0 +1,305 @@
+K 25
+svn:wc:ra_dav:version-url
+V 35
+/svn/!svn/ver/25/trunk/RBNinference
+END
+GGThread.java
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/11/trunk/RBNinference/GGThread.java
+END
+BayesNetIntHuginNet.java
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/2/trunk/RBNinference/BayesNetIntHuginNet.java
+END
+SampleProbs.java
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/2/trunk/RBNinference/SampleProbs.java
+END
+BayesNetIntXMLBIF.java
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/2/trunk/RBNinference/BayesNetIntXMLBIF.java
+END
+MapVals.class
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/8/trunk/RBNinference/MapVals.class
+END
+BNNode.class
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/2/trunk/RBNinference/BNNode.class
+END
+ComplexBNNodeInt.class
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/2/trunk/RBNinference/ComplexBNNodeInt.class
+END
+ComplexBNGroundAtomNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/!svn/ver/2/trunk/RBNinference/ComplexBNGroundAtomNode.java
+END
+SampleThread.class
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/!svn/ver/4/trunk/RBNinference/SampleThread.class
+END
+ComplexBNNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/23/trunk/RBNinference/ComplexBNNode.java
+END
+BayesConstructor.class
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/23/trunk/RBNinference/BayesConstructor.class
+END
+SimplePFNetworkNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/25/trunk/RBNinference/SimplePFNetworkNode.java
+END
+BoolNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/2/trunk/RBNinference/BoolNode.java
+END
+BayesNetIntSamIam.class
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/2/trunk/RBNinference/BayesNetIntSamIam.class
+END
+BayesConstructor$WeightComparator.class
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/23/trunk/RBNinference/BayesConstructor$WeightComparator.class
+END
+ComplexPFNetworkNode.class
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/23/trunk/RBNinference/ComplexPFNetworkNode.class
+END
+DummyBNNode.class
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/2/trunk/RBNinference/DummyBNNode.class
+END
+MapThread.java
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/!svn/ver/12/trunk/RBNinference/MapThread.java
+END
+BayesNetIntNeticaDnet.class
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/2/trunk/RBNinference/BayesNetIntNeticaDnet.class
+END
+ComplexBNNodeInt.java
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/2/trunk/RBNinference/ComplexBNNodeInt.java
+END
+BayesNetIntXMLBIF.class
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/2/trunk/RBNinference/BayesNetIntXMLBIF.class
+END
+SampleProbs.class
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/2/trunk/RBNinference/SampleProbs.class
+END
+BayesNetIntHuginNet.class
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/2/trunk/RBNinference/BayesNetIntHuginNet.class
+END
+SimpleBNNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/2/trunk/RBNinference/SimpleBNNode.java
+END
+SimpleBNGroundAtomNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/2/trunk/RBNinference/SimpleBNGroundAtomNode.java
+END
+PFNetwork.java
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/!svn/ver/25/trunk/RBNinference/PFNetwork.java
+END
+ComplexBNNode.class
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/23/trunk/RBNinference/ComplexBNNode.class
+END
+ComplexBNGroundAtomNode.class
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/2/trunk/RBNinference/ComplexBNGroundAtomNode.class
+END
+SimplePFNetworkNode.class
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/2/trunk/RBNinference/SimplePFNetworkNode.class
+END
+GroundAtomNodeInt.class
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/2/trunk/RBNinference/GroundAtomNodeInt.class
+END
+BayesNetIntNeticaDnet.java
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/2/trunk/RBNinference/BayesNetIntNeticaDnet.java
+END
+PFNetworkNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/25/trunk/RBNinference/PFNetworkNode.java
+END
+BayesNetInt.java
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/2/trunk/RBNinference/BayesNetInt.java
+END
+BoolNode.class
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/2/trunk/RBNinference/BoolNode.class
+END
+MapThread.class
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/12/trunk/RBNinference/MapThread.class
+END
+BayesNetIntBIF.class
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/2/trunk/RBNinference/BayesNetIntBIF.class
+END
+GroundAtomNodeInt.java
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/2/trunk/RBNinference/GroundAtomNodeInt.java
+END
+MapVals.java
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/8/trunk/RBNinference/MapVals.java
+END
+SimpleBNNode.class
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/!svn/ver/2/trunk/RBNinference/SimpleBNNode.class
+END
+SimpleBNGroundAtomNode.class
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/!svn/ver/2/trunk/RBNinference/SimpleBNGroundAtomNode.class
+END
+PFNetwork.class
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/!svn/ver/2/trunk/RBNinference/PFNetwork.class
+END
+BNNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/2/trunk/RBNinference/BNNode.java
+END
+BayesNetIntBIF.java
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/2/trunk/RBNinference/BayesNetIntBIF.java
+END
+BayesNetInt.class
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/2/trunk/RBNinference/BayesNetInt.class
+END
+PFNetworkNode.class
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/2/trunk/RBNinference/PFNetworkNode.class
+END
+SampleThread.java
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/4/trunk/RBNinference/SampleThread.java
+END
+BayesConstructor.java
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/25/trunk/RBNinference/BayesConstructor.java
+END
+BayesNetIntSamIam.java
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/2/trunk/RBNinference/BayesNetIntSamIam.java
+END
+ComplexPFNetworkNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/23/trunk/RBNinference/ComplexPFNetworkNode.java
+END
+DummyBNNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/2/trunk/RBNinference/DummyBNNode.java
+END

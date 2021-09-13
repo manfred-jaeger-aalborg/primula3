@@ -1,0 +1,5 @@
+alpha1([node]x)= WIF red(x)
+		 THEN COMBINE blue(y)
+		      WITH n-or
+		      FORALL y
+		 ELSE 0;

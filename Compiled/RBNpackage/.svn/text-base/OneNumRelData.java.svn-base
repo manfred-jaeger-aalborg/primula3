@@ -1,0 +1,566 @@
+/* OneNumRelData.java 
+ * 
+ * Copyright (C) 2009 Aalborg University
+ *
+ * contact:
+ * jaeger@cs.aau.dk   http://www.cs.aau.dk/~jaeger/Primula.html
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
+
+package RBNpackage;
+
+import java.util.*;
+
+import RBNutilities.*;
+
+import mymath.MyMathOps;
+
+import org.dom4j.Element;
+
+/** 
+ * Instantiation of OneRelData for numeric relations
+ * 
+ * @author jaeger
+ *
+ */
+public class OneNumRelData extends OneRelData{
+
+	/**
+	 * @uml.property  name="rel"
+	 * @uml.associationEnd  
+	 */
+	NumRel rel;
+	/**
+	 * @uml.property  name="defaultval"
+	 */
+//	Double defaultval;
+
+	private Hashtable<String, Double> numAtoms ;
+
+	/* Stores the minimum minmax[0] and maximum minmax[1] 
+	 * values contained in this relation
+	 */
+	double[] minmax;
+	
+	OneNumRelData()
+	{
+	}
+	
+	public NumRel rel(){
+		return rel;
+	}
+
+//	public Double dv(){
+//		return defaultval;
+//	}
+	
+	public OneNumRelData(NumRel r, Double v)
+	{	
+		rel = r;
+		defaultval = String.valueOf(v);
+		numAtoms  = new Hashtable<String, Double>();
+		minmax = new double[2];		
+		minmax[0]=Double.NaN;
+		minmax[1]=Double.NaN;
+	}
+
+	public OneNumRelData(NumRel r, String dv)
+	{
+		rel = r;
+		defaultval = dv;
+		numAtoms  = new Hashtable<String, Double>();
+		minmax = new double[2];
+		minmax[0]=Double.NaN;
+		minmax[1]=Double.NaN;
+	}
+
+	/* Returns 1 if this global relation was not already set to
+	 * tv; 0 else;
+	 */
+
+	//not modified yet...
+
+	public OneNumRelData copy(){
+		OneNumRelData result = new OneNumRelData(this.rel(),this.dv());
+		Hashtable<String, Double> ht = new Hashtable<String, Double>();
+		for(Enumeration<String>  e = numAtoms.keys();e.hasMoreElements();)
+		{	
+			String key = e.nextElement().toString();
+			ht.put(key, (Double)numAtoms.get(key));
+		}
+		result.setNumAtoms(ht);
+		result.setMinMax(this.minmax);
+		return result;
+	}
+
+	int setGlobal(Double v){
+		
+		if (rel.arity != 0){
+			throw new RuntimeException("setGlobal applied to relation of arity >0");
+		}
+
+		if (numAtoms.containsKey("") && numAtoms.get("")==v)
+			return 1;
+		
+		numAtoms  = new Hashtable<String, Double>();
+		numAtoms.put("",v);
+		
+		return -1;
+	}
+
+
+	void setNumAtoms(Hashtable<String, Double> ht){
+		numAtoms = ht;
+		updateMinMax();
+	}
+
+	void setMinMax(double[] mm){
+		minmax[0]=mm[0];
+		minmax[1]=mm[1];
+	}
+	
+	void add(OneNumRelData onrd){
+		if (! this.rel().equals(onrd.rel()))
+			System.out.println("Warning: adding incompatible relation data in OneNumRelData");
+		
+		String k;
+		for (Enumeration<String> onrdkeys = onrd.getKeys(); onrdkeys.hasMoreElements();){
+			k=onrdkeys.nextElement();
+			numAtoms.put(k, onrd.valueOf(k));
+		}
+	}
+	
+	void add(int[][] tuples, Double v){
+		for (int i=0;i<tuples.length;i++){
+			add(tuples[i],v);
+		}
+	}
+
+	/* adds tuple; 
+	 * Returns -1 if tuple was already there, otherwise 1
+	 */
+	public int add(int[] tuple, Double v)
+	{
+		if (rel.getArity()==0){
+			return setGlobal(v);
+		}
+		
+		String strTuple =  rbnutilities.arrayToString(tuple);
+
+		if (!numAtoms.containsKey(strTuple) ) {
+			numAtoms.put(strTuple, v);
+			updateMinMax(v,true);
+			return 1;
+		}
+		else if(numAtoms.containsKey(strTuple) && numAtoms.get(strTuple) == v){
+			return 1;
+		}
+		else if(numAtoms.containsKey(strTuple) && !(numAtoms.get(strTuple) == v)){
+			double oldval = numAtoms.get(strTuple);
+			numAtoms.remove(strTuple);	
+			updateMinMax(oldval,false);					
+			numAtoms.put(strTuple, v);
+			updateMinMax(v,true);
+			return 1;
+		}
+		return 0;
+	}
+
+
+
+
+	/** Returns all the atoms in hashtable as 
+	 * a vector of int[]. Objects are represented by
+	 * their internal index
+	 * 
+	 */
+	public Vector<int[]> allTrue(){
+
+		Vector<int[]> result = new Vector<int[]>();
+
+		for(Enumeration<String>  e = numAtoms.keys();e.hasMoreElements();)
+		{
+			String key = e.nextElement().toString();
+			result.add(myio.StringOps.stringToIntArray(key));
+		}
+		return result;
+
+	}
+	
+	public Vector<String[]> allTrue(RelStruc A){
+		Vector<String[]> result = new Vector<String[]>();
+		for(Enumeration<String>  e = numAtoms.keys();e.hasMoreElements();)
+		{
+			String key = e.nextElement().toString();
+			result.add(A.namesAtAsArray(myio.StringOps.stringToIntArray(key)));
+		}
+		return result;
+	}
+	
+	public Vector<String> allTrueAtoms(RelStruc A){
+
+		Vector<String> result = new Vector<String>();
+
+		for(Enumeration<String>  e = numAtoms.keys();e.hasMoreElements();)
+		{
+			String key = e.nextElement().toString();
+			result.add(A.namesAt(myio.StringOps.stringToIntArray(key)));
+		}
+		return result;
+
+	}
+	
+	public Vector<int[]> allNumAttr(){
+
+		Vector<int[]> result = new Vector<int[]>();
+
+		for(Enumeration<String>  e = numAtoms.keys();e.hasMoreElements();)
+		{
+			String key = e.nextElement().toString();
+			result.add(myio.StringOps.stringToIntArray(key));
+		}
+		return result;
+
+	}
+	
+	public double[] minMax(){
+		return minmax.clone();
+	}
+	
+	private void updateMinMax(){
+		if (numAtoms.size()==0){
+			minmax[0]=Double.NaN;
+			minmax[1]=Double.NaN;
+		}
+		else {
+			minmax[0]=Double.MAX_VALUE;
+			minmax[1]=Double.MIN_VALUE;
+			for(Enumeration<Double>  e = numAtoms.elements(); e.hasMoreElements();)
+			{
+				Double nextval = e.nextElement();
+				minmax[0]=Math.min(minmax[0], nextval);
+				minmax[1]=Math.max(minmax[1], nextval);
+			}
+		}
+	}
+
+	private void updateMinMax(double v, boolean addition){
+		if (addition == true){ // value v is added
+			if (!Double.isNaN(minmax[0]))
+				minmax[0]=Math.min(minmax[0], v);
+			else minmax[0]=v;
+			if (!Double.isNaN(minmax[1]))
+				minmax[1]=Math.max(minmax[1], v);
+			else minmax[1]=v;
+		}
+		else // value v is deleted
+			if (minmax[0]==v || minmax[1]== v)
+				updateMinMax();
+	}
+
+	/** Returns all the atoms in hashtable that have values greater than a value v as 
+	 * a vector of int[]. Objects are represented by
+	 * their internal index
+	 * 
+	 */
+	public Vector<int[]> greaterThan(Double v){
+
+		Vector<int[]> result = new Vector<int[]>();
+
+		for(Enumeration<String>  e = numAtoms.keys();e.hasMoreElements();)
+		{
+			String key = e.nextElement().toString();
+			Double value = numAtoms.get(key);
+			if( value > v){
+				result.add(myio.StringOps.stringToIntArray(key));
+			}
+		}
+		return result;
+
+	}
+	/** Returns all the atoms in hashtable that have lower greater than a value v as 
+	 * a vector of int[]. Objects are represented by
+	 * their internal index
+	 * 
+	 */
+	public Vector<int[]> lowerThan(Double v){
+
+		Vector<int[]> result = new Vector<int[]>();
+
+		for(Enumeration<String>  e = numAtoms.keys();e.hasMoreElements();)
+		{
+			String key = e.nextElement().toString();
+			Double value = numAtoms.get(key);
+			if( value > v){
+				result.add(myio.StringOps.stringToIntArray(key));
+			}
+		}
+		return result;
+	}
+
+	/** Returns all the atoms in hashtable that have values equal to a value v as 
+	 * a vector of int[]. Objects are represented by
+	 * their internal index
+	 * 
+	 */	
+	public Vector<int[]> equals(Double v){
+
+		Vector<int[]> result = new Vector<int[]>();
+
+		for(Enumeration<String>  e = numAtoms.keys();e.hasMoreElements();)
+		{
+			String key = e.nextElement().toString();
+			Double value = numAtoms.get(key);
+			if( value > v){
+				result.add(myio.StringOps.stringToIntArray(key));
+			}
+		}
+		return result;
+	}
+	public int numOfNumAtoms(){
+		return numAtoms.size();
+	}
+
+	/*
+	 * Returns all the atoms which are not instantiated
+	 * to either true or false. d is the domainsize, i.e.
+	 * the maximal index of an object to be considered.
+	 */	 
+
+	public Vector<int[]>  allUnInstantiated(int d){
+
+		Vector<int[]>  result = new Vector<int[]> ();
+		int[] nextatom;
+		for (int i=0;i< MyMathOps.intPow(d,rel.getArity());i++){
+			nextatom = rbnutilities.indexToTuple(i,rel.getArity(),d);
+			if (!numAtoms.contains(nextatom) )
+				result.add(nextatom);
+		}
+		return result;
+	}
+
+
+
+	/** Returns all the atoms instantiated to numeric as 
+	 * a vector of strings. Objects are represented by
+	 * their name in structure A
+	 */ 
+	public Vector<String> allNum(RelStruc A){
+		Vector<String> result = new Vector<String>();
+
+		for(Enumeration<String>  e = numAtoms.keys();e.hasMoreElements();)
+		{
+			String key = e.nextElement().toString();
+			result.add(A.namesAt(myio.StringOps.stringToIntArray(key)));	
+		}
+		return result;
+	}
+
+	/** Delete all atoms containing a 
+	 * @param a
+	 */
+	public void delete(int a){
+		int[] nextatom;
+
+		for(Enumeration<String>  e = numAtoms.keys();e.hasMoreElements();)
+		{
+			String key = e.nextElement().toString();
+			nextatom = myio.StringOps.stringToIntArray(key);
+			if (rbnutilities.inArray(nextatom,a)){
+				if(numAtoms.containsKey(key)){
+					updateMinMax(numAtoms.get(key),false);
+					numAtoms.remove(key);
+				}
+			}
+		}
+	}
+
+	public void delete(int[] tuple)
+	{
+		String key = rbnutilities.arrayToString(tuple);
+		if(numAtoms.containsKey(key)){
+			updateMinMax(numAtoms.get(key),false);
+			numAtoms.remove(key);
+		}
+	}
+
+
+	public void delete(int[][] tuples)
+	{
+		for (int i=0;i<tuples.length;i++){
+			delete(tuples[i]);
+		}
+
+	}
+
+
+	public String printAsString(RelStruc A, String pref){
+		/* pref is a string prefixed to every result line
+		 * used for example to prefix the gnuplot comment symbol
+		 * when result is written into a logfile used for plotting
+		 */
+		String result = "";
+
+
+		for (Enumeration<String> e = numAtoms.keys();e.hasMoreElements();) {
+			String key = e.nextElement();
+			int[] tuple = myio.StringOps.stringToIntArray(key);
+
+			result = result + pref +  rel.name.name
+			+ A.namesAt(tuple)+ numAtoms.get(key)
+			+ '\n';
+		}
+
+		return result;
+	}
+
+	int truthValueOf(int[] tuple)
+	{
+		if (rel.arity ==0){
+			if (numAtoms.size() > 0){
+				return 1;
+			}
+			else{
+				return -1;
+			}
+		}
+		else {
+			int result = -1;
+			String k = rbnutilities.arrayToString(tuple);
+			if (numAtoms.containsKey(k)) result = 1;
+			if (result == -1 && defaultval.equals(0.0)){
+				result =0;
+			}
+			return result;
+		}
+	}
+
+	public double valueOf(String key){
+		if (numAtoms.containsKey(key))
+			return numAtoms.get(key);
+		else {
+			if (defaultval != "?")
+				return Double.valueOf(defaultval);
+		}
+
+		return Double.NaN;
+
+	}
+
+
+
+	public double valueOf(int[] tuple){
+		String key;
+		if (rel.getArity() > 0)
+			key = rbnutilities.arrayToString(tuple);
+		else 
+			key = "";
+		return valueOf(key);
+	}
+	
+	public boolean isEmpty(){
+		if (numAtoms.size()>0 ) return false;
+		else return true;
+	}
+
+	/**Returns the binary tuples from the specified node to some other node
+	 *This method is usable ONLY with binary relations
+	 */
+	public Vector<int[]> getBinDirs(int node){
+		Vector<int[]> hits = new Vector<int[]>();
+
+		for (Enumeration<String> e = numAtoms.keys();e.hasMoreElements();) {
+			int[] temp = myio.StringOps.stringToIntArray(e.nextElement());
+			if(temp[0] == node)
+				hits.addElement(temp);
+		}
+		return hits;
+	}
+
+	public void addRelData(Element el, RelStruc struc){
+		for (Enumeration <String> e = numAtoms.keys();e.hasMoreElements();) {
+			String key = e.nextElement();
+			Double value = numAtoms.get(key);
+			Element dl = el.addElement("d");
+			dl.addAttribute("rel", rel.name.name);
+			dl.addAttribute("args", struc.namesAt(myio.StringOps.stringToIntArray(key)));
+			dl.addAttribute("val", value.toString());
+		}
+
+
+	}
+
+
+	//shared
+	/**
+	 * Replaces all arguments b of trueAtoms and falseAtoms lists
+	 * by b-1 if b>a (needed after the deletion of node with index a from
+	 * the underlying SparseRelStruc)
+	 * @param a
+	 */
+	public void shiftArgs(int a){
+		int[] currtuple;
+		int[] oldcurrtuple;
+		Vector<String> tuplesforremoval = new Vector<String>();
+		Vector<String> tuplesforinsertion = new Vector<String>();
+		Vector<Double> valuesforinsertion = new Vector<Double>();
+		
+		if (rel.arity != 0){
+			for (Enumeration<String> e = numAtoms.keys();e.hasMoreElements();) {
+				currtuple = myio.StringOps.stringToIntArray(e.nextElement());
+				Double value = numAtoms.get(rbnutilities.arrayToString(currtuple));
+
+				oldcurrtuple = (int[])currtuple.clone();
+				rbnutilities.arrayShiftArgs(currtuple,a);
+				if(rbnutilities.arrayCompare(oldcurrtuple, currtuple) !=0){
+					tuplesforremoval.add(rbnutilities.arrayToString(oldcurrtuple));
+					tuplesforinsertion.add(rbnutilities.arrayToString(currtuple));	
+					valuesforinsertion.add(value);
+				}
+
+			}
+			for(int i=0;i <tuplesforremoval.size();i++ ){
+				numAtoms.remove(tuplesforremoval.elementAt(i));
+			}
+			for(int i=0;i <tuplesforinsertion.size();i++ ){
+				numAtoms.put(tuplesforinsertion.elementAt(i), valuesforinsertion.elementAt(i));
+			}
+		}
+	}
+	
+	public Enumeration<String> getKeys(){
+		return numAtoms.keys();
+	}
+	
+//	public void delete(int[] tuple, Double v) {
+//		//if(numAtoms.get(rbnutilities.arrayToString(tuple))==v){
+//		numAtoms.remove(rbnutilities.arrayToString(tuple));
+//		//}
+//
+//	}
+	
+	/* Resets values of all atoms in numAtoms to random values */
+	public void setRandom(){
+		Hashtable<String, Double> newht = new Hashtable<String,Double>();
+
+		for(Enumeration<String>  e = numAtoms.keys();e.hasMoreElements();)
+		{
+			String key = e.nextElement();
+			newht.put(key, randomGenerators.getRandom(rel.minval(),rel.maxval()));
+		}
+		setNumAtoms(newht);
+	}
+}

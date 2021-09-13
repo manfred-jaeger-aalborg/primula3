@@ -1,0 +1,346 @@
+/*
+ * ProbFormIndicator.java
+ * 
+ * Copyright (C) 2003 Max-Planck-Institut fuer Informatik,
+ *                    Helsinki Institute for Information Technology
+ *
+ * contact:
+ * jaeger@cs.auc.dk   www.cs.auc.dk/~jaeger/Primula.html
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
+
+package RBNpackage;
+
+import java.util.*;
+import java.io.*;
+import RBNinference.*;
+import RBNExceptions.*;
+import RBNutilities.*;
+import myio.*;
+
+public class ProbFormIndicator extends ProbForm {
+
+
+	public Rel relation;
+	public String arguments[];
+
+	public ProbFormIndicator()
+	{
+		SSymbs = new Rel[0];
+		RSymbs = new Rel[0];
+		relation = new BoolRel();
+		arguments = new String[0];
+	}
+
+	public ProbFormIndicator(Rel r)
+	{
+		SSymbs = new Rel[0];
+		RSymbs = new Rel[1];
+		RSymbs[0] = r;
+		relation = r;
+		arguments = new String[r.arity];
+	}
+
+
+	/** Creates new ProbFormIndicator */
+	public ProbFormIndicator(Rel r, String[] args) 
+	throws IllegalArgumentException
+	{
+		SSymbs = new Rel[0];
+		RSymbs = new Rel[1];
+		RSymbs[0] = r;
+		relation = r;
+		if (args.length == r.arity){
+			arguments = args;}
+		else {
+			throw new IllegalArgumentException("Error in constructing Indicator-Formula: arguments do not match arity of " + r.name);
+		}
+	}
+
+	public ProbFormIndicator(Rel r, int[] args) 
+	throws IllegalArgumentException
+	{
+		SSymbs = new Rel[0];
+		RSymbs = new Rel[1];
+		RSymbs[0] = r;
+		relation = r;
+		if (args.length == r.arity)
+		{
+			arguments = new String[args.length];
+			for (int i=0; i<args.length; i++)
+				arguments[i]=Integer.toString(args[i]);
+		}
+		else {
+			throw new IllegalArgumentException("Error in constructing Indicator-Formula: arguments do not match arity of " + r.name);
+		}
+	}
+
+	/** Returns the arguments as an array of integers if formula represents
+	 * a ground atom. Throws an exception if formula not ground
+	 */
+	public int[] argsIfGround()
+	throws RuntimeException
+	{
+		int[] result = new int[arguments.length];
+		if (!this.isGround())
+			throw new RuntimeException("ProbFormIndicator.argsIfGround() applied to non-ground indicator");
+		else{
+			for (int i=0; i<arguments.length; i++)
+				result[i] = Integer.parseInt(arguments[i]);
+		}
+		return result;
+	}
+
+	public String asString(int syntax, int depth)
+	{
+		String tabstring = "";
+		for (int i=0;i<depth;i++)
+			tabstring = tabstring +"  ";
+
+		String result = new String();
+		result = tabstring + this.asString(syntax);
+		//         result = tabstring + relation.printname() + "(";
+		//         for (int i = 0; i<arguments.length-1; i++)
+		//             result = result + arguments[i] + ",";
+		//         result = result + arguments[arguments.length-1] + ")";
+		return result;
+	}
+
+	public String asString(int syntax)
+	{
+		String result = new String();
+		result = relation.printname();
+		result = result.concat("(");
+		for (int i = 0; i<arguments.length-1; i++)
+			result = result.concat(arguments[i] + ",");
+		result = result.concat(arguments[arguments.length-1]);
+		result = result.concat(")");
+		return result;
+	}
+
+	public String asString(int syntax, int depth, RelStruc A)
+	{
+		String tabstring = "";
+		for (int i=0;i<depth;i++)
+			tabstring = tabstring +" ";
+
+		String result = new String();
+		result = this.asString(A);
+		return result;
+	}
+
+	public String asString(RelStruc A)
+	{
+		String result = new String();
+		result = relation.printname();
+		result = result.concat("(");
+		for (int i = 0; i<arguments.length-1; i++)
+			if (rbnutilities.IsInteger(arguments[i]) && A!=null)
+				result = result.concat(A.nameAt(Integer.parseInt(arguments[i])) + ",");
+			else result = result.concat(arguments[i] + ",");
+		if (arguments.length>0){
+			if (rbnutilities.IsInteger(arguments[arguments.length-1])&& A!=null)
+				result = result.concat(A.nameAt(Integer.parseInt(arguments[arguments.length-1])));
+			else result = result.concat(arguments[arguments.length-1]);
+		}
+		result = result.concat(")");
+		return result;
+	}
+
+	/** Returns the ground atom if this ProbForm represents a ground atom;
+	 * otherwise returns null;
+	 */
+	public Atom atom(){
+		if (isGround())
+			return new Atom(relation, argsIfGround());
+		else
+			return null;
+	}
+
+	public ProbForm conditionEvidence(RelStruc A, OneStrucData inst)
+	{
+		return this.conditionEvidence(inst);
+	}
+
+	public ProbForm conditionEvidence(OneStrucData inst){
+		if (!this.isGround()) return new ProbFormIndicator(relation,arguments);
+		else {
+			int truth = inst.truthValueOf(this.relation, rbnutilities.stringArrayToIntArray(this.arguments));
+			switch (truth){
+			case -1 : return new ProbFormIndicator(relation,arguments); 
+			case 0 : return new ProbFormConstant(0);
+			case 1 : return new ProbFormConstant(1);
+			default : return new ProbFormConstant(1);
+			}
+		}
+	}
+
+
+	public boolean dependsOn(String variable, RelStruc A, OneStrucData data){
+
+		if (variable.equals("unknown_atom")){
+			double v = this.evaluate(A,data,new String[0], new int[0], false,new String[0],false);
+			if (v==-1)
+				return true;
+			else return false;
+		}
+		else return false;
+	}
+
+	public boolean equals(ProbFormIndicator pfi)
+	{
+		boolean result = true;
+		if(!relation.equals(pfi.relation)) return false;
+		for (int i=0; i<relation.arity; i++)
+			if (!arguments[i].equals(pfi.arguments[i])) result = false;
+		return result;
+	}
+
+
+
+	public double evaluate(RelStruc A, OneStrucData inst, String[] vars, int[] tuple, 
+			boolean useCurrentCvals, 
+    		String[] parameterrels,
+    		boolean useCurrentPvals)
+	{
+		ProbFormIndicator substituted = (ProbFormIndicator)this.substitute(vars,tuple);
+		if (!substituted.isGround())
+			throw new IllegalArgumentException("Attempt to evaluate non-ground indicator");
+
+		int truth = inst.truthValueOf(substituted.relation, rbnutilities.stringArrayToIntArray(substituted.arguments));
+
+		return (double)truth;
+	}
+
+	public  double evalSample(RelStruc A, Hashtable atomhasht, OneStrucData inst, long[] timers)
+	throws RBNCompatibilityException
+	{
+		double result;
+		if (!isGround())
+			throw new IllegalArgumentException("Attempt to evaluate non-ground indicator");
+		else{
+			Atom myatom = new Atom(relation,rbnutilities.stringArrayToIntArray(arguments));
+			String myatomname = myatom.asString();
+			if (atomhasht.get(myatomname) == null)	/* myatom is not in the network, because 
+			 * it has become an isolated prob. zero 
+			 * node due to the instantiation inst. 
+			 * Its truth value is found in inst
+			 */
+			{
+				return (double)inst.truthValueOf(myatom);  
+			}
+			PFNetworkNode gan = (PFNetworkNode)atomhasht.get(myatomname);
+			result = (double)gan.sampleinstVal();
+			if (result != 0 && result !=1)
+				System.out.println("-------in Indicator.evalSample: " +gan.myatom().asString(A) + " = " + result);
+			return (double)gan.sampleinstVal();
+		}
+	}
+
+	public  int evaluatesTo(RelStruc A){
+		return -1;
+	}
+
+	public  int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, Hashtable atomhasht){
+		/* Must be applied to ground atoms only! */
+		if (!usesampleinst){
+			int[] intargs =  rbnutilities.stringArrayToIntArray(arguments);
+			return inst.truthValueOf(relation,intargs);
+		}
+		else{
+			Atom myatom = new Atom(relation,rbnutilities.stringArrayToIntArray(arguments));
+			String myatomname = myatom.asString();
+			PFNetworkNode gan = (PFNetworkNode)atomhasht.get(myatomname);
+			return gan.sampleinstVal();
+		}
+	}
+
+	public String[] freevars()
+	{
+		return rbnutilities.NonIntOnly(arguments);
+	}
+
+	public boolean isGround()
+	{
+		if (this.freevars().length>0){
+			return false;}
+		else {
+			return true;}
+	}
+
+
+	public  Vector makeParentVec(RelStruc A){
+		return makeParentVec(A, new OneStrucData());
+	}
+
+	public  Vector makeParentVec(RelStruc A,OneStrucData inst){
+		if (!this.isGround())
+			throw new RuntimeException("Detected dependency on non-ground atom");
+		Vector result = new Vector();
+		if (inst.truthValueOf(relation,rbnutilities.stringArrayToIntArray(arguments))==-1){
+			result.add(new Atom(relation,rbnutilities.stringArrayToIntArray(arguments)));
+		}
+		return result;
+	}
+
+
+	public boolean multlinOnly(){
+		return true;
+	}
+
+	public String[] parameters(){
+		return new String[0];
+	}
+
+	public ProbForm sEval(RelStruc A){
+		return this;
+	}
+
+	public ProbForm substitute(String[] vars, int[] args)
+	{
+		ProbFormIndicator result = new ProbFormIndicator(relation);
+		String nextarg;
+		for (int i = 0; i<relation.arity; i++)
+		{
+			nextarg = arguments[i];
+			for (int j = 0; j<vars.length; j++)
+			{
+				if (nextarg.equals(vars[j])) nextarg = String.valueOf(args[j]);
+			}
+			result.arguments[i] = nextarg;
+		}
+		return result;
+	}
+
+	public ProbForm substitute(String[] vars, String[] args)
+	{
+		ProbFormIndicator result = new ProbFormIndicator(relation);
+		String nextarg;
+		for (int i = 0; i<relation.arity; i++)
+		{
+			nextarg = arguments[i];
+			for (int j = 0; j<vars.length; j++)
+			{
+				if (nextarg.equals(vars[j])) nextarg = args[j];
+			}
+			result.arguments[i] = nextarg;
+		}
+		return result;
+	}
+
+	public void setParameters(String[] params,  double[] values){
+	}
+}

@@ -1,0 +1,457 @@
+/**
+* @author Alberto García Collado
+*
+*
+* The mln has to have the predicate declarations in the first position. 
+* Second, the Declarations of the types, third Hard Formulas, and then the Weight Formulas. 
+* The only thing that is compulsory are the predicate and the type declarations. 
+* 
+* Cause of the warning: RelationList and HardFormulaList start with the same things. 
+* So, until the parser doesn't see a "\n" or a ".",
+* it doesn't know if it is a Relation or a HardFormula 
+* 
+* TODO: en la lista de relations puede que se ponga un "!" y no casque.
+**/
+options {
+      STATIC = false ;
+      LOOKAHEAD = 3;
+      FORCE_LA_CHECK = true;
+}
+PARSER_BEGIN(MLNParser)
+package MLNParser.MLNParser;
+
+//import java.io.*;
+import RBNpackage.ProbForm;
+import MLNExceptions.NoSuchRelationException;
+import MLNExceptions.BadArityException;
+import MLNParser.*;
+import java.util.Vector;
+
+
+public class MLNParser{
+	private RBNCreator creator;
+	private int parseno = 0;
+}
+
+PARSER_END(MLNParser)
+
+
+//Comments starting with "//":
+SKIP :
+{
+  "//" : WithinComment
+}
+
+<WithinComment> SKIP :
+{
+  "\n": DEFAULT
+}
+<WithinComment> SKIP :
+{
+  "\r\n": DEFAULT
+}
+<WithinComment> SKIP :
+{
+  "\r": DEFAULT
+}
+
+<WithinComment> MORE :
+{
+  <~[]>
+}
+
+
+void ReadMarkovLogicNetwork():
+{// used variables
+}
+{//grammar
+	RelationList() (<EOL>)* 
+	TypeDeclarationList()(<EOL>)*
+	HardFormulaList()(<EOL>)*  
+	WeightFormulaList()(<EOL>)*
+	{if (parseno==3)
+		creator.fileFinished();
+	}
+	<EOF>
+}
+
+//Relations
+void RelationList():
+{//variables
+	ProbForm formula;
+}
+{//grammar
+	(RelationDeclared()<EOL>)*
+}
+
+
+
+ProbForm RelationDeclared():
+{//variables
+	Token tok;
+	ProbForm formula;
+	ParsedRelation relation=new ParsedRelation();
+}
+{//grammar
+	tok=<Variable>
+	{
+		//relationName=tok.image;
+		relation = new ParsedRelation(tok.image);
+	}
+	 <OpenPar>
+	tok=<Variable>
+	{
+		relation.addArgument(tok.image);
+	}
+	( "," tok=<Variable>
+	{
+		relation.addArgument(tok.image);
+	}
+	)* <ClosePar>
+	{
+		formula = null;
+		if (parseno==1)
+		 	creator.createRelation(relation);
+		return formula;
+	}
+}
+void TypeDeclarationList():
+{//variables
+
+}
+{//grammar
+	(TypeDeclaration()(<EOL>)+)*
+}
+
+
+void TypeDeclaration():
+{//variables
+	Token typeTok,constTok;
+}
+{//grammar
+	typeTok=<Variable>
+	{
+	if (parseno==1)
+		creator.newTypeDeclared(typeTok.image);
+	}
+	"=""{"constTok=<Constant>
+	{
+	if (parseno==1)
+		creator.insertTypeConstant(typeTok.image,constTok.image);
+	} 
+	(","constTok=<Constant>
+	{
+	if (parseno==1)
+		creator.insertTypeConstant(typeTok.image,constTok.image);
+	} 
+	)*"}"
+}
+
+//Hard formulas
+void HardFormulaList():
+{//variables
+	ProbForm formula;
+}
+{//grammar
+	(formula = HardFormula() "."(<EOL>)+
+		{
+		if(parseno==2)
+			creator.addNewRelationFormula(formula);
+	}
+	)*	
+}
+
+
+
+
+ProbForm HardFormula():
+{//variables
+	ProbForm formula = null;
+}
+{//grammar
+	formula = Formula_1()
+	{
+		if(parseno == 3){
+			creator.newFormulaForArtificial();
+			return null;
+		}
+		else if(parseno == 2){
+			formula = creator.createWeightFormula(formula, "");
+			return formula;
+		}
+	return formula;
+	}
+}
+
+// A Formula_i is a formula of the form 
+// f1 op1 f2 op2 ... opn-1 fn
+// where the fi are either atomic formulas or sub-formulas
+// that are enclosed in parentheses, the opi are boolean 
+// operators, and the operator with the lowest precedence 
+// among op1,...,opn-1 is
+// i=1: <=>
+// i=2: =>
+// i=3: v
+// i=4: ^
+
+ProbForm Formula_1():
+{//variables
+	ProbForm formula = null;
+	ProbForm secondPart;
+}
+{//grammar
+	formula = Formula_2()( <IfAndOnlyIf> secondPart = Formula_2()
+	{ if (parseno==2)
+		formula = creator.createIfOnlyIf(formula, secondPart); 
+	}
+	)*
+	{return formula;}
+}
+
+ProbForm Formula_2():
+{//variables 
+	ProbForm formula = null;
+	ProbForm secondPart;
+}
+{//grammar
+	formula = Formula_3()( <Implies> secondPart = Formula_3() 
+	{ if (parseno==2)
+			formula = creator.createImplies(formula,secondPart);
+	}
+	)*
+	{return formula;}
+}
+
+ProbForm Formula_3():
+{//variables 
+	ProbForm formula = null;
+	ProbForm secondPart;
+}
+{//grammar
+	formula = Formula_4()( <Or> secondPart = Formula_4()	
+	{ if (parseno==2)
+			formula = creator.createOr(formula,secondPart);
+	}
+	)*
+	{return formula;}
+}
+
+ProbForm Formula_4():
+{//variables 
+	ProbForm formula = null;
+	ProbForm secondPart;
+}
+{//grammar
+	formula = Formula()( <And> secondPart =  Formula()
+	{ if (parseno==2)
+			formula = creator.createAnd(formula,secondPart);
+	}
+	)*
+	{return formula;}
+}
+
+ProbForm Formula():
+{//variables
+	Token tok;
+	ProbForm formula = null;
+	ParsedRelation relation=new ParsedRelation();
+	Vector<String> quantargs = new Vector<String>();
+	String equalityvar1 = "";
+	String equalityvar2 = "";
+}
+{//grammar
+	(//Not operator
+	<Not>
+	formula = Formula()
+	{ if (parseno==2){
+		formula = creator.createNot(formula);
+		}
+	}
+
+	|//Existential quantification
+	<Exist> 
+	tok=<Variable>
+	{ if (parseno==2){
+			quantargs.add(tok.image);
+		}	
+	}
+	(","
+	tok=<Variable>
+	{ if (parseno==2){
+			quantargs.add(tok.image);
+		}	
+	}
+	)*
+	formula = Formula()
+		{ if (parseno==2){
+			formula = creator.createExistential(formula,quantargs);
+		}	
+	}
+
+	|//Universal quantification
+	<Forall> 
+	tok=<Variable>
+	{ if (parseno==2){
+			quantargs.add(tok.image);
+		}	
+	}
+	(","
+	tok=<Variable>
+	{ if (parseno==2){
+			quantargs.add(tok.image);
+		}	
+	}
+	)*
+	formula = Formula()
+		{ if (parseno==2){
+			formula = creator.createUniversal(formula,quantargs);
+		}	
+	}
+	|//Parenthesis, that give different precedence
+	<OpenPar> formula = Formula_1() <ClosePar>{}
+
+	|//Atom
+	tok = <Variable> 
+	{ if (parseno>=2){
+		relation = new ParsedRelation(tok.image);
+		}	
+	}
+	<OpenPar> 
+	tok = <Variable>
+		{ if (parseno>=2){
+		relation.addArgument(tok.image);
+		}	
+	}
+	( "," 
+	tok = <Variable>
+			{ if (parseno>=2){
+		relation.addArgument(tok.image);
+		}
+	}
+	)* <ClosePar>
+	{
+			if (parseno==3){
+				creator.saveRelationForArtificial(relation);
+			}
+			else if (parseno==2){
+				try{
+					formula = creator.createFormulaRelation(relation);
+				}catch(NoSuchRelationException e){
+					System.out.println("The " +relation.getRelationName() + " relation is not valid");
+					e.printStackTrace();
+				}catch(BadArityException e){
+					System.out.print("The relation " + relation.getRelationName()+"("); 
+					String[] arg = relation.getArgumentsArray();
+					for(int i=0;i<arg.length-1;i++)
+						System.out.print(arg[i]+",");
+					System.out.print(arg[arg.length-1]);
+					System.out.println(") has not the same arity as declared");
+					e.printStackTrace();
+					System.exit(1);
+				}
+				}
+		}
+	
+	|// Equality Atom
+	tok = <Variable>
+	{	if (parseno==2){
+			equalityvar1 = tok.image;
+		}
+	}
+	"="
+	tok = <Variable>
+	{	if (parseno==2){
+			equalityvar2 = tok.image;
+		}
+	}
+	{	if (parseno==2){
+			formula = creator.createFormulaEquality(equalityvar1,equalityvar2);	
+		} 
+	}
+	)
+	{return formula;}
+}
+
+//Weight Formulas
+void WeightFormulaList():
+{//variables
+	ProbForm formula;
+	Token t;
+}
+{//grammar
+	(formula = WeightFormula()(<EOL>)+
+	{
+		if(parseno==2)
+			creator.addNewRelationFormula(formula);
+	}
+	)*
+}
+
+ProbForm WeightFormula():
+{//variables
+	Token t;
+	ProbForm formula = null;
+}
+{//grammar
+	t= <Weight> 
+	formula = Formula_1()
+	{
+		if(parseno == 3){
+			creator.newFormulaForArtificial();
+			return null;
+		}
+		else if(parseno == 2){
+			formula = creator.createWeightFormula(formula, t.image);
+			return formula;
+		}
+	return formula;
+	}
+}
+
+
+SKIP:{" " | "\t"} // ignores blank spaces and tabs
+
+TOKEN:{
+	<EOL: "\n" | "\r" | "\r\n">
+}
+
+//Precedences: "!" -> "^" -> "v" -> "=>" -> "<=>" 
+TOKEN:{<Not: "!">}
+TOKEN:{<And: "^">}
+TOKEN:{<Or: "v">}
+TOKEN:{<Implies: "=>">}
+TOKEN:{<IfAndOnlyIf: "<=>">}
+TOKEN: {<OpenPar: "(">}
+TOKEN: {<ClosePar: ")">}
+TOKEN:{<Exist: "EXIST"|"Exist"|"exist">}
+TOKEN:{<Forall: "FORALL"|"Forall"|"forall">}
+
+
+TOKEN:{
+	<Weight : <Num> | <Num> "." <Num> | <Num> "." | "."<Num> |"-"<Num> |"-" <Num> "." <Num> | "-"<Num> "." | "-."<Num> >
+}
+TOKEN:{
+	<#Num: (["0"-"9"])+ >
+}
+TOKEN:{
+	<Variable: ["a"-"z"] (["a"-"z", "A"-"Z","0"-"9","-", "_", "'"])* >
+}
+TOKEN:{
+	<Constant: ["A"-"Z"] (["a"-"z", "A"-"Z","0"-"9","-", "_", "'"])* >
+}
+
+//java functions
+void setCreator(RBNCreator c):
+{//variables
+}
+{//grammar
+	{creator = c;}
+}
+
+void setParse(int i):
+{//variables
+}
+{//grammar
+	{parseno = i;}
+}
+

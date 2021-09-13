@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<editmodel:ClassDiagramEditModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:editmodel="editmodel.xmi" xmlns:options="options.xmi" name="OneNumRelData" size="1194,454" id="RBNpackage" metadata="uml2-1.0" initialized="true" tag="10" key="32303037303533312D3130207072696D756C61">
+  <children xsi:type="editmodel:ClassEditModel" name="OneNumRelData" location="270,60" size="284,374" id="RBNpackage/OneNumRelData" runTimeClassModel="defaultval,add([ILjava.lang.Double;),addRelData(Lorg.dom4j.Element;LRBNpackage.RelStruc;),numAtoms,OneNumRelData(LRBNpackage.NumRel;Ljava.lang.Double;),equals(Ljava.lang.Double;),delete([ILjava.lang.Double;),numOfNumAtoms(),delete([I),allTrue(),setGlobal(Ljava.lang.Double;),rel(),allNumAttr(),allUnInstantiated(I),OneNumRelData(),delete(I),lowerThan(Ljava.lang.Double;),truthValueOf([I),add([[ILjava.lang.Double;),allNum(LRBNpackage.RelStruc;),printAsString(LRBNpackage.RelStruc;Ljava.lang.String;),shiftArgs(I),dv(),delete([[ILjava.lang.Double;),delete([[I),graterThan(Ljava.lang.Double;),getBinDirs(I),isEmpty(),rel">
+    <children xsi:type="editmodel:CompartmentEditModel" size="261,54">
+      <children xsi:type="editmodel:AttributeEditModel" name="rel" id="RBNpackage/NumRel@rel+RBNpackage/OneNumRelData@|RBNpackage/NumRel#rel"/>
+      <children xsi:type="editmodel:AttributeEditModel" name="defaultval" id="RBNpackage/OneNumRelData#defaultval"/>
+      <children xsi:type="editmodel:AttributeEditModel" name="numAtoms" id="RBNpackage/OneNumRelData#numAtoms"/>
+    </children>
+    <children xsi:type="editmodel:CompartmentEditModel" size="124,270">
+      <children xsi:type="editmodel:MethodEditModel" name="OneNumRelData" id="RBNpackage/OneNumRelData#OneNumRelData()"/>
+      <children xsi:type="editmodel:MethodEditModel" name="dv" id="RBNpackage/OneNumRelData#dv()"/>
+      <children xsi:type="editmodel:MethodEditModel" name="OneNumRelData" id="RBNpackage/OneNumRelData#OneNumRelData(LRBNpackage.NumRel;Ljava.lang.Double;)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="add" id="RBNpackage/OneNumRelData#add([[ILjava.lang.Double;)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="add" id="RBNpackage/OneNumRelData#add([ILjava.lang.Double;)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="allTrue" id="RBNpackage/OneNumRelData#allTrue()"/>
+      <children xsi:type="editmodel:MethodEditModel" name="allNumAttr" id="RBNpackage/OneNumRelData#allNumAttr()"/>
+      <children xsi:type="editmodel:MethodEditModel" name="allUnInstantiated" id="RBNpackage/OneNumRelData#allUnInstantiated(I)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="allNum" id="RBNpackage/OneNumRelData#allNum(LRBNpackage.RelStruc;)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="delete" id="RBNpackage/OneNumRelData#delete(I)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="delete" id="RBNpackage/OneNumRelData#delete([I)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="delete" id="RBNpackage/OneNumRelData#delete([[I)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="addRelData" id="RBNpackage/OneNumRelData#addRelData(Lorg.dom4j.Element;LRBNpackage.RelStruc;)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="delete" id="RBNpackage/OneNumRelData#delete([ILjava.lang.Double;)"/>
+      <children xsi:type="editmodel:MethodEditModel" name="delete" id="RBNpackage/OneNumRelData#delete([[ILjava.lang.Double;)"/>
+    </children>
+    <children xsi:type="editmodel:CompartmentEditModel" size="0,0"/>
+    <classifierPreferences xsi:type="editmodel:UMLClassDiagramClassifierPreference" showStereotype="true" attributeSorter="Natural" methodSorter="Natural" innerClassSorter="Natural" showPrivateAttributes="true" showProtectedAttributes="true" showPublicAttributes="true" showPackageAttributes="true" showStaticAttributes="true" showPublicMethods="true" showPackageMethods="true" showStaticMethods="true" showPublicInnerClasses="true" showPackageInnerClasses="true" showStaticInnerClasses="true" packageIndication="3" showAttributeProperty="true" showAssociationMember="true"/>
+  </children>
+  <diagramOptions xsi:type="options:ClassDiagramOptions" interactive="false" showScope="InPackage" properties="open=RBNpackage/OneNumRelData;wireOptions=7;Product=eUML2"/>
+  <boardSetting snapToGeometry="true" gridEnabled="true" gridSpacing="15,15" gridOrigin="0,0" rulerUnit="pixel" gridVisibility="false">
+    <leftRuler/>
+    <topRuler/>
+  </boardSetting>
+  <classDiagramPreferences xsi:type="editmodel:UMLClassDiagramPreference" showPopupBars="true" showConnectionHandles="true" attributeSorter="Natural" methodSorter="Natural" showClassStereotype="true" showPackageStereotype="true" showDependencyStereotype="true" showInterfaceStereotype="true" innerClassSorter="Natural" showPublicAttributes="true" showPackageAttributes="true" showStaticAttributes="true" showPublicMethods="true" showPackageMethods="true" showStaticMethods="true" showPublicInnerClasses="true" showPackageInnerClasses="true" showStaticInnerClasses="true" packageIndication="3" showAttributeProperty="true"/>
+</editmodel:ClassDiagramEditModel>

@@ -1,0 +1,492 @@
+/* OneBoolRelData.java 
+ * 
+ * Copyright (C) 2009 Aalborg University
+ *
+ * contact:
+ * jaeger@cs.aau.dk   http://www.cs.aau.dk/~jaeger/Primula.html
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
+
+package RBNpackage;
+
+import java.util.*;
+
+import mymath.MyMathOps;
+import RBNutilities.IntArrayComparator;
+import RBNutilities.rbnutilities;
+import org.dom4j.Element;
+
+/** 
+ * Instantiation of OneRelData for Boolean relations
+ * 
+ * @author jaeger
+ *
+ */
+public class OneBoolRelData extends OneRelData {
+
+	/**
+	 * @uml.property  name="rel"
+	 * @uml.associationEnd  
+	 */
+	public BoolRel rel;
+	/**
+	 * The default value for atoms of this relation: 'false' or '?'
+	 * @uml.property  name="defaultval"
+	 */
+	 public String defaultval;
+
+	/**
+	 * Vector of int[]; elements are maintained in lexical order: 001 < 010 < 020 etc.
+	 * @uml.property  name="trueAtoms"
+	 * @uml.associationEnd  multiplicity="(0 -1)" elementType="[I"
+	 */
+	 private TreeSet<int[]> trueAtoms;  
+	/**
+	 * @uml.property  name="falseAtoms"
+	 * @uml.associationEnd  multiplicity="(0 -1)" elementType="[I"
+	 */
+	 private TreeSet<int[]> falseAtoms; 
+	/* For relations of arity 0 (globals): r()=true is
+	 * represented by trueAtoms = ([0]) , falseAtoms = ();
+	 * r() = false is represented by trueAtoms = (), falseAtoms = ([0])
+	 * r() uninstantiated is represented by trueAtoms = (), falseAtoms = ()
+	 */
+
+	OneBoolRelData()
+	{
+	}
+
+	public OneBoolRelData(BoolRel r, String dv)
+	{
+		rel = r;
+		defaultval = dv;
+		trueAtoms = new TreeSet<int[]>(new IntArrayComparator());
+		falseAtoms = new TreeSet<int[]>(new IntArrayComparator());
+	}
+
+	public OneBoolRelData(BoolRel r, String dv, TreeSet<int[]> tats, TreeSet<int[]> fats){
+		rel = r;
+		defaultval = dv;
+		trueAtoms = tats;
+		falseAtoms = fats;
+	}
+	
+	public OneBoolRelData copy(){
+
+		OneBoolRelData result = new OneBoolRelData(this.rel(),this.dv());
+
+		for (Iterator<int[]> it = this.trueAtoms.iterator();it.hasNext();)
+			result.trueAtoms.add(rbnutilities.clonearray(it.next()));
+		for (Iterator<int[]> it = this.falseAtoms.iterator();it.hasNext();)
+			result.falseAtoms.add(rbnutilities.clonearray(it.next()));
+		return result;
+	}
+	
+	
+	/* Returns 1 if this global relation was not already set to
+	 * tv; 0 else;
+	 */
+	int setGlobal(boolean tv){
+		int result = 0;
+		if (rel.arity != 0){
+			throw new RuntimeException("setGlobal applied to relation of arity >0");
+		}
+		if (tv){
+			if (trueAtoms.size()==0){
+				falseAtoms = new TreeSet<int[]>(new IntArrayComparator());
+				trueAtoms.add(new int[1]);
+				result = 1;
+			}
+		}
+		else {
+			if (falseAtoms.size()==0){
+				trueAtoms = new TreeSet<int[]>(new IntArrayComparator());
+				falseAtoms.add(new int[1]);
+				result = 1;
+			}			
+
+		}
+		return result;
+	}
+
+	void add(OneBoolRelData obrd){
+		if (! this.rel().equals(obrd.rel()))
+			System.out.println("Warning: adding incompatible relation data in OneNumRelData");
+		
+		Vector<int[]> obrdalltrue = obrd.allTrue();
+		for (Iterator<int[]> i = obrdalltrue.iterator(); i.hasNext();)
+			add(i.next(),true);
+
+
+		if (!this.defaultval.equals("false")){
+			Vector<int[]> obrdallfalse = obrd.allFalse(null);
+			for (Iterator<int[]> i = obrdallfalse.iterator(); i.hasNext();)
+				add(i.next(),false);
+		}
+
+	}
+
+	void add(int[][] tuples, boolean tv){
+		for (int i=0;i<tuples.length;i++){
+			add(tuples[i],tv);
+		}
+	}
+
+	/* adds tuple; 
+	 * Returns -1 if tuple was already there, otherwise 1
+	 */
+	public int add(int[] tuple, boolean tv)
+	{
+		delete(tuple,!tv);
+		TreeSet<int[]> atoms;
+		if (tv) atoms = trueAtoms;
+		else atoms = falseAtoms;
+		if (atoms.contains(tuple))
+			return -1;
+		else {
+			atoms.add(tuple);
+			return 1;
+		}
+	}
+
+
+	/** Returns all the atoms instantiated to true as 
+	 * a vector of int[]. Objects are represented by
+	 * their internal index
+	 * 
+	 * NOTE: calling classes should be modified so that this can 
+	 * be returned as 
+	 * the TreeSet
+	 */ 
+	public Vector<int[]> allTrue(){
+		Vector<int[]> result = new Vector<int[]>();
+		for (Iterator<int[]> it = trueAtoms.iterator();it.hasNext();){
+			result.add(it.next());
+		}
+		return result;
+	}
+
+	public Vector<String[]> allTrue(RelStruc A){
+		Vector<String[]> result = new Vector<String[]>();
+		for (Iterator<int[]> it = trueAtoms.iterator();it.hasNext();){
+			result.add(A.namesAtAsArray(it.next()));
+		}
+		return result;
+	}
+
+	public int numtrue(){
+		return trueAtoms.size();
+	}
+
+	public int numfalse(){
+		return falseAtoms.size();
+	}
+
+	/** Returns all the atoms instantiated to false as 
+	 * a vector of int[]. Objects are represented by
+	 * their internal index
+	 * 
+	 * For the case that the defaultvalue of this relation is "false",
+	 * one needs to supply as argument the input structure
+	 */ 
+	public Vector<int[]> allFalse(RelStruc rs){
+		Vector<int[]> result = new Vector<int[]>();
+		if (defaultval.equals("?"))
+		for (Iterator<int[]> it = falseAtoms.iterator();it.hasNext();){
+			result.add(it.next());
+		}
+		else { // defaultval = "false"
+			if (rs != null){
+				Vector<int[]> elementsForCoordinate = new Vector<int[]>();
+				Type[] types = rel.getTypes();
+				for (int i=0;i<rel.arity;i++){
+					elementsForCoordinate.add( rbnutilities.intArrVecToArr(rs.allTrue(types[i])));
+				}
+
+				int[][] candidatetuples = rbnutilities.cartesProd(elementsForCoordinate);
+				int[] nextatom;
+				for (int i=0;i< candidatetuples.length ;i++){
+					nextatom = candidatetuples[i];
+					if (!trueAtoms.contains(nextatom))
+						result.add(nextatom);
+				}
+			}
+			else // rs == null
+				System.out.println("Warning: trying to compute allFalse for relation with default 'false' without RelStruc. Returning empty result.");
+		}
+		return result;
+	}
+
+	/** Returns all the atoms which are not instantiated
+	 * to either true or false. d is the domainsize, i.e.
+	 * the maximal index of an object to be considered.
+	 */
+	public Vector<int[]>  allUnInstantiated(int d){
+		Vector<int[]>  result = new Vector<int[]> ();
+		int[] nextatom;
+		for (int i=0;i< MyMathOps.intPow(d,rel.getArity());i++){
+			nextatom = rbnutilities.indexToTuple(i,rel.getArity(),d);
+			if (!trueAtoms.contains(nextatom) && !falseAtoms.contains(nextatom))
+				result.add(nextatom);
+		}
+		return result;
+	}
+
+	/** Returns all the atoms instantiated to true as 
+	 * a vector of strings. Objects are represented by
+	 * their name in structure A
+	 */ 
+	public Vector<String> allTrueAtoms(RelStruc A){
+		Vector<String>  result = new Vector<String> ();
+		for (Iterator<int[]> it = trueAtoms.iterator();it.hasNext();){
+			result.add(A.namesAt(it.next()));
+		}
+		return result;
+	}
+
+	/** Returns all the atoms instantiated to false as 
+	 * a vector of strings. Objects are represented by
+	 * their name in structure A
+	 */ 
+//	public Vector<String>  allFalse(RelStruc A){
+//		Vector<String>  result = new Vector<String> ();
+//		for (Iterator<int[]> it = falseAtoms.iterator();it.hasNext();){
+//			result.add(A.namesAt(it.next()));
+//		}
+//		return result;
+//	}
+
+	/** Delete all atoms containing a 
+	 * @param a
+	 */
+	public void delete(int a){
+		int[] nextatom;
+		Vector<int[]> atomsforremoval = new Vector<int[]>();
+
+		for (Iterator<int[]> it = trueAtoms.iterator();it.hasNext();){
+			nextatom = it.next();
+			if (rbnutilities.inArray(nextatom,a)) //it.remove();
+				atomsforremoval.add(nextatom);
+				
+			
+		}
+		for (Iterator<int[]> it = falseAtoms.iterator();it.hasNext();){
+			nextatom = it.next();
+			if (rbnutilities.inArray(nextatom,a))
+				it.remove();
+		}
+		
+		
+		for(int i=0;i<atomsforremoval.size();i++){
+			trueAtoms.remove(atomsforremoval.elementAt(i));
+		}
+		
+	}
+
+	public void delete(int[] tuple,boolean tv)
+	{
+		TreeSet<int[]> atoms;
+		if (tv) atoms = trueAtoms;
+		else atoms = falseAtoms;
+		atoms.remove(tuple);
+	}
+
+
+	public void delete(int[][] tuples,boolean tv)
+	{
+		TreeSet<int[]> atoms;
+		if (tv) atoms = trueAtoms;
+		else atoms = falseAtoms;
+		for (int i=0;i<tuples.length;i++)
+			atoms.remove(tuples[i]);
+	}
+
+
+	public BoolRel rel(){
+		return rel;
+	}
+
+	public String dv(){
+		return defaultval;
+	}
+
+	public void setDV(String newdv){
+		defaultval = newdv;
+		if (newdv.equals("false"))
+				falseAtoms = new TreeSet<int[]>(new IntArrayComparator());
+	}
+
+	public String printAsString(RelStruc A, String pref){
+		/* pref is a string prefixed to every result line
+		 * used for example to prefix the gnuplot comment symbol
+		 * when result is written into a logfile used for plotting
+		 */
+		String result = "";
+		for (Iterator<int[]> it = trueAtoms.iterator();it.hasNext();){
+			result = result + pref +  rel.name.name
+			+ A.namesAt(it.next())+ " = true"
+			+ '\n';
+		}
+		for (Iterator<int[]> it = falseAtoms.iterator();it.hasNext();){
+			result = result + pref +  rel.name.name
+			+ A.namesAt(it.next())+ " = false"
+			+ '\n';
+		}
+		return result;
+	}
+
+	int truthValueOf(int[] tuple)
+	{
+		if (rel.arity ==0){
+			if (trueAtoms.size() > 0)
+				return 1;
+			if (falseAtoms.size() >0)
+				return 0;
+			return -1;
+		}
+		else {
+			int result = -1;
+			if (trueAtoms.contains(tuple))
+				result = 1;
+			if (falseAtoms.contains(tuple))
+				result = 0;
+			if (result == -1 && defaultval.equals("false"))
+				result =0;
+			return result;
+		}
+	}
+
+//	public double valueOf(int[] tuple){
+//		return (double)truthValueOf(tuple);
+//	}
+	
+	public boolean isEmpty(){
+		if (trueAtoms.size()>0 || falseAtoms.size()>0) return false;
+		else return true;
+	}
+
+	/**Returns the binary tuples from the specified node to some other node
+	 *This method is usable ONLY with binary relations
+	 */
+	public Vector<int[]> getBinDirs(int node){
+		Vector<int[]> hits = new Vector<int[]>();
+		for (Iterator<int[]> it = trueAtoms.iterator();it.hasNext();){
+			int[] temp = it.next();
+			if(temp[0] == node)
+				hits.addElement(temp);
+		}
+		return hits;
+	}
+
+	public void addRelData(Element el, RelStruc struc){
+		for (Iterator<int[]> it = trueAtoms.iterator();it.hasNext();){
+			Element dl = el.addElement("d");
+			dl.addAttribute("rel", rel.name.name);
+			if (rel.arity > 0)
+				dl.addAttribute("args", struc.namesAt(it.next()));
+			else
+				{
+				dl.addAttribute("args", "()");
+				it.next();
+				}
+			dl.addAttribute("val", "true");
+		}
+		if (defaultval != "false"){
+			for (Iterator<int[]> it = falseAtoms.iterator();it.hasNext();){
+				Element dl = el.addElement("d");
+				dl.addAttribute("rel", rel.name.name);
+				if (rel.arity > 0)
+					dl.addAttribute("args", struc.namesAt(it.next()));
+				else
+					{dl.addAttribute("args", "()");
+					it.next();
+					}
+				dl.addAttribute("val", "false");
+			}
+		}
+
+	}
+
+	/**
+	 * Replaces all arguments b of trueAtoms and falseAtoms lists
+	 * by b-1 if b>a (needed after the deletion of node with index a from
+	 * the underlying SparseRelStruc)
+	 * @param a
+	 */
+	public void shiftArgs(int a){
+		int[] currtuple;
+		int[] oldcurrtuple;
+		Vector<int[]> tuplesforremoval = new Vector<int[]>();
+		Vector<int[]> tuplesforinsertion = new Vector<int[]>();
+		for (Iterator<int[]> it = trueAtoms.iterator();it.hasNext();){
+			currtuple = it.next();
+			oldcurrtuple = (int[])currtuple.clone();
+			rbnutilities.arrayShiftArgs(currtuple,a);
+			
+			if(rbnutilities.arrayCompare(oldcurrtuple, currtuple) !=0){
+				tuplesforremoval.add(oldcurrtuple);
+				tuplesforinsertion.add(currtuple);	
+			}
+		}
+		for(int i=0;i <tuplesforremoval.size();i++ ){
+			trueAtoms.remove(tuplesforremoval.elementAt(i));
+		}
+		for(int i=0;i <tuplesforinsertion.size();i++ ){
+			trueAtoms.add(tuplesforinsertion.elementAt(i));
+		}
+
+		/*
+		for (Iterator<int[]> it = falseAtoms.iterator();it.hasNext();){
+			currtuple = it.next();
+			oldcurrtuple = (int[])currtuple.clone();
+			rbnutilities.arrayShiftArgs(currtuple,a);
+			if(rbnutilities.arrayCompare(oldcurrtuple, currtuple) !=0){
+				tuplesforremoval.add(oldcurrtuple);
+				tuplesforinsertion.add(currtuple);	
+			}
+		}
+		*/
+		/*
+		for(int i=0;i <tuplesforremoval.size();i++ ){
+			falseAtoms.remove(tuplesforremoval.elementAt(i));
+		}
+		for(int i=0;i <tuplesforinsertion.size();i++ ){
+			falseAtoms.add(tuplesforinsertion.elementAt(i));
+		}
+		*/
+	}
+	
+	 public OneBoolRelData subSample(int pc, RelStruc rs){
+		 if (this.defaultval.equals("false")){
+			 	int[] nexttup;
+			 	double rand;
+			 	TreeSet<int[]> newFalseAtoms = new TreeSet<int[]>(new IntArrayComparator());
+			 	Vector<int[]> falseats = this.allFalse(rs);
+			 	
+			 	for (Iterator <int[]> it = falseats.iterator(); it.hasNext(); ){
+			 		nexttup = it.next();
+			 		rand = Math.random();
+			 		if (rand < ((double)pc)/100){
+			 			newFalseAtoms.add(nexttup);
+			 			System.out.println("adding " + rbnutilities.arrayToString(nexttup));
+			 		}
+			 	}
+			 	return new OneBoolRelData(this.rel, "?", this.trueAtoms, newFalseAtoms);
+		 }
+		 else return this;
+	 }
+
+}

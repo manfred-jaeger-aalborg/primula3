@@ -1,0 +1,145 @@
+@layer_0_0([node]v)= blue(v);
+@layer_0_1([node]v)= green(v);
+@layer_0_2([node]v)= red(v);
+@layer_0_3([node]v)= yellow(v);
+@layer_0_4([node]v)= purple(v);
+
+@read_0_0() = COMBINE @layer_0_0(w) 
+	 WITH sum 
+	 FORALL w 
+	 WHERE node(w);
+	 
+@read_0_1() = COMBINE @layer_0_1(w) 
+	 WITH sum 
+	 FORALL w 
+	 WHERE node(w);
+	 
+@read_0_2() = COMBINE @layer_0_2(w) 
+	 WITH sum 
+	 FORALL w 
+	 WHERE node(w);
+	 
+@read_0_3() = COMBINE @layer_0_3(w) 
+	 WITH sum 
+	 FORALL w 
+	 WHERE node(w);
+	 
+@read_0_4() = COMBINE @layer_0_4(w) 
+	 WITH sum 
+	 FORALL w 
+	 WHERE node(w); 
+
+@agg_0_0([node]v) = COMBINE @layer_0_0(w) 
+	 WITH sum 
+	 FORALL w 
+	 WHERE (edge(v,w)|edge(w,v));
+	 
+@agg_0_1([node]v) = COMBINE @layer_0_1(w) 
+	 WITH sum 
+	 FORALL w 
+	 WHERE (edge(v,w)|edge(w,v));
+	 
+@agg_0_2([node]v) = COMBINE @layer_0_2(w) 
+	 WITH sum 
+	 FORALL w 
+	 WHERE (edge(v,w)|edge(w,v));
+	 
+@agg_0_3([node]v) = COMBINE @layer_0_3(w) 
+	 WITH sum 
+	 FORALL w 
+	 WHERE (edge(v,w)|edge(w,v));
+	 
+@agg_0_4([node]v) = COMBINE @layer_0_4(w) 
+	 WITH sum 
+	 FORALL w 
+	 WHERE (edge(v,w)|edge(w,v)); 
+
+@layer_1_0([node]v)= COMBINE 
+	 ($c_1_0_0*@layer_0_0(v)), 
+	 ($c_1_0_1*@layer_0_1(v)), 
+	 ($c_1_0_2*@layer_0_2(v)), 
+	 ($c_1_0_3*@layer_0_3(v)), 
+	 ($c_1_0_4*@layer_0_4(v)), 
+	 ($A_1_0_0*@agg_0_0(v)), 
+	 ($A_1_0_1*@agg_0_1(v)), 
+	 ($A_1_0_2*@agg_0_2(v)), 
+	 ($A_1_0_3*@agg_0_3(v)), 
+	 ($A_1_0_4*@agg_0_4(v)), 
+	 ($R_1_0_0*@read_0_0()), 
+	 ($R_1_0_1*@read_0_1()), 
+	 ($R_1_0_2*@read_0_2()), 
+	 ($R_1_0_3*@read_0_3()), 
+	 ($R_1_0_4*@read_0_4()), 
+	 $b_1_0
+	 WITH l-reg 
+	 FORALL;
+
+@layer_1_1([node]v)= COMBINE 
+	 ($c_1_1_0*@layer_0_0(v)), 
+	 ($c_1_1_1*@layer_0_1(v)), 
+	 ($c_1_1_2*@layer_0_2(v)), 
+	 ($c_1_1_3*@layer_0_3(v)), 
+	 ($c_1_1_4*@layer_0_4(v)), 
+	 ($A_1_1_0*@agg_0_0(v)), 
+	 ($A_1_1_1*@agg_0_1(v)), 
+	 ($A_1_1_2*@agg_0_2(v)), 
+	 ($A_1_1_3*@agg_0_3(v)), 
+	 ($A_1_1_4*@agg_0_4(v)), 
+	 ($R_1_1_0*@read_0_0()), 
+	 ($R_1_1_1*@read_0_1()), 
+	 ($R_1_1_2*@read_0_2()), 
+	 ($R_1_1_3*@read_0_3()), 
+	 ($R_1_1_4*@read_0_4()), 
+	 $b_1_1
+	 WITH l-reg 
+	 FORALL;
+
+@layer_1_2([node]v)= COMBINE 
+	 ($c_1_2_0*@layer_0_0(v)), 
+	 ($c_1_2_1*@layer_0_1(v)), 
+	 ($c_1_2_2*@layer_0_2(v)), 
+	 ($c_1_2_3*@layer_0_3(v)), 
+	 ($c_1_2_4*@layer_0_4(v)), 
+	 ($A_1_2_0*@agg_0_0(v)), 
+	 ($A_1_2_1*@agg_0_1(v)), 
+	 ($A_1_2_2*@agg_0_2(v)), 
+	 ($A_1_2_3*@agg_0_3(v)), 
+	 ($A_1_2_4*@agg_0_4(v)), 
+	 ($R_1_2_0*@read_0_0()), 
+	 ($R_1_2_1*@read_0_1()), 
+	 ($R_1_2_2*@read_0_2()), 
+	 ($R_1_2_3*@read_0_3()), 
+	 ($R_1_2_4*@read_0_4()), 
+	 $b_1_2
+	 WITH l-reg 
+	 FORALL;
+
+@layer_1_3([node]v)= COMBINE 
+	 ($c_1_3_0*@layer_0_0(v)), 
+	 ($c_1_3_1*@layer_0_1(v)), 
+	 ($c_1_3_2*@layer_0_2(v)), 
+	 ($c_1_3_3*@layer_0_3(v)), 
+	 ($c_1_3_4*@layer_0_4(v)), 
+	 ($A_1_3_0*@agg_0_0(v)), 
+	 ($A_1_3_1*@agg_0_1(v)), 
+	 ($A_1_3_2*@agg_0_2(v)), 
+	 ($A_1_3_3*@agg_0_3(v)), 
+	 ($A_1_3_4*@agg_0_4(v)), 
+	 ($R_1_3_0*@read_0_0()), 
+	 ($R_1_3_1*@read_0_1()), 
+	 ($R_1_3_2*@read_0_2()), 
+	 ($R_1_3_3*@read_0_3()), 
+	 ($R_1_3_4*@read_0_4()), 
+	 $b_1_3
+	 WITH l-reg 
+	 FORALL;
+
+alpha1([node]v)= COMBINE 
+	 ($w_0*@layer_1_0(v)), 
+	 ($w_1*@layer_1_1(v)), 
+	 ($w_2*@layer_1_2(v)), 
+	 ($w_3*@layer_1_3(v)), 
+	 $w_5
+	 WITH l-reg 
+	 FORALL ;
+

@@ -1,0 +1,119 @@
+package RBNpackage;
+
+import java.util.Hashtable;
+import java.util.Vector;
+
+import RBNExceptions.RBNCompatibilityException;
+
+/* represents 'false' if sign=true, else represents
+ * 'true'
+ */
+public class ProbFormBoolConstant extends ProbFormBool {
+
+
+	
+	public ProbFormBoolConstant(boolean sig){
+		sign = sig;
+	}
+	
+	@Override
+	public String asString(int syntax, int depth, RelStruc A) {
+		if (sign)
+			return "true";
+		else
+			return "false";
+	}
+
+	@Override
+	public ProbForm conditionEvidence(RelStruc A, OneStrucData inst)
+			throws RBNCompatibilityException {
+		return new ProbFormBoolConstant(sign);
+	}
+
+	@Override
+	public double evaluate(RelStruc A, OneStrucData inst, String[] vars,
+			int[] tuple, boolean useCurrentCvals, String[] numrelparameters,
+			boolean useCurrentPvals) throws RBNCompatibilityException {
+		if (sign)
+			return 1;
+		else
+			return 0;
+	}
+
+	public double value(){
+		if (sign)
+			return 1;
+		else
+			return 0;
+	}
+	
+	@Override
+	public double evalSample(RelStruc A, Hashtable atomhasht,
+			OneStrucData inst, long[] timers) throws RBNCompatibilityException {
+		if (sign)
+			return 1;
+		else
+			return 0;
+	}
+
+	@Override
+	public int evaluatesTo(RelStruc A, OneStrucData inst,
+			boolean usesampleinst, Hashtable atomhasht)
+			throws RBNCompatibilityException {
+		if (sign)
+			return 1;
+		else
+			return 0;
+	}
+
+	@Override
+	public int evaluatesTo(RelStruc A) throws RBNCompatibilityException {
+		if (sign)
+			return 1;
+		else
+			return 0;	
+	}
+
+	@Override
+	public String[] freevars() {
+		return new String[0];
+	}
+
+	@Override
+	public Vector<Atom> makeParentVec(RelStruc A)
+			throws RBNCompatibilityException {
+		return new Vector<Atom>();
+	}
+
+	@Override
+	public Vector<Atom> makeParentVec(RelStruc A, OneStrucData inst)
+			throws RBNCompatibilityException {
+		return new Vector<Atom>();
+	}
+
+
+	@Override
+	public ProbForm sEval(RelStruc A) throws RBNCompatibilityException {
+		return new ProbFormBoolConstant(sign);
+	}
+
+	@Override
+	public ProbForm substitute(String[] vars, int[] args) {
+		return new ProbFormBoolConstant(sign);
+	}
+
+	@Override
+	public ProbForm substitute(String[] vars, String[] args) {
+		return new ProbFormBoolConstant(sign);
+	}
+
+	public ProbForm toStandardPF(boolean recursive)  {
+		double value = 0;
+		if (sign) value =1;
+		return new ProbFormConstant(value);
+	}
+	
+	public ProbFormBoolConstant clone(){
+		return new ProbFormBoolConstant(sign);
+	}
+}

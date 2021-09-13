@@ -1,0 +1,458 @@
+alpha1([node]v)=
+l-reg{
+      prod{
+          15.637568497099497,
+          l-reg{
+                prod{
+                    6.776652749049236,
+                    blue(v)
+                    | : true
+                   },
+                prod{
+                    6.779787801050813,
+                    green(v)
+                    | : true
+                   },
+                prod{
+                    6.77820721159117,
+                    red(v)
+                    | : true
+                   },
+                prod{
+                    6.782874030394491,
+                    yellow(v)
+                    | : true
+                   },
+                prod{
+                    6.7794504343195,
+                    purple(v)
+                    | : true
+                   },
+                prod{
+                    2.1288989206911095,
+                    sum{
+                        blue(v1)
+                        |v1 : (edge(v,v1)|edge(v1,v))
+                       }
+                    | : true
+                   },
+                prod{
+                    0.017780346984065123,
+                    sum{
+                        green(v1)
+                        |v1 : (edge(v,v1)|edge(v1,v))
+                       }
+                    | : true
+                   },
+                prod{
+                    0.012868103555649438,
+                    sum{
+                        red(v1)
+                        |v1 : (edge(v,v1)|edge(v1,v))
+                       }
+                    | : true
+                   },
+                prod{
+                    0.018142615789014153,
+                    sum{
+                        yellow(v1)
+                        |v1 : (edge(v,v1)|edge(v1,v))
+                       }
+                    | : true
+                   },
+                prod{
+                    0.011815486057536786,
+                    sum{
+                        purple(v1)
+                        |v1 : (edge(v,v1)|edge(v1,v))
+                       }
+                    | : true
+                   },
+                prod{
+                    -1.9900602659823652,
+                    sum{
+                        blue(v1)
+                        |v1 : node(v1)
+                       }
+                    | : true
+                   },
+                prod{
+                    0.057385215041379216,
+                    sum{
+                        green(v1)
+                        |v1 : node(v1)
+                       }
+                    | : true
+                   },
+                prod{
+                    0.058102006469629014,
+                    sum{
+                        red(v1)
+                        |v1 : node(v1)
+                       }
+                    | : true
+                   },
+                prod{
+                    0.06306719047188351,
+                    sum{
+                        yellow(v1)
+                        |v1 : node(v1)
+                       }
+                    | : true
+                   },
+                prod{
+                    0.06049374615808924,
+                    sum{
+                        purple(v1)
+                        |v1 : node(v1)
+                       }
+                    | : true
+                   },
+                11.25109928249449
+                | : true
+               }
+          | : true
+         },
+      prod{
+          -0.11807602667986783,
+          l-reg{
+                prod{
+                    -0.3048543614277815,
+                    blue(v)
+                    | : true
+                   },
+                prod{
+                    -0.573151486191495,
+                    green(v)
+                    | : true
+                   },
+                prod{
+                    -1.229162698979552,
+                    red(v)
+                    | : true
+                   },
+                prod{
+                    -0.23777829828294075,
+                    yellow(v)
+                    | : true
+                   },
+                prod{
+                    0.4856383913144509,
+                    purple(v)
+                    | : true
+                   },
+                prod{
+                    0.15207538687534486,
+                    sum{
+                        blue(v1)
+                        |v1 : (edge(v,v1)|edge(v1,v))
+                       }
+                    | : true
+                   },
+                prod{
+                    -0.4608952494398178,
+                    sum{
+                        green(v1)
+                        |v1 : (edge(v,v1)|edge(v1,v))
+                       }
+                    | : true
+                   },
+                prod{
+                    -0.593056344683933,
+                    sum{
+                        red(v1)
+                        |v1 : (edge(v,v1)|edge(v1,v))
+                       }
+                    | : true
+                   },
+                prod{
+                    -0.8939238472487857,
+                    sum{
+                        yellow(v1)
+                        |v1 : (edge(v,v1)|edge(v1,v))
+                       }
+                    | : true
+                   },
+                prod{
+                    0.05675695043713429,
+                    sum{
+                        purple(v1)
+                        |v1 : (edge(v,v1)|edge(v1,v))
+                       }
+                    | : true
+                   },
+                prod{
+                    -0.7748527999819933,
+                    sum{
+                        blue(v1)
+                        |v1 : node(v1)
+                       }
+                    | : true
+                   },
+                prod{
+                    0.579413537801269,
+                    sum{
+                        green(v1)
+                        |v1 : node(v1)
+                       }
+                    | : true
+                   },
+                prod{
+                    -0.6676869815261728,
+                    sum{
+                        red(v1)
+                        |v1 : node(v1)
+                       }
+                    | : true
+                   },
+                prod{
+                    -1.060976681880268,
+                    sum{
+                        yellow(v1)
+                        |v1 : node(v1)
+                       }
+                    | : true
+                   },
+                prod{
+                    0.5142573793100103,
+                    sum{
+                        purple(v1)
+                        |v1 : node(v1)
+                       }
+                    | : true
+                   },
+                -0.2703702331958308
+                | : true
+               }
+          | : true
+         },
+      prod{
+          -11.35513462772455,
+          l-reg{
+                prod{
+                    5.7380422784232135,
+                    blue(v)
+                    | : true
+                   },
+                prod{
+                    5.776642410155325,
+                    green(v)
+                    | : true
+                   },
+                prod{
+                    5.751822476076581,
+                    red(v)
+                    | : true
+                   },
+                prod{
+                    5.759591674539508,
+                    yellow(v)
+                    | : true
+                   },
+                prod{
+                    5.747490490917429,
+                    purple(v)
+                    | : true
+                   },
+                prod{
+                    2.304864010880712,
+                    sum{
+                        blue(v1)
+                        |v1 : (edge(v,v1)|edge(v1,v))
+                       }
+                    | : true
+                   },
+                prod{
+                    0.020306024266606403,
+                    sum{
+                        green(v1)
+                        |v1 : (edge(v,v1)|edge(v1,v))
+                       }
+                    | : true
+                   },
+                prod{
+                    0.015847405798621796,
+                    sum{
+                        red(v1)
+                        |v1 : (edge(v,v1)|edge(v1,v))
+                       }
+                    | : true
+                   },
+                prod{
+                    0.020877250356214766,
+                    sum{
+                        yellow(v1)
+                        |v1 : (edge(v,v1)|edge(v1,v))
+                       }
+                    | : true
+                   },
+                prod{
+                    0.02322982454208854,
+                    sum{
+                        purple(v1)
+                        |v1 : (edge(v,v1)|edge(v1,v))
+                       }
+                    | : true
+                   },
+                prod{
+                    -2.2088102252204926,
+                    sum{
+                        blue(v1)
+                        |v1 : node(v1)
+                       }
+                    | : true
+                   },
+                prod{
+                    0.05391783057806791,
+                    sum{
+                        green(v1)
+                        |v1 : node(v1)
+                       }
+                    | : true
+                   },
+                prod{
+                    0.056789925892257245,
+                    sum{
+                        red(v1)
+                        |v1 : node(v1)
+                       }
+                    | : true
+                   },
+                prod{
+                    0.05266773799123632,
+                    sum{
+                        yellow(v1)
+                        |v1 : node(v1)
+                       }
+                    | : true
+                   },
+                prod{
+                    0.05236997313792982,
+                    sum{
+                        purple(v1)
+                        |v1 : node(v1)
+                       }
+                    | : true
+                   },
+                7.844426139657059
+                | : true
+               }
+          | : true
+         },
+      prod{
+          -10.850766098940246,
+          l-reg{
+                prod{
+                    6.711521549949641,
+                    blue(v)
+                    | : true
+                   },
+                prod{
+                    6.7324885268444925,
+                    green(v)
+                    | : true
+                   },
+                prod{
+                    6.7083755872529505,
+                    red(v)
+                    | : true
+                   },
+                prod{
+                    6.713963853007689,
+                    yellow(v)
+                    | : true
+                   },
+                prod{
+                    6.70396811147558,
+                    purple(v)
+                    | : true
+                   },
+                prod{
+                    3.06398571165494,
+                    sum{
+                        blue(v1)
+                        |v1 : (edge(v,v1)|edge(v1,v))
+                       }
+                    | : true
+                   },
+                prod{
+                    0.024854668320026786,
+                    sum{
+                        green(v1)
+                        |v1 : (edge(v,v1)|edge(v1,v))
+                       }
+                    | : true
+                   },
+                prod{
+                    0.017770027815604866,
+                    sum{
+                        red(v1)
+                        |v1 : (edge(v,v1)|edge(v1,v))
+                       }
+                    | : true
+                   },
+                prod{
+                    0.026814596843902312,
+                    sum{
+                        yellow(v1)
+                        |v1 : (edge(v,v1)|edge(v1,v))
+                       }
+                    | : true
+                   },
+                prod{
+                    0.027926314197510453,
+                    sum{
+                        purple(v1)
+                        |v1 : (edge(v,v1)|edge(v1,v))
+                       }
+                    | : true
+                   },
+                prod{
+                    -2.9160226904223494,
+                    sum{
+                        blue(v1)
+                        |v1 : node(v1)
+                       }
+                    | : true
+                   },
+                prod{
+                    0.09102711448960515,
+                    sum{
+                        green(v1)
+                        |v1 : node(v1)
+                       }
+                    | : true
+                   },
+                prod{
+                    0.09421615261523114,
+                    sum{
+                        red(v1)
+                        |v1 : node(v1)
+                       }
+                    | : true
+                   },
+                prod{
+                    0.08837050482547314,
+                    sum{
+                        yellow(v1)
+                        |v1 : node(v1)
+                       }
+                    | : true
+                   },
+                prod{
+                    0.09047041886042222,
+                    sum{
+                        purple(v1)
+                        |v1 : node(v1)
+                       }
+                    | : true
+                   },
+                10.849506311229971
+                | : true
+               }
+          | : true
+         },
+      -6.524515357708326
+      | : true
+     };
+
