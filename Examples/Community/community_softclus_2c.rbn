@@ -1,0 +1,12 @@
+
+
+
+@linkfordifferent([Node]n1,[Node]n2)= COMBINE ((c1(n1)*c1(n2))+(c2(n1)*c2(n2))+alpha())
+				      WITH l-reg
+				      FORALL;
+
+
+link([Node]n1,[Node]n2)= WIF n1=n2
+			 THEN 0
+			 ELSE @linkfordifferent(n1,n2);
+
