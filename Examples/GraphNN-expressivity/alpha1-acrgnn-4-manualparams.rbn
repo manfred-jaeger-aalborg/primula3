@@ -1,0 +1,99 @@
+
+@layer_0_0([node]v)= blue(v);
+@layer_0_1([node]v)= yellow(v);
+@layer_0_2([node]v)= green(v);
+@layer_0_3([node]v)= red(v);
+@layer_0_4([node]v)= purple(v);
+
+% total no. of blue
+@read_0_0() = COMBINE @layer_0_0(w) 
+	 WITH sum 
+	 FORALL w 
+	 WHERE node(w); 
+@read_0_1() = COMBINE @layer_0_1(w) 
+	 WITH sum 
+	 FORALL w 
+	 WHERE node(w); 
+@read_0_2() = COMBINE @layer_0_2(w) 
+	 WITH sum 
+	 FORALL w 
+	 WHERE node(w); 
+@read_0_3() = COMBINE @layer_0_3(w) 
+	 WITH sum 
+	 FORALL w 
+	 WHERE node(w); 
+@read_0_4() = COMBINE @layer_0_4(w) 
+	 WITH sum 
+	 FORALL w 
+	 WHERE node(w); 
+
+% no. blue neighbors
+@agg_0_0([node]v) = COMBINE @layer_0_0(w) 
+	 WITH sum 
+	 FORALL w 
+	 WHERE (edge(v,w)|edge(w,v)); 
+@agg_0_1([node]v) = COMBINE @layer_0_1(w) 
+	 WITH sum 
+	 FORALL w 
+	 WHERE (edge(v,w)|edge(w,v)); 
+@agg_0_2([node]v) = COMBINE @layer_0_2(w) 
+	 WITH sum 
+	 FORALL w 
+	 WHERE (edge(v,w)|edge(w,v)); 
+@agg_0_3([node]v) = COMBINE @layer_0_3(w) 
+	 WITH sum 
+	 FORALL w 
+	 WHERE (edge(v,w)|edge(w,v)); 
+@agg_0_4([node]v) = COMBINE @layer_0_4(w) 
+	 WITH sum 
+	 FORALL w 
+	 WHERE (edge(v,w)|edge(w,v)); 
+
+% exists >=8 y(blue(y) & ~E(v,y))
+@layer_1_0([node]v)= COMBINE 
+	 (0*@layer_0_0(v)), 
+	 (0*@layer_0_1(v)), 
+	 (0*@layer_0_2(v)), 
+	 (0*@layer_0_3(v)), 
+	 (0*@layer_0_4(v)), 
+	 (-9.0*@agg_0_0(v)), 
+	 (0*@agg_0_1(v)), 
+	 (0*@agg_0_2(v)), 
+	 (0*@agg_0_3(v)), 
+	 (0*@agg_0_4(v)), 
+	 (9*@read_0_0()), 
+	 (0*@read_0_1()), 
+	 (0*@read_0_2()), 
+	 (0*@read_0_3()), 
+	 (0*@read_0_4()), 
+	 -69.0
+	 WITH l-reg 
+	 FORALL;
+
+@layer_1_1([node]v)= COMBINE 
+	 (0*@layer_0_0(v)), 
+	 (0*@layer_0_1(v)), 
+	 (0*@layer_0_2(v)), 
+	 (0*@layer_0_3(v)), 
+	 (0*@layer_0_4(v)), 
+	 (9*@agg_0_0(v)), 
+	 (0*@agg_0_1(v)), 
+	 (0*@agg_0_2(v)), 
+	 (0*@agg_0_3(v)), 
+	 (0*@agg_0_4(v)), 
+	 (-9*@read_0_0()), 
+	 (0*@read_0_1()), 
+	 (0*@read_0_2()), 
+	 (0*@read_0_3()), 
+	 (0*@read_0_4()), 
+	 96.0
+	 WITH l-reg 
+	 FORALL;
+
+alpha1([node]v)= COMBINE 
+	 (9*@layer_1_0(v)), 
+	 (9*@layer_1_1(v)), 
+	 -13
+	 WITH l-reg 
+	 FORALL ;
+
