@@ -11,10 +11,10 @@ public class runexperiment {
 
 	static String primulahome = System.getenv("PRIMULAHOME");
 
-	static String rbnbase = primulahome + "/Examples/Expressivity/alpha2-4-4-4";
+	static String rbnbase = primulahome + "/Examples/GraphNN/alpha2-2-1-2";
 	static String rbninputfilestring = rbnbase +".rbn";
 	
-	static String rdefinputfilestring = primulahome + "/Examples/Expressivity/GNNdata/p2/test-random-erdos-500-40-50.rdef";
+	static String rdefinputfilestring = primulahome + "/Examples/GraphNN/GNNdata/p2/test-random-erdos-500-40-50.rdef";
 
 	
 	
@@ -31,10 +31,10 @@ public class runexperiment {
 		
 		int restarts = 1;
 		int numbatches = 20; 
-		double alpha = 0.01;
+		double alpha = 0.05;
 		double beta1 = 0.9;
 		double beta2= 0.999;
-		boolean keepggs = true;
+		boolean keepggs = false;
 		int maxits = 200;
 		
 		lm.setRestarts(restarts);

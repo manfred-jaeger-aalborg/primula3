@@ -138,11 +138,12 @@ public class OneNumRelData extends OneRelData{
 			throw new RuntimeException("setGlobal applied to relation of arity >0");
 		}
 
-		if (numAtoms.containsKey("") && numAtoms.get("")==v)
+		int[] key = new int[0];
+		if (numAtoms.containsKey(key) && numAtoms.get(key)==v)
 			return 1;
 		
 		numAtoms  = new TreeMap<int[], Double>(new IntArrayComparator());
-		numAtoms.put(new int[0],v);
+		numAtoms.put(key,v);
 		
 		return -1;
 	}
@@ -544,7 +545,6 @@ public class OneNumRelData extends OneRelData{
 	}
 
 	public double valueOf(int[] key){
-		System.out.println("key: " + key);
 		for (int[] k: numAtoms.keySet())
 			System.out.println(k);
 		if (numAtoms.containsKey(key))

@@ -222,17 +222,17 @@ public class SettingsMAP extends JFrame implements ActionListener, ItemListener,
 		contentPane.add(incompleteoptions);
 		
 		samplesizetext.setText(""+infmodule.getNumChains());
-		samplesizetext.addActionListener(this);
+		samplesizetext.addKeyListener(this);
 
 		gibbsroundstext.setText(""+infmodule.getWindowSize());
-		gibbsroundstext.addActionListener(this);
+		gibbsroundstext.addKeyListener(this);
 
 
 		maxfailstext.setText(""+infmodule.getMaxFails());
-		maxfailstext.addActionListener(this);
+		maxfailstext.addKeyListener(this);
 		
 		restartstext.setText(""+infmodule.getMAPRestarts());
-		restartstext.addActionListener(this);
+		restartstext.addKeyListener(this);
 		
 		verbosecheckbox.setSelected(false);
 		verbosecheckbox.addItemListener(this);
@@ -270,7 +270,6 @@ public class SettingsMAP extends JFrame implements ActionListener, ItemListener,
 	}
 
 	public void keyReleased(KeyEvent e){
-		System.out.println("keyTyped");
 		Object source = e.getSource();	
 		if( source == samplesizetext ){
 			try{

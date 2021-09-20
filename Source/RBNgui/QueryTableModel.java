@@ -40,7 +40,7 @@ public class QueryTableModel extends AbstractTableModel{
 	 * @uml.property  name="mapdata"
 	 * @uml.associationEnd  multiplicity="(0 -1)" elementType="java.lang.String"
 	 */
-	LinkedList mapdata = new LinkedList();
+	LinkedList<String> mapdata = new LinkedList<String>();
 	
 	/**
 	 * @uml.property  name="probabilitydata"
@@ -280,5 +280,9 @@ public class QueryTableModel extends AbstractTableModel{
 			acedata.add( strProb );
 		}
 		fireTableDataChanged();
+	}
+	
+	public LinkedList<String> getMapValues() {
+		return mapdata;
 	}
 }

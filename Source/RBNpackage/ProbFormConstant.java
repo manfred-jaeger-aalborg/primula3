@@ -90,8 +90,8 @@ public class ProbFormConstant extends ProbForm
 			cval = 0.0;
 			ctype=CONSTANT_GENERAL;
 		}
-		else
-			System.out.println("Illegal identifier for rbn parameter: "+pn);
+		else // this is a constant for a numeric relation
+			ctype=CONSTANT_GENERAL;
 	}
 
 	public String[] freevars()

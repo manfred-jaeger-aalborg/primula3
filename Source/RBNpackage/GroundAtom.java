@@ -57,13 +57,20 @@ public class GroundAtom extends java.lang.Object {
      * relname(argname1,...,argnamek)
      * 
      * This is the converse of asString(RelStruc)
+     * 
+     * The last argument specifies the type of the relation 
      */
-    public GroundAtom(String atstring, RelStruc A){
+    public GroundAtom(String atstring, RelStruc A, int type){
     	int leftpar = atstring.indexOf("(");
-    	String relname = atstring.substring(0, leftpar-1);
+    	String relname = atstring.substring(0, leftpar);
     	args =  A.getIndexes(StringOps.stringToStringArray(atstring.substring(leftpar)));
     	int arity = args.length;
-    	rel = new Rel(relname,arity);	
+    	
+    	switch (type) {
+    	case Rel.BOOLEAN: rel = new BoolRel(relname,arity); break;
+    	case Rel.NUMERIC: rel = new NumRel(relname,arity); break;
+    	default: rel = new Rel(relname,arity);	
+    	} 	
     }
     
     public GroundAtom(Rel r, int[] a){

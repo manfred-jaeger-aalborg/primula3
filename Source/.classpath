@@ -6,6 +6,6 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Compiled/dom4j-2.0.3.jar"/>
+	<classpathentry kind="lib" path="/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/JAR/dom4j-2.0.3.jar"/>
 	<classpathentry kind="output" path="Compiled"/>
 </classpath>

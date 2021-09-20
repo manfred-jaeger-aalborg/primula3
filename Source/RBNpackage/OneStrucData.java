@@ -604,7 +604,7 @@ public class OneStrucData {
 		for (int i=0;i<allonebooldata.size();i++){
 			OneBoolRelData boolthisrelinst = (OneBoolRelData)allonebooldata.elementAt(i);
 
-			System.out.print(i + " " +boolthisrelinst.rel.name.name + '\n');
+			//System.out.print(i + " " +boolthisrelinst.rel.name.name + '\n');
 			boolthisrelinst.delete(a);
 			boolthisrelinst.shiftArgs(a);
 
@@ -1080,10 +1080,10 @@ public class OneStrucData {
 				for(int j=0;j<temptuples.size();j++){
 					if(rbnutilities.inArray(temptuples.elementAt(j), node)){
 						int[] tuple = temptuples.elementAt(j);
-						System.out.println(rbnutilities.arrayToString(tuple));
+						//System.out.println(rbnutilities.arrayToString(tuple));
 						v = allonenumdata.elementAt(i).valueOf(tuple);
 						result.add(v);
-						System.out.println(v);
+						//System.out.println(v);
 
 					}
 				}
@@ -1109,10 +1109,10 @@ public class OneStrucData {
 				for(int j=0;j<temptuples.size();j++){
 					if(rbnutilities.inArray(temptuples.elementAt(j), node)){
 						int[] tuple = temptuples.elementAt(j);
-						System.out.println(rbnutilities.arrayToString(tuple));
+						//System.out.println(rbnutilities.arrayToString(tuple));
 						v = allonenumdata.elementAt(i).valueOf(tuple);
 						result.add(v);
-						System.out.println(v);
+						//System.out.println(v);
 
 					}
 				}

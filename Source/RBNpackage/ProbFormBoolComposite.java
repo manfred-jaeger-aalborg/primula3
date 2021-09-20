@@ -296,6 +296,8 @@ public class ProbFormBoolComposite extends ProbFormBool {
 		 *  If recursive == true, then components are recursively cast
 		 *  as standard (non ProbFormBool) formulas   
 		 */
+		System.out.println("to standard for " + this.asString(0, 0, null, false, false));
+		
 		ProbForm[] pfargs = new ProbForm[components.length];
 		for (int i=0;i<components.length;i++){
 			if (operator==ProbFormBool.OPERATORAND){
@@ -315,10 +317,15 @@ public class ProbFormBoolComposite extends ProbFormBool {
 			}
 		}
 		ProbFormCombFunc pfcomb = new ProbFormCombFunc("n-or",pfargs,new String[0],new ProbFormBoolConstant(true));
-		if ( (sign && operator==ProbFormBool.OPERATOROR) || ( !sign && operator==ProbFormBool.OPERATORAND))
+		if ( (sign && operator==ProbFormBool.OPERATOROR) || ( !sign && operator==ProbFormBool.OPERATORAND)) {
+			System.out.println("returning  "  + pfcomb.asString(0, 0, null, false, false));
 			return pfcomb;		
-		else 
-			return new ProbFormConvComb(pfcomb,new ProbFormConstant(0),new ProbFormConstant(1));
+		}
+		else {
+			ProbFormConvComb result = new ProbFormConvComb(pfcomb,new ProbFormConstant(0),new ProbFormConstant(1));
+			System.out.println("returning  " + result.asString(0, 0, null, false, false));
+			return result;
+		}
 	}
 	
 	public ProbFormBoolComposite clone(){

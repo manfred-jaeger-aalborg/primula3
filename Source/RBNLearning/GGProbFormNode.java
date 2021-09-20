@@ -129,12 +129,22 @@ public abstract class GGProbFormNode extends GGNode{
 	{
 		gg.profiler.constructGGPFNcalls+=1;
 		
+		//System.out.println("construct ggpfn for " + pf.asString(1, 0, A, false, false));
 		
 		/* If this is not the construction of an upper ground atom node (which 
 		 * has to be inserted, no matter whether an equivalent node already exists), 
 		/* first try to find the GGProbFormNode in allnodes: */
-		//System.out.println("constructGGPFN for " + pf.asString(Primula.CLASSICSYNTAX, 0, A));
+		
 		GGProbFormNode ggn = null;
+		
+		/* Must transform ProbFormBoolAtom with negative sign so that it does not
+		 * get identified with an existing AtomNode (loosing the sign info)
+		 */
+		if ((pf instanceof ProbFormBoolAtom) && ((ProbFormBoolAtom)pf).sign()==false){
+			((ProbFormBoolAtom)pf).toggleSign();
+			pf = new ProbFormConvComb(pf,new ProbFormConstant(0), new ProbFormConstant(1));
+		}
+		
 		if (!isuga) {
 			ggn = gg.findInAllnodes(pf, inputcaseno, observcaseno, A);
 		}
@@ -164,7 +174,8 @@ public abstract class GGProbFormNode extends GGNode{
 				}
 			if ( (pf instanceof ProbFormAtom && ((ProbFormAtom)pf).getRelation().isprobabilistic() )
 					|| 
-					(pf instanceof ProbFormBoolAtom) && ((ProbFormBoolAtom)pf).getRelation().isprobabilistic()){
+					(pf instanceof ProbFormBoolAtom) && ((ProbFormBoolAtom)pf).getRelation().isprobabilistic())
+			{
 				if (gg.maxatoms() != null  && gg.maxatoms().contains(((ProbFormAtom)pf).atom()))
 					result =  new GGAtomMaxNode(gg,pf,A,I,inputcaseno,observcaseno);
 				else

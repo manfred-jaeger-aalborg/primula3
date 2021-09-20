@@ -120,12 +120,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 
 	public abstract void evaluateBounds();
 
-	/** The name of this node. The name identifies the function represented
-	 * by a node. Names are unique.
-	 */
-//	public abstract String name();
 
-//	public abstract String name(RelStruc A);
 
 	public double value(){
 		return value;

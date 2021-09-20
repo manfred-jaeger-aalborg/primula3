@@ -388,11 +388,11 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 //		datafile = null;
 		settingswindowopen = false;
 		samplesize = 1;
-		restarts = 3; /*-1 is for open-ended restarts */
+		restarts = -1; /*-1 is for open-ended restarts */
 		subsamples = 100;
 		numblocks = 1;
 		numbatches =200;
-		splitmode = RelData.SPLIT_BY_DOMAIN;
+		splitmode = RelData.SPLIT_ACROSS_DOMAINS;
 		dampingfac =0.99;
 		numchains = 2;
 		windowsize = 2;
@@ -630,18 +630,19 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 		Object source = e.getSource();
 		if(source == numrellist){
 			int index = numrellist.locationToIndex(e.getPoint());
-			if(index >= 0){;
-				if (numrellist.isSelectedIndex(index)){
-					numrellist.removeSelectionInterval(index,index);
-				}
-				else{
-					numrellist.addSelectionInterval(index,index);
-				}
-			}
+			System.out.println("current: " + StringOps.arrayToString(numrellist.getSelectedIndices(), "[", "]")  +" index: " + index);
+//			if(index >= 0){
+//				if (numrellist.isSelectedIndex(index)){
+//					System.out.println("removing");
+//					numrellist.removeSelectionInterval(index,index);
+//				}
+//				else{
+//					System.out.println("adding");
+//					numrellist.addSelectionInterval(index,index);
+//				}
+//			}
 			
-//			System.out.println("selection: " + StringOps.arrayToString(numrellist.getSelectedIndices(), "[", "]") + "   " 
-//					+ StringOps.arrayToString(getSelectedNumRels(), "[", "]"));
-			
+			System.out.println("selection: " + StringOps.arrayToString(numrellist.getSelectedIndices(), "[", "]")); 
 	
 		}
 	}

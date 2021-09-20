@@ -548,7 +548,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	 */
 	private boolean sampling;
 	
-	private boolean maprestarts;
+	//private boolean maprestarts;
 	/**
 	 * @uml.property  name="pausemcmc"
 	 */
@@ -662,7 +662,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 
 		myprimula = myprimula_param;
 		sampling = false;
-		maprestarts = false;
+//		maprestarts = false;
 		inst = myprimula.instasosd;
 		queryatoms = myprimula.queryatoms;
 		sampleordmode = OPTION_SAMPLEORD_FORWARD;
@@ -672,7 +672,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 
 		numchains = 2;
 		windowsize = 2;
-		numrestarts = -1;
+		numrestarts = 1;
 		
 		readElementNames();
 		readRBNRelations();
@@ -1241,15 +1241,25 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		}
 		else if (source == setMapVals){
 			if (currentGG != null){
-				OneStrucData currentMapData = currentGG.getMapValuesAsInst();
-				inst.add(currentMapData);
+				LinkedList<String> mapvals = dataModel.getMapValues();
+				LinkedList<String> queryats = dataModel.getQuery();
+				OneStrucData result = new OneStrucData();
+				result.setParentRelStruc(myprimula.getRels());
+				
+				Iterator<String> itq = queryats.iterator();
+				
+				for (Iterator<String> itmap = mapvals.iterator(); itmap.hasNext();) {
+					//System.out.println(itq.next() + " " + itmap.next());
+					result.add(new GroundAtom(itq.next(),myprimula.getRels(),Rel.BOOLEAN),Integer.parseInt(itmap.next()),"?");
+				}
+				inst.add(result);
 				updateInstantiationList();
 				myprimula.updateBavaria();
 			}
 			else System.out.println("Do not have GradientGraph defining Map values!");
 		}
 		else if( source == stopMap){
-			maprestarts = false;
+//			maprestarts = false;
 			mapthr.setRunning(false);
 			infoMessage.setText(" Stop MAP ");
 			startSampling.setEnabled( true );
@@ -1328,7 +1338,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		
 		GradientGraph gg = null;
 		try{
-			maprestarts = true;
+//			maprestarts = true;
 			RelData evidence = new RelData(myprimula.getRels(),myprimula.getInstantiation());
 			int mode;
 			String[] rbnparams = myprimula.getRBN().parameters();
@@ -2536,5 +2546,22 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		/** ... keith cascio */
 	
 		querytable.updateUI();
+	}
+	
+	public OneStrucData getMapValuesAsInst(){
+		LinkedList<String> mapvals = dataModel.getMapValues();
+		LinkedList<String> queryats = dataModel.getQuery();
+		OneStrucData result = new OneStrucData();
+		result.setParentRelStruc(myprimula.getRels());
+		
+		Iterator<String> itq = queryats.iterator();
+		
+		for (Iterator<String> itmap = mapvals.iterator(); itmap.hasNext();) {
+			System.out.println(itq.next() + " " + itmap.next());
+		}
+//		for (int i=0;i< mapatoms.size();i++){
+//			result.add(mapatoms.atomAt(i),instvals[i],"?");
+//		}
+		return result;
 	}
 }

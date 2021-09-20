@@ -260,8 +260,8 @@ public class GradientGraphO extends GradientGraph{
 			}
 		}
 		
-		
-		
+		this.showMaxNodes();
+	
 		/* Now construct the nodes for the data/evidence atoms 
 		 * 
 		 */
@@ -549,6 +549,8 @@ public class GradientGraphO extends GradientGraph{
 		
 		GGAtomSumNode nextisumn;
 		GGAtomMaxNode nextimaxn;
+		
+		this.showMaxNodes();
 		
 		for (Iterator<GGAtomMaxNode> it = maxindicators.iterator(); it.hasNext();){
 			nextimaxn = it.next();
@@ -1827,8 +1829,11 @@ public class GradientGraphO extends GradientGraph{
 	public int[] getMapVals(){
 		int[] result = new int[maxindicators.size()];
 		Collections.sort(maxindicators, new GGAtomMaxNodeComparator(CompareIndicatorMaxNodesByIndex));
-		for (int i=0;i<maxindicators.size();i++)
+		// System.out.println("New Map values:");
+		for (int i=0;i<maxindicators.size();i++) {
+		//	System.out.println(maxindicators.elementAt(i).getMyatom() + " " + maxindicators.elementAt(i).getCurrentInst());
 			result[i]=maxindicators.elementAt(i).getCurrentInst();
+		}	
 		return result;
 	}
 	

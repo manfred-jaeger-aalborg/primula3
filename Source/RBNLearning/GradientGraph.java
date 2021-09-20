@@ -601,17 +601,17 @@ public abstract class GradientGraph{
 
 	public static String makeKey(ProbForm pf, int inputcaseno, int observcaseno, RelStruc A){
 		String key;
-		//System.out.println("make key for " + pf.toString() + " " + inputcaseno  + " " + observcaseno);
-		String pfstring;
-		if (pf.getAlias()!=null)
-			pfstring=pf.getAlias();
-		else 
-			pfstring = pf.asString(Primula.CLASSICSYNTAX,0,A,false,true);
+//		System.out.println("make key for " + pf.toString() + " " + inputcaseno  + " " + observcaseno);
+		String pfstring= pf.asString(Primula.CLASSICSYNTAX,0,A,false,false);
+//		if (pf.getAlias()!=null)
+//			pfstring=pf.getAlias();
+//		else 
+//			pfstring = pf.asString(Primula.CLASSICSYNTAX,0,A,false,false);
 		if (pf instanceof ProbFormConstant)
 			key = pfstring;
 		else 
 			key = inputcaseno + "."  + observcaseno + "."  +  pfstring;
-		//System.out.println("return " + key); 
+//		System.out.println("return " + key); 
 		return key;
 	}
 	
@@ -627,8 +627,8 @@ public abstract class GradientGraph{
 
 	public abstract int[] getMapVals();
 	
-	public OneStrucData getMapValuesAsInst(){
-		int[] instvals = getMapVals();
+	public OneStrucData getMapValuesAsInst(int[] instvals){
+//		int[] instvals = getMapVals();
 		OneStrucData result = new OneStrucData();
 		result.setParentRelStruc(myPrimula.getRels());
 		for (int i=0;i< mapatoms.size();i++){
