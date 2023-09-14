@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<root>
+	<Relations>
+		<Rel name="node" arity="1" argtypes="Domain" valtype="boolean" default="false" type="predefined" color="(100,100,100)"/>
+		<Rel name="edge" arity="2" argtypes="node,node" valtype="boolean" default="?" type="probabilistic" color="(0,70,0)"/>
+		<Rel name="A" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic" color="(131,26,109)"/>
+		<Rel name="B" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic" color="(199,86,93)"/>
+		<Rel name="C" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic" color="(140,6,40)"/>
+		<Rel name="D" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic" color="(164,246,144)"/>
+		<Rel name="E" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic" color="(254,250,46)"/>
+		<Rel name="F" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic" color="(57,27,9)"/>
+		<Rel name="G" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic" color="(92,2,250)"/>
+		<Rel name="const_A_B" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic"/>
+		<Rel name="const_A_C" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic"/>
+		<Rel name="const_A_D" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic"/>
+		<Rel name="const_A_E" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic"/>
+		<Rel name="const_A_F" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic"/>
+		<Rel name="const_A_G" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic"/>
+		<Rel name="const_B_C" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic"/>
+		<Rel name="const_B_D" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic"/>
+		<Rel name="const_B_E" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic"/>
+		<Rel name="const_B_F" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic"/>
+		<Rel name="const_B_G" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic"/>
+		<Rel name="const_C_D" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic"/>
+		<Rel name="const_C_E" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic"/>
+		<Rel name="const_C_F" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic"/>
+		<Rel name="const_C_G" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic"/>
+		<Rel name="const_D_E" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic"/>
+		<Rel name="const_D_F" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic"/>
+		<Rel name="const_D_G" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic"/>
+		<Rel name="const_E_F" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic"/>
+		<Rel name="const_E_G" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic"/>
+		<Rel name="const_F_G" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic"/>
+		<Rel name="all_const" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic"/>
+		<Rel name="soft_max_0" arity="0" argtypes="" valtype="boolean" default="?" type="probabilistic"/>
+		<Rel name="soft_max_1" arity="0" argtypes="" valtype="boolean" default="?" type="probabilistic"/>
+	</Relations>
+	<Data>
+		<DataForInputDomain>
+			<Domain>
+				<obj ind='0' name='n0' coords='900.0,700.0' />
+				<obj ind='1' name='n1' coords='700.0,900.0' />
+				<obj ind='2' name='n2' coords='500.0,700.0' />
+				<obj ind='3' name='n3' coords='700.0,500.0' />
+			</Domain>
+			<PredefinedRels>
+				<d rel="node" args="(n0)(n1)(n2)(n3)" val="true"/>
+			</PredefinedRels>
+			<ProbabilisticRelsCase>
+				<d rel="const_A_B" args="(n0)(n1)(n2)(n3)" val="false"/>
+				<d rel="const_A_C" args="(n0)(n1)(n2)(n3)" val="false"/>
+				<d rel="const_A_D" args="(n0)(n1)(n2)(n3)" val="false"/>
+				<d rel="const_A_E" args="(n0)(n1)(n2)(n3)" val="false"/>
+				<d rel="const_A_F" args="(n0)(n1)(n2)(n3)" val="false"/>
+				<d rel="const_A_G" args="(n0)(n1)(n2)(n3)" val="false"/>
+				<d rel="const_B_C" args="(n0)(n1)(n2)(n3)" val="false"/>
+				<d rel="const_B_D" args="(n0)(n1)(n2)(n3)" val="false"/>
+				<d rel="const_B_E" args="(n0)(n1)(n2)(n3)" val="false"/>
+				<d rel="const_B_F" args="(n0)(n1)(n2)(n3)" val="false"/>
+				<d rel="const_B_G" args="(n0)(n1)(n2)(n3)" val="false"/>
+				<d rel="const_C_D" args="(n0)(n1)(n2)(n3)" val="false"/>
+				<d rel="const_C_E" args="(n0)(n1)(n2)(n3)" val="false"/>
+				<d rel="const_C_F" args="(n0)(n1)(n2)(n3)" val="false"/>
+				<d rel="const_C_G" args="(n0)(n1)(n2)(n3)" val="false"/>
+				<d rel="const_D_E" args="(n0)(n1)(n2)(n3)" val="false"/>
+				<d rel="const_D_F" args="(n0)(n1)(n2)(n3)" val="false"/>
+				<d rel="const_D_G" args="(n0)(n1)(n2)(n3)" val="false"/>
+				<d rel="const_E_F" args="(n0)(n1)(n2)(n3)" val="false"/>
+				<d rel="const_E_G" args="(n0)(n1)(n2)(n3)" val="false"/>
+				<d rel="const_F_G" args="(n0)(n1)(n2)(n3)" val="false"/>
+				<d rel="all_const" args="(n0)(n1)(n2)(n3)" val="true"/>
+			</ProbabilisticRelsCase>
+		</DataForInputDomain>
+	</Data>
+</root>
