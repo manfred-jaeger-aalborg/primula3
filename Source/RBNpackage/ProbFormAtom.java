@@ -2,9 +2,11 @@ package RBNpackage;
 
 import java.util.Hashtable;
 import java.util.Vector;
+import java.util.TreeSet;
+
 
 import RBNExceptions.RBNCompatibilityException;
-import RBNLearning.GradientGraph;
+import RBNLearning.*;
 import RBNinference.PFNetworkNode;
 import RBNutilities.rbnutilities;
 import RBNgui.Primula;
@@ -148,12 +150,12 @@ public  class ProbFormAtom extends ProbForm {
 	}
 
 
+
 	public boolean dependsOn(String variable, RelStruc A, OneStrucData data)
 			throws RBNCompatibilityException
 			{
 		if (relation.isprobabilistic() && variable.equals("unknown_atom")){
-			double v = this.evaluate(A,data,new String[0], new int[0], false,
-					new String[0],false,new GroundAtomList(),false,null);
+			double v = (double)this.evaluate(A, data, new String[0], new int[0], false, false, new GroundAtomList(), false, null, null, ProbForm.RETURN_ARRAY, true,null)[0];
 			if (Double.isNaN(v))
 				return true;
 			else return false;
@@ -217,15 +219,15 @@ public  class ProbFormAtom extends ProbForm {
 
 
 	public  Vector<GroundAtom> makeParentVec(RelStruc A){
-		return makeParentVec(A, new OneStrucData());
+		return makeParentVec(A, new OneStrucData(),null);
 	}
 
-	public  Vector<GroundAtom> makeParentVec(RelStruc A,OneStrucData inst){
+	public  Vector<GroundAtom> makeParentVec(RelStruc A,OneStrucData inst, TreeSet<String> macrosdone){
+		Vector<GroundAtom> result = new Vector<GroundAtom>();
+		if (this.getRelation().ispredefined())
+			return result;
 		if (!this.isGround())
 			throw new RuntimeException("Detected dependency on non-ground atom");
-		Vector<GroundAtom> result = new Vector<GroundAtom>();
-		if (relation.ispredefined())
-			return result;
 		if (inst.truthValueOf(relation,rbnutilities.stringArrayToIntArray(arguments))==-1){
 			result.add(new GroundAtom(relation,rbnutilities.stringArrayToIntArray(arguments)));
 		}
@@ -246,18 +248,22 @@ public  class ProbFormAtom extends ProbForm {
 //		else return this;
 //	}
 
+
 	public ProbForm sEval(RelStruc A){
-		double val= evaluate(A,
+		double val= (double)evaluate(A,
 				new OneStrucData(),
 				new String[0],
 				new int[0],
 				false,
-				new String[0],
 				false,
 				new GroundAtomList(),
 				false,
+				null,
+				null,
+				ProbForm.RETURN_ARRAY,
+				true,
 				null
-				);
+				)[0];
 
 		if (relation.ispredefined()){
 			int[] argsasints = rbnutilities.stringArrayToIntArray(arguments);
@@ -269,37 +275,20 @@ public  class ProbFormAtom extends ProbForm {
 	}
 
 	
-	public ProbForm substitute(String[] vars, int[] args)
+	public ProbFormAtom substitute(String[] vars, int[] args)
 	{
 		ProbFormAtom result = new ProbFormAtom(relation);
-		String nextarg;
-		for (int i = 0; i<relation.arity; i++)
-		{
-			nextarg = arguments[i];
-			for (int j = 0; j<vars.length; j++)
-			{
-				if (nextarg.equals(vars[j])) nextarg = String.valueOf(args[j]);
-			}
-			result.arguments[i] = nextarg;
-		}
+		result.arguments = rbnutilities.array_substitute(arguments,vars,args);
+		
 		if (this.alias != null)
 			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
 		return result;
 	}
 
-	public ProbForm substitute(String[] vars, String[] args)
+	public ProbFormAtom substitute(String[] vars, String[] args)
 	{
 		ProbFormAtom result = new ProbFormAtom(relation);
-		String nextarg;
-		for (int i = 0; i<relation.arity; i++)
-		{
-			nextarg = arguments[i];
-			for (int j = 0; j<vars.length; j++)
-			{
-				if (nextarg.equals(vars[j])) nextarg = args[j];
-			}
-			result.arguments[i] = nextarg;
-		}
+		result.arguments = rbnutilities.array_substitute(arguments,vars,args);
 		if (this.alias != null)
 			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
 		return result;
@@ -321,17 +310,75 @@ public  class ProbFormAtom extends ProbForm {
 		}
 	}
 	
-	public double evaluate(RelStruc A, 
+//	public double evaluate(RelStruc A, 
+//			OneStrucData inst, 
+//			String[] vars, 
+//			int[] tuple, 
+//			boolean useCurrentCvals, 
+//    		String[] numrelparameters,
+//    		boolean useCurrentPvals,
+//    		GroundAtomList mapatoms,
+//    		boolean useCurrentMvals,
+//    		Hashtable<String,Double> evaluated)
+//	{			
+//		String key="";
+//		
+//		ProbFormAtom substituted = (ProbFormAtom)this.substitute(vars,tuple);
+//		if (!substituted.isGround())
+//			throw new IllegalArgumentException("Attempt to evaluate non-ground atom");
+//		
+//		if (evaluated != null) {
+//			key = GradientGraph.makeKey(substituted, 0, 0, A);
+//			Double d = evaluated.get(key);
+//			if (d!=null)
+//				return d; 
+//		}
+//		if (RelStruc.isOrdRel(relation))
+//			return A.trueOrdAtom(relation,arguments);
+//		
+//		
+//		
+//		double value,result;
+//
+//		if (relation.isprobabilistic()){
+//			value = inst.valueOf(substituted.relation, rbnutilities.stringArrayToIntArray(substituted.getArguments()));
+//			if (value != -1 && (mapatoms == null || !mapatoms.contains(relation,substituted.argsIfGround())))
+//				result = value;
+//			else
+//				result = Double.NaN;
+//			if (evaluated != null)
+//				evaluated.put(key, result);
+//			return result;
+//		}
+//
+//		if (relation.ispredefined() && !rbnutilities.arrayContains(numrelparameters, this.asString(A))){
+//			return A.valueOf(relation, rbnutilities.stringArrayToIntArray(substituted.getArguments()));
+//		}
+//		//System.out.println("Evaluate: " + this.asString(0) +" return NaN");
+//		return Double.NaN;
+//	}
+//
+
+	public Object[] evaluate(RelStruc A, 
 			OneStrucData inst, 
 			String[] vars, 
 			int[] tuple, 
 			boolean useCurrentCvals, 
-    		String[] numrelparameters,
+    		// String[] numrelparameters,
     		boolean useCurrentPvals,
     		GroundAtomList mapatoms,
     		boolean useCurrentMvals,
-    		Hashtable<String,Double> evaluated)
+    		Hashtable<String,Object[]> evaluated,
+    		Hashtable<String,Integer> params,
+    		int returntype,
+    		boolean valonly,
+    		Profiler profiler)
 	{			
+		Boolean profile = (profiler != null);
+				
+		Object[] result= new Object[2];
+		double value;
+
 		String key="";
 		
 		ProbFormAtom substituted = (ProbFormAtom)this.substitute(vars,tuple);
@@ -339,34 +386,59 @@ public  class ProbFormAtom extends ProbForm {
 			throw new IllegalArgumentException("Attempt to evaluate non-ground atom");
 		
 		if (evaluated != null) {
-			key = GradientGraph.makeKey(substituted, 0, 0, A);
-			Double d = evaluated.get(key);
-			if (d!=null)
-				return d; 
+			key = substituted.makeKey(A);
+			//System.out.print("looking for " + key);
+			Object[] d = evaluated.get(key);
+			if (d!=null) {
+				//System.out.println("  yes found returning " + d[0]);
+				return d.clone(); 
+			}
+			//System.out.println("   not found");		
+		}	
+		
+		/* The main cases: */
+		if (RelStruc.isOrdRel(relation)) {
+			result[0]= A.trueOrdAtom(relation,arguments);
 		}
-		if (RelStruc.isOrdRel(relation))
-			return A.trueOrdAtom(relation,arguments);
-		
-		
-		
-		double value,result;
-
-		if (relation.isprobabilistic()){
+		else if (relation.isprobabilistic()){
 			value = inst.valueOf(substituted.relation, rbnutilities.stringArrayToIntArray(substituted.getArguments()));
-			if (value != -1 && (mapatoms == null || !mapatoms.contains(relation,substituted.argsIfGround())))
-				result = value;
+			if (value != -1 && (mapatoms == null || !mapatoms.contains(relation,substituted.argsIfGround()) || useCurrentMvals))
+				result[0] = value;
 			else
-				result = Double.NaN;
-			if (evaluated != null)
-				evaluated.put(key, result);
-			return result;
+				result[0] = Double.NaN;
+			result[1]=new Hashtable<String,Double>();
 		}
+		else if (relation.ispredefined()) {		
+			String thisstr = this.asString(A);
+			Integer i = null;
+			if (params!= null)
+				i = params.get(thisstr);
+			
+			if (i==null || useCurrentPvals)
+				result[0] = A.valueOf(relation, rbnutilities.stringArrayToIntArray(substituted.getArguments()));
+			else
+				result[0] = Double.NaN;	
 
-		if (relation.ispredefined() && !rbnutilities.arrayContains(numrelparameters, this.asString(A))){
-			return A.valueOf(relation, rbnutilities.stringArrayToIntArray(substituted.getArguments()));
+			if (!valonly) {
+				if (returntype==ProbForm.RETURN_ARRAY) {
+					result[1]=new double[params.size()];
+					if (i!=null)
+						((double[])result[1])[i] = 1.0;
+				}
+				else {
+					result[1]=new Hashtable<String,Double>();
+					if (i!= null)
+						((Hashtable<String,Double>)result[1]).put(thisstr, 1.0);
+				}
+			}
+		} // else if (relation.ispredefined())
+		
+		if (evaluated != null) {
+			//System.out.println("putting " + key + " = " + result[0]);
+			evaluated.put(key, result);
 		}
-		//System.out.println("Evaluate: " + this.asString(0) +" return NaN");
-		return Double.NaN;
+		
+		return result;
 	}
 
 
@@ -377,7 +449,7 @@ public  class ProbFormAtom extends ProbForm {
 			throw new IllegalArgumentException("Attempt to sample-evaluate non-ground atom");
 		else{
 			if (relation.ispredefined()){
-				return this.evaluate(A,null,new String[0], new int[0], false, new String[0], false,null,false,null);
+				return this.evaluate(A,inst);
 			}
 			if (relation.isprobabilistic()){
 				GroundAtom myatom = new GroundAtom(relation,rbnutilities.stringArrayToIntArray(arguments));
@@ -413,12 +485,31 @@ public  class ProbFormAtom extends ProbForm {
 		if (relinsig == null){
 			System.out.println("Warning: relation '" + relation.name() + "' of ProbFormAtom not contained in current signature" );
 		}
-		if (relinsig.getInout()!=relation.getInout())
-			System.out.println("Warning: changing inout type for relation " + relation.name() 
-			                    + " from " + relation.getInout_string() + " to " + relinsig.getInout_string());
+//		if (relinsig.getInout()!=relation.getInout())
+//			System.out.println("Warning: changing inout type for relation " + relation.name() 
+//			                    + " from " + relation.getInout_string() + " to " + relinsig.getInout_string());
 		relation = relinsig;
 	}
 	
 	public void setCvals(String paramname, double val) {
 	}
+	
+	public TreeSet<Rel> parentRels(){
+		TreeSet<Rel> result = new TreeSet<Rel>();
+		if (relation.isprobabilistic())
+			result.add(relation);
+		return result;
+	}
+	
+	public TreeSet<Rel> parentRels(TreeSet<String> processed){
+		String mykey=this.makeKey(null,null,true);
+		if (processed.contains(mykey))
+			return new TreeSet<Rel>();
+		else {
+			processed.add(mykey);
+			return this.parentRels();
+		}
+					
+	}
+	
 }

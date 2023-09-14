@@ -2,10 +2,12 @@ package RBNpackage;
 
 import java.util.Hashtable;
 import java.util.Vector;
+import java.util.TreeSet;
 
 import RBNExceptions.RBNCompatibilityException;
 import RBNinference.PFNetworkNode;
 import RBNutilities.rbnutilities;
+import RBNLearning.*;
 
 public class ProbFormBoolEquality extends ProbFormBool {
 
@@ -49,25 +51,57 @@ public class ProbFormBoolEquality extends ProbFormBool {
 		return this;
 	}
 
-	@Override
-	public double evaluate(RelStruc A, OneStrucData inst, String[] vars,
-			int[] tuple, boolean useCurrentCvals, String[] numrelparameters,
-			boolean useCurrentPvals,
+//	@Override
+//	public double evaluate(RelStruc A, OneStrucData inst, String[] vars,
+//			int[] tuple, boolean useCurrentCvals, String[] numrelparameters,
+//			boolean useCurrentPvals,
+//    		GroundAtomList mapatoms,
+//    		boolean useCurrentMvals,
+//    		Hashtable<String,Double> evaluated) throws RBNCompatibilityException {
+//		ProbFormBoolEquality thissubstituted = (ProbFormBoolEquality)this.substitute(vars,tuple);
+//		if (!thissubstituted.isGround())
+//			throw new IllegalArgumentException("Attempt to evaluate non-ground equality");
+//		if (Integer.parseInt(thissubstituted.term1)==Integer.parseInt(thissubstituted.term2)) return 1.0;
+//		else return 0.0;
+//	}
+
+	public Object[] evaluate(RelStruc A, 
+			OneStrucData inst, 
+			String[] vars, 
+			int[] tuple, 
+			boolean useCurrentCvals, 
+    		// String[] numrelparameters,
+    		boolean useCurrentPvals,
     		GroundAtomList mapatoms,
     		boolean useCurrentMvals,
-    		Hashtable<String,Double> evaluated) throws RBNCompatibilityException {
+    		Hashtable<String,Object[]> evaluated,
+    		Hashtable<String,Integer> params,
+    		int returntype,
+    		boolean valonly,
+    		Profiler profiler)
+	{			
+//		if (!valonly)
+//			System.out.println("Warning: trying to evaluate gradient for Boolean ProbForm" + this.makeKey(A));
+		Object[] result = new Object[2];
+		
+		if (returntype == ProbForm.RETURN_SPARSE)
+			result[1] = new Hashtable<String,Double>();
+		else result[1] = new double[0];
+		
 		ProbFormBoolEquality thissubstituted = (ProbFormBoolEquality)this.substitute(vars,tuple);
 		if (!thissubstituted.isGround())
 			throw new IllegalArgumentException("Attempt to evaluate non-ground equality");
-		if (Integer.parseInt(thissubstituted.term1)==Integer.parseInt(thissubstituted.term2)) return 1.0;
-		else return 0.0;
-	}
-
+		if (Integer.parseInt(thissubstituted.term1)==Integer.parseInt(thissubstituted.term2)) result[0] =1.0;
+		else result[0]=0.0;
+		return result;
+	}	
+	
+	
 	@Override
 	public double evalSample(RelStruc A,
 			Hashtable<String, PFNetworkNode> atomhasht, OneStrucData inst,
 			long[] timers) throws RBNCompatibilityException {
-		return evaluate(A, null, new String[0], new int[0], false, null, false,null,false,null);
+		return evaluate(A, null);
 	}
 
 	@Override
@@ -83,7 +117,7 @@ public class ProbFormBoolEquality extends ProbFormBool {
 	}
 
 	@Override
-	public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst)
+	public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone)
 			throws RBNCompatibilityException {
 		return new Vector<GroundAtom>();
 	}
@@ -91,7 +125,7 @@ public class ProbFormBoolEquality extends ProbFormBool {
 	@Override
 	public ProbForm sEval(RelStruc A) throws RBNCompatibilityException {
 		
-		double value = evaluate(A, null, new String[0], new int[0], false, null, false,null,false,null);
+		double value = evaluate(A, null);
 		if (value == 1) 
 			return new ProbFormBoolConstant(false);
 		else 
@@ -171,5 +205,11 @@ public class ProbFormBoolEquality extends ProbFormBool {
 	public void updateSig(Signature s){
 	}
 	
+	public TreeSet<Rel> parentRels(){
+		return new TreeSet<Rel>();
+	}
 	
+	public TreeSet<Rel> parentRels(TreeSet<String> processed){
+		return new TreeSet<Rel>();	
+	}
 }

@@ -25,6 +25,7 @@
 package RBNinference;
 
 import java.util.*;
+import RBNpackage.*;
 
 /**
  *
@@ -34,8 +35,8 @@ import java.util.*;
 //public class BNNode implements BNNodeInt{
 public class BNNode{
     public String name;
-    public LinkedList parents;
-    public LinkedList children;
+    public LinkedList<BNNode> parents;
+    public LinkedList<BNNode> children;
 
     /* Set to 0 resp. 1 if node instantiated to false, resp. true
      * Set to -1 if node not instantiated
@@ -64,8 +65,8 @@ public class BNNode{
 
     public BNNode(String n) {
         name = n;
-        parents = new LinkedList();
-        children = new LinkedList();
+        parents = new LinkedList<BNNode>();
+        children = new LinkedList<BNNode>();
         instantiated = -1;
         xcoord = 0;
         ycoord = 0;
@@ -75,31 +76,30 @@ public class BNNode{
         depth = -1;
         height = 0;
         level = 0;
-	visited = new boolean[vissize];
+        visited = new boolean[vissize];
         for (int i=0;i<vissize;i++) visited[i] = false;
         conncompof = null;
     }
 
     public BNNode(String n, int val) {
         name = n;
-        parents = new LinkedList();
-        children = new LinkedList();
+        parents = new LinkedList<BNNode>();
+        children = new LinkedList<BNNode>();
         instantiated = val;
         xcoord = 0;
         ycoord = 0;
         posnumber = 0;
         weight=0;
-
         depth = -1;
         height = 0;
         level = 0;
-	visited = new boolean[vissize];
+        visited = new boolean[vissize];
         for (int i=0;i<vissize;i++) visited[i] = false;
         conncompof = null;
     }
 
 
-    public BNNode(String n,LinkedList par, LinkedList chil) {
+    public BNNode(String n,LinkedList<BNNode> par, LinkedList<BNNode> chil) {
         name = n;
         parents = par;
         children = chil;
@@ -111,7 +111,7 @@ public class BNNode{
         depth = -1;
         height = 0;
         level = 0;
-	visited = new boolean[vissize];
+        visited = new boolean[vissize];
         for (int i=0;i<vissize;i++) visited[i] = false;
         conncompof = null;
     }
@@ -129,36 +129,36 @@ public class BNNode{
 
 
 
-    public Vector buildNodeStack()
+    public Vector<BNNode> buildNodeStack()
 	/* Returns Vector of nodes that are in the connected component
 	   of this BNNode
 	*/
     {
-	Vector nodestack = new Vector();
+	Vector<BNNode> nodestack = new Vector<BNNode>();
 	BNNode nextnode;
 	if (!visited[4]){
             nodestack.add(this);
             this.visited[4]=true;
-            ListIterator li = parents.listIterator();
+            ListIterator<BNNode> li = parents.listIterator();
             while (li.hasNext()){
-		nextnode = (BNNode)li.next();
-                nextnode.buildNodeStack(nodestack);
+            	nextnode = (BNNode)li.next();
+            	nextnode.buildNodeStack(nodestack);
             }
             li = children.listIterator();
             while (li.hasNext()){
-                ((BNNode)li.next()).buildNodeStack(nodestack);
+            	((BNNode)li.next()).buildNodeStack(nodestack);
             }
 	}
 	resetVisitedUpDownstream(4);
 	return nodestack;
     }
 
-    private void buildNodeStack(Vector nodestack)
+    private void buildNodeStack(Vector<BNNode> nodestack)
     {
     	if (!visited[4]){
     		nodestack.add(this);
     		visited[4]=true;
-    		ListIterator li = parents.listIterator();
+    		ListIterator<BNNode> li = parents.listIterator();
     		while (li.hasNext()){
     			((BNNode)li.next()).buildNodeStack(nodestack);
     		}
@@ -183,7 +183,7 @@ public class BNNode{
 
 
     public void resetParents(){
-	parents = new LinkedList();
+	parents = new LinkedList<BNNode>();
     }
 
     public void replaceInParentList(BNNode oldpar,BNNode newpar)
@@ -191,7 +191,7 @@ public class BNNode{
 	 */
     {
         boolean found = false;
-        ListIterator li = parents.listIterator();
+        ListIterator<BNNode> li = parents.listIterator();
         while (li.hasNext() && !found)
 	    {
 		if (((BNNode)li.next()).name == oldpar.name)
@@ -208,7 +208,7 @@ public class BNNode{
 	 */
     {
         boolean found = false;
-        ListIterator li = children.listIterator();
+        ListIterator<BNNode> li = children.listIterator();
         while (li.hasNext() && !found)
 	    {
 		if (((BNNode)li.next()).name == oldchil.name)
@@ -230,7 +230,7 @@ public class BNNode{
 	    System.out.println("Warning: resetVisited called for visited[4]!");
 	}
 	else{
-	    Vector nodestack = buildNodeStack();
+	    Vector<BNNode> nodestack = buildNodeStack();
 	    for (int i=0;i<nodestack.size();i++){
 		if (ind >=0)
 		    ((BNNode)nodestack.elementAt(i)).visited[ind]=false;
@@ -251,7 +251,7 @@ public class BNNode{
 	if (ind >= 0)
 	    visited[ind] = false;
 	else for (int i=0;i<visited.length;i++) visited[i] = false;
-	ListIterator li = parents.listIterator();
+	ListIterator<BNNode> li = parents.listIterator();
 	while (li.hasNext()){
 	    nextnode = (BNNode)li.next();
 	    if (ind >= 0){
@@ -270,7 +270,7 @@ public class BNNode{
 	if (ind >= 0)
 	    visited[ind] = false;
 	else for (int i=0;i<visited.length;i++) visited[i] = false;
-	ListIterator li = parents.listIterator();
+	ListIterator<BNNode> li = parents.listIterator();
 	while (li.hasNext()){
 	    nextnode = (BNNode)li.next();
 	    if (ind >= 0){
@@ -296,7 +296,7 @@ public class BNNode{
     /** Prints names of all nodes connected to this one
      */
     public void showAllReachable(){
-        Vector nodestack = buildNodeStack();
+        Vector<BNNode> nodestack = buildNodeStack();
         System.out.println("Nodes connected to "+ this.name);
         for (int i=0;i<nodestack.size();i++){
             System.out.println(((BNNode)nodestack.elementAt(i)).name);
@@ -311,7 +311,7 @@ public class BNNode{
     */
     public boolean parentsSubset(BNNode bnn){
         boolean result = true;
-        ListIterator li = parents.listIterator();
+        ListIterator<BNNode> li = parents.listIterator();
         while (li.hasNext() && result){
             if (!bnn.parents.contains(li.next())) result = false;
         }
@@ -340,5 +340,9 @@ public class BNNode{
     	if( bnnodes == null ) return xsum;
     	for( BNNode next : bnnodes ) xsum += next.xcoord;
     	return xsum;
+    }
+    
+    public ProbForm probform() {
+    	return null;
     }
 }

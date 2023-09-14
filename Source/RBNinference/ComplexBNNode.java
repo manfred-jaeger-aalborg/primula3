@@ -28,8 +28,15 @@ import java.util.*;
 import RBNpackage.*;
 import RBNExceptions.*;
 
+/**
+ * Class representing BN nodes in which the conditional 
+ * probability distribution is represented by a probability formula
+ * 
+ * @author jaeger
+ *
+ */
 
-public class ComplexBNNode extends BNNode implements ComplexBNNodeInt {
+public class ComplexBNNode extends BNNode{
 
     ProbForm probform;
     
@@ -71,4 +78,6 @@ public class ComplexBNNode extends BNNode implements ComplexBNNodeInt {
     public void setProbForm(ProbForm pf){
     	probform = pf;
     }
+    
+
 }

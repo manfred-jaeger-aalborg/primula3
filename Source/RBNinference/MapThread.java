@@ -35,7 +35,7 @@ public class MapThread extends GGThread {
 		 * there are any free parameters in the model
 		 */
 		
-		if (gg.parameters().length > 0){
+		if (gg.parameters().size() > 0){
 			myLearnModule = myprimula.openLearnModule(true);			
 			myLearnModule.disableDataTab();
 			myLearnModule.setParameters(gg.parameters());
@@ -62,7 +62,7 @@ public class MapThread extends GGThread {
 					newmapvals = gg.getMapVals();
 					mapprobs.setMV(newmapvals);
 					mapprobs.setLL(SmallDouble.asString(oldll));
-					if (gg.parameters().length > 0)
+					if (gg.parameters().size() > 0)
 						myLearnModule.setParameterValues(gg.getParameters());
 				}
 			}

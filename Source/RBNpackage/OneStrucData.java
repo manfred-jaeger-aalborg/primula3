@@ -476,7 +476,12 @@ public class OneStrucData {
 
 	}
 
-
+	public Vector<int[]> allInstantiated(BoolRel r){
+		Vector<int[]> result = allTrue(r);
+		result.addAll(allFalse(r));
+		return result;
+		
+	}
 
 	/** Returns all tuples that are instantiated to true in relation r 
 	 * Tuples represented as string arrays, using the names of objects
@@ -546,7 +551,7 @@ public class OneStrucData {
 			delete((BoolRel)r,tuple,false);
 		}
 		if ( r instanceof NumRel){
-			
+			System.out.println("Removing numeric tuple not implemented in OneStrucData.delete");
 		}
 	}
 
@@ -564,7 +569,7 @@ public class OneStrucData {
 
 		if (thisrelinst != null){
 			thisrelinst.delete(tuple,tv);
-			if (thisrelinst.isEmpty()) allonebooldata.remove(thisrelinst);
+			//if (thisrelinst.isEmpty()) allonebooldata.remove(thisrelinst);
 		}
 	}
 	
@@ -573,7 +578,7 @@ public class OneStrucData {
 
 		if (thisrelinst != null){
 			thisrelinst.delete(tuple);
-			if (thisrelinst.isEmpty()) allonenumdata.remove(thisrelinst);
+			//if (thisrelinst.isEmpty()) allonenumdata.remove(thisrelinst);
 		}
 	}
 

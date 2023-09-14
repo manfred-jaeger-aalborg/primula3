@@ -1336,6 +1336,9 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		if(isBavariaOpen){
 			bavaria.update();
 		}
+		if (rbn != null) {
+			rbn.updateSig(sig); // sig has been updated by rdefreader.readRDEF
+		}
 
 	}
 
@@ -1354,7 +1357,7 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 				evidenceModule.updateRBNRelations();
 		}
 		else{
-			if(confirm(INST_AND_QUERIES_LOST)){
+//			if(confirm(INST_AND_QUERIES_LOST)){
 				try{
 					rbn = new RBN(input_file);
 					rbnfile = input_file;
@@ -1365,9 +1368,10 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 					rbnfilename.setText("");
 					this.showMessage(ex.toString());
 				}
-				Rel.resetTheColorCounters();
-				instasosd.clear();
-				queryatoms.reset();
+				
+//				Rel.resetTheColorCounters();
+//				instasosd.clear();
+//				queryatoms.reset();
 				
 
 				if(isEvModuleOpen)
@@ -1376,13 +1380,14 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 				//					instasosd.reset();
 				//					queryatoms.reset();
 				//				}
-			}
-			else //replace the current text with the real filename
-				rbnfilename.setText(rbnfile.getPath());
+//			}
+//			else //replace the current text with the real filename
+//				rbnfilename.setText(rbnfile.getPath());
 		}
 		
 //		System.out.println("Init Inst.");
 		instasosd.init(rbn);
+		
 	}
 
 
@@ -1660,6 +1665,37 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		rels.addTuples(nrelparams,nrelvalues);
 	}
 
+	public void setParameters(Hashtable<String,Integer> paramidx,double[]paramvalues) {
+		for (String par: paramidx.keySet()) {
+			if (isRBNParameter(par))
+				rbn.setParameter(par, paramvalues[paramidx.get(par)]);
+			else
+				rels.addTuple(par,paramvalues[paramidx.get(par)] );
+		}
+	}
+	
+	public double[] getParameterVals(String[] paramnames) {
+		double[] result = new double[paramnames.length];
+		for (int i=0;i<result.length;i++) {
+			if (isRBNParameter(paramnames[i]))
+				result[i]=rbn.getParameterValue(paramnames[i]);
+			else
+				result[i]=rels.getNumAtomValue(paramnames[i]);
+		}
+		return result;
+	}
+	
+	public double[] getParameterVals(Hashtable<String,Integer> paramidx) {
+		double[] result = new double[paramidx.size()];
+		for (String par: paramidx.keySet()) {
+			if (isRBNParameter(par))
+				result[paramidx.get(par)]=rbn.getParameterValue(par);
+			else
+				result[paramidx.get(par)]=rels.getNumAtomValue(par);
+		}
+		return result;
+	}
+	
 	public Boolean isRBNParameter(String str){
 		if (str.charAt(0)=='#' || str.charAt(0)=='$')
 			return true;
@@ -1682,30 +1718,32 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 	}
 	
 	private void loadDefaults(){
-//		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Examples3/SocNetwks/Zachary/zachary_infdiffusion_learn.rbn";
-//		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Examples3/SocNetwks/Zachary/zachary_infdiffusion_sample30_reduced.rdef";
-		
+
+//		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Mendel/mendel.rbn";
+//		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Mendel/mendel_s.rdef";
+//			
+//		
 //		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/InformationDiffusion/independent_cascade.rbn";
 //		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/InformationDiffusion/independent_cascade.rdef";
 		
-		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Community/community_softclus_2c.rbn";
-		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Community/zachary.rdef";
+//		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Community/community_softclus_2c.rbn";
+//		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Community/zachary.rdef";
+	
+	
 
-//		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Examples3/RBNinputs/mendel.rbn";
-//		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Examples3/RDEFinputs/mendel_s.rdef";
-//		
-//		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/ExamplesTET/MyBagOBags/mybags_lreg.rbn";
-//		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/ExamplesTET/MyBagOBags/mybags_v4.rdef";
+		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/GraphNN-develop/alpha1ace.rbn";
+		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/GraphNN-develop/GNNdata/p1/testace.rdef"; 
+		
+		
+//		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Mutag/MAP/manual_no2.rbn";
+//		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Mutag/MAP/base_class_0_n3.rdef"; 
+		
+		
+//		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/SWF/swf_nodefeat.rbn";
+//		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/SWF/swf_coordinates_nodefeat_learned-ods-sheet2-l47.rdef";
 
-//		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Examples3/SocNetwks/MovieLens/movielens.rbn";
-//		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Examples3/SocNetwks/MovieLens/movielensTrain.rdef"; 
 			
-//		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Examples3/TestNumProbRels/testnumprobrels.rbn";
-//		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Examples3/TestNumProbRels/testnumprobrels.rdef"; 
-			
-//		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Examples3/SocNetwks/MotivatingEx/motex.rbn";
-//		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Examples3/SocNetwks/MotivatingEx/motex_2.rdef"; 
-//	
+		
 		srsfile = new File(rstinputfilestring);
 		rbnfile = new File(rbninputfilestring);
 

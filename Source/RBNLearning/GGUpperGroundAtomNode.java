@@ -56,7 +56,7 @@ public class GGUpperGroundAtomNode extends GGProbFormNode {
 	}
 
 	@Override
-	public double evaluateGrad(int param) {
+	public double evaluateGrad(String param) {
 		// TODO Auto-generated method stub
 		return 0;
 	}

@@ -104,7 +104,7 @@ public abstract class GGAtomNode extends GGProbFormNode{
 		}
 	}
 
-	public double evaluateGrad(int param){
+	public double evaluateGrad(String param){
 		return 0.0;
 	}
 
@@ -171,7 +171,6 @@ public abstract class GGAtomNode extends GGProbFormNode{
 				addMeToIndicators((GGProbFormNode)nextggn);
 			}
 		}
-		System.out.println("setAllugas for " + this.myatom.asString());
 		addMeToIndicators(myuppergroundatom);
 		allugas.add(myuppergroundatom);
 	}

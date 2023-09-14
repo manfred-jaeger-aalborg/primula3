@@ -63,14 +63,13 @@ public abstract class GGNode implements Comparable<GGNode>{
 	/** The partial derivatives of this node as returned by the most recent 
 	 * calls of evaluateGrad(param,sno); null if not yet evaluated or method 
 	 * resetGrad(param) has been called */
-	//Double[] gradient;
 
-	/* Treemap contains an entry for a key i if 
-	 * node depends on i'th parameter.
+	/* Treemap contains an entry for a key "pname" if 
+	 * node depends on parameter "pname".
 	 * 
 	 * Value is NaN if currently not evaluated
 	 */
-	TreeMap<Integer,Double> gradient;
+	TreeMap<String,Double> gradient;
 
 
 
@@ -81,18 +80,9 @@ public abstract class GGNode implements Comparable<GGNode>{
 		ancestors = null;
 		identifier = new Integer(gg.getNextId());
 		value = null;
-		gradient = new TreeMap<Integer,Double>();
+		gradient = new TreeMap<String,Double>();
 	}
 
-//	public void initgrads(int k){
-//		gradient = new Double[k];
-//		for (int i=0; i< gradient.length; i++)
-//			gradient[i]=null;
-//	}
-	
-	public void initgrads(){
-		gradient = new TreeMap<Integer,Double>();
-	}
 	
 	public void addToChildren(GGProbFormNode ggpfn){
 		children.add(ggpfn);
@@ -108,7 +98,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 	 */
 	public abstract double evaluate();
 
-	public abstract double evaluateGrad(int param) throws RBNNaNException;
+	public abstract double evaluateGrad(String param) throws RBNNaNException;
 
 //	/** Returns 0 (1) if this node evaluates to 0 (1) given a current partial
 //	* instantiation of the indicator nodes. Returns -1 if the current 
@@ -127,12 +117,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 	}
 
 
-
-//	public Double[] gradient(){
-//		return gradient;
-//	}
-
-	public TreeMap<Integer,Double> gradient(){
+	public TreeMap<String,Double> gradient(){
 		return gradient;
 	}
 	
@@ -143,9 +128,8 @@ public abstract class GGNode implements Comparable<GGNode>{
 
 
 	public void resetGradient(){
-		for (Iterator<Integer> it = gradient.keySet().iterator(); it.hasNext();){
-			Integer id = it.next();
-			gradient.put(id, Double.NaN);
+		for (String pname: gradient.keySet()){
+			gradient.put(pname, Double.NaN);
 		}
 	}
 	
@@ -155,9 +139,9 @@ public abstract class GGNode implements Comparable<GGNode>{
 //	}
 //	
 	
-	public void resetGradient(int i){
-		if (gradient.containsKey(i))
-			gradient.put(i, Double.NaN);
+	public void resetGradient(String p){
+		if (gradient.containsKey(p))
+			gradient.put(p, Double.NaN);
 	}
 	
 
@@ -232,7 +216,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 	 * Used to propagate value changes when the value of this
 	 * node has been changed. Mostly applied when this is 
 	 * a GGAtomNode, and the value of this
-	 * indicator has been changed in Gibbs sampling. 
+	 * indicator has been changed in Gibbs sampling or MAP inference
 	 */
 	public void reEvaluateUpstream(){
 		TreeSet<GGNode> myancestors;
@@ -249,7 +233,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 	/* Re-evaluate values and partial derivatives for parameter param 
 	 * Usually called when in coordinate-gradient descent a single 
 	 * parameter has changed value */
-	public void reEvaluateUpstream(int param)
+	public void reEvaluateUpstream(String param)
 			throws RBNNaNException
 	{
 		TreeSet<GGNode> myancestors;
@@ -276,7 +260,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 //		 ((GGProbFormNode)this).dependsOnParam[param] = true;
 //	}
 
-	public void setDependsOn(int param){
+	public void setDependsOn(String param){
 		if (this instanceof GGProbFormNode)
 			gradient.put(param, Double.NaN);
 	}

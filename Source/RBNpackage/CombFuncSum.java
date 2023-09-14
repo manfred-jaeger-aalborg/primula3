@@ -27,4 +27,10 @@ public class CombFuncSum extends CombFunc {
 		}
 	}
 
+	  public double evaluateGrad(double[] vals, double[] derivs) {
+			double derivsum = 0;
+			for (int i=0;i<derivs.length;i++)
+				derivsum = derivsum + derivs[i];
+			return derivsum;
+	  }
 }

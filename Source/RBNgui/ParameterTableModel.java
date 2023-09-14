@@ -25,6 +25,7 @@
 package RBNgui;
 
 import javax.swing.table.*;
+import java.util.Hashtable;
 
 
 public class ParameterTableModel extends AbstractTableModel {
@@ -86,10 +87,10 @@ public class ParameterTableModel extends AbstractTableModel {
 	 * @param params
 	 * @uml.property  name="parameters"
 	 */
-    public void setParameters(String[] params){
-    	parameters = new String[params.length+1];
-    	for (int i=0;i<params.length;i++)
-    		parameters[i]=params[i];
+    public void setParameters(Hashtable<String,Integer> params){
+    	parameters = new String[params.size()+1];
+    	for (String par: params.keySet())
+    		parameters[params.get(par)]=par;
     	parameters[parameters.length-1]="LOG-LIK: data";
     	
     	rownum = parameters.length;

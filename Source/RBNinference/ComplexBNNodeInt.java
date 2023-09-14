@@ -39,4 +39,11 @@ public interface ComplexBNNodeInt{
      */
     public abstract boolean isIsolatedZeroNode(RelStruc rels)throws RBNCompatibilityException;
     
+    public abstract void instantiate(int truthval);
+    
+    public abstract void addToChildren(ComplexBNNodeInt newchild);
+
+    public abstract void addToParents(ComplexBNNodeInt newpar);
+    
+
 }

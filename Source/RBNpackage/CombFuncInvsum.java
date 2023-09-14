@@ -56,4 +56,18 @@ public class CombFuncInvsum extends CombFunc{
 	}
     }
 
+    public double evaluateGrad(double[] vals, double[] derivs) {
+		double result = 0;
+		double val = this.evaluate(vals);
+		if (val == 1.0)
+			return 0;
+		else{
+			double derivsum = 0;
+			result = -Math.pow(val,-2);
+			for (int i=0;i<derivs.length;i++)
+				derivsum = derivsum + derivs[i];
+			result = result*derivsum;
+		}
+		return result;
+    }
 }

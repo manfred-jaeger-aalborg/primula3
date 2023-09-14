@@ -38,13 +38,15 @@ import javax.swing.*;
 
 import javax.swing.border.*;
 
-import RBNLearning.GradientGraph; 
+import RBNLearning.GradientGraph;
+import RBNLearning.RelData;
+import RBNpackage.ProbForm; 
 
 public class SettingsLearn extends JFrame implements ActionListener, ItemListener, KeyListener{
 
 	
-	private JTabbedPane tabbedPane   = new JTabbedPane();
-
+	private JTabbedPane tabbedPaneTop   = new JTabbedPane();
+	
 	/**
 	 * @uml.property  name="samplesizelabel"
 	 * @uml.associationEnd  multiplicity="(1 1)"
@@ -231,7 +233,12 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 	 * @uml.property  name="terminateoptions"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
+	//private JPanel ascentoptions = new JPanel();
+	private JTabbedPane ascentoptionstabs = new JTabbedPane();
+
 	private JPanel ascentoptions = new JPanel();
+	private JPanel batchoptions = new JPanel();
+	private JPanel adamoptions = new JPanel();
 	
 	
 	private JPanel ascentstrategies = new JPanel(new GridLayout(1,2));
@@ -239,8 +246,8 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 	private ButtonGroup topascent_menu_bg        = new ButtonGroup();
 	private JPanel topascent_menu       = new JPanel(new GridLayout(5,1));
 		
-	private JRadioButton asc_batch = new JRadioButton("Batch");
-	private JRadioButton asc_adam = new JRadioButton("Adam");
+	private JRadioButton asc_batch = new JRadioButton("Use Batch");
+	private JRadioButton asc_adam = new JRadioButton("Use Adam");
 	private JRadioButton asc_heur1 = new JRadioButton("Heur1");
 	private JRadioButton asc_block = new JRadioButton("Block");
 	private JRadioButton asc_twophase = new JRadioButton("Two Phase");
@@ -255,6 +262,21 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 	
 	private ButtonGroup lossfunc_bg = new ButtonGroup();
 	private JPanel lossfunc_menu = new JPanel(new GridLayout(3,1));
+	
+	private ButtonGroup divideoptions_bg = new ButtonGroup();
+	private JRadioButton div_across = new JRadioButton("Split across domains");
+	private JRadioButton div_by = new JRadioButton("Split by domains");
+	
+	
+	private JPanel divideoptions_menu = new JPanel(new GridLayout(2,1));
+	private JPanel divideoptions_menu_buttons = new JPanel(new GridLayout(1,2));
+	
+	private ButtonGroup gradientrep_bg = new ButtonGroup();
+	private JRadioButton grad_array = new JRadioButton("Dense");
+	private JRadioButton grad_sparse = new JRadioButton("Sparse");
+	
+	
+	private JPanel gradoptions_menu = new JPanel(new GridLayout(1,2));
 	
 	private JRadioButton loss_lik = new JRadioButton("Likelihood (use with incomplete data)");
 	private JRadioButton loss_loglik = new JRadioButton("Log-Likelihood");
@@ -275,7 +297,8 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 	 */
 	private JCheckBox verbosecheckbox = new JCheckBox("Verbose");
 	private JCheckBox loglikcheckbox = new JCheckBox("Use Log Likelihood");
-	private JCheckBox keepggscheckbox = new JCheckBox("Keep Gradient Graphs");
+	private JCheckBox useggscheckbox = new JCheckBox("Use Gradient Graphs");
+	private JCheckBox usememoizecheckbox = new JCheckBox("With Memoization");
 
 	private JCheckBox randominitcheckbox = new JCheckBox("Random initialization of numeric relations");
 	/**
@@ -327,8 +350,11 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 		
 		generaloptions.setLayout(new BoxLayout(generaloptions,BoxLayout.Y_AXIS));
 		lossfunc_menu.setBorder(new TitledBorder("Objective Function"));
-		
 		generalbuttonspanel.add(lossfunc_menu);
+		
+		
+		
+		
 		
 		gibbsroundspanel.add(gibbsroundslabel);
 		gibbsroundspanel.add(gibbsroundstext);
@@ -376,9 +402,12 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 		
 		
 		ascentoptions.setLayout(new BoxLayout(ascentoptions,BoxLayout.Y_AXIS));
+		batchoptions.setLayout(new BoxLayout(batchoptions,BoxLayout.Y_AXIS));
+		adamoptions.setLayout(new BoxLayout(adamoptions,BoxLayout.Y_AXIS));
 		
-		topascent_menu.add(asc_batch);
-		topascent_menu.add(asc_adam);
+		
+		batchoptions.add(asc_batch);
+		adamoptions.add(asc_adam);
 		topascent_menu.add(asc_heur1);
 		topascent_menu.add(asc_block);
 		topascent_menu.add(asc_twophase);
@@ -398,13 +427,13 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 		
 		
 		switch (learnmodule.getObjective()){
-		case GradientGraph.UseLik:
+		case LearnModule.UseLik:
 			loss_lik.setSelected(true);
 			break;
-		case GradientGraph.UseLogLik:
+		case LearnModule.UseLogLik:
 			loss_loglik.setSelected(true);
 			break;
-		case GradientGraph.UseSquaredError:
+		case LearnModule.UseSquaredError:
 			loss_se.setSelected(true);
 			break;
 		}
@@ -427,20 +456,27 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 			break;
 		}
 		
-		
+		switch (learnmodule.getSplitmode()) {
+		case RelData.SPLIT_BY_DOMAIN:
+			div_by.setSelected(true);
+			break;
+		case RelData.SPLIT_ACROSS_DOMAINS:
+			div_across.setSelected(true);
+			break;
+		}
 		
 		topascent_menu_bg.add(asc_batch);
 		topascent_menu_bg.add(asc_adam);
-		topascent_menu_bg.add(asc_heur1);
-		topascent_menu_bg.add(asc_block);
-		topascent_menu_bg.add(asc_twophase);
+//		topascent_menu_bg.add(asc_heur1);
+//		topascent_menu_bg.add(asc_block);
+//		topascent_menu_bg.add(asc_twophase);
 	
 		
 		subascent_menu.add(asc_lbfgs);
 		subascent_menu.add(asc_direct);
 		subascent_menu.add(asc_adagrad);
 		subascent_menu.add(asc_fletcherreeves);
-		subascent_menu.setBorder(new TitledBorder("Sub Strategy"));
+		subascent_menu.setBorder(new TitledBorder("Method"));
 		
 		asc_lbfgs.addItemListener(this);
 		asc_adagrad.addItemListener(this);
@@ -461,31 +497,65 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 			asc_direct.setSelected(true);
 			break;
 		}
+
+		switch (learnmodule.getType_of_gradient()){
+		case ProbForm.RETURN_ARRAY:
+			grad_array.setSelected(true);
+			break;
+		case ProbForm.RETURN_SPARSE:
+			grad_sparse.setSelected(true);
+			break;		
+		}
 		
-		
+		useggscheckbox.setSelected(learnmodule.getUseGGs());
+		usememoizecheckbox.setSelected(learnmodule.getUseMemoize());
+		usememoizecheckbox.setToolTipText("Use in presence of shared sub-formulas in RBN; requires extra space");
+
 		subascent_menu_bg.add(asc_lbfgs);
 		subascent_menu_bg.add(asc_adagrad);
 		subascent_menu_bg.add(asc_fletcherreeves);
 		subascent_menu_bg.add(asc_direct);
-		
+
 		ascentstrategies.add(topascent_menu);
-		ascentstrategies.add(subascent_menu);
+		batchoptions.add(subascent_menu);
 	
-		ascentoptions.add(ascentstrategies);
+	
+	
+		batchoptions.add(linedistancepanel);
+		
+//		ascentoptions.add(numblockpanel);
+//		ascentoptions.add(dampingpanel);
+		
+		divideoptions_menu.setBorder(new TitledBorder("Batch division"));
+		divideoptions_bg.add(div_across);
+		divideoptions_bg.add(div_by);
+		divideoptions_menu.add(numbatchpanel);
+		divideoptions_menu_buttons.add(div_across);
+		divideoptions_menu_buttons.add(div_by);
+		divideoptions_menu.add(divideoptions_menu_buttons);
+
+		gradientrep_bg.add(grad_array);
+		gradientrep_bg.add(grad_sparse);
+		grad_array.setToolTipText("use: few parameters or ground atoms depending on most parameters");
+		grad_sparse.setToolTipText("use: many parameters and single ground atom depends only on few parameters");
+		gradoptions_menu.setBorder(new TitledBorder("Gradient representation"));
+		gradoptions_menu.add(grad_array);
+		gradoptions_menu.add(grad_sparse);
+		
+		adamoptions.add(divideoptions_menu);
+		adamoptions.add(adambeta1panel);
+		adamoptions.add(adambeta2panel);
+		adamoptions.add(adamepsilonpanel);
+		adamoptions.add(adamalphapanel);
+		adamoptions.add(useggscheckbox);
+		adamoptions.add(usememoizecheckbox);
+		adamoptions.add(gradoptions_menu);
 		
 		ascentoptions.add(maxiterationspanel);
-		ascentoptions.add(linedistancepanel);
 		ascentoptions.add(llikelihoodpanel);
 		ascentoptions.add(likelihoodwindowpanel);
-		ascentoptions.add(numbatchpanel);
-		ascentoptions.add(numblockpanel);
-		ascentoptions.add(dampingpanel);
-		ascentoptions.add(adambeta1panel);
-		ascentoptions.add(adambeta2panel);
-		ascentoptions.add(adamepsilonpanel);
-		ascentoptions.add(adamalphapanel);
-		ascentoptions.add(keepggscheckbox);
 		
+		ascentoptions.add(ascentoptionstabs);
 		
 //		terminateoptions.setBorder(BorderFactory.createTitledBorder("Termination"));
 		
@@ -498,13 +568,16 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 
 		
 		
-		tabbedPane.add("General",generaloptions);
-		tabbedPane.add("Gradient Ascent",ascentoptions);
-		tabbedPane.add("Incomplete Data",incompleteoptions);
+		tabbedPaneTop.add("General",generaloptions);
+		tabbedPaneTop.add("Gradient Ascent",ascentoptions);
+		tabbedPaneTop.add("Incomplete Data",incompleteoptions);
+		
+		ascentoptionstabs.add("Batch",batchoptions);
+		ascentoptionstabs.add("Adam",adamoptions);
 
 		Container contentPane = this.getContentPane();
 		contentPane.setLayout(new BoxLayout(contentPane,BoxLayout.Y_AXIS));
-		contentPane.add(tabbedPane);
+		contentPane.add(tabbedPaneTop);
 
 
 		likelihoodwindowlabel.setToolTipText("Likelihood gain is averaged over this many iterations");
@@ -545,8 +618,10 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 		
 		acacheckbox.setSelected(false);
 		acacheckbox.addItemListener(this);
-		keepggscheckbox.setSelected(false);
-		keepggscheckbox.addItemListener(this);
+		
+		useggscheckbox.addItemListener(this);
+		usememoizecheckbox.addItemListener(this);
+		
 		randominitcheckbox.setSelected(learnmodule.ggrandominit());
 		randominitcheckbox.addItemListener(this);
 		
@@ -558,6 +633,12 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 		adamepsilontext.addKeyListener(this);
 		adamalphatext.setText("" + learnmodule.getAdamAlpha());
 		adamalphatext.addKeyListener(this);
+		
+		div_across.addItemListener(this);
+		div_by.addItemListener(this);
+		
+		grad_array.addItemListener(this);
+		grad_sparse.addItemListener(this);
 		
 		ImageIcon icon = new ImageIcon("small_logo.jpg");
 		if (icon.getImageLoadStatus() == MediaTracker.COMPLETE) //image ok
@@ -745,17 +826,17 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 		}
 		if ( source == loss_lik) {
 			if (e.getStateChange() == ItemEvent.SELECTED){
-			learnmodule.setObjectivek(GradientGraph.UseLik);
+			learnmodule.setObjectivek(LearnModule.UseLik);
 			}
 		}
 		if ( source == loss_loglik) {
 			if (e.getStateChange() == ItemEvent.SELECTED){
-			learnmodule.setObjectivek(GradientGraph.UseLogLik);
+			learnmodule.setObjectivek(LearnModule.UseLogLik);
 			}
 		}
 		if ( source == loss_se) {
 			if (e.getStateChange() == ItemEvent.SELECTED){
-			learnmodule.setObjectivek(GradientGraph.UseSquaredError);
+			learnmodule.setObjectivek(LearnModule.UseSquaredError);
 			}
 		}
 		if ( source == randominitcheckbox ){
@@ -772,12 +853,19 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 			else
 				learnmodule.setAca(false);
 		}
-		if ( source == keepggscheckbox ){
+		if ( source == useggscheckbox ){
 			if (e.getStateChange() == ItemEvent.SELECTED){
-				learnmodule.setKeepGGs(true);
+				learnmodule.setUseGGs(true);
 			}
 			else
-				learnmodule.setKeepGGs(false);
+				learnmodule.setUseGGs(false);
+		}
+		if ( source == usememoizecheckbox ){
+			if (e.getStateChange() == ItemEvent.SELECTED){
+				learnmodule.setUseMemoize(true);
+			}
+			else
+				learnmodule.setUseMemoize(false);
 		}
 		if ( source == asc_batch ){
 			if (e.getStateChange() == ItemEvent.SELECTED){
@@ -915,6 +1003,26 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 		if ( source == asc_direct ){
 			if (e.getStateChange() == ItemEvent.SELECTED){
 				learnmodule.setGGStrategy(LearnModule.AscentDirectGradient);
+			}
+		}
+		if ( source == div_across ){
+			if (e.getStateChange() == ItemEvent.SELECTED){
+				learnmodule.setSplitmode(RelData.SPLIT_ACROSS_DOMAINS);
+			}
+		}
+		if ( source == div_by){
+			if (e.getStateChange() == ItemEvent.SELECTED){
+				learnmodule.setSplitmode(RelData.SPLIT_BY_DOMAIN);
+			}
+		}
+		if ( source == grad_array){
+			if (e.getStateChange() == ItemEvent.SELECTED){
+				learnmodule.setType_of_gradient(ProbForm.RETURN_ARRAY);
+			}
+		}
+		if ( source == grad_sparse){
+			if (e.getStateChange() == ItemEvent.SELECTED){
+				learnmodule.setType_of_gradient(ProbForm.RETURN_SPARSE);
 			}
 		}
 	}

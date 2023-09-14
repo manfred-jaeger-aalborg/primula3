@@ -39,11 +39,12 @@ public class BayesConstructor extends java.lang.Object {
 
 
 	private Vector<BNNode> complexnodes;
-	private Hashtable<Integer,BNNode> groundatomhasht;
-	private boolean[] isolatedzeroind;
+	private Hashtable<String,BNNode> groundatomhasht;
+	private Hashtable<String,BNNode> simplenodehasht;
+//	private boolean[] isolatedzeroind;
 	private BayesNetInt bni;
 	private int numnodes = 0;
-	private int reccalls = 0;
+//	private int reccalls = 0;
 
 	private static int NODEWIDTH = 1;
 	private static final int COMPLNODE  = 0;
@@ -57,8 +58,8 @@ public class BayesConstructor extends java.lang.Object {
 	private String myAlternateName;
 	private Primula myprimula;
 
-	private Rel[] relations;
-	private int domsize;
+//	private Rel[] relations;
+//	private int domsize;
 
 
 
@@ -73,8 +74,8 @@ public class BayesConstructor extends java.lang.Object {
 		bnoutputfile = bnout;
 		instarg = in;
 		queryatoms = qats;
-		relations = rbnarg.Rels();
-		domsize = strucarg.dom;
+//		relations = rbnarg.Rels();
+//		domsize = strucarg.dom;
 	}
 
 	public BayesConstructor(RBN r, RelStruc rs, OneStrucData in, GroundAtomList qats) {
@@ -121,17 +122,196 @@ public class BayesConstructor extends java.lang.Object {
 	//	}
 
 
-	/* builds the initial groundatomhasht */
+	private void buildInitialGAHT(int querymode, int evidencemode, int nodetype ,int isolatedzeronodesmode)
+			throws RBNCompatibilityException,RBNIllegalArgumentException{
+		if (querymode == Primula.OPTION_NOT_QUERY_SPECIFIC)
+			buildInitialGAHT(evidencemode, nodetype , isolatedzeronodesmode);
+		else { // Primula.OPTION_QUERY_SPECIFIC
+			groundatomhasht = new Hashtable<String,BNNode>();
+			Stack<BNNode> toprocess = new Stack<BNNode>();
+			
+			/* A set containing all the relations that are represented by atoms in 
+			 * groundatomhasht after query atoms and their parents have been added.
+			 * 
+			 * Used to avoid adding evidence atoms that do not have any predecessors in
+			 * groundatomhasht.
+			 */
+			TreeSet<Rel> relset = new TreeSet<Rel>();
+			
+			
+			/* Start by adding all queryatoms to groundatomhashtable, and also put them on stack of nodes whose parents still 
+			 * have to be added
+			 */
+			for (GroundAtom ga: queryatoms.allAtoms()) {
+				BNNode newestnode;
+				ProbForm pf = myprimula.getRBN().probForm(ga.rel());
+				if (!relset.contains(ga.rel())) {
+					relset.add(ga.rel());
+					relset.addAll(myprimula.getRBN().ancestorRels(ga.rel()));
+				}
+				
+				ProbForm groundpf = pf.substitute(myprimula.getRBN().args(ga.rel()), ga.args());
+				String argumentnames = rbnutilities.namestring(ga.args(),strucarg);
+				switch (nodetype){
+				case COMPLNODE:
+					newestnode = new ComplexBNGroundAtomNode(
+							ga.rel(),
+							argumentnames,
+							ga.args(),
+							groundpf);
+					break;
+				case PFNNODE:
+					newestnode = new ComplexPFNetworkNode(
+							ga.rel(),
+							argumentnames,
+							ga.args(),
+							groundpf);
+					break;
+				default:
+					newestnode = new ComplexBNGroundAtomNode();
+					throw new RuntimeException("Illegal case encountered");
+				}
+				if (evidencemode == Primula.OPTION_EVIDENCE_CONDITIONED)
+					newestnode.instantiate(instarg.truthValueOf(ga.rel(),ga.args()));
+				
+				groundatomhasht.put(ga.asString(), newestnode);
+				toprocess.push(newestnode);
+			} // for (GroundAtom ga: queryatoms.allAtoms()) 
+			
+			/* Now do the same for evidence atoms */
+			if (evidencemode == Primula.OPTION_EVIDENCE_CONDITIONED) {
+				BNNode newestnode;
+				for (BoolRel br:  instarg.getBoolRels()){
+					/* Only proceed if br has ancestors included in relset
+					 * Otherwise evidence atoms for br will not have common
+					 * ancestors with query atoms
+					 * 
+					 * The first condition tests whether br might be a relation that 
+					 * is declared in the instantiation structure, but for which the
+					 * RBN does not actually contain a probability formula
+					 */
+					if (myprimula.getRBN().probForm(br) != null &&  ! emptyIntersect(rbnarg.ancestorRels(br),relset)) {
+						ProbForm pf = myprimula.getRBN().probForm(br);
+						for (int[] arg : instarg.allInstantiated(br)) {
+							ProbForm groundpf = pf.substitute(myprimula.getRBN().args(br), arg);
+							GroundAtom ga = new GroundAtom(br,arg);
+							String argumentnames = rbnutilities.namestring(ga.args(),strucarg);
+							switch (nodetype){
+							case COMPLNODE:
+								newestnode = new ComplexBNGroundAtomNode(
+										ga.rel(),
+										argumentnames,
+										ga.args(),
+										groundpf);
+								break;
+							case PFNNODE:
+								newestnode = new ComplexPFNetworkNode(
+										ga.rel(),
+										argumentnames,
+										ga.args(),
+										groundpf);
+								break;
+							default:
+								newestnode = new ComplexBNGroundAtomNode();
+								throw new RuntimeException("Illegal case encountered");
+							}
+							newestnode.instantiate(instarg.truthValueOf(ga.rel(),ga.args()));
+
+							groundatomhasht.put(ga.asString(), newestnode);
+							toprocess.push(newestnode);
+						}
+					} // if (! emptyIntersect(rbnarg.ancestorRels(br),relset)) 
+				} // for (BoolRel br:  instarg.getBoolRels())
+			} // if (evidencemode == Primula.OPTION_EVIDENCE_CONDITIONED) 
+			
+			/* Now add ancestors of nodes in groundatomhasht.
+			 * 
+			 * Maintain invariant that if a node is in groundatomhasht, then 
+			 * either it is also in the toprocess stack, or all its parents have
+			 * already been added to the toprocess stack
+			 * 
+			 */
+			while (!toprocess.empty()) {
+				BNNode bn = toprocess.pop();
+				ProbForm pf = null;
+				GroundAtom ga = null;
+				if (bn instanceof ComplexBNGroundAtomNode) {
+					ComplexBNGroundAtomNode cbn = (ComplexBNGroundAtomNode)bn;
+					pf = cbn.probform();
+					ga = cbn.myatom();
+				}
+				else if (bn instanceof ComplexPFNetworkNode) {
+					pf = ((ComplexPFNetworkNode)bn).probform();
+					ga = ((ComplexPFNetworkNode)bn).myatom();
+				}
+				else
+					throw new RBNCompatibilityException("Did not get expected complex node type");
+				/* Set instantiation */
+				if (evidencemode == Primula.OPTION_EVIDENCE_CONDITIONED)
+				{
+					bn.instantiate(instarg.truthValueOf(ga));
+				}
+				/* add bn to groundatomhasht */
+				groundatomhasht.put(ga.asString(), bn);
+				/* add parents to stack */
+				
+				//need to perform substitution or pass substitution argument here!
+				
+				System.out.println("Making parent vector for " + pf.asString(0, 0, strucarg, true, true));
+				
+				Vector<GroundAtom> parents = null;
+				TreeSet<String> macrosdone = new TreeSet<String>();
+				if (evidencemode == Primula.OPTION_EVIDENCE_CONDITIONED){
+					parents=pf.makeParentVec(strucarg,instarg,macrosdone);
+				}
+				else 
+					parents=pf.makeParentVec(strucarg);
+				
+				for (GroundAtom pga: parents) {
+					BNNode newestnode;
+					if (groundatomhasht.get(pga.asString())==null) {
+						ProbForm ppf = myprimula.getRBN().probForm(pga.rel());
+						String[] args = myprimula.getRBN().arguments(pga.rel());
+						ProbForm ppf_sub = ppf.substitute(args, pga.args);
+						String argumentnames = rbnutilities.namestring(pga.args(),strucarg);
+						switch (nodetype){
+						case COMPLNODE:
+							newestnode = new ComplexBNGroundAtomNode(
+									pga.rel(),
+									argumentnames,
+									pga.args(),
+									ppf_sub);
+							break;
+						case PFNNODE:
+							newestnode = new ComplexPFNetworkNode(
+									pga.rel(),
+									argumentnames,
+									pga.args(),
+									ppf_sub);
+							break;
+						default:
+							newestnode = new ComplexBNGroundAtomNode();
+							throw new RuntimeException("Illegal case encountered");
+						}
+						if (evidencemode == Primula.OPTION_EVIDENCE_CONDITIONED)
+							newestnode.instantiate(instarg.truthValueOf(ga.rel(),ga.args()));
+						toprocess.push(newestnode);
+					} // if (groundatomhasht.get(pga.asString())==null) 
+						
+				} // for (GroundAtom pga: pf.makeParentVec(strucarg))
+			} // while (!toprocess.empty())
+		}// end Primula.OPTION_QUERY_SPECIFIC
+	}
+	
+	/* builds an initial groundatomhasht for all possible ground atoms*/
 	private void buildInitialGAHT(int evidencemode, int nodetype ,int isolatedzeronodesmode)
 	throws RBNCompatibilityException,RBNIllegalArgumentException
 	{
-		groundatomhasht = new Hashtable<Integer,BNNode>();
+		groundatomhasht = new Hashtable<String,BNNode>();
 
 		/* Generate all ground atoms
 		 */
 
-		String thisrelname;
-		int thisarity;
 		Rel thisrel;
 		String[] thisvars;
 		int[] thistuple;
@@ -142,12 +322,9 @@ public class BayesConstructor extends java.lang.Object {
 		for (int i = 0;i<rbnarg.NumPFs();i++)
 		{
 			thisrel = rbnarg.relAt(i);
-			thisrelname = thisrel.name.name;
-			thisarity = thisrel.arity;
-			thisvars = rbnarg.argumentsAt(i);
-			thispf = rbnarg.ProbFormAt(i);
-
-
+			thisvars = rbnarg.arguments_prels_At(i);
+			thispf = rbnarg.probForm_prels_At(i);
+			
 			int[][] allargs=strucarg.allArgTuples(thisrel);
 
 			for (int j =0;j<allargs.length;j++){
@@ -156,12 +333,7 @@ public class BayesConstructor extends java.lang.Object {
 				/* Determine the domainelement names corresponding to
 				 * thistuple
 				 */ 
-				String argumentnames = "";
-				if (thistuple.length > 0){
-					argumentnames = argumentnames + strucarg.nameAt(thistuple[0]);
-					for (int k=1;k<thistuple.length;k++)
-						argumentnames = argumentnames + "," + strucarg.nameAt(thistuple[k]);
-				}
+				String argumentnames = rbnutilities.namestring(thistuple,strucarg);
 				groundpf = thispf.substitute(thisvars,thistuple);
 
 
@@ -187,7 +359,7 @@ public class BayesConstructor extends java.lang.Object {
 				{
 					newestnode.instantiate(instarg.truthValueOf(thisrel,thistuple));
 				}
-				groundatomhasht.put(thisatom.hashCode(), newestnode);
+				groundatomhasht.put(thisatom.asString(), newestnode);
 				// 		}
 				numnodes++;
 				++myProgress;//keith cascio 20060515
@@ -212,20 +384,17 @@ public class BayesConstructor extends java.lang.Object {
 	 * parentvecs is the parentvector of the i'th element in
 	 * the enumeration groundatomhasht.elements
 	 */
-	private void connectParents(Vector parentvecs){
-		Vector parvec = null;
+	private void connectParents(Vector<Vector<GroundAtom>> parentvecs){
+		Vector<GroundAtom> parvec = null;
 		BNNode nextpar;
 		BNNode newgatn;
 		int nodeindex = 0;
 		for (Enumeration<BNNode> e=groundatomhasht.elements();e.hasMoreElements();){
 			newgatn = e.nextElement();
-			//System.out.println("parents of ... " + ((GroundAtomNodeInt)newgatn).myatom().asString());
-			parvec = (Vector)parentvecs.elementAt(nodeindex);
+			parvec = (Vector<GroundAtom>)parentvecs.elementAt(nodeindex);
 			LinkedList parents = new LinkedList();
-			//System.out.println("parvec size: " + parvec.size());
 			for (int j=0;j<parvec.size();j++){
-
-				nextpar = groundatomhasht.get(((GroundAtom)parvec.elementAt(j)).hashCode());
+				nextpar = groundatomhasht.get(((GroundAtom)parvec.elementAt(j)).asString());
 				newgatn.addToParents(nextpar);
 				nextpar.addToChildren(newgatn);
 			}
@@ -234,6 +403,24 @@ public class BayesConstructor extends java.lang.Object {
 	}
 
 
+	private Vector<BNNode> exportnodes(int isolatedzeronodesmode){
+		Vector<BNNode> result = new Vector<BNNode>();
+		for (Enumeration<BNNode> e=groundatomhasht.elements();e.hasMoreElements();) {
+			BNNode nextn = e.nextElement();
+			switch (isolatedzeronodesmode) {
+				case Primula.OPTION_NOT_ELIMINATE_ISOLATED_ZERO_NODES:{
+					result.add(nextn);
+					break;
+				}
+				case Primula.OPTION_ELIMINATE_ISOLATED_ZERO_NODES:{
+					if (!((SimpleBNNode)nextn).isIsolatedZeroNode())
+						result.add(nextn);
+					break;
+				}
+			}
+		}
+		return result;
+	}
 
 
 	/*
@@ -259,120 +446,120 @@ public class BayesConstructor extends java.lang.Object {
 	 * groundatomhasht! Not any auxiliary nodes which are predecessors
 	 * of such nodes.
 	 */
-	private Vector exportnodes(int evidencemode,
-			int querymode,
-			int isolatedzeronodesmode)
-
-	throws RBNCompatibilityException
-	{
-		BNNode thisbnnode;
-		boolean isolatedZero=false;
-		GroundAtom thisatom;
-		Rel thisrel;
-		int[] thisargs;
-		Vector exportnodes = new Vector();
-
-		/* First collect all the relevant 'base' atoms depending on query and evidence mode */
-		for (Enumeration<BNNode> e=groundatomhasht.elements();e.hasMoreElements();){
-			thisbnnode = e.nextElement();
-			thisatom = ((GroundAtomNodeInt)thisbnnode).myatom();
-
-			if (thisbnnode instanceof SimpleBNNode)
-				isolatedZero = ((SimpleBNNode)thisbnnode).isIsolatedZeroNode();
-			if (thisbnnode instanceof ComplexBNNodeInt)
-				isolatedZero = ((ComplexBNNodeInt)thisbnnode).isIsolatedZeroNode(strucarg);
-
-			if (isolatedzeronodesmode == Primula.OPTION_NOT_ELIMINATE_ISOLATED_ZERO_NODES ||
-					!isolatedZero ||
-					queryatoms.contains(thisatom)){
-				switch (querymode){
-				case Primula.OPTION_NOT_QUERY_SPECIFIC:{
-					exportnodes.add(thisbnnode);
-					break;
-				}
-				case Primula.OPTION_QUERY_SPECIFIC:{
-					switch (evidencemode){
-					case Primula.OPTION_NOT_EVIDENCE_CONDITIONED:{
-						if (queryatoms.contains(thisatom)){
-							exportnodes.add(thisbnnode);
-						}
-						break;
-					}
-					case Primula.OPTION_EVIDENCE_CONDITIONED:{
-						thisatom = ((GroundAtomNodeInt)thisbnnode).myatom();
-						thisrel = thisatom.rel;
-						thisargs = thisatom.args;
-						if (queryatoms.contains(thisatom) || instarg.truthValueOf(thisrel,thisargs) != -1){
-							exportnodes.add(thisbnnode);
-						}
-
-						break;
-					}
-					}
-				}
-				}
-			} // end if (isolatedzeronodesmode == ...
-			++myProgress;//keith cascio 20060515
-		}// end for
-
-
-
-		// Prune away all nodes that are not above any query- or evidence
-		// nodes (if OPTION_QUERY_SPECIFIC)
-
-		switch (querymode){
-		case Primula.OPTION_NOT_QUERY_SPECIFIC:{
-			break;
-		}
-		case Primula.OPTION_QUERY_SPECIFIC:{
-			// mark all nodes that are reachable by backward
-			// chaining from query or evidence nodes with visited[1]=true
-			BNNode bnn;
-
-			for (int i=0; i<exportnodes.size();i++)
-				markUpstream((BNNode)exportnodes.elementAt(i),1);
-
-			// Remove all unmarked children
-			ListIterator li;
-			for (int i=0; i<exportnodes.size();i++){
-
-				bnn = (BNNode)exportnodes.elementAt(i);
-				if (!bnn.visited[0])
-					// this node not in connected component of previous
-					// node in exportnodes
-				{
-					Vector nodestack = bnn.buildNodeStack();
-					BNNode topnode;
-					for (int j=0; j<nodestack.size(); j++){
-						topnode = (BNNode)nodestack.elementAt(j);
-						topnode.visited[0]=true;
-						if (topnode.visited[1]){
-							LinkedList newchildren = new LinkedList();
-							BNNode nextchild;
-							li = topnode.children.listIterator();
-							while (li.hasNext())
-							{
-								nextchild = (BNNode)li.next();
-								if (nextchild.visited[1])
-									newchildren.add(nextchild);
-							}
-							topnode.children = newchildren;
-						}
-					}
-				}
-				++myProgress;//keith cascio 20060515
-			}
-
-
-			for (int i=0; i<exportnodes.size();i++){
-				bnn = (BNNode)exportnodes.elementAt(i);
-				bnn.resetVisited(-1);
-			}
-		}
-
-		}
-		return exportnodes;
-	}
+//	private Vector<BNNode> exportnodes(int evidencemode,
+//			int querymode,
+//			int isolatedzeronodesmode)
+//
+//	throws RBNCompatibilityException
+//	{
+//		BNNode thisbnnode;
+//		boolean isolatedZero=false;
+//		GroundAtom thisatom;
+//		Rel thisrel;
+//		int[] thisargs;
+//		Vector<BNNode> exportnodes = new Vector<BNNode>();
+//
+//		/* First collect all the relevant 'base' atoms depending on query and evidence mode */
+//		for (Enumeration<BNNode> e=simplenodehasht.elements();e.hasMoreElements();){
+//			thisbnnode = e.nextElement();
+//			thisatom = ((GroundAtomNodeInt)thisbnnode).myatom();
+//
+//			if (thisbnnode instanceof SimpleBNNode)
+//				isolatedZero = ((SimpleBNNode)thisbnnode).isIsolatedZeroNode();
+//			if (thisbnnode instanceof ComplexBNNodeInt)
+//				isolatedZero = ((ComplexBNNodeInt)thisbnnode).isIsolatedZeroNode(strucarg);
+//
+//			if (isolatedzeronodesmode == Primula.OPTION_NOT_ELIMINATE_ISOLATED_ZERO_NODES ||
+//					!isolatedZero ||
+//					queryatoms.contains(thisatom)){
+//				switch (querymode){
+//				case Primula.OPTION_NOT_QUERY_SPECIFIC:{
+//					exportnodes.add(thisbnnode);
+//					break;
+//				}
+//				case Primula.OPTION_QUERY_SPECIFIC:{
+//					switch (evidencemode){
+//					case Primula.OPTION_NOT_EVIDENCE_CONDITIONED:{
+//						if (queryatoms.contains(thisatom)){
+//							exportnodes.add(thisbnnode);
+//						}
+//						break;
+//					}
+//					case Primula.OPTION_EVIDENCE_CONDITIONED:{
+//						thisatom = ((GroundAtomNodeInt)thisbnnode).myatom();
+//						thisrel = thisatom.rel;
+//						thisargs = thisatom.args;
+//						if (queryatoms.contains(thisatom) || instarg.truthValueOf(thisrel,thisargs) != -1){
+//							exportnodes.add(thisbnnode);
+//						}
+//
+//						break;
+//					}
+//					}
+//				}
+//				}
+//			} // end if (isolatedzeronodesmode == ...
+//			++myProgress;//keith cascio 20060515
+//		}// end for
+//
+//
+//
+//		/* Prune away all nodes that are not above any query- or evidence
+//		*  nodes (if OPTION_QUERY_SPECIFIC)
+//		*/
+//		switch (querymode){
+//		case Primula.OPTION_NOT_QUERY_SPECIFIC:{
+//			break;
+//		}
+//		case Primula.OPTION_QUERY_SPECIFIC:{
+//			// mark all nodes that are reachable by backward
+//			// chaining from query or evidence nodes with visited[1]=true
+//			BNNode bnn;
+//
+//			for (int i=0; i<exportnodes.size();i++)
+//				markUpstream((BNNode)exportnodes.elementAt(i),1);
+//
+//			// Remove all unmarked children
+//			ListIterator li;
+//			for (int i=0; i<exportnodes.size();i++){
+//
+//				bnn = (BNNode)exportnodes.elementAt(i);
+//				if (!bnn.visited[0])
+//					// this node not in connected component of previous
+//					// node in exportnodes
+//				{
+//					Vector<BNNode> nodestack = bnn.buildNodeStack();
+//					BNNode topnode;
+//					for (int j=0; j<nodestack.size(); j++){
+//						topnode = (BNNode)nodestack.elementAt(j);
+//						topnode.visited[0]=true;
+//						if (topnode.visited[1]){
+//							LinkedList<BNNode> newchildren = new LinkedList<BNNode>();
+//							BNNode nextchild;
+//							li = topnode.children.listIterator();
+//							while (li.hasNext())
+//							{
+//								nextchild = (BNNode)li.next();
+//								if (nextchild.visited[1])
+//									newchildren.add(nextchild);
+//							}
+//							topnode.children = newchildren;
+//						}
+//					}
+//				}
+//				++myProgress;//keith cascio 20060515
+//			}
+//
+//
+//			for (int i=0; i<exportnodes.size();i++){
+//				bnn = (BNNode)exportnodes.elementAt(i);
+//				bnn.resetVisited(-1);
+//			}
+//		}
+//
+//		}
+//		return exportnodes;
+//	}
 
 	public PFNetwork constructPFNetwork(int evidencemode,
 			int querymode,
@@ -384,26 +571,27 @@ public class BayesConstructor extends java.lang.Object {
 		/* The following lines all operate on
 		 * groundatomhasht
 		 */
-		buildInitialGAHT(evidencemode, PFNNODE , isolatedzeronodesmode);
+		buildInitialGAHT(querymode, evidencemode, PFNNODE , isolatedzeronodesmode);
+		
 		Vector parentvecs = makeParentvecs(evidencemode);
 		connectParents(parentvecs);
 
 
-		Vector exportnodes = exportnodes(evidencemode, querymode, isolatedzeronodesmode);
+		Vector exportnodes = null; // Todo exportnodes(evidencemode, querymode, isolatedzeronodesmode);
 		/* the PFNetwork constructor requires a vector containing all nodes;
 		 * therefore have to add all predecessors of nodes in exportnodes to
 		 * exportnodes
 		 */
-		BNNode bnn;
-		BNNode bnn2;
-		Vector nodestack;
-		Vector allnodes = new Vector();
-		for (int i=0;i<exportnodes.size();i++){
-			bnn=(BNNode)exportnodes.elementAt(i);
+		
+		Vector<BNNode> nodestack;
+		Vector<BNNode> allnodes = new Vector<BNNode>();
+
+		for (Enumeration<BNNode> en= groundatomhasht.elements(); en.hasMoreElements();){
+			BNNode bnn = en.nextElement();
 			if (!bnn.visited[0]){
 				nodestack = bnn.buildNodeStack();
 				for (int j=0;j<nodestack.size();j++){
-					bnn2=(BNNode)nodestack.elementAt(j);
+					BNNode bnn2=(BNNode)nodestack.elementAt(j);
 					bnn2.visited[0]=true;
 					allnodes.add(bnn2);
 				}
@@ -482,12 +670,13 @@ public class BayesConstructor extends java.lang.Object {
 			myProgressMax += estRemainder;
 			/** ... keith cascio */
 
-			//myprimula.showMessage("construct CPT network...");
-			buildInitialGAHT(evidencemode, COMPLNODE,isolatedzeronodesmode );
+			myprimula.showMessage("construct CPT network...");
+			
+			
+			buildInitialGAHT(querymode, evidencemode, COMPLNODE,isolatedzeronodesmode );
+			
 
-
-			//System.out.println( "after buildInitialGAHT() progress " + myProgress + ", est " + myProgressMax );
-
+		
 			/** keith cascio 20060515 ... */
 
 			/** ... keith cascio */
@@ -511,24 +700,16 @@ public class BayesConstructor extends java.lang.Object {
 			}
 			}
 
-			//System.out.println( "after makeBNetwork() progress " + myProgress + ", est " + myProgressMax );
-
+			
 			/* Now all nodes in groundatomhasht (and all other nodes in network)
 			 * are SimpleBNNodes
 			 */
-			Vector exportnodes = exportnodes(evidencemode, querymode, isolatedzeronodesmode);
-
-			int median = -1;
-			//System.out.println( "after exportnodes() progress " + (median = myProgress) + ", est " + myProgressMax );
-			//System.out.println( "exportnodes.size() " + exportnodes.size() );
-
-			/** keith cascio 20060515 ... */
-			//myProgressMax += (exportnodes.size() * 4);
-			//if( layoutmode == Primula.OPTION_LAYOUT ) myProgressMax += (exportnodes.size() * 3);
-			/** ... keith cascio */
-
-			// Reduce exportnodes to list that contains only one representative
-			// node from each connected component of the network
+			Vector<BNNode> exportnodes = exportnodes(isolatedzeronodesmode);
+  
+			
+			/*Reduce exportnodes to list that contains only one representative
+			 *node from each connected component of the network
+			 */
 			int position = 0;
 			while (position < exportnodes.size()) {
 				removeReachable((SimpleBNNode)exportnodes.elementAt(position),exportnodes,true);
@@ -539,9 +720,6 @@ public class BayesConstructor extends java.lang.Object {
 			//revise the estimate
 			myProgressMax -= estRemainder;
 			myProgressMax += (exportnodes.size() * factor);
-
-			//System.out.println( "rem 000 progress " + myProgress + ", est " + myProgressMax );
-			//System.out.println( "exportnodes.size() " + exportnodes.size() );
 
 			SimpleBNNode nextconvcomp;
 
@@ -559,23 +737,20 @@ public class BayesConstructor extends java.lang.Object {
 				++myProgress;//keith cascio 20060515
 			}
 
-			//System.out.println( "rem 001 progress " + myProgress + ", est " + myProgressMax );
+			
 
 			// Merge equivalent deterministic nodes
 			boolean merge;
 			for (int i=0;i<exportnodes.size();i++){
 				nextconvcomp = (SimpleBNNode)exportnodes.elementAt(i);
-				//showNodes(nextconvcomp);
 				merge = true;
 				while (merge)
 					merge = mergeEquivalentDetNodes(nextconvcomp);
-				//nextconvcomp.resetVisited(-1);
 				++myProgress;//keith cascio 20060515
 			}
 
-			//System.out.println( "rem 002 progress " + myProgress + ", est " + myProgressMax );
-
-
+			
+			
 			if (layoutmode == Primula.OPTION_LAYOUT){
 				Primula.appendMessage("layout...");
 				// 	    // Set depths of nodes, includes acyclicity check
@@ -588,25 +763,8 @@ public class BayesConstructor extends java.lang.Object {
 				//revise the estimate
 				myProgressMax += costOfBalancing;
 
-				//System.out.println( "costOfBalancing " + costOfBalancing );
 
-				// 	    Vector nodestack = new Vector();
-				// 	    SimpleBNNode topnode;
-				// 	    int[] maxlevels = new int[exportnodes.size()];
-				// 	    for (int i = 0; i<exportnodes.size(); i++){
-				// 		nextconvcomp = (SimpleBNNode)exportnodes.elementAt(i);
-				// 		nodestack.add(nextconvcomp);
-				// 		nextconvcomp.visited[1]=true;
-				// 		while (!nodestack.isEmpty()){
-				// 		    topnode = (SimpleBNNode)nodestack.elementAt(nodestack.size()-1);
-				// 		    nodestack.removeElementAt(nodestack.size()-1);
-				// 		    maxlevels[i]=Math.max(maxlevels[i],setDepth(topnode, nodestack));
-				// 		}
-
-				// 		nextconvcomp.resetVisited(-1);
-				// 	    }
-
-				// Set heights
+				/*Set heights*/
 				Vector nodestack = new Vector();
 				SimpleBNNode topnode;
 				for (int i = 0; i<exportnodes.size(); i++){
@@ -621,9 +779,7 @@ public class BayesConstructor extends java.lang.Object {
 					++myProgress;//keith cascio 20060515
 				}
 
-				//System.out.println( "rem 003 progress " + myProgress + ", est " + myProgressMax );
-
-				// Set levels of nodes
+				/* Set levels of nodes */
 				for (int i = 0; i<exportnodes.size(); i++){
 					nextconvcomp = (SimpleBNNode)exportnodes.elementAt(i);
 					setLevel(nextconvcomp,maxlevels[i]);
@@ -631,9 +787,7 @@ public class BayesConstructor extends java.lang.Object {
 					++myProgress;//keith cascio 20060515
 				}
 
-				//System.out.println( "rem 004 progress " + myProgress + ", est " + myProgressMax );
-
-				// Set xcoordinates
+				/* Set xcoordinates */
 				for (int i = 0; i<exportnodes.size(); i++){
 					nextconvcomp = (SimpleBNNode)exportnodes.elementAt(i);
 					balanceLevels(nextconvcomp,maxlevels[i]);
@@ -641,10 +795,10 @@ public class BayesConstructor extends java.lang.Object {
 					++myProgress;//keith cascio 20060515
 				}
 
-				//System.out.println( "rem 005 progress " + myProgress + ", est " + myProgressMax );
-
 			} // end OPTION_LAYOUT
 
+			
+			
 			Primula.appendMessage("export...");
 
 			switch (bnsystem){
@@ -672,9 +826,6 @@ public class BayesConstructor extends java.lang.Object {
 				}
 				++myProgress;//keith cascio 20060515
 			}
-
-			//System.out.println( "after  remainder progress " + myProgress + ", est " + myProgressMax );
-			//System.out.println( "actual remainder progress " + (myProgress - median) );
 
 			bni.open();
 			Primula.appendMessage("done");
@@ -720,6 +871,9 @@ public class BayesConstructor extends java.lang.Object {
 		int[]  diffinst;
 		int diff;
 
+		/*TODO : avoid costly copying of inst.
+		 * 
+		 */
 		OneStrucData copyinst = inst.copy();
 		/* Additional bit-vector representations of instantiations: */
 		oldinst = new int[parentatoms.size()];
@@ -738,8 +892,20 @@ public class BayesConstructor extends java.lang.Object {
 		/* Iterate over all instantiations */
 		for (int h=0;h<cpt.length;h++){
 			//System.out.println(pform.asString(0, 0, A));
-			cpt[h]=pform.evaluate(A,copyinst,new String[0], new int[0], true, 
-					new String[0], true,new GroundAtomList(),false,null);
+			
+			cpt[h]=(double)pform.evaluate(A,
+					copyinst,
+					new String[0], 
+					new int[0], 
+					true, 
+					true,
+					new GroundAtomList(),
+					false,
+					new Hashtable<String,Object[]>(),
+					null,
+					ProbForm.RETURN_ARRAY,
+					true,
+					null)[0];
 			
 			if (cpt[h]<0 || cpt[h]>1)
 				System.out.println("invalid cpt entry " + cpt[h] + "from " + pform.asString(0,0,A,false,false));
@@ -772,17 +938,11 @@ public class BayesConstructor extends java.lang.Object {
 
 		OneStrucData inst=null;
 
-		Vector parentvecs = new Vector(); // Vector of Vector
-		Vector parvec = null;
+		Vector<Vector<GroundAtom>> parentvecs = new Vector<Vector<GroundAtom>> (); // Vector of Vector
+		Vector<GroundAtom> parvec = null;
 		ComplexBNGroundAtomNode currentnode;
 		ProbForm pform;
 		double[] cpt;
-		int[]  oldinst;
-		int[]  newinst;
-		int[]  diffinst;
-		int diff;
-		BNNode nextpar;
-		ComplexBNGroundAtomNode oldgatn;
 		SimpleBNGroundAtomNode newgatn;
 
 
@@ -793,30 +953,34 @@ public class BayesConstructor extends java.lang.Object {
 		 * ComplexBNGroundAtomNodes in groundatomhasht with
 		 * SimpleBNGroundAtomNodes
 		 */
+		
+		
+		
+		switch (evidencemode){
+		case Primula.OPTION_NOT_EVIDENCE_CONDITIONED:{
+			inst = new OneStrucData();
+			break;
+		}
+		case Primula.OPTION_EVIDENCE_CONDITIONED:{
+			inst = instarg.copy();
+			break;
+		}
+		}
+		
 		for (Enumeration<BNNode> e=groundatomhasht.elements();e.hasMoreElements();){
+			System.out.print(".");
 			currentnode = (ComplexBNGroundAtomNode)e.nextElement();
-			parvec = (Vector)parentvecs.elementAt(nodeindex);
+			parvec = (Vector<GroundAtom>)parentvecs.elementAt(nodeindex);
 			nodeindex++;
 			pform = currentnode.probform;
-			// 	    cpt = new double[(int)Math.pow(2,parvec.size())];
-			switch (evidencemode){
-			case Primula.OPTION_NOT_EVIDENCE_CONDITIONED:{
-				inst = new OneStrucData();
-				break;
-			}
-			case Primula.OPTION_EVIDENCE_CONDITIONED:{
-				inst = instarg.copy();
-				break;
-			}
-			}
-
-			
-			cpt = makeCPT(pform,strucarg,inst,parvec);
-			/* turn complexnode into simplenode
-			 */
-			//oldgatn = (ComplexBNGroundAtomNode)groundatomhasht[i];
 			GroundAtom atom = currentnode.myatom();
 			String name = currentnode.name;
+
+		
+			/* turn complexnode into simplenode
+			 */
+			cpt = makeCPT(pform,strucarg,inst,parvec);
+			
 			newgatn = new SimpleBNGroundAtomNode(atom,
 					name,
 					cpt,
@@ -826,18 +990,18 @@ public class BayesConstructor extends java.lang.Object {
 			if (evidencemode == Primula.OPTION_EVIDENCE_CONDITIONED){
 				newgatn.instantiate(currentnode.instantiated);
 			}
-			/* change node in groundatomhasht */
-			groundatomhasht.put(atom.hashCode(), newgatn);
+			/* add simplified node to groundatomhasht*/
+			groundatomhasht.put(atom.asString(), newgatn);
 
 			++myProgress;//keith cascio 20060515
-		}// for (int i=0;i<groundatomhasht.length;i++){
+		}// (Enumeration<BNNode> e=groundatomhasht.elements();e.hasMoreElements();)
 
-
+		
 		/* Second pass over groundatomhasht:
 		 * set parents and children
 		 */
 		connectParents(parentvecs);
-
+		
 	}
 
 
@@ -900,20 +1064,23 @@ public class BayesConstructor extends java.lang.Object {
 	 * is determined by the order in which groundatomhasht.elements()
 	 * returns the ground atoms!
 	 */
-	private Vector makeParentvecs(int evidencemode)
+	private Vector<Vector<GroundAtom>> makeParentvecs(int evidencemode)
 	throws RBNCompatibilityException
 	{
-		Vector parentvecs = new Vector(); // Vector of Vector of ground Atoms
-		Vector parvec = null;
-
+		Vector<Vector<GroundAtom>> parentvecs = new Vector<Vector<GroundAtom>>(); // Vector of Vector of ground Atoms
+		Vector<GroundAtom> parvec = null;
+		BNNode newgatn;
 		for (Enumeration<BNNode> e=groundatomhasht.elements();e.hasMoreElements();){
 			switch (evidencemode){
 			case Primula.OPTION_NOT_EVIDENCE_CONDITIONED:{
-				parvec = ((ComplexBNNodeInt)e.nextElement()).probform().makeParentVec(strucarg);
+				newgatn = e.nextElement();
+				parvec = newgatn.probform().makeParentVec(strucarg);
 				break;
 			}
 			case Primula.OPTION_EVIDENCE_CONDITIONED:{
-				parvec = ((ComplexBNNodeInt)e.nextElement()).probform().makeParentVec(strucarg,instarg);
+				newgatn = e.nextElement();
+				TreeSet<String> macrosdone = new TreeSet<String>();
+				parvec = newgatn.probform().makeParentVec(strucarg,instarg,macrosdone);
 				break;
 			}
 			}
@@ -942,7 +1109,7 @@ public class BayesConstructor extends java.lang.Object {
 			nextparent.replaceInChildrenList(oldnode,newnode);
 		}
 		if (newnode instanceof SimpleBNGroundAtomNode){
-			groundatomhasht.put(((GroundAtomNodeInt)newnode).myatom().hashCode(),newnode);
+			groundatomhasht.put(((GroundAtomNodeInt)newnode).myatom().asString(),newnode);
 		}
 	}
 
@@ -1962,7 +2129,7 @@ public class BayesConstructor extends java.lang.Object {
 				++myProgress;//keith cascio 20060515
 			}
 		}
-		System.out.println("Itcount: " + itcount);
+		
 		// Remove the dummies
 		// Compute for each level the "levelwidth" given
 		// by posnumber*weight of the last element
@@ -2424,7 +2591,19 @@ public class BayesConstructor extends java.lang.Object {
 		}
 		System.out.println();
 	}
+	
+	private Boolean emptyIntersect(TreeSet<Rel> tsr1, TreeSet<Rel> tsr2) {
+		Boolean result = true;
+		
+		for (Iterator<Rel> it= tsr1.iterator();it.hasNext();) {
+			Rel r = it.next();
+			if (tsr2.contains(r))
+				result = false;
+		}
+		
+		return result;
+	}
 
-
+	
 
 }

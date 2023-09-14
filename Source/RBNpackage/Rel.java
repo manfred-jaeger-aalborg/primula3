@@ -32,7 +32,7 @@ import org.dom4j.Document;
 
 
 
-public  class Rel implements Serializable{
+public  class Rel implements Serializable, Comparable<Rel>{
 
 	public static final int PREDEFINED = 0;
 	public static final int PROBABILISTIC = 1;
@@ -253,6 +253,13 @@ public  class Rel implements Serializable{
 		else return "PROBABILISTIC";
 					
 	}
+	
+	public int compareTo(Rel r) {
+		return this.toStringWArity().compareTo(r.toStringWArity());
+	}
   	
+	public void set_name(String name) {
+			this.name=new RelName(name);
+	}
 }
 

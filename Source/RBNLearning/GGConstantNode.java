@@ -117,9 +117,9 @@ public class GGConstantNode extends GGProbFormNode{
 //		}
 //	}
 
-	public double evaluateGrad(int param){
+	public double evaluateGrad(String param){
 		if (isUnknown){
-			if (paramname.equals(thisgg.parameterAt(param))){
+			if (paramname.equals(param)){
 				gradient.put(param,1.0);
 				return 1.0;
 			}

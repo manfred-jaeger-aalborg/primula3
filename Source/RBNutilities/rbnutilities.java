@@ -202,6 +202,14 @@ public class rbnutilities extends java.lang.Object
     	}
     	return false;
     }
+    
+    public static int arrayContainsAt(String[] arr, String ii){
+    	int result = -1;
+    	for (int i=0;i<arr.length;i++){
+    		if (arr[i].equals(ii)) result=i;
+    	}
+    	return result;
+    }
 
     public static double[] arrayAdd(double[] arg1, double[] arg2){
     	if (arg1.length != arg2.length)
@@ -1290,6 +1298,21 @@ public class rbnutilities extends java.lang.Object
     	}
     }
     
+    
+    public static int sigmoidNormalize(double v, double[] inminmax, int outmax, double shape){
+       	if (inminmax[0]==inminmax[1])
+    		return outmax;  	
+    	else {
+    		// First scale the value linearly into the interval [-shape,shape]
+    		double nv = 2*shape*(v-inminmax[0])/(inminmax[1]-inminmax[0])-shape;
+    		// Apply sigmoid for a nonlinear 'distortion':
+    		nv =1/(1+ Math.exp(-3*nv));
+    		int result = (int)(outmax*nv);
+    		//System.out.println("   out: " + result);
+    		return result;
+    	}
+    }
+    
     /* Turns a vector of int[] into an int[]. Intended for 
      * input where each array in intvec is of length 1. Then:
      * [2],[5],...,[3] -> [2,5,...,3]
@@ -1348,6 +1371,71 @@ public class rbnutilities extends java.lang.Object
     	for (Iterator it = ts.iterator();it.hasNext();) {
     		result.add(it.next());
     	}
+    	return result;
+    }
+    
+    /* Returns list of domain element names corresponding to
+     * the indices in idxs as a single comma-separated string
+     * (used in BayesConstructor).
+     */
+    public static String namestring(int[] idxs, RelStruc A) {
+    	String result = "";
+		if (idxs.length > 0){
+			result = result + A.nameAt(idxs[0]);
+			for (int k=1;k<idxs.length;k++)
+				result = result + "," + A.nameAt(idxs[k]);
+		}
+		return result;
+    }
+    
+    public static String[] array_substitute(String[] arr, String[] olds , String[] news) {
+    	/* Performs a substitution defined by olds/news on the array arr.
+    	 * 
+    	 * Example: array_substiture([u,z],[x,y,z],[a,b,c) = [u,c]
+    	 * 
+    	 */
+    	if (olds.length != news.length)
+    		System.out.println("calling rbnutilities.array_substitute with unmatched arguments");
+    	Hashtable<String,String> substitution = new Hashtable<String,String>();
+    	for (int i = 0;i<olds.length;i++)
+    		substitution.put(olds[i],news[i]);
+    	String[] result = new String[arr.length];
+    	for (int i=0;i<result.length;i++) {
+    		String s = substitution.get(arr[i]);
+    		if (s!= null)
+    			result[i]=s;
+    		else
+    			result[i]=arr[i];
+    	}
+    	return result;
+    }
+    
+    public static String[] array_substitute(String[] arr, String[] olds , int[] news) {
+    	/* Performs a substitution defined by olds/news on the array arr.
+    	 * 
+    	 * Example: array_substiture([u,z],[x,y,z],[1,2,3]) = [u,3]
+    	 * (all elements in result of type String).
+    	 */
+    	if (olds.length != news.length)
+    		System.out.println("calling rbnutilities.array_substitute with unmatched arguments");
+    	Hashtable<String,Integer> substitution = new Hashtable<String,Integer>();
+    	for (int i = 0;i<olds.length;i++)
+    		substitution.put(olds[i],news[i]);
+    	String[] result = new String[arr.length];
+    	for (int i=0;i<result.length;i++) {
+    		Integer s = substitution.get(arr[i]);
+    		if (s!= null)
+    			result[i]=String.valueOf(s);
+    		else
+    			result[i]=arr[i];
+    	}
+    	return result;
+    }
+    
+    public static String asString(Vector<String> sv) {
+    	String result = "";
+    	for (String s: sv)
+    		result += " " +s;
     	return result;
     }
 }

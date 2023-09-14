@@ -42,7 +42,7 @@ public class PFNetwork{
 	 *  Contains all nodes in the network
 	 * (can consist of several connected components) 
 	 */
-	private Vector allnodes; 
+	private Vector<PFNetworkNode> allnodes; 
 
 	/** 
 	 * Hashtable makes nodes accessible by their atom
@@ -50,7 +50,7 @@ public class PFNetwork{
 	 * formulas)
 	 *
 	 */
-	private Hashtable atomhasht;
+	private Hashtable<String,PFNetworkNode> atomhasht;
 
 	private RelStruc A; // Current underlying RelStruc
 	private OneStrucData inst;
@@ -74,7 +74,7 @@ public class PFNetwork{
 
 
 	public PFNetwork(){
-		allnodes = new Vector();
+		allnodes = new Vector<PFNetworkNode>();
 	}
 
 	public PFNetwork(Primula pr, Vector an, RelStruc A, OneStrucData inst){
@@ -297,7 +297,7 @@ public class PFNetwork{
 		allsampleweight_subsample = new double[num_subsamples_minmax][2];
 		makeSimple(numpar,inst,A);
 		sEval(A);
-		atomhasht = new Hashtable(allnodes.size(),(float)1.0);
+		atomhasht = new Hashtable<String,PFNetworkNode>(allnodes.size(),(float)1.0);
 		for (int i=0;i<allnodes.size();i++)
 			atomhasht.put(atomAt(i).asString(),allnodes.elementAt(i));
 
@@ -544,6 +544,7 @@ public class PFNetwork{
 		}
 		for (int i=0;i<sampleord.size() && !badsample;i++){
 			nextpfnn = (PFNetworkNode)sampleord.elementAt(i);
+			
 			inittime = System.currentTimeMillis();
 			try {
 				nextpfnn.sample(A,atomhasht,inst,sampleordmode,adaptivemode,timers,verbose);

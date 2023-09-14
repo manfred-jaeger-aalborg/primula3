@@ -1,25 +1,8 @@
 /*
 * SimpleBNNode.java 
 * 
-* Copyright (C) 2003 Max-Planck-Institut fuer Informatik,
-*                    Helsinki Institute for Information Technology
-*
-* contact:
-* jaeger@cs.auc.dk    www.cs.auc.dk/~jaeger/Primula.html
-*
-* This program is free software; you can redistribute it and/or
-* modify it under the terms of the GNU General Public License
-* as published by the Free Software Foundation; either version 2
-* of the License, or (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+* Class representing BN nodes in which the conditional probability distribution
+* is represented in tabular form. 
 */
 
 package RBNinference;
@@ -63,7 +46,7 @@ public class SimpleBNNode extends BNNode {
         exported = false;
     }
     
-    public SimpleBNNode(String name, double[] cpt, LinkedList parents, LinkedList children ) {
+    public SimpleBNNode(String name, double[] cpt, LinkedList<BNNode> parents, LinkedList<BNNode> children ) {
         super (name,parents,children); 
         cptentries = cpt;
         depthset =false;

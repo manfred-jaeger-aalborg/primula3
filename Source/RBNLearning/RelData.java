@@ -24,6 +24,7 @@
 package RBNLearning;
 
 import java.io.BufferedWriter;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -57,8 +58,8 @@ import RBNExceptions.RBNRuntimeException;
  */
 public class RelData {
 	
-	public static int SPLIT_BY_DOMAIN=0;
-	public static int SPLIT_ACROSS_DOMAINS=1;
+	public static final int SPLIT_BY_DOMAIN=0;
+	public static final int SPLIT_ACROSS_DOMAINS=1;
 	
 	Vector<RelDataForOneInput> cases;
 	

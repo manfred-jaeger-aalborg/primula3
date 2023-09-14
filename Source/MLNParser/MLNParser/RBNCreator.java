@@ -348,7 +348,7 @@ public class RBNCreator {
 
     }*/
     public void fileFinished() {
-        network = new RBN(formulas.size() + probabilisticRelations.size());
+        network = new RBN(formulas.size() + probabilisticRelations.size(),0);
         artificialRelations = new Vector<Rel>();
         
         /*create the artificial relations
@@ -358,9 +358,8 @@ public class RBNCreator {
             Type[] freetypes = this.checkFreeVars(formula);
             BoolRel relation = new BoolRel("MLNRel" + currentForm,formula.freevars().length,freetypes);
             
-            network.insertRel(relation, currentForm);
-            network.insertProbForm(formula, currentForm);
-            network.insertArguments(formula.freevars(), currentForm);
+            RBNPreldef pdef=new RBNPreldef(relation,formula.freevars(),formula);
+            network.insertPRel(pdef, currentForm);
             
             artificialRelations.add(relation);
             currentForm++;
@@ -371,13 +370,12 @@ public class RBNCreator {
         Vector<BoolRel> rels = new Vector(relations.values());
         for (BoolRel rel: rels){
             if(probabilisticRelations.contains(rel.printname())){
-                
-                network.insertRel(rel, currentForm);
                 String[] args = new String[rel.getArity()];
                 for (int i=0;i<args.length;i++)
                 	args[i]="x" + i;
-                network.insertArguments(args,currentForm);
-                network.insertProbForm(new ProbFormConstant(0.5), currentForm);
+                
+                RBNPreldef pdef=new RBNPreldef(rel,args,new ProbFormConstant(0.5));
+                network.insertPRel(pdef, currentForm);
             
                 currentForm++;
             }

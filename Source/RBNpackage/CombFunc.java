@@ -29,6 +29,13 @@ public abstract class CombFunc extends Object
 		return result;
 	}
 
+	/* Calculates the (partial) derivative of 
+	*  comb{ F1,...,Fn}
+	*  vals contains the values of F1,...,Fn and
+	*  derivs their derivatives
+	 */
+	public abstract double evaluateGrad(double[] vals, double[] derivs);
+	
 	public abstract  double evaluate(double[] args);
 
 	/* args is a vector with 1,0,-1 entries.

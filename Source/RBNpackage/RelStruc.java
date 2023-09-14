@@ -253,14 +253,17 @@ public abstract class RelStruc implements Cloneable{
 		NumRel rel;
 		int[] args;
 		for (int i=0;i<numatomstrings.size();i++){
-			atstring = numatomstrings.elementAt(i);
-			int leftpar = atstring.indexOf("(");
-	    	String relname = atstring.substring(0, leftpar);
-	    	args =  this.getIndexes(StringOps.stringToStringArray(atstring.substring(leftpar)));
-	    	int arity = args.length;
-	    	rel = new NumRel(relname,arity);
-	    	addTuple(rel,args,values.elementAt(i));
+			addTuple(numatomstrings.elementAt(i),values.elementAt(i));
 		}
+	}
+	
+	public void addTuple(String numat, double val) {
+		int leftpar = numat.indexOf("(");
+    	String relname = numat.substring(0, leftpar);
+    	int [] args =  this.getIndexes(StringOps.stringToStringArray(numat.substring(leftpar)));
+    	int arity = args.length;
+    	NumRel rel = new NumRel(relname,arity);
+    	addTuple(rel,args,val);
 	}
 	
 	public void addTuple(Rel r, String[] tuple){
@@ -396,7 +399,8 @@ public abstract class RelStruc implements Cloneable{
 			nrel = numattributes.elementAt(i);
 			double[] lowerupper = mydata.findInNumRel(nrel).minMax();
 			if (mydata.truthValueOf(nrel,node) == 1){
-				intens.addElement(rbnutilities.minMaxNormalize(mydata.valueOf(nrel, node),lowerupper,255,1.5));
+				//intens.addElement(rbnutilities.minMaxNormalize(mydata.valueOf(nrel, node),lowerupper,255,1.5));
+				intens.addElement(rbnutilities.sigmoidNormalize(mydata.valueOf(nrel, node),lowerupper,255,1.5));
 			}
 		}
 		if(intens.size() == 0)

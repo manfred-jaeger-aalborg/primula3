@@ -77,9 +77,7 @@ public abstract class GradientGraph{
 	public static int CompareIndicatorMaxNodesByScore =0;
 	public static int CompareIndicatorMaxNodesByIndex =1;
 	
-	public static final int UseLik = 0;
-	public static final int UseLogLik = 1;
-	public static final int UseSquaredError = 2;
+	
 	
 	protected int objective; /* One of UseLik, UseLogLik, UseSquaredError */
 	
@@ -120,22 +118,23 @@ public abstract class GradientGraph{
 	Vector<GGAtomMaxNode> maxindicators; /* All the indicators for atoms to be maximized */
 	Vector<GGConstantNode> paramNodes; /* All the constant (i.e. parameter) nodes */
 
-	 /* All the parameters. This array of parameter names is constructed
+	 /* Hashtable containing all the parameters as keys, with an integer index as value. 
+	  * This  is constructed
 		 * before the vector paramNodes is constructed. It is needed already
-		 * in the construction of the nodes of the graph. The order of the 
-		 * two lists of parameters must be consistent, i.e.
-		 * parameters[i] = paramNodes.elementAt(i).paramname() 
+		 * in the construction of the nodes of the graph. The Integer indices in this 
+		 * hashtable must correspond to the order in paramNodes: 
+		 * paramNodes.elementAt(parameters.get("pname")).paramname() = "pname" 
 		 */
-	String[] parameters;
+	Hashtable<String,Integer> parameters;
 
 	/* Minima and maxima for the parameters */
 	double[][] minmaxbounds;
 	
-	/* The parameters array contains first the model parameters from the 
-	 * rbn, and then (if any) the parameters from numerical relations;
-	 * maxrbnparam is the index of the last rbn parameter.
-	 */
-	int maxrbnparam;
+//	/* The parameters array contains first the model parameters from the 
+//	 * rbn, and then (if any) the parameters from numerical relations;
+//	 * maxrbnparam is the index of the last rbn parameter.
+//	 */
+//	int maxrbnparam;
 	
 
 	/* list of atoms for which MAP inference is to be performed
@@ -184,7 +183,7 @@ public abstract class GradientGraph{
 
 	public GradientGraph(Primula mypr, 
 			RelData data, 
-			String[] params,
+			Hashtable<String,Integer> params,
 			GradientGraphOptions go, 
 			GroundAtomList maxats, 
 			int m,
@@ -245,16 +244,16 @@ public abstract class GradientGraph{
 
 
 	public int numberOfParameters(){
-		return parameters.length;
+		return parameters.size();
 	}
 
-	public String[] parameters(){
+	public Hashtable<String,Integer> parameters(){
 		return parameters;
 	}
 
-	public String parameterAt(int i){
-		return parameters[i];
-	}
+//	public String parameterAt(int i){
+//		return parameters[i];
+//	}
 
 
 	/** Computes the empirical likelihood and empirical partial derivatives 
@@ -337,14 +336,14 @@ public abstract class GradientGraph{
 	public abstract void showLikelihoodNode(RelStruc A);
 	
 
-	public void showParameterValues(String prefix){
-		double[] paramvals = currentParameters();
-		System.out.print(prefix);
-		for (int i=0;i<parameters.length;i++){
-			System.out.print(parameters[i] + ": " + paramvals[i] + "; ");
-		}
-		System.out.println();
-	}
+//	public void showParameterValues(String prefix){
+//		double[] paramvals = currentParameters();
+//		System.out.print(prefix);
+//		for (int i=0;i<parameters.size();i++){
+//			System.out.print(parameters[i] + ": " + paramvals[i] + "; ");
+//		}
+//		System.out.println();
+//	}
 
 
 
@@ -366,16 +365,18 @@ public abstract class GradientGraph{
 		 */
 		double disttobound;
 		
-		for (int i=0 ;i < parameters.length;i++){
+		for (int i=0 ;i < parameters.size();i++){
 			if (gradient[i]<0){
-				if (minmaxbounds[i][0] != Double.NEGATIVE_INFINITY )
+				if (minmaxbounds[i][0] != Double.NEGATIVE_INFINITY ) {
 					disttobound = Math.min(theta[i]-minmaxbounds[i][0], 1.0);
+				}
 				else disttobound =1.0;
 				result[i]=gradient[i]*disttobound;
 			}
 			else{ // gradient > 0
-				if (minmaxbounds[i][1] != Double.POSITIVE_INFINITY )
+				if (minmaxbounds[i][1] != Double.POSITIVE_INFINITY ) {
 					disttobound = Math.min(minmaxbounds[i][1]-theta[i], 1.0);
+				}
 				else disttobound =1.0;
 				result[i]=gradient[i]*disttobound;
 			}
@@ -389,7 +390,7 @@ public abstract class GradientGraph{
 		double[] result = new double[theta.length];
 	
 		
-		for (int i=0 ;i < parameters.length;i++) {
+		for (int i=0 ;i < parameters.size();i++) {
 			result[i]=Math.max(theta[i],minmaxbounds[i][0]);
 			result[i]=Math.min(result[i],minmaxbounds[i][1]);
 		}

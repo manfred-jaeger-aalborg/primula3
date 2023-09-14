@@ -54,10 +54,10 @@ public class GGConvCombNode extends GGProbFormNode{
 			OneStrucData I,
 			int inputcaseno,
 			int observcaseno,
-			String[] parameterrels,
+			Hashtable<String,Integer> parameters,
 			boolean useCurrentPvals,
 			GroundAtomList mapatoms,
-    		Hashtable<String,Double>  evaluated )
+    		Hashtable<String,Object[]>  evaluated )
 					throws RBNCompatibilityException
 					{
 		super(gg,pf,A,I);
@@ -66,17 +66,48 @@ public class GGConvCombNode extends GGProbFormNode{
 		
 		evalOfSubPFs = new double[3];
 
+//	    public abstract double evaluate(RelStruc A, 
+//		OneStrucData inst, 
+//		String[] vars, 
+//		int[] tuple, 
+//		boolean useCurrentCvals, 
+//		String[] numrelparameters,
+//		boolean useCurrentPvals,
+//		GroundAtomList mapatoms,
+//		boolean useCurrentMvals,
+//		Hashtable<String,Double> evaluated)
+//throws RBNCompatibilityException;  
+		
+//	    public abstract Object[] evaluate(RelStruc A, 
+//	    		OneStrucData inst, 
+//	    		String[] vars, 
+//	    		int[] tuple, 
+//	    		boolean useCurrentCvals, 
+//	    		//String[] numrelparameters,
+//	    		boolean useCurrentPvals,
+//	    		GroundAtomList mapatoms,
+//	    		boolean useCurrentMvals,
+//	    		Hashtable<String,Object[]> evaluated,
+//	    		Hashtable<String,Integer> params,
+//	    		int returntype,
+//	    		boolean valonly)
+//	    
+//	    
+		
 		for (int i = 0; i<3; i++){
-			evalOfSubPFs[i]= ((ProbFormConvComb)pf).subPF(i+1).evaluate(A, 
+			evalOfSubPFs[i]= (double)((ProbFormConvComb)pf).subPF(i+1).evaluate(A, 
 					I , 
 					new String[0], 
 					new int[0] , 
 					false,
-					parameterrels,
 					useCurrentPvals,
 					mapatoms,
 					false,
-					null);
+					evaluated,
+					parameters,
+					ProbForm.RETURN_ARRAY,
+					true,
+					null)[0];
 		}
 
 		//System.out.println("evaluations " + StringOps.arrayToString(evalOfSubPFs, "(", ")"));
@@ -101,7 +132,7 @@ public class GGConvCombNode extends GGProbFormNode{
 						A, 
 						I,
 						inputcaseno,observcaseno,
-						parameterrels,
+						parameters,
 						false,
 						false,
 						"",
@@ -228,7 +259,7 @@ public class GGConvCombNode extends GGProbFormNode{
 		}
 	}
 
-	public double evaluateGrad(int param)
+	public double evaluateGrad(String param)
 	throws RBNNaNException
 	{
 		if (gradient.get(param)== null){
@@ -240,12 +271,7 @@ public class GGConvCombNode extends GGProbFormNode{
 				return currval;
 			}
 		}
-		
-		//		if (gradient[param] != null) 
-		//			return (double)gradient[param];
-//		if (!dependsOnParam[param])
-//			return 0.0;
-		
+			
 		
 		double result = 0;
 		GGProbFormNode F0 = children.elementAt(0);

@@ -2,8 +2,10 @@ package RBNpackage;
 
 import java.util.Hashtable;
 import java.util.Vector;
+import java.util.TreeSet;
 
 import RBNExceptions.RBNCompatibilityException;
+import RBNLearning.*;
 
 /* represents 'false' if sign=true, else represents
  * 'true'
@@ -32,19 +34,50 @@ public class ProbFormBoolConstant extends ProbFormBool {
 		return new ProbFormBoolConstant(sign);
 	}
 
-	@Override
-	public double evaluate(RelStruc A, OneStrucData inst, String[] vars,
-			int[] tuple, boolean useCurrentCvals, String[] numrelparameters,
-			boolean useCurrentPvals,
+//	@Override
+//	public double evaluate(RelStruc A, OneStrucData inst, String[] vars,
+//			int[] tuple, boolean useCurrentCvals, String[] numrelparameters,
+//			boolean useCurrentPvals,
+//    		GroundAtomList mapatoms,
+//    		boolean useCurrentMvals,
+//    		Hashtable<String,Double> evaluated) throws RBNCompatibilityException {
+//		if (sign)
+//			return 1;
+//		else
+//			return 0;
+//	}
+
+	public Object[] evaluate(RelStruc A, 
+			OneStrucData inst, 
+			String[] vars, 
+			int[] tuple, 
+			boolean useCurrentCvals, 
+    		// String[] numrelparameters,
+    		boolean useCurrentPvals,
     		GroundAtomList mapatoms,
     		boolean useCurrentMvals,
-    		Hashtable<String,Double> evaluated) throws RBNCompatibilityException {
+    		Hashtable<String,Object[]> evaluated,
+    		Hashtable<String,Integer> params,
+    		int returntype,
+    		boolean valonly,
+    		Profiler profiler)
+	{			
+//		if (!valonly)
+//			System.out.println("Warning: trying to evaluate gradient for Boolean ProbForm" + this.makeKey(A));
+		
+		Object[] result = new Object[2];
+		
+		if (returntype == ProbForm.RETURN_SPARSE)
+			result[1] = new Hashtable<String,Double>();
+		else result[1] = new double[0];
+		
 		if (sign)
-			return 1;
+			result[0] =1.0;
 		else
-			return 0;
+			result[0] =0.0;
+		return result;
 	}
-
+	
 	public double value(){
 		if (sign)
 			return 1;
@@ -91,7 +124,7 @@ public class ProbFormBoolConstant extends ProbFormBool {
 	}
 
 	@Override
-	public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst)
+	public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone)
 			throws RBNCompatibilityException {
 		return new Vector<GroundAtom>();
 	}
@@ -129,5 +162,13 @@ public class ProbFormBoolConstant extends ProbFormBool {
 	}
 	
 	public  void updateSig(Signature s){
+	}
+	
+	public TreeSet<Rel> parentRels(){
+		return new TreeSet<Rel>();
+	}
+	
+	public TreeSet<Rel> parentRels(TreeSet<String> processed){
+		return new TreeSet<Rel>();	
 	}
 }

@@ -2,9 +2,10 @@ package RBNpackage;
 
 import java.util.Hashtable;
 import java.util.Vector;
+import java.util.TreeSet;
 
 import RBNExceptions.RBNCompatibilityException;
-import RBNLearning.GradientGraph;
+import RBNLearning.*;
 import RBNutilities.rbnutilities;
 
 /* A conjunction or disjunction of subformulas contained in the
@@ -39,7 +40,7 @@ public class ProbFormBoolComposite extends ProbFormBool {
 			return this.getAlias();
 		String result ="";
 		if (!sign) 
-			result = result + "!";
+			result = result + "~";
 		result = result + "(" + components[0].asString(syntax,depth,A,paramsAsValue,usealias);
 		for (int i=1; i< components.length; i++){
 			switch (operator){
@@ -64,37 +65,89 @@ public class ProbFormBoolComposite extends ProbFormBool {
 		return new ProbFormBoolComposite(condarray,operator,sign);
 	}
 
-	@Override
-	public double evaluate(RelStruc A, OneStrucData inst, String[] vars,
-			int[] tuple, boolean useCurrentCvals, String[] numrelparameters,
-			boolean useCurrentPvals,
+//	@Override
+//	public double evaluate(RelStruc A, OneStrucData inst, String[] vars,
+//			int[] tuple, boolean useCurrentCvals, String[] numrelparameters,
+//			boolean useCurrentPvals,
+//    		GroundAtomList mapatoms,
+//    		boolean useCurrentMvals,
+//    		Hashtable<String,Double> evaluated) 
+//    	throws RBNCompatibilityException {
+//		
+//		double result =0;
+//		switch (operator){
+//		case ProbFormBool.OPERATORAND:
+//			result=1;
+//			for (int i=0;i<components.length;i++)
+//				result = result*components[i].evaluate(A, inst, vars, tuple, useCurrentCvals, 
+//						numrelparameters, useCurrentPvals,
+//						mapatoms,useCurrentMvals,evaluated);
+//			break;
+//		case ProbFormBool.OPERATOROR:
+//			result=0;
+//			for (int i=0;i<components.length;i++)
+//				result = Math.max(result,components[i].evaluate(A, inst, vars, tuple, useCurrentCvals, 
+//						numrelparameters, useCurrentPvals,
+//						mapatoms,useCurrentMvals,evaluated));
+//		}
+//		if (!sign)
+//			result = 1-result;
+//		
+//		return result;
+//	}
+
+	public Object[] evaluate(RelStruc A, 
+			OneStrucData inst, 
+			String[] vars, 
+			int[] tuple, 
+			boolean useCurrentCvals, 
+    		// String[] numrelparameters,
+    		boolean useCurrentPvals,
     		GroundAtomList mapatoms,
     		boolean useCurrentMvals,
-    		Hashtable<String,Double> evaluated) 
-    	throws RBNCompatibilityException {
+    		Hashtable<String,Object[]> evaluated,
+    		Hashtable<String,Integer> params,
+    		int returntype,
+    		boolean valonly,
+    		Profiler profiler){
+//		if (!valonly)
+//			System.out.println("Warning: trying to evaluate gradient for Boolean ProbForm" + this.makeKey(A));
 		
-		double result =0;
-		switch (operator){
-		case ProbFormBool.OPERATORAND:
-			result=1;
-			for (int i=0;i<components.length;i++)
-				result = result*components[i].evaluate(A, inst, vars, tuple, useCurrentCvals, 
-						numrelparameters, useCurrentPvals,
-						mapatoms,useCurrentMvals,evaluated);
-			break;
-		case ProbFormBool.OPERATOROR:
-			result=0;
-			for (int i=0;i<components.length;i++)
-				result = Math.max(result,components[i].evaluate(A, inst, vars, tuple, useCurrentCvals, 
-						numrelparameters, useCurrentPvals,
-						mapatoms,useCurrentMvals,evaluated));
+		Object[] result = new Object[2];
+		
+		if (returntype == ProbForm.RETURN_SPARSE)
+			result[1] = new Hashtable<String,Double>();
+		else result[1] = new double[0];
+		
+		try {
+			switch (operator){
+			case ProbFormBool.OPERATORAND:
+				result[0]=1.0;
+				for (int i=0;(i<components.length && (double)result[0] != 0);i++) {
+					double nextfac = (double)components[i].evaluate(A,inst,vars,tuple,useCurrentCvals,useCurrentPvals,
+							mapatoms,useCurrentMvals,evaluated,params,returntype,valonly,null)[0];
+					if (nextfac==0)
+						result[0]=0.0; // This allows to overwrite a previous result[0] = NaN with a clean 0
+					else	
+						result[0] = (double)result[0]*nextfac;
+					
+				}
+				break;
+			case ProbFormBool.OPERATOROR:
+				result[0]=0.0;
+				for (int i=0;(i<components.length && (double)result[0]<1);i++)
+					result[0] = Math.max((double)result[0],(double)components[i].evaluate(A,inst,vars,tuple,useCurrentCvals,useCurrentPvals,
+							mapatoms,useCurrentMvals,evaluated,params,returntype,valonly,null)[0]);
+			}
+			if (!sign)
+				result[0] = 1-(double)result[0];
 		}
-		if (!sign)
-			result = 1-result;
-		
+		catch (RBNCompatibilityException e) {System.out.println(e);};
 		return result;
 	}
 
+	
+	
 	public double evalSample(RelStruc A, Hashtable atomhasht,
 			OneStrucData inst, long[] timers) throws RBNCompatibilityException {
 		double result =0;
@@ -131,6 +184,7 @@ public class ProbFormBoolComposite extends ProbFormBool {
 				if (eval != 1)
 					evalTo1=false;
 			}
+			break;
 		case ProbFormBool.OPERATOROR:
 			evalTo0 = true;
 			evalTo1 = false;
@@ -171,6 +225,7 @@ public class ProbFormBoolComposite extends ProbFormBool {
 				if (eval != 1)
 					evalTo1=false;
 			}
+			break;
 		case ProbFormBool.OPERATOROR:
 			evalTo0 = true;
 			evalTo1 = false;
@@ -206,20 +261,20 @@ public class ProbFormBoolComposite extends ProbFormBool {
 	@Override
 	public Vector<GroundAtom> makeParentVec(RelStruc A) throws RBNCompatibilityException {
 		
-		return makeParentVec(A, new OneStrucData());
+		return makeParentVec(A, new OneStrucData(),null);
 	}
 
 	@Override
-	public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst)
+	public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone)
 			throws RBNCompatibilityException {
 		int evalto = evaluatesTo(A,inst,false,null);
 		
 		if (evalto != -1)
 			return new Vector<GroundAtom>();
 		
-		Vector<GroundAtom> result = components[0].makeParentVec(A, inst);
+		Vector<GroundAtom> result = components[0].makeParentVec(A, inst,macrosdone);
 		for (int i=1;i<components.length;i++)
-			result = rbnutilities.combineAtomVecs(result,components[i].makeParentVec(A, inst));
+			result = rbnutilities.combineAtomVecs(result,components[i].makeParentVec(A, inst,macrosdone));
 		return result;
 	}
 
@@ -296,7 +351,7 @@ public class ProbFormBoolComposite extends ProbFormBool {
 		 *  If recursive == true, then components are recursively cast
 		 *  as standard (non ProbFormBool) formulas   
 		 */
-		System.out.println("to standard for " + this.asString(0, 0, null, false, false));
+		
 		
 		ProbForm[] pfargs = new ProbForm[components.length];
 		for (int i=0;i<components.length;i++){
@@ -318,12 +373,10 @@ public class ProbFormBoolComposite extends ProbFormBool {
 		}
 		ProbFormCombFunc pfcomb = new ProbFormCombFunc("n-or",pfargs,new String[0],new ProbFormBoolConstant(true));
 		if ( (sign && operator==ProbFormBool.OPERATOROR) || ( !sign && operator==ProbFormBool.OPERATORAND)) {
-			System.out.println("returning  "  + pfcomb.asString(0, 0, null, false, false));
 			return pfcomb;		
 		}
 		else {
 			ProbFormConvComb result = new ProbFormConvComb(pfcomb,new ProbFormConstant(0),new ProbFormConstant(1));
-			System.out.println("returning  " + result.asString(0, 0, null, false, false));
 			return result;
 		}
 	}
@@ -339,4 +392,24 @@ public class ProbFormBoolComposite extends ProbFormBool {
 		for (int i=0;i<components.length;i++)
 			components[i].updateSig(s);	
 		}
+	
+	public TreeSet<Rel> parentRels(){
+		TreeSet<Rel> result = new TreeSet<Rel>();
+		for (int i=0;i<components.length; i++)
+			result.addAll(components[i].parentRels());
+		return result;
+	}
+	
+	public TreeSet<Rel> parentRels(TreeSet<String> processed){
+		String mykey = this.makeKey(null,null,true);
+		if (processed.contains(mykey))
+			return new TreeSet<Rel>();
+		else {
+			processed.add(mykey);
+			TreeSet<Rel> result = new TreeSet<Rel>();
+			for (int i=0;i<components.length; i++)
+				result.addAll(components[i].parentRels(processed));
+			return result;
+		}
+	}
 }

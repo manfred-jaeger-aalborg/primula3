@@ -72,7 +72,14 @@ public  class CombFuncMean extends MultLinCombFunc{
 	}
     }
    
-
+    public double evaluateGrad(double[] vals, double[] derivs) {
+		double result = 0;
+		for (int i=0;i<derivs.length;i++)
+			result = result + derivs[i];
+		result = result/derivs.length;
+		return result; 	
+    }
+    
      public void insertCompNetwork(LinkedList parnodes,SimpleBNNode targetnode, int decomposemode){
         switch (parnodes.size()){
             case 0:

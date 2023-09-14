@@ -448,8 +448,8 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 		double weight = thisdistrprob()/thissampleprob() ;
 		PFNetworkNode nextpfnn;
 		
-		for (Iterator<PFNetworkNode> it = children.iterator(); it.hasNext();){
-			nextpfnn = it.next();
+		for (Iterator<BNNode> it = children.iterator(); it.hasNext();){
+			nextpfnn = (PFNetworkNode)it.next();
 			weight = weight * nextpfnn.thisdistrprob()/nextpfnn.thissampleprob();
 		}
 		

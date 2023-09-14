@@ -2,11 +2,14 @@ package RBNpackage;
 
 import java.util.Hashtable;
 import java.util.Vector;
+import java.util.TreeSet;
+
 
 import RBNExceptions.RBNCompatibilityException;
 import RBNLearning.GradientGraph;
 import RBNinference.PFNetworkNode;
 import RBNutilities.rbnutilities;
+import RBNLearning.Profiler;
 
 /* This is basically a wrapper class around
  * ProbFormAtom. Needed to make ProbFormAtom available 
@@ -36,38 +39,86 @@ public class ProbFormBoolAtom extends ProbFormBool {
 	
 	@Override
 	public String asString(int syntax, int depth, RelStruc A, boolean paramsAsValue,boolean usealias){
+		String result ="";
+		if (!sign) 
+			result = result + "~";
 		if (usealias && this.getAlias() != null)
-			return this.getAlias();
-		return pfatom.asString(syntax, depth, A, paramsAsValue,usealias) ;
+			return result+this.getAlias();
+		return result+pfatom.asString(syntax, depth, A, paramsAsValue,usealias) ;
 	}
 	
 	@Override
-	public double evaluate(RelStruc A, 
+//	public double evaluate(RelStruc A, 
+//			OneStrucData inst, 
+//			String[] vars, 
+//			int[] tuple, 
+//			boolean useCurrentCvals, 
+//    		String[] numrelparameters,
+//    		boolean useCurrentPvals,
+//    		GroundAtomList mapatoms,
+//    		boolean useCurrentMvals,
+//    		Hashtable<String,Double> evaluated)
+//	{			
+//		
+//		double result = pfatom.evaluate(A, inst, vars, tuple, useCurrentCvals, 
+//				numrelparameters, useCurrentPvals,
+//				mapatoms,useCurrentMvals,evaluated);
+//		if (pfatom.getRelation().valtype() == Rel.NUMERIC)
+//		{
+//			if (result == Double.NaN)
+//				result = 0.0;
+//			else result = 1.0;
+//		}
+//		if (!sign) result = 1- result;
+//		
+//		return result;
+//	}
+
+	
+
+	public Object[] evaluate(RelStruc A, 
 			OneStrucData inst, 
 			String[] vars, 
 			int[] tuple, 
 			boolean useCurrentCvals, 
-    		String[] numrelparameters,
     		boolean useCurrentPvals,
     		GroundAtomList mapatoms,
     		boolean useCurrentMvals,
-    		Hashtable<String,Double> evaluated)
+    		Hashtable<String,Object[]> evaluated,
+    		Hashtable<String,Integer>params,
+    		int returntype,
+    		boolean valonly,
+    		Profiler profiler)
 	{			
+//		if (!valonly)
+//			System.out.println("Warning: trying to evaluate gradient for Boolean ProbForm" + this.makeKey(A));
+		Object[] result = pfatom.evaluate(A, 
+				inst, 
+				vars, 
+				tuple, 
+				useCurrentCvals, 
+				useCurrentPvals, 
+				mapatoms, 
+				useCurrentMvals, 
+				evaluated, 
+				params, 
+				returntype,
+				valonly,
+				profiler);
 		
-		double result = pfatom.evaluate(A, inst, vars, tuple, useCurrentCvals, 
-				numrelparameters, useCurrentPvals,
-				mapatoms,useCurrentMvals,evaluated);
 		if (pfatom.getRelation().valtype() == Rel.NUMERIC)
 		{
-			if (result == Double.NaN)
-				result = 0.0;
-			else result = 1.0;
+			double val = (double)result[0];
+			
+			if (val == Double.NaN)
+				result[0] = 0.0;
+			else result[0] = 1.0;
 		}
-		if (!sign) result = 1- result;
+		if (!sign) result[0] = 1.0 - (double)result[0];
 		
 		return result;
 	}
-
+	
 	@Override
 	public int evaluatesTo(RelStruc A, OneStrucData inst,
 			boolean usesampleinst, Hashtable<String,GroundAtom> atomhasht)
@@ -125,9 +176,9 @@ public class ProbFormBoolAtom extends ProbFormBool {
 	}
 
 	@Override
-	public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst)
+	public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone)
 			throws RBNCompatibilityException {
-		return pfatom.makeParentVec(A,inst);
+		return pfatom.makeParentVec(A,inst,macrosdone);
 	}
 
 	@Override
@@ -179,5 +230,12 @@ public class ProbFormBoolAtom extends ProbFormBool {
 	
 	public void updateSig(Signature s){
 		pfatom.updateSig(s);
+	}
+	
+	public TreeSet<Rel> parentRels(){
+		return pfatom.parentRels();
+	}
+	public TreeSet<Rel> parentRels(TreeSet<String> processed){
+		return pfatom.parentRels(processed);
 	}
 }

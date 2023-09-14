@@ -29,6 +29,7 @@ import RBNExceptions.*;
 import RBNLearning.GradientGraph;
 import RBNgui.Primula;
 import RBNutilities.*;
+import RBNLearning.Profiler;
 
 
 public class ProbFormCombFunc extends ProbForm{
@@ -268,10 +269,10 @@ public class ProbFormCombFunc extends ProbForm{
 
 	public  Vector makeParentVec(RelStruc A)
 			throws RBNCompatibilityException{
-		return makeParentVec(A,new OneStrucData());
+		return makeParentVec(A,new OneStrucData(),null);
 	}
 
-	public  Vector makeParentVec(RelStruc A, OneStrucData inst)
+	public  Vector makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone)
 			throws RBNCompatibilityException{
 		//System.out.println("makeParentVec for " + this.asString() + ": ");
 		Vector result = new Vector();
@@ -284,7 +285,7 @@ public class ProbFormCombFunc extends ProbForm{
 			for (int j=0; j<subslist.length; j++)
 			{
 				nextprobform = pfargs[i].substitute(quantvars,subslist[j]);
-				result = rbnutilities.combineAtomVecs(result,nextprobform.makeParentVec(A,inst));
+				result = rbnutilities.combineAtomVecs(result,nextprobform.makeParentVec(A,inst,macrosdone));
 			}
 		}
 		return result;
@@ -361,70 +362,219 @@ public class ProbFormCombFunc extends ProbForm{
 		return result;
 			}
 
-	public double evaluate(RelStruc A, 
+//	public double evaluate(RelStruc A, 
+//			OneStrucData inst, 
+//			String[] vars, 
+//			int[] tuple, 
+//			boolean useCurrentCvals, 
+//			String[] numrelparameters,
+//			boolean useCurrentPvals,
+//    		GroundAtomList mapatoms,
+//    		boolean useCurrentMvals,
+//    		Hashtable<String,Double> evaluated)
+//					throws RBNCompatibilityException
+//					{
+//		
+//		ProbFormCombFunc subspfcf = (ProbFormCombFunc)this.substitute(vars,tuple);
+//
+//		String key="";
+//		if (evaluated != null) {
+//			key = GradientGraph.makeKey(subspfcf, 0, 0, A);
+//			
+//			Double d = evaluated.get(key);
+//			if (d!=null)
+//				return d; 
+//		}
+//
+//		//        CConstr subscc = this.cconstr.substitute(vars,tuple);
+//
+//		//		/*
+//		//		* generate list of all substitution tuples for quantvars
+//		//		* that satisfy the cconstr
+//		//		*/
+//		//		int[][] subslist = A.allTrue(subscc,quantvars);
+//		int[][] subslist = tuplesSatisfyingCConstr(A, vars, tuple);
+//
+//		/* Initialize array of arguments for combination function */
+//		double[] combargs = new double[subspfcf.pfargs.length*subslist.length];
+//
+//		/* Evaluate the probability formulas in pfargs and 
+//		 * enter results into combargs
+//		 */
+//		int nextindex;
+//		double nextvalue;
+//		for (int i=0; i<subspfcf.pfargs.length; i++)
+//		{
+//			for (int j=0; j<subslist.length; j++)
+//			{
+//				nextindex = i*subslist.length + j;
+//				nextvalue = subspfcf.pfargs[i].evaluate(A,inst,quantvars,subslist[j],useCurrentCvals,numrelparameters,
+//						useCurrentPvals,
+//						mapatoms,useCurrentMvals,evaluated);
+//				//if (Double.isNaN(nextvalue)) return Double.NaN;
+//				combargs[nextindex]=nextvalue;
+//			}
+//		}
+//
+//		/*
+//        apply mycomb to the resulting array
+//		 */
+//		double result = mycomb.evaluate(combargs);
+//		if (evaluated != null)
+//			evaluated.put(key, result);
+//		
+//		return result;
+//					}
+
+	public Object[] evaluate(RelStruc A, 
 			OneStrucData inst, 
 			String[] vars, 
 			int[] tuple, 
 			boolean useCurrentCvals, 
-			String[] numrelparameters,
+			// String[] numrelparameters,
 			boolean useCurrentPvals,
-    		GroundAtomList mapatoms,
-    		boolean useCurrentMvals,
-    		Hashtable<String,Double> evaluated)
+			GroundAtomList mapatoms,
+			boolean useCurrentMvals,
+			Hashtable<String,Object[]> evaluated,
+			Hashtable<String,Integer> params,
+			int returntype,
+			boolean valonly,
+			Profiler profiler)
 					throws RBNCompatibilityException
-					{
+	{			
+
+		Boolean profile = (profiler != null);
+		
+		String key="";
+		
+		long timebeforelookup = System.currentTimeMillis();
+		if (evaluated != null) {
+			key = this.makeKey(vars,tuple,false);		
+//			System.out.println("debug: looking for " + key);
+			Object[] d = evaluated.get(key);
+			if (d!=null) {
+				//System.out.println("debug:  yes found");
+				if (profile) {
+					profiler.addTime(Profiler.NUM_EVALUATE_OLD, 1);
+					profiler.addTime(Profiler.TIME_OLDLOOKUP, System.currentTimeMillis()-timebeforelookup);
+				}
+				return d; 
+			}
+		}
+		if (profile)
+			profiler.addTime(Profiler.TIME_OLDLOOKUP, System.currentTimeMillis()-timebeforelookup);
+		//System.out.println("debug:   not found");
+		
+		long beforesat = System.currentTimeMillis();
 		
 		ProbFormCombFunc subspfcf = (ProbFormCombFunc)this.substitute(vars,tuple);
-
-		String key="";
-		if (evaluated != null) {
-			key = GradientGraph.makeKey(subspfcf, 0, 0, A);
-			
-			Double d = evaluated.get(key);
-			if (d!=null)
-				return d; 
-		}
-
-		//        CConstr subscc = this.cconstr.substitute(vars,tuple);
-
-		//		/*
-		//		* generate list of all substitution tuples for quantvars
-		//		* that satisfy the cconstr
-		//		*/
-		//		int[][] subslist = A.allTrue(subscc,quantvars);
+		
 		int[][] subslist = tuplesSatisfyingCConstr(A, vars, tuple);
 
+		if (profile)
+			profiler.addTime(Profiler.TIME_GETSATISFYING, System.currentTimeMillis()-beforesat);
+		
 		/* Initialize array of arguments for combination function */
-		double[] combargs = new double[subspfcf.pfargs.length*subslist.length];
+		Vector<Object[]> combargs = new Vector<Object[]>();
 
 		/* Evaluate the probability formulas in pfargs and 
 		 * enter results into combargs
 		 */
 		int nextindex;
-		double nextvalue;
+		double[] nextvalue;
+		
+		
 		for (int i=0; i<subspfcf.pfargs.length; i++)
 		{
 			for (int j=0; j<subslist.length; j++)
 			{
-				nextindex = i*subslist.length + j;
-				nextvalue = subspfcf.pfargs[i].evaluate(A,inst,quantvars,subslist[j],useCurrentCvals,numrelparameters,
+				combargs.add(subspfcf.pfargs[i].evaluate(A,
+						inst,
+						quantvars,
+						subslist[j],
+						useCurrentCvals,
 						useCurrentPvals,
-						mapatoms,useCurrentMvals,evaluated);
-				//if (Double.isNaN(nextvalue)) return Double.NaN;
-				combargs[nextindex]=nextvalue;
+						mapatoms,
+						useCurrentMvals,
+						evaluated,
+						params,
+						returntype,
+						valonly,
+						profiler));
 			}
 		}
 
+	
+		
 		/*
         apply mycomb to the resulting array
 		 */
-		double result = mycomb.evaluate(combargs);
-		if (evaluated != null)
-			evaluated.put(key, result);
-		
-		return result;
-					}
+		Object[] result = new Object[2];
 
+		double[] vals = new double[combargs.size()];
+		int i=0;
+		for (Object[] d: combargs) {
+			vals[i]= (Double)d[0];
+			i++;
+		}
+		result[0]=mycomb.evaluate(vals);
+		
+	
+		if (!valonly) {
+			if (returntype == ProbForm.RETURN_ARRAY) {
+				long timebeforearraycreate = System.currentTimeMillis();
+				result[1]=new double[params.size()];
+				for (int k=0; k<params.size();k++) {
+					double[] derivs = new double[combargs.size()];
+					i =0;
+					for (Object[] d: combargs) {
+						derivs[i]= ((double[])d[1])[k];
+						i++;
+					}
+					((double[])result[1])[k]=mycomb.evaluateGrad(vals, derivs);
+				}
+				profiler.addTime(Profiler.TIME_ARRAYCREATE,System.currentTimeMillis()-timebeforearraycreate);
+			}
+			else {
+				long timebeforehashcreate = System.currentTimeMillis();
+				result[1]=new Hashtable<String,Double>();
+				TreeSet<String> donekeys = new TreeSet<String>();
+				for (int j=0; j<combargs.size(); j++) {
+					for (String p: ((Hashtable<String,Double>)combargs.elementAt(j)[1]).keySet()) 
+					{
+						if (!donekeys.contains(p)) {
+							double[] derivs = new double[combargs.size()];
+							/* The elements in combargs.elementAt(0),...,combargs.elementAt(j-1) had a 
+							 * 0 derivative for parameter p */
+							for (int h=j; h<combargs.size(); h++) {
+								Double di = ((Hashtable<String,Double>)combargs.elementAt(h)[1]).get(p);
+								if (di==null)
+									derivs[h]=0.0;
+								else
+									derivs[h]=di;
+							}
+							donekeys.add(p);
+							((Hashtable<String,Double>)result[1]).put(p,mycomb.evaluateGrad(vals, derivs));
+						}
+					}
+					
+				}
+				if (profile)
+					profiler.addTime(Profiler.TIME_HASHCREATE, System.currentTimeMillis()-timebeforehashcreate);
+			}// not (returntype == ProbForm.RETURN_ARRAY)
+
+		} // if (!valonly) {
+		if (evaluated != null) {
+			//System.out.println("ProbFormCombFunc: adding to evaluated: " + key + " = " + result[0] );
+			evaluated.put(key, result);
+		}
+		if (profile) {
+			//System.out.println("debug: evaluated new " + key);
+			profiler.addTime(Profiler.NUM_EVALUATE_NEW, 1);
+		}
+		return result;
+	}	
+	
 	public  double evalSample(RelStruc A, Hashtable atomhasht, OneStrucData inst, long[] timers)
 			throws RBNCompatibilityException
 			{
@@ -717,4 +867,23 @@ public class ProbFormCombFunc extends ProbForm{
 			pfargs[i].setCvals(paramname,val);
 	}
 	
+	public TreeSet<Rel> parentRels(){
+		TreeSet<Rel> result = new TreeSet<Rel>();
+		for (int i=0;i<pfargs.length;i++)
+			result.addAll(pfargs[i].parentRels());
+		return result;
+	}
+	
+	public TreeSet<Rel> parentRels(TreeSet<String> processed){
+		String mykey = this.makeKey(null,null,true);
+		if (processed.contains(mykey))
+			return new TreeSet<Rel>();
+		else {
+			processed.add(mykey);
+			TreeSet<Rel> result = new TreeSet<Rel>();
+			for (int i=0;i<pfargs.length;i++)
+				result.addAll(pfargs[i].parentRels(processed));
+			return result;
+		}
+	}
 }

@@ -355,6 +355,16 @@ public class OneBoolRelData extends OneRelData {
 	{
 		TreeSet<int[]> atoms;
 		HashMap<Integer,TreeSet<int[]>>[] index;
+
+		if (this.rel().arity==0) {
+			if (tv) {
+				trueAtoms=new TreeSet<int[]>();
+			}
+			else {
+				falseAtoms=new TreeSet<int[]>();
+			}
+			return;
+		}
 		if (tv) {
 			atoms = trueAtoms;
 			index=trueAtomsIndex;
@@ -363,8 +373,10 @@ public class OneBoolRelData extends OneRelData {
 			atoms = falseAtoms;
 			index=falseAtomsIndex;
 		}
+
 		atoms.remove(tuple);
 		removeFromIndex(tuple, index);
+
 	}
 
 

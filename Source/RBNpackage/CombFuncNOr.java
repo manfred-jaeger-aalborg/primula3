@@ -62,7 +62,28 @@ public class CombFuncNOr extends MultLinCombFunc{
 	}
     }
 
-
+    public double evaluateGrad(double[] vals, double[] derivs) {
+		double result = 0;
+        
+        double factor = 1;
+        
+        for (int i=0;i<vals.length;i++)
+                factor = factor*(1-vals[i]);
+        
+        if (factor == 0)
+        	return 0.0;
+        
+        /* Now compute the partial derivative as
+         *
+         * \sum_{F_i\in fthetalist} (factor/(1-F_i))*(F_i')
+         */
+        for (int i=0;i<vals.length;i++){
+                        result = result + (factor/(1-vals[i])*derivs[i]);
+        }
+        
+		return result;
+    }
+    
     public void insertCompNetwork(LinkedList parnodes,SimpleBNNode targetnode,int decomposemode){
         // parameter decomposemode is irrelevant in the noisy-or implementation of this method!
         switch (parnodes.size()){

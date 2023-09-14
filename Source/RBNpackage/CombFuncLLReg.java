@@ -33,4 +33,14 @@ public class CombFuncLLReg extends CombFunc{
 		return -1;
 	}
 
+	  public double evaluateGrad(double[] vals, double[] derivs) {
+			double sum = 0;
+			double sumpr = 0;
+			for (int i=0;i<vals.length;i++){
+				sum = sum + vals[i];
+				sumpr = sumpr + derivs[i];
+			}
+			
+			return sumpr/Math.pow(1+sum,2);
+	  }
 }

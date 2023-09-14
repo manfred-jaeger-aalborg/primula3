@@ -25,8 +25,7 @@
 package RBNpackage;
 
 import java.io.*;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.*;
 
 import RBNio.*;
 import RBNutilities.randomGenerators;
@@ -35,63 +34,16 @@ import RBNExceptions.*;
 
 
 
-class RBNelement
-{
-	/**
-	 * @uml.property  name="prel"
-	 * @uml.associationEnd  
-	 */
-	BoolRel prel;           // Relation
-	/**
-	 * @uml.property  name="arguments" multiplicity="(0 -1)" dimension="1"
-	 */
-	String[] arguments; // Argument list. Must be superset of
-	// free variables of prfrm.
-	/**
-	 * @uml.property  name="prfrm"
-	 * @uml.associationEnd  
-	 */
-	ProbForm prfrm;
 
-	public RBNelement()
-	{
-	}
-
-	public RBNelement(BoolRel r, ProbForm pf)
-	{
-		prel =r;
-		prfrm = pf;
-	}
-
-	protected String[] arguments() {
-		return arguments;
-	}
-
-	protected Type[] types(){
-		return prel.getTypes();
-	}
-	
-	protected BoolRel rel() {
-		return prel;
-	}
-	
-	protected ProbForm pform(){
-		return prfrm;
-	}
-	
-	protected void setRel(BoolRel br){
-		prel = br;
-	}
-	
-}
 
 public class RBN extends java.lang.Object {
 
-	/**
-	 * @uml.property  name="elements"
-	 * @uml.associationEnd  multiplicity="(0 -1)"
-	 */
-	private RBNelement[] elements;
+
+	private RBNElement[] elements; // the concatenation of macroelements and prelements.
+	private RBNPreldef[] prelements;
+	private RBNMacro[] macroelements;
+	
+	
 	
 	/* The current setting of values for all 
 	 * parameters in the RBN
@@ -102,17 +54,18 @@ public class RBN extends java.lang.Object {
 	public RBN() {
 	}
 
-	public RBN(int i){
-		elements = new RBNelement[i];
-		for (int j=0;j<i;j++)
-			elements[j] = new RBNelement();
+	public RBN(int nprels, int nmacros){
+		prelements = new RBNPreldef[nprels];
+		macroelements = new RBNMacro[nmacros];
+		elements = new RBNElement[nprels+nmacros];
+		
 		paramvals = new Hashtable<String,Double>();
 	}
 
 
 	
 	public RBN(File input_file){
-		RBNReader2 rbnrdr =  new RBNReader2();
+		RBNReader3 rbnrdr =  new RBNReader3();
 		
 		RBN rbn = new RBN();
 		try{
@@ -120,10 +73,13 @@ public class RBN extends java.lang.Object {
 		}
 		catch (RBNSyntaxException e){System.out.println(e);}
 		catch (IOException e){System.out.println(e);};
-		elements = rbn.elements();
+		elements = rbn.elements;
+		prelements = rbn.prelements;
+		macroelements = rbn.macroelements;
 		
 		/* Initialize parameters with 0.5 values*/
 		String[] allparams = this.parameters();
+		
 		paramvals = new Hashtable<String,Double>();
 		for (int i=0;i<allparams.length;i++)
 			paramvals.put(allparams[i],0.5);
@@ -133,21 +89,47 @@ public class RBN extends java.lang.Object {
 	/** @author keith cascio
     	@since 20060515 */
     	public RBN( RBN toCopy ){
-    		if( toCopy.elements != null ) this.elements = (RBNelement[]) toCopy.elements.clone();
+    		if( toCopy.elements != null ) {
+    			this.elements = (RBNElement[]) toCopy.elements.clone();
+    			this.prelements = (RBNPreldef[]) toCopy.prelements.clone();
+    			this.macroelements = (RBNMacro[]) toCopy.macroelements.clone();
+    			
+    		}
+    		
     	}
 
-    	public RBNelement[] elements(){
+    	public RBNElement[] elements(){
     		return elements;
     	}
 
-    	public String[] argumentsAt(int i){
-    		return elements[i].arguments();
+    	public RBNPreldef[] prelements() {
+    		return prelements;
+    	}
+    	
+    	public RBNMacro[] macroelements() {
+    		return macroelements;
+    	}
+    	
+    	public String[] arguments_prels_At(int i){
+    		return prelements[i].arguments();
     	}
 
+    	public String[] arguments_element_At(int i){
+    		return elements[i].arguments();
+    	}
+    	
+    	public String[] arguments(Rel r) {
+    		int ind = indexOf(r);
+    		if (ind >= 0)
+    			return arguments_prels_At(ind);
+    		else
+    			return null;
+    	}
+    	
     	public boolean multlinOnly(){
     		boolean result = true;
     		for (int i=0;i<elements.length;i++)
-    			if (!elements[i].prfrm.multlinOnly())
+    			if (!elements[i].pform().multlinOnly())
     				result = false;
     		return result;
     	}
@@ -158,8 +140,8 @@ public class RBN extends java.lang.Object {
     	private int indexOf(Rel r){
     		boolean found = false;
     		int ind = 0;
-    		while (!found && ind<elements.length){
-    			if (elements[ind].rel().equals(r))
+    		while (!found && ind<prelements.length){
+    			if (prelements[ind].rel().equals(r))
     				found = true;
     			if (!found)
     				ind++;
@@ -172,34 +154,39 @@ public class RBN extends java.lang.Object {
 
     	public int NumPFs()
     	{
-    		return elements.length;
+    		return prelements.length;
     	}
 
     	public Rel[] Rels()
     	{
-    		Rel[] result = new Rel[elements.length];
-    		for (int i=0;i<elements.length;i++)
-    			result[i]=elements[i].rel();
+    		Rel[] result = new Rel[prelements.length];
+    		for (int i=0;i<prelements.length;i++)
+    			result[i]=prelements[i].rel();
     		return result;
     	}
 
 
     	public BoolRel relAt(int i)
     	{
-    		return elements[i].rel();
+    		return prelements[i].rel();
     	}
 
 
-    	public ProbForm ProbFormAt(int i)
+    	public ProbForm probForm_prels_At(int i)
     	{
-    		return elements[i].prfrm;
+    		return prelements[i].pform();
     	}
 
+    	public ProbForm probForm_elements_At(int i)
+    	{
+    		return elements[i].pform();
+    	}
+    	
     	/** Returns the probability formula for relation r */
     	public ProbForm probForm(Rel r){
     		int ind = indexOf(r);
     		if (ind >= 0)
-    			return ProbFormAt(ind);
+    			return probForm_prels_At(ind);
     		else
     			return null;
     	}
@@ -218,28 +205,38 @@ public class RBN extends java.lang.Object {
     	public String[] args(Rel r){
     		int ind = indexOf(r);
     		if (ind >= 0)
-    			return argumentsAt(ind);
+    			return arguments_prels_At(ind);
     		else
     			return null;
     	}
 
-    	public void insertRel(BoolRel r, int i)
-    	{
-    		elements[i].prel=r;
+    	public void insertPRel(RBNPreldef prd,int i) {
+    		prelements[i]=prd;
+    		elements[macroelements.length+i]=prd;
     	}
-//    	public void insertRel(NumRel r, int i)
+    	
+    	public void insertMacro(RBNMacro m, int i) {
+    		macroelements[i]=m;
+    		elements[i]=m;
+    	}
+    	
+//    	public void insertRel(BoolRel r, int i)
 //    	{
-//    		elements[i].prel=r;
+//    		elements[i].set_rel(r);
 //    	}
-    	public void insertArguments(String[] ags, int i)
-    	{
-    		elements[i].arguments = ags;
-    	}
-
-    	public void insertProbForm(ProbForm pf, int i)
-    	{
-    		elements[i].prfrm = pf;
-    	}
+////    	public void insertRel(NumRel r, int i)
+////    	{
+////    		elements[i].prel=r;
+////    	}
+//    	public void insertArguments(String[] ags, int i)
+//    	{
+//    		elements[i].set_args(ags);
+//    	}
+//
+//    	public void insertProbForm(ProbForm pf, int i)
+//    	{
+//    		elements[i].set_pform(pf);
+//    	}
 
     	/** Returns all the parameters contained in probability formulas
     	 * in the RBN. Two occurrences of parameters with the same name 
@@ -249,7 +246,7 @@ public class RBN extends java.lang.Object {
     	public String[] parameters(){
     		String[] result = new String[0];
     		for (int i=0;i<elements.length;i++){
-    			result = rbnutilities.arraymerge(result,this.ProbFormAt(i).parameters());
+    			result = rbnutilities.arraymerge(result,elements[i].pform().parameters());
     		}
     		return result;
     	}
@@ -260,7 +257,7 @@ public class RBN extends java.lang.Object {
     			for (int i=0;i<elements.length;i++){
     				filwrt.write(NameAt(i));
     				filwrt.write("(");
-    				String[] args = argumentsAt(i);
+    				String[] args = arguments_element_At(i);
     				Type[] types = typesAt(i);
     				for (int j=0;j<args.length;j++){
     					if (!(types[j] instanceof TypeDomain))
@@ -271,7 +268,7 @@ public class RBN extends java.lang.Object {
     				}
     				filwrt.write(")");
     				filwrt.write("=" + '\n');
-    				filwrt.write(ProbFormAt(i).asString(syntax,0,null,paramsAsValues,false)+ ";" + '\n' + '\n');
+    				filwrt.write(probForm_elements_At(i).asString(syntax,0,null,paramsAsValues,false)+ ";" + '\n' + '\n');
 
     			}
     			filwrt.close();
@@ -291,9 +288,16 @@ public class RBN extends java.lang.Object {
     		for (int i=0;i<params.length;i++) {
     			paramvals.put(params[i],values[i]);
     			for (int j=0; j<elements.length; j++){
-    				elements[j].prfrm.setCvals(params[i], values[i]);
+    				elements[j].pform().setCvals(params[i], values[i]);
     			}
     		}
+    	}
+    	
+    	public void setParameter(String par,  double val){
+    		paramvals.put(par,val);
+			for (int j=0; j<elements.length; j++){
+				elements[j].pform().setCvals(par, val);
+			}
     	}
     	
     	public void setParametersInFormulas() {
@@ -301,7 +305,7 @@ public class RBN extends java.lang.Object {
     		{
     			String key = e.nextElement();
     			for (int j=0; j<elements.length; j++)
-    				elements[j].prfrm.setCvals(key, paramvals.get(key));
+    				elements[j].pform().setCvals(key, paramvals.get(key));
     		}
     	}
     	
@@ -320,8 +324,10 @@ public class RBN extends java.lang.Object {
     			String key = e.nextElement();
     			if (key.charAt(0)=='#')
     				newht.put(key, Math.random());
+    				
     			else 
-        			newht.put(key, 2*Math.random()-1); 
+        			newht.put(key, 2*Math.random()-1); // Initialize in range [-1,1]
+    				//newht.put(key, 0.1);
     		}
     		paramvals= newht;
     		setParametersInFormulas();
@@ -331,7 +337,8 @@ public class RBN extends java.lang.Object {
     		if (parname.charAt(0)=='#')
     			paramvals.put(parname, Math.random());
     		else 
-    			paramvals.put(parname, 2*Math.random()-1); // random between -1 and 1
+    			//paramvals.put(parname, 2*Math.random()-1); // random between -1 and 1
+    			paramvals.put(parname, 0.1);
     	}
     	
     	public double getParameterValue(String parname){
@@ -351,23 +358,61 @@ public class RBN extends java.lang.Object {
     	 * @param s
     	 */
     	public void updateSig(Signature s){
-    		RBNelement el;
+    		RBNElement el;
     		Rel headrel;
     		Rel relinsig;
-    		for (int i=0; i<elements.length; i++){
-    			el=elements[i];
+    		for (int i=0; i<prelements.length; i++){
+    			el=prelements[i];
     			headrel = el.rel();
     			relinsig = s.getRelByName(headrel.name());
     			if (relinsig == null)
     				System.out.println("Warning: did not find relation " + headrel.name() + " used in RBN in the signature declaration");
     			if (relinsig.getInout()!=Rel.PROBABILISTIC)
-    				System.out.println("Warning: relation" + headrel.name() + " not probabilistic according to signature");
+    				System.out.println("Warning: relation " + headrel.name() + " not probabilistic according to signature");
     			if (!(relinsig instanceof BoolRel))
-    				System.out.println("Warning: relation" + headrel.name() + " not Boolean according to signature");
+    				System.out.println("Warning: relation " + headrel.name() + " not Boolean according to signature");
     			else
     				el.setRel((BoolRel)relinsig);
     			el.pform().updateSig(s);
     		}
+    		for (int i=0; i<macroelements.length; i++){
+    			macroelements[i].pform().updateSig(s);
+    		}
+    	}
+    	
+    	/**
+    	 * Returns all the probabilistic ancestor relations of r according to the RBN
+    	 * 
+    	 * @param r
+    	 * @return
+    	 */
+    	public TreeSet<Rel> ancestorRels(Rel r){
+    		TreeSet<Rel> result = new TreeSet<Rel>();
+    		Stack<Rel>toprocess = new Stack<Rel>();
+    		TreeSet<String> processedpfs = new TreeSet<String>();
+    		toprocess.push(r);
+    		while (!toprocess.isEmpty()) {
+    			Rel nr = toprocess.pop();
+    			if (!result.contains(nr)) {
+    				result.add(nr);
+    				for (Rel pr: this.probForm(nr).parentRels(processedpfs)) 
+    					toprocess.push(pr);
+    			}
+    		}
+    		return result;
+    		
+    	}
+    	
+    	public void set_elements(RBNElement[] els) {
+    		elements = els;
+    	}
+    	
+       	public void set_macroelements(RBNMacro[] ms) {
+    		macroelements = ms;
+    	}
+       	
+       	public void set_prelements(RBNPreldef[] prs) {
+    		prelements = prs;
     	}
 }
 

@@ -54,10 +54,10 @@ public class GGCombFuncNode extends GGProbFormNode{
 			OneStrucData I,
 			int inputcaseno,
 			int observcaseno,
-    		String[] parameterrels,
+    		Hashtable<String,Integer> parameters,
     		boolean useCurrentPvals,
     		GroundAtomList mapatoms,
-    		Hashtable<String,Double>  evaluated )
+    		Hashtable<String,Object[]>  evaluated )
 	throws RBNCompatibilityException
 	{
 		super(gg,pf,A,I);
@@ -95,14 +95,12 @@ public class GGCombFuncNode extends GGProbFormNode{
 				
 				double starttime = System.currentTimeMillis();
 				
-				evalOfSubPF = groundnextsubpf.evaluate(A, I, new String[0], new int[0] , false,
-						parameterrels,
+				evalOfSubPF = (double)groundnextsubpf.evaluate(A, I, new String[0], new int[0] , false,
 						useCurrentPvals,
-						mapatoms,false,evaluated);
+						mapatoms,false,evaluated,parameters,ProbForm.RETURN_ARRAY,true,null)[0];
 				
 				double midtime = System.currentTimeMillis();
 				
-				gg.profiler.time1+= midtime -starttime;
 				
 				if (Double.isNaN(evalOfSubPF)){
 					constructedchild = GGProbFormNode.constructGGPFN(gg,
@@ -112,7 +110,7 @@ public class GGCombFuncNode extends GGProbFormNode{
 							I,
 							inputcaseno,
 							observcaseno,
-							parameterrels,
+							parameters,
 							false,
 							false,
 							"",
@@ -125,8 +123,6 @@ public class GGCombFuncNode extends GGProbFormNode{
 					vals.add(evalOfSubPF);
 				
 				double endtime = System.currentTimeMillis();				
-				gg.profiler.time2+= endtime-midtime;
-				gg.profiler.count1+=1;
 				
 
 			} /* for (int j=0; j<subslist.length; j++) */
@@ -191,9 +187,15 @@ public class GGCombFuncNode extends GGProbFormNode{
 
 	public double evaluate(){
 
-		if (value != null)
+//		if (this.isuga()) {
+//			System.out.print("evaluating " + this.getMyatom());
+//		}
+		if (value != null) {
+//			if (this.isuga()) {
+//				System.out.println(" return old value " + value);
+//			}
 			return value;
-
+		}
 		/* Construct an argument array for the combination function: */
 		double[] args = new double[valuesOfSubPFs.length+ children.size()];
 		for (int i=0;i<valuesOfSubPFs.length;i++)
@@ -204,6 +206,9 @@ public class GGCombFuncNode extends GGProbFormNode{
 		value = result;
 		if (Double.isNaN(result))
 			System.out.println("result = NaN in evaluate for comb.func " );
+//		if (this.isuga()) {
+//			System.out.println(" return recalculated value " + value);
+//		}
 		return result;
 	}
 
@@ -242,7 +247,7 @@ public class GGCombFuncNode extends GGProbFormNode{
 		}
 	}
 
-	public double evaluateGrad(int param)
+	public double evaluateGrad(String param)
 			throws RBNNaNException{
 		
 //		if (gradient[param] != null)
@@ -302,7 +307,7 @@ public class GGCombFuncNode extends GGProbFormNode{
 
 
 
-	private double computeDerivNOR(int param)
+	private double computeDerivNOR(String param)
 	throws RBNNaNException
 	{
 		double result = 0;
@@ -327,7 +332,7 @@ public class GGCombFuncNode extends GGProbFormNode{
 		return result;
 	}
 
-	private double computeDerivPROD(int param)
+	private double computeDerivPROD(String param)
 			throws RBNNaNException{
 		double result = 0;
         /* First compute \prod Fi over all subformulas */
@@ -350,7 +355,7 @@ public class GGCombFuncNode extends GGProbFormNode{
 		return result;
 	}
 
-	private double computeDerivMEAN(int param )
+	private double computeDerivMEAN(String param )
 			throws RBNNaNException{
 		double result = 0;
 		for (int i=0;i<children.size();i++)
@@ -359,7 +364,7 @@ public class GGCombFuncNode extends GGProbFormNode{
 		return result;
 	}
 
-	private double computeDerivLREG(int param )
+	private double computeDerivLREG(String param )
 			throws RBNNaNException{
 		
 		double sum = aggregateOfSubPFs;
@@ -380,7 +385,7 @@ public class GGCombFuncNode extends GGProbFormNode{
 		
 	}
 
-	private double computeDerivLLREG(int param )
+	private double computeDerivLLREG(String param )
 			throws RBNNaNException{
 		
 		double sum = aggregateOfSubPFs;
@@ -404,7 +409,7 @@ public class GGCombFuncNode extends GGProbFormNode{
 		return thisgg.computeCombFunc(CombFunc.INVSUM,args);
 	}
 
-	private double computeDerivINVSUM(int param )
+	private double computeDerivINVSUM(String param )
 			throws RBNNaNException{
 		double result = 0;
 		double val = this.evaluate();
@@ -420,7 +425,7 @@ public class GGCombFuncNode extends GGProbFormNode{
 		return result;
 	}
 
-	private double computeDerivESUM(int param )
+	private double computeDerivESUM(String param )
 			throws RBNNaNException{
 		double result = 0;
 		double val = this.evaluate();
@@ -434,7 +439,7 @@ public class GGCombFuncNode extends GGProbFormNode{
 		return result;
 	}
 
-	private double computeDerivSUM(int param )
+	private double computeDerivSUM(String param )
 			throws RBNNaNException{
 
 		double derivsum = 0;

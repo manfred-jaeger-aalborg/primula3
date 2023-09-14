@@ -25,8 +25,12 @@
 package RBNpackage;
 
 import java.util.*;
+
+import RBNExceptions.RBNCompatibilityException;
+
 import java.io.*;
 import RBNutilities.*;
+import RBNLearning.*;
 
 
 
@@ -141,7 +145,7 @@ public class ProbFormConstant extends ProbForm
 		return new Vector();
 	}
 
-	public  Vector makeParentVec(RelStruc A, OneStrucData inst){
+	public  Vector makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone){
 		return new Vector();
 	}
 
@@ -160,21 +164,62 @@ public class ProbFormConstant extends ProbForm
 			return false;
 	}
 
-	public double evaluate(RelStruc A, OneStrucData inst, String[] vars, int[] tuple, 
+//	public double evaluate(RelStruc A, OneStrucData inst, String[] vars, int[] tuple, 
+//			boolean useCurrentCvals, 
+//    		String[] parameters,
+//    		boolean useCurrentPvals,
+//    		GroundAtomList mapatoms,
+//    		boolean useCurrentMvals,
+//    		Hashtable<String,Double> evaluated)
+//	{
+//		if (paramname != "" && !useCurrentCvals && rbnutilities.arrayContains(parameters, paramname))
+//			return Double.NaN;
+//		else 
+//			return cval;
+//	}
+
+
+	public Object[] evaluate(RelStruc A, 
+			OneStrucData inst, 
+			String[] vars, 
+			int[] tuple, 
 			boolean useCurrentCvals, 
-    		String[] parameters,
+    		// String[] numrelparameters,
     		boolean useCurrentPvals,
     		GroundAtomList mapatoms,
     		boolean useCurrentMvals,
-    		Hashtable<String,Double> evaluated)
-	{
-		if (paramname != "" && !useCurrentCvals && rbnutilities.arrayContains(parameters, paramname))
-			return Double.NaN;
+    		Hashtable<String,Object[]> evaluated,
+    		Hashtable<String,Integer> params,
+    		int returntype,
+    		boolean valonly,
+    		Profiler profiler)
+	{			
+		
+		Object[] result = new Object[2];
+		
+		if (paramname != "" && !useCurrentCvals && params.get(paramname)!=null)
+			result[0]=Double.NaN;
 		else 
-			return cval;
+			result[0]= cval;
+	
+		if (!valonly) {
+			if (returntype==ProbForm.RETURN_ARRAY) {
+				result[1]=new double[params.size()];
+				Integer i = params.get(paramname);
+				if (i!=null)
+					((double[])result[1])[i]=1.0;
+			}
+			else {
+				result[1] = new Hashtable<String,Double>();
+				if (paramname != "")
+					((Hashtable<String,Double>)result[1]).put(paramname,1.0);
+			}
+		}
+
+		
+		return result;
 	}
-
-
+	
 	public  double evalSample(RelStruc A,Hashtable atomhasht,OneStrucData inst, long[] timers){
 		return cval;
 	}
@@ -250,4 +295,13 @@ public class ProbFormConstant extends ProbForm
 		if (paramname==this.paramname)
 			cval=val;
 	}
+	
+	public TreeSet<Rel> parentRels(){
+		return new TreeSet<Rel>();
+	}
+	
+	public TreeSet<Rel> parentRels(TreeSet<String> processed){
+		return new TreeSet<Rel>();	
+	}
+	
 }

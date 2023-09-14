@@ -82,42 +82,42 @@ private int index;
 		GGProbFormNode nextuga;
 		double nextscore;
 
-		if ((scoremode == USEMINSCORE || scoremode == USEAVGSCORE)){
-			score = 0;
-			for (int i=0; i<allugas.size();i++){
-				nextuga = allugas.elementAt(i);
-				nextscore = nextuga.value();
-				if (nextuga.instval()==1)
-					nextscore = nextuga.value();
-				if (nextuga.instval()==0)
-					nextscore = 1 - nextuga.value();
-				if (scoremode == USEMINSCORE)
-					score = Math.min(score, nextscore);
-				if (scoremode == USEAVGSCORE)
-					score = score + nextscore;
-			}
-			if (scoremode == USEAVGSCORE)
-				score = score/(1+allugas.size());
-		}
+//		if ((scoremode == USEMINSCORE || scoremode == USEAVGSCORE)){
+//			score = 0;
+//			for (int i=0; i<allugas.size();i++){
+//				nextuga = allugas.elementAt(i);
+//				nextscore = nextuga.value();
+//				if (nextuga.instval()==1)
+//					nextscore = nextuga.value();
+//				if (nextuga.instval()==0)
+//					nextscore = 1 - nextuga.value();
+//				if (scoremode == USEMINSCORE)
+//					score = Math.min(score, nextscore);
+//				if (scoremode == USEAVGSCORE)
+//					score = score + nextscore;
+//			}
+//			if (scoremode == USEAVGSCORE)
+//				score = score/(1+allugas.size());
+//		}
 		
 		if (scoremode == USELLSCORE){
-			//System.out.println("Compute score for " + this.getMyatom());
+			System.out.println("Compute score for " + this.getMyatom());
 			
 			double[] oldvalues = new double[allugas.size()];
 			double oldll = GradientGraphO.computePartialLikelihood(allugas,oldvalues);
 			
 			
 			
-			//System.out.print("values for ugas: old="  
-			//+ StringOps.arrayToString(oldvalues, "(", ")") );
+			System.out.println("values for ugas: old="  
+			+ StringOps.arrayToString(oldvalues, "(", ")") );
 			toggleCurrentInst();
 			reEvaluateUpstream();
 			
 			double[] newvalues = new double[allugas.size()];		
 			double newll = GradientGraphO.computePartialLikelihood(allugas,newvalues);
 			
-			//System.out.println("   new="  
-			//		+ StringOps.arrayToString(newvalues, "(", ")")  );
+			System.out.println("   new="  
+					+ StringOps.arrayToString(newvalues, "(", ")")  );
 			
 			toggleCurrentInst();
 			reEvaluateUpstream();
@@ -126,7 +126,7 @@ private int index;
 			for (int i=0;i<allugas.size();i++){
 				score = score + Math.log( oldvalues[i]/newvalues[i]);
 			}
-			//System.out.println("result = " + score);
+			System.out.println("result = " + score);
 		}
 	}
 

@@ -156,7 +156,7 @@ public class GroundAtomList extends java.lang.Object {
     }
 
 
-    public Vector allAtoms(){
+    public Vector<GroundAtom> allAtoms(){
         return atoms;
     }
 

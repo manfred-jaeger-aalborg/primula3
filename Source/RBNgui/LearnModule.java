@@ -43,7 +43,9 @@ import java.util.*;
 
 public class LearnModule extends JFrame implements ActionListener,MouseListener,GradientGraphOptions, KeyListener
 {
-	
+	public static final int UseLik = 0;
+	public static final int UseLogLik = 1;
+	public static final int UseSquaredError = 2;
 	
 	/* Options for the top-level learning strategy in LearnThread:*/
 	public static final int AscentBatch =0;
@@ -61,6 +63,9 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 	public static final int AscentAdagrad =1;
 	public static final int AscentFletcherReeves =2;
 	public static final int AscentDirectGradient =3;
+	
+	public static final String threadstrategy[] = {"Batch","Adam"};
+	public static final String ggstrategy[] = {"LBFGS","Adagrad","FletcherReeves","Greedy"};
 	
 	/**
 	 * @uml.property  name="tabbedPane"
@@ -336,7 +341,9 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 	/**
 	 * @uml.property  name="verbose"
 	 */
-	private boolean keepggs;
+	private boolean useggs;
+	
+	private boolean usememoize;
 	
 	private boolean learnverbose;
 	private int objective;
@@ -352,12 +359,14 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 	protected int threadascentstrategy;
 	protected int lbfgsmemory;
 	
-	double adagradfade = 0.5;
-	double adagradepsilon = 1.0E-10;
-	double adam_beta1=0.9;
-	double adam_beta2=0.999;
-	double adam_epsilon = 1.0E-8;
-	double adam_alpha = 0.01;
+	double adagradfade;
+	double adagradepsilon;
+	double adam_beta1;
+	double adam_beta2;
+	double adam_epsilon;
+	double adam_alpha;
+	
+	private int type_of_gradient; // one of ProbForm.RETURN_ARRAY or  ProbForm.RETURN_SPARSE
 	
 	/**
 	 * @uml.property  name="aca"
@@ -388,16 +397,16 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 //		datafile = null;
 		settingswindowopen = false;
 		samplesize = 1;
-		restarts = -1; /*-1 is for open-ended restarts */
+		restarts = 1; /*-1 is for open-ended restarts */
 		subsamples = 100;
 		numblocks = 1;
-		numbatches =200;
-		splitmode = RelData.SPLIT_ACROSS_DOMAINS;
+		numbatches =50;
+		splitmode = RelData.SPLIT_BY_DOMAIN;
 		dampingfac =0.99;
 		numchains = 2;
 		windowsize = 2;
 		maxfails = 5;
-		maxiterations = 100;
+		maxiterations = 20;
 		linedistancethresh = 0.0001;
 //		linelikelihoodthresh = 0.001;
 		likelihoodwindow = 5;
@@ -407,14 +416,24 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 		omitrounds = 3;
 		percmiss = 0.0;
 		learnverbose = false;
-		objective = GradientGraph.UseLogLik;
+		objective = UseLogLik;
 		gg2phase = false;
 		ggrandominit = true;
 		numrelsfromfile = false;
 		aca = false;
 		readNumRels();
-		keepggs=false;
+		useggs=false;
+		usememoize=true;
+		
 		//selectednumrels = new Vector<String>();
+		type_of_gradient=ProbForm.RETURN_ARRAY;
+		
+		adagradfade = 0.5;
+		adagradepsilon = 1.0E-10;
+		adam_beta1=0.9;
+		adam_beta2=0.999;
+		adam_epsilon = 1.0E-8;
+		adam_alpha = 0.01;
 		
 		fileChooser.addChoosableFileFilter(myFilterRDEF = new Filter_rdef());
 
@@ -630,7 +649,7 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 		Object source = e.getSource();
 		if(source == numrellist){
 			int index = numrellist.locationToIndex(e.getPoint());
-			System.out.println("current: " + StringOps.arrayToString(numrellist.getSelectedIndices(), "[", "]")  +" index: " + index);
+//			System.out.println("current: " + StringOps.arrayToString(numrellist.getSelectedIndices(), "[", "]")  +" index: " + index);
 //			if(index >= 0){
 //				if (numrellist.isSelectedIndex(index)){
 //					System.out.println("removing");
@@ -642,7 +661,7 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 //				}
 //			}
 			
-			System.out.println("selection: " + StringOps.arrayToString(numrellist.getSelectedIndices(), "[", "]")); 
+//			System.out.println("selection: " + StringOps.arrayToString(numrellist.getSelectedIndices(), "[", "]")); 
 	
 		}
 	}
@@ -823,6 +842,15 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 		return numchains;
 	}
 
+	public int getType_of_gradient() {
+		return type_of_gradient;
+	}
+	
+	public void setType_of_gradient(int t) {
+		type_of_gradient =t;
+	}
+	
+	
 	public String[][] getSelectedNumRels(){
 		if (numrelsfromfile)
 			return numrelblocks;
@@ -876,12 +904,20 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 		aca = v;
 	}
 	
-	public void setKeepGGs(boolean v){
-		keepggs = v;
+	public void setUseGGs(boolean v){
+		useggs = v;
 	}
 	
-	public boolean getKeepGGs() {
-		return keepggs;
+	public void setUseMemoize(boolean v){
+		usememoize = v;
+	}
+	
+	public boolean getUseGGs() {
+		return useggs;
+	}
+	
+	public boolean getUseMemoize() {
+		return usememoize;
 	}
 	
 	public boolean aca(){
@@ -910,7 +946,7 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 		tabbedPane.setEnabledAt(tabbedPane.indexOfComponent(dataPanel),false);
 	}
 	
-	public void setParameters(String[] params){
+	public void setParameters(Hashtable<String,Integer> params){
 		parammodel.setParameters(params);
 		parametertable.updateUI();
 	}

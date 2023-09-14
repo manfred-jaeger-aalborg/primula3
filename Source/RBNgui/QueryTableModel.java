@@ -285,4 +285,8 @@ public class QueryTableModel extends AbstractTableModel{
 	public LinkedList<String> getMapValues() {
 		return mapdata;
 	}
+	
+	public LinkedList<String> getProbabilities(){
+		return probabilitydata;
+	}
 }

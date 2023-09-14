@@ -58,4 +58,21 @@ public  class CombFuncLReg extends CombFunc{
 	public int evaluatesTo(int[] args){
 		return -1;
 	}
+	
+	  public double evaluateGrad(double[] vals, double[] derivs) {
+			double sum = 0;
+			double sumpr = 0;
+			for (int i=0;i<vals.length;i++){
+				sum = sum + vals[i];
+				sumpr = sumpr + derivs[i];
+			}
+			double esum = Math.exp(sum);
+			
+			if (Double.isInfinite(Math.pow(1+esum,2)))
+					return 0;
+			double result = (esum*sumpr)/Math.pow(1+esum,2);
+			
+			return result;
+			
+	  }
 }

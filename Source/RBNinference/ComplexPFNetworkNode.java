@@ -30,9 +30,10 @@ import RBNpackage.*;
 import RBNExceptions.*;
 
 
-public class ComplexPFNetworkNode extends PFNetworkNode implements ComplexBNNodeInt{
+public class ComplexPFNetworkNode extends PFNetworkNode{
 
 	private ProbForm probform;
+	
 
 	public ComplexPFNetworkNode(ComplexBNGroundAtomNode cgan){
 		super(cgan.myatom());
@@ -46,6 +47,11 @@ public class ComplexPFNetworkNode extends PFNetworkNode implements ComplexBNNode
 		truesampleweight = new double[2];
 	}
 
+	public ComplexPFNetworkNode(GroundAtom ga, ProbForm pf) {
+		super(ga);
+		probform=pf;
+	}
+	
 	/* Computes the conditional probability of the instantiation of this node
 	 * in the current sample, given the instantiations in this sample of 
 	 * the parent nodes
@@ -149,4 +155,6 @@ public class ComplexPFNetworkNode extends PFNetworkNode implements ComplexBNNode
 			{
 		probform = probform.sEval(A);
 			}
+	
+
 }

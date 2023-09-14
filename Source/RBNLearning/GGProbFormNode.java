@@ -119,15 +119,14 @@ public abstract class GGProbFormNode extends GGNode{
 			OneStrucData I,
 			int inputcaseno,
 			int observcaseno,
-    		String[] parameterrels,
+    		Hashtable<String,Integer> parameters,
     		boolean useCurrentPvals,
 			boolean isuga,
 			String uganame,
 			GroundAtomList mapatoms,
-			Hashtable<String,Double>  evaluated )
+			Hashtable<String,Object[]>  evaluated )
 	throws RuntimeException,RBNCompatibilityException
 	{
-		gg.profiler.constructGGPFNcalls+=1;
 		
 		//System.out.println("construct ggpfn for " + pf.asString(1, 0, A, false, false));
 		
@@ -136,6 +135,13 @@ public abstract class GGProbFormNode extends GGNode{
 		/* first try to find the GGProbFormNode in allnodes: */
 		
 		GGProbFormNode ggn = null;
+		
+		/* Perform expansion for macro calls. 
+		 * 
+		 */
+		if (pf instanceof ProbFormMacroCall) {
+			pf = ((ProbFormMacroCall)pf).pform().substitute(((ProbFormMacroCall)pf).macro().arguments(), ((ProbFormMacroCall)pf).args());
+		}
 		
 		/* Must transform ProbFormBoolAtom with negative sign so that it does not
 		 * get identified with an existing AtomNode (loosing the sign info)
@@ -149,7 +155,6 @@ public abstract class GGProbFormNode extends GGNode{
 			ggn = gg.findInAllnodes(pf, inputcaseno, observcaseno, A);
 		}
 		if (ggn != null){
-			gg.profiler.foundnodes+=1;
 			return ggn;
 		}
 		else{
@@ -208,18 +213,18 @@ public abstract class GGProbFormNode extends GGNode{
 
 			}
 			if (pf instanceof ProbFormConvComb)
-				result =  new GGConvCombNode(gg,pf,allnodes,A,I,inputcaseno,observcaseno,parameterrels,
+				result =  new GGConvCombNode(gg,pf,allnodes,A,I,inputcaseno,observcaseno,parameters,
 						useCurrentPvals,mapatoms,evaluated);
 			if (pf instanceof ProbFormCombFunc)
-				result =  new GGCombFuncNode(gg,pf,allnodes,A,I,inputcaseno,observcaseno,parameterrels,
+				result =  new GGCombFuncNode(gg,pf,allnodes,A,I,inputcaseno,observcaseno,parameters,
 						useCurrentPvals,mapatoms,evaluated);
 			if (pf instanceof ProbFormBoolComposite){
 				ProbForm pfstandard = ((ProbFormBoolComposite) pf).toStandardPF(false);
 				if (pfstandard instanceof ProbFormCombFunc)
-					result =  new GGCombFuncNode(gg,pfstandard,allnodes,A,I,inputcaseno,observcaseno,parameterrels,
+					result =  new GGCombFuncNode(gg,pfstandard,allnodes,A,I,inputcaseno,observcaseno,parameters,
 							useCurrentPvals,mapatoms,evaluated);
 				if (pfstandard instanceof ProbFormConvComb)
-					result =  new GGConvCombNode(gg,pfstandard,allnodes,A,I,inputcaseno,observcaseno,parameterrels,
+					result =  new GGConvCombNode(gg,pfstandard,allnodes,A,I,inputcaseno,observcaseno,parameters,
 							useCurrentPvals,mapatoms,evaluated);
 			}
 			if (pf instanceof ProbFormBoolConstant){
@@ -228,8 +233,7 @@ public abstract class GGProbFormNode extends GGNode{
 			}
 			if (pf instanceof ProbFormBoolEquality){
 				result = new GGConstantNode(gg,pf,A,I);
-				((GGConstantNode)result).setCurrentParamVal(((ProbFormBoolEquality)pf).evaluate(A,
-						I,new String[0], new int[0],false, new String[0],false,mapatoms,false,null));
+				((GGConstantNode)result).setCurrentParamVal(((ProbFormBoolEquality)pf).evaluate(A,I));
 			}
 			
 			String key = gg.makeKey(pf, inputcaseno, observcaseno, A);
@@ -281,11 +285,11 @@ public abstract class GGProbFormNode extends GGNode{
 //	}
 //	
 	
-	public boolean dependsOn(int param){
+	public boolean dependsOn(String param){
 		return (gradient.get(param)!=null);
 	}
 
-	public void setDependsOn(int param){
+	public void setDependsOn(String param){
 		gradient.put(param, Double.NaN);
 	}
 	

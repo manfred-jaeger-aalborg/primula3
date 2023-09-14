@@ -96,5 +96,8 @@ public class ComplexBNGroundAtomNode extends ComplexBNNode implements GroundAtom
 	return myatom;
     }
     
+    public String[] vars() {
+    	return vars;
+    }
 
 }

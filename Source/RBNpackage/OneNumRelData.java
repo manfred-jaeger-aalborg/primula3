@@ -545,8 +545,6 @@ public class OneNumRelData extends OneRelData{
 	}
 
 	public double valueOf(int[] key){
-		for (int[] k: numAtoms.keySet())
-			System.out.println(k);
 		if (numAtoms.containsKey(key))
 			return numAtoms.get(key);
 		else {

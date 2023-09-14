@@ -392,7 +392,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	 * @uml.property  name="pauseSampling"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
-	private JButton pauseSampling  = new JButton("Pause");
+	private JButton setPrediction  = new JButton("Predict");
 	/**
 	 * @uml.property  name="stopSampling"
 	 * @uml.associationEnd  multiplicity="(1 1)"
@@ -877,7 +877,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		delAllQueryAtomButton.addActionListener(this);
 		settingsSampling.addActionListener( this );
 		startSampling.addActionListener( this );
-		pauseSampling.addActionListener( this );
+		setPrediction.addActionListener( this );
 		stopSampling.addActionListener( this );
 		startEval.addActionListener( this );
 		settingsMap.addActionListener( this );
@@ -903,7 +903,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		settingsSampling.setBackground(Primula.COLOR_BLUE);
 		startSampling.setBackground(Primula.COLOR_GREEN);
 		stopSampling.setBackground(Primula.COLOR_GREEN);
-		pauseSampling.setBackground(Primula.COLOR_GREEN);
+		setPrediction.setBackground(Primula.COLOR_GREEN);
 		startEval.setBackground(Primula.COLOR_GREEN);
 		settingsMap.setBackground(Primula.COLOR_BLUE);
 		startMap.setBackground(Primula.COLOR_GREEN);
@@ -922,10 +922,10 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		samplingPanel.add(settingsSampling);
 		samplingPanel.add(startSampling);
 		startSampling.setToolTipText("Start sampling");
-		samplingPanel.add(pauseSampling);
-		pauseSampling.setToolTipText("Pause sampling");
 		samplingPanel.add(stopSampling);
 		stopSampling.setToolTipText("Stop sampling");
+		samplingPanel.add(setPrediction);
+		setPrediction.setToolTipText("Set predicted values as evidence");
 
 		evalPanel.add(startEval);
 		
@@ -1193,21 +1193,25 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		else if( source == startSampling ){
 			startSampleThread();
 		}
-		else if( source == pauseSampling){
-			if(pausemcmc == true){
-				pausemcmc = false;
+		else if( source == setPrediction){
+			// mostly copy from (source == setMapVals)
+			LinkedList<String> probvals = dataModel.getProbabilities();
+			LinkedList<String> queryats = dataModel.getQuery();
+			OneStrucData result = new OneStrucData();
+			result.setParentRelStruc(myprimula.getRels());
+			
+			Iterator<String> itq = queryats.iterator();
+			
+			for (Iterator<String> itprob = probvals.iterator(); itprob.hasNext();) {
+				double p = Double.parseDouble(itprob.next());
+				if (p>=0.5)
+					result.add(new GroundAtom(itq.next(),myprimula.getRels(),Rel.BOOLEAN),true,"?");
+				else
+					result.add(new GroundAtom(itq.next(),myprimula.getRels(),Rel.BOOLEAN),false,"?");
 			}
-			else{
-				pausemcmc = true;
-			}
-			sampthr.setPause(pausemcmc);
-			if (pausemcmc){
-				infoMessage.setText(" Pause Sampling ");
-			}
-			else{
-				infoMessage.setText(" Resume Sampling ");
-			}
-
+			inst.add(result);
+			updateInstantiationList();
+			myprimula.updateBavaria();
 		}
 		else if( source == stopSampling){
 			sampling = false;
@@ -1342,13 +1346,27 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 			RelData evidence = new RelData(myprimula.getRels(),myprimula.getInstantiation());
 			int mode;
 			String[] rbnparams = myprimula.getRBN().parameters();
+			Hashtable<String,Integer> rbnparamidx = new Hashtable<String,Integer>();
+			for (int i=0;i<rbnparams.length;i++)
+				rbnparamidx.put(rbnparams[i], i);
+			
 			if (rbnparams.length >0)
 				mode = GradientGraphO.LEARNANDMAPMODE;
 			else 
 				mode = GradientGraphO.MAPMODE;
+			
+//			public GradientGraphO(Primula mypr, 
+//					RelData data, 
+//					Hashtable<String,Integer> params,
+//					GradientGraphOptions go, 
+//					GroundAtomList maxats, 
+//					int m,
+//					int obj,
+//					Boolean showInfoInPrimula)
+			
 			gg = new GradientGraphO(myprimula, 
 					 								evidence, 
-					 								rbnparams,
+					 								rbnparamidx,
 					 								this ,
 					 								queryatoms,
 					 								mode,
@@ -1896,7 +1914,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 			String names = ""+rel.name.name + "(";
 			for(int j=0; j<nodes.length; ++j){
 				if(j+1 < nodes.length){
-					names = names + elementNamesListModel.elementAt(nodes[j]) + ", ";
+					names = names + elementNamesListModel.elementAt(nodes[j]) + ",";
 				}
 				else { //last item
 					names = names + elementNamesListModel.elementAt(nodes[j]);
@@ -2021,16 +2039,19 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 				varargs = rbn.args(gat.rel());
 				intargs = gat.args();
 				try{
-					prob = pf.evaluate(A, 
+					prob = (double)pf.evaluate(A, 
 							osd, 
 							varargs, 
 							intargs, 
-							true, 
-							new String[0], 
+							true,  
 							true, 
 							null, 
 							false,
-							null);
+							null,
+							null,
+							ProbForm.RETURN_ARRAY,
+							true,
+							null)[0];
 				}
 				catch (RBNCompatibilityException ex){System.out.println(ex);}
 				if (prob!=Double.NaN)
@@ -2237,7 +2258,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 				RelStruc A = rdoi.inputDomain();
 				for (OneStrucData osd: rdoi.allOneStrucData()) {
 					double prob=Double.NaN;
-					Hashtable<String,Double> evaluated = new Hashtable<String,Double>();
+					Hashtable<String,Object[]> evaluated = new Hashtable<String,Object[]>();
 					//Hashtable<String,Double> evaluated =null;
 					/* First the true cases: */
 					Vector<int[]> at = osd.allTrue(r);
@@ -2245,16 +2266,20 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 					for (int[] intargs : at){
 						
 							try{
-								prob = pf.evaluate(A, 
+								
+								prob = (double)pf.evaluate(A, 
 										osd, 
 										varargs, 
 										intargs, 
 										true, 
-										new String[0], 
 										true, 
 										null, 
 										false,
-										evaluated);
+										evaluated,
+										null,
+										ProbForm.RETURN_ARRAY,
+										true,
+										null)[0];
 							}
 							catch (RBNCompatibilityException ex){System.out.println(ex);}
 							if (prob!=Double.NaN)
@@ -2275,16 +2300,19 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 							boolean predpos;
 
 							try{
-								prob = pf.evaluate(A, 
+								prob = (double)pf.evaluate(A, 
 										osd, 
 										varargs, 
 										intargs, 
 										true, 
-										new String[0], 
 										true, 
 										null, 
 										false,
-										evaluated);
+										evaluated,
+										null,
+										ProbForm.RETURN_ARRAY,
+										true,
+										null)[0];
 							}
 							catch (RBNCompatibilityException ex){System.out.println(ex);}
 							if (prob!=Double.NaN)

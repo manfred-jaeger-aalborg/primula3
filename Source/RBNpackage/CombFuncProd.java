@@ -35,4 +35,38 @@ public class CombFuncProd extends CombFunc {
 		}
 	}
 
+	  public double evaluateGrad(double[] vals, double[] derivs) {
+			double result = 0;
+	        /* First compute \prod Fi over all subformulas */
+			
+			/* Need special consideration of the case where exactly one of the vals is zero */
+			int zerocount = 0;
+			int zeroidx = 0; // init value irrelevant
+			
+	        double factor = 1;
+	        
+	        for (int i=0;i<vals.length;i++) {
+	        	if (vals[i]==0) {
+	        		zerocount ++;
+	        		zeroidx = i;
+	        	}
+	        	else
+	        		factor = factor*vals[i];
+	        }
+	        
+	        if (zerocount > 1)
+	        	return 0.0;
+	        
+	        if (zerocount ==1)
+	        	return factor*derivs[zeroidx];
+	        
+	        /* Now compute the partial derivative as
+	         *
+	         * \sum_{F_i\in fthetalist} (factor/F_i)*(F_i')
+	         */
+	        for (int i=0;i<vals.length;i++){
+	                        result = result + (factor/vals[i])*(derivs[i]);
+	        }
+			return result;
+	  }
 }

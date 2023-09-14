@@ -29,6 +29,7 @@ import java.io.*;
 import RBNExceptions.*;
 import RBNutilities.*;
 import RBNgui.Primula;
+import RBNLearning.Profiler;
 
 
 public class ProbFormConvComb extends ProbForm {
@@ -98,20 +99,21 @@ public class ProbFormConvComb extends ProbForm {
 	public  Vector makeParentVec(RelStruc A)
 	throws RBNCompatibilityException
 	{
-		return makeParentVec(A,new OneStrucData());
+		return makeParentVec(A,new OneStrucData(),null);
 	}
 
-	public  Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst)
+	public  Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone)
 	throws RBNCompatibilityException
 	{
-		Vector<GroundAtom> atomvec1 = F1.makeParentVec(A,inst);
-		Vector<GroundAtom> atomvec2 = F2.makeParentVec(A,inst);
-		Vector<GroundAtom> atomvec3 = F3.makeParentVec(A,inst);
+		Vector<GroundAtom> atomvec1 = F1.makeParentVec(A,inst,macrosdone);
+		Vector<GroundAtom> atomvec2 = F2.makeParentVec(A,inst,macrosdone);
+		Vector<GroundAtom> atomvec3 = F3.makeParentVec(A,inst,macrosdone);
 		Vector<GroundAtom> result = atomvec1;
 		double v1,v2,v3;
-		v1=F1.evaluate(A,inst,new String[0],new int[0],false,new String[0],false,new GroundAtomList(),false,null);
-		v2=F2.evaluate(A,inst,new String[0],new int[0],false,new String[0],false,new GroundAtomList(),false,null);
-		v3=F3.evaluate(A,inst,new String[0],new int[0],false,new String[0],false,new GroundAtomList(),false,null);
+	    
+		v1=(Double)F1.evaluate(A,inst,new String[0],new int[0],false,false,new GroundAtomList(),false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
+		v2=(Double)F2.evaluate(A,inst,new String[0],new int[0],false,false,new GroundAtomList(),false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
+		v3=(Double)F3.evaluate(A,inst,new String[0],new int[0],false,false,new GroundAtomList(),false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
 
 		if (!Double.isNaN(v1))
 			atomvec1 = new Vector<GroundAtom>();
@@ -181,52 +183,186 @@ public class ProbFormConvComb extends ProbForm {
 	}
 
 
-	public double evaluate(RelStruc A, OneStrucData inst, String[] vars, int[] tuple, 
-			boolean useCurrentCvals,
-			String[] numrelparameters,
-    		boolean useCurrentPvals,
-    		GroundAtomList mapatoms,
-    		boolean useCurrentMvals,
-    		Hashtable<String,Double> evaluated)
-	throws RBNCompatibilityException
-	{
-		double ev1 = F1.evaluate(A,inst,vars,tuple,useCurrentCvals,numrelparameters,useCurrentPvals,
-				mapatoms,useCurrentMvals,evaluated);
-		double ev2 = F2.evaluate(A,inst,vars,tuple,useCurrentCvals,numrelparameters,useCurrentPvals,
-				mapatoms,useCurrentMvals,evaluated);
-		double ev3 = F3.evaluate(A,inst,vars,tuple,useCurrentCvals,numrelparameters,useCurrentPvals,
-				mapatoms,useCurrentMvals,evaluated);
+//	public double evaluate(RelStruc A, OneStrucData inst, String[] vars, int[] tuple, 
+//			boolean useCurrentCvals,
+//			String[] numrelparameters,
+//    		boolean useCurrentPvals,
+//    		GroundAtomList mapatoms,
+//    		boolean useCurrentMvals,
+//    		Hashtable<String,Double> evaluated)
+//	throws RBNCompatibilityException
+//	{
+//		double ev1 = F1.evaluate(A,inst,vars,tuple,useCurrentCvals,numrelparameters,useCurrentPvals,
+//				mapatoms,useCurrentMvals,evaluated);
+//		double ev2 = F2.evaluate(A,inst,vars,tuple,useCurrentCvals,numrelparameters,useCurrentPvals,
+//				mapatoms,useCurrentMvals,evaluated);
+//		double ev3 = F3.evaluate(A,inst,vars,tuple,useCurrentCvals,numrelparameters,useCurrentPvals,
+//				mapatoms,useCurrentMvals,evaluated);
+//
+//
+//		if (Double.isNaN(ev1)) {
+//			if (ev2==ev3)
+//				return ev2;
+//			else
+//				return Double.NaN;
+//		}
+//
+//		if ((ev1 != 0) && (Double.isNaN(ev2)) )
+//			return Double.NaN;
+//
+//		if ((ev1 != 1) && (Double.isNaN(ev3)) )
+//			return Double.NaN;
+//
+//		double firstterm =0;
+//		double secondterm =0;
+//		
+//		if (ev1==0 || ev2==0)
+//			firstterm =0;
+//		else firstterm = ev1*ev2;
+//		
+//		if (ev1 == 1 || ev3==0)
+//			secondterm =0;
+//		else secondterm = (1-ev1)*ev3;
+//		
+//	
+//		return firstterm + secondterm;
+//
+//	}
 
+	public Object[] evaluate(RelStruc A, 
+			OneStrucData inst, 
+			String[] vars, 
+			int[] tuple, 
+			boolean useCurrentCvals, 
+			// String[] numrelparameters,
+			boolean useCurrentPvals,
+			GroundAtomList mapatoms,
+			boolean useCurrentMvals,
+			Hashtable<String,Object[]> evaluated,
+			Hashtable<String,Integer> params,
+			int returntype,
+			boolean valonly,
+			Profiler profiler)
+					throws RBNCompatibilityException
+	{	
 
-		if (Double.isNaN(ev1)) {
-			if (ev2==ev3)
-				return ev2;
-			else
-				return Double.NaN;
+		Boolean profile = (profiler != null);
+		
+		String key="";
+		if (evaluated != null) {
+			key = this.makeKey(vars,tuple,false);		
+			//System.out.print("debug: looking for " + key);
+			Object[] d = evaluated.get(key);
+			if (d!=null) {
+				//System.out.println("debug:  yes found");
+				if (profile)
+					profiler.addTime(Profiler.NUM_EVALUATE_OLD, 1);
+				return d; 
+			}
 		}
+	//System.out.println("debug:   not found");
 
-		if ((ev1 != 0) && (Double.isNaN(ev2)) )
-			return Double.NaN;
+	ProbFormConvComb subspfcf = (ProbFormConvComb)this.substitute(vars,tuple);
 
-		if ((ev1 != 1) && (Double.isNaN(ev3)) )
-			return Double.NaN;
+	//		String key="";
+	//		if (evaluated != null) {
+	//			key = subspfcf.makeKey(A);		
+	//			System.out.print("looking for " + key);
+	//			Object[] d = evaluated.get(key);
+	//			if (d!=null) {
+	//				System.out.println("  yes found");
+	//				return d; 
+	//			}
+	//		}
+	//		System.out.println("   not found");
 
-		double firstterm =0;
-		double secondterm =0;
-		
-		if (ev1==0 || ev2==0)
-			firstterm =0;
-		else firstterm = ev1*ev2;
-		
-		if (ev1 == 1 || ev3==0)
-			secondterm =0;
-		else secondterm = (1-ev1)*ev3;
-		
-	
-		return firstterm + secondterm;
+	Object[] result = new Object[2];
 
+	Object[] r1= F1.evaluate(A, inst, vars, tuple, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly,profiler);
+	Object[] r2= F2.evaluate(A, inst, vars, tuple, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly,profiler);
+	Object[] r3= F3.evaluate(A, inst, vars, tuple, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly,profiler);
+
+	double r1v = (double)r1[0];
+	double r2v = (double)r2[0];
+	double r3v = (double)r3[0];
+
+
+	/* The value: */
+	if (Double.isNaN(r1v)) {
+		if (r2v==r3v)
+			result[0]= r2v;
+		else
+			result[0]= Double.NaN;
 	}
 
+	if ((r1v != 0) && (Double.isNaN(r2v)) )
+		result[0]= Double.NaN;
+
+	if ((r1v != 1) && (Double.isNaN(r3v)) )
+		result[0]= Double.NaN;
+
+	double firstterm =0;
+	double secondterm =0;
+
+	if (r1v==0 || r2v==0)
+		firstterm =0;
+	else firstterm = r1v*r2v;
+
+	if (r1v == 1 || r3v==0)
+		secondterm =0;
+	else secondterm = (1-r1v)*r3v;
+
+	result[0]= firstterm + secondterm;
+
+	/* The derivatives */
+	if (!valonly) {
+		if (returntype == ProbForm.RETURN_ARRAY) {
+			result[1]=new double[params.size()];
+			double[] r1g = (double[])r1[1];
+			double[] r2g = (double[])r2[1];
+			double[] r3g = (double[])r3[1];
+			for (int i=1;i<params.size()+1;i++) {
+				result[i]=r1g[i]*r2v+r1v*r2g[i]+(1-r1v)*r3g[i]-r1g[i]*r3v;
+			}
+		}
+		else {
+			result[1]=new Hashtable<String,Double>();
+			Hashtable<String,Double> r1g = (Hashtable<String,Double>)r1[1];
+			Hashtable<String,Double> r2g = (Hashtable<String,Double>)r2[1];
+			Hashtable<String,Double> r3g = (Hashtable<String,Double>)r3[1];
+
+
+
+			TreeSet<String> allkeys = new TreeSet<String>(r1g.keySet());
+			allkeys.addAll(r2g.keySet());
+			allkeys.addAll(r3g.keySet());
+
+			for (String p: allkeys) {
+				Double r1gp = r1g.get(p);
+				Double r2gp = r2g.get(p);
+				Double r3gp = r3g.get(p);
+
+				if (r1gp == null)
+					r1gp = 0.0;
+				if (r2gp == null)
+					r2gp = 0.0;
+				if (r3gp == null)
+					r3gp = 0.0;
+
+				double gp=r1gp*r2v+r1v*r2gp+(1-r1v)*r3gp-r1gp*r3v;
+				((Hashtable<String,Double>)result[1]).put(p,gp);
+			}
+		}
+	}
+	if (evaluated != null) {
+		System.out.println("ProbFormConvComb: adding to evaluated: " + key + " = " + result[0] );
+
+		evaluated.put(key, result);
+	}
+	if (profile)
+		profiler.addTime(Profiler.NUM_EVALUATE_NEW, 1);
+	return result;
+	}
 
 	public  double evalSample(RelStruc A,Hashtable atomhasht,OneStrucData inst, long[] timers)
 	throws RBNCompatibilityException
@@ -360,5 +496,28 @@ public class ProbFormConvComb extends ProbForm {
 		F1.setCvals(paramname, val);
 		F2.setCvals(paramname, val);
 		F3.setCvals(paramname, val);
+	}
+	
+	public TreeSet<Rel> parentRels(){
+		TreeSet<Rel> result = new TreeSet<Rel>();
+		result.addAll(F1.parentRels());
+		result.addAll(F2.parentRels());
+		result.addAll(F3.parentRels());
+		return result;
+		
+	}
+	
+	public TreeSet<Rel> parentRels(TreeSet<String> processed){
+		String mykey = this.makeKey(null,null,true);
+		if (processed.contains(mykey))
+			return new TreeSet<Rel>();
+		else {
+			processed.add(mykey);
+			TreeSet<Rel> result = new TreeSet<Rel>();
+			result.addAll(F1.parentRels(processed));
+			result.addAll(F2.parentRels(processed));
+			result.addAll(F3.parentRels(processed));
+			return result;
+		}
 	}
 }

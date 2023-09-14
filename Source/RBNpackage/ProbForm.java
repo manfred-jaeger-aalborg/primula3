@@ -27,7 +27,9 @@ package RBNpackage;
 import java.util.*;
 import RBNExceptions.*;
 import RBNinference.*;
+import RBNutilities.rbnutilities;
 import RBNgui.Primula;
+import RBNLearning.Profiler;
 
 public abstract class ProbForm
 {
@@ -38,6 +40,9 @@ public abstract class ProbForm
 	public static final int PFCOMBFUNC = 2;
 	public static final int PFCONVCOMB = 3;
 	public static final int PFCONST = 4;
+	
+	public static final int RETURN_ARRAY=0;
+	public static final int RETURN_SPARSE=1;
 	
 	/* An atomic representation of this probform that can be used to form keys etc. */ 
 	public ProbFormAtom alias; 
@@ -79,6 +84,34 @@ public abstract class ProbForm
     public abstract boolean dependsOn(String variable, RelStruc A, OneStrucData data)
 	throws RBNCompatibilityException;
 
+//    /** Evaluate this ProbForm for input structure A, instantiation (data/evidence) inst, under the
+//     * substitution tuple for vars. Returns Double.NaN if the value of probform is not defined
+//     * because 
+//     * a) it depends on a probabilistic atom not instantiated in inst.
+//     * b) useCurrentCvals=false and probform depends on an unknown parameter.
+//     * c) useCurrentPvals=false, and probform depends on a numeric input relation atom that is contained in numrelparameters
+//     * d) useCurrentMvals=false, and probform depends on a boolean probabilistic relation atom that is contained in mapatoms
+//     * 
+//     * If useCurrentCvals=true, then evaluation at ProbFormConstant's is done with regard to
+//     * their cval field, even when their paramname != "".
+//     * If useCurrentPvals=true, then evaluation for numeric input relations is performed 
+//     * according to their value given in A
+//     * 
+//     * If the Hashtable evalutated is not null, then first the value for this ProbForm
+//     * is looked up using the GradientGraph.makeKey method for key generation.
+//     */
+//    public abstract double evaluate(RelStruc A, 
+//    		OneStrucData inst, 
+//    		String[] vars, 
+//    		int[] tuple, 
+//    		boolean useCurrentCvals, 
+//    		String[] numrelparameters,
+//    		boolean useCurrentPvals,
+//    		GroundAtomList mapatoms,
+//    		boolean useCurrentMvals,
+//    		Hashtable<String,Double> evaluated)
+//    throws RBNCompatibilityException;  
+    
     /** Evaluate this ProbForm for input structure A, instantiation (data/evidence) inst, under the
      * substitution tuple for vars. Returns Double.NaN if the value of probform is not defined
      * because 
@@ -87,6 +120,8 @@ public abstract class ProbForm
      * c) useCurrentPvals=false, and probform depends on a numeric input relation atom that is contained in numrelparameters
      * d) useCurrentMvals=false, and probform depends on a boolean probabilistic relation atom that is contained in mapatoms
      * 
+     * Throws exception if formula under the given substitution is not ground
+     * 
      * If useCurrentCvals=true, then evaluation at ProbFormConstant's is done with regard to
      * their cval field, even when their paramname != "".
      * If useCurrentPvals=true, then evaluation for numeric input relations is performed 
@@ -94,18 +129,40 @@ public abstract class ProbForm
      * 
      * If the Hashtable evalutated is not null, then first the value for this ProbForm
      * is looked up using the GradientGraph.makeKey method for key generation.
+     * 
+     * Returns an array of Object, where 
+     * -the first component is the Double value of this formula
+     * -if returntype==this.RETURN_ARRAY, then the second component is an array containing the gradient with components 
+     *  according to the order defined in params
+     * -if returntype==this.RETURN_SPARSE, then the second component is a Hashtable<String,double> with parameter names as keys,
+     *  and partial derivatives as values 
+     *   
+     * 
+     * If valuonly==true, then only the value is computed
      */
-    public abstract double evaluate(RelStruc A, 
+    public abstract Object[] evaluate(RelStruc A, 
     		OneStrucData inst, 
     		String[] vars, 
     		int[] tuple, 
     		boolean useCurrentCvals, 
-    		String[] numrelparameters,
+    		//String[] numrelparameters,
     		boolean useCurrentPvals,
     		GroundAtomList mapatoms,
     		boolean useCurrentMvals,
-    		Hashtable<String,Double> evaluated)
+    		Hashtable<String,Object[]> evaluated,
+    		Hashtable<String,Integer> params,
+    		int returntype,
+    		boolean valonly,
+    		Profiler profiler)
     throws RBNCompatibilityException;  
+    
+    public double evaluate(
+    		RelStruc A, 
+    		OneStrucData inst
+    		)  throws RBNCompatibilityException
+    {
+    	return (double)this.evaluate(A,inst,new String[0], new int[0], false, false,null,false,null,null,ProbForm.RETURN_ARRAY,true,null)[0];
+    }
     
     /** Evaluate this probform over RelStruc A. For ground atoms on which probform
      * depends, a ComplexBNGroundAtomNode is accessible via 
@@ -150,7 +207,7 @@ public abstract class ProbForm
     /** same as previous but with respect to the given
      * truth values in the Instantiation argument
      */
-    public abstract Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst)
+    public abstract Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone)
 	throws RBNCompatibilityException;
 
     /** returns true if ProbForm only contains
@@ -158,7 +215,14 @@ public abstract class ProbForm
      */
     public abstract boolean multlinOnly();
  
-    /** Returns all the parameters that this ProbForm depends on */
+    /** Returns all the parameters that this ProbForm depends on 
+     * Macro calls are not expanded!
+     * 
+     * Example: 
+     * @macro(v) = WIF $p THEN 0.3 ELSE blue(v)
+     * 
+     * then parameters() of WIF @macro(w) THEN $s ELSE $t is [$s,$t] (not including $p).
+     * */
     public abstract String[] parameters();
 
     /**
@@ -230,5 +294,33 @@ public abstract class ProbForm
      * @param val
      */
     public abstract void setCvals(String paramname, double val);
+    
+    public String makeKey(RelStruc A) {
+    	return this.asString(Primula.CLASSICSYNTAX, 0, A, false, true);
+
+    }
+    
+    public String makeKey(String[] vars, int[] args, Boolean nosub) {
+    	if (nosub) {
+    		if (this.alias != null)
+    			return this.alias.getRelation().name();
+    		if (this instanceof ProbFormAtom)
+    			return ((ProbFormAtom)this).getRelation().name();
+    		return this.asString(Primula.CLASSICSYNTAX, 0, null, false, true);
+    	}
+    	if (this.alias != null) {
+    		ProbFormAtom groundalias = this.alias.substitute(vars, args);
+    		return groundalias.asString(Primula.CLASSICSYNTAX, 0, null, false, true);
+    	}
+    	else return this.substitute(vars,args).asString(Primula.CLASSICSYNTAX, 0, null, false, true);
+    }
+    
+    /* Returns set of relations that evaluation of this ProbForm depends on */
+    public abstract TreeSet<Rel> parentRels();
+    
+    /* Returns set of relations that evaluation of this ProbForm depends on, checks in recursion whether sub-formula has already
+     * been processed */
+    public abstract TreeSet<Rel> parentRels(TreeSet<String> processed);
+    
 }
 
