@@ -568,6 +568,7 @@ public class ProbFormCombFunc extends ProbForm{
 			//System.out.println("ProbFormCombFunc: adding to evaluated: " + key + " = " + result[0] );
 			evaluated.put(key, result);
 		}
+
 		if (profile) {
 			//System.out.println("debug: evaluated new " + key);
 			profiler.addTime(Profiler.NUM_EVALUATE_NEW, 1);
