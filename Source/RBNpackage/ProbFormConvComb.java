@@ -355,10 +355,11 @@ public class ProbFormConvComb extends ProbForm {
 		}
 	}
 	if (evaluated != null) {
-		System.out.println("ProbFormConvComb: adding to evaluated: " + key + " = " + result[0] );
+		//System.out.println("ProbFormConvComb: adding to evaluated: " + key + " = " + result[0] );
 
 		evaluated.put(key, result);
 	}
+
 	if (profile)
 		profiler.addTime(Profiler.NUM_EVALUATE_NEW, 1);
 	return result;
