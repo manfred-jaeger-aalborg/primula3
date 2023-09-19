@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root> 
+    <Relations>
+        <Rel name="node" arity="1" argtypes="Domain" valtype="boolean" default="false" type="predefined" color="(100,100,100)"/>
+        <Rel name="edge" arity="2" argtypes="node,node" valtype="boolean" default="false" type="probabilistic" color="(0,70,0)"/>
+        <Rel name="green" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic" color="(51,204,0)"/>
+        <Rel name="red" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic" color="(255,0,51)"/>
+        <Rel name="blue" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic" color="(0,0,200)"/>
+        <Rel name="yellow" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic" color="(255,255,0)"/>
+        <Rel name="purple" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic" color="(204,0,204)"/>
+        <Rel name="alpha1" arity="1" argtypes="node" valtype="boolean" default="false" type="probabilistic" color="(200,255,100)"/>
+    </Relations>
+    <Data> 
+        <DataForInputDomain> 
+            <Domain> 
+                <obj ind='0' name='n0' coords='420,510' /> 
+                <obj ind='1' name='n1' coords='200,440' /> 
+                <obj ind='2' name='n2' coords='650,590' /> 
+                <obj ind='3' name='n3' coords='430,640' /> 
+                <obj ind='4' name='n4' coords='520,840' /> 
+            </Domain>
+            <PredefinedRels> 
+                <d rel='node' args='(n0)(n1)(n2)(n3)(n4)' val='true'/> 
+                
+            </PredefinedRels> 
+            <ProbabilisticRelsCase> 
+                <d rel='edge' args='(n0,n2)(n1,n2)(n2,n3)(n2,n4)(n3,n4)' val='true'/> 
+                <!-- <d rel='blue' args='(n3)(n4)(n5)' val='true'/>  -->
+                <d rel='blue' args='(n3)' val='true'/> 
+                <!-- <d rel='red' args='(n2)' val='true'/>  -->
+                <!-- <d rel='yellow' args='(n0)' val='true'/> 
+                <d rel='purple' args='(n1)' val='true'/>  -->
+                <d rel='alpha1' args='(n0)(n1)' val='true'/>
+                
+            </ProbabilisticRelsCase> 
+        </DataForInputDomain> 
+    </Data>
+</root>
