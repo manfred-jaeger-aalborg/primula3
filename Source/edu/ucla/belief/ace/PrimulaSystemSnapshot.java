@@ -23,6 +23,8 @@ public class PrimulaSystemSnapshot
 		specifically, calls copy constructors for { RBN, RelStruc, Instantiation, AtomList }
 	*/
 	public PrimulaSystemSnapshot(
+		Primula primula, // added 15092023 MJ -- this seems against the spirit of the snapshot, but needed for 
+		                 // for compatibility with updates of Primula methods
 		RBN rbn,
 		RelStruc rels,
 		OneStrucData inst,
@@ -38,6 +40,7 @@ public class PrimulaSystemSnapshot
 		int bnsystem,
 		Settings acesettings )
 	{
+		this.primula 			   = primula;
 		this.rels                  = (   RelStruc     ) rels.clone();
 		this.rbn                   = new RBN          ( rbn );
 		this.inst                  = new OneStrucData( this.myCurrentEvidence = inst       );
@@ -323,11 +326,13 @@ public class PrimulaSystemSnapshot
 			}
 
 			this.myConstructor = new BayesConstructor(
-				PrimulaSystemSnapshot.this.rbn,
+					PrimulaSystemSnapshot.this.rbn,
 				PrimulaSystemSnapshot.this.rels,
 				PrimulaSystemSnapshot.this.inst,
 				PrimulaSystemSnapshot.this.queryatoms,
-				PrimulaSystemSnapshot.this.bnoutfile );
+				PrimulaSystemSnapshot.this.bnoutfile,
+				PrimulaSystemSnapshot.this.primula
+				);
 
 			synchronized( RunWriteHuginNet.this ){
 				RunWriteHuginNet.this.notifyAll();
@@ -467,6 +472,7 @@ public class PrimulaSystemSnapshot
 	private long myCreationTime;
 	private File myFileEvidence;
 
+	private Primula primula;
 	private RBN rbn;
 	private RelStruc rels;
 	private OneStrucData inst;
