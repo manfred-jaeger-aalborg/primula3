@@ -155,8 +155,8 @@ public class ProbFormBoolAtom extends ProbFormBool {
 			else result = 1.0;
 		}
 		if (sign)
-			result = result;
-		return 1-result;
+			return result;
+		else return 1-result;
 	}
 	
 	@Override
