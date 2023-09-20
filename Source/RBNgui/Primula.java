@@ -538,6 +538,7 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		if( (this.rbn == null) || (this.rels == null) ) return null;
 
 		PrimulaSystemSnapshot ret = new PrimulaSystemSnapshot(
+				this,
 				this.rbn,
 				this.rels,
 				this.instasosd,
@@ -1719,9 +1720,9 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 	
 	private void loadDefaults(){
 
-//		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Mendel/mendel.rbn";
-//		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Mendel/mendel_s.rdef";
-//			
+		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Test/rbn_acr.rbn";
+		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Test/alpha1-blue.rdef";
+			
 //		
 //		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/InformationDiffusion/independent_cascade.rbn";
 //		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/InformationDiffusion/independent_cascade.rdef";
@@ -1731,9 +1732,9 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 	
 	
 
-		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/GraphNN-develop/alpha1ace.rbn";
-		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/GraphNN-develop/GNNdata/p1/testace.rdef"; 
-		
+//		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/GraphNN-develop/alpha1ace.rbn";
+//		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/GraphNN-develop/GNNdata/p1/testace.rdef"; 
+//		
 		
 //		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Mutag/MAP/manual_no2.rbn";
 //		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Mutag/MAP/base_class_0_n3.rdef"; 
@@ -1763,7 +1764,7 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		Primula win = new Primula();
 		SamiamManager.centerWindow( win );
 		win.show();
-		win.loadDefaults();
+//		win.loadDefaults();
 
 	}
 	
