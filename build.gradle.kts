@@ -1,0 +1,31 @@
+plugins {
+    id("java")
+}
+
+group = "org.example"
+version = "1.0-SNAPSHOT"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation(platform("org.junit:junit-bom:5.9.1"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    implementation("org.dom4j:dom4j:2.1.3")
+}
+
+tasks.test {
+    useJUnitPlatform()
+}
+
+// tasks.withType<JavaCompile> {
+//     options.compilerArgs.add("-Xlint:none") // Disable Java compiler warnings
+//     options.isFailOnError = false // Don't fail the build on compilation errors
+// }
+
+tasks.jar {
+    manifest {
+        attributes["Main-Class"] = "RBNgui.Primula"
+    }
+}
