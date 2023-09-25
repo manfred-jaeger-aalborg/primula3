@@ -1,8 +1,9 @@
 plugins {
     id("java")
+    id("application")
 }
 
-group = "org.example"
+group = "org.primula"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -13,6 +14,12 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     implementation("org.dom4j:dom4j:2.1.3")
+    //implementation(kotlin("script-runtime"))
+
+}
+
+application {
+    mainClass.set("RBNgui.Primula")
 }
 
 tasks.test {
