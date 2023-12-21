@@ -28,6 +28,7 @@ import java.util.*;
 import RBNExceptions.*;
 import RBNLearning.GradientGraph;
 import RBNgui.Primula;
+import RBNinference.PFNetworkNode;
 import RBNutilities.*;
 import RBNLearning.Profiler;
 
@@ -362,69 +363,6 @@ public class ProbFormCombFunc extends ProbForm{
 		return result;
 			}
 
-//	public double evaluate(RelStruc A, 
-//			OneStrucData inst, 
-//			String[] vars, 
-//			int[] tuple, 
-//			boolean useCurrentCvals, 
-//			String[] numrelparameters,
-//			boolean useCurrentPvals,
-//    		GroundAtomList mapatoms,
-//    		boolean useCurrentMvals,
-//    		Hashtable<String,Double> evaluated)
-//					throws RBNCompatibilityException
-//					{
-//		
-//		ProbFormCombFunc subspfcf = (ProbFormCombFunc)this.substitute(vars,tuple);
-//
-//		String key="";
-//		if (evaluated != null) {
-//			key = GradientGraph.makeKey(subspfcf, 0, 0, A);
-//			
-//			Double d = evaluated.get(key);
-//			if (d!=null)
-//				return d; 
-//		}
-//
-//		//        CConstr subscc = this.cconstr.substitute(vars,tuple);
-//
-//		//		/*
-//		//		* generate list of all substitution tuples for quantvars
-//		//		* that satisfy the cconstr
-//		//		*/
-//		//		int[][] subslist = A.allTrue(subscc,quantvars);
-//		int[][] subslist = tuplesSatisfyingCConstr(A, vars, tuple);
-//
-//		/* Initialize array of arguments for combination function */
-//		double[] combargs = new double[subspfcf.pfargs.length*subslist.length];
-//
-//		/* Evaluate the probability formulas in pfargs and 
-//		 * enter results into combargs
-//		 */
-//		int nextindex;
-//		double nextvalue;
-//		for (int i=0; i<subspfcf.pfargs.length; i++)
-//		{
-//			for (int j=0; j<subslist.length; j++)
-//			{
-//				nextindex = i*subslist.length + j;
-//				nextvalue = subspfcf.pfargs[i].evaluate(A,inst,quantvars,subslist[j],useCurrentCvals,numrelparameters,
-//						useCurrentPvals,
-//						mapatoms,useCurrentMvals,evaluated);
-//				//if (Double.isNaN(nextvalue)) return Double.NaN;
-//				combargs[nextindex]=nextvalue;
-//			}
-//		}
-//
-//		/*
-//        apply mycomb to the resulting array
-//		 */
-//		double result = mycomb.evaluate(combargs);
-//		if (evaluated != null)
-//			evaluated.put(key, result);
-//		
-//		return result;
-//					}
 
 	public Object[] evaluate(RelStruc A, 
 			OneStrucData inst, 
@@ -576,15 +514,34 @@ public class ProbFormCombFunc extends ProbForm{
 		return result;
 	}	
 	
-	public  double evalSample(RelStruc A, Hashtable atomhasht, OneStrucData inst, long[] timers)
+	public  Double evalSample(RelStruc A, 
+			Hashtable<String,PFNetworkNode> atomhasht, 
+			OneStrucData inst, 
+    		Hashtable<String,Double> evaluated,
+			long[] timers)
 			throws RBNCompatibilityException
-			{
+	{
+		String key = null;
+		
+		//System.out.println("evalSample for "+key);
+		
+		if (evaluated != null) {
+			key = this.makeKey(A);
+			//System.out.println("evalSample for "+key);
+			Double d = evaluated.get(key);
+			if (d!=null) {
+				return d; 
+			}
+		}	
+		
 		long inittime; 
 		/* Same code as in evaluate and evaluatesTo: */
 		ProbFormBool scc = this.cconstr;
 		inittime=System.currentTimeMillis();
 		int[][] subslist = A.allTrue(scc,quantvars);
 		timers[3]=timers[3]+System.currentTimeMillis()-inittime;
+
+		//System.out.println("evalSample for " + this.makeKey(new String[0],new int[0],false));
 
 		ProbForm groundpf;
 		double[] combargs = new double[this.pfargs.length*subslist.length];
@@ -596,13 +553,17 @@ public class ProbFormCombFunc extends ProbForm{
 			{
 				nextindex = i*subslist.length + j;
 				groundpf = this.pfargs[i].substitute(quantvars,subslist[j]);
-				nextvalue = groundpf.evalSample(A,atomhasht,inst,timers);
+				nextvalue = groundpf.evalSample(A,atomhasht,inst,evaluated,timers);
 				combargs[nextindex]=nextvalue;
 			}
 		}
 
-		return mycomb.evaluate(combargs);
-			}
+		Double result = mycomb.evaluate(combargs);
+		if (evaluated != null) {
+			evaluated.put(key, result);
+		}
+		return result;
+	}
 
 	public int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, Hashtable atomhasht)
 			throws RBNCompatibilityException
@@ -729,8 +690,8 @@ public class ProbFormCombFunc extends ProbForm{
 	//	}
 
 	public String asString(int syntax, int depth, RelStruc A, boolean paramsAsValue,boolean usealias)
-	/* precedes string representation of formula with depth 
-	 * tabs
+	/* precedes string representation of formula with depth many
+	 * tabs (to obtain a multi-line output with suitable indentations).
 	 */ 
 	{
 		if (usealias && this.getAlias() != null)

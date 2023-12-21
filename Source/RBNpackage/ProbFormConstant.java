@@ -31,6 +31,7 @@ import RBNExceptions.RBNCompatibilityException;
 import java.io.*;
 import RBNutilities.*;
 import RBNLearning.*;
+import RBNinference.PFNetworkNode;
 
 
 
@@ -220,7 +221,11 @@ public class ProbFormConstant extends ProbForm
 		return result;
 	}
 	
-	public  double evalSample(RelStruc A,Hashtable atomhasht,OneStrucData inst, long[] timers){
+	public  Double evalSample(RelStruc A, 
+			Hashtable<String,PFNetworkNode> atomhasht, 
+			OneStrucData inst, 
+    		Hashtable<String,Double> evaluated,
+			long[] timers){
 		return cval;
 	}
 

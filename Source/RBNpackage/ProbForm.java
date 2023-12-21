@@ -84,33 +84,6 @@ public abstract class ProbForm
     public abstract boolean dependsOn(String variable, RelStruc A, OneStrucData data)
 	throws RBNCompatibilityException;
 
-//    /** Evaluate this ProbForm for input structure A, instantiation (data/evidence) inst, under the
-//     * substitution tuple for vars. Returns Double.NaN if the value of probform is not defined
-//     * because 
-//     * a) it depends on a probabilistic atom not instantiated in inst.
-//     * b) useCurrentCvals=false and probform depends on an unknown parameter.
-//     * c) useCurrentPvals=false, and probform depends on a numeric input relation atom that is contained in numrelparameters
-//     * d) useCurrentMvals=false, and probform depends on a boolean probabilistic relation atom that is contained in mapatoms
-//     * 
-//     * If useCurrentCvals=true, then evaluation at ProbFormConstant's is done with regard to
-//     * their cval field, even when their paramname != "".
-//     * If useCurrentPvals=true, then evaluation for numeric input relations is performed 
-//     * according to their value given in A
-//     * 
-//     * If the Hashtable evalutated is not null, then first the value for this ProbForm
-//     * is looked up using the GradientGraph.makeKey method for key generation.
-//     */
-//    public abstract double evaluate(RelStruc A, 
-//    		OneStrucData inst, 
-//    		String[] vars, 
-//    		int[] tuple, 
-//    		boolean useCurrentCvals, 
-//    		String[] numrelparameters,
-//    		boolean useCurrentPvals,
-//    		GroundAtomList mapatoms,
-//    		boolean useCurrentMvals,
-//    		Hashtable<String,Double> evaluated)
-//    throws RBNCompatibilityException;  
     
     /** Evaluate this ProbForm for input structure A, instantiation (data/evidence) inst, under the
      * substitution tuple for vars. Returns Double.NaN if the value of probform is not defined
@@ -171,7 +144,11 @@ public abstract class ProbForm
      * the sample method of that node has to be called
      *
      */
-    public abstract double evalSample(RelStruc A, Hashtable<String,PFNetworkNode> atomhasht, OneStrucData inst, long[] timers)
+    public abstract Double evalSample(RelStruc A, 
+    		Hashtable<String,PFNetworkNode> atomhasht, 
+    		OneStrucData inst, 
+    		Hashtable<String,Double> evaluated,
+    		long[] timers)
 	throws RBNCompatibilityException;
 
 

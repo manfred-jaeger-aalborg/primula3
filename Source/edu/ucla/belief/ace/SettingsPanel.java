@@ -20,7 +20,7 @@ public class SettingsPanel extends JPanel implements ActionListener, Settings.AC
 	}
 
 	public static final double DOUBLE_MINUTES_PER_DAY = 1440;
-	public static final String STR_TITLE              = Settings.STR_ACE_DISPLAY_NAME + " SettingsSampling";
+	public static final String STR_TITLE              = Settings.STR_ACE_DISPLAY_NAME + " Settings";
 	public static final String STR_QUERY_BASED        = "query based";
 
 	public void commit( Settings acesettings ){

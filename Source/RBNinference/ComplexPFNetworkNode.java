@@ -56,10 +56,14 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 	 * in the current sample, given the instantiations in this sample of 
 	 * the parent nodes
 	 */
-	private double condProb(RelStruc A,Hashtable atomhasht,OneStrucData inst,long[] timers)
+	private double condProb(RelStruc A,
+			Hashtable<String,PFNetworkNode> atomhasht,
+			OneStrucData inst,
+    		Hashtable<String,Double> evaluated,
+			long[] timers)
 			throws RBNCompatibilityException
 			{
-		double result = probform.evalSample(A,atomhasht,inst,timers);
+		double result = probform.evalSample(A,atomhasht,inst,evaluated,timers);
 		//System.out.print(" cP: " + result);
 		return result;
 			}
@@ -104,12 +108,17 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 	}
 
 
-	public void sampleForward(RelStruc A,Hashtable atomhasht,OneStrucData inst,int adaptivemode,long[] timers)
+	public void sampleForward(RelStruc A,
+			Hashtable<String,PFNetworkNode> atomhasht,
+			OneStrucData inst,
+			int adaptivemode,
+    		Hashtable<String,Double> evaluated,
+    		long[] timers)
 			throws RBNCompatibilityException
 			/* adaptivemode argument not used (adaptive=non-adaptive in forward sampling for ComplexPFNNodes) */
 			{
 		//System.out.println("<" + myatom().asString(A));
-		double prob = condProb(A,atomhasht,inst,timers);
+		double prob = condProb(A,atomhasht,inst,evaluated,timers);
 		if (prob > 1 || prob <0)
 			System.out.println("#####################found prob " + prob);
 		if (instantiated == -1){
@@ -141,13 +150,17 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 
 
 
-	public  void setDistrProb(RelStruc A, Hashtable atomhasht,OneStrucData inst,long[] timers)
+	public  void setDistrProb(RelStruc A, 
+			Hashtable<String,PFNetworkNode> atomhasht,
+			OneStrucData inst,
+    		Hashtable<String,Double> evaluated,
+			long[] timers)
 			throws RBNCompatibilityException
 			{
 		if (thisdistrprob == -1)
 			if (sampleinst == 1)
-				thisdistrprob = condProb( A,atomhasht,inst, timers);
-			else thisdistrprob = 1-condProb( A,atomhasht,inst, timers);
+				thisdistrprob = condProb( A,atomhasht,inst, evaluated,timers);
+			else thisdistrprob = 1-condProb( A,atomhasht,inst, evaluated,timers);
 			}
 
 	public void sEval(RelStruc A)

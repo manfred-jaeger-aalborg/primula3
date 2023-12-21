@@ -6,6 +6,7 @@ import java.util.TreeSet;
 
 import RBNExceptions.RBNCompatibilityException;
 import RBNLearning.*;
+import RBNinference.PFNetworkNode;
 import RBNutilities.rbnutilities;
 
 /* A conjunction or disjunction of subformulas contained in the
@@ -148,22 +149,41 @@ public class ProbFormBoolComposite extends ProbFormBool {
 
 	
 	
-	public double evalSample(RelStruc A, Hashtable atomhasht,
-			OneStrucData inst, long[] timers) throws RBNCompatibilityException {
+	public Double evalSample(RelStruc A, 
+			Hashtable<String,PFNetworkNode>  atomhasht,
+			OneStrucData inst, 
+    		Hashtable<String,Double> evaluated,
+			long[] timers) 
+		throws RBNCompatibilityException {
+		
+		
+		String key = null;
+		
+		if (evaluated != null) {
+			key = this.makeKey(A);
+			Double d = evaluated.get(key);
+			if (d!=null) {
+				return d; 
+			}
+		}
+		
 		double result =0;
 		switch (operator){
 		case ProbFormBool.OPERATORAND:
 			result=1;
 			for (int i=0;i<components.length;i++)
-				result = result*components[i].evalSample(A, atomhasht, inst, timers);
+				result = result*components[i].evalSample(A, atomhasht, inst, evaluated, timers);
 		case ProbFormBool.OPERATOROR:
 			result=0;
 			for (int i=0;i<components.length;i++)
-				result = Math.max(result,components[i].evalSample(A, atomhasht, inst, timers));
+				result = Math.max(result,components[i].evalSample(A, atomhasht, inst, evaluated, timers));
 		}
-		if (sign)
-			return result;
-		else return 1-result;
+		if (!sign)
+			result = 1- result;
+		if (evaluated != null) {
+			evaluated.put(key, result);
+		}
+		return result;
 	}
 
 	@Override

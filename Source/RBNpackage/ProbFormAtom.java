@@ -442,14 +442,29 @@ public  class ProbFormAtom extends ProbForm {
 	}
 
 
-	public  double evalSample(RelStruc A, Hashtable<String,PFNetworkNode> atomhasht, OneStrucData inst, long[] timers)
+	public  Double evalSample(RelStruc A, 
+			Hashtable<String,PFNetworkNode> atomhasht, 
+			OneStrucData inst, 
+    		Hashtable<String,Double> evaluated,
+			long[] timers)
 			throws RBNCompatibilityException{
-		double result;
+		
+		String key = null;
+		
+		if (evaluated != null) {
+			key = this.makeKey(A);
+			Double d = evaluated.get(key);
+			if (d!=null) {
+				return d; 
+			}
+		}	
+		
+		Double result = null;
 		if (!isGround())
 			throw new IllegalArgumentException("Attempt to sample-evaluate non-ground atom");
 		else{
 			if (relation.ispredefined()){
-				return this.evaluate(A,inst);
+				result = this.evaluate(A,inst);
 			}
 			if (relation.isprobabilistic()){
 				GroundAtom myatom = new GroundAtom(relation,rbnutilities.stringArrayToIntArray(arguments));
@@ -460,16 +475,19 @@ public  class ProbFormAtom extends ProbForm {
 				 * Its truth value is found in instasosd
 				 */
 				{
-					return (double)inst.truthValueOf(myatom);  
+					result=(double)inst.truthValueOf(myatom);  
 				}
-				PFNetworkNode gan = (PFNetworkNode)atomhasht.get(myatomname);
-				result = (double)gan.sampleinstVal();
-				if (result != 0 && result !=1)
-					System.out.println("-------in Indicator.evalSample: " +gan.myatom().asString(A) + " = " + result);
-				return (double)gan.sampleinstVal();
+				else {
+					PFNetworkNode gan = (PFNetworkNode)atomhasht.get(myatomname);
+					result = (double)gan.sampleinstVal();
+				}
 			}
 		}
-		return Double.NaN;
+		if (evaluated != null) {
+			evaluated.put(key, result);
+		}
+		
+		return result;
 	}
 
 	public Rel getRelation(){

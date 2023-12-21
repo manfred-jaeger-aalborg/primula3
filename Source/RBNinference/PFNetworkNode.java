@@ -345,32 +345,39 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
      * return 1.0.
      */
     public void sample(RelStruc A,
-    		Hashtable atomhasht,
+    		Hashtable<String,PFNetworkNode> atomhasht,
     		OneStrucData inst,
     		int sampleordmode,
     		int adaptivemode,
+    		Hashtable<String,Double> evaluated,
     		long[] timers,
     		boolean verbose)
     throws RBNCompatibilityException,RBNInconsistentEvidenceException,RBNBadSampleException
     {
     	switch (sampleordmode){
     	case InferenceModule.OPTION_SAMPLEORD_FORWARD:
-    		sampleForward(A,atomhasht, inst, adaptivemode,timers);
+    		sampleForward(A,atomhasht, inst, adaptivemode,evaluated,timers);
     		break;
     	case InferenceModule.OPTION_SAMPLEORD_RIPPLE:
-    		sampleRipple(A,atomhasht,inst,adaptivemode,timers,verbose);
+    		sampleRipple(A,atomhasht,inst,adaptivemode,evaluated,timers,verbose);
     	}
     }
 
 
     /* Not all arguments are needed for implementation of this abstract method in all subclasses! */
-    public abstract void sampleForward(RelStruc A,Hashtable atomhasht,OneStrucData inst,int adaptivemode,long[] timers)
+    public abstract void sampleForward(RelStruc A,
+    		Hashtable<String,PFNetworkNode> atomhasht,
+    		OneStrucData inst,
+    		int adaptivemode,
+    		Hashtable<String,Double> evaluated,
+    		long[] timers)
 	throws RBNCompatibilityException;
 
     public  void sampleRipple(RelStruc A,
-			      Hashtable atomhasht,
+			      Hashtable<String,PFNetworkNode> atomhasht,
 			      OneStrucData inst,
 			      int adaptivemode,
+			      Hashtable<String,Double> evaluated,
 			      long[] timers,
 			      boolean verbose)
 	throws RBNCompatibilityException,RBNInconsistentEvidenceException,RBNBadSampleException
@@ -379,7 +386,7 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
 	//System.out.print("Sample Ripple for " + this.myatom().asString(A));
 	if (sampleinst == -1){ // Node can already be instantiated due to deterministic propagation
 	    if (!upstreamofevidence)
-		sampleForward(A,atomhasht,inst,adaptivemode,timers);
+		sampleForward(A,atomhasht,inst,adaptivemode,evaluated,timers);
 	    else{
 		inittime = System.currentTimeMillis();
 		boolean trueiscons = isLocallyConsistent(A,inst,true,atomhasht,1);
@@ -428,7 +435,11 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
     /* Sets the thisdistrprob field according to current sample
      * instantiation
      */
-    public abstract void setDistrProb(RelStruc A, Hashtable atomhasht,OneStrucData inst,long[] timers)
+    public abstract void setDistrProb(RelStruc A, 
+    		Hashtable<String,PFNetworkNode> atomhasht,
+    		OneStrucData inst,
+    		Hashtable<String,Double> evaluated,
+    		long[] timers)
 	throws RBNCompatibilityException;
 
     public void setSampleProb(double p){

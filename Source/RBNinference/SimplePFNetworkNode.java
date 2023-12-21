@@ -265,7 +265,12 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 
 
 
-	public void sampleForward(RelStruc A,Hashtable atomhasht,OneStrucData inst,int adaptivemode,long[] timers){
+	public void sampleForward(RelStruc A,
+			Hashtable<String,PFNetworkNode>  atomhasht,
+			OneStrucData inst,
+			int adaptivemode,
+    		Hashtable<String,Double> evaluated,
+			long[] timers){
 		sampleForward(A,adaptivemode);
 	}
 
@@ -385,7 +390,11 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 	}
 
 
-	public  void setDistrProb(RelStruc A, Hashtable atomhasht,OneStrucData inst,long[] timers)
+	public  void setDistrProb(RelStruc A, 
+			Hashtable<String,PFNetworkNode> atomhasht,
+			OneStrucData inst,
+    		Hashtable<String,Double> evaluated,
+			long[] timers)
 	{
 		if (thisdistrprob == -1)
 			if (sampleinst == 1)

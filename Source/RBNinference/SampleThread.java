@@ -91,7 +91,7 @@ public class SampleThread extends Thread{
 			}
 			catch (RBNCompatibilityException e){System.out.println(e);}
 			catch (RBNInconsistentEvidenceException e){System.out.println(e);}
-
+			
 			numsamp++;
 			if (subsind < num_subsamples-1) subsind++;
 			else subsind = 0;

@@ -74,10 +74,14 @@ public class BayesConstructor extends java.lang.Object {
 		bnoutputfile = bnout;
 		instarg = in;
 		queryatoms = qats;
-//		relations = rbnarg.Rels();
-//		domsize = strucarg.dom;
 	}
 
+	public BayesConstructor(RBN r, RelStruc rs, OneStrucData in, 
+			GroundAtomList qats, File bnout, Primula primula) {
+		this(r,rs,in,qats,bnout);
+		this.myprimula = primula;
+	}
+	
 	public BayesConstructor(RBN r, RelStruc rs, OneStrucData in, GroundAtomList qats) {
 		this( r, rs, in, qats, (File)null );
 	}
@@ -257,7 +261,7 @@ public class BayesConstructor extends java.lang.Object {
 				
 				//need to perform substitution or pass substitution argument here!
 				
-				System.out.println("Making parent vector for " + pf.asString(0, 0, strucarg, true, true));
+	
 				
 				Vector<GroundAtom> parents = null;
 				TreeSet<String> macrosdone = new TreeSet<String>();
@@ -423,143 +427,7 @@ public class BayesConstructor extends java.lang.Object {
 	}
 
 
-	/*
-	 * determine Vector of nodes that need to be
-	 * exported according to inference mode
-	 * In exportnodes() are collected:
-	 * OPTION_NOT_QUERY_SPECIFIC: all nodes
-	 * OPTION_QUERY_SPECIFIC,OPTION_NOT_EVIDENCE_CONDITIONED: all nodes
-	 *                        in queryatoms
-	 * OPTION_QUERY_SPECIFIC,OPTION_EVIDENCE_CONDITIONED: all nodes in
-	 *                        queryatoms and all instantiated nodes
-	 * If OPTION_ELIMINATE_ISOLATED_ZERO_NODES is set, then
-	 * isolated nodes with probability zero are skipped.
-	 *
-	 * In all cases it is sufficient to construct the network containing
-	 * all predecessors of nodes in exportnodes (further reductions
-	 * would be possible)
-	 *
-	 * The procedure finally prunes away all children of nodes in
-	 * exportnodes that are not predecessors of any exportnodes.
-	 *
-	 * exportnodes only contains GroundAtomNodes from the original
-	 * groundatomhasht! Not any auxiliary nodes which are predecessors
-	 * of such nodes.
-	 */
-//	private Vector<BNNode> exportnodes(int evidencemode,
-//			int querymode,
-//			int isolatedzeronodesmode)
-//
-//	throws RBNCompatibilityException
-//	{
-//		BNNode thisbnnode;
-//		boolean isolatedZero=false;
-//		GroundAtom thisatom;
-//		Rel thisrel;
-//		int[] thisargs;
-//		Vector<BNNode> exportnodes = new Vector<BNNode>();
-//
-//		/* First collect all the relevant 'base' atoms depending on query and evidence mode */
-//		for (Enumeration<BNNode> e=simplenodehasht.elements();e.hasMoreElements();){
-//			thisbnnode = e.nextElement();
-//			thisatom = ((GroundAtomNodeInt)thisbnnode).myatom();
-//
-//			if (thisbnnode instanceof SimpleBNNode)
-//				isolatedZero = ((SimpleBNNode)thisbnnode).isIsolatedZeroNode();
-//			if (thisbnnode instanceof ComplexBNNodeInt)
-//				isolatedZero = ((ComplexBNNodeInt)thisbnnode).isIsolatedZeroNode(strucarg);
-//
-//			if (isolatedzeronodesmode == Primula.OPTION_NOT_ELIMINATE_ISOLATED_ZERO_NODES ||
-//					!isolatedZero ||
-//					queryatoms.contains(thisatom)){
-//				switch (querymode){
-//				case Primula.OPTION_NOT_QUERY_SPECIFIC:{
-//					exportnodes.add(thisbnnode);
-//					break;
-//				}
-//				case Primula.OPTION_QUERY_SPECIFIC:{
-//					switch (evidencemode){
-//					case Primula.OPTION_NOT_EVIDENCE_CONDITIONED:{
-//						if (queryatoms.contains(thisatom)){
-//							exportnodes.add(thisbnnode);
-//						}
-//						break;
-//					}
-//					case Primula.OPTION_EVIDENCE_CONDITIONED:{
-//						thisatom = ((GroundAtomNodeInt)thisbnnode).myatom();
-//						thisrel = thisatom.rel;
-//						thisargs = thisatom.args;
-//						if (queryatoms.contains(thisatom) || instarg.truthValueOf(thisrel,thisargs) != -1){
-//							exportnodes.add(thisbnnode);
-//						}
-//
-//						break;
-//					}
-//					}
-//				}
-//				}
-//			} // end if (isolatedzeronodesmode == ...
-//			++myProgress;//keith cascio 20060515
-//		}// end for
-//
-//
-//
-//		/* Prune away all nodes that are not above any query- or evidence
-//		*  nodes (if OPTION_QUERY_SPECIFIC)
-//		*/
-//		switch (querymode){
-//		case Primula.OPTION_NOT_QUERY_SPECIFIC:{
-//			break;
-//		}
-//		case Primula.OPTION_QUERY_SPECIFIC:{
-//			// mark all nodes that are reachable by backward
-//			// chaining from query or evidence nodes with visited[1]=true
-//			BNNode bnn;
-//
-//			for (int i=0; i<exportnodes.size();i++)
-//				markUpstream((BNNode)exportnodes.elementAt(i),1);
-//
-//			// Remove all unmarked children
-//			ListIterator li;
-//			for (int i=0; i<exportnodes.size();i++){
-//
-//				bnn = (BNNode)exportnodes.elementAt(i);
-//				if (!bnn.visited[0])
-//					// this node not in connected component of previous
-//					// node in exportnodes
-//				{
-//					Vector<BNNode> nodestack = bnn.buildNodeStack();
-//					BNNode topnode;
-//					for (int j=0; j<nodestack.size(); j++){
-//						topnode = (BNNode)nodestack.elementAt(j);
-//						topnode.visited[0]=true;
-//						if (topnode.visited[1]){
-//							LinkedList<BNNode> newchildren = new LinkedList<BNNode>();
-//							BNNode nextchild;
-//							li = topnode.children.listIterator();
-//							while (li.hasNext())
-//							{
-//								nextchild = (BNNode)li.next();
-//								if (nextchild.visited[1])
-//									newchildren.add(nextchild);
-//							}
-//							topnode.children = newchildren;
-//						}
-//					}
-//				}
-//				++myProgress;//keith cascio 20060515
-//			}
-//
-//
-//			for (int i=0; i<exportnodes.size();i++){
-//				bnn = (BNNode)exportnodes.elementAt(i);
-//				bnn.resetVisited(-1);
-//			}
-//		}
-//
-//		}
-//		return exportnodes;
-//	}
+	
 
 	public PFNetwork constructPFNetwork(int evidencemode,
 			int querymode,
