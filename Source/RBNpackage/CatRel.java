@@ -26,6 +26,10 @@ public class CatRel extends Rel {
 		valtype = Rel.CATEGORICAL;
 	}
 	
+	public CatRel(String n, int a, String[] vals){
+		this(n,a);
+		this.values=vals;
+	}
 	
 	public CatRel(String n, int a, Type[] types){
 		super(n,a,types);
