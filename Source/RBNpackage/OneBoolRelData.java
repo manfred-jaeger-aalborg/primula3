@@ -92,12 +92,12 @@ public class OneBoolRelData extends OneRelData {
 		defaultval = dv;
 		trueAtoms = tats;
 		falseAtoms = fats;
-		trueAtomsIndex = (HashMap<Integer,TreeSet<int[]>>[]) new HashMap[r.arity];
-		falseAtomsIndex = (HashMap<Integer,TreeSet<int[]>>[]) new HashMap[r.arity];
-		for (int i=0;i<r.arity;i++) {
-			trueAtomsIndex[i]=new HashMap<Integer,TreeSet<int[]>>();
-			falseAtomsIndex[i]=new HashMap<Integer,TreeSet<int[]>>();
-		}
+//		trueAtomsIndex = (HashMap<Integer,TreeSet<int[]>>[]) new HashMap[r.arity];
+//		falseAtomsIndex = (HashMap<Integer,TreeSet<int[]>>[]) new HashMap[r.arity];
+//		for (int i=0;i<r.arity;i++) {
+//			trueAtomsIndex[i]=new HashMap<Integer,TreeSet<int[]>>();
+//			falseAtomsIndex[i]=new HashMap<Integer,TreeSet<int[]>>();
+//		}
 		makeIndex(true);
 		makeIndex(false);
 		
