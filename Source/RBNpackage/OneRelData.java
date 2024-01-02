@@ -92,6 +92,41 @@ public abstract class OneRelData {
 	public abstract TreeSet<int[]> allTrue(String[] args);
 	
 	public abstract Vector<String[]> allTrue(RelStruc A);
+	
+	/**
+	 * For a given array args that contains integers in some positons: args=[*,1,*,7,*]:
+	 * return all the tuples that are 'true' (for num and cat rels: have a value) with
+	 * the given arguments in the specified postions.
+	 * @param args
+	 * @param trueIndex
+	 * @return
+	 */
+	public TreeSet<int[]> allTrue(String[] args, HashMap<Integer,TreeSet<int[]>>[] trueIndex){
+		
+		Vector<TreeSet<int[]>> slices = new Vector<TreeSet<int[]>>();
+		boolean existsnull=false;
+		
+		for (int i=0;i<args.length;i++) {
+			if (rbnutilities.IsInteger(args[i])) {
+				TreeSet<int[]> slicefori = trueIndex[i].get(Integer.parseInt(args[i]));
+				if (slicefori==null)
+					existsnull=true;
+				slices.add(slicefori);
+			}
+		}
+		if (slices.size()==0) {
+			return this.allTrue();
+		}
+		if (existsnull) {
+			return new TreeSet<int[]>(new IntArrayComparator());
+		}
+		else {
+			TreeSet<int[]> result = slices.elementAt(0);
+			for (int i=1; i < slices.size(); i++)
+				result = rbnutilities.treeSetIntersection(result, slices.elementAt(i));
+			return result;
+		}
+	}
 
 	public Rel rel(){
 		return rel;
@@ -114,7 +149,29 @@ public abstract class OneRelData {
 
     public abstract void addRelData(Element el, RelStruc struc);
 
-    
+	/** Delete all atoms containing a 
+	 * @param a
+	 */
+	public abstract void delete(int a);
+	
+	/** Delete all tuples containing integer a
+	 * from valmap. The HashMap index returns for each position in the
+	 * relation a set of tuples with a in that position.
+	 * @param a
+	 * @param index
+	 * @param valmap
+	 */
+	public void delete(int a, HashMap<Integer,TreeSet<int[]> >[] index, Map<int[],? extends Object> valmap) {
+		for (int i=0;i<rel.arity;i++) {
+			TreeSet<int[]> tuples = index[i].get(a);
+			for (int[] t: tuples) {
+				valmap.remove(t);
+				removeFromIndex(t,index);
+			}
+		}
+	}
+	
+	
     /**
      * Replaces all arguments b of trueAtoms and falseAtoms lists
      * by b-1 if b>a (needed after the deletion of node with index a from
@@ -142,6 +199,15 @@ public abstract class OneRelData {
     	}
     }
 
+    /**Returns the binary tuples from the specified node to some other node
+	 *This method is usable ONLY with binary relations
+	 */
+	public Vector<int[]> getBinDirs(int node,HashMap<Integer,TreeSet<int[]> >[] index){
+		Vector<int[]> result = new Vector<int[]>();
+		for (int[] t : index[0].get(node))
+			result.addElement(t);
+		return result;
+	}
 
 
     
