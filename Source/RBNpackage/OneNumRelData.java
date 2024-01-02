@@ -221,10 +221,6 @@ public class OneNumRelData extends OneRelData{
 
 		TreeSet<int[]> result = new TreeSet<int[]>(new IntArrayComparator());
 
-//		for(Enumeration<int[]>  e = numAtoms.keys();e.hasMoreElements();)
-//		{
-//			result.add(e.nextElement());
-//		}
 		for (int[] k: numAtoms.keySet())
 			result.add(k);
 		return result;
