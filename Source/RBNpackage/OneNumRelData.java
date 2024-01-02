@@ -228,31 +228,7 @@ public class OneNumRelData extends OneRelData{
 	
 	public TreeSet<int[]> allTrue(String[] args){
 		
-		Vector<TreeSet<int[]>> slices = new Vector<TreeSet<int[]>>();
-		boolean existsnull=false;
-		
-		for (int i=0;i<args.length;i++) {
-			if (rbnutilities.IsInteger(args[i])) {
-				TreeSet<int[]> slicefori = numAtomsIndex[i].get(Integer.parseInt(args[i]));
-				if (slicefori==null)
-					existsnull=true;
-				slices.add(slicefori);
-			}
-		}
-		if (slices.size()==0) {
-			return this.allTrue();
-		}
-		if (existsnull) {
-			return new TreeSet<int[]>(new IntArrayComparator());
-		}
-		else {
-			TreeSet<int[]> result = slices.elementAt(0);
-			for (int i=1; i < slices.size(); i++)
-				result = rbnutilities.treeSetIntersection(result, slices.elementAt(i));
-				
-			
-			return result;
-		}
+		return this.allTrue(args, numAtomsIndex);
 	}
 
 	
@@ -260,43 +236,13 @@ public class OneNumRelData extends OneRelData{
 	
 	public Vector<String[]> allTrue(RelStruc A){
 		Vector<String[]> result = new Vector<String[]>();
-//		for(Enumeration<int[]>  e = numAtoms.keys();e.hasMoreElements();)
-//		{
-//			result.add(A.namesAtAsArray(e.nextElement()));
-//		}
+
 		for (int[] k: numAtoms.keySet())
 			result.add(A.namesAtAsArray(k));
 		return result;
 	}
 	
-	
-	/* Differs from allTrue(RelStruc) slightly w.r.t
-	 * format of return value (String vs. String[])!
-	 */
-//	public Vector<String> allTrueAtoms(RelStruc A){
-//
-//		Vector<String> result = new Vector<String>();
-//
-//		for(Enumeration<int[]>  e = numAtoms.keys();e.hasMoreElements();)
-//		{
-//			result.add(A.namesAt(e.nextElement()));
-//		}
-//		return result;
-//
-//	}
-	
-//	public Vector<int[]> allNumAttr(){
-//
-//		Vector<int[]> result = new Vector<int[]>();
-//
-//		for(Enumeration<int[]>  e = numAtoms.keys();e.hasMoreElements();)
-//		{
-//			String key = e.nextElement().toString();
-//			result.add(myio.StringOps.stringToIntArray(key));
-//		}
-//		return result;
-//
-//	}
+
 	
 	public double[] minMax(){
 		return minmax.clone();
@@ -347,14 +293,6 @@ public class OneNumRelData extends OneRelData{
 
 		Vector<int[]> result = new Vector<int[]>();
 
-//		for(Enumeration<int[]>  e = numAtoms.keys();e.hasMoreElements();)
-//		{
-//			int[] k = e.nextElement();
-//			Double value = numAtoms.get(k);
-//			if( value > v){
-//				result.add(k);
-//			}
-//		}
 		for (int[] k: numAtoms.keySet()) {
 			if (numAtoms.get(k)>v)
 				result.add(k);
@@ -371,14 +309,6 @@ public class OneNumRelData extends OneRelData{
 
 		Vector<int[]> result = new Vector<int[]>();
 
-//		for(Enumeration<int[]>  e = numAtoms.keys();e.hasMoreElements();)
-//		{
-//			int[] k = e.nextElement();
-//			Double value = numAtoms.get(k);
-//			if( value > v){
-//				result.add(k);
-//			}
-//		}
 		for (int[] k: numAtoms.keySet()) {
 			if (numAtoms.get(k)<v)
 				result.add(k);
@@ -395,14 +325,6 @@ public class OneNumRelData extends OneRelData{
 
 		Vector<int[]> result = new Vector<int[]>();
 
-//		for(Enumeration<int[]>  e = numAtoms.keys();e.hasMoreElements();)
-//		{
-//			int[] k = e.nextElement();
-//			Double value = numAtoms.get(k);
-//			if( value > v){
-//				result.add(k);
-//			}
-//		}
 		for (int[] k: numAtoms.keySet()) {
 			if (numAtoms.get(k)==v)
 				result.add(k);
@@ -433,46 +355,11 @@ public class OneNumRelData extends OneRelData{
 
 
 
-//	/** Returns all the atoms instantiated to numeric as 
-//	 * a vector of strings. Objects are represented by
-//	 * their name in structure A
-//	 */ 
-//	public Vector<String> allNum(RelStruc A){
-//		Vector<String> result = new Vector<String>();
-//
-//		for(Enumeration<int[]>  e = numAtoms.keys();e.hasMoreElements();)
-//		{
-//			int[] k = e.nextElement();
-//			result.add(A.namesAt(k));	
-//		}
-//		return result;
-//	}
-
 	/** Delete all atoms containing a 
 	 * @param a
 	 */
 	public void delete(int a){
-		int[] nextatom;
-
-//		for(Enumeration<int[]>  e = numAtoms.keys();e.hasMoreElements();)
-//		{
-//			int[] k = e.nextElement();
-//			
-//			if (rbnutilities.inArray(k,a)){
-//				if(numAtoms.containsKey(k)){
-//					updateMinMax(numAtoms.get(k),false);
-//					numAtoms.remove(k);
-//				}
-//			}
-//		}
-		for (int[] k: numAtoms.keySet() ) {
-			if (rbnutilities.inArray(k,a)){
-				if(numAtoms.containsKey(k)){
-					updateMinMax(numAtoms.get(k),false);
-					numAtoms.remove(k);
-				}
-			}
-		}
+		this.delete(a,numAtomsIndex, numAtoms);
 	}
 
 	public void delete(int[] tuple)
@@ -501,15 +388,6 @@ public class OneNumRelData extends OneRelData{
 		 * when result is written into a logfile used for plotting
 		 */
 		String result = "";
-
-
-//		for (Enumeration<int[]> e = numAtoms.keys();e.hasMoreElements();) {
-//			int[] k = e.nextElement();
-//			
-//			result = result + pref +  rel.name.name
-//			+ A.namesAt(k)+ numAtoms.get(k)
-//			+ '\n';
-//		}
 
 		for (int [] k: numAtoms.keySet()) {
 			result = result + pref +  rel.name.name
@@ -552,16 +430,6 @@ public class OneNumRelData extends OneRelData{
 
 	}
 
-
-
-//	public double valueOf(int[] tuple){
-//		String key;
-//		if (rel.getArity() > 0)
-//			key = rbnutilities.arrayToString(tuple);
-//		else 
-//			key = "";
-//		return valueOf(key);
-//	}
 	
 	public boolean isEmpty(){
 		if (numAtoms.size()>0 ) return false;
@@ -572,29 +440,10 @@ public class OneNumRelData extends OneRelData{
 	 *This method is usable ONLY with binary relations
 	 */
 	public Vector<int[]> getBinDirs(int node){
-		Vector<int[]> hits = new Vector<int[]>();
-
-//		for (Enumeration<int[]> e = numAtoms.keys();e.hasMoreElements();) {
-//			int[] temp = e.nextElement();
-//			if(temp[0] == node)
-//				hits.addElement(temp);
-//		}
-		for (int[] k: numAtoms.keySet()) {
-			if(k[0] == node)
-				hits.addElement(k);
-		}
-		return hits;
+		return getBinDirs(node,numAtomsIndex);
 	}
 
 	public void addRelData(Element el, RelStruc struc){
-//		for (Enumeration <int[]> e = numAtoms.keys();e.hasMoreElements();) {
-//			int[] k = e.nextElement();
-//			Double value = numAtoms.get(k);
-//			Element dl = el.addElement("d");
-//			dl.addAttribute("rel", rel.name.name);
-//			dl.addAttribute("args", struc.namesAt(k));
-//			dl.addAttribute("val", value.toString());
-//		}
 
 		for (int[] k: numAtoms.keySet()) {
 			Double value = numAtoms.get(k);
@@ -608,7 +457,7 @@ public class OneNumRelData extends OneRelData{
 
 	//shared
 	/**
-	 * Replaces all arguments b of trueAtoms and falseAtoms lists
+	 * Replaces all arguments b of numAtoms 
 	 * by b-1 if b>a (needed after the deletion of node with index a from
 	 * the underlying SparseRelStruc)
 	 * @param a
@@ -621,19 +470,6 @@ public class OneNumRelData extends OneRelData{
 		Vector<Double> valuesforinsertion = new Vector<Double>();
 		
 		if (rel.arity != 0){
-//			for (Enumeration<int[]> e = numAtoms.keys();e.hasMoreElements();) {
-//				currtuple = e.nextElement();
-//				Double value = numAtoms.get(currtuple);
-//
-//				oldcurrtuple = (int[])currtuple.clone();
-//				rbnutilities.arrayShiftArgs(currtuple,a);
-//				if(rbnutilities.arrayCompare(oldcurrtuple, currtuple) !=0){
-//					tuplesforremoval.add(oldcurrtuple);
-//					tuplesforinsertion.add(currtuple);	
-//					valuesforinsertion.add(value);
-//				}
-
-//			}
 			for (int[] currtuple: numAtoms.keySet()) {
 				Double value = numAtoms.get(currtuple);
 
@@ -647,9 +483,11 @@ public class OneNumRelData extends OneRelData{
 			}
 			for(int i=0;i <tuplesforremoval.size();i++ ){
 				numAtoms.remove(tuplesforremoval.elementAt(i));
+				removeFromIndex(tuplesforremoval.elementAt(i), numAtomsIndex); 
 			}
 			for(int i=0;i <tuplesforinsertion.size();i++ ){
 				numAtoms.put(tuplesforinsertion.elementAt(i), valuesforinsertion.elementAt(i));
+				addToIndex(tuplesforinsertion.elementAt(i), numAtomsIndex); 
 			}
 		}
 	}
@@ -658,22 +496,13 @@ public class OneNumRelData extends OneRelData{
 		return numAtoms.keySet();
 	}
 	
-//	public void delete(int[] tuple, Double v) {
-//		//if(numAtoms.get(rbnutilities.arrayToString(tuple))==v){
-//		numAtoms.remove(rbnutilities.arrayToString(tuple));
-//		//}
-//
-//	}
+
 	
 	/* Resets values of all atoms in numAtoms to random values */
 	public void setRandom(double scale){
 		TreeMap<int[], Double> newht = new TreeMap<int[],Double>(new IntArrayComparator());
 
-//		for(Enumeration<int[]>  e = numAtoms.keys();e.hasMoreElements();)
-//		{
-//			int[] k = e.nextElement();
-//			newht.put(k, randomGenerators.getRandom(((NumRel)rel).minval(),((NumRel)rel).maxval(),scale));
-//		}
+
 		for (int[] k: numAtoms.keySet()) {
 			newht.put(k, randomGenerators.getRandom(((NumRel)rel).minval(),((NumRel)rel).maxval(),scale));
 		}
@@ -698,11 +527,6 @@ public class OneNumRelData extends OneRelData{
 		 for (int i=0;i<numfolds;i++)
 			 numats.add(new TreeMap<int[],Double>(new IntArrayComparator()));
 		 
-//		 for(Enumeration<int[]>  e = numAtoms.keys();e.hasMoreElements();)
-//		 {
-//			 int[] k  = e.nextElement();
-//			 numats.elementAt(randomGenerators.randInt(0, numfolds-1)).put(k,numAtoms.get(k));
-//		 }
 		 for (int[] k: numAtoms.keySet())
 			 numats.elementAt(randomGenerators.randInt(0, numfolds-1)).put(k,numAtoms.get(k));
 
@@ -718,10 +542,6 @@ public class OneNumRelData extends OneRelData{
 	 public void print(){
 		 System.out.println("Relation: " + rel.name());
 
-//		 for(Enumeration<int[]>  e = numAtoms.keys();e.hasMoreElements();){
-//			 int[] k = e.nextElement();
-//			 System.out.println("key " + k + " value: " + numAtoms.get(k));
-//		 }
 		 for (int[] k: numAtoms.keySet())
 			 System.out.println("key " + k + " value: " + numAtoms.get(k));
 	 }
