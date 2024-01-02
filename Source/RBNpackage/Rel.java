@@ -43,12 +43,14 @@ public  class Rel implements Serializable, Comparable<Rel>{
 	public static final int UNKNOWN = 0;
 	public static final int BOOLEAN = 1;
 	public static final int NUMERIC = 2;
+	public static final int CATEGORICAL = 3;
+
 	
 	public RelName name;
 	public int arity;
     private Type[] argtypes;
     
-    /* boolean or numeric*/
+    /* boolean or numeric or categorical*/
     protected int valtype;
     
     /* PREDEFINED or PROBABILISTIC*/	
