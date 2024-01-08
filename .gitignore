@@ -7,3 +7,5 @@ build
 .vscode
 bin
 .idea
+/src/main/java/Experiments/
+/primula-experiments/

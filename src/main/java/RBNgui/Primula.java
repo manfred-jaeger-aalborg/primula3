@@ -1717,13 +1717,52 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		}
 		return learnModule;
 	}
-	
+
+	public InferenceModule openInferenceModule(boolean visible) {
+		if(!isEvModuleOpen){
+			evidenceModule = new InferenceModule(this);
+			evidenceModule.setVisibility(visible);
+			isEvModuleOpen = true;
+		}
+		return evidenceModule;
+	}
+
+	// add in order to use the RBN without the file
+	public void setRbn(RBN rbn) {
+		this.rbn = rbn;
+	}
+
 	private void loadDefaults(){
 
-		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Mendel/mendel.rbn";
-		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Mendel/mendel_s.rdef";
-			
-		
+		// alpha example
+//		String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-github-examples/tex_file/GNN-RBN-alpha/rbn_acr.rbn";
+		String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/purple.rbn";
+		String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/purple_data.rdef";
+//		String rstinputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-github-examples/tex_file/GNN-RBN-alpha/alpha1-blue.rdef";
+		// String rstinputfilestring = "/Users/lz50rg/Desktop/GNN-RBN-alpha-edge/alpha1-edge.rdef";
+
+		// explainer gnn
+		//String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-github-examples/tex_file/GNN-RBN-explainer/rbn_acr.rbn";
+		//String rstinputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-github-examples/tex_file/GNN-RBN-explainer/base_class_0_n6_0.rdef";
+
+		// synthetic
+		//String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN/models/triangle_10_8_6_20230725-152135/exp_41/rbn_acr_graph_triangle_10.rbn";
+		//String rstinputfilestring = "/Users/lz50rg/Dev/GNN-RBN/models/triangle_10_8_6_20230725-152135/exp_41/triangle_base/base_class_0_n6_0.rdef";
+
+		// layer gnn mutag
+		//String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN/models/Mutagenicity_16_8_8_20230814-204701/exp_33/rbn_acr_graph_Mutagenicity_16_8_8_add.rbn";
+		//String rstinputfilestring = "/Users/lz50rg/Dev/GNN-RBN/models/Mutagenicity_16_8_8_20230814-204701/exp_33/graphs/10_restarts/0_graphs/edge_050/n7.rdef";
+		//String rbninputfilestring = "/Users/lz50rg/Dev/layer-explainer/reddit-1-layer.rbn";
+		//String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN/models/REDDIT-BINARY_16_8_8_20231020-103716/exp_82/rbn_acr_graph_REDDIT-BINARY_16_8_8_add.rbn";
+		//String rstinputfilestring = "/Users/lz50rg/Dev/GNN-RBN/models/REDDIT-BINARY_16_8_8_20231019-085653/exp_1/graphs/base/base_class_0_n12_0.rdef";
+
+		// reddit
+		//String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN/models/REDDIT-BINARY_16_8_8_20231020-103716/exp_82/rbn_acr_graph_REDDIT-BINARY_16_8_8_add.rbn";
+		//String rstinputfilestring = "/Users/lz50rg/Dev/GNN-RBN/models/REDDIT-BINARY_16_8_8_20231019-085653/exp_1/graphs/base/base_class_0_n6_0.rdef";
+
+		// String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/rbn.rbn";
+		// String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/test.rdef";
+
 		srsfile = new File(rstinputfilestring);
 		rbnfile = new File(rbninputfilestring);
 
@@ -1733,7 +1772,6 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 
 	}
 
-	
 	public static void main( String[] args ){
 		
 		for( String arg : args ){
@@ -1743,10 +1781,7 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		Primula win = new Primula();
 		SamiamManager.centerWindow( win );
 		win.show();
-		//win.loadDefaults();
+		win.loadDefaults();
 
 	}
-	
-
-
 }

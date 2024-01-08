@@ -204,6 +204,10 @@ public class OneBoolRelData extends OneRelData {
 		return trueAtoms;
 	}
 
+	public TreeSet<int[]> allFalse(){
+		return falseAtoms;
+	}
+
 	public TreeSet<int[]> allTrue(String[] args){
 		Vector<TreeSet<int[]>> slices = new Vector<TreeSet<int[]>>();
 		boolean existsnull=false;

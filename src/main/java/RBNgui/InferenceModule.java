@@ -672,7 +672,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 
 		numchains = 2;
 		windowsize = 2;
-		numrestarts = 1;
+		numrestarts = 10;
 		
 		readElementNames();
 		readRBNRelations();
@@ -1078,7 +1078,11 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		this.setVisible(true);
 	}
 
-	public void actionPerformed( ActionEvent e ) 
+	public void setVisibility(boolean visibility) {
+		this.setVisible(visibility);
+	}
+
+	public void actionPerformed( ActionEvent e )
 	{
 		Object source = e.getSource();
 

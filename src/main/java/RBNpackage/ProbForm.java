@@ -143,7 +143,7 @@ public abstract class ProbForm
     public abstract Object[] evaluate(RelStruc A, 
     		OneStrucData inst, 
     		String[] vars, 
-    		int[] tuple, 
+    		int[] tuple, // until here useful
     		boolean useCurrentCvals, 
     		//String[] numrelparameters,
     		boolean useCurrentPvals,
@@ -152,7 +152,7 @@ public abstract class ProbForm
     		Hashtable<String,Object[]> evaluated,
     		Hashtable<String,Integer> params,
     		int returntype,
-    		boolean valonly,
+    		boolean valonly, // true for gnn
     		Profiler profiler)
     throws RBNCompatibilityException;  
     

@@ -1,5 +1,7 @@
 package RBNinference;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.util.*;
 
 import RBNExceptions.RBNNaNException;
@@ -8,6 +10,8 @@ import RBNutilities.*;
 import RBNgui.InferenceModule;
 import RBNgui.LearnModule;
 import RBNgui.Primula;
+import java.io.File;
+import java.io.IOException;
 
 public class MapThread extends GGThread {
 	
@@ -54,9 +58,27 @@ public class MapThread extends GGThread {
 		double[] oldll=new double[2];
 		double[] newll;
 
+		/**
+		 * SAVE LIKELIHOOD ON FILE
+		 *
+		 * File filell = new File("/Users/lz50rg/Desktop/ll3.txt");
+		 * 		FileWriter fileWriter = null;
+		 * 		try {
+		 * 			fileWriter = new FileWriter(filell, true);
+		 *                } catch (IOException e) {
+		 * 			throw new RuntimeException(e);
+		 *        }
+		 * 		BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+		 */
+
+
 		while (running && ((maxrestarts == -1) || (restarts <= maxrestarts))){
 			try {
-				newll = gg.mapInference(this);	
+				newll = gg.mapInference(this);
+
+				// System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" + Arrays.toString(newll));
+				// bufferedWriter.write(Arrays.toString(newll));
+
 				if (SmallDouble.compareSD(newll,oldll)==1){
 					oldll=newll;
 					newmapvals = gg.getMapVals();
@@ -71,10 +93,24 @@ public class MapThread extends GGThread {
 				System.out.println(e);
 				System.out.println("Restart aborted");
 			}
-			mapprobs.setRestarts(restarts);
+			/**
+			 * catch (IOException e) {
+			 * 		throw new RuntimeException(e);
+			 * }
+			 */
+            mapprobs.setRestarts(restarts);
 			mapprobs.notifyObservers();
 			restarts++;
 		}
+
+		/**
+		try {
+			bufferedWriter.close();
+			fileWriter.close();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}*/
+
 	}
 
 	public void setRunning(boolean r){

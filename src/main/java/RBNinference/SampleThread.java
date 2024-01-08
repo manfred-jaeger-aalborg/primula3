@@ -123,4 +123,7 @@ public class SampleThread extends Thread{
 		this.pause = pause;
 	}
 
+	public SampleProbs getSprobs() {
+		return sprobs;
+	}
 }
