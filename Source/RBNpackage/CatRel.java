@@ -29,6 +29,12 @@ public class CatRel extends Rel {
 	public CatRel(String n, int a, String[] vals){
 		this(n,a);
 		this.values=vals;
+		this.stringToIndx = new HashMap<String,Integer>();
+		this.indxToString = new HashMap<Integer,String>();
+		for (int i=0;i<vals.length;i++) {
+			stringToIndx.put(vals[i], i);
+			indxToString.put(i, vals[i]);
+		}
 	}
 	
 	public CatRel(String n, int a, Type[] types){
