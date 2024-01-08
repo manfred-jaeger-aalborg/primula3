@@ -68,54 +68,88 @@ public class OneStrucData {
 	 * @uml.associationEnd  multiplicity="(0 -1)" ordering="true" elementType="RBNpackage.OneNumRelData" qualifier="arrayToString:java.lang.String java.lang.Double"
 	 */
 	Vector<OneNumRelData>allonenumdata;
+	
+	Vector<OneCatRelData>allonecatdata;
 
+	Vector<Vector<? extends OneRelData>> allreltypes;
+	
 	/**
 	 * The weight can be used to represent a weight of this data in a data sample. 
 	 * Used when this data does not represent a single observation, but multiple identical
 	 * observations. The weights of multiple OneStrucData elements in the parentrelstruc should
 	 * then sum to 1.
+	 * (This seems so far unused and untested ...)
 	 */
 	double weight =1;
 	
 	public OneStrucData(){
 		allonebooldata=new Vector<OneBoolRelData>();
 		allonenumdata = new Vector<OneNumRelData>();
+		allonecatdata = new Vector<OneCatRelData>();
+		
+		allreltypes = new Vector<Vector<? extends OneRelData>>();
+		allreltypes.add(this.allonebooldata);
+		allreltypes.add(this.allonenumdata);
+		allreltypes.add(this.allonecatdata);
 	}
 
 	public OneStrucData(OneStrucData toCopy){
 		allonebooldata=new Vector<OneBoolRelData>();
 		allonenumdata = new Vector<OneNumRelData>();
+		allonecatdata = new Vector<OneCatRelData>();
 		if( toCopy != null ){
 			for (int i=0;i<toCopy.allonebooldata.size();i++)
 				allonebooldata.add(toCopy.allonebooldata.elementAt(i).copy());
-
 			for (int i=0;i<toCopy.allonenumdata.size();i++)
 				allonenumdata.add(toCopy.allonenumdata.elementAt(i).copy());
+			for (int i=0;i<toCopy.allonecatdata.size();i++)
+				allonecatdata.add(toCopy.allonecatdata.elementAt(i).copy());
 		}
+		allreltypes = new Vector<Vector<? extends OneRelData>>();
+		allreltypes.add(this.allonebooldata);
+		allreltypes.add(this.allonenumdata);
+		allreltypes.add(this.allonecatdata);
 		if (toCopy.getParentRelStruc() != null)
 			parentrelstruc = toCopy.getParentRelStruc();
 	}
 
-	public OneStrucData(Vector<OneBoolRelData>allbooldat,Vector<OneNumRelData> allnumdata ){
+	public OneStrucData(Vector<OneBoolRelData>allbooldat,
+			Vector<OneNumRelData> allnumdata,
+			Vector<OneCatRelData> allcatdata ){
 		allonebooldata=allbooldat;
 		allonenumdata =allnumdata;
+		allonecatdata =allcatdata;
+		allreltypes = new Vector<Vector<? extends OneRelData>>();
+		allreltypes.add(this.allonebooldata);
+		allreltypes.add(this.allonenumdata);
+		allreltypes.add(this.allonecatdata);
 	}
 
 	public void add(OneBoolRelData ord){
 		if (findInBoolRel(ord.rel())==null)
 		allonebooldata.add(ord);
 		else
-			System.out.println("Attempt to add data for " + ord.rel().name() + " to OneStrucData already containing data for this relation");
+			System.out.println("Attempt to add data for " + ord.rel().name() + 
+					" to OneStrucData already containing data for this relation");
 	}
 	
 	public void add(OneNumRelData ord){
 		allonenumdata.add(ord);
 	}
 
+	public void add(OneCatRelData ord){
+		if (findInCatRel(ord.rel())==null)
+		allonecatdata.add(ord);
+		else
+			System.out.println("Attempt to add data for " + ord.rel().name() + 
+					" to OneStrucData already containing data for this relation");
+	}
 	
 	public void add(OneStrucData osd){
 		Vector<OneBoolRelData>allboolrels = osd.getAllonebooldata();
 		Vector<OneNumRelData>allnumrels = osd.getAllonenumdata();
+		Vector<OneCatRelData>allcatrels = osd.getAllonecatdata();
+		
 		for (int i=0;i<allnumrels.size();i++){
 			OneNumRelData addonrd = allnumrels.elementAt(i);
 			OneNumRelData oldonrd = findInNumRel(addonrd.rel());
@@ -131,6 +165,14 @@ public class OneStrucData {
 				oldobrd.add(addobrd);
 			else
 				allonebooldata.add(allboolrels.elementAt(i));
+		}
+		for (int i=0;i<allcatrels.size();i++){
+			OneCatRelData addocrd = allcatrels.elementAt(i);
+			OneCatRelData oldocrd = findInCatRel(addocrd.rel());
+			if (oldocrd != null)
+				oldocrd.add(addocrd);
+			else
+				allonecatdata.add(allcatrels.elementAt(i));
 		}
 	}
 
@@ -152,14 +194,6 @@ public class OneStrucData {
 			ord.add(args,tv);
 	}
 
-//	public void setData(String relname, int[] args, boolean tv)
-//	throws RBNIllegalArgumentException
-//	{
-//		OneBoolRelData ord = boolfind(relname);
-//		if (ord == null)
-//			throw new RBNIllegalArgumentException("Cannot find relation " + relname);
-//		ord.add(args,tv);
-//	}
 	
 	//numeric version
 	public void setData(NumRel r, int[] args, Double v)
@@ -171,27 +205,42 @@ public class OneStrucData {
 		ord.add(args,v);
 	}
 
-
+	//categorical version
+	public void setData(CatRel r, int[] args, Integer v)
+			throws RBNIllegalArgumentException
+	{
+		OneCatRelData ord = findInCatRel(r);
+		if (ord == null)
+			throw new RBNIllegalArgumentException("Cannot find categorical relation " + r.printname());
+		ord.add(args,v);
+	}
+	
 	public OneRelData find(Rel r){
 		OneNumRelData nr = findInNumRel(r);
 		if ( nr != null)
 			return nr;
-		else {
-			OneBoolRelData br = findInBoolRel(r);
+		OneBoolRelData br = findInBoolRel(r);
+		if (br != null)
 			return br;
-		}
+		OneCatRelData cr = findInCatRel(r);
+		if (cr != null)
+			return cr;
+		return null;
 	}
 
 	public OneRelData find(String rname){
 		OneNumRelData nr = findInNumRel(rname);
 		if ( nr != null)
 			return nr;
-		else {
-			OneBoolRelData br = findInBoolRel(rname);
+		OneBoolRelData br = findInBoolRel(rname);
+		if (br != null)
 			return br;
-		}
+		OneCatRelData cr = findInCatRel(rname);
+		if (cr != null)
+			return cr;
+		return null;
 	}
-
+ 
 	public OneNumRelData findInNumRel(Rel r){
 		for (int i=0;i<allonenumdata.size();i++){
 			if (allonenumdata.elementAt(i).rel().equals(r))
@@ -208,6 +257,13 @@ public class OneStrucData {
 		return null;
 	}
 
+	public OneCatRelData findInCatRel(Rel r){
+		for (int i=0;i<allonecatdata.size();i++){
+			if (allonecatdata.elementAt(i).rel().equals(r))
+				return allonecatdata.elementAt(i);
+		}
+		return null;
+	}
 	/* finding relations based only on name --
 	 * unsafe if there are two relations with the same name 
 	 * but different arities
@@ -228,6 +284,15 @@ public class OneStrucData {
 		}
 		return null;
 	}
+	
+	public OneCatRelData findInCatRel(String rname){
+		for (int i=0;i<allonecatdata.size();i++){
+			if (allonecatdata.elementAt(i).rel().name().equals(rname))
+				return allonecatdata.elementAt(i);
+		}
+		return null;
+	}
+	
 	public void add(GroundAtom at, int tv, String dv){
 		switch(tv){
 		case 0:
@@ -250,6 +315,9 @@ public class OneStrucData {
 
 	/** Returns 1 if r,tuple,tv was not already in the data;
 	 * 0 otherwise.
+	 * 
+	 * The dv argument only plays a role when the relation r so far
+	 * is not present, and a new OneRelData element has to be created.
 	 * @param r
 	 * @param tuple
 	 * @param tv
@@ -293,6 +361,24 @@ public class OneStrucData {
 		}
 	}
 
+	public int add(CatRel r, int[] tuple, Integer v,String dv)
+	{
+		int temp;
+		OneCatRelData thisrelinst = findInCatRel(r);
+		if (thisrelinst == null){
+			thisrelinst = new OneCatRelData(r,dv);
+			allonecatdata.add(thisrelinst);
+		}
+		if (r.arity == 0)
+			return thisrelinst.setGlobal(v);
+		else{
+			temp = thisrelinst.add(tuple,v);
+			if (temp >= 0)
+				return 1;
+			else return 0;
+		}
+	}
+	
 	public void add(BoolRel r, int[][] tuples, boolean tv,String dv)
 	{
 		OneBoolRelData thisrelinst = findInBoolRel(r);
@@ -314,6 +400,12 @@ public class OneStrucData {
 	public void add(BoolRel r, String dv){
 		if (findInBoolRel(r)==null){
 			allonebooldata.add(new OneBoolRelData(r,dv));
+		}
+	}
+	
+	public void add(CatRel r, String dv){
+		if (findInCatRel(r)==null){
+			allonecatdata.add(new OneCatRelData(r,dv));
 		}
 	}
 	
@@ -500,40 +592,14 @@ public class OneStrucData {
 	}
 	
 
-	
-
-	/** Returns all tuples that are instantiated to false in relation r 
-	 * Tuples represented as string arrays, using the names of objects
-	 * as defined in A
-	 */
-//	public Vector<String> allFalse(Rel r, RelStruc A){
-//		OneBoolRelData ori = (OneBoolRelData)find(r);
-//		if (ori != null)
-//			return ori.allFalse(A);
-//		else
-//			return new Vector<String>();
-//
-//	}
-
-	//	public void reset(){
-	//		allonedata = new Vector();
-	//	}
 
 	public boolean isEmpty(){
 		boolean result = true;
 		if (allonebooldata != null && !allonebooldata.isEmpty())
 			result = false;
 		if (allonenumdata != null && !allonenumdata.isEmpty())
-			//			int pos = 0;
-			//			while (pos < thisrelinst.trueAtoms.size())
-			//				if (rbnutilities.inArray((int[])thisrelinst.trueAtoms.elementAt(pos),a))
-			//					thisrelinst.trueAtoms.remove(pos);
-			//				else pos++;
-			//			pos = 0;
-			//			while (pos < thisrelinst.falseAtoms.size())
-			//				if (rbnutilities.inArray((int[])thisrelinst.falseAtoms.elementAt(pos),a))
-			//					thisrelinst.falseAtoms.remove(pos);
-			//				else pos++;
+			result = false;
+		if (allonecatdata != null && !allonecatdata.isEmpty())
 			result = false;
 		return result;
 	}
@@ -550,19 +616,14 @@ public class OneStrucData {
 			delete((BoolRel)r,tuple,true);
 			delete((BoolRel)r,tuple,false);
 		}
+		if ( r instanceof CatRel){
+			delete((CatRel)r,tuple);
+		}
 		if ( r instanceof NumRel){
 			System.out.println("Removing numeric tuple not implemented in OneStrucData.delete");
 		}
 	}
 
-//	public void delete(Rel r, int[] tuple, boolean tv){
-//		OneBoolRelData thisrelinst = (OneBoolRelData)find(r);
-//
-//		if (thisrelinst != null){
-//			thisrelinst.delete(tuple,tv);
-//			if (thisrelinst.isEmpty()) allonebooldata.remove(thisrelinst);
-//		}
-//	}
 	
 	public void delete(BoolRel r, int[] tuple, boolean tv){
 		OneBoolRelData thisrelinst = findInBoolRel(r);
@@ -582,23 +643,7 @@ public class OneStrucData {
 		}
 	}
 
-	//	public void delete(int a){
-	//		// delete all InstAtoms with a in the arguments
-	//		for (int i=0;i<allonedata.size();i++){
-	//			OneRelData thisrelinst = (OneRelData)allonedata.elementAt(i);
-	//			int pos = 0;
-	//			while (pos < thisrelinst.trueAtoms.size())
-	//				if (rbnutilities.inArray((int[])thisrelinst.trueAtoms.elementAt(pos),a))
-	//					thisrelinst.trueAtoms.remove(pos);
-	//				else pos++;
-	//			pos = 0;
-	//			while (pos < thisrelinst.falseAtoms.size())
-	//				if (rbnutilities.inArray((int[])thisrelinst.falseAtoms.elementAt(pos),a))
-	//					thisrelinst.falseAtoms.remove(pos);
-	//				else pos++;
-	//			if (thisrelinst.isEmpty()) allonedata.remove(thisrelinst);
-	//		}
-	//	}
+
 
 	/** Delete all atoms containing a and subtract 1 from
 	 * all elements with index > a
@@ -606,34 +651,23 @@ public class OneStrucData {
 	 */
 	public void deleteShift(int a){
 		Vector<Integer> emptyrels = new Vector<Integer>();
-		for (int i=0;i<allonebooldata.size();i++){
-			OneBoolRelData boolthisrelinst = (OneBoolRelData)allonebooldata.elementAt(i);
+		
+		for (Vector<? extends OneRelData> ord: allreltypes) {
+			for (int i=0;i<ord.size();i++){
+				OneRelData thisrelinst = ord.elementAt(i);
 
-			//System.out.print(i + " " +boolthisrelinst.rel.name.name + '\n');
-			boolthisrelinst.delete(a);
-			boolthisrelinst.shiftArgs(a);
+				thisrelinst.delete(a);
+				thisrelinst.shiftArgs(a);
 
-			if (boolthisrelinst.isEmpty()){ 
-				emptyrels.add(i);
+				if (thisrelinst.isEmpty()){ 
+					emptyrels.add(i);
+				}
 			}
-		}
-		for(int i=0;i < emptyrels.size();i++){
-			allonebooldata.remove(emptyrels.elementAt(i));
-		}
-
-		emptyrels.clear();
-		for (int i=0;i<allonenumdata.size();i++){
-			OneNumRelData numthisrelinst = (OneNumRelData)allonenumdata.elementAt(i);
-			numthisrelinst.delete(a);	
-			numthisrelinst.shiftArgs(a);
-			if (numthisrelinst.isEmpty()){
-				emptyrels.add(i);
+			for(int i=0;i < emptyrels.size();i++){
+				ord.remove(emptyrels.elementAt(i));
 			}
+			emptyrels.clear();
 		}
-		for(int i=0;i < emptyrels.size();i++){
-			allonenumdata.remove(emptyrels.elementAt(i));
-		}
-
 	}
 
 
@@ -645,11 +679,13 @@ public class OneStrucData {
 				allonebooldata.remove(thisrelinst);
 			if (thisrelinst instanceof OneNumRelData)
 				allonenumdata.remove(thisrelinst);
+			if (thisrelinst instanceof OneCatRelData)
+				allonecatdata.remove(thisrelinst);
 		}
-			
 		else
 			System.out.println("relation not found");
 	}
+	
 	public void delete(BoolRel r){
 		OneBoolRelData thisrelinst = findInBoolRel(r);
 		if (thisrelinst != null)
@@ -657,46 +693,35 @@ public class OneStrucData {
 		else
 			System.out.println("relation not found");
 	}
+	
 	public void delete(NumRel r){
 		OneNumRelData thisrelinst = findInNumRel(r);
 		if (thisrelinst != null)
 			allonenumdata.remove(find(r));
-
 		else
 			System.out.println("relation not found");
 	}
 
-
+	public void delete(CatRel r){
+		OneCatRelData thisrelinst = findInCatRel(r);
+		if (thisrelinst != null)
+			allonecatdata.remove(find(r));
+		else
+			System.out.println("relation not found");
+	}
+	
 	public void shiftArgs(int a){
 		// Replaces all arguments b of trueAtoms and falseAtoms lists
 		// by b-1 if b>a (needed after the deletion of node with index a from
 		// the underlying SparseRelStruc)
-		for (int k=0;k<allonebooldata.size();k++){
-			OneBoolRelData thisrelinst = allonebooldata.elementAt(k);
-			thisrelinst.shiftArgs(a);
-		}
-		for (int k=0;k<allonenumdata.size();k++){
-			OneNumRelData thisrelinst = allonenumdata.elementAt(k);
-			thisrelinst.shiftArgs(a);
+		for (Vector<? extends OneRelData> ord: allreltypes) {
+			for (int k=0;k<ord.size();k++){
+				OneRelData thisrelinst = ord.elementAt(k);
+				thisrelinst.shiftArgs(a);
+			}	
 		}
 	}
 
-
-
-
-//	private OneRelData copyOneRelData(OneRelData clonethis){
-//
-//		OneRelData result = new OneRelData(clonethis.rel(), clonethis.dv());
-//
-//		for (Iterator<int[]> it = clonethis.trueAtoms.iterator();it.hasNext();)
-//			result.trueAtoms.add(rbnutilities.clonearray(it.next()));
-//		for (Iterator<int[]> it = clonethis.falseAtoms.iterator();it.hasNext();)
-//			result.falseAtoms.add(rbnutilities.clonearray(it.next()));
-//		return result;
-//	}
-	
-
-	
 
 
 	public OneStrucData copy(){
@@ -706,26 +731,31 @@ public class OneStrucData {
 
 		for (int i=0;i<this.allonenumdata.size();i++)
 			result.allonenumdata.add(this.allonenumdata.elementAt(i).copy());
+		
+		for (int i=0;i<this.allonecatdata.size();i++)
+			result.allonecatdata.add(this.allonecatdata.elementAt(i).copy());
 
+		result.allreltypes = new Vector<Vector<? extends OneRelData>>();
+		result.allreltypes.add(result.allonebooldata);
+		result.allreltypes.add(result.allonenumdata);
+		result.allreltypes.add(result.allonecatdata);
 		return result;
 	}
 
 	public String printAsString(RelStruc A,String pref){
 		String result = "";
-		for (int i=0;i<allonebooldata.size();i++){
-			OneBoolRelData thisrelinst = (OneBoolRelData)allonebooldata.elementAt(i);
-			result = result + thisrelinst.printAsString(A,pref);
-		}
-		for (int i=0;i<allonenumdata.size();i++){
-			OneNumRelData thisrelinst = (OneNumRelData)allonenumdata.elementAt(i);
-			result = result + thisrelinst.printAsString(A,pref);
+		for (Vector<? extends OneRelData> ord: allreltypes) {
+			for (int i=0;i<ord.size();i++){
+				OneRelData thisrelinst = ord.elementAt(i);
+				result = result + thisrelinst.printAsString(A,pref);
+			}	
 		}
 		
 		return result;
 	}
 
 	public String printSummary(){
-		String result ="";
+		String result ="Summary without categorical variables: \n" ;
 
 		OneBoolRelData thisrelinst = new OneBoolRelData();
 		for (int i=0;i<allonebooldata.size();i++){
@@ -761,10 +791,12 @@ public class OneStrucData {
 		else if(r instanceof NumRel){
 			return truthValueOf((NumRel)r,tuple);
 		}
+		else if(r instanceof CatRel){
+			return truthValueOf((CatRel)r,tuple);
+		}
 		else{
 			return -1;
 		}
-
 	}
 	
 	public int truthValueOf(Rel r, int[] tuple)
@@ -773,6 +805,8 @@ public class OneStrucData {
 		if (thisrelinst != null){
 			if (thisrelinst instanceof OneBoolRelData)
 				return ((OneBoolRelData)thisrelinst).truthValueOf(tuple);
+			else if (thisrelinst instanceof OneCatRelData)
+				return ((OneCatRelData)thisrelinst).truthValueOf(tuple);
 			else 
 				return ((OneNumRelData)thisrelinst).truthValueOf(tuple);
 		}
@@ -794,6 +828,18 @@ public class OneStrucData {
 	public int truthValueOf(NumRel r, int[] tuple)
 	{
 		OneNumRelData thisrelinst = findInNumRel(r);
+		if (thisrelinst != null)
+		{
+			return thisrelinst.truthValueOf(tuple);
+		}
+		else {
+			return -1;
+		}
+	}
+	
+	public int truthValueOf(CatRel r, int[] tuple)
+	{
+		OneCatRelData thisrelinst = findInCatRel(r);
 		if (thisrelinst != null)
 		{
 			return thisrelinst.truthValueOf(tuple);
@@ -827,30 +873,19 @@ public class OneStrucData {
 			else 
 				return Double.NaN;
 		}
+		OneCatRelData thiscatrelinst = findInCatRel(r);
+		if (thiscatrelinst != null)
+		{
+			int tv = thiscatrelinst.truthValueOf(tuple);
+			if (tv != -1)
+				return (double)tv;
+			else 
+				return Double.NaN;
+		}
 		return Double.NaN;
 	}
 
-//	public Vector<InstAtom> allInstAtoms(){
-//		// returns Vecor of InstAtom
-//		Vector<InstAtom>  result = new Vector<InstAtom> ();
-//		for (int i=0;i<allonebooldata.size();i++){
-//			OneBoolRelData thisrelinst = (OneBoolRelData)allonebooldata.elementAt(i);
-//			if (thisrelinst.rel.arity == 0){
-//				if (thisrelinst.trueAtoms.size() > 0)
-//					result.add(new InstAtom(thisrelinst.rel,new int[0],true));
-//				if (thisrelinst.falseAtoms.size() > 0)
-//					result.add(new InstAtom(thisrelinst.rel,new int[0],false));
-//
-//			}
-//			else{
-//				for (Iterator<int[]> it = thisrelinst.trueAtoms.iterator();it.hasNext();)
-//					result.add(new InstAtom(thisrelinst.rel,it.next(),true));
-//				for (Iterator<int[]> it = thisrelinst.falseAtoms.iterator();it.hasNext();)
-//					result.add(new InstAtom(thisrelinst.rel,it.next(),false));
-//			}
-//		}
-//		return result;
-//	}
+x
 
 	public Vector<InstAtom> allInstAtoms(){
 		// returns Vecor of InstAtom
@@ -1274,7 +1309,9 @@ public class OneStrucData {
 	public Vector<OneNumRelData> getAllonenumdata(){
 		return allonenumdata;
 	}
-	
+	public Vector<OneCatRelData> getAllonecatdata(){
+		return allonecatdata;
+	}
 //	public Hashtable<String, Integer>  getboolNumRelHashtable(){
 //		Vector<BoolRel>  brel = getBoolRels();
 //		Vector<NumRel>   nrel = getNumRels();
