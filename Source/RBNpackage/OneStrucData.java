@@ -885,16 +885,15 @@ public class OneStrucData {
 		return Double.NaN;
 	}
 
-x
 
 	public Vector<InstAtom> allInstAtoms(){
+		System.out.println("Warning: OneStrucData.allInstAtoms not yet handling categorical relations");
 		// returns Vecor of InstAtom
 		Vector<InstAtom>  result = new Vector<InstAtom> ();
 		for (int i=0;i<allonebooldata.size();i++){
 			OneBoolRelData thisrelinst = (OneBoolRelData)allonebooldata.elementAt(i);
 			Vector<int[]> alltrues = (Vector<int[]>) rbnutilities.treeSetToVector(thisrelinst.allTrue());
-			Vector<int[]> allfalse;
-			allfalse = (Vector<int[]>) rbnutilities.treeSetToVector(thisrelinst.allFalse(this.parentrelstruc));
+			Vector<int[]> allfalse = (Vector<int[]>) rbnutilities.treeSetToVector(thisrelinst.allFalse(this.parentrelstruc));
 			if (thisrelinst.rel.arity == 0){
 				if (alltrues.size() > 0)
 					result.add(new InstAtom(thisrelinst.rel,new int[0],true));
@@ -950,25 +949,23 @@ x
 	}
 
 	public int numRels(){
-		return allonebooldata.size()+allonenumdata.size();
+		return allonebooldata.size()+allonenumdata.size()+allonecatdata.size();
 	}
 
-	/** returns all the relations with arity 1 */
-	public Vector<Rel> getAttributes(){
-		Vector<Rel> attributes = new Vector<Rel>();
-		Rel rel;
-		for(int i=0; i<allonebooldata.size(); ++i){
-			rel = allonebooldata.elementAt(i).rel();
-			if (rel.arity == 1)  //is an attribute
-				attributes.addElement(rel);
-		}
-		for(int i=0; i<allonenumdata.size(); ++i){
-			rel = allonenumdata.elementAt(i).rel();
-			if (rel.arity == 1)  //is an attribute
-				attributes.addElement(rel);
-		}
-		return attributes;
-	}
+//	/** returns all the relations with arity 1 */
+//	public Vector<Rel> getAttributes(){
+//		Vector<Rel> attributes = new Vector<Rel>();
+//		Rel rel;
+//		for (Vector<? extends OneRelData> ord: allreltypes) {
+//			for(int i=0; i<ord.size(); ++i){
+//				rel = ord.elementAt(i).rel();
+//				if (rel.arity == 1)  //is an attribute
+//					attributes.addElement(rel);
+//			}
+//		}
+//		return attributes;
+//	}
+		
 	public Vector<BoolRel> getBoolAttributes(){
 		BoolRel rel;
 		Vector<BoolRel> attributes = new Vector<BoolRel>();
@@ -979,6 +976,7 @@ x
 		}
 		return attributes;
 	}
+	
 	public Vector<NumRel> getNumAttributes(){
 		NumRel rel;
 		Vector<NumRel> attributes = new Vector<NumRel>();
@@ -990,22 +988,31 @@ x
 		return attributes;
 	}
 
-	/**  returns all the relations with arity 2 */
-	public Vector<Rel> getBinaryRelations(){
-		Vector<Rel> binaries = new Vector<Rel>();
-		Rel rel;
-		for(int i=0; i<allonebooldata.size(); ++i){
-			rel = allonebooldata.elementAt(i).rel();
-			if (rel.arity == 2)  //is a binary rel
-				binaries.addElement(rel);
+	public Vector<CatRel> getCatAttributes(){
+		CatRel rel;
+		Vector<CatRel> attributes = new Vector<CatRel>();
+		for(int i=0; i<allonecatdata.size(); ++i){
+			rel = allonecatdata.elementAt(i).rel();
+			if (rel.arity == 1)  //is an attribute
+				attributes.addElement(rel);
 		}
-		for(int i=0; i<allonenumdata.size(); ++i){
-			rel = allonenumdata.elementAt(i).rel();
-			if (rel.arity == 2)  //is a binary rel
-				binaries.addElement(rel);
-		}
-		return binaries;
+		return attributes;
 	}
+	
+	
+//	/**  returns all the relations with arity 2 */
+//	public Vector<Rel> getBinaryRelations(){
+//		Vector<Rel> binaries = new Vector<Rel>();
+//		Rel rel;
+//		for (Vector<? extends OneRelData> ord: allreltypes) {
+//			for(int i=0; i<ord.size(); ++i){
+//				rel = ord.elementAt(i).rel();
+//				if (rel.arity == 2)  //is a binary relation
+//					binaries.addElement(rel);
+//			}
+//		}
+//		return binaries;
+//	}
 
 	public Vector<BoolRel> getBoolBinaryRelations(){
 		BoolRel rel;
@@ -1017,11 +1024,23 @@ x
 		}
 		return binaries;
 	}
+	
 	public Vector<NumRel> getNumBinaryRelations(){
 		NumRel rel;
 		Vector<NumRel> binaries = new Vector<NumRel>();
 		for(int i=0; i<allonenumdata.size(); ++i){
 			rel = allonenumdata.elementAt(i).rel();
+			if (rel.arity == 2)  
+				binaries.addElement(rel);
+		}
+		return binaries;
+	}
+
+	public Vector<CatRel> getCatBinaryRelations(){
+		CatRel rel;
+		Vector<CatRel> binaries = new Vector<CatRel>();
+		for(int i=0; i<allonecatdata.size(); ++i){
+			rel = allonecatdata.elementAt(i).rel();
 			if (rel.arity == 2)  
 				binaries.addElement(rel);
 		}
@@ -1041,21 +1060,23 @@ x
 	
 	/**  returns all the relations with arity >=3 */
 
-	public Vector<Rel> getArbitraryRelations(){
-		Vector<Rel> arbrels = new Vector<Rel>();
-		Rel rel;
-		for(int i=0; i<allonebooldata.size(); ++i){
-			rel = allonebooldata.elementAt(i).rel();
-			if (rel.arity == 2)  //is a binary rel
-				arbrels.addElement(rel);
-		}
-		for(int i=0; i<allonenumdata.size(); ++i){
-			rel = allonenumdata.elementAt(i).rel();
-			if (rel.arity == 2)  //is a binary rel
-				arbrels.addElement(rel);
-		}
-		return arbrels;
-	}
+//	public Vector<Rel> getArbitraryRelations(){
+//		Vector<Rel> arbrels = new Vector<Rel>();
+//		Rel rel;
+//		for(int i=0; i<allonebooldata.size(); ++i){
+//			rel = allonebooldata.elementAt(i).rel();
+//			if (rel.arity == 2)  //is a binary rel
+//				arbrels.addElement(rel);
+//		}
+//		for(int i=0; i<allonenumdata.size(); ++i){
+//			rel = allonenumdata.elementAt(i).rel();
+//			if (rel.arity == 2)  //is a binary rel
+//				arbrels.addElement(rel);
+//		}
+//		return arbrels;
+//		
+//	}
+	
 	public Vector<BoolRel> getBoolArbitraryRelations(){
 		BoolRel rel;
 		Vector<BoolRel> attributes = new Vector<BoolRel>();
@@ -1066,6 +1087,7 @@ x
 		}
 		return attributes;
 	}
+	
 	public Vector<NumRel> getNumArbitraryRelations(){
 		NumRel rel;
 		Vector<NumRel> attributes = new Vector<NumRel>();
@@ -1077,9 +1099,22 @@ x
 		return attributes;
 	}
 
+	public Vector<CatRel> getCatArbitraryRelations(){
+		CatRel rel;
+		Vector<CatRel> attributes = new Vector<CatRel>();
+		for(int i=0; i<allonecatdata.size(); ++i){
+			rel = allonecatdata.elementAt(i).rel();
+			if (rel.arity >= 3)  
+				attributes.addElement(rel);
+		}
+		return attributes;
+	}
 
 
-//	public  Vector<Double> numbinAndArityValues(int node){
+
+
+//	// TODO this needs to be redone!
+//	public  Vector<Double> numattributesValues(int node){
 //		Vector<Double> result = new Vector<Double>() ;
 //
 //		NumRel rel;
@@ -1087,8 +1122,8 @@ x
 //		Vector<int[]> temptuples;
 //		for(int i=0; i<allonenumdata.size(); ++i){
 //			rel = allonenumdata.elementAt(i).rel();
-//			if(rel.arity >= 2){
-//				temptuples = allonenumdata.elementAt(i).allTrue();
+//			if(rel.arity == 1){
+//				temptuples = rbnutilities.treeSetToVector(allonenumdata.elementAt(i).allTrue());
 //				for(int j=0;j<temptuples.size();j++){
 //					if(rbnutilities.inArray(temptuples.elementAt(j), node)){
 //						int[] tuple = temptuples.elementAt(j);
@@ -1105,89 +1140,66 @@ x
 //		return result;
 //
 //	}
-
-	// TODO this needs to be redone!
+	
+	// TODO this needs to be tested (handling of NaN values?)!
 	public  Vector<Double> numattributesValues(int node){
 		Vector<Double> result = new Vector<Double>() ;
-
-		NumRel rel;
-		Double v;
-		Vector<int[]> temptuples;
-		for(int i=0; i<allonenumdata.size(); ++i){
-			rel = allonenumdata.elementAt(i).rel();
-			if(rel.arity == 1){
-				temptuples = rbnutilities.treeSetToVector(allonenumdata.elementAt(i).allTrue());
-				for(int j=0;j<temptuples.size();j++){
-					if(rbnutilities.inArray(temptuples.elementAt(j), node)){
-						int[] tuple = temptuples.elementAt(j);
-						//System.out.println(rbnutilities.arrayToString(tuple));
-						v = allonenumdata.elementAt(i).valueOf(tuple);
-						result.add(v);
-						//System.out.println(v);
-
-					}
-				}
-			}
-		}
-
+        Vector<NumRel> numatts = this.getNumAttributes();
+        int[] arg = {node};
+        for (NumRel r: numatts) {
+        	OneNumRelData ond = this.findInNumRel(r);
+        	Double val = ond.valueOf(arg);
+        	if (val!=Double.NaN)
+        		result.add(val);
+        }
 		return result;
-
 	}
 	
-	//TODO needs to be redone!
-	public  Vector<Double> getNumBinValues(int node){
-		Vector<Double> result = new Vector<Double>() ;
+//	//TODO needs to be redone!
+//	public  Vector<Double> getNumBinValues(int node){
+//		Vector<Double> result = new Vector<Double>() ;
+//
+//		NumRel rel;
+//		Double v;
+//		Vector<int[]> temptuples;
+//		for(int i=0; i<allonenumdata.size(); ++i){
+//			rel = allonenumdata.elementAt(i).rel();
+//			if (rel.arity == 2){
+//
+//				temptuples = rbnutilities.treeSetToVector(allonenumdata.elementAt(i).allTrue());
+//				for(int j=0;j<temptuples.size();j++){
+//					if(rbnutilities.inArray(temptuples.elementAt(j), node)){
+//						int[] tuple = temptuples.elementAt(j);
+//						//System.out.println(rbnutilities.arrayToString(tuple));
+//						v = allonenumdata.elementAt(i).valueOf(tuple);
+//						result.add(v);
+//						//System.out.println(v);
+//
+//					}
+//				}
+//
+//			}
+//		}
+//
+//		return result;
+//
+//	}
+	
+//	// TODO this needs to be tested (handling of NaN values?)!
+//	public  Vector<Double> getNumBinValues(int node){
+//		Vector<Double> result = new Vector<Double>() ;
+//        Vector<NumRel> numbins = this.getNumBinaryRelations();
+//        int[] arg = {node};
+//        for (NumRel r: numatts) {
+//        	OneNumRelData ond = this.findInNumRel(r);
+//        	Double val = ond.valueOf(arg);
+//        	if (val!=Double.NaN)
+//        		result.add(val);
+//        }
+//		return result;
+//	}
+//	
 
-		NumRel rel;
-		Double v;
-		Vector<int[]> temptuples;
-		for(int i=0; i<allonenumdata.size(); ++i){
-			rel = allonenumdata.elementAt(i).rel();
-			if (rel.arity == 2){
-
-				temptuples = rbnutilities.treeSetToVector(allonenumdata.elementAt(i).allTrue());
-				for(int j=0;j<temptuples.size();j++){
-					if(rbnutilities.inArray(temptuples.elementAt(j), node)){
-						int[] tuple = temptuples.elementAt(j);
-						//System.out.println(rbnutilities.arrayToString(tuple));
-						v = allonenumdata.elementAt(i).valueOf(tuple);
-						result.add(v);
-						//System.out.println(v);
-
-					}
-				}
-
-			}
-		}
-
-		return result;
-
-	}
-	/*
-	//getNumBinValues
-	public  Vector<int[]> getNumBinValues(int[] tuples){
-		Vector result = new Vector<int[]>();
-		NumRel rel;
-		Vector<int[]> temptuples;
-		for(int i=0; i<allonenumdata.size(); ++i){
-			rel = allonenumdata.elementAt(i).rel();
-			if (rel.arity == 2){
-
-				temptuples = allonenumdata.elementAt(i).allTrue();
-				for(int j=0;j<temptuples.size();j++){
-					if(rbnutilities.inArray(temptuples.elementAt(j), node)){
-						result.add(temptuples.elementAt(j));
-					}
-				}
-
-			}
-		}
-
-
-		return result;
-
-	}
-	 */
 
 	public int size(){
 		return allonebooldata.size() + allonenumdata.size();
