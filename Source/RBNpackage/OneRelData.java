@@ -202,7 +202,7 @@ public abstract class OneRelData {
     /**Returns the binary tuples from the specified node to some other node
 	 *This method is usable ONLY with binary relations
 	 */
-	public Vector<int[]> getBinDirs(int node,HashMap<Integer,TreeSet<int[]> >[] index){
+	public Vector<int[]> getBinDirs(int node, HashMap<Integer,TreeSet<int[]> >[] index){
 		Vector<int[]> result = new Vector<int[]>();
 		for (int[] t : index[0].get(node))
 			result.addElement(t);
