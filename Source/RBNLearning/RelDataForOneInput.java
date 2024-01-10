@@ -68,9 +68,9 @@ public class RelDataForOneInput {
 		return D.size();
 	}
 	
-	public Vector<Rel> getProbRels(){
-		return D.elementAt(0).getRels();
-	}
+//	public Vector<Rel> getProbRels(){
+//		return D.elementAt(0).getRels();
+//	}
 	
 	public void addCase(OneStrucData osd){
 		D.add(osd);
@@ -98,7 +98,7 @@ public class RelDataForOneInput {
 		 RelDataForOneInput result = new RelDataForOneInput(this.A);
 		 
 		 for (Iterator<OneStrucData> it = D.iterator(); it.hasNext();)
-			 result.addCase(it.next().subSampleData(pc));
+			 result.addCase(it.next().negativeSampleData(pc));
 		 return result;
 	 }
 
@@ -135,94 +135,94 @@ public class RelDataForOneInput {
 		 return result;
 	 }
 	 
-	 
-	 public void saveToFOIL(File filename){
-		 try{	  
-			 FileWriter thiswriter = new FileWriter(filename);
-
-			 Rel nextrel;
-			 Type[] reltypes;
-			 String rname;
-			 Vector<int[]> truetuples;
-			 Vector<int[]> falsetuples;
-
-			 Vector elnames = A.getNames();
-			 thiswriter.write("DOMAIN: ");
-			 for (int i=0;i<elnames.size()-1;i++)
-				 thiswriter.write(elnames.elementAt(i)+",");
-			 thiswriter.write(elnames.elementAt(elnames.size()-1)+".");
-			 thiswriter.write('\n');
-			 thiswriter.write('\n');
-			 
-			 /* All unary predefined relations of A are interpreted as types: */
-			 Vector<Rel> predefrels = A.getRels();
-			 for (int i=0;i<predefrels.size();i++){
-				 nextrel = predefrels.elementAt(i);
-				 if (nextrel.getArity()==1){
-					 thiswriter.write(nextrel.name.name + ": ");
-					 Vector<int[]> allts = A.allTrue(nextrel);
-					 for (int j=0;j<allts.size()-1;j++)
-						 thiswriter.write(A.nameAt(allts.elementAt(j)[0]) + ",");
-					 thiswriter.write(A.nameAt(allts.elementAt(allts.size()-1)[0]) + "." + '\n' + '\n' );
-				 }
-			 }
-
-			 /* All non-unary predefined relations: */
-
-			 for (int i=0;i<predefrels.size();i++){
-				 nextrel = predefrels.elementAt(i);
-				 reltypes = nextrel.getTypes();
-				 if (nextrel.getArity()!=1){
-					 rname = nextrel.name.name;
-					 thiswriter.write("*" + rname + "(");
-					 for (int j=0;j<reltypes.length-1;j++)
-						 thiswriter.write(reltypes[j].getName() + ",");
-					 thiswriter.write(reltypes[reltypes.length-1].getName() );
-					 thiswriter.write(")" + '\n');
-					 truetuples = A.allTrue(nextrel);
-					 for (int j=0;j<truetuples.size();j++){
-						 thiswriter.write(  StringOps.arrayToString(A.namesAtAsArray(truetuples.elementAt(j)),"","") );
-						 thiswriter.write('\n');
-					 }
-					 thiswriter.write("." + '\n' + '\n');
-				 } 
-			 }
-			 
-			 /* The probabilistic relations */
-			 
-			 OneStrucData osd = D.elementAt(0);
-			 thiswriter.write('\n');
-			 
-			 for (int i=0;i<osd.boolsize();i++){
-				 nextrel = osd.boolRelAt(i);
-				 reltypes = nextrel.getTypes();
-				 rname = nextrel.name.name;
-				 thiswriter.write("*" + rname + "(");
-				 for (int j=0;j<reltypes.length-1;j++)
-					 thiswriter.write(reltypes[j].getName() + ",");
-				 thiswriter.write(reltypes[reltypes.length-1].getName() );
-				 thiswriter.write(")" + '\n');
-				 truetuples = osd.allTrue(nextrel);
-				 for (int j=0;j<truetuples.size();j++){
-					 thiswriter.write(  StringOps.arrayToString(A.namesAtAsArray(truetuples.elementAt(j)),"","") );
-					 thiswriter.write('\n');
-				 }
-				 thiswriter.write(";" + '\n');
-				 falsetuples = osd.allFalse((BoolRel)nextrel); 
-				 for (int j=0;j<falsetuples.size();j++){
-					 thiswriter.write(  StringOps.arrayToString(A.namesAtAsArray(falsetuples.elementAt(j)),"","") );
-					 thiswriter.write('\n');
-				 }
-				 thiswriter.write("." + '\n');
-			 }
-
-	
-			 thiswriter.flush();
-			 thiswriter.close();
-		 }
-		 catch (IOException e){System.out.println(e);}
-
-	 }
+//   Needs update to work again:	 
+//	 public void saveToFOIL(File filename){
+//		 try{	  
+//			 FileWriter thiswriter = new FileWriter(filename);
+//
+//			 Rel nextrel;
+//			 Type[] reltypes;
+//			 String rname;
+//			 Vector<int[]> truetuples;
+//			 Vector<int[]> falsetuples;
+//
+//			 Vector elnames = A.getNames();
+//			 thiswriter.write("DOMAIN: ");
+//			 for (int i=0;i<elnames.size()-1;i++)
+//				 thiswriter.write(elnames.elementAt(i)+",");
+//			 thiswriter.write(elnames.elementAt(elnames.size()-1)+".");
+//			 thiswriter.write('\n');
+//			 thiswriter.write('\n');
+//			 
+//			 /* All unary predefined relations of A are interpreted as types: */
+//			 Vector<Rel> predefrels = A.getRels();
+//			 for (int i=0;i<predefrels.size();i++){
+//				 nextrel = predefrels.elementAt(i);
+//				 if (nextrel.getArity()==1){
+//					 thiswriter.write(nextrel.name.name + ": ");
+//					 Vector<int[]> allts = A.allTrue(nextrel);
+//					 for (int j=0;j<allts.size()-1;j++)
+//						 thiswriter.write(A.nameAt(allts.elementAt(j)[0]) + ",");
+//					 thiswriter.write(A.nameAt(allts.elementAt(allts.size()-1)[0]) + "." + '\n' + '\n' );
+//				 }
+//			 }
+//
+//			 /* All non-unary predefined relations: */
+//
+//			 for (int i=0;i<predefrels.size();i++){
+//				 nextrel = predefrels.elementAt(i);
+//				 reltypes = nextrel.getTypes();
+//				 if (nextrel.getArity()!=1){
+//					 rname = nextrel.name.name;
+//					 thiswriter.write("*" + rname + "(");
+//					 for (int j=0;j<reltypes.length-1;j++)
+//						 thiswriter.write(reltypes[j].getName() + ",");
+//					 thiswriter.write(reltypes[reltypes.length-1].getName() );
+//					 thiswriter.write(")" + '\n');
+//					 truetuples = A.allTrue(nextrel);
+//					 for (int j=0;j<truetuples.size();j++){
+//						 thiswriter.write(  StringOps.arrayToString(A.namesAtAsArray(truetuples.elementAt(j)),"","") );
+//						 thiswriter.write('\n');
+//					 }
+//					 thiswriter.write("." + '\n' + '\n');
+//				 } 
+//			 }
+//			 
+//			 /* The probabilistic relations */
+//			 
+//			 OneStrucData osd = D.elementAt(0);
+//			 thiswriter.write('\n');
+//			 
+//			 for (int i=0;i<osd.boolsize();i++){
+//				 nextrel = osd.boolRelAt(i);
+//				 reltypes = nextrel.getTypes();
+//				 rname = nextrel.name.name;
+//				 thiswriter.write("*" + rname + "(");
+//				 for (int j=0;j<reltypes.length-1;j++)
+//					 thiswriter.write(reltypes[j].getName() + ",");
+//				 thiswriter.write(reltypes[reltypes.length-1].getName() );
+//				 thiswriter.write(")" + '\n');
+//				 truetuples = osd.allTrue(nextrel);
+//				 for (int j=0;j<truetuples.size();j++){
+//					 thiswriter.write(  StringOps.arrayToString(A.namesAtAsArray(truetuples.elementAt(j)),"","") );
+//					 thiswriter.write('\n');
+//				 }
+//				 thiswriter.write(";" + '\n');
+//				 falsetuples = osd.allFalse((BoolRel)nextrel); 
+//				 for (int j=0;j<falsetuples.size();j++){
+//					 thiswriter.write(  StringOps.arrayToString(A.namesAtAsArray(falsetuples.elementAt(j)),"","") );
+//					 thiswriter.write('\n');
+//				 }
+//				 thiswriter.write("." + '\n');
+//			 }
+//
+//	
+//			 thiswriter.flush();
+//			 thiswriter.close();
+//		 }
+//		 catch (IOException e){System.out.println(e);}
+//
+//	 }
 
 
 	 public int numberOfObservations(){

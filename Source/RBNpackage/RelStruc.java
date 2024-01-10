@@ -244,7 +244,11 @@ public abstract class RelStruc implements Cloneable{
 		return mydata.add(r,tuple, (Double)1.0);
 
 	}
-
+	public int addTuple(CatRel r, int[] tuple, int v)
+	{
+		return mydata.add(r,tuple, v, "?");
+	}
+	
 	/*Takes a vector of numerical relation atoms represented as strings, 
 	* and a vector of values of corresponding length
 	*/
@@ -271,6 +275,8 @@ public abstract class RelStruc implements Cloneable{
 			this.addTuple((BoolRel)r, this.getIndexes(tuple));
 		if (r instanceof NumRel)
 			this.addTuple((NumRel)r, this.getIndexes(tuple));
+//		if (r instanceof CatRel)
+//			this.addTuple((CatRel)r, this.getIndexes(tuple));
 	}
 
 	public int addTuple(NumRel r, int[] tuple, double value)
@@ -289,20 +295,22 @@ public abstract class RelStruc implements Cloneable{
 	public void deleteTuple(Rel r, int[] tuple)
 	{
 		mydata.delete(r, tuple);
-
 	}
+	
 	public void deleteTuple(BoolRel r, int[] tuple)
 	{
 		mydata.delete(r, tuple, true);
-
 	}
 	
 	public void deleteTuple(NumRel r, int[] tuple)
 	{
 		mydata.delete(r, tuple);
-
 	}
 	
+	public void deleteTuple(CatRel r, int[] tuple)
+	{
+		mydata.delete(r, tuple);
+	}
 //	public void deleteTuple(NumRel r, int[] tuple, double value)
 //	{
 //		mydata.delete(r, tuple, value);
@@ -315,6 +323,9 @@ public abstract class RelStruc implements Cloneable{
 
 	public abstract void addRelation(NumRel r)
 	throws RBNCompatibilityException;
+	
+	public abstract void addRelation(CatRel r)
+			throws RBNCompatibilityException;
 	
 	public void deleteRelation(Rel r)
 	{
@@ -457,15 +468,19 @@ public abstract class RelStruc implements Cloneable{
 	public Vector<NumRel> getNumAttributes(){
 		return mydata.getNumAttributes();
 	}
+	public Vector<CatRel> getCatAttributes(){
+		return mydata.getCatAttributes();
+	}
 	//returns all the relations with arity 2
 	public Vector<BoolRel> getBoolBinaryRelations(){
 		return mydata.getBoolBinaryRelations();
 	}
-
 	public Vector<NumRel> getNumBinaryRelations(){
 		return mydata.getNumBinaryRelations();
 	}
-
+	public Vector<CatRel> getCatBinaryRelations(){
+		return mydata.getCatBinaryRelations();
+	}
 	//returns all the relations with arity >= 3
 
 
@@ -476,7 +491,9 @@ public abstract class RelStruc implements Cloneable{
 	public Vector<NumRel> getNumArbitraryRelations(){
 		return mydata.getNumArbitraryRelations();
 	}
-
+	public Vector<CatRel> getCatArbitraryRelations(){
+		return mydata.getCatArbitraryRelations();
+	}
 	/** Returns true if r is one of the OrdRels **/
 	public static boolean isOrdRel(Rel r){
 		boolean result = false;
@@ -929,23 +946,30 @@ public abstract class RelStruc implements Cloneable{
 		return args;
 	}
 
-	public Vector<Rel> getRels(){
-		return mydata.getRels();
-	}
+//	public Vector<Rel> getRels(){
+//		return mydata.getRels();
+//	}
+	
 	public Vector<BoolRel> getBoolRels(){
 		return mydata.getBoolRels();
 	}
 	public Vector<NumRel> getNumRels(){
 		return mydata.getNumRels();
 	}
-
+	public Vector<CatRel> getCatRels(){
+		return mydata.getCatRels();
+	}
+	
 	public NumRel getNumRel(String name){
 		return mydata.findInNumRel(name).rel();
 	}
-	
 	public BoolRel getBoolRel(String name){
 		return mydata.findInBoolRel(name).rel();
 	}
+	public CatRel getCatRel(String name){
+		return mydata.findInCatRel(name).rel();
+	}
+	
 	
 	public int truthValueOf(Rel r, int[] args){
 		return mydata.truthValueOf(r,args);
@@ -982,7 +1006,5 @@ public abstract class RelStruc implements Cloneable{
 		return sig;
 	}
 	
-	public void printNumRelVals(){
-		mydata.print();
-	}
+
 }

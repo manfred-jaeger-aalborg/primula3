@@ -209,11 +209,14 @@ public class RelData {
 		 /* Adding declarations for the predefined relations */
 		 Vector<BoolRel> boolpredefinedrels = firstcase.inputDomain().getBoolRels();
 		 Vector<NumRel> numpredefinedrels = firstcase.inputDomain().getNumRels();
+		 Vector<CatRel> catpredefinedrels = firstcase.inputDomain().getCatRels();
 		 
 		 for (int i=0;i<boolpredefinedrels.size();i++)
 			 boolpredefinedrels.elementAt(i).addRelHeader(reldecs,"false","predefined");
 		 for (int i=0;i<numpredefinedrels.size();i++)
 			 numpredefinedrels.elementAt(i).addRelHeader(reldecs,"0.0","predefined");
+		 for (int i=0;i<catpredefinedrels.size();i++)
+			 catpredefinedrels.elementAt(i).addRelHeader(reldecs,"?","predefined");
 		 
 		 /* Adding declarations for the probabilistic relations 
 		  * -- only if this RelData object does not represent 
@@ -223,12 +226,16 @@ public class RelData {
 			 OneStrucData firstobservedats = firstcase.observedAtoms().elementAt(0);
 			 for (int i=0;i<firstobservedats.boolsize();i++)
 				 firstobservedats.boolRelAt(i).addRelHeader(reldecs,
-						 					firstobservedats.boolDvAt(i),
-				 							"probabilistic");
+						 firstobservedats.boolDvAt(i),
+						 "probabilistic");
 			 for (int i=0;i<firstobservedats.numsize();i++)
 				 firstobservedats.boolRelAt(i).addRelHeader(reldecs,
-						 					firstobservedats.numDvAt(i),
-				 							"probabilistic");
+						 firstobservedats.numDvAt(i),
+						 "probabilistic");
+			 for (int i=0;i<firstobservedats.catsize();i++)
+				 firstobservedats.catRelAt(i).addRelHeader(reldecs,
+						 "?",				 							
+						 "probabilistic");
 		 }
 		 /* Now iterating over the cases */
 		 Element datael = root.addElement("Data");
@@ -239,10 +246,10 @@ public class RelData {
 		 return result;
 	}
 
-	 /** Saves first RelDataForOneInput into FOIL format*/
-	 public void saveToFOIL(File filename){
-		 cases.elementAt(0).saveToFOIL(filename);
-	 }
+//	 /** Saves first RelDataForOneInput into FOIL format*/
+//	 public void saveToFOIL(File filename){
+//		 cases.elementAt(0).saveToFOIL(filename);
+//	 }
 
 	 public boolean singleObservation(){
 		 return (cases.size()==1 && caseAt(0).numberOfObservations()==1);

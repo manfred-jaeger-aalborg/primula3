@@ -98,7 +98,11 @@ public class SparseRelStruc extends RelStruc {
 	{
 		mydata.addRelation(r, 0.0);
 	}
-
+	public void addRelation(CatRel r)
+	{
+		mydata.addRelation(r, "?");
+	}
+	
 	public void addOneStrucData(OneStrucData osd){
 		mydata.add(osd);
 	}
@@ -534,17 +538,19 @@ public class SparseRelStruc extends RelStruc {
 		return result;
 	}
 
-	//getNumValuesAndTuples
-	public Vector<Double> getNumBinValues(int node){
-		Vector<Double> result = new Vector<Double>() ;
-		result = mydata.getNumBinValues(node);
-		return result;
-	}
+//	//getNumValuesAndTuples
+//	public Vector<Double> getNumBinValues(int node){
+//		Vector<Double> result = new Vector<Double>() ;
+//		result = mydata.getNumBinValues(node);
+//		return result;
+//	}
+	
 //	public Vector<Double> numbinAndArityValues(int node){
 //		Vector<Double> result = new Vector<Double>() ;
 //		result = mydata.numbinAndArityValues(node);
 //		return result;
 //	}
+	
 	public Vector<Double> numattributesValues(int node){
 		Vector<Double> result = new Vector<Double>() ;
 		result = mydata.numattributesValues(node);
@@ -573,27 +579,27 @@ public class SparseRelStruc extends RelStruc {
 			result.setData(mydata);
 		return result;
 	}
-	public Vector<BoolRel> getBoolAttributes(){
-		return mydata.getBoolAttributes();
-	}
-	public Vector<NumRel> getNumAttributes(){
-		return mydata.getNumAttributes();
-	}
+//	public Vector<BoolRel> getBoolAttributes(){
+//		return mydata.getBoolAttributes();
+//	}
+//	public Vector<NumRel> getNumAttributes(){
+//		return mydata.getNumAttributes();
+//	}
 	public Vector<NumRel> getNumGlobals(){
 		return mydata.getNumGlobals();
 	}
 	
-	public Vector<BoolRel> getBoolBinaryRelations(){
-		return mydata.getBoolBinaryRelations();
-	}
-	public Vector<NumRel> getNumBinaryRelations(){
-		return mydata.getNumBinaryRelations();
-	}
-	public Vector<BoolRel> getBoolArbitraryRelations(){
-		return mydata.getBoolArbitraryRelations();
-	}
-	public Vector<NumRel> getNumArbitraryRelations(){
-		return mydata.getNumArbitraryRelations();
-	}
+//	public Vector<BoolRel> getBoolBinaryRelations(){
+//		return mydata.getBoolBinaryRelations();
+//	}
+//	public Vector<NumRel> getNumBinaryRelations(){
+//		return mydata.getNumBinaryRelations();
+//	}
+//	public Vector<BoolRel> getBoolArbitraryRelations(){
+//		return mydata.getBoolArbitraryRelations();
+//	}
+//	public Vector<NumRel> getNumArbitraryRelations(){
+//		return mydata.getNumArbitraryRelations();
+//	}
 
 }

@@ -1004,7 +1004,7 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 	 * 'false' values according to the default are explicitly added as 
 	 * 'false' 
 	 */
-	private void subSampleData(int pc){
+	private void negativeSampleData(int pc){
 		data.subSampleData(pc);
 	}
 	

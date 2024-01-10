@@ -1732,8 +1732,8 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 	
 	
 
-		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/GNN-RBN-alpha/rbn_acr_3layers.rbn";
-		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/GNN-RBN-alpha/alpha1-blue.rdef"; 
+//		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/GNN-RBN-alpha/rbn_acr_3layers.rbn";
+//		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/GNN-RBN-alpha/alpha1-blue.rdef"; 
 		
 		
 //		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Mutag/MAP/manual_no2.rbn";
@@ -1745,10 +1745,12 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 
 			
 		
+		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Examples3/RDEFinputs/watershed_num0.rdef";
+	
 		srsfile = new File(rstinputfilestring);
-		rbnfile = new File(rbninputfilestring);
+//		rbnfile = new File(rbninputfilestring);
 
-		loadRBNFunction(rbnfile);
+//		loadRBNFunction(rbnfile);
 		loadSparseRelFile(srsfile);
 
 

@@ -53,6 +53,15 @@ public class OneBoolRelData extends OneRelData {
 	 private TreeSet<int[]> trueAtoms;  
 	 private TreeSet<int[]> falseAtoms; 
 	 
+	 /*
+		 * Contains for each argument (position) of this relation
+		 * a HashMap that maps node (integer) identifiers to the set of 
+		 * tuples contained in trueAtoms
+		 * 
+		 * Example: this.arity=2,
+		 * Then trueAtomsIndex[1].get(3) returns a the tree set of pairs 
+		 * contained in trueAtoms with 3 in the second position.
+		 */
 	 protected  HashMap<Integer,TreeSet<int[]>>[] trueAtomsIndex;
 	 protected  HashMap<Integer,TreeSet<int[]>>[] falseAtomsIndex; 
 	 
@@ -532,7 +541,7 @@ public class OneBoolRelData extends OneRelData {
 		makeIndices();
 	}
 	
-	 public OneBoolRelData subSample(int pc, RelStruc rs){
+	 public OneBoolRelData negativeSample(int pc, RelStruc rs){
 		 if (this.defaultval.equals("false")){
 			 	int[] nexttup;
 			 	double rand;

@@ -49,6 +49,16 @@ public class OneNumRelData extends OneRelData{
 
 	private TreeMap<int[], Double> numAtoms ;
 
+	/*
+	 * Contains for each argument (position) of this relation
+	 * a HashMap that maps node (integer) identifiers to the set of 
+	 * tuples for which a tuple with the given node at the given
+	 * position is in the data.
+	 * 
+	 * Example: this.arity=2,
+	 * Then numAtomsIndex[1].get(3) returns a the tree set of pairs 
+	 * with 3 in the second position.
+	 */
 	private  HashMap<Integer,TreeSet<int[]>>[] numAtomsIndex;
 	
 	/* Stores the minimum minmax[0] and maximum minmax[1] 

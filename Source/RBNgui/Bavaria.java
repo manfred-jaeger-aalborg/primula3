@@ -1565,9 +1565,9 @@ public class Bavaria extends JFrame implements ActionListener,ItemListener,KeyLi
 		return displaystruc.getOtherNumRelsAndTuples(node);
 	}
 
-	public Vector getNumBinValues(int node){
-		return displaystruc.getNumBinValues(node);
-	}
+//	public Vector getNumBinValues(int node){
+//		return displaystruc.getNumBinValues(node);
+//	}
 
 	public void setData(NumRel r, int[] tuple, double v) throws RBNIllegalArgumentException{
 		struc.setData(r,tuple,v);
