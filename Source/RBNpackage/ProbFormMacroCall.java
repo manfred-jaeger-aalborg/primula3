@@ -32,7 +32,7 @@ public class ProbFormMacroCall extends ProbForm {
 	
 	private void setpf() {
 		if (pf_sub == null)
-			pf_sub = macro.pform().substitute(macro.arguments(), arguments);
+			pf_sub = macro.cpmod().substitute(macro.arguments(), arguments);
 	}
 	
 	public void setpf(ProbForm pf) {
@@ -66,7 +66,7 @@ public class ProbFormMacroCall extends ProbForm {
 
 	@Override
 	public boolean dependsOn(String variable, RelStruc A, OneStrucData data) throws RBNCompatibilityException {
-		return macro.pform().dependsOn(variable, A, data);
+		return macro.cpmod().dependsOn(variable, A, data);
 	}
 
 	@Override
@@ -195,7 +195,7 @@ public class ProbFormMacroCall extends ProbForm {
 
 	@Override
 	public TreeSet<Rel> parentRels() {
-		return macro.pform().parentRels(); // No substitution required here
+		return macro.cpmod().parentRels(); // No substitution required here
 	}
 	
 	public TreeSet<Rel> parentRels(TreeSet<String> processed){
@@ -204,12 +204,12 @@ public class ProbFormMacroCall extends ProbForm {
 			return new TreeSet<Rel>();
 		else {
 			processed.add(mykey);
-			return macro.pform().parentRels(processed);
+			return macro.cpmod().parentRels(processed);
 		}
 	}
 	
 	public ProbForm pform() {
-		return macro.pform();
+		return (ProbForm)macro.cpmod();
 	}
 	
 	public RBNMacro macro() {

@@ -14,27 +14,27 @@ public class RBNElement
 	 * The right side of the definition is given by a probability formula.
 	 */
 
-	BoolRel prel;           // Relation
+	Rel prel;           // Relation
 
 	String[] arguments; // Argument list. Must be superset of free variables of prfrm.
 
-	ProbForm prfrm;
+	CPModel cpmod;
 
 	public RBNElement()
 	{
 	}
 
-	public RBNElement(BoolRel r, ProbForm pf)
+	public RBNElement(Rel r, CPModel pf)
 	{
 		prel =r;
-		prfrm = pf;
+		cpmod = pf;
 	}
 
-	public RBNElement(BoolRel r, String[] args, ProbForm pf)
+	public RBNElement(Rel r, String[] args, CPModel pf)
 	{
 		prel =r;
 		arguments = args;
-		prfrm = pf;
+		cpmod = pf;
 	}
 	
 	public String[] arguments() {
@@ -49,7 +49,7 @@ public class RBNElement
 		return prel.getTypes();
 	}
 
-	public BoolRel rel() {
+	public Rel rel() {
 		return prel;
 	}
 
@@ -58,11 +58,11 @@ public class RBNElement
 	}
 	
 	public void set_pform(ProbForm pf) {
-		prfrm=pf;
+		cpmod=pf;
 	}
 	
-	public ProbForm pform(){
-		return prfrm;
+	public CPModel cpmod(){
+		return cpmod;
 	}
 
 	public void setRel(BoolRel br){

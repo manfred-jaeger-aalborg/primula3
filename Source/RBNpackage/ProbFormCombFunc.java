@@ -323,7 +323,7 @@ public class ProbFormCombFunc extends ProbForm{
 		while (i<pfargs.length && allconstant){
 			j=0;
 			while (j<subslist.length && allconstant){
-				nextcondpfarg = pfargs[i].substitute(quantvars,subslist[j]).conditionEvidence(A,inst);
+				nextcondpfarg = (ProbForm)pfargs[i].substitute(quantvars,subslist[j]).conditionEvidence(A,inst);
 				if (!(nextcondpfarg instanceof ProbFormConstant)) allconstant = false;
 				else condpfargs[currentindex]=((ProbFormConstant)nextcondpfarg).cval;
 				j++;

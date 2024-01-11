@@ -327,7 +327,7 @@ public class BayesConstructor extends java.lang.Object {
 		{
 			thisrel = rbnarg.relAt(i);
 			thisvars = rbnarg.arguments_prels_At(i);
-			thispf = rbnarg.probForm_prels_At(i);
+			thispf = rbnarg.cpmod_prelements_At(i);
 			
 			int[][] allargs=strucarg.allArgTuples(thisrel);
 
@@ -899,7 +899,7 @@ public class BayesConstructor extends java.lang.Object {
 			 * to  complexnodes!
 			 */
 			if (evidencemode == Primula.OPTION_EVIDENCE_CONDITIONED){
-				nextnode.probform = nextnode.probform.conditionEvidence(strucarg,instarg);
+				nextnode.probform = (ProbForm)nextnode.probform.conditionEvidence(strucarg,instarg);
 			}
 
 			if (nextnode.probform instanceof ProbFormConstant)

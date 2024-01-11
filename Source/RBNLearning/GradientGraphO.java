@@ -122,7 +122,7 @@ public class GradientGraphO extends GradientGraph{
 		 *  
 		 */
 
-		BoolRel nextrel;
+		Rel nextrel;
 		Vector<int[]> inrel;
 		String[] vars; /* The argument list for nextpf */
 		ProbForm groundnextpf;
@@ -253,7 +253,7 @@ public class GradientGraphO extends GradientGraph{
 				
 				Hashtable<String,Object[]>  evaluated = new Hashtable<String,Object[]>();
 				for (int i=0; i<rbn.NumPFs(); i++){
-					nextpf = rbn.probForm_prels_At(i);
+					nextpf = rbn.cpmod_prelements_At(i);
 					vars = rbn.arguments_prels_At(i);
 					nextrel = rbn.relAt(i);
 					for (int ti = 0; ti <= 1 ; ti++) {

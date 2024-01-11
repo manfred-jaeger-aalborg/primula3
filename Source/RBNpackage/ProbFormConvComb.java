@@ -140,9 +140,9 @@ public class ProbFormConvComb extends ProbForm {
 	public ProbForm conditionEvidence(RelStruc A, OneStrucData inst)
 	throws RBNCompatibilityException
 	{
-		ProbForm newF1 = F1.conditionEvidence(A,inst);
-		ProbForm newF2 = F2.conditionEvidence(A,inst);
-		ProbForm newF3 = F3.conditionEvidence(A,inst);
+		ProbForm newF1 = (ProbForm)F1.conditionEvidence(A,inst);
+		ProbForm newF2 = (ProbForm)F2.conditionEvidence(A,inst);
+		ProbForm newF3 = (ProbForm)F3.conditionEvidence(A,inst);
 		if ((newF1 instanceof ProbFormConstant)&&
 				(newF2 instanceof ProbFormConstant)&&
 				(newF3 instanceof ProbFormConstant))

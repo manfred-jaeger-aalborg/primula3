@@ -129,7 +129,7 @@ public class RBN extends java.lang.Object {
     	public boolean multlinOnly(){
     		boolean result = true;
     		for (int i=0;i<elements.length;i++)
-    			if (!elements[i].pform().multlinOnly())
+    			if (!elements[i].cpmod().multlinOnly())
     				result = false;
     		return result;
     	}
@@ -166,27 +166,27 @@ public class RBN extends java.lang.Object {
     	}
 
 
-    	public BoolRel relAt(int i)
+    	public Rel relAt(int i)
     	{
     		return prelements[i].rel();
     	}
 
 
-    	public ProbForm probForm_prels_At(int i)
+    	public CPModel cpmod_prelements_At(int i)
     	{
-    		return prelements[i].pform();
+    		return prelements[i].cpmod();
     	}
 
-    	public ProbForm probForm_elements_At(int i)
+    	public CPModel cpmod_elements_At(int i)
     	{
-    		return elements[i].pform();
+    		return elements[i].cpmod();
     	}
     	
-    	/** Returns the probability formula for relation r */
-    	public ProbForm probForm(Rel r){
+    	/** Returns the model for relation r */
+    	public CPModel probForm(Rel r){
     		int ind = indexOf(r);
     		if (ind >= 0)
-    			return probForm_prels_At(ind);
+    			return cpmod_prelements_At(ind);
     		else
     			return null;
     	}
@@ -246,7 +246,7 @@ public class RBN extends java.lang.Object {
     	public String[] parameters(){
     		String[] result = new String[0];
     		for (int i=0;i<elements.length;i++){
-    			result = rbnutilities.arraymerge(result,elements[i].pform().parameters());
+    			result = rbnutilities.arraymerge(result,elements[i].cpmod().parameters());
     		}
     		return result;
     	}
@@ -268,7 +268,7 @@ public class RBN extends java.lang.Object {
     				}
     				filwrt.write(")");
     				filwrt.write("=" + '\n');
-    				filwrt.write(probForm_elements_At(i).asString(syntax,0,null,paramsAsValues,false)+ ";" + '\n' + '\n');
+    				filwrt.write(cpmod_elements_At(i).asString(syntax,0,null,paramsAsValues,false)+ ";" + '\n' + '\n');
 
     			}
     			filwrt.close();
@@ -288,7 +288,7 @@ public class RBN extends java.lang.Object {
     		for (int i=0;i<params.length;i++) {
     			paramvals.put(params[i],values[i]);
     			for (int j=0; j<elements.length; j++){
-    				elements[j].pform().setCvals(params[i], values[i]);
+    				elements[j].cpmod().setCvals(params[i], values[i]);
     			}
     		}
     	}
@@ -296,7 +296,7 @@ public class RBN extends java.lang.Object {
     	public void setParameter(String par,  double val){
     		paramvals.put(par,val);
 			for (int j=0; j<elements.length; j++){
-				elements[j].pform().setCvals(par, val);
+				elements[j].cpmod().setCvals(par, val);
 			}
     	}
     	
@@ -305,7 +305,7 @@ public class RBN extends java.lang.Object {
     		{
     			String key = e.nextElement();
     			for (int j=0; j<elements.length; j++)
-    				elements[j].pform().setCvals(key, paramvals.get(key));
+    				elements[j].cpmod().setCvals(key, paramvals.get(key));
     		}
     	}
     	
@@ -373,10 +373,10 @@ public class RBN extends java.lang.Object {
     				System.out.println("Warning: relation " + headrel.name() + " not Boolean according to signature");
     			else
     				el.setRel((BoolRel)relinsig);
-    			el.pform().updateSig(s);
+    			el.cpmod().updateSig(s);
     		}
     		for (int i=0; i<macroelements.length; i++){
-    			macroelements[i].pform().updateSig(s);
+    			macroelements[i].cpmod().updateSig(s);
     		}
     	}
     	

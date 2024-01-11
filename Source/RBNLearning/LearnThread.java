@@ -735,7 +735,7 @@ public class LearnThread extends GGThread {
 				if (myLearnModule.getUseMemoize())
 					evaluated = new Hashtable<String,Object[]>();
 				for (int i=0; i<rbn.NumPFs(); i++){
-					ProbForm nextpf = rbn.probForm_prels_At(i);
+					ProbForm nextpf = rbn.cpmod_prelements_At(i);
 					String[] vars = rbn.arguments_prels_At(i);
 					BoolRel nextrel = rbn.relAt(i);
 					for (int ti = 0; ti <= 1 ; ti++) {
