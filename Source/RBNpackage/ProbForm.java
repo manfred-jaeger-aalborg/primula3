@@ -49,6 +49,38 @@ public abstract class ProbForm extends CPModel
     {alias = null;}  
 
 
+    public Object[] evaluate(RelStruc A, 
+    		OneStrucData inst, 
+    		String[] vars, 
+    		int[] tuple, 
+    		boolean useCurrentCvals, 
+    		//String[] numrelparameters,
+    		boolean useCurrentPvals,
+    		GroundAtomList mapatoms,
+    		boolean useCurrentMvals,
+    		Hashtable<String,Object[]> evaluated,
+    		Hashtable<String,Integer> params,
+    		int returntype,
+    		boolean valonly,
+    		Profiler profiler)
+    throws RBNCompatibilityException{
+    	return evaluate(A, 
+        		inst, 
+        		vars, 
+        		tuple, 
+        		1,
+        		useCurrentCvals, 
+        		useCurrentPvals,
+        		mapatoms,
+        		useCurrentMvals,
+        		evaluated,
+        		params,
+        		returntype,
+        		valonly,
+        		profiler);
+    }
+    
+    
     /** Returns 0 if this probform evaluates to zero over 
      * structure A and with respect to instantiation inst, but
      * irrespective of any instantiation of other
