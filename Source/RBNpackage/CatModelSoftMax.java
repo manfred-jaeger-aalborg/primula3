@@ -5,6 +5,7 @@ import java.util.*;
 import RBNExceptions.RBNCompatibilityException;
 import RBNLearning.Profiler;
 import RBNinference.PFNetworkNode;
+import RBNutilities.rbnutilities;
 
 public class CatModelSoftMax extends CPModel {
 
@@ -79,15 +80,14 @@ public class CatModelSoftMax extends CPModel {
 			int returntype, 
 			boolean valonly,
 			Profiler profiler) throws RBNCompatibilityException {
-		// TODO Auto-generated method stub
 		Object[][] evaluatedpfs = new Object[probforms.size()][2];
 		Object[] result = new Object[2];
 		result[0]=new double[probforms.size()];
 		double nextval;
 		double valsum =0;
-		
+
 		for (int i = 0;i<probforms.size();i++) {
-			
+
 			Object[] pfval = probforms.elementAt(i).evaluate(A, 
 					inst, 
 					vars, 
@@ -115,88 +115,114 @@ public class CatModelSoftMax extends CPModel {
 		}
 		if (valonly)
 			return result;
-		x
-		return null;
+		if (returntype == ProbForm.RETURN_ARRAY) {
+			result[1]=new double[params.size()];
+
+			for (int k =0;k<params.size();k++) {
+				double derivsum =0;
+				for (int i=0;i<probforms.size();i++) {
+					derivsum+=Math.exp((Double)evaluatedpfs[i][0])*((Double[])evaluatedpfs[i][1])[k];
+				}
+				((Double[])result[1])[k]=Math.exp((Double)evaluatedpfs[gradindx][0])
+						*(((Double[])evaluatedpfs[gradindx][1])[k]-derivsum)/valsum;
+			}
+		}
+		else 
+			System.out.println("CatModelSoftMax.evaluate: gradients as hashtables not implemented yet");
+		return result;
 	}
 
 	@Override
 	public Double evalSample(RelStruc A, Hashtable<String, PFNetworkNode> atomhasht, OneStrucData inst,
 			Hashtable<String, Double> evaluated, long[] timers) throws RBNCompatibilityException {
-		// TODO Auto-generated method stub
+		System.out.println("CatModelSoftMax.evalSample: not yet implemented");
 		return null;
 	}
 
 	@Override
 	public String[] freevars() {
-		// TODO Auto-generated method stub
-		return null;
+		String result[] = new String[0];
+		for (int i = 0;i<probforms.size();i++)
+			result= rbnutilities.arraymerge(result,probforms.elementAt(i).freevars());
+		return result;
 	}
 
 	@Override
 	public Vector<GroundAtom> makeParentVec(RelStruc A) throws RBNCompatibilityException {
-		// TODO Auto-generated method stub
-		return null;
+		return makeParentVec(A,new OneStrucData(),null);
 	}
 
 	@Override
 	public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone)
 			throws RBNCompatibilityException {
-		// TODO Auto-generated method stub
+		Vector<GroundAtom> result = new Vector<GroundAtom>();
+		for (int i = 0;i<probforms.size();i++)
+			result = rbnutilities.combineAtomVecs(result,probforms.elementAt(i).makeParentVec(A,inst,macrosdone));
 		return null;
 	}
 
 	@Override
 	public String[] parameters() {
-		// TODO Auto-generated method stub
+		String result[] = new String[0];
+		for (int i = 0;i<probforms.size();i++)
+			result = rbnutilities.arraymerge(result,probforms.elementAt(i).parameters());
+		return result;
+	}
+
+	@Override
+	public CatModelSoftMax sEval(RelStruc A) throws RBNCompatibilityException {
+		CatModelSoftMax result = new CatModelSoftMax();
+		for (int i = 0;i<probforms.size();i++)
+			result.addProbForm((ProbForm)probforms.elementAt(i).sEval(A));
+		return result;
+	}
+
+	@Override
+	public CatModelSoftMax substitute(String[] vars, int[] args) {
+		
 		return null;
 	}
 
 	@Override
-	public ProbForm sEval(RelStruc A) throws RBNCompatibilityException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public ProbForm substitute(String[] vars, int[] args) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public ProbForm substitute(String[] vars, String[] args) {
-		// TODO Auto-generated method stub
-		return null;
+	public CatModelSoftMax substitute(String[] vars, String[] args) {
+		CatModelSoftMax result = new CatModelSoftMax();
+		for (int i = 0;i<probforms.size();i++)
+			result.addProbForm((ProbForm)probforms.elementAt(i).substitute(vars,args));
+		return result;
 	}
 
 	@Override
 	public void updateSig(Signature s) {
-		// TODO Auto-generated method stub
-
+		for (int i = 0;i<probforms.size();i++)
+			probforms.elementAt(i).updateSig(s);
 	}
 
 	@Override
 	public void setCvals(String paramname, double val) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public String makeKey(String[] vars, int[] args, Boolean nosub) {
-		// TODO Auto-generated method stub
-		return null;
+		for (int i = 0;i<probforms.size();i++)
+			probforms.elementAt(i).setCvals(paramname,val);
 	}
 
 	@Override
 	public TreeSet<Rel> parentRels() {
-		// TODO Auto-generated method stub
-		return null;
+		TreeSet<Rel> result = new TreeSet<Rel>();
+		for (int i = 0;i<probforms.size();i++)
+			result.addAll(probforms.elementAt(i).parentRels());
+		return result;
 	}
 
 	@Override
 	public TreeSet<Rel> parentRels(TreeSet<String> processed) {
-		// TODO Auto-generated method stub
-		return null;
+		String mykey = this.makeKey(null,null,true);
+		if (processed.contains(mykey))
+			return new TreeSet<Rel>();
+		else {
+			processed.add(mykey);
+			TreeSet<Rel> result = new TreeSet<Rel>();
+			for (int i = 0;i<probforms.size();i++)
+				result.addAll(probforms.elementAt(i).parentRels(processed));
+			return result;
+		}
 	}
 	
 	public void addProbForm(ProbForm pf) {

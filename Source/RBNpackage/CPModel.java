@@ -185,7 +185,7 @@ public abstract class CPModel
      * is already pre-evaluated (substitution lists in 
      * combination functions, and values of CConstr's)
      */  
-    public abstract ProbForm sEval(RelStruc A) throws RBNCompatibilityException;
+    public abstract CPModel sEval(RelStruc A) throws RBNCompatibilityException;
 
 
     /** returns the model obtained by substituting
@@ -193,9 +193,9 @@ public abstract class CPModel
      * Produces an error if vars are not among 
      * the free variables of the model
      */
-    public abstract ProbForm substitute(String[] vars, int[] args); 
+    public abstract CPModel substitute(String[] vars, int[] args); 
     
-    public abstract ProbForm substitute(String[] vars, String[] args);
+    public abstract CPModel substitute(String[] vars, String[] args);
     
     
     /**
@@ -217,7 +217,20 @@ public abstract class CPModel
 
     }
     
-    public abstract String makeKey(String[] vars, int[] args, Boolean nosub); 
+    public String makeKey(String[] vars, int[] args, Boolean nosub){
+    	if (nosub) {
+    		if (this.alias != null)
+    			return this.alias.getRelation().name();
+    		if (this instanceof ProbFormAtom)
+    			return ((ProbFormAtom)this).getRelation().name();
+    		return this.asString(Primula.CLASSICSYNTAX, 0, null, false, true);
+    	}
+    	if (this.alias != null) {
+    		ProbFormAtom groundalias = this.alias.substitute(vars, args);
+    		return groundalias.asString(Primula.CLASSICSYNTAX, 0, null, false, true);
+    	}
+    	else return this.substitute(vars,args).asString(Primula.CLASSICSYNTAX, 0, null, false, true);
+    } 
     
     
     /* Returns set of relations that evaluation of this Model depends on */

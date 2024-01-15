@@ -133,21 +133,6 @@ public abstract class ProbForm extends CPModel
     }
     
     
-    public String makeKey(String[] vars, int[] args, Boolean nosub) {
-    	if (nosub) {
-    		if (this.alias != null)
-    			return this.alias.getRelation().name();
-    		if (this instanceof ProbFormAtom)
-    			return ((ProbFormAtom)this).getRelation().name();
-    		return this.asString(Primula.CLASSICSYNTAX, 0, null, false, true);
-    	}
-    	if (this.alias != null) {
-    		ProbFormAtom groundalias = this.alias.substitute(vars, args);
-    		return groundalias.asString(Primula.CLASSICSYNTAX, 0, null, false, true);
-    	}
-    	else return this.substitute(vars,args).asString(Primula.CLASSICSYNTAX, 0, null, false, true);
-    }
-    
     public abstract ProbForm conditionEvidence(RelStruc A, OneStrucData inst)
     	    throws RBNCompatibilityException;
     
