@@ -5,7 +5,9 @@ import RBNpackage.ProbForm;
 
 public class RBNMacro extends RBNElement{
 	
-	/* Example: 
+	/* Can only have a ProbForm (not other CPModel) on the right side.
+	 * 
+	 * Example: 
 	 * 
 	 * @macro(u,v) = WIF r(u) THEN 0.3 ELSE  t(v);
 	 * 

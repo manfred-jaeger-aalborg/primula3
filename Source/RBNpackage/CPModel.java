@@ -137,7 +137,7 @@ public abstract class CPModel
     		OneStrucData inst
     		)  throws RBNCompatibilityException
     {
-    	return (double)this.evaluate(A,inst,new String[0], new int[0], false, false,null,false,null,null,ProbForm.RETURN_ARRAY,true,null)[0];
+    	return (double)this.evaluate(A,inst,new String[0], new int[0], 0, false, false,null,false,null,null,ProbForm.RETURN_ARRAY,true,null)[0];
     }
     
     /** Evaluate this probform over RelStruc A. For ground atoms on which probform

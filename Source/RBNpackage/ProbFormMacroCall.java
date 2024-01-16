@@ -32,7 +32,7 @@ public class ProbFormMacroCall extends ProbForm {
 	
 	private void setpf() {
 		if (pf_sub == null)
-			pf_sub = macro.cpmod().substitute(macro.arguments(), arguments);
+			pf_sub = ((ProbForm)macro.cpmod()).substitute(macro.arguments(), arguments);
 	}
 	
 	public void setpf(ProbForm pf) {

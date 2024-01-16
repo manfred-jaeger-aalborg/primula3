@@ -48,11 +48,14 @@ public abstract class ProbForm extends CPModel
     public ProbForm()
     {alias = null;}  
 
-
+/*
+ * To evaluate a ProbForm ignore the 'gradindx' argument!
+ */
     public Object[] evaluate(RelStruc A, 
     		OneStrucData inst, 
     		String[] vars, 
     		int[] tuple, 
+    		int gradindx,
     		boolean useCurrentCvals, 
     		//String[] numrelparameters,
     		boolean useCurrentPvals,
@@ -68,7 +71,6 @@ public abstract class ProbForm extends CPModel
         		inst, 
         		vars, 
         		tuple, 
-        		1,
         		useCurrentCvals, 
         		useCurrentPvals,
         		mapatoms,
@@ -80,6 +82,20 @@ public abstract class ProbForm extends CPModel
         		profiler);
     }
     
+    public abstract Object[] evaluate(RelStruc A, 
+    		OneStrucData inst, 
+    		String[] vars, 
+    		int[] tuple, 
+    		boolean useCurrentCvals, 
+    		//String[] numrelparameters,
+    		boolean useCurrentPvals,
+    		GroundAtomList mapatoms,
+    		boolean useCurrentMvals,
+    		Hashtable<String,Object[]> evaluated,
+    		Hashtable<String,Integer> params,
+    		int returntype,
+    		boolean valonly,
+    		Profiler profiler)throws RBNCompatibilityException;
     
     /** Returns 0 if this probform evaluates to zero over 
      * structure A and with respect to instantiation inst, but
@@ -132,6 +148,12 @@ public abstract class ProbForm extends CPModel
     	return 0;
     }
     
+    public abstract ProbForm substitute(String[] vars, int[] args); 
+    
+    public abstract ProbForm substitute(String[] vars, String[] args);
+    
+    public abstract ProbForm sEval(RelStruc A) throws RBNCompatibilityException;
+
     
     public abstract ProbForm conditionEvidence(RelStruc A, OneStrucData inst)
     	    throws RBNCompatibilityException;
