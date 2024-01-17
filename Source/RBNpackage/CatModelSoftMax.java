@@ -30,10 +30,10 @@ public class CatModelSoftMax extends CPModel {
 		String result = "SOFTMAX [ \n";
 		for (ProbForm pf: probforms) {
 			result = result + pf.asString(syntax, 1, A, paramsAsValue, usealias);
-			result = result + ",";
+			result = result + ",\n";
 		}
-		result = result.substring(0, result.length() - 1); // removing last ","
-		result = result + "/n ]";
+		result = result.substring(0, result.length() - 2); // removing last ","
+		result = result + "]";
 		return result;
 	}
 	
@@ -108,10 +108,10 @@ public class CatModelSoftMax extends CPModel {
 				Arrays.fill((double[])result[0],Double.NaN);
 				return result;
 			}
-			valsum+=nextval;
+			valsum+=Math.exp(nextval);
 		}
 		for (int i = 0;i<probforms.size();i++){
-			((double[])result[0])[i]=((Double)evaluatedpfs[i][0])/valsum;
+			((double[])result[0])[i]=(Math.exp((Double)evaluatedpfs[i][0]))/valsum;
 		}
 		if (valonly)
 			return result;
@@ -121,10 +121,10 @@ public class CatModelSoftMax extends CPModel {
 			for (int k =0;k<params.size();k++) {
 				double derivsum =0;
 				for (int i=0;i<probforms.size();i++) {
-					derivsum+=Math.exp((Double)evaluatedpfs[i][0])*((Double[])evaluatedpfs[i][1])[k];
+					derivsum+=Math.exp((double)(evaluatedpfs[i][0]))*((double[])evaluatedpfs[i][1])[k];
 				}
-				((Double[])result[1])[k]=Math.exp((Double)evaluatedpfs[gradindx][0])
-						*(((Double[])evaluatedpfs[gradindx][1])[k]-derivsum)/valsum;
+				((double[])result[1])[k]=Math.exp(((double)evaluatedpfs[gradindx][0]))
+						*(((double[])evaluatedpfs[gradindx][1])[k]*valsum-derivsum)/Math.pow(valsum,2);
 			}
 		}
 		else 

@@ -471,7 +471,8 @@ public class ProbFormCombFunc extends ProbForm{
 					}
 					((double[])result[1])[k]=mycomb.evaluateGrad(vals, derivs);
 				}
-				profiler.addTime(Profiler.TIME_ARRAYCREATE,System.currentTimeMillis()-timebeforearraycreate);
+				if (profile)
+					profiler.addTime(Profiler.TIME_ARRAYCREATE,System.currentTimeMillis()-timebeforearraycreate);
 			}
 			else {
 				long timebeforehashcreate = System.currentTimeMillis();

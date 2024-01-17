@@ -171,6 +171,10 @@ public class RBN extends java.lang.Object {
     		return prelements[i].rel();
     	}
 
+       	public CPModel modAt(int i)
+    	{
+    		return prelements[i].cpmod();
+    	}
 
     	public CPModel cpmod_prelements_At(int i)
     	{
