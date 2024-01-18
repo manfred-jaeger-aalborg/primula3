@@ -237,10 +237,15 @@ public  class Rel implements Serializable, Comparable<Rel>{
   		return valtype;
   	}
 
-	public int getValtype() {
-		return valtype;
-	}
-
+  	public double numvals() {
+  		switch (valtype) {
+  		case Rel.BOOLEAN: return 2;
+  		case Rel.CATEGORICAL: return ((CatRel)this).numvals();
+  		case Rel.NUMERIC: return Double.POSITIVE_INFINITY;
+  		}
+  		return Double.NaN;
+  	}
+  	
 	public void setValtype(int valtype) {
 		this.valtype = valtype;
 	}

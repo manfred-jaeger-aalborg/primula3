@@ -187,7 +187,7 @@ public class RBN extends java.lang.Object {
     	}
     	
     	/** Returns the model for relation r */
-    	public CPModel probForm(Rel r){
+    	public CPModel cpmodel(Rel r){
     		int ind = indexOf(r);
     		if (ind >= 0)
     			return cpmod_prelements_At(ind);
@@ -399,7 +399,7 @@ public class RBN extends java.lang.Object {
     			Rel nr = toprocess.pop();
     			if (!result.contains(nr)) {
     				result.add(nr);
-    				for (Rel pr: this.probForm(nr).parentRels(processedpfs)) 
+    				for (Rel pr: this.cpmodel(nr).parentRels(processedpfs)) 
     					toprocess.push(pr);
     			}
     		}

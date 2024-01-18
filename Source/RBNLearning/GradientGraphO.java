@@ -175,7 +175,7 @@ public class GradientGraphO extends GradientGraph{
 				nextatom = mapatoms.atomAt(qano);
 				narel = nextatom.rel();
 				naargs = nextatom.args();
-				nextpf = rbn.probForm(narel);
+				nextpf = rbn.cpmodel(narel);
 				vars = rbn.args(narel);
 				groundnextpf = nextpf.substitute(vars,naargs);
 				
@@ -384,7 +384,7 @@ public class GradientGraphO extends GradientGraph{
 			nextarg = at.args();
 			inputcaseno = nextggin.inputcaseno();
 			observcaseno = nextggin.observcaseno();
-			nextpf = rbn.probForm(at.rel());
+			nextpf = rbn.cpmodel(at.rel());
 			vars = rbn.args(at.rel());
 			groundnextpf = nextpf.substitute(vars,nextarg);
 			/** Note that (arbitrarily) the truthval of the constructed

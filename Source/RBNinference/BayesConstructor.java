@@ -115,15 +115,6 @@ public class BayesConstructor extends java.lang.Object {
 		this.myprimula = primula;
 	}
 
-	//	/** Determine size of and initialize groundatomhasht (=number of ground atoms)
-	//	@author keith cascio
-	//	@since 20060515 */
-	//	private int determineSizeHashTable(){
-	//	int numatoms =0;
-	//	for (int i=0;i<relations.length;i++)
-	//	numatoms = numatoms + (int)Math.pow(domsize,relations[i].arity);
-	//	return numatoms;
-	//	}
 
 
 	private void buildInitialGAHT(int querymode, int evidencemode, int nodetype ,int isolatedzeronodesmode)
@@ -148,13 +139,13 @@ public class BayesConstructor extends java.lang.Object {
 			 */
 			for (GroundAtom ga: queryatoms.allAtoms()) {
 				BNNode newestnode;
-				ProbForm pf = myprimula.getRBN().probForm(ga.rel());
+				CPModel cpm = myprimula.getRBN().cpmodel(ga.rel());
 				if (!relset.contains(ga.rel())) {
 					relset.add(ga.rel());
 					relset.addAll(myprimula.getRBN().ancestorRels(ga.rel()));
 				}
 				
-				ProbForm groundpf = pf.substitute(myprimula.getRBN().args(ga.rel()), ga.args());
+				CPModel groundcpm = cpm.substitute(myprimula.getRBN().args(ga.rel()), ga.args());
 				String argumentnames = rbnutilities.namestring(ga.args(),strucarg);
 				switch (nodetype){
 				case COMPLNODE:
@@ -162,14 +153,14 @@ public class BayesConstructor extends java.lang.Object {
 							ga.rel(),
 							argumentnames,
 							ga.args(),
-							groundpf);
+							groundcpm);
 					break;
 				case PFNNODE:
 					newestnode = new ComplexPFNetworkNode(
 							ga.rel(),
 							argumentnames,
 							ga.args(),
-							groundpf);
+							groundcpm);
 					break;
 				default:
 					newestnode = new ComplexBNGroundAtomNode();
@@ -194,10 +185,10 @@ public class BayesConstructor extends java.lang.Object {
 					 * is declared in the instantiation structure, but for which the
 					 * RBN does not actually contain a probability formula
 					 */
-					if (myprimula.getRBN().probForm(br) != null &&  ! emptyIntersect(rbnarg.ancestorRels(br),relset)) {
-						ProbForm pf = myprimula.getRBN().probForm(br);
+					if (myprimula.getRBN().cpmodel(br) != null &&  ! emptyIntersect(rbnarg.ancestorRels(br),relset)) {
+						CPModel cpm = myprimula.getRBN().cpmodel(br);
 						for (int[] arg : instarg.allInstantiated(br)) {
-							ProbForm groundpf = pf.substitute(myprimula.getRBN().args(br), arg);
+							CPModel groundcpm = cpm.substitute(myprimula.getRBN().args(br), arg);
 							GroundAtom ga = new GroundAtom(br,arg);
 							String argumentnames = rbnutilities.namestring(ga.args(),strucarg);
 							switch (nodetype){
@@ -206,14 +197,14 @@ public class BayesConstructor extends java.lang.Object {
 										ga.rel(),
 										argumentnames,
 										ga.args(),
-										groundpf);
+										groundcpm);
 								break;
 							case PFNNODE:
 								newestnode = new ComplexPFNetworkNode(
 										ga.rel(),
 										argumentnames,
 										ga.args(),
-										groundpf);
+										groundcpm);
 								break;
 							default:
 								newestnode = new ComplexBNGroundAtomNode();
@@ -237,15 +228,15 @@ public class BayesConstructor extends java.lang.Object {
 			 */
 			while (!toprocess.empty()) {
 				BNNode bn = toprocess.pop();
-				ProbForm pf = null;
+				CPModel pf = null;
 				GroundAtom ga = null;
 				if (bn instanceof ComplexBNGroundAtomNode) {
 					ComplexBNGroundAtomNode cbn = (ComplexBNGroundAtomNode)bn;
-					pf = cbn.probform();
+					pf = cbn.cpmodel();
 					ga = cbn.myatom();
 				}
 				else if (bn instanceof ComplexPFNetworkNode) {
-					pf = ((ComplexPFNetworkNode)bn).probform();
+					pf = ((ComplexPFNetworkNode)bn).cpmodel();
 					ga = ((ComplexPFNetworkNode)bn).myatom();
 				}
 				else
@@ -274,9 +265,9 @@ public class BayesConstructor extends java.lang.Object {
 				for (GroundAtom pga: parents) {
 					BNNode newestnode;
 					if (groundatomhasht.get(pga.asString())==null) {
-						ProbForm ppf = myprimula.getRBN().probForm(pga.rel());
+						CPModel ppf = myprimula.getRBN().cpmodel(pga.rel());
 						String[] args = myprimula.getRBN().arguments(pga.rel());
-						ProbForm ppf_sub = ppf.substitute(args, pga.args);
+						CPModel ppf_sub = ppf.substitute(args, pga.args);
 						String argumentnames = rbnutilities.namestring(pga.args(),strucarg);
 						switch (nodetype){
 						case COMPLNODE:
@@ -320,8 +311,8 @@ public class BayesConstructor extends java.lang.Object {
 		String[] thisvars;
 		int[] thistuple;
 		GroundAtom thisatom;
-		ProbForm thispf;
-		ProbForm groundpf;
+		CPModel thispf;
+		CPModel groundpf;
 
 		for (int i = 0;i<rbnarg.NumPFs();i++)
 		{
@@ -396,7 +387,6 @@ public class BayesConstructor extends java.lang.Object {
 		for (Enumeration<BNNode> e=groundatomhasht.elements();e.hasMoreElements();){
 			newgatn = e.nextElement();
 			parvec = (Vector<GroundAtom>)parentvecs.elementAt(nodeindex);
-			LinkedList parents = new LinkedList();
 			for (int j=0;j<parvec.size();j++){
 				nextpar = groundatomhasht.get(((GroundAtom)parvec.elementAt(j)).asString());
 				newgatn.addToParents(nextpar);
@@ -730,10 +720,13 @@ public class BayesConstructor extends java.lang.Object {
 	 * depends given instasosd. The computed cpt is w.r.t. the parent order defined
 	 * by parentatoms
 	 */
-	public static double[] makeCPT(ProbForm pform,RelStruc A,OneStrucData inst,Vector parentatoms)
+	public static double[] makeCPT(CPModel cpmodel,RelStruc A,OneStrucData inst,Vector<GroundAtom> parentatoms)
 	throws RBNCompatibilityException
 	{
-		double[] cpt = new double[(int)Math.pow(2,parentatoms.size())];
+		int numparconfigs =1;
+		for (GroundAtom ga: parentatoms)
+			numparconfigs*=ga.rel.numvals();
+		double[] cpt = new double[numparconfigs];
 		int[]  oldinst;
 		int[]  newinst;
 		int[]  diffinst;
@@ -809,7 +802,7 @@ public class BayesConstructor extends java.lang.Object {
 		Vector<Vector<GroundAtom>> parentvecs = new Vector<Vector<GroundAtom>> (); // Vector of Vector
 		Vector<GroundAtom> parvec = null;
 		ComplexBNGroundAtomNode currentnode;
-		ProbForm pform;
+		CPModel cpmodel;
 		double[] cpt;
 		SimpleBNGroundAtomNode newgatn;
 
@@ -840,14 +833,14 @@ public class BayesConstructor extends java.lang.Object {
 			currentnode = (ComplexBNGroundAtomNode)e.nextElement();
 			parvec = (Vector<GroundAtom>)parentvecs.elementAt(nodeindex);
 			nodeindex++;
-			pform = currentnode.probform;
+			cpmodel = currentnode.cpmodel;
 			GroundAtom atom = currentnode.myatom();
 			String name = currentnode.name;
 
 		
 			/* turn complexnode into simplenode
 			 */
-			cpt = makeCPT(pform,strucarg,inst,parvec);
+			cpt = makeCPT(cpmodel,strucarg,inst,parvec);
 			
 			newgatn = new SimpleBNGroundAtomNode(atom,
 					name,
@@ -899,21 +892,21 @@ public class BayesConstructor extends java.lang.Object {
 			 * to  complexnodes!
 			 */
 			if (evidencemode == Primula.OPTION_EVIDENCE_CONDITIONED){
-				nextnode.probform = (ProbForm)nextnode.probform.conditionEvidence(strucarg,instarg);
+				nextnode.cpmodel = (ProbForm)nextnode.cpmodel.conditionEvidence(strucarg,instarg);
 			}
 
-			if (nextnode.probform instanceof ProbFormConstant)
+			if (nextnode.cpmodel instanceof ProbFormConstant)
 				processConstNode(nextnode,evidencemode);
-			if (nextnode.probform instanceof ProbFormAtom)
+			if (nextnode.cpmodel instanceof ProbFormAtom)
 				processAtomNode((ComplexBNGroundAtomNode)nextnode,evidencemode);
-			if (nextnode.probform instanceof ProbFormConvComb)
+			if (nextnode.cpmodel instanceof ProbFormConvComb)
 				processConvCombNode(nextnode,evidencemode,decomposemode);
-			if (nextnode.probform instanceof ProbFormCombFunc)
+			if (nextnode.cpmodel instanceof ProbFormCombFunc)
 				processCombFuncNode(nextnode,evidencemode,decomposemode);
-			if (nextnode.probform instanceof  ProbFormBoolEquality 	)
+			if (nextnode.cpmodel instanceof  ProbFormBoolEquality 	)
 				processProbFormBoolEquality(nextnode,evidencemode);
-			if (nextnode.probform instanceof ProbFormBool){ // and not atomic!
-				nextnode.setProbForm(((ProbFormBool)nextnode.probform).toStandardPF(true));
+			if (nextnode.cpmodel instanceof ProbFormBool){ // and not atomic!
+				nextnode.setProbForm(((ProbFormBool)nextnode.cpmodel).toStandardPF(true));
 				complexnodes.add(nextnode);
 			}
 
@@ -990,7 +983,7 @@ public class BayesConstructor extends java.lang.Object {
 		else typeofnode = 1;
 		SimpleBNNode newnode;
 		double[] cpt = new double[1];
-		cpt[0] = ((ProbFormConstant)node.probform).cval;
+		cpt[0] = ((ProbFormConstant)node.cpmodel).cval;
 		switch (typeofnode)
 		{
 		case 0:
@@ -1024,8 +1017,8 @@ public class BayesConstructor extends java.lang.Object {
 			newnode.instantiate(node.instantiated);
 		}
 
-		Rel parrel = ((ProbFormAtom)node.probform).getRelation();
-		int[] parargs = rbnutilities.stringArrayToIntArray(((ProbFormAtom)node.probform).getArguments());
+		Rel parrel = ((ProbFormAtom)node.cpmodel).getRelation();
+		int[] parargs = rbnutilities.stringArrayToIntArray(((ProbFormAtom)node.cpmodel).getArguments());
 		GroundAtom paratom = new GroundAtom(parrel,parargs);
 		BNNode par = groundatomhasht.get(paratom.hashCode());
 		newnode.parents.add(par);
@@ -1170,13 +1163,13 @@ public class BayesConstructor extends java.lang.Object {
 		switch (i)
 		{
 		case 0:
-			pf[i] = ((ProbFormConvComb)oldnode.probform).f1();
+			pf[i] = ((ProbFormConvComb)oldnode.cpmodel).f1();
 			break;
 		case 1:
-			pf[i] = ((ProbFormConvComb)oldnode.probform).f2();
+			pf[i] = ((ProbFormConvComb)oldnode.cpmodel).f2();
 			break;
 		case 2:
-			pf[i] = ((ProbFormConvComb)oldnode.probform).f3();
+			pf[i] = ((ProbFormConvComb)oldnode.cpmodel).f3();
 			break;
 		}
 
@@ -1354,7 +1347,7 @@ public class BayesConstructor extends java.lang.Object {
 
 
 	private void processCombFuncNode( ComplexBNNode node, int evidencemode, int decomposemode ){
-		CombFunc   cfunc       = ((ProbFormCombFunc)node.probform).getMycomb();
+		CombFunc   cfunc       = ((ProbFormCombFunc)node.cpmodel).getMycomb();
 		if( !(cfunc instanceof MultLinCombFunc) ) throw new IllegalArgumentException( "Cannot proceed contructing a bayesian network at node \"" + node.name + "\".\nDecompose mode is on, but the current model is not decomposable because it contains the non-multilinear combination function \"" + cfunc.name + "\".\nPlease set decompose mode to \"none\" (in Primula console menu Options:Construction Mode:Decompose Mode:none)." );
 
 		int typeofnode;
@@ -1386,9 +1379,9 @@ public class BayesConstructor extends java.lang.Object {
 		int ind;
 
 
-		ProbForm[] argpfs      = ((ProbFormCombFunc)node.probform).getPfargs();
-		ProbFormBool    ccon        = ((ProbFormCombFunc)node.probform).getCconstr();
-		String[]   qvars       = ((ProbFormCombFunc)node.probform).getQuantvars();
+		ProbForm[] argpfs      = ((ProbFormCombFunc)node.cpmodel).getPfargs();
+		ProbFormBool    ccon        = ((ProbFormCombFunc)node.cpmodel).getCconstr();
+		String[]   qvars       = ((ProbFormCombFunc)node.cpmodel).getQuantvars();
 		int[][]    argtuples   = new int[0][0];
 		try{
 			argtuples = strucarg.allTrue(ccon,qvars);

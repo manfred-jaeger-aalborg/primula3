@@ -2035,7 +2035,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 			osd = rdoi.oneStrucDataAt(i);
 			for (int j=0;j<queryatoms.size();j++){
 				gat=queryatoms.atomAt(j);
-				pf = rbn.probForm(gat.rel());
+				pf = rbn.cpmodel(gat.rel());
 				varargs = rbn.args(gat.rel());
 				intargs = gat.args();
 				try{
@@ -2248,7 +2248,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		
 		for (Rel r : sig.getProbRels()) {
 			System.out.println("Evaluate relation " + r.name() + " for " + rdata.cases().size() + " input domains");
-			ProbForm pf = rbn.probForm(r);
+			ProbForm pf = rbn.cpmodel(r);
 			String[] varargs = rbn.args(r);
 			
 			double[] result = new double[5];

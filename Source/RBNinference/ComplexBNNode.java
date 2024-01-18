@@ -38,26 +38,26 @@ import RBNExceptions.*;
 
 public class ComplexBNNode extends BNNode{
 
-    ProbForm probform;
+    CPModel cpmodel;
     
     /** Creates new ComplexBNNode */
     public ComplexBNNode() {
     }
     
-     public ComplexBNNode(String name, ProbForm pf) {
+     public ComplexBNNode(String name, CPModel pf) {
         super (name);
-        probform = pf;
+        cpmodel = pf;
     }
     
-    public ComplexBNNode(String name, ProbForm pf, int val) {
+    public ComplexBNNode(String name, CPModel pf, int val) {
         super (name,val);
-        probform = pf;
+        cpmodel = pf;
     }
     
  
-    public ComplexBNNode(String name, ProbForm pf, LinkedList parents, LinkedList children ) {
+    public ComplexBNNode(String name, CPModel pf, LinkedList parents, LinkedList children ) {
         super (name,parents,children);
-        probform = pf;
+        cpmodel = pf;
     }
 
 
@@ -66,17 +66,17 @@ public class ComplexBNNode extends BNNode{
     		throws RBNCompatibilityException{
     	if (parents.size()!=0) return false;
     	if (children.size()!=0) return false;
-    	if (probform.evaluatesTo(rels)!=0) return false;
+    	if (cpmodel instanceof ProbForm && ((ProbForm)cpmodel).evaluatesTo(rels)!=0) return false;
     	if (instantiated != -1) return false;
     	return true;
     }
 
-    public ProbForm probform(){
-    	return probform;
+    public CPModel cpmodel(){
+    	return cpmodel;
     }
     
-    public void setProbForm(ProbForm pf){
-    	probform = pf;
+    public void setCPModel(ProbForm pf){
+    	cpmodel = pf;
     }
     
 

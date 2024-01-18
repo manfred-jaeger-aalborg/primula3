@@ -32,24 +32,24 @@ import RBNExceptions.*;
 
 public class ComplexPFNetworkNode extends PFNetworkNode{
 
-	private ProbForm probform;
+	private CPModel cpmodel;
 	
 
 	public ComplexPFNetworkNode(ComplexBNGroundAtomNode cgan){
 		super(cgan.myatom());
-		probform = cgan.probform;
+		cpmodel = cgan.cpmodel;
 	}
 
-	public ComplexPFNetworkNode(Rel r,String arnames, int[] ar,ProbForm pf) {
+	public ComplexPFNetworkNode(Rel r,String arnames, int[] ar,CPModel pf) {
 		super(new GroundAtom(r,ar));
-		probform = pf;
+		cpmodel = pf;
 		sampleinst = -1;
 		truesampleweight = new double[2];
 	}
 
-	public ComplexPFNetworkNode(GroundAtom ga, ProbForm pf) {
+	public ComplexPFNetworkNode(GroundAtom ga, CPModel pf) {
 		super(ga);
-		probform=pf;
+		cpmodel=pf;
 	}
 	
 	/* Computes the conditional probability of the instantiation of this node
@@ -63,7 +63,7 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 			long[] timers)
 			throws RBNCompatibilityException
 			{
-		double result = probform.evalSample(A,atomhasht,inst,evaluated,timers);
+		double result = cpmodel.evalSample(A,atomhasht,inst,evaluated,timers);
 		//System.out.print(" cP: " + result);
 		return result;
 			}
@@ -73,7 +73,7 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 			throws RBNCompatibilityException
 	{
 		//System.out.print(" ceto " + this.myatom().asString(A));
-		int result = probform.evaluatesTo(A,inst,usesampleinst,atomhasht);
+		int result = cpmodel.evaluatesTo(A,inst,usesampleinst,atomhasht);
 		//System.out.print(" " + result);
 		return result;
 	}
@@ -97,14 +97,14 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 			throws RBNCompatibilityException{
 		if (parents.size()!=0) return false;
 		if (children.size()!=0) return false;
-		if (probform.evaluatesTo(rels)!=0) return false;
+		if (cpmodel.evaluatesTo(rels)!=0) return false;
 		if (instantiated != -1) return false;
 		return true;
 	}
 
 
-	public ProbForm probform(){
-		return probform;
+	public CPModel cpmodel(){
+		return cpmodel;
 	}
 
 
@@ -166,7 +166,7 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 	public void sEval(RelStruc A)
 			throws RBNCompatibilityException
 			{
-		probform = probform.sEval(A);
+		cpmodel = cpmodel.sEval(A);
 			}
 	
 

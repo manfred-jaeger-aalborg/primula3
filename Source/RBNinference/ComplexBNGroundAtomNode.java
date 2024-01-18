@@ -54,39 +54,39 @@ public class ComplexBNGroundAtomNode extends ComplexBNNode implements GroundAtom
     public ComplexBNGroundAtomNode(){
     }
 
-     public ComplexBNGroundAtomNode(GroundAtom at,ProbForm pf) {
+     public ComplexBNGroundAtomNode(GroundAtom at,CPModel pf) {
         super(at.asString(),pf);
         myatom = at;
     }
 
-    public ComplexBNGroundAtomNode(GroundAtom at,ProbForm pf,int inst) {
+    public ComplexBNGroundAtomNode(GroundAtom at,CPModel pf,int inst) {
         super(at.asString(),pf,inst);
         myatom = at;
     }
 
     
-    public ComplexBNGroundAtomNode(Rel r,int[] ar,ProbForm pf) {
+    public ComplexBNGroundAtomNode(Rel r,int[] ar,CPModel pf) {
         super(r.printname() + '(' + rbnutilities.arrayToString(ar) + ')',pf);
         myatom = new GroundAtom(r,ar);
     }
     
 
-     public ComplexBNGroundAtomNode(GroundAtom at,String arnames,ProbForm pf) {
+     public ComplexBNGroundAtomNode(GroundAtom at,String arnames,CPModel pf) {
         super(at.relname() + '(' + arnames + ')',pf);
         myatom = at;
     }
 
-     public ComplexBNGroundAtomNode(Rel r,String arnames, int[] ar,ProbForm pf) {
+     public ComplexBNGroundAtomNode(Rel r,String arnames, int[] ar,CPModel pf) {
         super(r.printname() + '(' + arnames + ')',pf);
          myatom = new GroundAtom(r,ar);
     }
     
-    public ComplexBNGroundAtomNode(GroundAtom at, ProbForm pf,LinkedList parents,LinkedList children) {
+    public ComplexBNGroundAtomNode(GroundAtom at, CPModel pf,LinkedList parents,LinkedList children) {
         super(at.asString(),pf,parents,children);
         myatom = at;
     }
 
-    public ComplexBNGroundAtomNode(Rel r,int[] ar,ProbForm pf,LinkedList parents,LinkedList children) {
+    public ComplexBNGroundAtomNode(Rel r,int[] ar,CPModel pf,LinkedList parents,LinkedList children) {
         super(r.printname() + '(' + rbnutilities.arrayToString(ar) + ')',pf,parents,children);
         myatom = new GroundAtom(r,ar);
     }
