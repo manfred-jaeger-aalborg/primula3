@@ -294,15 +294,21 @@ public class OneStrucData {
 	}
 	
 	public void add(GroundAtom at, int tv, String dv){
-		switch(tv){
-		case 0:
-			add((BoolRel)at.rel,at.args,false,dv);
-			break;
-		case 1:
-			add((BoolRel)at.rel,at.args,true,dv);
-			break;
-		default:
-			System.out.println("Cannot add truthvalue " + tv + " to instantiation");
+		Rel r = at.rel;
+		if (r instanceof BoolRel) {
+			switch(tv){
+			case 0:
+				add((BoolRel)r,at.args,false,dv);
+				break;
+			case 1:
+				add((BoolRel)r,at.args,true,dv);
+				break;
+			default:
+				System.out.println("Cannot add truthvalue " + tv + " to instantiation");
+			}
+		}
+		else {  // CatRel
+			add((CatRel)r,at.args,tv,dv);
 		}
 	}
 

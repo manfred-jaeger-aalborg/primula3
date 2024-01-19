@@ -582,6 +582,17 @@ public class rbnutilities extends java.lang.Object
         return result;
     }
 
+    
+    public static String arrayToString (double arr[],String separator)
+    {
+        String result = "";
+        for (int i = 0; i<arr.length-1; i++)
+            result = result + arr[i] + separator;
+        if (arr.length > 0) 
+            result = result + arr[arr.length-1];
+        return result;
+    }
+
     public static String arrayToString (double arr[],int first, int last)
     {
         String result = "";
@@ -867,6 +878,35 @@ public class rbnutilities extends java.lang.Object
 	}
     }
 
+    /** 
+     * maxvals is a vector representing the maximal number for any component
+     * 
+     * cv is a current vector of the same length as maxvals, where each
+     * entry is <= the corresponding entry in maxvals.
+     * 
+	 * Method turns cv  into vector representing the "next" configuration
+	 * 
+	 * Example:
+	 * maxvals = [2,3,4,2]
+	 * 
+	 * cv = [0,0,0,1] -> [0,0,1,0] -> [0,0,1,1] -> [0,0,2,1] ->
+	 * 
+	 * cv = [0,1,3,1] -> [0,2,0,0] -> ...
+	 */
+    public static void incrementCatVector(int[] maxvals, int[] cv)
+    {
+    	int ind = cv.length-1;
+    	while (cv[ind]==maxvals[ind] && ind>0){
+    		cv[ind]=0;
+    		ind--;
+    	}
+    	if (ind==0 && cv[ind]==maxvals[ind])
+    		throw new RuntimeException("Trying to increment maximal bit vector");
+    	else{
+    		cv[ind]+=1;
+    	}
+    }
+    
     /** returns the tuple i_0,i_2,...,i_(dim-1) 
 	 * that occurs in place 'ind' in a 
 	 * lexicographic enumeration of all 

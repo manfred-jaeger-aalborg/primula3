@@ -12,6 +12,14 @@ public class CatRel extends Rel {
 	
 	private String[] values;
 	
+	public String[] getValues() {
+		return values;
+	}
+
+	public void setValues(String[] values) {
+		this.values = values;
+	}
+
 	private HashMap<String,Integer> stringToIndx;
 	private HashMap<Integer,String> indxToString;
 	

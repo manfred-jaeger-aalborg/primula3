@@ -30,7 +30,7 @@ public class SimpleBNNode extends BNNode {
      * 
      * 
      */
-    double[] cptentries;
+    double[][] cptentries;
 
     boolean exported;
     
@@ -40,13 +40,13 @@ public class SimpleBNNode extends BNNode {
     
     public SimpleBNNode(String name) {
         super (name); 
-        cptentries = new double[0];
+        cptentries = new double[0][0];
         depthset = false;
 
         exported = false;
     }
     
-    public SimpleBNNode(String name, double[] cpt, LinkedList<BNNode> parents, LinkedList<BNNode> children ) {
+    public SimpleBNNode(String name, double[][] cpt, LinkedList<BNNode> parents, LinkedList<BNNode> children ) {
         super (name,parents,children); 
         cptentries = cpt;
         depthset =false;
@@ -54,7 +54,7 @@ public class SimpleBNNode extends BNNode {
         exported = false;
     }
     
-    public void setCPT(double[] cpt){
+    public void setCPT(double[][] cpt){
         cptentries = cpt;
     }
 
@@ -65,36 +65,38 @@ public class SimpleBNNode extends BNNode {
     {
 	if (parents.size()!=0) return false;
 	if (children.size()!=0) return false;
-	if (cptentries[0]!=0) return false; // No parents -> only cptentries[0] exists
+	if (!this.isIsboolean()) return false;
+	if (cptentries[0][0]!=1) return false; // No parents -> only cptentries[0] exists
 	if (instantiated != -1) return false; // instantiated nodes should be shown, even if they are isolated zero!
 	return true;
     }
     
-    /** returns true if this and sbnn are equivalent deterministic nodes,
-     * i.e. they are both deterministic, with the same set of parents, and
-     * equivalent cpts.
-     */
-    public boolean isDetEquivalent(SimpleBNNode sbnn){
-        boolean result = true;
-        if (!this.parentsSubset(sbnn)) result = false;
-        if (!sbnn.parentsSubset(this)) result = false;
-        if (result){
-            // Compute the permutation vector of parents:
-            // Example: this.parents = (A,B,C)
-            //          sbnn.parents = (B,C,A)
-            // Compute perm = (3,1,2)
-            int[] perm = new int[parents.size()];
-            for (int i=0;i<parents.size();i++)
-                perm[i]=sbnn.parents.indexOf(parents.get(i));
-            // Now compare the cpts (and check that they are 0,1-valued):
-            for (int i=0;i<cptentries.length;i++){
-                if (cptentries[i] != 0 && cptentries[i]!= 1) result = false;
-                if (cptentries[i]!=sbnn.cptentries[rbnutilities.computePermutedIndex(i, perm, 2, parents.size())])
-                    result = false;
-            }
-        }
-        return result;
-    }
+//    /** returns true if this and sbnn are equivalent deterministic nodes,
+//     * i.e. they are both deterministic, with the same set of parents, and
+//     * equivalent cpts.
+//     */
+//    Temporarily disabled ....(needs update for categorical case)    
+//    public boolean isDetEquivalent(SimpleBNNode sbnn){
+//        boolean result = true;
+//        if (!this.parentsSubset(sbnn)) result = false;
+//        if (!sbnn.parentsSubset(this)) result = false;
+//        if (result){
+//            // Compute the permutation vector of parents:
+//            // Example: this.parents = (A,B,C)
+//            //          sbnn.parents = (B,C,A)
+//            // Compute perm = (3,1,2)
+//            int[] perm = new int[parents.size()];
+//            for (int i=0;i<parents.size();i++)
+//                perm[i]=sbnn.parents.indexOf(parents.get(i));
+//            // Now compare the cpts (and check that they are 0,1-valued):
+//            for (int i=0;i<cptentries.length;i++){
+//                if (cptentries[i] != 0 && cptentries[i]!= 1) result = false;
+//                if (cptentries[i]!=sbnn.cptentries[rbnutilities.computePermutedIndex(i, perm, 2, parents.size())])
+//                    result = false;
+//            }
+//        }
+//        return result;
+//    }
 }
 
 

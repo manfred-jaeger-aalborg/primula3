@@ -37,6 +37,16 @@ public class BNNode{
 	public LinkedList<BNNode> parents;
 	public LinkedList<BNNode> children;
 
+	private boolean isboolean; // if this node represents a Boolean variable
+	
+	public boolean isIsboolean() {
+		return isboolean;
+	}
+
+	public void setIsboolean(boolean isboolean) {
+		this.isboolean = isboolean;
+	}
+
 	/* Set to 0 resp. 1 (Boolean case) or value index (Categorical case) if node instantiated 
 	 * Set to -1 if node not instantiated
 	 */

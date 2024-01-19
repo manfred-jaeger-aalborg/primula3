@@ -158,5 +158,8 @@ public abstract class ProbForm extends CPModel
     public abstract ProbForm conditionEvidence(RelStruc A, OneStrucData inst)
     	    throws RBNCompatibilityException;
     
+    public int numvals() {
+    	return 2;
+    }
 }
 

@@ -57,38 +57,45 @@ public class ComplexBNGroundAtomNode extends ComplexBNNode implements GroundAtom
      public ComplexBNGroundAtomNode(GroundAtom at,CPModel pf) {
         super(at.asString(),pf);
         myatom = at;
+        this.setIsboolean(at.rel().valtype()==Rel.BOOLEAN);
     }
 
     public ComplexBNGroundAtomNode(GroundAtom at,CPModel pf,int inst) {
         super(at.asString(),pf,inst);
         myatom = at;
+        this.setIsboolean(at.rel().valtype()==Rel.BOOLEAN);
     }
 
     
     public ComplexBNGroundAtomNode(Rel r,int[] ar,CPModel pf) {
         super(r.printname() + '(' + rbnutilities.arrayToString(ar) + ')',pf);
         myatom = new GroundAtom(r,ar);
+        this.setIsboolean(r.valtype()==Rel.BOOLEAN);
     }
     
 
      public ComplexBNGroundAtomNode(GroundAtom at,String arnames,CPModel pf) {
         super(at.relname() + '(' + arnames + ')',pf);
         myatom = at;
+        this.setIsboolean(at.rel().valtype()==Rel.BOOLEAN);
     }
 
      public ComplexBNGroundAtomNode(Rel r,String arnames, int[] ar,CPModel pf) {
         super(r.printname() + '(' + arnames + ')',pf);
          myatom = new GroundAtom(r,ar);
+         this.setIsboolean(r.valtype()==Rel.BOOLEAN);
     }
     
     public ComplexBNGroundAtomNode(GroundAtom at, CPModel pf,LinkedList parents,LinkedList children) {
         super(at.asString(),pf,parents,children);
         myatom = at;
+        this.setIsboolean(at.rel().valtype()==Rel.BOOLEAN);
     }
 
     public ComplexBNGroundAtomNode(Rel r,int[] ar,CPModel pf,LinkedList parents,LinkedList children) {
         super(r.printname() + '(' + rbnutilities.arrayToString(ar) + ')',pf,parents,children);
         myatom = new GroundAtom(r,ar);
+        this.setIsboolean(r.valtype()==Rel.BOOLEAN);
     }
     
 

@@ -597,15 +597,16 @@ public class BayesConstructor extends java.lang.Object {
 
 			
 
-			// Merge equivalent deterministic nodes
-			boolean merge;
-			for (int i=0;i<exportnodes.size();i++){
-				nextconvcomp = (SimpleBNNode)exportnodes.elementAt(i);
-				merge = true;
-				while (merge)
-					merge = mergeEquivalentDetNodes(nextconvcomp);
-				++myProgress;//keith cascio 20060515
-			}
+//			// Merge equivalent deterministic nodes
+//			Temporarily disabled (needs update for categorical)
+//			boolean merge;
+//			for (int i=0;i<exportnodes.size();i++){
+//				nextconvcomp = (SimpleBNNode)exportnodes.elementAt(i);
+//				merge = true;
+//				while (merge)
+//					merge = mergeEquivalentDetNodes(nextconvcomp);
+//				++myProgress;//keith cascio 20060515
+//			}
 
 			
 			
@@ -717,16 +718,29 @@ public class BayesConstructor extends java.lang.Object {
 
 	/* Compute a CPT representation of conditional distribution defined
 	 * by pform. parentatoms contains the atoms on which pform effectively
-	 * depends given instasosd. The computed cpt is w.r.t. the parent order defined
+	 * depends given inst. The computed cpt is w.r.t. the parent order defined
 	 * by parentatoms
+	 * 
+	 * the cpt has dimensions (#parent configurations) x (#values of relation) 
+	 * 
+	 * The probability values are listed in the order defined by their integer
+	 * indices (Boolean case: first false, then true)
 	 */
-	public static double[] makeCPT(CPModel cpmodel,RelStruc A,OneStrucData inst,Vector<GroundAtom> parentatoms)
+	public static double[][] makeCPT(CPModel cpmodel,RelStruc A,OneStrucData inst,Vector<GroundAtom> parentatoms)
 	throws RBNCompatibilityException
 	{
+		boolean iscatmodel = (cpmodel instanceof CatModelSoftMax);
+		boolean isboolmodel = !iscatmodel;
+		
+		int[] numparvals = new int[parentatoms.size()];
+		
 		int numparconfigs =1;
-		for (GroundAtom ga: parentatoms)
-			numparconfigs*=ga.rel.numvals();
-		double[] cpt = new double[numparconfigs];
+		for (int i=0;i<parentatoms.size();i++) {
+			numparvals[i]=(int)parentatoms.elementAt(i).rel.numvals();
+			numparconfigs*=numparvals[i];
+		}
+		int numvals = cpmodel.numvals();
+		double[][] cpt = new double[numvals][numparconfigs];
 		int[]  oldinst;
 		int[]  newinst;
 		int[]  diffinst;
@@ -747,17 +761,17 @@ public class BayesConstructor extends java.lang.Object {
 		 */
 		for (int j=0;j<parentatoms.size();j++){
 			newinst[j]=0;
-			copyinst.add((GroundAtom)parentatoms.elementAt(j),false,"?");
+			copyinst.add((GroundAtom)parentatoms.elementAt(j),0,"?");
 		}
 
 		/* Iterate over all instantiations */
 		for (int h=0;h<cpt.length;h++){
-			//System.out.println(pform.asString(0, 0, A));
-			
-			cpt[h]=(double)pform.evaluate(A,
+			if (isboolmodel) {
+			double trueval =(double)cpmodel.evaluate(A,
 					copyinst,
 					new String[0], 
 					new int[0], 
+					0,
 					true, 
 					true,
 					new GroundAtomList(),
@@ -767,9 +781,24 @@ public class BayesConstructor extends java.lang.Object {
 					ProbForm.RETURN_ARRAY,
 					true,
 					null)[0];
-			
-			if (cpt[h]<0 || cpt[h]>1)
-				System.out.println("invalid cpt entry " + cpt[h] + "from " + pform.asString(0,0,A,false,false));
+			cpt[h]=new double[] {1-trueval,trueval};
+			}
+			if (iscatmodel) {
+				cpt[h] =(double[])cpmodel.evaluate(A,
+						copyinst,
+						new String[0], 
+						new int[0], 
+						0,
+						true, 
+						true,
+						new GroundAtomList(),
+						false,
+						new Hashtable<String,Object[]>(),
+						null,
+						ProbForm.RETURN_ARRAY,
+						true,
+						null)[0];
+				}
 			
 			/* the last two arguments here are just dummy arguments,
 			 * because pform is ground
@@ -779,14 +808,10 @@ public class BayesConstructor extends java.lang.Object {
 			if (h<cpt.length-1){
 				for (int k=0;k<newinst.length;k++)
 					oldinst[k]=newinst[k];
-				rbnutilities.incrementBitVector(newinst);
+				rbnutilities.incrementCatVector(numparvals,newinst);
 				for (int k=0;k<newinst.length;k++){
-					diff = newinst[k]-oldinst[k];
-					switch (diff){
-					case 0: break;
-					case 1: copyinst.add((GroundAtom)parentatoms.elementAt(k),true,"?"); break;
-					case -1: copyinst.add((GroundAtom)parentatoms.elementAt(k),false,"?");
-					}
+					if (oldinst[k]!=newinst[k])
+						copyinst.add((GroundAtom)parentatoms.elementAt(k),newinst[k],"?");
 				}
 			}
 		}
@@ -803,7 +828,7 @@ public class BayesConstructor extends java.lang.Object {
 		Vector<GroundAtom> parvec = null;
 		ComplexBNGroundAtomNode currentnode;
 		CPModel cpmodel;
-		double[] cpt;
+		double[][] cpt;
 		SimpleBNGroundAtomNode newgatn;
 
 
@@ -906,7 +931,7 @@ public class BayesConstructor extends java.lang.Object {
 			if (nextnode.cpmodel instanceof  ProbFormBoolEquality 	)
 				processProbFormBoolEquality(nextnode,evidencemode);
 			if (nextnode.cpmodel instanceof ProbFormBool){ // and not atomic!
-				nextnode.setProbForm(((ProbFormBool)nextnode.cpmodel).toStandardPF(true));
+				nextnode.setCPModel(((ProbFormBool)nextnode.cpmodel).toStandardPF(true));
 				complexnodes.add(nextnode);
 			}
 
@@ -935,13 +960,13 @@ public class BayesConstructor extends java.lang.Object {
 			switch (evidencemode){
 			case Primula.OPTION_NOT_EVIDENCE_CONDITIONED:{
 				newgatn = e.nextElement();
-				parvec = newgatn.probform().makeParentVec(strucarg);
+				parvec = newgatn.cpmodel().makeParentVec(strucarg);
 				break;
 			}
 			case Primula.OPTION_EVIDENCE_CONDITIONED:{
 				newgatn = e.nextElement();
 				TreeSet<String> macrosdone = new TreeSet<String>();
-				parvec = newgatn.probform().makeParentVec(strucarg,instarg,macrosdone);
+				parvec = newgatn.cpmodel().makeParentVec(strucarg,instarg,macrosdone);
 				break;
 			}
 			}
@@ -982,8 +1007,10 @@ public class BayesConstructor extends java.lang.Object {
 		if (node instanceof ComplexBNGroundAtomNode) typeofnode = 0;
 		else typeofnode = 1;
 		SimpleBNNode newnode;
-		double[] cpt = new double[1];
-		cpt[0] = ((ProbFormConstant)node.cpmodel).cval;
+		double[][] cpt = new double[2][1];
+		cpt[0][0] = 1-((ProbFormConstant)node.cpmodel).cval;
+		cpt[0][1] = ((ProbFormConstant)node.cpmodel).cval;
+
 		switch (typeofnode)
 		{
 		case 0:
@@ -1023,7 +1050,10 @@ public class BayesConstructor extends java.lang.Object {
 		BNNode par = groundatomhasht.get(paratom.hashCode());
 		newnode.parents.add(par);
 		par.children.add(newnode);
-		double newcpt[] = {0,1};
+		/*
+		 * TODO: unchecked fix for categorical version
+		 */
+		double newcpt[][] = {{0,1}};
 		newnode.cptentries = newcpt;
 		newnode.children = node.children;
 
@@ -1074,31 +1104,31 @@ public class BayesConstructor extends java.lang.Object {
 		newnode.parents =parents;
 		newnode.children = node.children;
 
-		double[] cpt = new double[(int)Math.pow(2,numparents)];
+		double[][] cpt = new double[2][(int)Math.pow(2,numparents)];
 		switch (type[0]){
 		case 0:
 			switch (type[1]){
 			case 0:
 				switch (type[2]){
 				case 0: // type 0 0 0
-					cpt[0] = value[0]*value[1]+(1-value[0])*value[2];
+					cpt[0][1] = value[0]*value[1]+(1-value[0])*value[2];
 					break;
 				default: // type 0 0 *
-					cpt[0] = value[0]*value[1];
-					cpt[1] = value[0]*value[1]+1-value[0];
+					cpt[0][1]  = value[0]*value[1];
+					cpt[1][1]  = value[0]*value[1]+1-value[0];
 				}
 				break;
 			default :
 				switch (type[2]){
 				case 0: // type 0 * 0
-					cpt[0] = (1-value[0])*value[2];
-					cpt[1] = value[0]+(1-value[0])*value[2];
+					cpt[0][1]  = (1-value[0])*value[2];
+					cpt[1][1]  = value[0]+(1-value[0])*value[2];
 					break;
 				default: // type 0 * *
-					cpt[0] = 0;
-					cpt[1] = 1-value[0];
-					cpt[2] = value[0];
-					cpt[3] = 1;
+					cpt[0][1]  = 0;
+					cpt[1][1]  = 1-value[0];
+					cpt[2][1]  = value[0];
+					cpt[3][1]  = 1;
 				}
 				break;
 			}
@@ -1108,40 +1138,41 @@ public class BayesConstructor extends java.lang.Object {
 			case 0:
 				switch (type[2]){
 				case 0: // type * 0 0
-					cpt[0] = value[2];
-					cpt[1] = value[1];
+					cpt[0][1]  = value[2];
+					cpt[1][1]  = value[1];
 					break;
 				default: // type * 0 *
-					cpt[0] = 0;
-					cpt[1] = 1;
-					cpt[2] = value[1];
-					cpt[3] = value[1];
+					cpt[0][1]  = 0;
+					cpt[1][1]  = 1;
+					cpt[2][1]  = value[1];
+					cpt[3][1]  = value[1];
 				}
 				break;
 			default :
 				switch (type[2]){
 				case 0: // type * * 0
-					cpt[0] = value[2];
-					cpt[1] = value[2];
-					cpt[2] = 0;
-					cpt[3] = 1;
+					cpt[0][1]  = value[2];
+					cpt[1][1]  = value[2];
+					cpt[2][1]  = 0;
+					cpt[3][1]  = 1;
 					break;
 				default: // type * * *
-					cpt[0] = 0;
-					cpt[1] = 1;
-					cpt[2] = 0;
-					cpt[3] = 1;
-					cpt[4] = 0;
-					cpt[5] = 0;
-					cpt[6] = 1;
-					cpt[7] = 1;
+					cpt[0][1]  = 0;
+					cpt[1][1]  = 1;
+					cpt[2][1]  = 0;
+					cpt[3][1]  = 1;
+					cpt[4][1]  = 0;
+					cpt[5][1]  = 0;
+					cpt[6][1]  = 1;
+					cpt[7][1]  = 1;
 				}
 				break;
 			}
 			break;
 		}
 
-
+		for (int i=0;i<cpt.length;i++)
+			cpt[i][0]=1-cpt[i][1];
 		newnode.cptentries = cpt;
 		numnodes = numnodes + 3; // This is only an upper bound on the
 		// actual number of nodes
@@ -1269,11 +1300,13 @@ public class BayesConstructor extends java.lang.Object {
 		if (node instanceof ComplexBNGroundAtomNode) typeofnode = 0;
 		else typeofnode = 1;
 		SimpleBNNode newnode;
-		double[] cpt = new double[1];
-		int val = node.probform().evaluatesTo(strucarg);
+		double[][] cpt = new double[1][2];
+		int val = ((ProbFormBoolEquality)node.cpmodel()).evaluatesTo(strucarg);
 		if (val == -1)
 			throw new RBNRuntimeException("Equality with undefined value in BayesConstructor");
-		cpt[0] = val;
+		cpt[0][1] = val;
+		cpt[0][0]=1-val;
+		
 		switch (typeofnode)
 		{
 		case 0:
@@ -1467,92 +1500,94 @@ public class BayesConstructor extends java.lang.Object {
 						marginalizeOut((SimpleBNNode)li.next(),currentnode);
 					result = true;
 					break;
-				case Primula.OPTION_DECOMPOSE_DETERMINISTIC:
-					//if (currentnode.parents.size()>0){
-					if (isDeterministic(currentnode)){
-						childrenlist = new LinkedList(currentnode.children);
-						li = childrenlist.listIterator();
-						while (li.hasNext())
-							marginalizeOut((SimpleBNNode)li.next(),currentnode);
-						result = true;
-					}
+//				case Primula.OPTION_DECOMPOSE_DETERMINISTIC:
+//					//if (currentnode.parents.size()>0){
+//					if (isDeterministic(currentnode)){
+//						childrenlist = new LinkedList(currentnode.children);
+//						li = childrenlist.listIterator();
+//						while (li.hasNext())
+//							marginalizeOut((SimpleBNNode)li.next(),currentnode);
+//						result = true;
+//					}
 				}// end switch decomposemode
 			}
 		}
 		return result;
 	}
 
-	/** Merges all equivalent deterministic auxiliary nodes in
-	 * network component given by bnn
-	 * returns true if at least one merge operation has taken place
-	 */
-	private boolean mergeEquivalentDetNodes(SimpleBNNode bnn){
-		boolean result = false;
-		SimpleBNNode currentnode;
-		SimpleBNNode child1;
-		SimpleBNNode child2;
-		SimpleBNNode nextgrandchild;
-		SimpleBNNode nextcousin;
-		Vector nodestack = bnn.buildNodeStack();
-		ListIterator li;
-		boolean removed = true;
-		for (int i=0; i<nodestack.size(); i++){
-			currentnode = (SimpleBNNode)nodestack.elementAt(i);
-
-			LinkedList newchildren = new LinkedList(currentnode.children);
-			int j = 0;
-			while (j<currentnode.children.size()-1){
-				child1 = (SimpleBNNode)currentnode.children.get(j);
-				int h = j+1;
-				while (h<currentnode.children.size()){
-					child2 = (SimpleBNNode)currentnode.children.get(h);
-					if (!(child1 instanceof SimpleBNGroundAtomNode) && !(child2 instanceof SimpleBNGroundAtomNode) ){
-						if (child1.isDetEquivalent(child2)){
-							result = true;
-							//System.out.println("merging  " + child1.name + "  and  " + child2.name);
-							currentnode.children.remove(child2);
-							li = child2.children.listIterator();
-							while (li.hasNext()){
-								nextgrandchild = (SimpleBNNode)li.next();
-								if (!nextgrandchild.parents.contains(child1)){
-									nextgrandchild.replaceInParentList(child2,child1);
-									child1.addToChildren(nextgrandchild);
-									child2.children = new LinkedList();// child2 then passed over when considered
-									// as next element in nodestack
-								}
-								else{
-									int child1ind = nextgrandchild.parents.indexOf(child1);
-									int child2ind = nextgrandchild.parents.indexOf(child2);
-
-									double[] newcpt = eliminateDuplicateDependency(nextgrandchild.cptentries,
-											nextgrandchild.parents.size(),
-											child1ind,child2ind);
-									nextgrandchild.parents.remove(child2);
-									child2.children = new LinkedList();
-									nextgrandchild.cptentries = newcpt;
-								}
-							}
-							li = child2.parents.listIterator();
-							while (li.hasNext()){
-								nextcousin = (SimpleBNNode)li.next();
-								if (nextcousin != currentnode){
-									removed=true;
-									while (removed){
-										removed = nextcousin.children.remove(child2);
-									}
-								}
-							}
-						} // end  if (child1.isDetEquivalent(child2))
-					} // end if (!(child1 instanceof SimpleBNGroundAtomNode) && ...
-					h++;
-				}// end while h
-				j++;
-			} // end while j
-			//currentnode.children = newchildren;
-
-		}
-		return result;
-	}
+//	/** Merges all equivalent deterministic auxiliary nodes in
+//	 * network component given by bnn
+//	 * returns true if at least one merge operation has taken place
+//	 * 
+//	 * Currently disabled for maintainability!
+//	 */
+//	private boolean mergeEquivalentDetNodes(SimpleBNNode bnn){
+//		boolean result = false;
+//		SimpleBNNode currentnode;
+//		SimpleBNNode child1;
+//		SimpleBNNode child2;
+//		SimpleBNNode nextgrandchild;
+//		SimpleBNNode nextcousin;
+//		Vector nodestack = bnn.buildNodeStack();
+//		ListIterator li;
+//		boolean removed = true;
+//		for (int i=0; i<nodestack.size(); i++){
+//			currentnode = (SimpleBNNode)nodestack.elementAt(i);
+//
+//			LinkedList newchildren = new LinkedList(currentnode.children);
+//			int j = 0;
+//			while (j<currentnode.children.size()-1){
+//				child1 = (SimpleBNNode)currentnode.children.get(j);
+//				int h = j+1;
+//				while (h<currentnode.children.size()){
+//					child2 = (SimpleBNNode)currentnode.children.get(h);
+//					if (!(child1 instanceof SimpleBNGroundAtomNode) && !(child2 instanceof SimpleBNGroundAtomNode) ){
+//						if (child1.isDetEquivalent(child2)){
+//							result = true;
+//							//System.out.println("merging  " + child1.name + "  and  " + child2.name);
+//							currentnode.children.remove(child2);
+//							li = child2.children.listIterator();
+//							while (li.hasNext()){
+//								nextgrandchild = (SimpleBNNode)li.next();
+//								if (!nextgrandchild.parents.contains(child1)){
+//									nextgrandchild.replaceInParentList(child2,child1);
+//									child1.addToChildren(nextgrandchild);
+//									child2.children = new LinkedList();// child2 then passed over when considered
+//									// as next element in nodestack
+//								}
+//								else{
+//									int child1ind = nextgrandchild.parents.indexOf(child1);
+//									int child2ind = nextgrandchild.parents.indexOf(child2);
+//
+//									double[] newcpt = eliminateDuplicateDependency(nextgrandchild.cptentries,
+//											nextgrandchild.parents.size(),
+//											child1ind,child2ind);
+//									nextgrandchild.parents.remove(child2);
+//									child2.children = new LinkedList();
+//									nextgrandchild.cptentries = newcpt;
+//								}
+//							}
+//							li = child2.parents.listIterator();
+//							while (li.hasNext()){
+//								nextcousin = (SimpleBNNode)li.next();
+//								if (nextcousin != currentnode){
+//									removed=true;
+//									while (removed){
+//										removed = nextcousin.children.remove(child2);
+//									}
+//								}
+//							}
+//						} // end  if (child1.isDetEquivalent(child2))
+//					} // end if (!(child1 instanceof SimpleBNGroundAtomNode) && ...
+//					h++;
+//				}// end while h
+//				j++;
+//			} // end while j
+//			//currentnode.children = newchildren;
+//
+//		}
+//		return result;
+//	}
 
 	private boolean isDeterministic(SimpleBNNode node){
 		boolean result = true;

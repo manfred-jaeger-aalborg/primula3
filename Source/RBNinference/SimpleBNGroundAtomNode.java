@@ -42,31 +42,37 @@ public class SimpleBNGroundAtomNode extends SimpleBNNode implements GroundAtomNo
     public SimpleBNGroundAtomNode(GroundAtom at) {
         super(at.asString());
         myatom = at;
+        this.setIsboolean(at.rel().valtype()==Rel.BOOLEAN);
     }
 
     public SimpleBNGroundAtomNode(Rel r,int[] ar) {
         super(r.name.name + '(' + rbnutilities.arrayToString(ar) + ')');
         myatom = new GroundAtom(r,ar);
+        this.setIsboolean(r.valtype()==Rel.BOOLEAN);
     }
     
      public SimpleBNGroundAtomNode(GroundAtom at, String name) {
         super(name);
         myatom = at;
+        this.setIsboolean(at.rel().valtype()==Rel.BOOLEAN);
     }
 
      public SimpleBNGroundAtomNode(Rel r, String name, int[] ar) {
         super(name);
         myatom = new GroundAtom(r,ar);
+        this.setIsboolean(r.valtype()==Rel.BOOLEAN);
     }
     
-    public SimpleBNGroundAtomNode(GroundAtom at, String name, double[] cpt,LinkedList parents,LinkedList children) {
+    public SimpleBNGroundAtomNode(GroundAtom at, String name, double[][] cpt,LinkedList parents,LinkedList children) {
         super(name,cpt,parents,children);
          myatom = at;
+         this.setIsboolean(at.rel().valtype()==Rel.BOOLEAN);
     }
 
-    public SimpleBNGroundAtomNode(Rel r, String name, int[] ar,double[] cpt,LinkedList parents,LinkedList children) {
+    public SimpleBNGroundAtomNode(Rel r, String name, int[] ar,double[][] cpt,LinkedList parents,LinkedList children) {
         super(name,cpt,parents,children);
          myatom = new GroundAtom(r,ar);
+         this.setIsboolean(r.valtype()==Rel.BOOLEAN);
     }
 
     public GroundAtom myatom(){

@@ -240,5 +240,7 @@ public abstract class CPModel
      * been processed */
     public abstract TreeSet<Rel> parentRels(TreeSet<String> processed);
     
+    public abstract int numvals();
+    
 }
 

@@ -33,7 +33,8 @@ package RBNinference;
 import java.util.*;
 import java.io.*;
 import RBNio.*;
-
+import RBNpackage.*;
+import RBNutilities.rbnutilities;
 import edu.ucla.belief.ui.primula.*;
 
 public class BayesNetIntHuginNet implements BayesNetInt {
@@ -122,65 +123,137 @@ public class BayesNetIntHuginNet implements BayesNetInt {
         addNode(node,pt,truthval);
     }
 
-     /* Add a new BoolNode to the network.
-      * Place node at coordinates coords
-      * (if concrete BNS supports such
-      * placement)
-      */
-    public void addNode(SimpleBNNode node,int[] coords, int truthval){
-        ListIterator li;
-        String internalname = makeNetName(node.name);
-        double trueval,falseval;
-        try{
-            bufwr.write("node " + internalname + '\n');
-            bufwr.write("{" + '\n');
-	    if (node instanceof SimpleBNGroundAtomNode)
-		bufwr.write('\t' + "label = \"" + node.name + "\";" + '\n');
-	    else
-		bufwr.write('\t' + "label = \"" + "aux" + "\";" + '\n');
-            bufwr.write('\t' + "position = ("+coords[0] +" " + coords[1] +");"+ '\n');
-            bufwr.write('\t' + "states = (\"false\" \"true\");" + '\n');
-            bufwr.write('\t' + "subtype = boolean;" + '\n');
-            writeTruthValue( truthval );
-            bufwr.write("}" + '\n' + '\n');
+//     /* Add a new BoolNode to the network.
+//      * Place node at coordinates coords
+//      * (if concrete BNS supports such
+//      * placement)
+//      */
+//    public void addNode(SimpleBNNode node,int[] coords, int truthval){
+//        ListIterator li;
+//        String internalname = makeNetName(node.name);
+//        double trueval,falseval;
+//        try{
+//            bufwr.write("node " + internalname + '\n');
+//            bufwr.write("{" + '\n');
+//	    if (node instanceof SimpleBNGroundAtomNode)
+//		bufwr.write('\t' + "label = \"" + node.name + "\";" + '\n');
+//	    else
+//		bufwr.write('\t' + "label = \"" + "aux" + "\";" + '\n');
+//            bufwr.write('\t' + "position = ("+coords[0] +" " + coords[1] +");"+ '\n');
+//            bufwr.write('\t' + "states = (\"false\" \"true\");" + '\n');
+//            bufwr.write('\t' + "subtype = boolean;" + '\n');
+//            writeTruthValue( truthval );
+//            bufwr.write("}" + '\n' + '\n');
+//
+//            bufwr.write("potential (" + internalname );
+//            if (node.parents.size()>0){
+//                bufwr.write(" | ");
+//                li = node.parents.listIterator();
+//                while (li.hasNext()){
+//                    bufwr.write(makeNetName(((BNNode)li.next()).name) + " ");
+//                }
+//            }
+//            bufwr.write(")" +'\n' );
+//            // The order of the cptentries in the net format is as follows
+//            //
+//            //  pa1  pa2 pa3  |  true false
+//            //  ----------------------------
+//            //  t    t    t   |   16(7)   15
+//            //  t    t    f   |   14(6)   13
+//            //  t    f    t   |   12(5)    11
+//            //  .    .    .   |   .     .
+//            //  f    f    t   |   4(1)    3
+//            //  f    f    f   |   2(0)    1
+//            //
+//            // Numbers in parenthesis are the indices of the parameters
+//            // in the cptentries field of SimpleBNNode!
+//            bufwr.write("{" + '\n');
+//            bufwr.write('\t' + "data = (");
+//            for (int i=0; i<node.cptentries.length;i++){
+//                trueval = node.cptentries[i] ;
+//                falseval = 1-trueval;
+//                bufwr.write(falseval + " " + trueval);
+//                if (i<node.cptentries.length-1) {
+//                    bufwr.write('\n');
+//                    bufwr.write('\t');
+//                }
+//            }
+//            bufwr.write(" );" + '\n');
+//            bufwr.write("}" + '\n' + '\n');
+//        }
+//        catch (IOException e) {System.out.println(e);}
+//    }
 
-            bufwr.write("potential (" + internalname );
-            if (node.parents.size()>0){
-                bufwr.write(" | ");
-                li = node.parents.listIterator();
-                while (li.hasNext()){
-                    bufwr.write(makeNetName(((BNNode)li.next()).name) + " ");
-                }
-            }
-            bufwr.write(")" +'\n' );
-            // The order of the cptentries in the net format is as follows
-            //
-            //  pa1  pa2 pa3  |  true false
-            //  ----------------------------
-            //  t    t    t   |   16(7)   15
-            //  t    t    f   |   14(6)   13
-            //  t    f    t   |   12(5)    11
-            //  .    .    .   |   .     .
-            //  f    f    t   |   4(1)    3
-            //  f    f    f   |   2(0)    1
-            //
-            // Numbers in parenthesis are the indices of the parameters
-            // in the cptentries field of SimpleBNNode!
-            bufwr.write("{" + '\n');
-            bufwr.write('\t' + "data = (");
-            for (int i=0; i<node.cptentries.length;i++){
-                trueval = node.cptentries[i] ;
-                falseval = 1-trueval;
-                bufwr.write(falseval + " " + trueval);
-                if (i<node.cptentries.length-1) {
-                    bufwr.write('\n');
-                    bufwr.write('\t');
-                }
-            }
-            bufwr.write(" );" + '\n');
-            bufwr.write("}" + '\n' + '\n');
-        }
-        catch (IOException e) {System.out.println(e);}
+    /* Add a new Node to the network.
+   * Place node at coordinates coords
+   * (if concrete BNS supports such
+   * placement)
+   */
+    public void addNode(SimpleBNNode node,int[] coords, int truthval){
+    	ListIterator li;
+    	String internalname = makeNetName(node.name);
+    	try{
+    		bufwr.write("node " + internalname + '\n');
+    		bufwr.write("{" + '\n');
+    		if (node instanceof SimpleBNGroundAtomNode)
+    			bufwr.write('\t' + "label = \"" + node.name + "\";" + '\n');
+    		else
+    			bufwr.write('\t' + "label = \"" + "aux" + "\";" + '\n');
+    		bufwr.write('\t' + "position = ("+coords[0] +" " + coords[1] +");"+ '\n');
+    		if (!(node instanceof GroundAtomNodeInt) || node.isIsboolean())
+    			bufwr.write('\t' + "states = (\"false\" \"true\");" + '\n');
+    		else { // categorical
+    			String[] valnames = ((CatRel)((GroundAtomNodeInt)node).myatom().rel()).getValues();
+    			bufwr.write('\t' + "states = (");
+    			for (int i=0;i<valnames.length;i++)
+    				bufwr.write("\""+valnames[i]+"\" ");
+    			bufwr.write(");" + '\n');
+    		}
+    		if (!(node instanceof GroundAtomNodeInt) || node.isIsboolean()) {
+    			bufwr.write('\t' + "subtype = boolean;" + '\n');
+    			writeTruthValue( truthval ); // Unclear whether this is needed!
+    		}
+    		else { // categorical
+    			bufwr.write('\t' + "subtype = labeled;" + '\n');
+    		}
+    		
+    		bufwr.write("}" + '\n' + '\n');
+
+    		bufwr.write("potential (" + internalname );
+    		if (node.parents.size()>0){
+    			bufwr.write(" | ");
+    			li = node.parents.listIterator();
+    			while (li.hasNext()){
+    				bufwr.write(makeNetName(((BNNode)li.next()).name) + " ");
+    			}
+    		}
+    		bufwr.write(")" +'\n' );
+    		// The order of the cptentries in the net format is as follows
+    		//
+    		//  pa1  pa2 pa3  |  true false
+    		//  ----------------------------
+    		//  t    t    t   |   16(7)   15
+    		//  t    t    f   |   14(6)   13
+    		//  t    f    t   |   12(5)    11
+    		//  .    .    .   |   .     .
+    		//  f    f    t   |   4(1)    3
+    		//  f    f    f   |   2(0)    1
+    		//
+    		// Numbers in parenthesis are the indices of the parameters
+    		// in the cptentries field of SimpleBNNode!
+    		bufwr.write("{" + '\n');
+    		bufwr.write('\t' + "data = (");
+    		for (int i=0; i<node.cptentries.length;i++){
+    			bufwr.write(rbnutilities.arrayToString(node.cptentries[i], " "));
+    			if (i<node.cptentries.length-1) {
+    				bufwr.write('\n');
+    				bufwr.write('\t');
+    			}
+    		}
+    		bufwr.write(" );" + '\n');
+    		bufwr.write("}" + '\n' + '\n');
+    	}
+    	catch (IOException e) {System.out.println(e);}
     }
 
     public void open(){
