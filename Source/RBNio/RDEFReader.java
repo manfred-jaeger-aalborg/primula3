@@ -114,6 +114,9 @@ public class RDEFReader {
 		Vector<OneBoolRelData> boolpredrels = new Vector<OneBoolRelData>();
 		Vector<OneBoolRelData> boolprobrels = new Vector<OneBoolRelData>();
 		
+		Vector<OneCatRelData> catpredrels = new Vector<OneCatRelData>();
+		Vector<OneCatRelData> catprobrels = new Vector<OneCatRelData>();
+	
 		Vector<OneNumRelData> numpredrels = new Vector<OneNumRelData>();
 		Vector<OneNumRelData> numprobrels = new Vector<OneNumRelData>();
 		
@@ -138,10 +141,12 @@ public class RDEFReader {
 			String maxval;
 			String colstr;
 			Color col;
+			String valtype;
+			String catvalues;
 			
 			Rel r = new Rel();
 			
-			String valtype;
+			
 			
 			for ( Iterator i = reldecs.elementIterator("Rel"); i.hasNext(); ) {
 				Element reldec = (Element) i.next();
@@ -153,6 +158,7 @@ public class RDEFReader {
 				type = reldec.attributeValue("type");
 				argtypes = reldec.attributeValue("argtypes");
 				valtype = reldec.attributeValue("valtype");
+				catvalues = reldec.attributeValue("values");
 				
 //				int[] colrgb = StringOps.stringToIntArray(reldec.attributeValue("color"));
 //				System.out.println(rbnutilities.arrayToString(colrgb));
@@ -171,7 +177,10 @@ public class RDEFReader {
 					r = new BoolRel(rname,rarity,typeStringToArray(argtypes,rarity));
 					r.setColor(col);
 				}
-				else{
+				else if (valtype.equals("categorical")){
+					r = new CatRel(rname,rarity,typeStringToArray(argtypes,rarity),valStringToArray(catvalues));
+				}
+				else if (valtype.equals("numeric")){
 					double min;
 					double max;
 					if (minval != null){
@@ -186,7 +195,8 @@ public class RDEFReader {
 					r = new NumRel(rname,rarity,typeStringToArray(argtypes,rarity),min,max);
 					r.setColor(col);
 				}
-				
+				else
+					throw new RBNIllegalArgumentException("Unknown value type " + valtype + " in .rdef input");
 				
 				if (type.equals("predefined")){
 					r.setInout(Rel.PREDEFINED);
@@ -196,6 +206,9 @@ public class RDEFReader {
 					else{
 						if(valtype.equals("boolean")){
 							boolpredrels.add(new OneBoolRelData((BoolRel)r,dv));	
+						}
+						else if (valtype.equals("categorical")){
+							catpredrels.add(new OneCatRelData((CatRel)r,dv));	
 						}
 						else{
 							numpredrels.add(new OneNumRelData((NumRel)r,Double.parseDouble(dv)));
@@ -209,6 +222,9 @@ public class RDEFReader {
 					if(valtype.equals("boolean")){
 						boolprobrels.add(new OneBoolRelData((BoolRel)r,dv));	
 					}
+					else if (valtype.equals("categorical")){
+						catprobrels.add(new OneCatRelData((CatRel)r,dv));	
+					}
 					else{
 						numprobrels.add(new OneNumRelData((NumRel)r,Double.parseDouble(dv)));
 					}
@@ -221,7 +237,9 @@ public class RDEFReader {
 			myprimula.setSignature(sig);
 			Element datael = root.element("Data");
 			for ( Iterator i = datael.elementIterator("DataForInputDomain"); i.hasNext(); ) {
-				reldata.add(parseDataForOneInput((Element)i.next(),boolpredrels,boolprobrels,numpredrels,numprobrels,A,sig));
+				reldata.add(parseDataForOneInput((Element)i.next(),boolpredrels,boolprobrels,
+						catpredrels,catprobrels,
+						numpredrels,numprobrels,A,sig));
 			}
 			
 		}
@@ -233,6 +251,7 @@ public class RDEFReader {
 	
 	private OneStrucData parseOneDataElement(
 			Vector<OneBoolRelData> boolinitrels, 
+			Vector<OneCatRelData> catinitrels, 
 			Vector<OneNumRelData> numinitrels,
 			Element datael, 
 			Hashtable<String,Object[]> namehasht,
@@ -245,6 +264,9 @@ public class RDEFReader {
 		for (int i=0;i<boolinitrels.size();i++)
 			result.add(new OneBoolRelData(boolinitrels.elementAt(i).rel(),boolinitrels.elementAt(i).dv()));
 
+		for (int i=0;i<catinitrels.size();i++)
+			result.add(new OneCatRelData(catinitrels.elementAt(i).rel(),catinitrels.elementAt(i).dv()));
+		
 		for (int i=0;i<numinitrels.size();i++)
 			result.add(new OneNumRelData(numinitrels.elementAt(i).rel(),numinitrels.elementAt(i).dv()));
 
@@ -255,12 +277,8 @@ public class RDEFReader {
 			
 			Rel currentrel = result.find(nextdat.attributeValue("rel")).rel();
 			
-			
-			
 			String argstr = nextdat.attributeValue("args");
 			
-					
-		
 			
 			/*  Two possibilities: 
 			 * 
@@ -361,7 +379,11 @@ public class RDEFReader {
 //						System.out.println(tupno);
 				}
 			}
-			
+			else if (currentrel instanceof CatRel){
+				for (int tupno =0; tupno<intargs.length; tupno++){
+					result.setData((CatRel)currentrel,intargs[tupno],((CatRel)currentrel).get_Int_val(truthval));
+				}
+			}
 			else {
 				for (int tupno =0; tupno<intargs.length; tupno++){
 					result.setData((NumRel)currentrel,intargs[tupno],Double.parseDouble(truthval));
@@ -380,6 +402,8 @@ public class RDEFReader {
 	private RelDataForOneInput parseDataForOneInput(Element el,
 			Vector<OneBoolRelData> boolpredrels,
 			Vector<OneBoolRelData> boolprobrels,
+			Vector<OneCatRelData> catpredrels,
+			Vector<OneCatRelData> catprobrels,
 			Vector<OneNumRelData> numpredrels,
 			Vector<OneNumRelData> numprobrels,
 			RelStruc A,
@@ -478,6 +502,7 @@ public class RDEFReader {
 			else{
 				Element predreldata = el.element("PredefinedRels");
 				OneStrucData inputdata = parseOneDataElement(boolpredrels, 
+						catpredrels,
 						numpredrels,
 						predreldata,
 						namehasht,
@@ -523,6 +548,7 @@ public class RDEFReader {
 			for (Iterator<Element> i = el.elementIterator("ProbabilisticRelsCase");i.hasNext();){
 				Element nextdatael = (Element)i.next();
 				nextonestruc =  parseOneDataElement(boolprobrels,
+						catprobrels,
 						numprobrels,
 						nextdatael,
 						namehasht,
@@ -559,6 +585,10 @@ public class RDEFReader {
 		}
 		return result;
 
+	}
+	
+	private String[] valStringToArray(String vs) {
+		return rbnutilities.stringToArray(vs,",");
 	}
 	
 	private Boolean isBoolTrue(String tv){

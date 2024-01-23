@@ -740,7 +740,7 @@ public class BayesConstructor extends java.lang.Object {
 			numparconfigs*=numparvals[i];
 		}
 		int numvals = cpmodel.numvals();
-		double[][] cpt = new double[numvals][numparconfigs];
+		double[][] cpt = new double[numparconfigs][numvals];
 		int[]  oldinst;
 		int[]  newinst;
 		int[]  diffinst;
@@ -1483,7 +1483,8 @@ public class BayesConstructor extends java.lang.Object {
 	 *  auxiliary nodes that have at most one parent.
 	 *  Returns true if at least one node was eliminated
 	 */
-	private boolean marginalizeOutRedundant(SimpleBNNode bnn,int decomposemode){
+	private boolean marginalizeOutRedundant(SimpleBNNode bnn,int decomposemode)
+	throws RBNIllegalArgumentException{
 		boolean result = false;
 		SimpleBNNode currentnode;
 		LinkedList childrenlist;
@@ -1590,20 +1591,27 @@ public class BayesConstructor extends java.lang.Object {
 //	}
 
 	private boolean isDeterministic(SimpleBNNode node){
+		if (!node.isIsboolean()) {
+			System.out.println("BayesConstructor.isDeterministic called for non Boolean node");
+			return false;
+		}
 		boolean result = true;
 		for (int i=0;i<node.cptentries.length;i++){
-			if (node.cptentries[i]!=0.0 &&  node.cptentries[i]!=1.0) result = false;
+			if (node.cptentries[i][0]!=0.0 &&  node.cptentries[i][0]!=1.0) result = false;
 		}
 		return result;
 	}
 
 
 	private void marginalizeOut(SimpleBNNode child, SimpleBNNode parent)
+	throws RBNIllegalArgumentException
 	// parent is a node with at most one parent. child is a node with
 	// parent among its parents. Dependency of
 	// child on parent is eliminated. child becomes dependent on (single)
 	// parent of parent (if exists)
 	{
+		if (!child.isIsboolean() || !parent.isIsboolean())
+			throw new RBNIllegalArgumentException("Non-boolean nodes in marginalizeOut!");
 		int cptsize = child.cptentries.length;
 		int numparents = child.parents.size();
 		int parentpos = child.parents.indexOf(parent);
@@ -1612,15 +1620,15 @@ public class BayesConstructor extends java.lang.Object {
 		double p1,p2;
 		SimpleBNNode grandparent;
 		if (parent.parents.size()==0){
-			p1 = parent.cptentries[0]; // marginal probability of parent being true
+			p1 = parent.cptentries[0][0]; // marginal probability of parent being true
 			child.parents.remove(parent);
 			parent.children.remove(child);
-			double[] newcpt = new double[cptsize/2];
+			double[][] newcpt = new double[2][cptsize/2];
 			int newcptpos = 0;
 			for (int i=0; i<cptsize; i++){
 				if (rbnutilities.indexToTuple(i,numparents,2)[parentpos]==0){
 					corrindex=rbnutilities.computeCorrespondingIndex(numparents,parentpos,i);
-					newcpt[newcptpos]=(1-p1)*child.cptentries[i]+p1*child.cptentries[corrindex];
+					newcpt[newcptpos][0]=(1-p1)*child.cptentries[i][0]+p1*child.cptentries[corrindex][0];
 					newcptpos++;
 				}
 			}
@@ -1649,8 +1657,8 @@ public class BayesConstructor extends java.lang.Object {
 				//       x          true      |    q1(1-p2)+q2p2
 				//            ...             |     ...
 
-				p1=parent.cptentries[0];
-				p2=parent.cptentries[1];
+				p1=parent.cptentries[0][1];
+				p2=parent.cptentries[1][1];
 				child.parents.remove(parent);
 				parent.children.remove(child);
 
@@ -1658,15 +1666,15 @@ public class BayesConstructor extends java.lang.Object {
 				grandparent.children.remove(parent);
 				parent.parents.remove(grandparent);
 				grandparent.children.add(child);
-				double[] newcpt = new double[cptsize];
+				double[][] newcpt = new double[2][cptsize];
 				for (int i=0; i<cptsize; i++){
 					if (rbnutilities.indexToTuple(i,numparents,2)[parentpos]==0){
 						corrindex=rbnutilities.computeCorrespondingIndex(numparents,parentpos,i);
-						newcpt[i]=child.cptentries[i]*(1-p1)+child.cptentries[corrindex]*p1;
+						newcpt[i][1]=child.cptentries[i][1]*(1-p1)+child.cptentries[corrindex][1]*p1;
 					}
 					if (rbnutilities.indexToTuple(i,numparents,2)[parentpos]==1){
 						corrindex=rbnutilities.computeCorrespondingIndex(numparents,parentpos,i);
-						newcpt[i]=child.cptentries[corrindex]*(1-p2)+child.cptentries[i]*p2;
+						newcpt[i][1]=child.cptentries[corrindex][1]*(1-p2)+child.cptentries[i][1]*p2;
 					}
 				}
 				child.cptentries = newcpt;
@@ -1697,22 +1705,22 @@ public class BayesConstructor extends java.lang.Object {
 				//            ...             |     ...
 
 				grandparentpos = child.parents.indexOf(grandparent);
-				p1=parent.cptentries[0];
-				p2=parent.cptentries[1];
+				p1=parent.cptentries[0][1];
+				p2=parent.cptentries[1][1];
 				child.parents.remove(parent);
 				parent.children.remove(child);
 				grandparent.children.remove(parent);
 				parent.parents.remove(grandparent);
 
-				double[] newcpt = new double[cptsize/2];
+				double[][] newcpt = new double[2][cptsize/2];
 				int newcptpos = 0;
 				for (int i=0; i<cptsize; i++){
 					if (rbnutilities.indexToTuple(i,numparents,2)[parentpos]==0){
 						corrindex=rbnutilities.computeCorrespondingIndex(numparents,parentpos,i);
 						if (rbnutilities.indexToTuple(i,numparents,2)[grandparentpos]==0)
-							newcpt[newcptpos]=(1-p1)*child.cptentries[i]+p1*child.cptentries[corrindex];
+							newcpt[newcptpos][1]=(1-p1)*child.cptentries[i][1]+p1*child.cptentries[corrindex][1];
 						else
-							newcpt[newcptpos]=(1-p2)*child.cptentries[i]+p2*child.cptentries[corrindex];
+							newcpt[newcptpos][1]=(1-p2)*child.cptentries[i][1]+p2*child.cptentries[corrindex][1];
 						newcptpos++;
 					}
 				}

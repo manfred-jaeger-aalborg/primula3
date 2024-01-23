@@ -36,7 +36,7 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 
 
 
-	private double[] cptentries;
+	private double[][] cptentries;
 
 	/** conditionalsampleweightsfalse[i]: sum of all weights of samples in which 
 	 * i'th parent configuration was sampled and this node was sampled false
@@ -154,7 +154,7 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 		ListIterator li = cpfn.parents.listIterator();
 		while (li.hasNext())
 			atomvec.add(((PFNetworkNode)li.next()).myatom());
-		cptentries = BayesConstructor.makeCPT(cpfn.probform(),A,inst,atomvec);
+		cptentries = BayesConstructor.makeCPT(cpfn.cpmodel(),A,inst,atomvec);
 		instantiated = cpfn.instantiated;
 		sampleinst = cpfn.sampleinstVal();
 		parents = cpfn.parents;

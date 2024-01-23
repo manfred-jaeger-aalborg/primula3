@@ -31,15 +31,17 @@ public interface RBNParser3Constants {
   /** RegularExpression Id. */
   int COMBWHERE = 35;
   /** RegularExpression Id. */
-  int MULT = 36;
+  int SOFTMAX = 36;
   /** RegularExpression Id. */
-  int PLUS = 37;
+  int MULT = 37;
   /** RegularExpression Id. */
-  int Digits = 38;
+  int PLUS = 38;
   /** RegularExpression Id. */
-  int Constant = 39;
+  int Digits = 39;
   /** RegularExpression Id. */
-  int Name = 40;
+  int Constant = 40;
+  /** RegularExpression Id. */
+  int Name = 41;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -84,6 +86,7 @@ public interface RBNParser3Constants {
     "<COMBWITH>",
     "<COMBFORALL>",
     "<COMBWHERE>",
+    "<SOFTMAX>",
     "\"*\"",
     "\"+\"",
     "<Digits>",

@@ -22,6 +22,10 @@ public class CatModelSoftMax extends CPModel {
 		probforms = new Vector<ProbForm>();
 	}
 	
+	public CatModelSoftMax(Vector<ProbForm> pfs) {
+		probforms = pfs;
+	}
+	
 	@Override
 	public String asString(int syntax, int depth, RelStruc A, boolean paramsAsValue, boolean usealias) {
 		if (usealias && this.getAlias() != null)
@@ -158,7 +162,7 @@ public class CatModelSoftMax extends CPModel {
 		Vector<GroundAtom> result = new Vector<GroundAtom>();
 		for (int i = 0;i<probforms.size();i++)
 			result = rbnutilities.combineAtomVecs(result,probforms.elementAt(i).makeParentVec(A,inst,macrosdone));
-		return null;
+		return result;
 	}
 
 	@Override
@@ -179,8 +183,10 @@ public class CatModelSoftMax extends CPModel {
 
 	@Override
 	public CatModelSoftMax substitute(String[] vars, int[] args) {
-		
-		return null;
+		CatModelSoftMax result = new CatModelSoftMax();
+		for (int i = 0;i<probforms.size();i++)
+			result.addProbForm((ProbForm)probforms.elementAt(i).substitute(vars,args));
+		return result;
 	}
 
 	@Override

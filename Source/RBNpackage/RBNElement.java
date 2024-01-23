@@ -28,13 +28,16 @@ public class RBNElement
 	{
 		prel =r;
 		cpmod = pf;
+		if (pf instanceof ProbForm)
+			r.setValtype(Rel.BOOLEAN);
+		else
+			r.setValtype(Rel.CATEGORICAL);
 	}
 
 	public RBNElement(Rel r, String[] args, CPModel pf)
 	{
-		prel =r;
+		this(r,pf);
 		arguments = args;
-		cpmod = pf;
 	}
 	
 	public String[] arguments() {
@@ -57,8 +60,8 @@ public class RBNElement
 		prel=r;
 	}
 	
-	public void set_pform(ProbForm pf) {
-		cpmod=pf;
+	public void set_cpmod(CPModel cpm) {
+		cpmod=cpm;
 	}
 	
 	public CPModel cpmod(){

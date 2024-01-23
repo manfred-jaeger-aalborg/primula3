@@ -515,6 +515,10 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		return Primula.this.rbn;
 	}
 
+	public void setRBN(RBN newrbn){
+		rbn = newrbn;
+	}
+
 	/**
 	 * @author  keith cascio
 	 * @since  20060728
@@ -1719,10 +1723,10 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 	}
 	
 	private void loadDefaults(){
-
-//		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Mendel/mendel.rbn";
-//		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Mendel/mendel_s.rdef";
-//			
+		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Categorical/firstcat.rbn";
+		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Categorical/inputstruc.rdef";
+	
+		
 		
 //		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/InformationDiffusion/independent_cascade.rbn";
 //		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/InformationDiffusion/independent_cascade.rdef";
@@ -1745,13 +1749,12 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 
 			
 		
-		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Examples3/RDEFinputs/watershed_num0.rdef";
 	
 		srsfile = new File(rstinputfilestring);
 //		rbnfile = new File(rbninputfilestring);
 
-//		loadRBNFunction(rbnfile);
-		loadSparseRelFile(srsfile);
+		loadRBNFunction(rbnfile);
+//		loadSparseRelFile(srsfile);
 
 
 	}

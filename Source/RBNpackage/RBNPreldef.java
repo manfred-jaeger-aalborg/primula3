@@ -1,7 +1,5 @@
 package RBNpackage;
 
-import RBNpackage.BoolRel;
-import RBNpackage.ProbForm;
 
 public class RBNPreldef extends RBNElement {
 	

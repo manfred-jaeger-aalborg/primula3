@@ -39,10 +39,10 @@ public class RBNReader3{
 //	}
 	
 	class ParsedTypedAtom{
-		BoolRel rel;
+		Rel rel;
 		ParsedTypedArguments pargs;
 		
-		ParsedTypedAtom(BoolRel r, ParsedTypedArguments pa){
+		ParsedTypedAtom(Rel r, ParsedTypedArguments pa){
 			rel = r;
 			pargs = pa;
 		}
@@ -51,7 +51,7 @@ public class RBNReader3{
 			return pargs.arity();
 		}
 		
-		BoolRel rel(){
+		Rel rel(){
 			return rel;
 		}
 		
@@ -225,12 +225,12 @@ public class RBNReader3{
 	
 	protected void setMacroPF(Rel r, ProbForm pf){
 		RBNMacro prdef = macrosdefined.get(r.toStringWArity());
-		prdef.set_pform(pf);
+		prdef.set_cpmod(pf);
 		pf.setAlias(new ProbFormAtom(prdef.rel(),prdef.arguments()));
 	}
 	
-	protected void setProbRelPF(Rel r, ProbForm pf){
+	protected void setProbRelPF(Rel r, CPModel cpm){
 		RBNPreldef prdef = probrelsdefined.get(r.toStringWArity());
-		prdef.set_pform(pf);
+		prdef.set_cpmod(cpm);
 	}
 }

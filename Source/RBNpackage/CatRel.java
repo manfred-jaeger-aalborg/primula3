@@ -51,6 +51,18 @@ public class CatRel extends Rel {
 	
 	}
 	
+	public CatRel(String n, int a, Type[] types, String[] vals){
+		super(n,a,types);
+		this.values=vals;
+		this.stringToIndx = new HashMap<String,Integer>();
+		this.indxToString = new HashMap<Integer,String>();
+		for (int i=0;i<vals.length;i++) {
+			stringToIndx.put(vals[i], i);
+			indxToString.put(i, vals[i]);
+		}
+		valtype = Rel.CATEGORICAL;	
+	}
+	
 	public CatRel(String n, int a, Vector<Type> types){
 		super(n,a,types);
 		valtype = Rel.CATEGORICAL;

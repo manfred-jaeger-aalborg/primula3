@@ -72,8 +72,9 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 	public  int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, Hashtable atomhasht )
 			throws RBNCompatibilityException
 	{
-		//System.out.print(" ceto " + this.myatom().asString(A));
-		int result = cpmodel.evaluatesTo(A,inst,usesampleinst,atomhasht);
+		if (!(this.cpmodel() instanceof ProbForm))
+			throw new RBNCompatibilityException();
+		int result = ((ProbForm)cpmodel).evaluatesTo(A,inst,usesampleinst,atomhasht);
 		//System.out.print(" " + result);
 		return result;
 	}
@@ -95,9 +96,11 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 
 	public boolean isIsolatedZeroNode(RelStruc rels)
 			throws RBNCompatibilityException{
+		if (!(this.cpmodel() instanceof ProbForm))
+			throw new RBNCompatibilityException();
 		if (parents.size()!=0) return false;
 		if (children.size()!=0) return false;
-		if (cpmodel.evaluatesTo(rels)!=0) return false;
+		if (((ProbForm)cpmodel).evaluatesTo(rels)!=0) return false;
 		if (instantiated != -1) return false;
 		return true;
 	}

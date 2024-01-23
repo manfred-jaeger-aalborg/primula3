@@ -12,17 +12,23 @@ public class Signature {
 		rels = new HashMap<String,Rel>();
 	}
 	
+//	public void addRel(Rel r){
+//		switch (r.valtype()){
+//		case Rel.BOOLEAN:
+//			rels.put(r.name(), new BoolRel(r));
+//			break;
+//		case Rel.NUMERIC:
+//			rels.put(r.name(), new NumRel(r));
+//			break;
+//		case Rel.CATEGORICAL:
+//			rels.put(r.name(), new CatRel(r));
+//		case Rel.UNKNOWN:
+//			rels.put(r.name(), r);
+//		}
+//	}
+	
 	public void addRel(Rel r){
-		switch (r.valtype()){
-		case Rel.BOOLEAN:
-			rels.put(r.name(), new BoolRel(r));
-			break;
-		case Rel.NUMERIC:
-			rels.put(r.name(), new NumRel(r));
-			break;
-		case Rel.UNKNOWN:
 			rels.put(r.name(), r);
-		}
 	}
 	
 	public Rel getRelByName(String rname){

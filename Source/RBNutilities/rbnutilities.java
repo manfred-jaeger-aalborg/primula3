@@ -1478,4 +1478,30 @@ public class rbnutilities extends java.lang.Object
     		result += " " +s;
     	return result;
     }
+    
+	public static String[] stringToArray(String ts , String sep){
+		/*
+		 * splits the string ts into the substrings defined by the
+		 * separator sep and returns them as an array
+		 */
+		Vector<String> result = new Vector<String>();
+		String next;
+		int nextsep;
+		
+		while (ts.length()>0) {
+			nextsep = ts.indexOf(sep);
+			if (nextsep!= -1){
+				next = ts.substring(0,nextsep);
+				ts = ts.substring(nextsep+1);
+			}
+			else{
+				next = ts;
+				ts = "";
+			}
+			result.add(next);
+		}
+
+		return result.toArray(new String[result.size()]);
+
+	}
 }

@@ -88,7 +88,7 @@ public class CombFuncNOr extends MultLinCombFunc{
         // parameter decomposemode is irrelevant in the noisy-or implementation of this method!
         switch (parnodes.size()){
             case 0:
-                double cpt[] = {0};
+                double cpt[][] = {{1,0}};
                 targetnode.setCPT(cpt);
                 break;
             default:
@@ -98,12 +98,12 @@ public class CombFuncNOr extends MultLinCombFunc{
                 parents = new LinkedList();
                 parents.add(nextparnode);
                 children = new LinkedList();
-                double firstor[] = {0,1};
+                double firstor[][] = {{1,0},{0,1}};
                 BNNode lastornode = new SimpleBNNode("or."+ nextparnode.name + "." + targetnode.name,firstor,parents,children);
                 nextparnode.children.add(lastornode);
                 BNNode nextornode;
                
-                double orcpt[] = {0,1,1,1};
+                double orcpt[][] = {{1,0},{0,1},{0,1},{0,1}};
                 while (li.hasNext()){
                     nextparnode = (BNNode)li.next();
                     parents = new LinkedList();
@@ -119,7 +119,7 @@ public class CombFuncNOr extends MultLinCombFunc{
                 }
         targetnode.parents.add(lastornode);
         lastornode.children.add(targetnode);
-        double targetcpt[] = {0,1};
+        double targetcpt[][] = {{1,0},{0,1}};
         targetnode.setCPT(targetcpt);
         
         }
