@@ -3,7 +3,7 @@ package RBNio;
 import RBNpackage.*;
 import java.util.*;
 import myio.StringOps;
-import RBNExceptions.RBNSyntaxException;
+import RBNExceptions.*;
 
 /** Token Manager. */
 public class RBNParser3TokenManager implements RBNParser3Constants

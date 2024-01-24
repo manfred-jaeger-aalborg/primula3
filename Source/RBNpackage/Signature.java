@@ -1,31 +1,17 @@
 package RBNpackage;
 
-import java.util.Vector;
-import java.util.HashMap;
-import java.util.AbstractList;
+import java.util.*;
 
 public class Signature {
 	
-	HashMap<String,Rel> rels;
+	/*
+	 * Relations keyed by their names
+	 */
+	private HashMap<String,Rel> rels;
 	
 	public Signature(){
 		rels = new HashMap<String,Rel>();
 	}
-	
-//	public void addRel(Rel r){
-//		switch (r.valtype()){
-//		case Rel.BOOLEAN:
-//			rels.put(r.name(), new BoolRel(r));
-//			break;
-//		case Rel.NUMERIC:
-//			rels.put(r.name(), new NumRel(r));
-//			break;
-//		case Rel.CATEGORICAL:
-//			rels.put(r.name(), new CatRel(r));
-//		case Rel.UNKNOWN:
-//			rels.put(r.name(), r);
-//		}
-//	}
 	
 	public void addRel(Rel r){
 			rels.put(r.name(), r);
@@ -44,5 +30,27 @@ public class Signature {
 		}
 		return result;
 		
+	}
+	
+	public Collection<Rel> getAllRels(){
+		return rels.values();
+	}
+	
+	public boolean isExtension(Signature sig) {
+		/* 
+		 * Returns true if all relations of sig are also contained in this
+		 * (with consistent arity, type, etc.
+		 * 
+		 */
+		if (sig==null)
+			return true;
+		for (Rel r: sig.getAllRels()) {
+			Rel rr = rels.get(r.name());
+			if (rr==null)
+				return false;
+			if (!rr.equals(r))
+				return false;
+		}
+		return true;
 	}
 }

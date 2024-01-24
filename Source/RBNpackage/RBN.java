@@ -64,15 +64,19 @@ public class RBN extends java.lang.Object {
 
 
 	
-	public RBN(File input_file){
-		RBNReader3 rbnrdr =  new RBNReader3();
+	public RBN(File input_file, Signature sig){
+		if (sig==null)
+			System.out.println("Cannot load RBN from file without loading signature first!");
+		RBNReader3 rbnrdr =  new RBNReader3(sig);
 		
 		RBN rbn = new RBN();
 		try{
 			rbn = rbnrdr.ReadRBNfromFile(input_file);
 		}
 		catch (RBNSyntaxException e){System.out.println(e);}
-		catch (IOException e){System.out.println(e);};
+		catch (IOException e){System.out.println(e);}
+		catch (RBNIllegalArgumentException e){System.out.println(e);}
+		
 		elements = rbn.elements;
 		prelements = rbn.prelements;
 		macroelements = rbn.macroelements;

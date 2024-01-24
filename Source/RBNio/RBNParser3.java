@@ -4,13 +4,13 @@ package RBNio;
 import RBNpackage.*;
 import java.util.*;
 import myio.StringOps;
-import RBNExceptions.RBNSyntaxException;
+import RBNExceptions.*;
 
 public class RBNParser3 implements RBNParser3Constants {
         private int parseno = 1;
         private RBNReader3 reader;
 
-  final public void ReadRBN() throws ParseException {
+  final public void ReadRBN() throws ParseException, RBNIllegalArgumentException {
     trace_call("ReadRBN");
     try {
       label_1:
@@ -34,7 +34,7 @@ public class RBNParser3 implements RBNParser3Constants {
     }
   }
 
-  final public void MacroDefinition() throws ParseException {
+  final public void MacroDefinition() throws ParseException, RBNIllegalArgumentException {
     trace_call("MacroDefinition");
     try {
  RBNReader3.ParsedTypedAtom parsedat;
@@ -58,7 +58,7 @@ public class RBNParser3 implements RBNParser3Constants {
     }
   }
 
-  final public void ProbRelDefinition() throws ParseException {
+  final public void ProbRelDefinition() throws ParseException, RBNIllegalArgumentException {
     trace_call("ProbRelDefinition");
     try {
  RBNReader3.ParsedTypedAtom parsedat;
@@ -80,7 +80,7 @@ public class RBNParser3 implements RBNParser3Constants {
     }
   }
 
-  final public CPModel CPModel() throws ParseException {
+  final public CPModel CPModel() throws ParseException, RBNIllegalArgumentException {
     trace_call("CPModel");
     try {
  CPModel parsedcpm;
@@ -99,7 +99,7 @@ public class RBNParser3 implements RBNParser3Constants {
     }
   }
 
-  final public ProbForm ProbForm() throws ParseException {
+  final public ProbForm ProbForm() throws ParseException, RBNIllegalArgumentException {
     trace_call("ProbForm");
     try {
  ProbForm parsedpf;
@@ -126,7 +126,7 @@ public class RBNParser3 implements RBNParser3Constants {
     }
   }
 
-  final public RBNReader3.ParsedUnTypedAtom UntypedAtom() throws ParseException {
+  final public RBNReader3.ParsedUnTypedAtom UntypedAtom() throws ParseException, RBNIllegalArgumentException {
     trace_call("UntypedAtom");
     try {
   Vector<String> args;
@@ -135,20 +135,18 @@ public class RBNParser3 implements RBNParser3Constants {
       // grammar
               tok = jj_consume_token(Name);
       args = UntypedArguments();
-         rel = new Rel(tok.image,args.size());
-         {if (true) return reader.new ParsedUnTypedAtom(rel,args);}
+         {if (true) return reader.new ParsedUnTypedAtom(tok.image,args);}
     throw new Error("Missing return statement in function");
     } finally {
       trace_return("UntypedAtom");
     }
   }
 
-  final public RBNReader3.ParsedTypedAtom TypedAtom() throws ParseException {
+  final public RBNReader3.ParsedTypedAtom TypedAtom() throws ParseException, RBNIllegalArgumentException {
     trace_call("TypedAtom");
     try {
         Token tok;
         RBNReader3.ParsedTypedArguments args;
-        Rel rel;
         int arity;
         String relname;
       // grammar
@@ -156,8 +154,7 @@ public class RBNParser3 implements RBNParser3Constants {
          relname = tok.image;
       args = TypedArguments();
          arity = args.arity();
-         rel = new Rel(relname,arity,args.types());
-         {if (true) return  reader.new ParsedTypedAtom(rel,args);}
+         {if (true) return  reader.new ParsedTypedAtom(relname,args);}
     throw new Error("Missing return statement in function");
     } finally {
       trace_return("TypedAtom");
@@ -331,7 +328,7 @@ public class RBNParser3 implements RBNParser3Constants {
     }
   }
 
-  final public ProbForm Atom() throws ParseException {
+  final public ProbForm Atom() throws ParseException, RBNIllegalArgumentException {
     trace_call("Atom");
     try {
  ProbFormAtom parsedpfatom;
@@ -369,7 +366,7 @@ public class RBNParser3 implements RBNParser3Constants {
     }
   }
 
-  final public ProbFormConvComb ConvCombination() throws ParseException {
+  final public ProbFormConvComb ConvCombination() throws ParseException, RBNIllegalArgumentException {
     trace_call("ConvCombination");
     try {
  ProbFormConvComb pf;
@@ -393,7 +390,7 @@ public class RBNParser3 implements RBNParser3Constants {
     }
   }
 
-  final public ProbFormConvComb ConvCombinationClassic() throws ParseException {
+  final public ProbFormConvComb ConvCombinationClassic() throws ParseException, RBNIllegalArgumentException {
     trace_call("ConvCombinationClassic");
     try {
  ProbForm pf1;
@@ -418,7 +415,7 @@ public class RBNParser3 implements RBNParser3Constants {
     }
   }
 
-  final public ProbFormConvComb ConvCombinationCherry() throws ParseException {
+  final public ProbFormConvComb ConvCombinationCherry() throws ParseException, RBNIllegalArgumentException {
     trace_call("ConvCombinationCherry");
     try {
  ProbForm pf1;
@@ -442,7 +439,7 @@ public class RBNParser3 implements RBNParser3Constants {
     }
   }
 
-  final public ProbFormCombFunc CombinationFunc() throws ParseException {
+  final public ProbFormCombFunc CombinationFunc() throws ParseException, RBNIllegalArgumentException {
     trace_call("CombinationFunc");
     try {
  ProbFormCombFunc pf;
@@ -470,7 +467,7 @@ public class RBNParser3 implements RBNParser3Constants {
     }
   }
 
-  final public ProbFormCombFunc CombinationFuncClassic() throws ParseException {
+  final public ProbFormCombFunc CombinationFuncClassic() throws ParseException, RBNIllegalArgumentException {
     trace_call("CombinationFuncClassic");
     try {
   Token tok;
@@ -506,7 +503,7 @@ public class RBNParser3 implements RBNParser3Constants {
     }
   }
 
-  final public ProbFormCombFunc CombinationFuncCherry() throws ParseException {
+  final public ProbFormCombFunc CombinationFuncCherry() throws ParseException, RBNIllegalArgumentException {
     trace_call("CombinationFuncCherry");
     try {
   Token tok;
@@ -541,7 +538,7 @@ public class RBNParser3 implements RBNParser3Constants {
     }
   }
 
-  final public ProbFormCombFunc CombinationFuncProd() throws ParseException {
+  final public ProbFormCombFunc CombinationFuncProd() throws ParseException, RBNIllegalArgumentException {
     trace_call("CombinationFuncProd");
     try {
  Vector<ProbForm> pflist = new Vector<ProbForm>();
@@ -577,7 +574,7 @@ ProbForm[] pfarr;
     }
   }
 
-  final public ProbFormCombFunc CombinationFuncSum() throws ParseException {
+  final public ProbFormCombFunc CombinationFuncSum() throws ParseException, RBNIllegalArgumentException {
     trace_call("CombinationFuncSum");
     try {
  Vector<ProbForm> pflist = new Vector<ProbForm>();
@@ -613,7 +610,7 @@ ProbForm[] pfarr;
     }
   }
 
-  final public Vector<ProbForm> ProbFormList() throws ParseException {
+  final public Vector<ProbForm> ProbFormList() throws ParseException, RBNIllegalArgumentException {
     trace_call("ProbFormList");
     try {
  Vector<ProbForm> pflist = new Vector<ProbForm>();
@@ -642,7 +639,7 @@ ProbForm[] pfarr;
     }
   }
 
-  final public ProbFormBool BoolFormula() throws ParseException {
+  final public ProbFormBool BoolFormula() throws ParseException, RBNIllegalArgumentException {
     trace_call("BoolFormula");
     try {
  ProbFormBool pf;
@@ -669,7 +666,7 @@ ProbForm[] pfarr;
     }
   }
 
-  final public ProbFormBoolAtom BoolAtom() throws ParseException {
+  final public ProbFormBoolAtom BoolAtom() throws ParseException, RBNIllegalArgumentException {
     trace_call("BoolAtom");
     try {
  RBNReader3.ParsedUnTypedAtom parsedat;
@@ -682,7 +679,7 @@ ProbForm[] pfarr;
     }
   }
 
-  final public ProbFormBoolEquality BoolEquality() throws ParseException {
+  final public ProbFormBoolEquality BoolEquality() throws ParseException, RBNIllegalArgumentException {
     trace_call("BoolEquality");
     try {
  Token tok1;
@@ -698,7 +695,7 @@ ProbForm[] pfarr;
     }
   }
 
-  final public ProbFormBoolComposite BoolAnd() throws ParseException {
+  final public ProbFormBoolComposite BoolAnd() throws ParseException, RBNIllegalArgumentException {
     trace_call("BoolAnd");
     try {
  Vector<ProbFormBool> comps=new Vector<ProbFormBool>() ;
@@ -725,7 +722,7 @@ ProbFormBool nextpfb;
     }
   }
 
-  final public ProbFormBoolComposite BoolOr() throws ParseException {
+  final public ProbFormBoolComposite BoolOr() throws ParseException, RBNIllegalArgumentException {
     trace_call("BoolOr");
     try {
  Vector<ProbFormBool> comps=new Vector<ProbFormBool>();
@@ -771,7 +768,7 @@ ProbFormBool nextpfb;
     }
   }
 
-  final public ProbFormBool BoolNegation() throws ParseException {
+  final public ProbFormBool BoolNegation() throws ParseException, RBNIllegalArgumentException {
     trace_call("BoolNegation");
     try {
  ProbFormBool pfb;
@@ -785,7 +782,7 @@ ProbFormBool nextpfb;
     }
   }
 
-  final public ProbFormMacroCall MacroCall() throws ParseException {
+  final public ProbFormMacroCall MacroCall() throws ParseException, RBNIllegalArgumentException {
     trace_call("MacroCall");
     try {
  RBNReader3.ParsedUnTypedAtom parsedat;
@@ -810,7 +807,7 @@ ProbFormBool nextpfb;
     }
   }
 
-  final public CatModelSoftMax CatSoftMax() throws ParseException {
+  final public CatModelSoftMax CatSoftMax() throws ParseException, RBNIllegalArgumentException {
     trace_call("CatSoftMax");
     try {
   Vector<ProbForm> pflist;
@@ -1345,15 +1342,15 @@ ProbFormBool nextpfb;
     return false;
   }
 
+  private boolean jj_3_7() {
+    if (jj_3R_14()) return true;
+    return false;
+  }
+
   private boolean jj_3R_45() {
     if (jj_scan_token(Name)) return true;
     if (jj_scan_token(10)) return true;
     if (jj_scan_token(Name)) return true;
-    return false;
-  }
-
-  private boolean jj_3_7() {
-    if (jj_3R_14()) return true;
     return false;
   }
 
@@ -1364,6 +1361,16 @@ ProbFormBool nextpfb;
 
   private boolean jj_3_10() {
     if (jj_3R_17()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_34() {
+    if (jj_3R_16()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_33() {
+    if (jj_3R_15()) return true;
     return false;
   }
 
@@ -1378,23 +1385,8 @@ ProbFormBool nextpfb;
     return false;
   }
 
-  private boolean jj_3R_34() {
-    if (jj_3R_16()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_33() {
-    if (jj_3R_15()) return true;
-    return false;
-  }
-
   private boolean jj_3R_32() {
     if (jj_3R_14()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_44() {
-    if (jj_3R_35()) return true;
     return false;
   }
 
@@ -1403,10 +1395,8 @@ ProbFormBool nextpfb;
     return false;
   }
 
-  private boolean jj_3_38() {
-    if (jj_scan_token(12)) return true;
-    if (jj_3R_17()) return true;
-    if (jj_scan_token(21)) return true;
+  private boolean jj_3R_44() {
+    if (jj_3R_35()) return true;
     return false;
   }
 
@@ -1429,6 +1419,13 @@ ProbFormBool nextpfb;
     }
     }
     }
+    return false;
+  }
+
+  private boolean jj_3_38() {
+    if (jj_scan_token(12)) return true;
+    if (jj_3R_17()) return true;
+    if (jj_scan_token(21)) return true;
     return false;
   }
 
@@ -1461,6 +1458,11 @@ ProbFormBool nextpfb;
     return false;
   }
 
+  private boolean jj_3_4() {
+    if (jj_3R_11()) return true;
+    return false;
+  }
+
   private boolean jj_3_39() {
     if (jj_3R_29()) return true;
     return false;
@@ -1483,11 +1485,6 @@ ProbFormBool nextpfb;
 
   private boolean jj_3R_40() {
     if (jj_3R_46()) return true;
-    return false;
-  }
-
-  private boolean jj_3_4() {
-    if (jj_3R_11()) return true;
     return false;
   }
 
@@ -1528,6 +1525,11 @@ ProbFormBool nextpfb;
     return false;
   }
 
+  private boolean jj_3R_10() {
+    if (jj_3R_30()) return true;
+    return false;
+  }
+
   private boolean jj_3_32() {
     if (jj_scan_token(14)) return true;
     if (jj_3R_12()) return true;
@@ -1541,11 +1543,6 @@ ProbFormBool nextpfb;
       xsp = jj_scanpos;
       if (jj_3_32()) { jj_scanpos = xsp; break; }
     }
-    return false;
-  }
-
-  private boolean jj_3R_10() {
-    if (jj_3R_30()) return true;
     return false;
   }
 

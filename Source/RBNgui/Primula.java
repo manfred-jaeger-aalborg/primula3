@@ -1352,7 +1352,7 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 	public void loadRBNFunction(File input_file){
 		if(instasosd.isEmpty() && queryatoms.isEmpty()){
 		
-				rbn = new RBN(input_file);
+				rbn = new RBN(input_file,this.sig);
 			
 			rbnfile = input_file;
 			rbnfilename.setText(rbnfile.getName());
@@ -1364,7 +1364,7 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		else{
 //			if(confirm(INST_AND_QUERIES_LOST)){
 				try{
-					rbn = new RBN(input_file);
+					rbn = new RBN(input_file,this.sig);
 					rbnfile = input_file;
 					rbnfilename.setText(rbnfile.getPath());
 				}catch (Exception ex){
@@ -1751,10 +1751,11 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		
 	
 		srsfile = new File(rstinputfilestring);
-//		rbnfile = new File(rbninputfilestring);
+		rbnfile = new File(rbninputfilestring);
 
+		loadSparseRelFile(srsfile);
 		loadRBNFunction(rbnfile);
-//		loadSparseRelFile(srsfile);
+		
 
 
 	}

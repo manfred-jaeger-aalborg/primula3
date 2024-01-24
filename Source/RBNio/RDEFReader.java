@@ -97,6 +97,9 @@ public class RDEFReader {
  * of input structures (declarations of predefined relations, domain
  * specifications), then A must be null.
  * 
+ * An .rdef file may also just contain the specification of a 
+ * signature. Then only the Signature of myprimula will be set 
+ * accordingly (overriding any previous Signature setting in myprimula).
  * 
  * @param rdef
  * @param A
@@ -144,7 +147,7 @@ public class RDEFReader {
 			String valtype;
 			String catvalues;
 			
-			Rel r = new Rel();
+			Rel r;
 			
 			
 			
@@ -233,13 +236,19 @@ public class RDEFReader {
 				sig.addRel(r);
 			}
 
+			if (!sig.isExtension(myprimula.getSignature()))
+				System.out.println("Warning: overriding existing Signature setting");
 			
 			myprimula.setSignature(sig);
+			
+			// Now reading the data part
 			Element datael = root.element("Data");
-			for ( Iterator i = datael.elementIterator("DataForInputDomain"); i.hasNext(); ) {
-				reldata.add(parseDataForOneInput((Element)i.next(),boolpredrels,boolprobrels,
-						catpredrels,catprobrels,
-						numpredrels,numprobrels,A,sig));
+			if (datael!=null) { // Not only a signature in the .rdef file!
+				for ( Iterator i = datael.elementIterator("DataForInputDomain"); i.hasNext(); ) {
+					reldata.add(parseDataForOneInput((Element)i.next(),boolpredrels,boolprobrels,
+							catpredrels,catprobrels,
+							numpredrels,numprobrels,A,sig));
+				}
 			}
 			
 		}

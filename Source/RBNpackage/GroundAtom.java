@@ -69,7 +69,7 @@ public class GroundAtom extends java.lang.Object {
     	switch (type) {
     	case Rel.BOOLEAN: rel = new BoolRel(relname,arity); break;
     	case Rel.NUMERIC: rel = new NumRel(relname,arity); break;
-    	default: rel = new Rel(relname,arity);	
+    	case Rel.CATEGORICAL: rel = new CatRel(relname,arity); break;
     	} 	
     }
     

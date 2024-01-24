@@ -32,7 +32,7 @@ import org.dom4j.Document;
 
 
 
-public  class Rel implements Serializable, Comparable<Rel>{
+public abstract class Rel implements Serializable, Comparable<Rel>{
 
 	public static final int PREDEFINED = 0;
 	public static final int PROBABILISTIC = 1;
@@ -125,7 +125,15 @@ public  class Rel implements Serializable, Comparable<Rel>{
     
     public boolean equals( Rel r ){
     	//System.out.println(r.toStringWArity() + " equals " + this.toStringWArity() +" ?");
-    	return this.name.equals( r.name ) && (this.arity == r.arity);
+    	if (this.getClass() != r.getClass())
+    		return false;
+    	if (!(this.name.equals( r.name )))
+    		return false;
+    	if (!(this.arity == r.arity))
+    		return false;
+    	if (this.inout != r.inout)
+    		return false;
+    	return true;
     }
 
     public int getArity(){

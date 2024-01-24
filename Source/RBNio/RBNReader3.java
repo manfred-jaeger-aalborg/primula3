@@ -42,7 +42,13 @@ public class RBNReader3{
 		Rel rel;
 		ParsedTypedArguments pargs;
 		
-		ParsedTypedAtom(Rel r, ParsedTypedArguments pa){
+		ParsedTypedAtom(String relname, ParsedTypedArguments pa)
+				throws RBNIllegalArgumentException
+		{
+			Rel r = sig.getRelByName(relname);
+			if (r==null) {
+				throw new RBNIllegalArgumentException("Relation with name " + relname + "not declared in signature");
+			}
 			rel = r;
 			pargs = pa;
 		}
@@ -68,7 +74,13 @@ public class RBNReader3{
 		Rel rel;
 		Vector<String> args;;
 		
-		ParsedUnTypedAtom(Rel r, Vector<String> a){
+		ParsedUnTypedAtom(String relname, Vector<String> a)
+		throws RBNIllegalArgumentException
+		{
+			Rel r = sig.getRelByName(relname);
+			if (r==null) {
+				throw new RBNIllegalArgumentException("Relation with name " + relname + "not declared in signature");
+			}
 			rel = r;
 			args = a;
 		}
@@ -115,6 +127,8 @@ public class RBNReader3{
 	}
 	
 
+	Signature sig;
+	
 	/**
 	 * Contains the probabilistic relations defined in the RBN	
 	 * 
@@ -143,8 +157,12 @@ public class RBNReader3{
 	 **/
 	Hashtable<String, Rel> typesreferenced = new Hashtable<String, Rel>();
 	
+	public RBNReader3(Signature s) {
+		sig =s;
+	}
+	
 	public RBN ReadRBNfromFile(File input_file)
-	throws RBNSyntaxException,IOException{
+	throws RBNSyntaxException,IOException,RBNIllegalArgumentException{
 
 
 		RBNParser3 parser = 

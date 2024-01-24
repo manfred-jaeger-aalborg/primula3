@@ -879,7 +879,8 @@ public class rbnutilities extends java.lang.Object
     }
 
     /** 
-     * maxvals is a vector representing the maximal number for any component
+     * maxvals is a vector representing the number of values 0,1,...,maxvals-1 
+     * for any component
      * 
      * cv is a current vector of the same length as maxvals, where each
      * entry is <= the corresponding entry in maxvals.
@@ -896,12 +897,12 @@ public class rbnutilities extends java.lang.Object
     public static void incrementCatVector(int[] maxvals, int[] cv)
     {
     	int ind = cv.length-1;
-    	while (cv[ind]==maxvals[ind] && ind>0){
+    	while (cv[ind]==maxvals[ind]-1 && ind>0){
     		cv[ind]=0;
     		ind--;
     	}
-    	if (ind==0 && cv[ind]==maxvals[ind])
-    		throw new RuntimeException("Trying to increment maximal bit vector");
+    	if (ind==0 && cv[ind]==maxvals[ind]-1)
+    		throw new RuntimeException("Trying to increment maximal vector");
     	else{
     		cv[ind]+=1;
     	}
