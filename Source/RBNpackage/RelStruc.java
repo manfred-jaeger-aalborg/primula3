@@ -623,7 +623,7 @@ public abstract class RelStruc implements Cloneable{
 		if (t.getName().equals("Domain"))
 			return domainAsIntVec();
 		else
-			return mydata.allTrue(new Rel(t.getName(),1));
+			return mydata.allTrue(sig.getRelByName(t.getName()));
 	}
 
 	public Vector<String[]> allTrue(Rel r,RelStruc A){

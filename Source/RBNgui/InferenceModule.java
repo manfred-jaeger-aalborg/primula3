@@ -1791,7 +1791,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 			}
 			else if(stringAtTupleIndex.startsWith("[")){
 				String attrname = stringAtTupleIndex.substring(1,stringAtTupleIndex.length()-2);
-				Vector<int[]> elementsOfAttr = myprimula.getRels().allTrue(new Rel(attrname,1));
+				Vector<int[]> elementsOfAttr = myprimula.getRels().allTrue(myprimula.sig.getRelByName(attrname));
 				/* Turn vector of int[1] into int[]:*/
 				nextComponent = rbnutilities.intArrVecToArr(elementsOfAttr);
 			}
@@ -1817,7 +1817,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 			}
 			else if(nextstr.startsWith("[")){
 				String attrname = nextstr.substring(1,nextstr.length()-2);
-				Vector<int[]> elementsOfAttr = myprimula.getRels().allTrue(new Rel(attrname,1));
+				Vector<int[]> elementsOfAttr = myprimula.getRels().allTrue(myprimula.sig.getRelByName(attrname));
 				/* Turn vector of int[1] into int[]:*/
 				nextComponent = rbnutilities.intArrVecToArr(elementsOfAttr);
 			}
@@ -1951,7 +1951,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 			String element = atom.substring(comma, atom.indexOf(")"));
 			elementNames.add(element);
 			int[] tuple = new int[elementNames.size()];
-			Rel relnew = new Rel();
+			Rel relnew = null;
 			if(elementNames.size() == 1){
 				for(int m=0;m<attributesListModel.size();m++){
 					if(attributesListModel.get(m).toString().equals(rel)){
@@ -2024,7 +2024,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		OneStrucData osd;
 		
 		GroundAtom gat;
-		ProbForm pf;
+		CPModel pf;
 		String[] varargs;
 		int[] intargs;
 		double prob=0;
@@ -2042,7 +2042,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 					prob = (double)pf.evaluate(A, 
 							osd, 
 							varargs, 
-							intargs, 
+							intargs,
+							0,
 							true,  
 							true, 
 							null, 
@@ -2248,7 +2249,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		
 		for (Rel r : sig.getProbRels()) {
 			System.out.println("Evaluate relation " + r.name() + " for " + rdata.cases().size() + " input domains");
-			ProbForm pf = rbn.cpmodel(r);
+			CPModel pf = rbn.cpmodel(r);
 			String[] varargs = rbn.args(r);
 			
 			double[] result = new double[5];
@@ -2271,6 +2272,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 										osd, 
 										varargs, 
 										intargs, 
+										0,
 										true, 
 										true, 
 										null, 
@@ -2304,6 +2306,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 										osd, 
 										varargs, 
 										intargs, 
+										0,
 										true, 
 										true, 
 										null, 
