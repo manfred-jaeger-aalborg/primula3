@@ -113,11 +113,11 @@ public class ProbFormBoolEquality extends ProbFormBool {
 		return rbnutilities.NonIntOnly(bothterms);
 	}
 
-	@Override
-	public Vector<GroundAtom> makeParentVec(RelStruc A)
-			throws RBNCompatibilityException {
-		return new Vector<GroundAtom>();
-	}
+//	@Override
+//	public Vector<GroundAtom> makeParentVec(RelStruc A)
+//			throws RBNCompatibilityException {
+//		return new Vector<GroundAtom>();
+//	}
 
 	@Override
 	public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone)

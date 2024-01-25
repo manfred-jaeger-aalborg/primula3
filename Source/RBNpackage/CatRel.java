@@ -82,9 +82,6 @@ public class CatRel extends Rel {
 		return this.stringToIndx.get(s);
 	}
 	
-	public int numVals() {
-		return values.length;
-	}
 	
 	/** Adds to root an element containing the 
   	 * header information for this CatRel
@@ -104,4 +101,7 @@ public class CatRel extends Rel {
   			relel.addAttribute("color", "(" + color.getRed() + "," + color.getGreen() + "," + color.getBlue() +")");;
   	}
 
+ 	public double numvals() {
+  		return values.length;
+  	}
 }

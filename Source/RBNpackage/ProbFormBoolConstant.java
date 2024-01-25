@@ -122,11 +122,11 @@ public class ProbFormBoolConstant extends ProbFormBool {
 		return new String[0];
 	}
 
-	@Override
-	public Vector<GroundAtom> makeParentVec(RelStruc A)
-			throws RBNCompatibilityException {
-		return new Vector<GroundAtom>();
-	}
+//	@Override
+//	public Vector<GroundAtom> makeParentVec(RelStruc A)
+//			throws RBNCompatibilityException {
+//		return new Vector<GroundAtom>();
+//	}
 
 	@Override
 	public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone)

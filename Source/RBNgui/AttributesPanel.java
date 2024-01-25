@@ -224,7 +224,7 @@ public class AttributesPanel extends JPanel implements MouseListener, KeyListene
 
 				}
 				else
-					bavaria.addTuple(new Rel());  //so that arity equals 0
+					bavaria.addTuple(new BoolRel());  //so that arity equals 0
 			}
 			else if (mode == DELETERELATION){
 				if (index >= 0){

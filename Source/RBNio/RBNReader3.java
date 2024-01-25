@@ -42,12 +42,18 @@ public class RBNReader3{
 		Rel rel;
 		ParsedTypedArguments pargs;
 		
-		ParsedTypedAtom(String relname, ParsedTypedArguments pa)
+		ParsedTypedAtom(String relname, ParsedTypedArguments pa, boolean isMacro)
 				throws RBNIllegalArgumentException
 		{
-			Rel r = sig.getRelByName(relname);
-			if (r==null) {
-				throw new RBNIllegalArgumentException("Relation with name " + relname + "not declared in signature");
+			Rel r = null;
+			if (isMacro)
+				r = new BoolRel(relname,pa.arity());
+			else {
+				r = sig.getRelByName(relname);
+				if (r==null) {
+					System.out.println("x");
+					throw new RBNIllegalArgumentException("Relation with name " + relname + "not declared in signature");
+				}
 			}
 			rel = r;
 			pargs = pa;
@@ -74,16 +80,21 @@ public class RBNReader3{
 		Rel rel;
 		Vector<String> args;;
 		
-		ParsedUnTypedAtom(String relname, Vector<String> a)
-		throws RBNIllegalArgumentException
-		{
-			Rel r = sig.getRelByName(relname);
-			if (r==null) {
-				throw new RBNIllegalArgumentException("Relation with name " + relname + "not declared in signature");
+		ParsedUnTypedAtom(String relname, Vector<String> a,boolean isMacro)
+				throws RBNIllegalArgumentException
+				{
+			Rel r = null;
+			if (isMacro)
+				r = new BoolRel(relname,a.size());
+			else {
+				r = sig.getRelByName(relname);
+				if (r==null) {
+					throw new RBNIllegalArgumentException("Relation with name " + relname + "not declared in signature");
+				}
 			}
 			rel = r;
 			args = a;
-		}
+				}
 		
 		Rel rel(){
 			return rel;

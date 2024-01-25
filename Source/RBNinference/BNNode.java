@@ -37,7 +37,8 @@ public class BNNode{
 	public LinkedList<BNNode> parents;
 	public LinkedList<BNNode> children;
 
-	private boolean isboolean; // if this node represents a Boolean variable
+	private boolean isboolean = true; // if this node represents a Boolean variable. True by default. Must be
+	                                  // set to false when constructing a categorical node. 
 	
 	public boolean isIsboolean() {
 		return isboolean;

@@ -40,7 +40,7 @@ public class RBNParser3 implements RBNParser3Constants {
  RBNReader3.ParsedTypedAtom parsedat;
  ProbForm parsedprobform;
       jj_consume_token(9);
-      parsedat = TypedAtom();
+      parsedat = TypedAtom(true);
       jj_consume_token(10);
       parsedprobform = ProbForm();
       jj_consume_token(11);
@@ -64,7 +64,7 @@ public class RBNParser3 implements RBNParser3Constants {
  RBNReader3.ParsedTypedAtom parsedat;
  CPModel parsedcpm;
       // grammar
-              parsedat = TypedAtom();
+              parsedat = TypedAtom(false);
       jj_consume_token(10);
       parsedcpm = CPModel();
       jj_consume_token(11);
@@ -126,7 +126,7 @@ public class RBNParser3 implements RBNParser3Constants {
     }
   }
 
-  final public RBNReader3.ParsedUnTypedAtom UntypedAtom() throws ParseException, RBNIllegalArgumentException {
+  final public RBNReader3.ParsedUnTypedAtom UntypedAtom(boolean ismacro) throws ParseException, RBNIllegalArgumentException {
     trace_call("UntypedAtom");
     try {
   Vector<String> args;
@@ -135,14 +135,14 @@ public class RBNParser3 implements RBNParser3Constants {
       // grammar
               tok = jj_consume_token(Name);
       args = UntypedArguments();
-         {if (true) return reader.new ParsedUnTypedAtom(tok.image,args);}
+         {if (true) return reader.new ParsedUnTypedAtom(tok.image,args,ismacro);}
     throw new Error("Missing return statement in function");
     } finally {
       trace_return("UntypedAtom");
     }
   }
 
-  final public RBNReader3.ParsedTypedAtom TypedAtom() throws ParseException, RBNIllegalArgumentException {
+  final public RBNReader3.ParsedTypedAtom TypedAtom(boolean ismacro) throws ParseException, RBNIllegalArgumentException {
     trace_call("TypedAtom");
     try {
         Token tok;
@@ -154,7 +154,7 @@ public class RBNParser3 implements RBNParser3Constants {
          relname = tok.image;
       args = TypedArguments();
          arity = args.arity();
-         {if (true) return  reader.new ParsedTypedAtom(relname,args);}
+         {if (true) return  reader.new ParsedTypedAtom(relname,args,ismacro);}
     throw new Error("Missing return statement in function");
     } finally {
       trace_return("TypedAtom");
@@ -336,7 +336,7 @@ public class RBNParser3 implements RBNParser3Constants {
  Rel parsedrel;
  Rel oldrel;
       // grammar
-              parsedutat = UntypedAtom();
+              parsedutat = UntypedAtom(false);
         switch(parseno){
         case 1:
                 reader.addAllRel(parsedutat.rel());
@@ -671,7 +671,7 @@ ProbForm[] pfarr;
     try {
  RBNReader3.ParsedUnTypedAtom parsedat;
       // grammar
-              parsedat = UntypedAtom();
+              parsedat = UntypedAtom(false);
          {if (true) return new ProbFormBoolAtom(parsedat.rel(),parsedat.args(),true);}
     throw new Error("Missing return statement in function");
     } finally {
@@ -788,7 +788,7 @@ ProbFormBool nextpfb;
  RBNReader3.ParsedUnTypedAtom parsedat;
  RBNMacro macrodef;
       jj_consume_token(9);
-      parsedat = UntypedAtom();
+      parsedat = UntypedAtom(true);
         // Add the '@' back to the name:
         parsedat.set_relname("@"+parsedat.rel().name());
         switch(parseno){

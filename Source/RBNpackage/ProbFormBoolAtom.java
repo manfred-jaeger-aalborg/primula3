@@ -186,11 +186,11 @@ public class ProbFormBoolAtom extends ProbFormBool {
 		return pfatom.freevars();
 	}
 
-	@Override
-	public Vector<GroundAtom> makeParentVec(RelStruc A)
-			throws RBNCompatibilityException {
-		return pfatom.makeParentVec(A);
-	}
+//	@Override
+//	public Vector<GroundAtom> makeParentVec(RelStruc A)
+//			throws RBNCompatibilityException {
+//		return pfatom.makeParentVec(A);
+//	}
 
 	@Override
 	public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone)

@@ -506,11 +506,11 @@ public class ProbFormConvComb extends ProbForm {
 //		F3.setRandomParameterVals();
 //	}
 	
-	public void updateSig(Signature s){
-		F1.updateSig(s);
-		F2.updateSig(s);
-		F3.updateSig(s);
-	}
+//	public void updateSig(Signature s){
+//		F1.updateSig(s);
+//		F2.updateSig(s);
+//		F3.updateSig(s);
+//	}
 	
 	public void setCvals(String paramname, double val) {
 		F1.setCvals(paramname, val);

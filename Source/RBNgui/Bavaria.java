@@ -749,7 +749,7 @@ public class Bavaria extends JFrame implements ActionListener,ItemListener,KeyLi
 		else if( source == moveNode ){
 			editPanel.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
 			editPanel.setMode(MOVENODE);
-			editPanel.setRel(new Rel());
+			editPanel.setRel(new BoolRel());
 			attributesPanel.setMode(MOVENODE);
 			binaryPanel.setMode(MOVENODE);
 			arbitraryPanel.setMode(MOVENODE);
@@ -763,7 +763,7 @@ public class Bavaria extends JFrame implements ActionListener,ItemListener,KeyLi
 		else if( source == deleteNode ){
 			editPanel.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 			editPanel.setMode(DELETENODE);
-			editPanel.setRel(new Rel());
+			editPanel.setRel(new BoolRel());
 			attributesPanel.setMode(DELETENODE);
 			binaryPanel.setMode(DELETENODE);
 			arbitraryPanel.setMode(DELETENODE);

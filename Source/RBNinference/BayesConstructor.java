@@ -260,7 +260,7 @@ public class BayesConstructor extends java.lang.Object {
 					parents=pf.makeParentVec(strucarg,instarg,macrosdone);
 				}
 				else 
-					parents=pf.makeParentVec(strucarg);
+					parents=pf.makeParentVec(strucarg, new OneStrucData(), macrosdone);
 				
 				for (GroundAtom pga: parents) {
 					BNNode newestnode;
@@ -956,16 +956,16 @@ public class BayesConstructor extends java.lang.Object {
 		Vector<Vector<GroundAtom>> parentvecs = new Vector<Vector<GroundAtom>>(); // Vector of Vector of ground Atoms
 		Vector<GroundAtom> parvec = null;
 		BNNode newgatn;
+		TreeSet<String> macrosdone = new TreeSet<String>();
 		for (Enumeration<BNNode> e=groundatomhasht.elements();e.hasMoreElements();){
 			switch (evidencemode){
 			case Primula.OPTION_NOT_EVIDENCE_CONDITIONED:{
 				newgatn = e.nextElement();
-				parvec = newgatn.cpmodel().makeParentVec(strucarg);
+				parvec = newgatn.cpmodel().makeParentVec(strucarg, new OneStrucData() ,macrosdone);
 				break;
 			}
 			case Primula.OPTION_EVIDENCE_CONDITIONED:{
 				newgatn = e.nextElement();
-				TreeSet<String> macrosdone = new TreeSet<String>();
 				parvec = newgatn.cpmodel().makeParentVec(strucarg,instarg,macrosdone);
 				break;
 			}
@@ -1014,7 +1014,11 @@ public class BayesConstructor extends java.lang.Object {
 		switch (typeofnode)
 		{
 		case 0:
-			newnode = new SimpleBNGroundAtomNode(((ComplexBNGroundAtomNode)node).myatom(),((ComplexBNGroundAtomNode)node).name,cpt,node.parents,node.children);
+			newnode = new SimpleBNGroundAtomNode(((ComplexBNGroundAtomNode)node).myatom(),
+					((ComplexBNGroundAtomNode)node).name,
+					cpt,
+					node.parents,
+					node.children);
 			if (evidencemode == Primula.OPTION_EVIDENCE_CONDITIONED)
 			{
 				newnode.instantiate(node.instantiated);

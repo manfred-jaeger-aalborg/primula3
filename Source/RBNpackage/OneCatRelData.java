@@ -270,7 +270,7 @@ public class OneCatRelData extends OneRelData {
 	}
 
 	public void addRelData(Element el, RelStruc struc){
-		String[] argstrings = new String[((CatRel)rel).numVals()];
+		String[] argstrings = new String[(int)((CatRel)rel).numvals()];
 		for (int i=0;i<argstrings.length;i++)
 			argstrings[i]="";
 		
@@ -278,7 +278,7 @@ public class OneCatRelData extends OneRelData {
 			argstrings[values.get(t)]=argstrings[values.get(t)] + struc.namesAt(t);
 		}
 
-		for (int i=0; i<((CatRel)rel).numVals();i++) {
+		for (int i=0; i<(int)((CatRel)rel).numvals();i++) {
 			if (!argstrings[i].contentEquals("")) {
 				Element dl = el.addElement("d");
 				dl.addAttribute("rel", rel.name.name);

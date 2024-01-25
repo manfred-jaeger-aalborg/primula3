@@ -37,9 +37,9 @@ public abstract class Rel implements Serializable, Comparable<Rel>{
 	public static final int PREDEFINED = 0;
 	public static final int PROBABILISTIC = 1;
 
-	// The valtype of a relation is only declared by the 
-	// RelStruc. When a predefined relation has only been read
-	// from an rbn, its valtype is unknown.
+//	// The valtype of a relation is only declared by the 
+//	// RelStruc. When a predefined relation has only been read
+//	// from an rbn, its valtype is unknown.
 	public static final int UNKNOWN = 0;
 	public static final int BOOLEAN = 1;
 	public static final int NUMERIC = 2;
@@ -74,8 +74,11 @@ public abstract class Rel implements Serializable, Comparable<Rel>{
     private static int attributecounter = 0;
     private static int binarycounter = 0;
 
- 
- 
+    
+ /* Note: the following constructors for the abstract class Rel
+  * should only be invoked as initial constructors by constructors 
+  * of the subclasses BoolRel, CatRel, NumRel
+  */
     public Rel(){
         name = new RelName();
         arity = 0;
@@ -245,14 +248,7 @@ public abstract class Rel implements Serializable, Comparable<Rel>{
   		return valtype;
   	}
 
-  	public double numvals() {
-  		switch (valtype) {
-  		case Rel.BOOLEAN: return 2;
-  		case Rel.CATEGORICAL: return ((CatRel)this).numvals();
-  		case Rel.NUMERIC: return Double.POSITIVE_INFINITY;
-  		}
-  		return Double.NaN;
-  	}
+  	public abstract double numvals();
   	
 	public void setValtype(int valtype) {
 		this.valtype = valtype;

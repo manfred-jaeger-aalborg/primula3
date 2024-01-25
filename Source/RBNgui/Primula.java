@@ -1341,9 +1341,9 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		if(isBavariaOpen){
 			bavaria.update();
 		}
-		if (rbn != null) {
-			rbn.updateSig(sig); // sig has been updated by rdefreader.readRDEF
-		}
+//		if (rbn != null) {
+//			rbn.updateSig(sig); // sig has been updated by rdefreader.readRDEF
+//		}
 
 	}
 
@@ -1470,8 +1470,6 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 
 	public void setSignature(Signature s){
 		sig=s;
-		if (rbn != null)
-			rbn.updateSig(sig);
 	}
 	
 	//sets the current input file

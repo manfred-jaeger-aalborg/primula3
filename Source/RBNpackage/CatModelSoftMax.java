@@ -151,10 +151,10 @@ public class CatModelSoftMax extends CPModel {
 		return result;
 	}
 
-	@Override
-	public Vector<GroundAtom> makeParentVec(RelStruc A) throws RBNCompatibilityException {
-		return makeParentVec(A,new OneStrucData(),null);
-	}
+//	@Override
+//	public Vector<GroundAtom> makeParentVec(RelStruc A) throws RBNCompatibilityException {
+//		return makeParentVec(A,new OneStrucData(),null);
+//	}
 
 	@Override
 	public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone)
@@ -197,11 +197,11 @@ public class CatModelSoftMax extends CPModel {
 		return result;
 	}
 
-	@Override
-	public void updateSig(Signature s) {
-		for (int i = 0;i<probforms.size();i++)
-			probforms.elementAt(i).updateSig(s);
-	}
+//	@Override
+//	public void updateSig(Signature s) {
+//		for (int i = 0;i<probforms.size();i++)
+//			probforms.elementAt(i).updateSig(s);
+//	}
 
 	@Override
 	public void setCvals(String paramname, double val) {

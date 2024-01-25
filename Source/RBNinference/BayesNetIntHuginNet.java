@@ -200,7 +200,7 @@ public class BayesNetIntHuginNet implements BayesNetInt {
     		else
     			bufwr.write('\t' + "label = \"" + "aux" + "\";" + '\n');
     		bufwr.write('\t' + "position = ("+coords[0] +" " + coords[1] +");"+ '\n');
-    		if (!(node instanceof GroundAtomNodeInt) || node.isIsboolean())
+    		if ((!(node instanceof GroundAtomNodeInt)) || node.isIsboolean())
     			bufwr.write('\t' + "states = (\"false\" \"true\");" + '\n');
     		else { // categorical
     			String[] valnames = ((CatRel)((GroundAtomNodeInt)node).myatom().rel()).getValues();

@@ -28,10 +28,10 @@ public class RBNElement
 	{
 		prel =r;
 		cpmod = pf;
-		if (pf instanceof ProbForm)
-			r.setValtype(Rel.BOOLEAN);
-		else
-			r.setValtype(Rel.CATEGORICAL);
+//		if (pf instanceof ProbForm)
+//			r.setValtype(Rel.BOOLEAN);
+//		else
+//			r.setValtype(Rel.CATEGORICAL);
 	}
 
 	public RBNElement(Rel r, String[] args, CPModel pf)

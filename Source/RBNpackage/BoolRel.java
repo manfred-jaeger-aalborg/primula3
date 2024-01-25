@@ -51,8 +51,8 @@ public class BoolRel extends Rel {
   		if (arity==1 || arity == 2)
   			relel.addAttribute("color", "(" + color.getRed() + "," + color.getGreen() + "," + color.getBlue() +")");;
   	}
-//  	public BoolRel relToBoolRel(Rel r){
-//		BoolRel result = new BoolRel(r.name.name,r.arity, r.getTypes() );
-//		return result;
-//	}
+
+  	public double numvals() {
+  		return 2;
+  	}
 }

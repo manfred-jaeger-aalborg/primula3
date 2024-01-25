@@ -157,11 +157,11 @@ public abstract class CPModel
     /** returns the free variables of the model */
     public abstract String[] freevars();
     
-    /** returns the vector of (ground!) Atoms on which the
-     * evaluation of the model depends
-     */
-    public abstract Vector<GroundAtom> makeParentVec(RelStruc A)
-	throws RBNCompatibilityException;
+//    /** returns the vector of (ground!) Atoms on which the
+//     * evaluation of the model depends
+//     */
+//    public abstract Vector<GroundAtom> makeParentVec(RelStruc A, TreeSet<String> macrosdone)
+//	throws RBNCompatibilityException;
 
     /** same as previous but with respect to the given
      * truth values in the Instantiation argument
@@ -198,11 +198,11 @@ public abstract class CPModel
     public abstract CPModel substitute(String[] vars, String[] args);
     
     
-    /**
-     * See updateSig in RBN class
-     * @param s
-     */
-    public abstract void updateSig(Signature s);
+//    /**
+//     * See updateSig in RBN class
+//     * @param s
+//     */
+//    public abstract void updateSig(Signature s);
     
     /** 
      * Sets the cval field of parameter with name=paramname to the

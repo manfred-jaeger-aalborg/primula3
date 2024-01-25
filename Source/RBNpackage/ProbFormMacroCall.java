@@ -123,11 +123,11 @@ public class ProbFormMacroCall extends ProbForm {
 			return rbnutilities.NonIntOnly(macro.arguments);
 	}
 
-	@Override
-	public Vector<GroundAtom> makeParentVec(RelStruc A) throws RBNCompatibilityException {
-		setpf();
-		return pf_sub.makeParentVec(A);
-	}
+//	@Override
+//	public Vector<GroundAtom> makeParentVec(RelStruc A) throws RBNCompatibilityException {
+//		setpf();
+//		return pf_sub.makeParentVec(A);
+//	}
 
 	@Override
 	public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone) 
@@ -179,12 +179,12 @@ public class ProbFormMacroCall extends ProbForm {
 		return new ProbFormMacroCall(this.macro,rbnutilities.array_substitute(arguments, vars, args));
 	}
 
-	@Override
-	public void updateSig(Signature s) {
-		/* Do nothing here. Signature update should be performed directly by iterating in the 
-		* RBN over the probability formulas in the macro definitions.
-		*/
-	}
+//	@Override
+//	public void updateSig(Signature s) {
+//		/* Do nothing here. Signature update should be performed directly by iterating in the 
+//		* RBN over the probability formulas in the macro definitions.
+//		*/
+//	}
 
 	@Override
 	public void setCvals(String paramname, double val) {

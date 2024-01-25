@@ -278,11 +278,11 @@ public class ProbFormBoolComposite extends ProbFormBool {
 		return result;
 	}
 
-	@Override
-	public Vector<GroundAtom> makeParentVec(RelStruc A) throws RBNCompatibilityException {
-		
-		return makeParentVec(A, new OneStrucData(),null);
-	}
+//	@Override
+//	public Vector<GroundAtom> makeParentVec(RelStruc A) throws RBNCompatibilityException {
+//		
+//		return makeParentVec(A, new OneStrucData(),null);
+//	}
 
 	@Override
 	public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone)
@@ -408,11 +408,11 @@ public class ProbFormBoolComposite extends ProbFormBool {
 		return new ProbFormBoolComposite(clonedcomps,operator,sign);
 	}
 	
-	public void updateSig(Signature s){
-		for (int i=0;i<components.length;i++)
-			components[i].updateSig(s);	
-		}
-	
+//	public void updateSig(Signature s){
+//		for (int i=0;i<components.length;i++)
+//			components[i].updateSig(s);	
+//		}
+//	
 	public TreeSet<Rel> parentRels(){
 		TreeSet<Rel> result = new TreeSet<Rel>();
 		for (int i=0;i<components.length; i++)

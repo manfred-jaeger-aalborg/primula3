@@ -99,4 +99,7 @@ public class NumRel extends Rel{
   		return maxval;
   	}
   	
+ 	public double numvals() {
+ 		return Double.POSITIVE_INFINITY;
+ 	}
 }

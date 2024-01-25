@@ -820,11 +820,11 @@ public class ProbFormCombFunc extends ProbForm{
 //			pfargs[i].setRandomParameterVals();
 //	}
 	
-	public void updateSig(Signature s){
-		for (int i=0;i<pfargs.length;i++)
-			pfargs[i].updateSig(s);
-		cconstr.updateSig(s);
-	}
+//	public void updateSig(Signature s){
+//		for (int i=0;i<pfargs.length;i++)
+//			pfargs[i].updateSig(s);
+//		cconstr.updateSig(s);
+//	}
 	public void setCvals(String paramname, double val) {
 		for (int i=0;i<pfargs.length;i++)
 			pfargs[i].setCvals(paramname,val);

@@ -353,40 +353,31 @@ public class RBN extends java.lang.Object {
     		return paramvals.get(parname);
     	}
     	
-    	/**
-    	 * Checks and sets relation properties in this 
-    	 * rbn according to the signature s:
-    	 * 
-    	 * - checks that relations for which this rbn contains a defining
-    	 * element are declared as probabilistic in s (else prints a warning)
-    	 * 
-    	 * - sets the relation attribute in all atoms that appear in probforms
-    	 * in this rbn to the relations with the corresponding name in s 
-    	 * 
-    	 * @param s
-    	 */
-    	public void updateSig(Signature s){
-    		RBNElement el;
-    		Rel headrel;
-    		Rel relinsig;
-    		for (int i=0; i<prelements.length; i++){
-    			el=prelements[i];
-    			headrel = el.rel();
-    			relinsig = s.getRelByName(headrel.name());
-    			if (relinsig == null)
-    				System.out.println("Warning: did not find relation " + headrel.name() + " used in RBN in the signature declaration");
-    			if (relinsig.getInout()!=Rel.PROBABILISTIC)
-    				System.out.println("Warning: relation " + headrel.name() + " not probabilistic according to signature");
-    			if (!(relinsig instanceof BoolRel))
-    				System.out.println("Warning: relation " + headrel.name() + " not Boolean according to signature");
-    			else
-    				el.setRel((BoolRel)relinsig);
-    			el.cpmod().updateSig(s);
-    		}
-    		for (int i=0; i<macroelements.length; i++){
-    			macroelements[i].cpmod().updateSig(s);
-    		}
-    	}
+//    	/**
+//    	 * Checks whether the relations in the RBN are declared in the signature s
+//    	 */
+//    	public void updateSig(Signature s){
+//    		RBNElement el;
+//    		Rel headrel;
+//    		Rel relinsig;
+//    		for (int i=0; i<prelements.length; i++){
+//    			el=prelements[i];
+//    			headrel = el.rel();
+//    			relinsig = s.getRelByName(headrel.name());
+//    			if (relinsig == null)
+//    				System.out.println("Warning: did not find relation " + headrel.name() + " used in RBN in the signature declaration");
+//    			if (relinsig.getInout()!=Rel.PROBABILISTIC)
+//    				System.out.println("Warning: relation " + headrel.name() + " not probabilistic according to signature");
+//    			if (!(relinsig instanceof BoolRel))
+//    				System.out.println("Warning: relation " + headrel.name() + " not Boolean according to signature");
+//    			else
+//    				el.setRel((BoolRel)relinsig);
+//    			el.cpmod().updateSig(s);
+//    		}
+//    		for (int i=0; i<macroelements.length; i++){
+//    			macroelements[i].cpmod().updateSig(s);
+//    		}
+//    	}
     	
     	/**
     	 * Returns all the probabilistic ancestor relations of r according to the RBN
