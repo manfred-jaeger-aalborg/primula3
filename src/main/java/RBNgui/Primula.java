@@ -1734,16 +1734,22 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 
 	private void loadDefaults(){
 
-		// alpha example
+//		// alpha example
 //		String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-github-examples/tex_file/GNN-RBN-alpha/rbn_acr.rbn";
-		String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/purple.rbn";
-		String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/purple_data.rdef";
-//		String rstinputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-github-examples/tex_file/GNN-RBN-alpha/alpha1-blue.rdef";
+
+		String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/models/only_blue_alpha1_10_5_20240123-151213/RBN_acr_graph_alpha1_10_5.rbn";
+		String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/alpha1.rdef";
+
+//		String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/RBN_acr_graph_alpha1_10_5.rbn";
+
+// 		String rstinputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-github-examples/tex_file/GNN-RBN-alpha/alpha1-blue.rdef";
+//		String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/purple.rbn";
+//		String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/purple_data.rdef";
 		// String rstinputfilestring = "/Users/lz50rg/Desktop/GNN-RBN-alpha-edge/alpha1-edge.rdef";
 
 		// explainer gnn
-		//String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-github-examples/tex_file/GNN-RBN-explainer/rbn_acr.rbn";
-		//String rstinputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-github-examples/tex_file/GNN-RBN-explainer/base_class_0_n6_0.rdef";
+//		String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-github-examples/tex_file/GNN-RBN-explainer/rbn_acr.rbn";
+//		String rstinputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-github-examples/tex_file/GNN-RBN-explainer/base_class_0_n6_0.rdef";
 
 		// synthetic
 		//String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN/models/triangle_10_8_6_20230725-152135/exp_41/rbn_acr_graph_triangle_10.rbn";

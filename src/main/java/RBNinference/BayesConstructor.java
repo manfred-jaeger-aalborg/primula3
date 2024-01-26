@@ -891,7 +891,7 @@ public class BayesConstructor extends java.lang.Object {
 
 		/* Iterate over all instantiations */
 		for (int h=0;h<cpt.length;h++){
-			//System.out.println(pform.asString(0, 0, A));
+			//System.out.println("--> " + pform.asString(0, 0, A, false, false));
 			
 			cpt[h]=(double)pform.evaluate(A,
 					copyinst,

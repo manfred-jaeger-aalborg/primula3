@@ -58,12 +58,15 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 	 */
 	private double condProb(RelStruc A,Hashtable atomhasht,OneStrucData inst,long[] timers)
 			throws RBNCompatibilityException
-			{
-		double result = probform.evalSample(A,atomhasht,inst,timers);
+	{
+		if (probform instanceof ProbFormGnn) {
+			((ProbFormGnn) probform).setGnnPy(gnnPy);
+			return probform.evalSample(A,atomhasht,inst,timers);
+		} else {
+			return probform.evalSample(A,atomhasht,inst,timers);
+		}
 		//System.out.print(" cP: " + result);
-		return result;
-			}
-
+	}
 
 	public  int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, Hashtable atomhasht )
 			throws RBNCompatibilityException
@@ -98,11 +101,9 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 		return true;
 	}
 
-
 	public ProbForm probform(){
 		return probform;
 	}
-
 
 	public void sampleForward(RelStruc A,Hashtable atomhasht,OneStrucData inst,int adaptivemode,long[] timers)
 			throws RBNCompatibilityException
@@ -136,10 +137,6 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 			}
 		}
 			}
-
-
-
-
 
 	public  void setDistrProb(RelStruc A, Hashtable atomhasht,OneStrucData inst,long[] timers)
 			throws RBNCompatibilityException

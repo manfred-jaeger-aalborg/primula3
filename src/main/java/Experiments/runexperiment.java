@@ -59,7 +59,7 @@ public class runexperiment {
          */
         RBN manual_rbn = new RBN(3, 0);
 
-        RBNPreldef gnn_pred = new RBNPreldef(new BoolRel("gnn", 1), new String[]{"v"}, new ProbFormGnn());
+        RBNPreldef gnn_pred = new RBNPreldef(new BoolRel("gnn", 1), new String[]{"v"}, new ProbFormGnn("v", new ProbForm[]{}));
 
         RBNPreldef red_pred = new RBNPreldef(new BoolRel("red", 1), new String[]{"v"}, new ProbFormConstant(0.5));
 
@@ -98,13 +98,14 @@ public class runexperiment {
             queryatoms.add(gnnrel, new int[]{i});
         }
 
-        for (int i = 0; i < 1; i++) {
-            queryatoms.add(redrel, new int[]{i});
-        }
+//        for (int i = 0; i < 1; i++) {
+//            queryatoms.add(redrel, new int[]{i});
+//        }
+//
+//        for (int i = 0; i < 1; i++) {
+//            queryatoms.add(bluerel, new int[]{i});
+//        }
 
-        for (int i = 0; i < 1; i++) {
-            queryatoms.add(bluerel, new int[]{i});
-        }
 
         // COMPUTE MCMC
         /**

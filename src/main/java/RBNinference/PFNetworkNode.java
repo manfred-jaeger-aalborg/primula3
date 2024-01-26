@@ -55,8 +55,9 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
     /** The same but distributed over num_subsamples subsamples
      * only used at querynodes
      **/
-    protected double[][] truesampleweight_subsample = null; 
+    protected double[][] truesampleweight_subsample = null;
 
+	protected GnnPy gnnPy;
 
     public PFNetworkNode(GroundAtom at){
 	super(at.asString());
@@ -461,22 +462,19 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
 	    throw new RBNBadSampleException();
     }
 
-
     public double[] truesampleweight(){
 	return truesampleweight;
     }
-
 
     public double[] truesampleweight_subsample(int i){
 	return truesampleweight_subsample[i];
     }
 
-
-
-
     public boolean upstreamOfEvidence(){
 	return upstreamofevidence;
     }
 
-
+	public void setGnnPy(GnnPy gnnPy) {
+		this.gnnPy = gnnPy;
+	}
 }

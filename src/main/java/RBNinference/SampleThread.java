@@ -53,6 +53,11 @@ public class SampleThread extends Thread{
 	long time;
 	long newtime;
 
+	// FOR GNN INTERACTION the jep library needs to be on the same thread
+	// the jep object then will be shared across all the probforms that need it
+	// probably only one jep object can be created at time --> close it when it is not needed anymore
+	private GnnPy gnnPy;
+	private boolean gnnIntegration;
 	public SampleThread(Observer infmodule, 
 			PFNetwork pfn, 
 			GroundAtomList queryatoms, 
@@ -70,10 +75,28 @@ public class SampleThread extends Thread{
 		sprobs.addObserver(infmodule);
 		pause = false;
 		test = new double[queryAtomSize];
+		this.gnnIntegration = true;
 	}
 
 	public void run()
 	{
+		// if we use the python-java interface we create the object
+		// this variable needs to be defined apriori
+		// the jep object needs to be in the same thread
+		if (this.gnnIntegration) {
+			String modelPath = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python/primula-gnn";
+			String scriptPath = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python";
+			String scriptName = "inference_test";
+
+			String jepPath = "/Users/lz50rg/miniconda3/envs/torch/lib/python3.10/site-packages/jep/libjep.jnilib";
+			String pythonHome = "/Users/lz50rg/miniconda3/envs/torch/bin/python";
+			this.gnnPy = new GnnPy(modelPath, scriptPath, scriptName, jepPath, pythonHome);
+			pfn.setGnnPy(this.gnnPy);
+		}
+		else {
+			this.gnnPy = null;
+		}
+
 		time = System.currentTimeMillis();
 		while(running){
 			try{
@@ -113,8 +136,13 @@ public class SampleThread extends Thread{
 			}
 
 		}
+		// the interpreter needs to be closed from the same thread
+		this.closeGnnIntepreter();
 	}
 
+	public void closeGnnIntepreter() {
+		this.gnnPy.closeInterpreter();
+	}
 	public void setRunning(boolean running){
 		this.running = running;
 	}

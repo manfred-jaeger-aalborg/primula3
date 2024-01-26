@@ -1291,7 +1291,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		/** ... keith cascio */
 	}
 
-	private void startSampleThread(){
+	public void startSampleThread(){
 		sampling = true;
 		PFNetwork pfn = null;
 		if (!noLog()){
@@ -1341,7 +1341,39 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		delQueryAtomButton.setEnabled( false );
 		delAllQueryAtomButton.setEnabled( false );
 	}
-	
+
+	public void setQueryAtoms(GroundAtomList atomsList) {
+		this.queryatoms = atomsList;
+	}
+
+	public void stopSampleThread(){
+		sampling = false;
+		sampthr.setRunning(false);
+		if (!noLog()){
+			try{
+				logwriter.flush();
+				if (logfilename != "")
+					logwriter.close();
+			}
+			catch (java.io.IOException ex){System.err.println(ex);};
+		}
+		infoMessage.setText(" Stop Sampling ");
+		pausemcmc = false;
+		startSampling.setEnabled( true );
+		trueButton.setEnabled( true );
+		falseButton.setEnabled( true );
+		queryButton.setEnabled( true );
+		toggleTruthButton.setEnabled( true );
+		delInstButton.setEnabled( true );
+		delAllInstButton.setEnabled( true );
+		delQueryAtomButton.setEnabled( true );
+		delAllQueryAtomButton.setEnabled( true );
+	}
+
+	public SampleThread getSampthr() {
+		return sampthr;
+	}
+
 	private GradientGraph startMapThread(){
 		
 		GradientGraph gg = null;
