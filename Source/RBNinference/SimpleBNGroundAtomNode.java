@@ -63,13 +63,13 @@ public class SimpleBNGroundAtomNode extends SimpleBNNode implements GroundAtomNo
         this.setIsboolean(r.valtype()==Rel.BOOLEAN);
     }
     
-    public SimpleBNGroundAtomNode(GroundAtom at, String name, double[][] cpt,LinkedList parents,LinkedList children) {
+    public SimpleBNGroundAtomNode(GroundAtom at, String name, double[][] cpt,Vector parents,Vector children) {
         super(name,cpt,parents,children);
          myatom = at;
          this.setIsboolean(at.rel().valtype()==Rel.BOOLEAN);
     }
 
-    public SimpleBNGroundAtomNode(Rel r, String name, int[] ar,double[][] cpt,LinkedList parents,LinkedList children) {
+    public SimpleBNGroundAtomNode(Rel r, String name, int[] ar,double[][] cpt,Vector parents,Vector children) {
         super(name,cpt,parents,children);
          myatom = new GroundAtom(r,ar);
          this.setIsboolean(r.valtype()==Rel.BOOLEAN);

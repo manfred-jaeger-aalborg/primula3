@@ -34,10 +34,10 @@ import RBNpackage.*;
  */
 public class BNNode{
 	public String name;
-	public LinkedList<BNNode> parents;
-	public LinkedList<BNNode> children;
+	public Vector<BNNode> parents;
+	public Vector<BNNode> children;
 
-	private boolean isboolean = true; // if this node represents a Boolean variable. True by default. Must be
+	protected boolean isboolean = true; // if this node represents a Boolean variable. True by default. Must be
 	                                  // set to false when constructing a categorical node. 
 	
 	public boolean isIsboolean() {
@@ -46,6 +46,17 @@ public class BNNode{
 
 	public void setIsboolean(boolean isboolean) {
 		this.isboolean = isboolean;
+	}
+
+	protected int numvalues = 2; 
+	
+	
+	public int getNumvalues() {
+		return numvalues;
+	}
+
+	public void setNumvalues(int numvalues) {
+		this.numvalues = numvalues;
 	}
 
 	/* Set to 0 resp. 1 (Boolean case) or value index (Categorical case) if node instantiated 
@@ -75,8 +86,8 @@ public class BNNode{
 
 	public BNNode(String n) {
 		name = n;
-		parents = new LinkedList<BNNode>();
-		children = new LinkedList<BNNode>();
+		parents = new Vector<BNNode>();
+		children = new Vector<BNNode>();
 		instantiated = -1;
 		xcoord = 0;
 		ycoord = 0;
@@ -93,8 +104,8 @@ public class BNNode{
 
 	public BNNode(String n, int val) {
 		name = n;
-		parents = new LinkedList<BNNode>();
-		children = new LinkedList<BNNode>();
+		parents = new Vector<BNNode>();
+		children = new Vector<BNNode>();
 		instantiated = val;
 		xcoord = 0;
 		ycoord = 0;
@@ -109,7 +120,7 @@ public class BNNode{
 	}
 
 
-	public BNNode(String n,LinkedList<BNNode> par, LinkedList<BNNode> chil) {
+	public BNNode(String n,Vector<BNNode> par, Vector<BNNode> chil) {
 		name = n;
 		parents = par;
 		children = chil;
@@ -193,7 +204,7 @@ public class BNNode{
 
 
 	public void resetParents(){
-		parents = new LinkedList<BNNode>();
+		parents = new Vector<BNNode>();
 	}
 
 	public void replaceInParentList(BNNode oldpar,BNNode newpar)

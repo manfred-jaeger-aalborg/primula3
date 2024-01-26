@@ -16,7 +16,7 @@ public class SimpleBNNode extends BNNode {
     
     /* cptentries contains the probabilities for this node being
      * true in the following order (where parents are enumerated 
-     * according to their order in the parents LinkedList):
+     * according to their order in the parents Vector):
      *
      *  pa1  pa2 pa3  |  true false
      *  ----------------------------
@@ -46,7 +46,7 @@ public class SimpleBNNode extends BNNode {
         exported = false;
     }
     
-    public SimpleBNNode(String name, double[][] cpt, LinkedList<BNNode> parents, LinkedList<BNNode> children ) {
+    public SimpleBNNode(String name, double[][] cpt, Vector<BNNode> parents, Vector<BNNode> children ) {
         super (name,parents,children); 
         cptentries = cpt;
         depthset =false;

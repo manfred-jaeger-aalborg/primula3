@@ -928,6 +928,7 @@ public class rbnutilities extends java.lang.Object
     }
 
 
+    
     /** Formats a vector of int[] as String */
     public static String intArrVecToString(Vector vec){
 	String result = "";
@@ -1504,5 +1505,21 @@ public class rbnutilities extends java.lang.Object
 
 		return result.toArray(new String[result.size()]);
 
+	}
+	
+	public int sampledValue(double rand, double[] cpr) {
+		/* For a given (random) number rand \in [0,1] and conditional 
+		 * probability row cpr, returns the index of the value sampled
+		 * according to the cpr probabilities.
+		 * 
+		 * Example: cpr = [0.1,0.3,0.1,0.5], rand= 0.15 then return 1
+		 */
+		int result=0;
+		double probsum =0;
+		while (probsum<rand) {
+			
+		}
+			
+		return result;
 	}
 }

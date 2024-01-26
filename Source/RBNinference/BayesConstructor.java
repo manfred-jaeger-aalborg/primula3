@@ -725,8 +725,11 @@ public class BayesConstructor extends java.lang.Object {
 	 * 
 	 * The probability values are listed in the order defined by their integer
 	 * indices (Boolean case: first false, then true)
+	 * 
+	 * Also returns a hashmap <Integer,int[]> that maps indices of parent configurations
+	 * to the tuple of parent values at that index. 
 	 */
-	public static double[][] makeCPT(CPModel cpmodel,RelStruc A,OneStrucData inst,Vector<GroundAtom> parentatoms)
+	public static Object[] makeCPT(CPModel cpmodel,RelStruc A,OneStrucData inst,Vector<GroundAtom> parentatoms)
 	throws RBNCompatibilityException
 	{
 		boolean iscatmodel = (cpmodel instanceof CatModelSoftMax);
@@ -739,8 +742,11 @@ public class BayesConstructor extends java.lang.Object {
 			numparvals[i]=(int)parentatoms.elementAt(i).rel.numvals();
 			numparconfigs*=numparvals[i];
 		}
+		
 		int numvals = cpmodel.numvals();
 		double[][] cpt = new double[numparconfigs][numvals];
+		HashMap<Integer,int[]> indxToTuple = new HashMap<Integer,int[]>();
+		
 		int[]  oldinst;
 		int[]  newinst;
 		int[]  diffinst;
@@ -766,6 +772,7 @@ public class BayesConstructor extends java.lang.Object {
 
 		/* Iterate over all instantiations */
 		for (int h=0;h<cpt.length;h++){
+			indxToTuple.put(h, newinst);
 			if (isboolmodel) {
 			double trueval =(double)cpmodel.evaluate(A,
 					copyinst,
@@ -815,7 +822,7 @@ public class BayesConstructor extends java.lang.Object {
 				}
 			}
 		}
-		return cpt;
+		return new Object[] {cpt,indxToTuple};
 	}
 
 	private void makeBNetwork(int evidencemode)
@@ -865,13 +872,13 @@ public class BayesConstructor extends java.lang.Object {
 		
 			/* turn complexnode into simplenode
 			 */
-			cpt = makeCPT(cpmodel,strucarg,inst,parvec);
+			cpt = (double[][])makeCPT(cpmodel,strucarg,inst,parvec)[0];
 			
 			newgatn = new SimpleBNGroundAtomNode(atom,
 					name,
 					cpt,
-					new LinkedList(),
-					new LinkedList());
+					new Vector(),
+					new Vector());
 
 			if (evidencemode == Primula.OPTION_EVIDENCE_CONDITIONED){
 				newgatn.instantiate(currentnode.instantiated);
@@ -1097,7 +1104,7 @@ public class BayesConstructor extends java.lang.Object {
 		for (int i=0;i<3;i++)
 			processComponentOfConvComp(i,node,newnode,pf,type,value,parnodes,decomposemode);
 
-		LinkedList parents = new LinkedList();
+		Vector<BNNode> parents = new Vector<BNNode>();
 		int numparents = 0;
 		for (int i = 0; i<3; i++)
 			if (type[i] != 0 )
@@ -1282,7 +1289,7 @@ public class BayesConstructor extends java.lang.Object {
 			break;
 		case 2:
 			pnodes[i] = new ComplexBNNode(oldnode.name + ".CC" + i,pf[i]);
-			LinkedList children = new LinkedList();
+			Vector<BNNode> children = new Vector<BNNode>();
 			children.add(newnode);
 			pnodes[i].children = children;
 			complexnodes.add(pnodes[i]);
@@ -1948,7 +1955,7 @@ public class BayesConstructor extends java.lang.Object {
 		BNNode currentchild;
 		DummyBNNode currentdummy;
 		DummyBNNode nextdummy;
-		LinkedList newchildren;
+		Vector<BNNode> newchildren;
 		int dist;
 		int pos;
 		for( int i=0; i<levels.length; i++ ){
@@ -1956,7 +1963,7 @@ public class BayesConstructor extends java.lang.Object {
 				currentnode = (BNNode)levels[i].get(j);//elementAt(j);
 				if (currentnode instanceof SimpleBNNode){
 					li = currentnode.children.listIterator();
-					newchildren = new LinkedList();
+					newchildren = new Vector<BNNode>();
 					while (li.hasNext()){
 						currentchild = (BNNode)li.next();
 						dist = currentchild.level-currentnode.level;

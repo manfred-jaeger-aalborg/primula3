@@ -66,6 +66,10 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
 	thisdistrprob = -1;
 	truesampleweight = new double[2];
 	upstreamofevidence = false;
+	
+	Rel r = at.rel();
+	if (r instanceof CatRel)
+		this.numvalues=(int)r.numvals();
     }
 
     public void addToTruesampleweight(double[] d,int subsind){
