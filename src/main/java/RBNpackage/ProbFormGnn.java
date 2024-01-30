@@ -11,12 +11,12 @@ import jep.python.PyObject;
 import java.util.*;
 
 /**
- * alpha(p0) = COMPUTE WITH
- * <gnn>
+ * alpha(a) = COMPUTE WITH
+ *      <gnn>
  * FOR INPUTS
- * <list of attributes>
- * FORALL p1
- * WITH edge(p0, p1)
+ *      <list of attributes>
+ * FORALL b
+ *      WITH edge(a, b) <> WITH edge(b, a) <> WITH edge(a, b) || WITH edge(b, a)
  */
 public class ProbFormGnn extends ProbForm {
     // the order of attributes need to be respected! this order will be used for the gnn encoding
@@ -25,11 +25,12 @@ public class ProbFormGnn extends ProbForm {
 
     // the name of the edge relation in the RBN definition (usually "edge")
     private String edge_name;
-
+    private String edge_direction;
     private GnnPy gnnPy;
 
     public ProbFormGnn(String argument, Rel[] attr) {
         this.setEdge_name("edge");
+        this.setEdge_direction("ABBA");
 
         this.argument = argument;
         this.gnnattr = attr;
@@ -37,6 +38,7 @@ public class ProbFormGnn extends ProbForm {
 
     public ProbFormGnn(String argumentm, GnnPy gnnpy) {
         this.setEdge_name("edge");
+        this.setEdge_direction("ABBA");
 
         this.argument = argument;
         this.gnnPy = gnnpy;
@@ -130,7 +132,12 @@ public class ProbFormGnn extends ProbForm {
         String edge_index = "";
         for (BoolRel element : boolrel) {
             if (Objects.equals(element.name(), this.edge_name)) {
-                edge_index =  this.gnnPy.stringifyGnnEdges(sampledRel, element);
+                if (Objects.equals(this.edge_direction, "ABBA"))
+                    edge_index =  this.gnnPy.stringifyGnnEdgesABBA(sampledRel, element);
+                if (Objects.equals(this.edge_direction, "AB"))
+                    edge_index =  this.gnnPy.stringifyGnnEdgesAB(sampledRel, element);
+                if (Objects.equals(this.edge_direction, "BA"))
+                    edge_index =  this.gnnPy.stringifyGnnEdgesBA(sampledRel, element);
                 break;
             }
         }
@@ -167,7 +174,6 @@ public class ProbFormGnn extends ProbForm {
         return makeParentVec(A, new OneStrucData(), null);
     }
 
-    // TODO add also arity >=1
     @Override
     public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone) throws RBNCompatibilityException {
         System.out.println("makeParentVec code 2");
@@ -263,5 +269,9 @@ public class ProbFormGnn extends ProbForm {
 
     public void setEdge_name(String edge_name) {
         this.edge_name = edge_name;
+    }
+
+    public void setEdge_direction(String edge_direction) {
+        this.edge_direction = edge_direction;
     }
 }

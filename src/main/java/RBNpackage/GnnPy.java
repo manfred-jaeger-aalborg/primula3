@@ -222,7 +222,14 @@ public class GnnPy {
         return result.toString();
     }
 
-    public String stringifyGnnEdges(SparseRelStruc sampledRel, BoolRel edgerel) {
+    /**
+     * This function will write the edges in both directions
+     * A -> B and B -> A
+     * @param sampledRel
+     * @param edgerel
+     * @return
+     */
+    public String stringifyGnnEdgesABBA(SparseRelStruc sampledRel, BoolRel edgerel) {
         // use the edge relation present in mydata
         OneBoolRelData edgeinst = null;
         String edge_index = "";
@@ -239,6 +246,62 @@ public class GnnPy {
             arrays[idx+1][0] = array[1];
             arrays[idx+1][1] = array[0];
             idx += 2;
+        }
+        // Sort the arrays based on the first column
+        Arrays.sort(arrays, Comparator.comparingInt(a -> a[0]));
+        return this.arraysToEdgeTensor(arrays);
+    }
+
+    /**
+     * This function will write the edges in one direction
+     * A -> B
+     * @param sampledRel
+     * @param edgerel
+     * @return
+     */
+    public String stringifyGnnEdgesAB(SparseRelStruc sampledRel, BoolRel edgerel) {
+        // use the edge relation present in mydata
+        OneBoolRelData edgeinst = null;
+        String edge_index = "";
+
+        edgeinst = (OneBoolRelData) sampledRel.getmydata().find(edgerel);
+        TreeSet<int[]> edges_list = edgeinst.allTrue();
+        // in order to transpose the edge matrix we use 2 arrays
+        // we are dealing with directed edges while in our PyTorch data is undirected!
+        int[][] arrays = new int[edges_list.size()][2];
+        int idx = 0;
+        for (int[] array : edges_list) {
+            arrays[idx][0] = array[0];
+            arrays[idx][1] = array[1];
+            idx++;
+        }
+        // Sort the arrays based on the first column
+        Arrays.sort(arrays, Comparator.comparingInt(a -> a[0]));
+        return this.arraysToEdgeTensor(arrays);
+    }
+
+    /**
+     * This function will write the edges in one direction but opposite
+     * B -> A
+     * @param sampledRel
+     * @param edgerel
+     * @return
+     */
+    public String stringifyGnnEdgesBA(SparseRelStruc sampledRel, BoolRel edgerel) {
+        // use the edge relation present in mydata
+        OneBoolRelData edgeinst = null;
+        String edge_index = "";
+
+        edgeinst = (OneBoolRelData) sampledRel.getmydata().find(edgerel);
+        TreeSet<int[]> edges_list = edgeinst.allTrue();
+        // in order to transpose the edge matrix we use 2 arrays
+        // we are dealing with directed edges while in our PyTorch data is undirected!
+        int[][] arrays = new int[edges_list.size()][2];
+        int idx = 0;
+        for (int[] array : edges_list) {
+            arrays[idx][0] = array[1];
+            arrays[idx][1] = array[0];
+            idx++;
         }
         // Sort the arrays based on the first column
         Arrays.sort(arrays, Comparator.comparingInt(a -> a[0]));
