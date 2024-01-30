@@ -6,6 +6,7 @@ import java.util.TreeSet;
 
 import RBNExceptions.RBNCompatibilityException;
 import RBNLearning.*;
+import RBNinference.PFNetworkNode;
 
 /* represents 'false' if sign=true, else represents
  * 'true'
@@ -86,12 +87,16 @@ public class ProbFormBoolConstant extends ProbFormBool {
 	}
 	
 	@Override
-	public double evalSample(RelStruc A, Hashtable atomhasht,
-			OneStrucData inst, long[] timers) throws RBNCompatibilityException {
+	public Double evalSample(RelStruc A, 
+			Hashtable<String,PFNetworkNode> atomhasht, 
+			OneStrucData inst, 
+    		Hashtable<String,Double> evaluated,
+			long[] timers)
+		throws RBNCompatibilityException {
 		if (sign)
-			return 1;
+			return Double.valueOf(1);
 		else
-			return 0;
+			return Double.valueOf(0);
 	}
 
 	@Override

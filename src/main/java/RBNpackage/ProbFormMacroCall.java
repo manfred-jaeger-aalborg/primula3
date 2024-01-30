@@ -35,6 +35,10 @@ public class ProbFormMacroCall extends ProbForm {
 			pf_sub = macro.pform().substitute(macro.arguments(), arguments);
 	}
 	
+	public void setpf(ProbForm pf) {
+		pf_sub=pf;
+	}
+	
 	@Override
 	public String asString(int syntax, int depth, RelStruc A, boolean paramsAsValue, boolean usealias) {
 		String result = new String();
@@ -72,10 +76,6 @@ public class ProbFormMacroCall extends ProbForm {
 			Profiler profiler) throws RBNCompatibilityException {
 			setpf();
 
-//			long timebeforemacrosub = System.currentTimeMillis();
-//			ProbForm pf = macro.pform().substitute(macro.arguments(), arguments);
-//			if (profiler != null)
-//				profiler.addTime(Profiler.TIME_SUBMACRO, System.currentTimeMillis() - timebeforemacrosub);
 			Object[] result = pf_sub.evaluate(A, 
 				inst,
 				vars, 
@@ -95,10 +95,14 @@ public class ProbFormMacroCall extends ProbForm {
 	}
 
 	@Override
-	public double evalSample(RelStruc A, Hashtable<String, PFNetworkNode> atomhasht, OneStrucData inst, long[] timers)
+	public Double evalSample(RelStruc A, 
+			Hashtable<String,PFNetworkNode> atomhasht, 
+			OneStrucData inst, 
+    		Hashtable<String,Double> evaluated,
+			long[] timers)
 			throws RBNCompatibilityException {
 		setpf();
-		return pf_sub.evalSample(A, atomhasht, inst, timers);
+		return pf_sub.evalSample(A, atomhasht, inst, evaluated,timers);
 	}
 
 	@Override
@@ -150,12 +154,21 @@ public class ProbFormMacroCall extends ProbForm {
 		return new String[0];
 	}
 
+//	@Override
+//	public ProbForm sEval(RelStruc A) throws RBNCompatibilityException {
+//		setpf();
+//		return pf_sub.sEval(A);
+//	}
+
 	@Override
 	public ProbForm sEval(RelStruc A) throws RBNCompatibilityException {
 		setpf();
-		return pf_sub.sEval(A);
+		pf_sub.sEval(A);
+		ProbFormMacroCall returnval = new ProbFormMacroCall(this.macro,this.arguments);
+		returnval.setpf(pf_sub);
+		return returnval;
 	}
-
+	
 	@Override
 	public ProbForm substitute(String[] vars, int[] args) {
 		return new ProbFormMacroCall(this.macro,rbnutilities.array_substitute(arguments, vars, args));

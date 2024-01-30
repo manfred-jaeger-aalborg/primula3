@@ -431,13 +431,22 @@ public class PFNetwork{
 		return ((PFNetworkNode)allnodes.elementAt(i)).sampleinstVal();
 	}
 
+	public double thisSampleProbAt(int i){
+		return ((PFNetworkNode)allnodes.elementAt(i)).thissampleprob();
+	}
+
+	public double thisDistrProbAt(int i){
+		return ((PFNetworkNode)allnodes.elementAt(i)).thisdistrprob();
+	}
+
 	public double[] trueSampleWeightAt(int i){
 		return ((PFNetworkNode)allnodes.elementAt(i)).truesampleweight();
 	}
 
 	public void showNodes(){
 		for (int i=0;i<allnodes.size();i++){
-			System.out.println(atomAt(i).asString() + " "+ sampleValAt(i));
+			System.out.println(atomAt(i).asString() + "sampled: "+ sampleValAt(i) + " inst: " + instValAt(i) 
+			+" sampleprob: " + thisSampleProbAt(i) + " distrprob: " + thisDistrProbAt(i) );
 		}
 	}
 
@@ -547,12 +556,16 @@ public class PFNetwork{
 				((PFNetworkNode)allnodes.elementAt(i)).setGnnPy(this.gnnPy);
 			}
 		}
+		
+		Hashtable<String,Double> evaluated = new Hashtable<String,Double>();
+		//Hashtable<String,Double> evaluated = null;
+		
 		for (int i=0;i<sampleord.size() && !badsample;i++){
 			nextpfnn = (PFNetworkNode)sampleord.elementAt(i);
 			
 			inittime = System.currentTimeMillis();
 			try {
-				nextpfnn.sample(A,atomhasht,inst,sampleordmode,adaptivemode,timers,verbose);
+				nextpfnn.sample(A,atomhasht,inst,sampleordmode,adaptivemode,evaluated,timers,verbose);
 			}
 			catch (RBNBadSampleException e){
 				badsample = true;
@@ -580,7 +593,7 @@ public class PFNetwork{
 			for (int i=0;i<sampleord.size();i++){
 				nextpfnn = (PFNetworkNode)sampleord.elementAt(i);
 				if (sampleordmode == InferenceModule.OPTION_SAMPLEORD_RIPPLE)
-					nextpfnn.setDistrProb(A,atomhasht,inst,timers);
+					nextpfnn.setDistrProb(A,atomhasht,inst,evaluated,timers);
 				if (verbose){
 					System.out.println(nextpfnn.myatom().asString(A) + ": dp: " + nextpfnn.thisdistrprob() 
 							+ " sp: " + nextpfnn.thissampleprob());

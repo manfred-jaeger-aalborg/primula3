@@ -432,7 +432,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	 * @uml.property  name="aceButtonSettings"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
-	private JButton aceButtonSettings = new JButton( "SettingsSampling" );
+	private JButton aceButtonSettings = new JButton( "ACE settings" );
 	//private JButton aceButtonCompile  = new JButton( "Compile" );
 	//private JButton aceButtonLoad     = new JButton( "Load" );
 	//private JButton aceButtonCompute  = new JButton( "Compute" );

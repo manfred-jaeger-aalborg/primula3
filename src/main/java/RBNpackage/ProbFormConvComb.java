@@ -29,6 +29,7 @@ import java.io.*;
 import RBNExceptions.*;
 import RBNutilities.*;
 import RBNgui.Primula;
+import RBNinference.PFNetworkNode;
 import RBNLearning.Profiler;
 
 
@@ -365,18 +366,36 @@ public class ProbFormConvComb extends ProbForm {
 	return result;
 	}
 
-	public  double evalSample(RelStruc A,Hashtable atomhasht,OneStrucData inst, long[] timers)
+	public  Double evalSample(RelStruc A, 
+			Hashtable<String,PFNetworkNode> atomhasht, 
+			OneStrucData inst, 
+    		Hashtable<String,Double> evaluated,
+			long[] timers)
 	throws RBNCompatibilityException
 	{
+		String key = null;
+		
+		if (evaluated != null) {
+			key = this.makeKey(A);
+			Double d = evaluated.get(key);
+			if (d!=null) {
+				return d; 
+			}
+		}	
+		
 		double v1;
 		double v2 =0;
 		double v3 =0;
-		v1 =  F1.evalSample(A,atomhasht,inst,timers);
+		v1 =  F1.evalSample(A,atomhasht,inst,evaluated,timers);
 		if (v1 != 0.0)
-			v2 =  F2.evalSample(A,atomhasht,inst,timers);
+			v2 =  F2.evalSample(A,atomhasht,inst,evaluated,timers);
 		if (v1 != 1.0)
-			v3 =  F3.evalSample(A,atomhasht,inst,timers);
-		return v1*v2+(1-v1)*v3;
+			v3 =  F3.evalSample(A,atomhasht,inst,evaluated,timers);
+		Double result = v1*v2+(1-v1)*v3;
+		if (evaluated != null) {
+			evaluated.put(key, result);
+		}
+		return result;
 	}
 
 
