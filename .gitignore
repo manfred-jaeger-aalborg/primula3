@@ -5,6 +5,7 @@
 build
 
 .vscode
+.DS_Store
 bin
 .idea
 /src/main/java/Experiments/
