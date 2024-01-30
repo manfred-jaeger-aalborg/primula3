@@ -36,7 +36,7 @@ public class ProbFormGnn extends ProbForm {
         this.gnnattr = attr;
     }
 
-    public ProbFormGnn(String argumentm, GnnPy gnnpy) {
+    public ProbFormGnn(String argument, GnnPy gnnpy) {
         this.setEdge_name("edge");
         this.setEdge_direction("ABBA");
 
@@ -258,7 +258,7 @@ public class ProbFormGnn extends ProbForm {
     public TreeSet<Rel> parentRels(TreeSet<String> processed) {
         System.out.println("parentRels code 2");
         TreeSet<Rel> result = new TreeSet<Rel>();
-        // need to check if processed makes sense here
+        // this checks if processed makes sense here
         assert !processed.isEmpty();
         return new TreeSet<Rel>(Arrays.asList(this.gnnattr));
     }

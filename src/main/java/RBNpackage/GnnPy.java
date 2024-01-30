@@ -5,7 +5,10 @@ package RBNpackage;
 import jep.*;
 import jep.python.PyObject;
 
+import java.io.IOException;
 import java.util.*;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 public class GnnPy {
     private String modelPath;
@@ -22,24 +25,32 @@ public class GnnPy {
 
     private float[] currentResult;
 
-    public GnnPy(String modelPath, String scriptPath, String scriptName, String jepPath, String pythonHome) {
-        initJep(modelPath, scriptPath, scriptName, jepPath, pythonHome);
+    public GnnPy(String modelPath, String scriptPath, String scriptName, String pythonHome) throws IOException {
+        initJep(modelPath, scriptPath, scriptName, pythonHome);
     }
 
-    private void initJep(String modelPath, String scriptPath, String scriptName, String jepPath, String pythonHome) {
-        this.modelPath = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python/primula-gnn";
-        this.scriptPath = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python";
-        this.scriptName = "inference_test";
+    public String loadjep(String pythonHome) throws IOException {
+        // taken from https://gist.github.com/vwxyzjn/c054bae6dfa6f80e6c663df70347e238
+        // automatically find the library path in the python home it is installed
+        Process p = Runtime.getRuntime().exec(pythonHome + " get_jep_path.py");
+        BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
+        return in.readLine();
+
+    }
+    private void initJep(String modelPath, String scriptPath, String scriptName, String pythonHome) throws IOException {
+        this.modelPath = modelPath;
+        this.scriptPath = scriptPath;
+        this.scriptName = scriptName;
 
         // pip install jep in a miniconda env (torch)
-        // TODO: can I put this libjep.jnlib in Primula?
-        MainInterpreter.setJepLibraryPath("/Users/lz50rg/miniconda3/envs/torch/lib/python3.10/site-packages/jep/libjep.jnilib");
-        PyConfig pyConfig = new PyConfig();
-        pyConfig.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
+        MainInterpreter.setJepLibraryPath(loadjep(pythonHome));
+
+//        MainInterpreter.setJepLibraryPath("/Users/lz50rg/miniconda3/envs/torch/lib/python3.10/site-packages/jep/libjep.jnilib");
+//        PyConfig pyConfig = new PyConfig();
+//        pyConfig.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
 
 //        jep.JepConfig jepConf = new JepConfig();
 //        jepConf.addSharedModules("numpy"); // this helps for the warning (https://github.com/ninia/jep/issues/418#issuecomment-1165062651)
-
         initializeInterpreter();
     }
 
@@ -84,7 +95,7 @@ public class GnnPy {
     public double inferModelNodeDouble(int node, String x, String edge_index, String method) {
         assert this.sharedInterpreter != null;
         try {
-            // check if there is already computed the results for the specific node in the result matrix, otherwise compute for all
+            // check if there is already computed the results for the specific node in the result matrix, otherwise compute for all nodes with one forward propagation
             if (this.currentX != null && this.currentEdgeIndex != null && this.currentMethod != null && this.currentResult != null) {
                 if (this.currentX.equals(x) && this.currentEdgeIndex.equals(edge_index) && this.currentMethod.equals(method)) {
                     return (double) this.currentResult[node];

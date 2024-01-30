@@ -36,7 +36,7 @@ public class runexperiment_2 {
     static String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/models/only_blue_alpha1_10_5_20240123-151213/RBN_acr_graph_alpha1_10_5.rbn";
 //    static String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/models/alpha1_64_64_64_20240126-144611/RBN_acr_graph_alpha1_64_64_64.pt";
 
-    static String rdefinputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/alpha1-edge.rdef";
+    static String rdefinputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/alpha1-blue.rdef";
 
     public static void main(String[] args) {
         File input_rbn = new File(rbninputfilestring);
@@ -75,8 +75,8 @@ public class runexperiment_2 {
             new Bavaria(temp, srsfile, primula, false);
         }
 
-//        BoolRel queryrel = new BoolRel("blue", 1);
-        BoolRel queryrel = new BoolRel("edge", 2);
+        BoolRel queryrel = new BoolRel("blue", 1);
+//        BoolRel queryrel = new BoolRel("edge", 2);
         queryrel.setInout(1);
         RelStruc A = primula.getRels();
         try {
@@ -88,7 +88,10 @@ public class runexperiment_2 {
             InferenceModule im = primula.openInferenceModule(false);
             im.setQueryAtoms(ga);
 
-            System.out.println(primula.evidencemode());
+            im.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
+            im.setModelPath("/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python/primula-gnn");
+            im.setScriptPath("/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python");
+            im.setScriptName("inference_test");
 
             im.startSampleThread();
 

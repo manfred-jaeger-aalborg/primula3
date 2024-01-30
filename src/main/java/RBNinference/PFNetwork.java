@@ -703,4 +703,12 @@ public class PFNetwork{
 	public void setGnnPy(GnnPy gnnPy) {
 		this.gnnPy = gnnPy;
 	}
+
+	public boolean checkGnnRel() {
+		for (PFNetworkNode node: allnodes) {
+			if (node.probform() instanceof ProbFormGnn)
+				return true;
+		}
+		return false;
+	}
 }

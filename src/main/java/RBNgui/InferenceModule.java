@@ -656,7 +656,10 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	 */
 	private String logfilename = "";
 
-
+	private String modelPath;
+	private String scriptPath;
+	private String scriptName;
+	private String pythonHome;
 
 	public InferenceModule( Primula myprimula_param ){
 
@@ -1329,6 +1332,12 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 				num_subsamples_minmax,
 				samplelogmode,
 				logwriter);
+		if (sampthr.isGnnIntegration()) {
+			sampthr.setPythonHome(this.pythonHome);
+			sampthr.setModelPath(this.modelPath);
+			sampthr.setScriptPath(this.scriptPath);
+			sampthr.setScriptName(this.scriptName);
+		}
 		sampthr.start();
 		infoMessage.setText(" Starting Sampling ");
 		startSampling.setEnabled( false );
@@ -2627,5 +2636,25 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 //			result.add(mapatoms.atomAt(i),instvals[i],"?");
 //		}
 		return result;
+	}
+
+	public void setModelPath(String modelPath) {
+		this.modelPath = modelPath;
+	}
+
+	public void setScriptPath(String scriptPath) {
+		this.scriptPath = scriptPath;
+	}
+
+	public void setScriptName(String scriptName) {
+		this.scriptName = scriptName;
+	}
+
+	public void setPythonHome(String pythonHome) {
+		this.pythonHome = pythonHome;
+	}
+
+	public QueryTableModel getDataModel() {
+		return dataModel;
 	}
 }

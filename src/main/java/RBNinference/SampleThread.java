@@ -57,7 +57,11 @@ public class SampleThread extends Thread{
 	// the jep object then will be shared across all the probforms that need it
 	// probably only one jep object can be created at time --> close it when it is not needed anymore
 	private GnnPy gnnPy;
-	private boolean gnnIntegration;
+	private final boolean gnnIntegration;
+	private String modelPath;
+	private String scriptPath;
+	private String scriptName;
+	private String pythonHome;
 	public SampleThread(Observer infmodule, 
 			PFNetwork pfn, 
 			GroundAtomList queryatoms, 
@@ -75,7 +79,7 @@ public class SampleThread extends Thread{
 		sprobs.addObserver(infmodule);
 		pause = false;
 		test = new double[queryAtomSize];
-		this.gnnIntegration = true;
+        this.gnnIntegration = this.pfn.checkGnnRel();
 	}
 
 	public void run()
@@ -84,14 +88,12 @@ public class SampleThread extends Thread{
 		// this variable needs to be defined apriori
 		// the jep object needs to be in the same thread
 		if (this.gnnIntegration) {
-			String modelPath = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python/primula-gnn";
-			String scriptPath = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python";
-			String scriptName = "inference_test";
-
-			String jepPath = "/Users/lz50rg/miniconda3/envs/torch/lib/python3.10/site-packages/jep/libjep.jnilib";
-			String pythonHome = "/Users/lz50rg/miniconda3/envs/torch/bin/python";
-			this.gnnPy = new GnnPy(modelPath, scriptPath, scriptName, jepPath, pythonHome);
-			pfn.setGnnPy(this.gnnPy);
+			try {
+				this.gnnPy = new GnnPy(modelPath, scriptPath, scriptName, pythonHome);
+				pfn.setGnnPy(this.gnnPy);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
 		}
 		else {
 			this.gnnPy = null;
@@ -137,7 +139,8 @@ public class SampleThread extends Thread{
 
 		}
 		// the interpreter needs to be closed from the same thread
-		this.closeGnnIntepreter();
+		if (this.gnnIntegration)
+			this.closeGnnIntepreter();
 	}
 
 	public void closeGnnIntepreter() {
@@ -153,5 +156,25 @@ public class SampleThread extends Thread{
 
 	public SampleProbs getSprobs() {
 		return sprobs;
+	}
+
+	public void setModelPath(String modelPath) {
+		this.modelPath = modelPath;
+	}
+
+	public void setScriptPath(String scriptPath) {
+		this.scriptPath = scriptPath;
+	}
+
+	public void setScriptName(String scriptName) {
+		this.scriptName = scriptName;
+	}
+
+	public void setPythonHome(String pythonHome) {
+		this.pythonHome = pythonHome;
+	}
+
+	public boolean isGnnIntegration() {
+		return gnnIntegration;
 	}
 }
