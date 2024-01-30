@@ -80,7 +80,7 @@ public  class CombFuncMean extends MultLinCombFunc{
 		return result; 	
     }
     
-    public void insertCompNetwork(LinkedList parnodes,SimpleBNNode targetnode, int decomposemode){
+    public void insertCompNetwork(Vector<BNNode> parnodes,SimpleBNNode targetnode, int decomposemode){
     	switch (parnodes.size()){
     	case 0:
     		double cpt[][] = {{1,0}};
@@ -90,16 +90,16 @@ public  class CombFuncMean extends MultLinCombFunc{
     		ListIterator li = parnodes.listIterator();
     		int count = 1;
     		BNNode nextparnode = (BNNode)li.next();
-    		LinkedList parents,children;
-    		parents = new LinkedList();
+    		Vector<BNNode> parents,children;
+    		parents = new Vector<BNNode>();
     		parents.add(nextparnode);
-    		children = new LinkedList();
+    		children = new Vector<BNNode>();
     		double firstmean[][] = {{1,0},{0,1}};
     		BNNode lastmeannode = new SimpleBNNode("mean."+ nextparnode.name + "." + targetnode.name,firstmean,parents,children);
     		nextparnode.children.add(lastmeannode);
     		BNNode nextmeannode;
     		SimpleBNNode r1,r2;
-    		LinkedList r1parents,r1children,r2parents,r2children;
+    		Vector<BNNode> r1parents,r1children,r2parents,r2children;
     		double[][] r1cpt,r2cpt; 
     		count++;
 
@@ -112,10 +112,10 @@ public  class CombFuncMean extends MultLinCombFunc{
     				nextcpt[1][1] = (double)1.0/count;
     				nextcpt[2][1] = (double)(count - 1.0)/count;
     				nextcpt[3][1] = 1;
-    				parents = new LinkedList();
+    				parents = new Vector<BNNode>();
     				parents.add(lastmeannode);
     				parents.add(nextparnode);
-    				children = new LinkedList();
+    				children = new Vector<BNNode>();
     				nextmeannode = new SimpleBNNode("mean."+ nextparnode.name + "." + targetnode.name,nextcpt,parents,children);
 
     				lastmeannode.children.add(nextmeannode);
@@ -179,19 +179,19 @@ public  class CombFuncMean extends MultLinCombFunc{
     				nextcpt[14][1] = 1;  // 1110
     				nextcpt[15][1] = 1;  // 1111
     				// construct randomizing nodes	
-    				r1parents = new LinkedList();
-    				r2parents = new LinkedList();
-    				r1children = new LinkedList();
-    				r2children = new LinkedList();
+    				r1parents = new Vector<BNNode>();
+    				r2parents = new Vector<BNNode>();
+    				r1children = new Vector<BNNode>();
+    				r2children = new Vector<BNNode>();
     				r1 = new SimpleBNNode("mean."+ nextparnode.name + "." + targetnode.name + ".r1",r1cpt,r1parents,r1children);
     				r2 = new SimpleBNNode("mean."+ nextparnode.name + "." + targetnode.name + ".r2",r2cpt,r2parents,r2children);
     				// construct new meannode
-    				parents = new LinkedList();
+    				parents = new Vector<BNNode>();
     				parents.add(lastmeannode);
     				parents.add(nextparnode);
     				parents.add(r1);
     				parents.add(r2);
-    				children = new LinkedList();
+    				children = new Vector<BNNode>();
     				nextmeannode = new SimpleBNNode("mean."+ nextparnode.name + "." + targetnode.name,nextcpt,parents,children);
     				// add missing links
     				r1.children.add(nextmeannode);

@@ -121,9 +121,13 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
     }
 
 
-    /* Return 0 resp. 1 if the probability of this node is 0 resp. 1
-     * when evaluated over A and w.r.t. to given partial instantiation instasosd
-     * Return -1 if neither is the case
+    /* Returns j if the probability of state j is 1 
+     * when evaluated over A and w.r.t. to given partial instantiation (evidence) inst
+     * 
+     * if usesampleinst then also sampled instantiation values will be used (apart from the
+     * 'static' values in inst).
+     * 
+     * Return -1 if the state of this PFNetworkNode is not determined in the given context.
      */
     public abstract int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, Hashtable atomhasht)
 	throws RBNCompatibilityException;

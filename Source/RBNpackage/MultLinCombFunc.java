@@ -30,5 +30,5 @@ import RBNinference.*;
 
 public abstract class MultLinCombFunc extends CombFunc {
 
-    public abstract void insertCompNetwork(LinkedList parnodes,SimpleBNNode targetnode,int decomposemode);
+    public abstract void insertCompNetwork(Vector<BNNode> parnodes,SimpleBNNode targetnode,int decomposemode);
 }

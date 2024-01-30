@@ -36,10 +36,13 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 
 
 
-	private double[][] cptentries;
+	/*
+	 * maps instantiations of the parents represented as int[] to a probability vector cpt
+	 */
+	private HashMap<int[],double[]> cpt;
 	
-	/* As constructed by BayesConstructor.makeCPT */
-	private HashMap<Integer,int[]> indxToTuple = new HashMap<Integer,int[]>();
+//	/* As constructed by BayesConstructor.makeCPT */
+//	private HashMap<Integer,int[]> indxToTuple = new HashMap<Integer,int[]>();
 
 	/** conditionalsampleweights[i][j]: sum of all weights of samples in which 
 	 * i'th parent configuration was sampled and j was the sampled state of this node
@@ -129,7 +132,7 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 
 	public SimplePFNetworkNode(GroundAtom at){
 		super(at);
-		cptentries = new double[0][0];
+		cpt = new HashMap<int[],double[]>();
 		conditionalsampleweights = new double[0][0][2];
 		numvalsamples = new int[0][0];
 		conditionalsampleweights_subsample = new double[0][0][0][2];
@@ -156,9 +159,7 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 		Vector<GroundAtom> atomvec = new Vector<GroundAtom>();
 		for (BNNode pfnn: cpfn.parents)
 			atomvec.add(((PFNetworkNode)pfnn).myatom());
-		Object[] cpt_and_indx = BayesConstructor.makeCPT(cpfn.cpmodel(),A,inst,atomvec);
-		cptentries = (double[][])cpt_and_indx[0];
-		indxToTuple = (HashMap<Integer,int[]>)cpt_and_indx[1];
+		cpt = (HashMap<int[],double[]>)BayesConstructor.makeCPT(cpfn.cpmodel(),A,inst,atomvec)[2];
 		
 		instantiated = cpfn.instantiated;
 		sampleinst = cpfn.sampleinstVal();
@@ -170,9 +171,9 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 			parentnumvals[i]=parents.elementAt(i).getNumvalues();		
 	}
 
-	public double[][] mycpt(){
-		return cptentries;
-	}
+//	public double[][] mycpt(){
+//		return cptentries;
+//	}
 
 
 	public double[][][] conditionalsampleweights(){
@@ -190,19 +191,17 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 
 	public  int evaluatesTo(boolean usesampleinst)
 	{
-		int[] parentinst;
 		boolean instconsistent;
 		boolean terminate=false;
 		PFNetworkNode nextpar;
 		int evalsto = -1;
 		int instval;
 
-		for (int i=0;i<cptentries.length && !terminate;i++){
+		for (int[] parentinst: cpt.keySet()){
 			/* test whether the parent configuration 
 			 * corresponding to index i is consistent
 			 * with instantiation
 			 */
-			parentinst = indxToTuple.get(i);
 			instconsistent = true;
 
 			for (int p=0;p<parents.size();p++){
@@ -213,16 +212,19 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 				if (instval != -1 & instval != parentinst[p])
 					instconsistent = false;
 			}
+			
 			/* now check the probability value
 			 */
 			if (instconsistent){
+				double[] cptrow = cpt.get(parentinst);
 				for (int v=0;v<this.numvalues;v++) {
-					if (cptentries[i][v]==1) {
-						if (evalsto != -1 && evalsto!=v) {
-							evalsto =-1;
-							terminate = true;
+					if (cptrow[v] != 1 && cptrow[v]!=0)
+						return -1; // Non deterministic cpt row -> no deterministic value for this node
+					if (cptrow[v]==1) {
+						if (evalsto != -1 && evalsto!=v) { // Another cptrow defines a different value for this node
+							return -1;
 						}
-						if (evalsto ==-1 && !terminate)
+						if (evalsto == -1)  // this is the -1 from initialization!
 							evalsto = v;
 					}
 				}

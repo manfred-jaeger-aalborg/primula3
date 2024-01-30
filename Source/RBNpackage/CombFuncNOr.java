@@ -84,7 +84,7 @@ public class CombFuncNOr extends MultLinCombFunc{
 		return result;
     }
     
-    public void insertCompNetwork(LinkedList parnodes,SimpleBNNode targetnode,int decomposemode){
+    public void insertCompNetwork(Vector<BNNode> parnodes,SimpleBNNode targetnode,int decomposemode){
         // parameter decomposemode is irrelevant in the noisy-or implementation of this method!
         switch (parnodes.size()){
             case 0:
@@ -94,10 +94,10 @@ public class CombFuncNOr extends MultLinCombFunc{
             default:
                 ListIterator li = parnodes.listIterator();
                 BNNode nextparnode = (BNNode)li.next();
-                LinkedList parents,children;
-                parents = new LinkedList();
+                Vector<BNNode> parents,children;
+                parents = new Vector<BNNode>();
                 parents.add(nextparnode);
-                children = new LinkedList();
+                children = new Vector<BNNode>();
                 double firstor[][] = {{1,0},{0,1}};
                 BNNode lastornode = new SimpleBNNode("or."+ nextparnode.name + "." + targetnode.name,firstor,parents,children);
                 nextparnode.children.add(lastornode);
@@ -106,10 +106,10 @@ public class CombFuncNOr extends MultLinCombFunc{
                 double orcpt[][] = {{1,0},{0,1},{0,1},{0,1}};
                 while (li.hasNext()){
                     nextparnode = (BNNode)li.next();
-                    parents = new LinkedList();
+                    parents = new Vector<BNNode>();
                     parents.add(lastornode);
                     parents.add(nextparnode);
-                    children = new LinkedList();
+                    children = new Vector<BNNode>();
                     nextornode = new SimpleBNNode("or."+ nextparnode.name + "." + targetnode.name,orcpt,parents,children);
                     //nextornode = new SimpleBNNode("or",orcpt,parents,children);
                     

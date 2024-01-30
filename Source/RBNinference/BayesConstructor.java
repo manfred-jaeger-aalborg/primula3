@@ -728,6 +728,8 @@ public class BayesConstructor extends java.lang.Object {
 	 * 
 	 * Also returns a hashmap <Integer,int[]> that maps indices of parent configurations
 	 * to the tuple of parent values at that index. 
+	 * 
+	 * Also returns a hashmap <int[],double[]> mapping a parent configuration to a cpt row.
 	 */
 	public static Object[] makeCPT(CPModel cpmodel,RelStruc A,OneStrucData inst,Vector<GroundAtom> parentatoms)
 	throws RBNCompatibilityException
@@ -746,6 +748,7 @@ public class BayesConstructor extends java.lang.Object {
 		int numvals = cpmodel.numvals();
 		double[][] cpt = new double[numparconfigs][numvals];
 		HashMap<Integer,int[]> indxToTuple = new HashMap<Integer,int[]>();
+		HashMap<int[],double[]> parconfigToCPT = new HashMap<int[],double[]>();
 		
 		int[]  oldinst;
 		int[]  newinst;
@@ -806,6 +809,7 @@ public class BayesConstructor extends java.lang.Object {
 						true,
 						null)[0];
 				}
+			parconfigToCPT.put(newinst, cpt[h]);
 			
 			/* the last two arguments here are just dummy arguments,
 			 * because pform is ground
@@ -822,7 +826,7 @@ public class BayesConstructor extends java.lang.Object {
 				}
 			}
 		}
-		return new Object[] {cpt,indxToTuple};
+		return new Object[] {cpt,indxToTuple,parconfigToCPT};
 	}
 
 	private void makeBNetwork(int evidencemode)
@@ -1417,7 +1421,7 @@ public class BayesConstructor extends java.lang.Object {
 		substituteNode(node,newnode);
 		newnode.children       = node.children;
 
-		LinkedList decompnodes = new LinkedList();
+		Vector<BNNode> decompnodes = new Vector<BNNode>();
 		ProbForm nextpf;
 		ComplexBNNode newbnnode;
 		int ind;
