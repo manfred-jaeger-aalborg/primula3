@@ -90,7 +90,7 @@ public class ProbFormGnn extends ProbForm {
     }
 
     @Override
-    public double evalSample(RelStruc A, Hashtable<String, PFNetworkNode> atomhasht, OneStrucData inst, long[] timers) throws RBNCompatibilityException {
+    public Double evalSample(RelStruc A, Hashtable<String, PFNetworkNode> atomhasht, OneStrucData inst, Hashtable<String,Double> evaluated, long[] timers) throws RBNCompatibilityException {
 //            System.out.println("evalSample code");
         OneStrucData onsd = new OneStrucData(A.getmydata().copy());
         // hardcoded solution where the sampled parent is blue
