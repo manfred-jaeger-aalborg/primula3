@@ -220,6 +220,7 @@ public class rbnutilities extends java.lang.Object
     	return result;
     }
     
+    
     public static int[] arrayAdd(int[] arg1, int[] arg2){
     	if (arg1.length != arg2.length)
     		System.out.println("Cannot add arrays of unequal length!");
@@ -283,6 +284,13 @@ public class rbnutilities extends java.lang.Object
     	return result;
     }
     
+    /* component-wise power */
+    public static double[] arrayPow(double[] arg1, double p){
+    	double[] result = new double[arg1.length];
+    	for (int i=0;i<result.length;i++)
+    		result[i]=Math.pow(arg1[i],p);
+    	return result;
+    }
     
     
     public static double[] arrayScalMult(double[] arg1, double s){
@@ -1507,19 +1515,26 @@ public class rbnutilities extends java.lang.Object
 
 	}
 	
-	public int sampledValue(double rand, double[] cpr) {
-		/* For a given (random) number rand \in [0,1] and conditional 
-		 * probability row cpr, returns the index of the value sampled
+	public static int sampledValue(double[] cpr) {
+		/* For probability vector cpr, returns the index of the value sampled
 		 * according to the cpr probabilities.
 		 * 
-		 * Example: cpr = [0.1,0.3,0.1,0.5], rand= 0.15 then return 1
 		 */
 		int result=0;
 		double probsum =0;
-		while (probsum<rand) {
-			
+		double rand=Math.random();
+		for (int i=0; i< cpr.length && probsum<rand;i++) { 
+			result++;
+			probsum+=cpr[i];
 		}
-			
 		return result;
+	}
+	
+	public static boolean isDeterministic(double[] cpt) {
+		for (int i=0; i<cpt.length; i++) {
+			if (cpt[i] != 0 && cpt[i]!=1)
+				return false;
+		}
+		return true;
 	}
 }

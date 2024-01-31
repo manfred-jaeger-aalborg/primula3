@@ -31,7 +31,7 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
 
     protected int sampleinst;  /* The instantiation of this ground atom in a current sample */
 
-    protected int sampleparentconfig; /* Index of parent configuration in current
+    protected int[] sampleparentconfig; /* Parent configuration in current
 				       * sample -- not used in all modes for sampling
 				       */
 
