@@ -1309,6 +1309,20 @@ public class rbnutilities extends java.lang.Object
     	return result/ar.length;
     }
     
+    public static double arraySum(double[] ar){
+    	double result = 0;
+    	for (int i=0;i<ar.length;i++)
+    		result = result+ar[i];
+    	return result;
+    }
+    
+    public static int arraySum(int[] ar){
+    	int result = 0;
+    	for (int i=0;i<ar.length;i++)
+    		result = result+ar[i];
+    	return result;
+    }
+    
     public static double euclidDist(double[] ar1, double[] ar2){
     	if (ar1.length != ar2.length)
     		System.out.println("Warning: arrays of unequal lengths in rbnutilities.euclidDist  ");

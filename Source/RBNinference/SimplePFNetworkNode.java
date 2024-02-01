@@ -36,7 +36,8 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 
 
 	/*
-	 * Maps inter index to a parentconfiguration
+	 * Maps integer index to a parentconfiguration
+	 * As constructed by BayesConstructor.makeCPT
 	 */
 	private HashMap<Integer,int[]> indxToParconfig;
 
@@ -45,8 +46,6 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 	 */
 	private HashMap<int[],double[]> cpt;
 	
-//	/* As constructed by BayesConstructor.makeCPT */
-//	private HashMap<Integer,int[]> indxToTuple = new HashMap<Integer,int[]>();
 
 	/** conditionalsampleweights.get(parconfig)[j]: sum of all weights of samples in which 
 	 * parent configuration parconfig was sampled and j was the sampled state of this node
@@ -61,13 +60,6 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 	 **/
 	protected HashMap<int[],double[][]> conditionalsampleweights;
 
-//	/** conditionalsampleweightstrue[i]: sum of all weights of samples in which 
-//	 * i'th parent configuration was sampled and this node was sampled true
-//	 *(in a run of importance sampling).
-//	 * Initialized to [0,...,0].
-//	 * Only used in adaptive sampling
-//	 **/
-//	protected double[][] conditionalsampleweightstrue;
 
 	/** numvalsamples[i][j]: number of samples in which 
 	 * i'th parent configuration was sampled and j was the sampled state of this node
@@ -75,20 +67,12 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 	 **/
 	protected HashMap<int[],int[]> numvalsamples;
 
-//	/** numtruesamples[i]: number of samples in which 
-//	 * i'th parent configuration was sampled and this node was sampled false
-//	 *(in a run of importance sampling).
-//	 * Initialized to [0,...,0].
-//	 * Only used in adaptive sampling
-//	 **/
-//	protected int[] numfalsesamples;
-
-
-	private int num_subsamples_adapt = 10;
 	/* Number of subsamples for determining variance in adaptive sampling
 	 * Need not be equal to number of subsamples used for variance 
 	 * estimate for querynodes
 	 */
+	private int num_subsamples_adapt = 10;
+
 	
 	
 	/** 
@@ -111,7 +95,12 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 //	protected int[][] numfalsesamples_subsample;
 
 
-	protected HashMap<int[],double[]> odds_variance;
+	/*
+	 * For importance sampling: maps parentconfigurations to 
+	 * the variance of the importance sampling distributions defined
+	 * by different subsamples
+	 */
+	protected HashMap<int[],Double> odds_variance;
 
 	protected int[] sampleindex;
 	
@@ -141,7 +130,7 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 		numvalsamples = new HashMap<int[],int[]>();
 		conditionalsampleweights_subsample = new HashMap<int[],double[][][]>();
 		numvalsamples_subsample = new HashMap<int[],int[][]>();
-		odds_variance = new HashMap<int[],double[]>();
+		odds_variance = new HashMap<int[],Double>();
 		sampleindex = new int[0];
 	}
 
@@ -269,13 +258,10 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 			numvalsamples = new HashMap<int[],int[]>();
 			conditionalsampleweights_subsample = new HashMap<int[],double[][][]>();
 			numvalsamples_subsample = new HashMap<int[],int[][]>();
-			odds_variance = new HashMap<int[],double[]>();
+			odds_variance = new HashMap<int[],Double>();
 			sampleindex = new int[num_parentconfig];
 			for (int[] parconfig: indxToParconfig.values()) {
-				double[] initov = new double[numvalues];
-				for (int i=0;i<numvalues;i++)
-					initov[i]=-1;
-				odds_variance.put(parconfig,initov);
+				odds_variance.put(parconfig,Double.parseDouble("-1"));
 			}
 		}
 	}
@@ -309,7 +295,7 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 				double[] prob = new double[numvalues];
 				double[][] av = new double[numvalues][2]; // small double representation
 				double[] avsum  = new double[2]; // small double representation
-				double[] odds = new double[numvalues];
+				double[] odds = new double[numvalues]; // corresponds to icpt in the paper
 				double lambda=0;
 
 				if (rbnutilities.isDeterministic(cptrow))
@@ -338,10 +324,10 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 //					if (varmeasure >= 0)
 //					lambda = 1/Math.exp(varmeasure);
 
-					if (trueodds_variance[sampleparentconfig] != -1)
-						if (trueodds != 0 && trueodds != 1)
-							lambda = 1/Math.exp(trueodds_variance[sampleparentconfig]/trueodds);
-						else lambda = 1-1/((double)numtruesamples[sampleparentconfig]+(double)numfalsesamples[sampleparentconfig]);
+					if (odds_variance.get(sampleparentconfig)[0] != -1) // variance defined
+						if (! rbnutilities.isDeterministic(odds))
+							lambda = 1/Math.exp(odds_variance.get(sampleparentconfig));
+						else lambda = 1-1/rbnutilities.arraySum(numvalsamples.get(sampleparentconfig));
 					else lambda = 0;
 
 					prob = (1-lambda)*cpt + (lambda)*(trueodds);
@@ -512,7 +498,8 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 						rbnutilities.arrayPow(
 								rbnutilities.arraySubtract(
 								SmallDouble.toStandardDoubleArray(
-										SmallDouble.divide(conditionalsampleweights_subsample.get(sampleparentconfig)[i],subsweight))
+										SmallDouble.divide(conditionalsampleweights_subsample.get(sampleparentconfig)[i]
+												           ,subsweight))
 								,odds)
 						,2.0));
 		}
