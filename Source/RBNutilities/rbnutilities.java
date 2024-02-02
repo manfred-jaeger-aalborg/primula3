@@ -1302,6 +1302,13 @@ public class rbnutilities extends java.lang.Object
     	return norm;
     }
     
+    public static double squaredNorm(double[] ar){
+    	double norm = 0;
+    	for (int i=0;i<ar.length;i++)
+    		norm = norm + Math.pow(ar[i],2);
+    	return norm;
+    }
+    
     public static double arrayAverage(double[] ar){
     	double result = 0;
     	for (int i=0;i<ar.length;i++)

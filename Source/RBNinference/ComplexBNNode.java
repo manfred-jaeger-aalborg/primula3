@@ -55,7 +55,7 @@ public class ComplexBNNode extends BNNode{
     }
     
  
-    public ComplexBNNode(String name, CPModel pf, LinkedList parents, LinkedList children ) {
+    public ComplexBNNode(String name, CPModel pf, Vector<BNNode> parents, Vector<BNNode> children ) {
         super (name,parents,children);
         cpmodel = pf;
     }

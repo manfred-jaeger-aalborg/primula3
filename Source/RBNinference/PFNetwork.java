@@ -615,7 +615,7 @@ public class PFNetwork{
 				if (nextpfnn.sampleinstVal()==1)
 					nextpfnn.addToTruesampleweight(importance,subsind);
 				if (adaptivemode == InferenceModule.OPTION_SAMPLE_ADAPTIVE && nextpfnn instanceof SimplePFNetworkNode){
-					((SimplePFNetworkNode)nextpfnn).updateconditionalsampleweightsnew();
+					((SimplePFNetworkNode)nextpfnn).updateconditionalsampleweights();
 				}
 			}
 		} 
