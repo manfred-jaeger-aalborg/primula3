@@ -114,7 +114,7 @@ public class PFNetwork{
 	/* Turns all ComplexPFNetworkNodes in allnodes that 
 	 * have at most numpar parents into SimplePFNetworkNodes
 	 */
-	private void makeSimple(int numpar,OneStrucData inst, RelStruc A)
+	public void makeSimple(int numpar,OneStrucData inst, RelStruc A)
 	throws RBNCompatibilityException
 	{
 		ComplexPFNetworkNode cpfn;
@@ -124,17 +124,10 @@ public class PFNetwork{
 				SimplePFNetworkNode spfn = new SimplePFNetworkNode(cpfn,inst,A);
 				allnodes.remove(i);
 				allnodes.add(i,spfn);
-				ListIterator li = spfn.parents.listIterator();
-				BNNode nextbnn;
-				while (li.hasNext()){
-					nextbnn = (BNNode)li.next();
+				for (BNNode nextbnn: spfn.parents) 
 					nextbnn.replaceInChildrenList(cpfn,spfn);
-				}
-				li = spfn.children.listIterator();
-				while (li.hasNext()){
-					nextbnn = (BNNode)li.next();
+				for (BNNode nextbnn: spfn.children) 
 					nextbnn.replaceInParentList(cpfn,spfn);
-				}
 			}
 		}
 	}
@@ -250,7 +243,7 @@ public class PFNetwork{
 
 	}
 
-	private void makeSampleOrd(int sampleordmode){
+	public void makeSampleOrd(int sampleordmode){
 		/* First make sure that the depth field of the nodes in all nodes
 		 * represents the partial order according to which they are sampled
 		 * Initially the depth field contains the genuine depth, which 

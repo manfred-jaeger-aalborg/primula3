@@ -1536,13 +1536,46 @@ public class rbnutilities extends java.lang.Object
 
 	}
 	
+	public static int[] stringToIntArray(String ts , String sep){
+		/*
+		 * splits the string ts into the substrings defined by the
+		 * separator sep and returns an array consisting of the
+		 * substrings parsed as integers:
+		 * 
+		 * "4,17,5" -> [4,17,5]
+		 */
+		Vector<Integer> result_vec = new Vector<Integer>();
+		String next;
+		int nextsep;
+		
+		while (ts.length()>0) {
+			nextsep = ts.indexOf(sep);
+			if (nextsep!= -1){
+				next = ts.substring(0,nextsep);
+				ts = ts.substring(nextsep+1);
+			}
+			else{
+				next = ts;
+				ts = "";
+			}
+			result_vec.add(Integer.parseInt(next));
+		}
+
+		int[] result = new int[result_vec.size()];
+		for (int i=0; i<result_vec.size(); i++)
+			result[i]=result_vec.elementAt(i);
+		return result;
+
+	}
+	
+	
 	public static int sampledValue(double[] cpr) {
 		/* For probability vector cpr, returns the index of the value sampled
 		 * according to the cpr probabilities.
 		 * 
 		 */
 		int result=0;
-		double probsum =0;
+		double probsum =cpr[0];
 		double rand=Math.random();
 		for (int i=0; i< cpr.length && probsum<rand;i++) { 
 			result++;

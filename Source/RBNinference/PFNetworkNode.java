@@ -35,6 +35,10 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
 				       * sample -- not used in all modes for sampling
 				       */
 
+    protected String sampleparentconfig_string; /* String representation (used as key in Hashtables)
+      * of sampleparentconfig
+     */
+
     protected double thissampleprob; /* The probability with which this node was set to its sampleinst value
 				      * in the current sample
 				      */

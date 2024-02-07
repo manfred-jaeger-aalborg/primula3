@@ -39,12 +39,12 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 	 * Maps integer index to a parentconfiguration
 	 * As constructed by BayesConstructor.makeCPT
 	 */
-	private HashMap<Integer,int[]> indxToParconfig;
+	private HashMap<Integer,String> indxToParconfig;
 
 	/*
 	 * maps instantiations of the parents represented as int[] to a probability vector cpt
 	 */
-	private HashMap<int[],double[]> cpt;
+	private HashMap<String,double[]> cpt;
 	
 
 	/** conditionalsampleweights.get(parconfig)[j]: sum of all weights of samples in which 
@@ -58,14 +58,14 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 	 * 
 	 * Marginal of conditionalsampleweights_subsample;
 	 **/
-	protected HashMap<int[],double[][]> conditionalsampleweights;
+	protected HashMap<String,double[][]> conditionalsampleweights;
 
 
 	/** numvalsamples[i][j]: number of samples in which 
 	 * i'th parent configuration was sampled and j was the sampled state of this node
 	 *(in a run of importance sampling).
 	 **/
-	protected HashMap<int[],int[]> numvalsamples;
+	protected HashMap<String,int[]> numvalsamples;
 
 	/* Number of subsamples for determining variance in adaptive sampling
 	 * Need not be equal to number of subsamples used for variance 
@@ -81,7 +81,7 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 	 * assigned to the kth subsample 
 	 * with parentconfig parconfig where this node is sampled to j
 	 **/
-	protected HashMap<int[],double[][][]> conditionalsampleweights_subsample;
+	protected HashMap<String,double[][][]> conditionalsampleweights_subsample;
 
 //	/** array of dimensions 2 x num_parentconfig x num_samples
 //	 * conditionalsampleweightstrue_subsample[i][j] contains the
@@ -91,7 +91,7 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 //	 **/
 //	protected double[][][] conditionalsampleweightstrue_subsample;
 	
-	protected HashMap<int[],int[][]> numvalsamples_subsample;
+	protected HashMap<String,int[][]> numvalsamples_subsample;
 //	protected int[][] numfalsesamples_subsample;
 
 	
@@ -99,20 +99,20 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 	 * For importance sampling: maps parentconfigurations to 
 	 * the importance sampling distributions 
 	 */
-	protected HashMap<int[],double[]> importance;
+	protected HashMap<String,double[]> importance;
 
 	/*
 	 * For importance sampling: maps parentconfigurations to 
 	 * the variance of the importance sampling distributions defined
 	 * by different subsamples
 	 */
-	protected HashMap<int[],Double> importance_variance;
+	protected HashMap<String,Double> importance_variance;
 
 	/*
 	 * Maintains for each parentconfiguration the index of the current
 	 * subsample 0,...,num_subsamples_adapt-1
 	 */
-	protected HashMap<int[],Integer> sampleindex;
+	protected HashMap<String,Integer> sampleindex;
 	
 	/*
 	 * The number of values of the parents of this node 
@@ -135,14 +135,14 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 
 	public SimplePFNetworkNode(GroundAtom at){
 		super(at);
-		cpt = new HashMap<int[],double[]>();
-		conditionalsampleweights = new HashMap<int[],double[][]>();
-		numvalsamples = new HashMap<int[],int[]>();
-		conditionalsampleweights_subsample = new HashMap<int[],double[][][]>();
-		numvalsamples_subsample = new HashMap<int[],int[][]>();
-		importance = new HashMap<int[],double[]>();
-		importance_variance = new HashMap<int[],Double>();
-		sampleindex = new HashMap<int[],Integer>();
+		cpt = new HashMap<String,double[]>();
+		conditionalsampleweights = new HashMap<String,double[][]>();
+		numvalsamples = new HashMap<String,int[]>();
+		conditionalsampleweights_subsample = new HashMap<String,double[][][]>();
+		numvalsamples_subsample = new HashMap<String,int[][]>();
+		importance = new HashMap<String,double[]>();
+		importance_variance = new HashMap<String,Double>();
+		sampleindex = new HashMap<String,Integer>();
 	}
 
 	/* Turn a ComplexPFNetworkNode cpfn into a simple one.
@@ -156,6 +156,7 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 	public SimplePFNetworkNode(ComplexPFNetworkNode cpfn, OneStrucData inst, RelStruc A)
 	throws RBNCompatibilityException
 	{
+		
 		super(cpfn.myatom());
 		/* Turn cpfn.parents into vector of atoms
 		 * and construct cpt
@@ -165,8 +166,26 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 			atomvec.add(((PFNetworkNode)pfnn).myatom());
 		
 		Object[] frombayescon = BayesConstructor.makeCPT(cpfn.cpmodel(),A,inst,atomvec);
-		cpt = (HashMap<int[],double[]>)frombayescon[2];
-		indxToParconfig = (HashMap<Integer,int[]>)frombayescon[1];
+		cpt = (HashMap<String,double[]>)frombayescon[2];
+		indxToParconfig = (HashMap<Integer,String>)frombayescon[1];
+		
+		conditionalsampleweights = new HashMap<String,double[][]>();
+		numvalsamples = new HashMap<String,int[]>();
+		conditionalsampleweights_subsample = new HashMap<String,double[][][]>();
+		numvalsamples_subsample = new HashMap<String,int[][]>();
+		importance = new HashMap<String,double[]>();
+		importance_variance = new HashMap<String,Double>();
+		sampleindex = new HashMap<String,Integer>();
+		
+		for (String parstring: indxToParconfig.values()) {
+			conditionalsampleweights.put(parstring, new double[this.getNumvalues()][2]);
+			numvalsamples.put(parstring, new int[this.getNumvalues()]);
+			conditionalsampleweights_subsample.put(parstring, new double[this.getNumvalues()][num_subsamples_adapt][2]);
+			numvalsamples_subsample.put(parstring, new int[this.getNumvalues()][num_subsamples_adapt]);
+			importance.put(parstring,new double[2]);
+			importance_variance.put(parstring, Double.valueOf(0));
+			sampleindex.put(parstring, Integer.valueOf(0));
+		}
 		
 		instantiated = cpfn.instantiated;
 		sampleinst = cpfn.sampleinstVal();
@@ -175,7 +194,8 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 		depth = cpfn.depth();
 		parentnumvals = new int[parents.size()];
 		for (int i=0; i<parents.size();i++) 
-			parentnumvals[i]=parents.elementAt(i).getNumvalues();		
+			parentnumvals[i]=parents.elementAt(i).getNumvalues();	
+		
 	}
 
 //	public double[][] mycpt(){
@@ -204,11 +224,12 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 		int evalsto = -1;
 		int instval;
 
-		for (int[] parentinst: cpt.keySet()){
+		for (String parentinst: cpt.keySet()){
 			/* test whether the parent configuration 
 			 * corresponding to index i is consistent
 			 * with instantiation
 			 */
+			int[] parentinst_array=rbnutilities.stringToIntArray(parentinst,",");
 			instconsistent = true;
 
 			for (int p=0;p<parents.size();p++){
@@ -216,7 +237,7 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 				if (!usesampleinst)
 					instval = nextpar.instantiated;
 				else instval = nextpar.sampleinstVal();
-				if (instval != -1 & instval != parentinst[p])
+				if (instval != -1 & instval != parentinst_array[p])
 					instconsistent = false;
 			}
 			
@@ -265,13 +286,13 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 				&& upstreamofevidence == true)
 		{
 			num_subsamples_adapt=nsa;
-			conditionalsampleweights =  new HashMap<int[],double[][]>();
-			numvalsamples = new HashMap<int[],int[]>();
-			conditionalsampleweights_subsample = new HashMap<int[],double[][][]>();
-			numvalsamples_subsample = new HashMap<int[],int[][]>();
-			importance_variance = new HashMap<int[],Double>();
-			sampleindex = new HashMap<int[],Integer>();
-			for (int[] parconfig: indxToParconfig.values()) {
+			conditionalsampleweights =  new HashMap<String,double[][]>();
+			numvalsamples = new HashMap<String,int[]>();
+			conditionalsampleweights_subsample = new HashMap<String,double[][][]>();
+			numvalsamples_subsample = new HashMap<String,int[][]>();
+			importance_variance = new HashMap<String,Double>();
+			sampleindex = new HashMap<String,Integer>();
+			for (String parconfig: indxToParconfig.values()) {
 				importance_variance.put(parconfig,Double.parseDouble("-1"));
 			}
 		}
@@ -291,8 +312,9 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 	public void sampleForward(RelStruc A,int adaptivemode)
 	{	    
 		sampleparentconfig = parentConfig();
-		double[] cptrow = cpt.get(sampleparentconfig);
-		double[] importancerow = importance.get(sampleparentconfig);
+		sampleparentconfig_string = rbnutilities.arrayToString(sampleparentconfig);
+		double[] cptrow = cpt.get(sampleparentconfig_string);
+		double[] importancerow = importance.get(sampleparentconfig_string);
 		
 		if (instantiated == -1){
 
@@ -310,10 +332,10 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 				if (rbnutilities.isDeterministic(cptrow))
 					sampleprob = cptrow;
 				else{
-					if (importance_variance.get(sampleparentconfig) != -1) // variance defined
+					if (importance_variance.get(sampleparentconfig_string) != -1) // variance defined
 						if (! rbnutilities.isDeterministic(importancerow))
-							lambda = 1/Math.exp(importance_variance.get(sampleparentconfig));
-						else lambda = 1-1/rbnutilities.arraySum(numvalsamples.get(sampleparentconfig));
+							lambda = 1/Math.exp(importance_variance.get(sampleparentconfig_string));
+						else lambda = 1-1/rbnutilities.arraySum(numvalsamples.get(sampleparentconfig_string));
 					else lambda = 0;
 
 					sampleprob = rbnutilities.arrayAdd(
@@ -339,8 +361,6 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 	/* Computes the index of the parent configuration of current sample
 	 */
 	public int[] parentConfig(){
-		
-		PFNetworkNode nextpar;
 		int[] parinst = new int[parents.size()];
 		for (int i=0;i<parents.size();i++){
 			parinst[i]=((PFNetworkNode)parents.elementAt(i)).sampleinstVal();
@@ -357,7 +377,7 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 			long[] timers)
 	{
 		if (thisdistrprob == -1)
-			thisdistrprob = cpt.get(parentConfig())[sampleinst];
+			thisdistrprob = cpt.get(rbnutilities.arrayToString(sampleparentconfig))[sampleinst];
 	}
 
 
@@ -423,19 +443,20 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 		double smallweight[] = {weight,0};
 		
 		if (upstreamofevidence == true){ // otherwise no importance distribution for this node needed
-			numvalsamples.get(sampleparentconfig)[sampleinst]++;
-			conditionalsampleweights.get(sampleparentconfig)[sampleinst]=
-					SmallDouble.add(conditionalsampleweights.get(sampleparentconfig)[sampleinst],smallweight);
-			numvalsamples.get(sampleparentconfig)[sampleinst]++;
-			numvalsamples_subsample.get(sampleparentconfig)[sampleindex.get(sampleparentconfig)][sampleinst]++;
+			numvalsamples.get(sampleparentconfig_string)[sampleinst]++;
+			double[][] thesecondsampw = conditionalsampleweights.get(sampleparentconfig_string);
+			thesecondsampw[sampleinst]=
+					SmallDouble.add(thesecondsampw[sampleinst],smallweight);
+			numvalsamples.get(sampleparentconfig_string)[sampleinst]++;
+			numvalsamples_subsample.get(sampleparentconfig_string)[sampleindex.get(sampleparentconfig_string)][sampleinst]++;
 			
-			if (sampleindex.get(sampleparentconfig) == num_subsamples_adapt -1)
+			if (sampleindex.get(sampleparentconfig_string) == num_subsamples_adapt -1)
 			{
-				sampleindex.put(sampleparentconfig,Integer.parseInt("0"));
+				sampleindex.put(sampleparentconfig_string,Integer.parseInt("0"));
 				updateImportance();
 			}
 			else
-				sampleindex.put(sampleparentconfig,sampleindex.get(sampleparentconfig)+1);
+				sampleindex.put(sampleparentconfig_string,sampleindex.get(sampleparentconfig_string)+1);
 		}
 	}
 	
@@ -444,22 +465,22 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 		double[] importancerow = new double[numvalues];
 		double importancevar=0;
 
-		double[] allweight = SmallDouble.sumArray(conditionalsampleweights.get(sampleparentconfig));
+		double[] allweight = SmallDouble.sumArray(conditionalsampleweights.get(sampleparentconfig_string));
 		double[] subsweight = new double[2];
 		boolean allsubsampleshaveweight = true;
 
 		// Updating the importance function
 		if (allweight[0] == 0) { // no data to construct an importance distribution for this sampleparentconfig
-			importance.put(sampleparentconfig,cpt.get(sampleparentconfig).clone());
+			importance.put(sampleparentconfig_string,cpt.get(sampleparentconfig_string).clone());
 			return;
 		}
 		else importancerow = SmallDouble.toStandardDoubleArray(
-				SmallDouble.divide(conditionalsampleweights.get(sampleparentconfig),allweight));
-		importance.put(sampleparentconfig, importancerow);
+				SmallDouble.divide(conditionalsampleweights.get(sampleparentconfig_string),allweight));
+		importance.put(sampleparentconfig_string, importancerow);
 		
 		// Updating the variance
 		for (int i=0;i<num_subsamples_adapt;i++){
-			subsweight = SmallDouble.sumArray(conditionalsampleweights_subsample.get(sampleparentconfig)[i]);
+			subsweight = SmallDouble.sumArray(conditionalsampleweights_subsample.get(sampleparentconfig_string)[i]);
 			if (subsweight[0] == 0)
 				allsubsampleshaveweight = false;
 			else 
@@ -468,7 +489,7 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 						rbnutilities.arraySubtract(
 								SmallDouble.toStandardDoubleArray(
 								    SmallDouble.divide(
-								    		conditionalsampleweights_subsample.get(sampleparentconfig)[i]
+								    		conditionalsampleweights_subsample.get(sampleparentconfig_string)[i]
 								    				,subsweight)
 								                                 )
 								, importancerow));
@@ -479,7 +500,7 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 		else 
 			importancevar = -1;
 		
-		importance_variance.put(sampleparentconfig,importancevar);
+		importance_variance.put(sampleparentconfig_string,importancevar);
 	}
 }
 

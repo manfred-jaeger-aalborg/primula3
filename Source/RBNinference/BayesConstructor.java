@@ -55,6 +55,14 @@ public class BayesConstructor extends java.lang.Object {
 	private File bnoutputfile;
 	private OneStrucData instarg;
 	private GroundAtomList queryatoms;
+	public GroundAtomList getQueryatoms() {
+		return queryatoms;
+	}
+
+	public void setQueryatoms(GroundAtomList queryatoms) {
+		this.queryatoms = queryatoms;
+	}
+
 	private String myAlternateName;
 	private Primula myprimula;
 
@@ -747,8 +755,8 @@ public class BayesConstructor extends java.lang.Object {
 		
 		int numvals = cpmodel.numvals();
 		double[][] cpt = new double[numparconfigs][numvals];
-		HashMap<Integer,int[]> indxToTuple = new HashMap<Integer,int[]>();
-		HashMap<int[],double[]> parconfigToCPT = new HashMap<int[],double[]>();
+		HashMap<Integer,String> indxToParConfig = new HashMap<Integer,String>();
+		HashMap<String,double[]> parconfigToCPT = new HashMap<String,double[]>();
 		
 		int[]  oldinst;
 		int[]  newinst;
@@ -775,7 +783,7 @@ public class BayesConstructor extends java.lang.Object {
 
 		/* Iterate over all instantiations */
 		for (int h=0;h<cpt.length;h++){
-			indxToTuple.put(h, newinst);
+			indxToParConfig.put(h, rbnutilities.arrayToString(newinst));
 			if (isboolmodel) {
 			double trueval =(double)cpmodel.evaluate(A,
 					copyinst,
@@ -809,7 +817,7 @@ public class BayesConstructor extends java.lang.Object {
 						true,
 						null)[0];
 				}
-			parconfigToCPT.put(newinst, cpt[h]);
+			parconfigToCPT.put(rbnutilities.arrayToString(newinst), cpt[h]);
 			
 			/* the last two arguments here are just dummy arguments,
 			 * because pform is ground
@@ -825,8 +833,8 @@ public class BayesConstructor extends java.lang.Object {
 						copyinst.add((GroundAtom)parentatoms.elementAt(k),newinst[k],"?");
 				}
 			}
-		}
-		return new Object[] {cpt,indxToTuple,parconfigToCPT};
+		} // for (int h=0;h<cpt.length;h++)
+		return new Object[] {cpt,indxToParConfig,parconfigToCPT};
 	}
 
 	private void makeBNetwork(int evidencemode)
@@ -2521,6 +2529,22 @@ public class BayesConstructor extends java.lang.Object {
 		}
 		
 		return result;
+	}
+
+	public OneStrucData getInstarg() {
+		return instarg;
+	}
+
+	public void setInstarg(OneStrucData instarg) {
+		this.instarg = instarg;
+	}
+
+	public RelStruc getStrucarg() {
+		return strucarg;
+	}
+
+	public void setStrucarg(RelStruc strucarg) {
+		this.strucarg = strucarg;
 	}
 
 	

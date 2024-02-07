@@ -502,6 +502,14 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
 	private GroundAtomList queryatoms;
+	public GroundAtomList getQueryatoms() {
+		return queryatoms;
+	}
+
+	public void setQueryatoms(GroundAtomList queryatoms) {
+		this.queryatoms = queryatoms;
+	}
+
 	/**
 	 * @uml.property  name="rel"
 	 * @uml.associationEnd  
@@ -1214,8 +1222,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 			myprimula.updateBavaria();
 		}
 		else if( source == stopSampling){
-			sampling = false;
-			sampthr.setRunning(false);
+			stopSampling();
+			
 			if (!noLog()){
 				try{
 					logwriter.flush();
@@ -1287,7 +1295,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		/** ... keith cascio */
 	}
 
-	private void startSampleThread(){
+	public SampleThread startSampleThread(){
 		sampling = true;
 		PFNetwork pfn = null;
 		if (!noLog()){
@@ -1336,10 +1344,16 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		delAllInstButton.setEnabled( false );
 		delQueryAtomButton.setEnabled( false );
 		delAllQueryAtomButton.setEnabled( false );
-	}
-	
-	private GradientGraph startMapThread(){
 		
+		return sampthr;
+	}
+
+	public void stopSampling() {
+		sampling = false;
+		sampthr.setRunning(false);
+	}
+	private GradientGraph startMapThread(){
+
 		GradientGraph gg = null;
 		try{
 //			maprestarts = true;

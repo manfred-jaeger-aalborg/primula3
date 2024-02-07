@@ -86,13 +86,13 @@ public class ComplexBNGroundAtomNode extends ComplexBNNode implements GroundAtom
          this.setIsboolean(r.valtype()==Rel.BOOLEAN);
     }
     
-    public ComplexBNGroundAtomNode(GroundAtom at, CPModel pf,LinkedList parents,LinkedList children) {
+    public ComplexBNGroundAtomNode(GroundAtom at, CPModel pf,Vector<BNNode> parents,Vector<BNNode> children) {
         super(at.asString(),pf,parents,children);
         myatom = at;
         this.setIsboolean(at.rel().valtype()==Rel.BOOLEAN);
     }
 
-    public ComplexBNGroundAtomNode(Rel r,int[] ar,CPModel pf,LinkedList parents,LinkedList children) {
+    public ComplexBNGroundAtomNode(Rel r,int[] ar,CPModel pf, Vector<BNNode> parents,Vector<BNNode> children) {
         super(r.printname() + '(' + rbnutilities.arrayToString(ar) + ')',pf,parents,children);
         myatom = new GroundAtom(r,ar);
         this.setIsboolean(r.valtype()==Rel.BOOLEAN);
