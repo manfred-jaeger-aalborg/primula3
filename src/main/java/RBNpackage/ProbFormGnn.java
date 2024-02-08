@@ -82,10 +82,48 @@ public class ProbFormGnn extends ProbForm {
 
         Double[] result = new Double[2];
 
-        /**
-         * Reminder: look BayesConstructor makeCPT for evaluate function
-         */
+        // TODO return NaN by checking if the data is not missing
 
+        // for now only val no gradient computed
+        if (valonly) {
+            OneStrucData onsd = new OneStrucData(A.getmydata().copy());
+            // hardcoded solution where the sampled parent is blue
+            // we need to sample the entire structure before sending to python
+            int num_features = 0;
+            SparseRelStruc sampledRel = new SparseRelStruc(A.getNames(), onsd, A.getCoords(), A.signature());
+            sampledRel.getmydata().add(inst.copy());
+            for (Rel parent : this.parentRels()) {
+                try {
+                    int[][] mat = A.allTypedTuples(parent.getTypes());
+                    // maybe there could be attributes with different number, we keep the biggest
+                    if (parent.arity == 1 && mat.length >= num_features)
+                        num_features = mat.length;
+
+                    for (int i = 0; i < mat.length; i++) {
+
+                        result[0] = inst.valueOf(parent, rbnutilities.stringArrayToIntArray(new String[]{this.argument}));
+
+//                        if (sampledRel.truthValueOf(parent, mat[i]) == -1) {
+//                            GroundAtom myatom = new GroundAtom(parent, mat[i]);
+//                            String myatomname = myatom.asString();
+//                            System.out.println(myatomname);
+//                            PFNetworkNode gan = (PFNetworkNode) atomhasht.get(myatomname);
+//                            if (gan != null) {
+//                                double result = (double) gan.sampleinstVal();
+//                                boolean sampledVal = false;
+//                                if (result == 1)
+//                                    sampledVal = true;
+//                                sampledRel.getmydata().findInBoolRel(parent).add(mat[i], sampledVal);
+//                            }
+//                        }
+                    }
+
+                } catch (RBNIllegalArgumentException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+        result[0] = Double.NaN;
         return result;
     }
 
@@ -273,5 +311,21 @@ public class ProbFormGnn extends ProbForm {
 
     public void setEdge_direction(String edge_direction) {
         this.edge_direction = edge_direction;
+    }
+
+    public String getEdge_name() {
+        return edge_name;
+    }
+
+    public String getEdge_direction() {
+        return edge_direction;
+    }
+
+    public Rel[] getGnnattr() {
+        return gnnattr;
+    }
+
+    public String getArgument() {
+        return argument;
     }
 }

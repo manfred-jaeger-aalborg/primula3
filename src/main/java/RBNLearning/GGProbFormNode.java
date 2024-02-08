@@ -235,7 +235,10 @@ public abstract class GGProbFormNode extends GGNode{
 				result = new GGConstantNode(gg,pf,A,I);
 				((GGConstantNode)result).setCurrentParamVal(((ProbFormBoolEquality)pf).evaluate(A,I));
 			}
-			
+			if (pf instanceof ProbFormGnn) {
+				result = new GGGnnNode(gg,pf,allnodes,A,I,inputcaseno,observcaseno,parameters,useCurrentPvals,mapatoms,evaluated);
+			}
+
 			String key = gg.makeKey(pf, inputcaseno, observcaseno, A);
 			
 			if (isuga) 

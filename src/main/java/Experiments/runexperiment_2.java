@@ -34,7 +34,7 @@ public class runexperiment_2 {
 ////
 //    static String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/RBN_acr_graph_alpha1_10_5.rbn";
     static String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/models/only_blue_alpha1_10_5_20240123-151213/RBN_acr_graph_alpha1_10_5.rbn";
-//    static String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/models/alpha1_64_64_64_20240126-144611/RBN_acr_graph_alpha1_64_64_64.pt";
+//    static String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/models/alpha1_64_64_64_20240126-144611/RBN_acr_graph_alpha1_64_64_64.rbn";
 
     static String rdefinputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/alpha1-blue.rdef";
 
@@ -42,7 +42,7 @@ public class runexperiment_2 {
         File input_rbn = new File(rbninputfilestring);
 
         Primula primula = new Primula();
-        // primula.loadRBNFunction(input_rbn);
+//         primula.loadRBNFunction(input_rbn);
 
         File srsfile = new File(rdefinputfilestring);
         primula.loadSparseRelFile(srsfile);

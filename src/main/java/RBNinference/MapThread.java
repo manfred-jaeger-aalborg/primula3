@@ -6,6 +6,7 @@ import java.util.*;
 
 import RBNExceptions.RBNNaNException;
 import RBNLearning.*;
+import RBNpackage.*;
 import RBNutilities.*;
 import RBNgui.InferenceModule;
 import RBNgui.LearnModule;
@@ -21,7 +22,14 @@ public class MapThread extends GGThread {
 	GradientGraphO gg;
 	MapVals mapprobs;
 	boolean running;
-	
+	private GnnPy gnnPy;
+	private final boolean gnnIntegration;
+	private String modelPath;
+	private String scriptPath;
+	private String scriptName;
+	private String pythonHome;
+
+	public boolean isSampling;
 	public MapThread(InferenceModule infmodule,
 			Primula mypr,
 			GradientGraphO ggarg){
@@ -30,9 +38,25 @@ public class MapThread extends GGThread {
 		gg = ggarg;
 		mapprobs = new MapVals(gg.maxatoms().size());
 		mapprobs.addObserver(infmodule);
+
+		this.gnnIntegration = this.checkGnnRel(this.myprimula.getRBN());
+		this.isSampling = false;
 	}
 	
 	public void run(){
+		this.isSampling = true;
+		if (this.gnnIntegration) {
+			try {
+				this.gnnPy = new GnnPy(this.modelPath, this.scriptPath, this.scriptName, this.pythonHome);
+				gg.setGnnPy(this.gnnPy);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		else {
+			this.gnnPy = null;
+		}
+
 		running = true;
 		
 		/* Open a LearnModule to monitor parameter values, if
@@ -103,6 +127,10 @@ public class MapThread extends GGThread {
 			restarts++;
 		}
 
+		if (this.gnnIntegration)
+			this.gnnPy.closeInterpreter();
+		this.isSampling = false;
+
 		/**
 		try {
 			bufferedWriter.close();
@@ -117,4 +145,43 @@ public class MapThread extends GGThread {
 		this.running = r;
 	}
 
+	public void setModelPath(String modelPath) {
+		this.modelPath = modelPath;
+	}
+
+	public void setScriptPath(String scriptPath) {
+		this.scriptPath = scriptPath;
+	}
+
+	public void setScriptName(String scriptName) {
+		this.scriptName = scriptName;
+	}
+
+	public void setPythonHome(String pythonHome) {
+		this.pythonHome = pythonHome;
+	}
+
+	public boolean isGnnIntegration() {
+		return gnnIntegration;
+	}
+
+	private boolean checkGnnRel(RBN rbn) {
+		for(int i=0; i<rbn.prelements().length; i++) {
+			if (rbn.probForm_prels_At(i) instanceof ProbFormGnn)
+				return true;
+		}
+		return false;
+	}
+
+	public GnnPy getGnnPy() {
+		return gnnPy;
+	}
+
+	public MapVals getMapprobs() {
+		return mapprobs;
+	}
+
+	public boolean getRunning() {
+		return this.running;
+	}
 }

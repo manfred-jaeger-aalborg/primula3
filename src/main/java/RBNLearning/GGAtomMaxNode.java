@@ -99,25 +99,26 @@ private int index;
 //			if (scoremode == USEAVGSCORE)
 //				score = score/(1+allugas.size());
 //		}
+//
 		
 		if (scoremode == USELLSCORE){
-			System.out.println("Compute score for " + this.getMyatom());
+			if (thisgg.debugPrint)
+				System.out.println("Compute score for " + this.getMyatom());
 			
 			double[] oldvalues = new double[allugas.size()];
 			double oldll = GradientGraphO.computePartialLikelihood(allugas,oldvalues);
 			
 			
-			
-			System.out.println("values for ugas: old="  
-			+ StringOps.arrayToString(oldvalues, "(", ")") );
+			if (thisgg.debugPrint)
+				System.out.println("values for ugas: old=" + StringOps.arrayToString(oldvalues, "(", ")") );
 			toggleCurrentInst();
 			reEvaluateUpstream();
 			
 			double[] newvalues = new double[allugas.size()];		
 			double newll = GradientGraphO.computePartialLikelihood(allugas,newvalues);
-			
-			System.out.println("   new="  
-					+ StringOps.arrayToString(newvalues, "(", ")")  );
+
+			if (thisgg.debugPrint)
+				System.out.println("   new=" + StringOps.arrayToString(newvalues, "(", ")")  );
 			
 			toggleCurrentInst();
 			reEvaluateUpstream();
@@ -126,7 +127,8 @@ private int index;
 			for (int i=0;i<allugas.size();i++){
 				score = score + Math.log( oldvalues[i]/newvalues[i]);
 			}
-			System.out.println("result = " + score);
+			if (thisgg.debugPrint)
+				System.out.println("result = " + score);
 		}
 	}
 
