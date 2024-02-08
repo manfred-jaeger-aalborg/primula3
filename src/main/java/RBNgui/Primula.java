@@ -1165,8 +1165,8 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		else if( source == evModule ){
 			//actionlistener for opening the evidence module
 			if(!isEvModuleOpen){
-				evidenceModule = new InferenceModule(this
-				);
+				evidenceModule = new InferenceModule(this);
+				evidenceModule.setVisibility(true);
 				isEvModuleOpen = true;
 			}
 		}
@@ -1738,6 +1738,7 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 //		String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-github-examples/tex_file/GNN-RBN-alpha/rbn_acr.rbn";
 
 		String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/models/only_blue_alpha1_10_5_20240123-151213/RBN_acr_graph_alpha1_10_5.rbn";
+//		String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/RBN_alpha_stupid.rbn";
 		String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/alpha1-edge.rdef";
 
 //		String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/RBN_acr_graph_alpha1_10_5.rbn";
@@ -1774,7 +1775,46 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 
 		loadRBNFunction(rbnfile);
 		loadSparseRelFile(srsfile);
+	}
 
+	public void loadManualRBN(){
+		try{
+			RBNPreldef blue_pred = new RBNPreldef(new BoolRel("blue", 1), new String[]{"v"},  new ProbFormConstant(0.5));
+			RBNPreldef edge_pred = new RBNPreldef(new BoolRel("edge", 2), new String[]{"v", "w"},  new ProbFormConstant(0.5));
+			RBNPreldef gnn_pred = new RBNPreldef(
+					new BoolRel("alpha1", 1),
+					new String[]{"v"},
+					new ProbFormGnn("v",
+							new Rel[]{
+									blue_pred.rel(),
+									edge_pred.rel()}
+					)
+			);
+
+			RBN manual_rbn = new RBN(3, 0);
+			manual_rbn.insertPRel(blue_pred, 0);
+			manual_rbn.insertPRel(edge_pred, 2);
+			manual_rbn.insertPRel(gnn_pred, 1);
+			this.setRbn(manual_rbn);
+			this.getInstantiation().init(manual_rbn);
+			rbnfile = new File("TEST INTERNAL GNN");
+			rbnfilename.setText(rbnfile.getPath());
+		}catch (Exception ex){
+			rbn = null;
+			rbnfile = null;
+			rbnfilename.setText("");
+			this.showMessage(ex.toString());
+		}
+		if(isEvModuleOpen)
+			evidenceModule.updateRBNRelations();
+
+		instasosd.init(rbn);
+	}
+	public void loadGNNRBN() {
+		String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/alpha1-edge.rdef";
+		srsfile = new File(rstinputfilestring);
+		this.loadSparseRelFile(srsfile);
+		this.loadManualRBN();
 
 	}
 
@@ -1787,7 +1827,7 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		Primula win = new Primula();
 		SamiamManager.centerWindow( win );
 		win.show();
-		win.loadDefaults();
-
+//		win.loadDefaults();
+		win.loadGNNRBN();
 	}
 }

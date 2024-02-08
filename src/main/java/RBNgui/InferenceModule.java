@@ -1078,7 +1078,12 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		/** keith cascio 20060511 ... */
 		SamiamManager.centerWindow( this );
 		/** ... keith cascio */
-		this.setVisible(true);
+		this.setVisible(false);
+
+		this.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
+		this.setModelPath("/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python/primula-gnn");
+		this.setScriptPath("/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python");
+		this.setScriptName("inference_test");
 	}
 
 	public void setVisibility(boolean visibility) {
@@ -1294,6 +1299,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		/** ... keith cascio */
 	}
 
+	// set to public for experiments
 	public void startSampleThread(){
 		sampling = true;
 		PFNetwork pfn = null;
@@ -1383,7 +1389,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		return sampthr;
 	}
 
-	private GradientGraph startMapThread(){
+	// set to public for experiments
+	public GradientGraph startMapThread(){
 		
 		GradientGraph gg = null;
 		try{
@@ -1418,6 +1425,13 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 					 								0,
 					 								true);
 			mapthr = new MapThread(this,myprimula,(GradientGraphO)gg);
+			if (mapthr.isGnnIntegration()) {
+				mapthr.setPythonHome(this.pythonHome);
+				mapthr.setModelPath(this.modelPath);
+				mapthr.setScriptPath(this.scriptPath);
+				mapthr.setScriptName(this.scriptName);
+				((GradientGraphO) gg).setGnnPy(mapthr.getGnnPy());
+			}
 			mapthr.start();
 			trueButton.setEnabled( false );
 			falseButton.setEnabled( false );
@@ -1430,6 +1444,20 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		}
 		catch (RBNCompatibilityException ex){System.out.println(ex.toString());}
 		return gg;
+	}
+
+	public void stopMapThread() {
+		mapthr.setRunning(false);
+		infoMessage.setText(" Stop MAP ");
+		startSampling.setEnabled( true );
+		trueButton.setEnabled( true );
+		falseButton.setEnabled( true );
+		queryButton.setEnabled( true );
+		toggleTruthButton.setEnabled( true );
+		delInstButton.setEnabled( true );
+		delAllInstButton.setEnabled( true );
+		delQueryAtomButton.setEnabled( true );
+		delAllQueryAtomButton.setEnabled( true );
 	}
 
 	
@@ -2657,4 +2685,9 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	public QueryTableModel getDataModel() {
 		return dataModel;
 	}
+
+	public MapThread getMapthr() {
+		return mapthr;
+	}
+
 }
