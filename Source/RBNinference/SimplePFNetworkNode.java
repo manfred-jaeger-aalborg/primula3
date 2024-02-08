@@ -169,23 +169,6 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 		cpt = (HashMap<String,double[]>)frombayescon[2];
 		indxToParconfig = (HashMap<Integer,String>)frombayescon[1];
 		
-		conditionalsampleweights = new HashMap<String,double[][]>();
-		numvalsamples = new HashMap<String,int[]>();
-		conditionalsampleweights_subsample = new HashMap<String,double[][][]>();
-		numvalsamples_subsample = new HashMap<String,int[][]>();
-		importance = new HashMap<String,double[]>();
-		importance_variance = new HashMap<String,Double>();
-		sampleindex = new HashMap<String,Integer>();
-		
-		for (String parstring: indxToParconfig.values()) {
-			conditionalsampleweights.put(parstring, new double[this.getNumvalues()][2]);
-			numvalsamples.put(parstring, new int[this.getNumvalues()]);
-			conditionalsampleweights_subsample.put(parstring, new double[this.getNumvalues()][num_subsamples_adapt][2]);
-			numvalsamples_subsample.put(parstring, new int[this.getNumvalues()][num_subsamples_adapt]);
-			importance.put(parstring,new double[2]);
-			importance_variance.put(parstring, Double.valueOf(0));
-			sampleindex.put(parstring, Integer.valueOf(0));
-		}
 		
 		instantiated = cpfn.instantiated;
 		sampleinst = cpfn.sampleinstVal();
@@ -286,15 +269,8 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 				&& upstreamofevidence == true)
 		{
 			num_subsamples_adapt=nsa;
-			conditionalsampleweights =  new HashMap<String,double[][]>();
-			numvalsamples = new HashMap<String,int[]>();
-			conditionalsampleweights_subsample = new HashMap<String,double[][][]>();
-			numvalsamples_subsample = new HashMap<String,int[][]>();
-			importance_variance = new HashMap<String,Double>();
-			sampleindex = new HashMap<String,Integer>();
-			for (String parconfig: indxToParconfig.values()) {
-				importance_variance.put(parconfig,Double.parseDouble("-1"));
-			}
+			
+			initMaps();
 		}
 	}
 
@@ -314,7 +290,7 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 		sampleparentconfig = parentConfig();
 		sampleparentconfig_string = rbnutilities.arrayToString(sampleparentconfig);
 		double[] cptrow = cpt.get(sampleparentconfig_string);
-		double[] importancerow = importance.get(sampleparentconfig_string);
+
 		
 		if (instantiated == -1){
 
@@ -326,6 +302,7 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 				thisdistrprob=cptrow[sampleinst];
 			}
 			else{  // adaptive sampling
+				double[] importancerow = importance.get(sampleparentconfig_string);
 				double[] sampleprob = new double[numvalues];
 				double lambda=0;
 
@@ -443,7 +420,8 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 		double smallweight[] = {weight,0};
 		
 		if (upstreamofevidence == true){ // otherwise no importance distribution for this node needed
-			numvalsamples.get(sampleparentconfig_string)[sampleinst]++;
+			int[] thesenumvalsamps = numvalsamples.get(sampleparentconfig_string);
+			thesenumvalsamps[sampleinst]++;
 			double[][] thesecondsampw = conditionalsampleweights.get(sampleparentconfig_string);
 			thesecondsampw[sampleinst]=
 					SmallDouble.add(thesecondsampw[sampleinst],smallweight);
@@ -501,6 +479,26 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 			importancevar = -1;
 		
 		importance_variance.put(sampleparentconfig_string,importancevar);
+	}
+	
+	private void initMaps() {
+		conditionalsampleweights = new HashMap<String,double[][]>();
+		numvalsamples = new HashMap<String,int[]>();
+		conditionalsampleweights_subsample = new HashMap<String,double[][][]>();
+		numvalsamples_subsample = new HashMap<String,int[][]>();
+		importance = new HashMap<String,double[]>();
+		importance_variance = new HashMap<String,Double>();
+		sampleindex = new HashMap<String,Integer>();
+		
+		for (String parstring: indxToParconfig.values()) {
+			conditionalsampleweights.put(parstring, new double[this.getNumvalues()][2]);
+			numvalsamples.put(parstring, new int[this.getNumvalues()]);
+			conditionalsampleweights_subsample.put(parstring, new double[this.getNumvalues()][num_subsamples_adapt][2]);
+			numvalsamples_subsample.put(parstring, new int[this.getNumvalues()][num_subsamples_adapt]);
+			importance.put(parstring,new double[2]);
+			importance_variance.put(parstring, Double.valueOf(-1));
+			sampleindex.put(parstring, Integer.valueOf(0));
+		}
 	}
 }
 
