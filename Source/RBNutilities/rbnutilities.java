@@ -275,6 +275,30 @@ public class rbnutilities extends java.lang.Object
     	return result;
     }
     
+    /* component-wise power */
+    public static double[] arrayCompPow(double[] arg, double po){
+    	double[] result = new double[arg.length];
+    	for (int i=0;i<result.length;i++)
+    		result[i]=Math.pow(arg[i],po);
+    	return result;
+    }
+    
+    
+    /* component-wise max */
+    public static double[] arrayCompMax(double[] arg1, double[] arg2){
+    	double[] result = new double[arg1.length];
+    	for (int i=0;i<result.length;i++)
+    		result[i]=Math.max(arg1[i],arg2[i]);
+    	return result;
+    }
+    
+    /* component-wise min */
+    public static double[] arrayCompMin(double[] arg1, double[] arg2){
+    	double[] result = new double[arg1.length];
+    	for (int i=0;i<result.length;i++)
+    		result[i]=Math.min(arg1[i],arg2[i]);
+    	return result;
+    }
     
     /* component-wise square root */
     public static double[] arraySQRT(double[] arg1){

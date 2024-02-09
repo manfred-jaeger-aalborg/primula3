@@ -30,6 +30,8 @@ package RBNinference;
 
 import java.util.*;
 
+import RBNpackage.*;
+
 
 
 
@@ -37,104 +39,122 @@ import java.util.*;
 public class SampleProbs extends Observable{
 
 
-    private double[] probs;
-    private double[] maxprobs;
-    private double[] minprobs;
-    private double[] variance;
-    private int size;
-    private double weight;
+	/*
+	 * Represents estimated probabilities for a list of query atoms
+	 * For each query atom have arrays of length corresponding to the
+	 * the number of values for the atom's relation
+	 */
+	private double[][] probs;
+	private double[][] maxprobs;
+	private double[][] minprobs;
+	private double[][] variance;
+	private int size;
+	private double weight;
 
 
-    public SampleProbs(int i){
-
-
-	probs = new double[i];
-	maxprobs = new double[i];
-	minprobs = new double[i];
-	variance = new double[i];
-
-    }
-
-
-
-
-
-    public void setProb(double p, int i){
-	probs[i]=p;
-	setChanged();
-    }
-
-
-    public void setMinProb(double p, int i){
-	minprobs[i]=p;
-	setChanged();
-    }
-
-    public void setMaxProb(double p, int i){
-	maxprobs[i]=p;
-	setChanged();
-    }
-
-    public void setVar(double p, int i){
-	variance[i]=p;
-	setChanged();
-    }
-
-    public void setProbs(double[] probs){
-	this.probs = probs;
-	setChanged();
-    }
-
-
-	
-
-
-    public double[] getProbs(){
-	return probs;
-    }
-
-
-     public double[] getMinProbs(){
-	return minprobs;
-    }
-
-     public double[] getMaxProbs(){
-	return maxprobs;
-    }
-
-    public double[] getVar(){
-	return variance;
-    }
+	public SampleProbs(GroundAtomList queryatoms){
+		int l = queryatoms.size();
+		probs = new double[l][];
+		maxprobs = new double[l][];
+		minprobs = new double[l][];
+		variance = new double[l][];
+		
+		for (int i =0;i<l;i++) {
+			int v = (int)queryatoms.atomAt(i).rel().numvals();
+			probs[i]=new double[v];
+			maxprobs[i]=new double[v];
+			minprobs[i]=new double[v];
+			variance[i]=new double[v];
+		}
+	}
 
 
 
 
-    public int getSize(){
-	return size;
-    }
+
+	public void setProb(double p, int i, int val){
+		probs[i][val]=p;
+		setChanged();
+	}
+
+	public void setProbs(double[] p, int i){
+		probs[i]=p;
+		setChanged();
+	}
+
+	public void setMinProb(double p, int i, int val){
+		minprobs[i][val]=p;
+		setChanged();
+	}
+
+	public void setMinProbs(double[] p, int i){
+		minprobs[i]=p;
+		setChanged();
+	}
+
+	public void setMaxProb(double p, int i, int val){
+		maxprobs[i][val]=p;
+		setChanged();
+	}
+	public void setMaxProbs(double[] p, int i){
+		maxprobs[i]=p;
+		setChanged();
+	}
+	public void setVar(double p, int i, int val){
+		variance[i][val]=p;
+		setChanged();
+	}
+
+	public void setVars(double[] p, int i){
+		variance[i]=p;
+		setChanged();
+	}
+
+	public void setProbs(double[][] probs){
+		this.probs = probs;
+		setChanged();
+	}
 
 
-  
 
 
-    public void setSize(int size){
-  	this.size = size;
-    }
+
+	public double[][] getProbs(){
+		return probs;
+	}
 
 
- 
+	public double[][] getMinProbs(){
+		return minprobs;
+	}
 
-    public double getWeight(){
-	return weight;
-    }
+	public double[][] getMaxProbs(){
+		return maxprobs;
+	}
+
+	public double[][] getVar(){
+		return variance;
+	}
 
 
-  
+	public int getSize(){
+		return size;
+	}
 
 
-    public void setWeight(double weight){
-  	this.weight = weight;
-    }
+	public void setSize(int size){
+		this.size = size;
+	}
+
+
+	public double getWeight(){
+		return weight;
+	}
+
+
+	public void setWeight(double weight){
+		this.weight = weight;
+	}
 
 
 }

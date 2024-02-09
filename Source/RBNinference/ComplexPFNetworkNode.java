@@ -44,7 +44,7 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 		super(new GroundAtom(r,ar));
 		cpmodel = pf;
 		sampleinst = -1;
-		truesampleweight = new double[2];
+		valsampleweight = new double[this.numvalues][2];
 	}
 
 	public ComplexPFNetworkNode(GroundAtom ga, CPModel pf) {

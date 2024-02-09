@@ -66,7 +66,7 @@ public class SampleThread extends Thread{
 		logmode = logmode_param;
 		num_subsamples = num_subsamples_param;
 		logwriter = logwriter_param;
-		sprobs = new SampleProbs(queryAtomSize);
+		sprobs = new SampleProbs(queryatoms);
 		sprobs.addObserver(infmodule);
 		pause = false;
 		test = new double[queryAtomSize];

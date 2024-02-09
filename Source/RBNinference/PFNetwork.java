@@ -430,8 +430,8 @@ public class PFNetwork{
 		return ((PFNetworkNode)allnodes.elementAt(i)).thisdistrprob();
 	}
 
-	public double[] trueSampleWeightAt(int i){
-		return ((PFNetworkNode)allnodes.elementAt(i)).truesampleweight();
+	public double[] sampleWeightAt(int i, int val){
+		return ((PFNetworkNode)allnodes.elementAt(i)).valsampleweight[val];
 	}
 
 	public void showNodes(){
@@ -604,16 +604,14 @@ public class PFNetwork{
 		if (!badsample || adaptivemode == InferenceModule.OPTION_SAMPLE_ADAPTIVE){
 			for (int i=0;i<allnodes.size();i++){
 				nextpfnn = (PFNetworkNode)allnodes.elementAt(i);
-
-				if (nextpfnn.sampleinstVal()==1)
-					nextpfnn.addToTruesampleweight(importance,subsind);
+				nextpfnn.addToSampleweight(importance,subsind,nextpfnn.sampleinstVal());
 				if (adaptivemode == InferenceModule.OPTION_SAMPLE_ADAPTIVE && nextpfnn instanceof SimplePFNetworkNode){
 					((SimplePFNetworkNode)nextpfnn).updateconditionalsampleweights();
 				}
 			}
 		} 
 
-//		/* Update subsample statistics at querynodes
+		//		/* Update subsample statistics at querynodes
 //		*/
 //		for (int i=0;i<queryPFNnodes.length;i++){
 //		nextpfnn = (SimplePFNetworkNode)queryPFNnodes[i];
@@ -646,30 +644,36 @@ public class PFNetwork{
 //		System.out.println();
 //		System.out.println("************");
 		/* the probs field of sps must have the same length as queryatoms */
-		double nextprob;
-		double min,max,var,nextprob_subsample;
+		double[] nextprob;
+		double[] min,max,var,nextprob_subsample;
 		for (int i=0;i<queryPFNnodes.length;i++){
-			nextprob = SmallDouble.toStandardDouble(
-						SmallDouble.divide(queryPFNnodes[i].truesampleweight(),
+			int numvals = queryPFNnodes[i].getNumvalues();
+			nextprob = SmallDouble.toStandardDoubleArray(
+						SmallDouble.divide(queryPFNnodes[i].valsampleweight,
 									allsampleweight));
 			if (logwriter != null && (samplelogmode[2] || samplelogmode[3]))
 				logwriter.write(nextprob + " ");
-			sps.setProb(nextprob,i);
-			min = 1;
-			max = 0;
-			var = 0;
+			sps.setProbs(nextprob,i);
+			
+			min = new double[numvals];
+			min = rbnutilities.arrayAddConst(min, 1);
+			max = new double[numvals];
+			var = new double[numvals];
+			
 			for (int k=0;k<num_subsamples;k++){
-				nextprob_subsample = SmallDouble.toStandardDouble(
-						SmallDouble.divide(queryPFNnodes[i].truesampleweight_subsample(k),
+				nextprob_subsample = SmallDouble.toStandardDoubleArray(
+						SmallDouble.divide(queryPFNnodes[i].valsampleweight_subsample[k],
 									allsampleweight_subsample[k]));
-				min = Math.min(min,nextprob_subsample);
-				max = Math.max(max,nextprob_subsample);
-				var = var + Math.pow(nextprob-nextprob_subsample,2.0);
+				min = rbnutilities.arrayCompMin(min,nextprob_subsample);
+				max = rbnutilities.arrayCompMax(max,nextprob_subsample);
+				
+				var = rbnutilities.arrayAdd(var ,
+						rbnutilities.arrayCompPow(rbnutilities.arraySubtract(nextprob,nextprob_subsample),2.0));
 			}
-			var = var/num_subsamples;
-			sps.setMinProb(min,i);
-			sps.setMaxProb(max,i);
-			sps.setVar(var,i);
+			var = rbnutilities.arrayScalMult(var,1/num_subsamples);
+			sps.setMinProbs(min,i);
+			sps.setMaxProbs(max,i);
+			sps.setVars(var,i);
 
 			if (logwriter != null && samplelogmode[3])
 				logwriter.write(min + " " + max  + " " + var + " ");
