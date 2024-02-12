@@ -483,5 +483,41 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
 		return upstreamofevidence;
 	}
 
+	public Vector<PFNetworkNode> buildNodeStack()
+	/* Returns Vector of nodes that are in the connected component
+	   of this PFNetworkNode
+	 */
+	{
+		Vector<PFNetworkNode> nodestack = new Vector<PFNetworkNode>();
+		PFNetworkNode nextnode;
+		if (!visited[4]){
+			nodestack.add(this);
+			this.visited[4]=true;
+			ListIterator<PFNetworkNode> li = parents.listIterator();
+			while (li.hasNext()){
+				nextnode = (PFNetworkNode)li.next();
+				nextnode.buildNodeStack(nodestack);
+			}
+			li = children.listIterator();
+			while (li.hasNext()){
+				((PFNetworkNode)li.next()).buildNodeStack(nodestack);
+			}
+		}
+		resetVisitedUpDownstream(4);
+		return nodestack;
+	}
+
+	private void buildNodeStack(Vector<PFNetworkNode> nodestack)
+	{
+		if (!visited[4]){
+			nodestack.add(this);
+			visited[4]=true;
+			for (PFNetworkNode pfn: parents)
+				pfn.buildNodeStack(nodestack);
+			for (PFNetworkNode pfn: children)
+				pfn.buildNodeStack(nodestack);
+			
+		}
+	}
 
 }

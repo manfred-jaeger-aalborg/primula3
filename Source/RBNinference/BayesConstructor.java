@@ -439,7 +439,7 @@ public class BayesConstructor extends java.lang.Object {
 		 */
 		buildInitialGAHT(querymode, evidencemode, PFNNODE , isolatedzeronodesmode);
 		
-		Vector parentvecs = makeParentvecs(evidencemode);
+		Vector<Vector<GroundAtom>> parentvecs = makeParentvecs(evidencemode);
 		connectParents(parentvecs);
 
 
@@ -449,13 +449,14 @@ public class BayesConstructor extends java.lang.Object {
 		 * exportnodes
 		 */
 		
-		Vector<BNNode> nodestack;
-		Vector<BNNode> allnodes = new Vector<BNNode>();
+		Vector<PFNetworkNode> nodestack;
+		Vector<PFNetworkNode> allnodes = new Vector<PFNetworkNode>();
 
-		for (Enumeration<BNNode> en= groundatomhasht.elements(); en.hasMoreElements();){
-			BNNode bnn = en.nextElement();
-			if (!bnn.visited[0]){
-				nodestack = bnn.buildNodeStack();
+		for (BNNode bnn: groundatomhasht.values()){
+			PFNetworkNode pfnn=(PFNetworkNode)bnn;
+			
+			if (!pfnn.visited[0]){
+				nodestack = pfnn.buildNodeStack();
 				for (int j=0;j<nodestack.size();j++){
 					BNNode bnn2=(BNNode)nodestack.elementAt(j);
 					bnn2.visited[0]=true;
