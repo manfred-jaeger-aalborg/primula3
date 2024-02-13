@@ -17,8 +17,8 @@ import RBNgui.*;
 public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
 
 
-	public Vector<PFNetworkNode> parents;
-	public Vector<PFNetworkNode> children;
+//	public Vector<PFNetworkNode> parents;
+//	public Vector<PFNetworkNode> children;
 
 	protected GroundAtom myatom;
 	protected int sampledepth; /* Defines a partial order for sampling: nodes with depth d must
@@ -95,7 +95,8 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
 			Vector instnodes,
 			boolean usesampleinst){
 
-		for (PFNetworkNode nextpfnn: pfnn.parents) {
+		for (int i=0;i< pfnn.parents.size();i++) {
+			PFNetworkNode nextpfnn = (PFNetworkNode)pfnn.parents.elementAt(i);
 			if (nextpfnn != notthis){
 				if (!usesampleinst && nextpfnn.instantiated == -1 && !instnodes.contains(nextpfnn))
 					instnodes.add(nextpfnn);
@@ -216,7 +217,8 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
 				else
 					this.sampleinstantiate(val);
 			}
-			for (PFNetworkNode nextbn: children) {
+			for  (int i=0;i< children.size();i++) {
+				PFNetworkNode nextbn = (PFNetworkNode)children.elementAt(i);
 				if (!usesampleinst)
 					nextbnint = nextbn.instantiated;
 				else
@@ -286,7 +288,8 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
 
 
 				if (forcedinst){
-					for (PFNetworkNode nextpfnn: this.parents) {
+					for  (int i=0;i< this.parents.size();i++){
+						PFNetworkNode nextpfnn = (PFNetworkNode)parents.elementAt(i);
 						if (!usesampleinst){
 							if (nextpfnn.instantiated == -1){
 								instnodes.add(nextpfnn);
@@ -297,7 +300,8 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
 							if (nextpfnn.sampleinstVal() == -1)
 								instnodes.add(nextpfnn);
 					}
-					for (PFNetworkNode nextpfnn: this.children) {
+					for  (int i=0;i< this.parents.size();i++){
+						PFNetworkNode nextpfnn = (PFNetworkNode)this.parents.elementAt(i);
 						if (!usesampleinst){
 							if (nextpfnn.instantiated == -1 && !instnodes.contains(nextpfnn)){
 								instnodes.add(nextpfnn);
@@ -483,41 +487,41 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
 		return upstreamofevidence;
 	}
 
-	public Vector<PFNetworkNode> buildNodeStack()
-	/* Returns Vector of nodes that are in the connected component
-	   of this PFNetworkNode
-	 */
-	{
-		Vector<PFNetworkNode> nodestack = new Vector<PFNetworkNode>();
-		PFNetworkNode nextnode;
-		if (!visited[4]){
-			nodestack.add(this);
-			this.visited[4]=true;
-			ListIterator<PFNetworkNode> li = parents.listIterator();
-			while (li.hasNext()){
-				nextnode = (PFNetworkNode)li.next();
-				nextnode.buildNodeStack(nodestack);
-			}
-			li = children.listIterator();
-			while (li.hasNext()){
-				((PFNetworkNode)li.next()).buildNodeStack(nodestack);
-			}
-		}
-		resetVisitedUpDownstream(4);
-		return nodestack;
-	}
-
-	private void buildNodeStack(Vector<PFNetworkNode> nodestack)
-	{
-		if (!visited[4]){
-			nodestack.add(this);
-			visited[4]=true;
-			for (PFNetworkNode pfn: parents)
-				pfn.buildNodeStack(nodestack);
-			for (PFNetworkNode pfn: children)
-				pfn.buildNodeStack(nodestack);
-			
-		}
-	}
+//	public Vector<PFNetworkNode> buildNodeStack()
+//	/* Returns Vector of nodes that are in the connected component
+//	   of this PFNetworkNode
+//	 */
+//	{
+//		Vector<PFNetworkNode> nodestack = new Vector<PFNetworkNode>();
+//		PFNetworkNode nextnode;
+//		if (!visited[4]){
+//			nodestack.add(this);
+//			this.visited[4]=true;
+//			ListIterator<PFNetworkNode> li = parents.listIterator();
+//			while (li.hasNext()){
+//				nextnode = (PFNetworkNode)li.next();
+//				nextnode.buildNodeStack(nodestack);
+//			}
+//			li = children.listIterator();
+//			while (li.hasNext()){
+//				((PFNetworkNode)li.next()).buildNodeStack(nodestack);
+//			}
+//		}
+//		resetVisitedUpDownstream(4);
+//		return nodestack;
+//	}
+//
+//	private void buildNodeStack(Vector<PFNetworkNode> nodestack)
+//	{
+//		if (!visited[4]){
+//			nodestack.add(this);
+//			visited[4]=true;
+//			for (PFNetworkNode pfn: parents)
+//				pfn.buildNodeStack(nodestack);
+//			for (PFNetworkNode pfn: children)
+//				pfn.buildNodeStack(nodestack);
+//			
+//		}
+//	}
 
 }

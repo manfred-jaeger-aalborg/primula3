@@ -991,6 +991,18 @@ public class rbnutilities extends java.lang.Object
         return result;
     }
     
+    public static String MatrixToString (double arr[][])
+    {   
+        String result = "";
+        if (arr.length>0)
+	    {
+		result = arrayToString(arr[0]);
+		for (int i = 1; i<arr.length; i++)
+		    result = result + "\n" + arrayToString(arr[i]);
+	    }
+        return result;
+    }
+    
     public static String[] NewVariables(String[] vars, int k)
 	// returns an array of k new variable names 
 	// v<int+1>,v<int+2>,...,v<int+k>

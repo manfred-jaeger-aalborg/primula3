@@ -11,32 +11,39 @@ public class RBNParser3 implements RBNParser3Constants {
         private RBNReader3 reader;
 
   final public void ReadRBN() throws ParseException, RBNIllegalArgumentException {
-    label_1:
-    while (true) {
-      if (jj_2_1(3)) {
-        MacroDefinition();
-      } else if (jj_2_2(3)) {
-        ProbRelDefinition();
-      } else {
-        jj_consume_token(-1);
-        throw new ParseException();
+    trace_call("ReadRBN");
+    try {
+      label_1:
+      while (true) {
+        if (jj_2_1(3)) {
+          MacroDefinition();
+        } else if (jj_2_2(3)) {
+          ProbRelDefinition();
+        } else {
+          jj_consume_token(-1);
+          throw new ParseException();
+        }
+        if (jj_2_3(3)) {
+          ;
+        } else {
+          break label_1;
+        }
       }
-      if (jj_2_3(3)) {
-        ;
-      } else {
-        break label_1;
-      }
+    } finally {
+      trace_return("ReadRBN");
     }
   }
 
   final public void MacroDefinition() throws ParseException, RBNIllegalArgumentException {
+    trace_call("MacroDefinition");
+    try {
  RBNReader3.ParsedTypedAtom parsedat;
  ProbForm parsedprobform;
-    jj_consume_token(9);
-    parsedat = TypedAtom(true);
-    jj_consume_token(10);
-    parsedprobform = ProbForm();
-    jj_consume_token(11);
+      jj_consume_token(9);
+      parsedat = TypedAtom(true);
+      jj_consume_token(10);
+      parsedprobform = ProbForm();
+      jj_consume_token(11);
          // Add the '@' back to the name:
         parsedat.set_relname("@"+parsedat.rel().name());
         switch  (parseno){
@@ -46,16 +53,21 @@ public class RBNParser3 implements RBNParser3Constants {
         case 2:
                 reader.setMacroPF(parsedat.rel(),parsedprobform);
         }
+    } finally {
+      trace_return("MacroDefinition");
+    }
   }
 
   final public void ProbRelDefinition() throws ParseException, RBNIllegalArgumentException {
+    trace_call("ProbRelDefinition");
+    try {
  RBNReader3.ParsedTypedAtom parsedat;
  CPModel parsedcpm;
-    // grammar
-            parsedat = TypedAtom(false);
-    jj_consume_token(10);
-    parsedcpm = CPModel();
-    jj_consume_token(11);
+      // grammar
+              parsedat = TypedAtom(false);
+      jj_consume_token(10);
+      parsedcpm = CPModel();
+      jj_consume_token(11);
          switch  (parseno){
                 case 1:
                         reader.addProbRelDefined(new RBNPreldef(parsedat.rel(),parsedat.args(),parsedcpm));
@@ -63,130 +75,145 @@ public class RBNParser3 implements RBNParser3Constants {
                 case 2:
                 reader.setProbRelPF(parsedat.rel(),parsedcpm);
         }
+    } finally {
+      trace_return("ProbRelDefinition");
+    }
   }
 
   final public CPModel CPModel() throws ParseException, RBNIllegalArgumentException {
+    trace_call("CPModel");
+    try {
  CPModel parsedcpm;
-    if (jj_2_4(3)) {
-      parsedcpm = CatSoftMax();
-    } else if (jj_2_5(3)) {
-      parsedcpm = ProbForm();
-    } else {
-      jj_consume_token(-1);
-      throw new ParseException();
-    }
+      if (jj_2_4(3)) {
+        parsedcpm = CatSoftMax();
+      } else if (jj_2_5(3)) {
+        parsedcpm = ProbForm();
+      } else {
+        jj_consume_token(-1);
+        throw new ParseException();
+      }
      {if (true) return parsedcpm;}
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("CPModel");
+    }
   }
 
   final public ProbForm ProbForm() throws ParseException, RBNIllegalArgumentException {
+    trace_call("ProbForm");
+    try {
  ProbForm parsedpf;
-    if (jj_2_6(3)) {
-      parsedpf = Constant();
-    } else if (jj_2_7(2147483647)) {
-      parsedpf = Atom();
-    } else if (jj_2_8(2147483647)) {
-      parsedpf = ConvCombination();
-    } else if (jj_2_9(2147483647)) {
-      parsedpf = CombinationFunc();
-    } else if (jj_2_10(3)) {
-      parsedpf = BoolFormula();
-    } else if (jj_2_11(3)) {
-      parsedpf = MacroCall();
-    } else {
-      jj_consume_token(-1);
-      throw new ParseException();
-    }
+      if (jj_2_6(2147483647)) {
+        parsedpf = Atom();
+      } else if (jj_2_7(2147483647)) {
+        parsedpf = ConvCombination();
+      } else if (jj_2_8(2147483647)) {
+        parsedpf = CombinationFunc();
+      } else if (jj_2_9(3)) {
+        parsedpf = BoolFormula();
+      } else if (jj_2_10(3)) {
+        parsedpf = MacroCall();
+      } else if (jj_2_11(3)) {
+        parsedpf = Constant();
+      } else {
+        jj_consume_token(-1);
+        throw new ParseException();
+      }
          {if (true) return parsedpf;}
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("ProbForm");
+    }
   }
 
   final public RBNReader3.ParsedUnTypedAtom UntypedAtom(boolean ismacro) throws ParseException, RBNIllegalArgumentException {
+    trace_call("UntypedAtom");
+    try {
   Vector<String> args;
   Token tok;
   Rel rel;
-    // grammar
-            tok = jj_consume_token(Name);
-    args = UntypedArguments();
+      // grammar
+              tok = jj_consume_token(Name);
+      args = UntypedArguments();
          {if (true) return reader.new ParsedUnTypedAtom(tok.image,args,ismacro);}
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("UntypedAtom");
+    }
   }
 
   final public RBNReader3.ParsedTypedAtom TypedAtom(boolean ismacro) throws ParseException, RBNIllegalArgumentException {
+    trace_call("TypedAtom");
+    try {
         Token tok;
         RBNReader3.ParsedTypedArguments args;
         int arity;
         String relname;
-    // grammar
-            tok = jj_consume_token(Name);
+      // grammar
+              tok = jj_consume_token(Name);
          relname = tok.image;
-    args = TypedArguments();
+      args = TypedArguments();
          arity = args.arity();
          {if (true) return  reader.new ParsedTypedAtom(relname,args,ismacro);}
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("TypedAtom");
+    }
   }
 
   final public Vector<String> UntypedArguments() throws ParseException {
+    trace_call("UntypedArguments");
+    try {
  Vector<String> parsedargs;
-    jj_consume_token(12);
-    parsedargs = ArgList();
-    jj_consume_token(13);
+      jj_consume_token(12);
+      parsedargs = ArgList();
+      jj_consume_token(13);
          {if (true) return parsedargs;}
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("UntypedArguments");
+    }
   }
 
   final public Vector<String> ArgList() throws ParseException {
+    trace_call("ArgList");
+    try {
  Vector<String> parsedargs = new Vector<String>();
  Token tok;
-    if (jj_2_13(3)) {
-      tok = jj_consume_token(Name);
-                 parsedargs.add(tok.image);
-      label_2:
-      while (true) {
-        if (jj_2_12(3)) {
-          ;
-        } else {
-          break label_2;
-        }
-        jj_consume_token(14);
+      if (jj_2_13(3)) {
         tok = jj_consume_token(Name);
                  parsedargs.add(tok.image);
+        label_2:
+        while (true) {
+          if (jj_2_12(3)) {
+            ;
+          } else {
+            break label_2;
+          }
+          jj_consume_token(14);
+          tok = jj_consume_token(Name);
+                 parsedargs.add(tok.image);
+        }
+      } else {
+        ;
       }
-    } else {
-      ;
-    }
          {if (true) return parsedargs;}
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("ArgList");
+    }
   }
 
   final public RBNReader3.ParsedTypedArguments TypedArguments() throws ParseException {
+    trace_call("TypedArguments");
+    try {
         Token tok;
         Vector<String> args = new Vector<String>();
         Vector<Type> types = new Vector<Type>();
         String typename = null;
-    jj_consume_token(12);
-    if (jj_2_17(3)) {
-      if (jj_2_14(3)) {
-        typename = TypeDeclaration();
-      } else {
-        ;
-      }
-                  if (typename != null)
-                        {types.add(new TypeRel(typename));
-                         typename = null;
-                        }
-                  else {types.add(new TypeDomain());}
-      tok = jj_consume_token(Name);
-                 args.add(tok.image);
-      label_3:
-      while (true) {
-        if (jj_2_15(3)) {
-          ;
-        } else {
-          break label_3;
-        }
-        jj_consume_token(14);
-        if (jj_2_16(3)) {
+      jj_consume_token(12);
+      if (jj_2_17(3)) {
+        if (jj_2_14(3)) {
           typename = TypeDeclaration();
         } else {
           ;
@@ -198,73 +225,118 @@ public class RBNParser3 implements RBNParser3Constants {
                   else {types.add(new TypeDomain());}
         tok = jj_consume_token(Name);
                  args.add(tok.image);
+        label_3:
+        while (true) {
+          if (jj_2_15(3)) {
+            ;
+          } else {
+            break label_3;
+          }
+          jj_consume_token(14);
+          if (jj_2_16(3)) {
+            typename = TypeDeclaration();
+          } else {
+            ;
+          }
+                  if (typename != null)
+                        {types.add(new TypeRel(typename));
+                         typename = null;
+                        }
+                  else {types.add(new TypeDomain());}
+          tok = jj_consume_token(Name);
+                 args.add(tok.image);
+        }
+      } else {
+        ;
       }
-    } else {
-      ;
-    }
-    jj_consume_token(13);
+      jj_consume_token(13);
          {if (true) return reader.new ParsedTypedArguments(types,args);}
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("TypedArguments");
+    }
   }
 
   final public String TypeDeclaration() throws ParseException {
+    trace_call("TypeDeclaration");
+    try {
  Token tok;
-    jj_consume_token(15);
-    tok = jj_consume_token(Name);
-    jj_consume_token(16);
+      jj_consume_token(15);
+      tok = jj_consume_token(Name);
+      jj_consume_token(16);
          {if (true) return tok.image;}
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("TypeDeclaration");
+    }
   }
 
   final public ProbForm Constant() throws ParseException {
+    trace_call("Constant");
+    try {
  ProbForm parsedpf;
-    if (jj_2_18(3)) {
-      parsedpf = NumericConstant();
-    } else if (jj_2_19(3)) {
-      parsedpf = Parameter();
-    } else {
-      jj_consume_token(-1);
-      throw new ParseException();
-    }
+      if (jj_2_18(3)) {
+        parsedpf = NumericConstant();
+      } else if (jj_2_19(3)) {
+        parsedpf = Parameter();
+      } else {
+        jj_consume_token(-1);
+        throw new ParseException();
+      }
          {if (true) return parsedpf;}
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("Constant");
+    }
   }
 
   final public ProbFormConstant NumericConstant() throws ParseException {
+    trace_call("NumericConstant");
+    try {
  ProbFormConstant parsedpfconst;
  Token tok;
-    // grammar
-            tok = jj_consume_token(Constant);
+      // grammar
+              tok = jj_consume_token(Constant);
          parsedpfconst = new ProbFormConstant(Double.parseDouble(tok.image));
          {if (true) return parsedpfconst;}
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("NumericConstant");
+    }
   }
 
   final public ProbFormConstant Parameter() throws ParseException {
+    trace_call("Parameter");
+    try {
  ProbFormConstant parsedpfconst;
  Token tok;
-    if (jj_2_20(3)) {
-      jj_consume_token(17);
-      tok = jj_consume_token(Name);
+      if (jj_2_20(3)) {
+        jj_consume_token(17);
+        tok = jj_consume_token(Name);
           {if (true) return new ProbFormConstant("#" + tok.image);}
-    } else if (jj_2_21(3)) {
-      jj_consume_token(18);
-      tok = jj_consume_token(Name);
+      } else if (jj_2_21(3)) {
+        jj_consume_token(18);
+        tok = jj_consume_token(Name);
           {if (true) return new ProbFormConstant("$" + tok.image);}
-    } else {
-      jj_consume_token(-1);
-      throw new ParseException();
-    }
+      } else {
+        jj_consume_token(-1);
+        throw new ParseException();
+      }
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("Parameter");
+    }
   }
 
   final public ProbForm Atom() throws ParseException, RBNIllegalArgumentException {
+    trace_call("Atom");
+    try {
  ProbFormAtom parsedpfatom;
  RBNReader3.ParsedUnTypedAtom parsedutat;
  Rel parsedrel;
  Rel oldrel;
-    // grammar
-            parsedutat = UntypedAtom(false);
+      // grammar
+              parsedutat = UntypedAtom(false);
         switch(parseno){
         case 1:
                 reader.addAllRel(parsedutat.rel());
@@ -289,18 +361,23 @@ public class RBNParser3 implements RBNParser3Constants {
 //		     }
         }
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("Atom");
+    }
   }
 
   final public ProbFormConvComb ConvCombination() throws ParseException, RBNIllegalArgumentException {
+    trace_call("ConvCombination");
+    try {
  ProbFormConvComb pf;
-    if (jj_2_22(3)) {
-      pf = ConvCombinationClassic();
-    } else if (jj_2_23(3)) {
-      pf = ConvCombinationCherry();
-    } else {
-      jj_consume_token(-1);
-      throw new ParseException();
-    }
+      if (jj_2_22(3)) {
+        pf = ConvCombinationClassic();
+      } else if (jj_2_23(3)) {
+        pf = ConvCombinationCherry();
+      } else {
+        jj_consume_token(-1);
+        throw new ParseException();
+      }
          switch(parseno){
         case 1:
                 {if (true) return null;}
@@ -308,19 +385,24 @@ public class RBNParser3 implements RBNParser3Constants {
         case 2: {if (true) return pf;}
         }
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("ConvCombination");
+    }
   }
 
   final public ProbFormConvComb ConvCombinationClassic() throws ParseException, RBNIllegalArgumentException {
+    trace_call("ConvCombinationClassic");
+    try {
  ProbForm pf1;
  ProbForm pf2;
  ProbForm pf3;
-    jj_consume_token(12);
-    pf1 = ProbForm();
-    jj_consume_token(19);
-    pf2 = ProbForm();
-    jj_consume_token(14);
-    pf3 = ProbForm();
-    jj_consume_token(13);
+      jj_consume_token(12);
+      pf1 = ProbForm();
+      jj_consume_token(19);
+      pf2 = ProbForm();
+      jj_consume_token(14);
+      pf3 = ProbForm();
+      jj_consume_token(13);
          switch(parseno){
         case 1:
                 {if (true) return null;}
@@ -328,18 +410,23 @@ public class RBNParser3 implements RBNParser3Constants {
         case 2: {if (true) return new ProbFormConvComb(pf1,pf2,pf3);}
         }
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("ConvCombinationClassic");
+    }
   }
 
   final public ProbFormConvComb ConvCombinationCherry() throws ParseException, RBNIllegalArgumentException {
+    trace_call("ConvCombinationCherry");
+    try {
  ProbForm pf1;
  ProbForm pf2;
  ProbForm pf3;
-    jj_consume_token(WIFWIF);
-    pf1 = ProbForm();
-    jj_consume_token(WIFTHEN);
-    pf2 = ProbForm();
-    jj_consume_token(WIFELSE);
-    pf3 = ProbForm();
+      jj_consume_token(WIFWIF);
+      pf1 = ProbForm();
+      jj_consume_token(WIFTHEN);
+      pf2 = ProbForm();
+      jj_consume_token(WIFELSE);
+      pf3 = ProbForm();
          switch(parseno){
         case 1:
                 {if (true) return null;}
@@ -347,22 +434,27 @@ public class RBNParser3 implements RBNParser3Constants {
         case 2: {if (true) return new ProbFormConvComb(pf1,pf2,pf3);}
         }
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("ConvCombinationCherry");
+    }
   }
 
   final public ProbFormCombFunc CombinationFunc() throws ParseException, RBNIllegalArgumentException {
+    trace_call("CombinationFunc");
+    try {
  ProbFormCombFunc pf;
-    if (jj_2_24(3)) {
-      pf = CombinationFuncClassic();
-    } else if (jj_2_25(3)) {
-      pf = CombinationFuncCherry();
-    } else if (jj_2_26(2147483647)) {
-      pf = CombinationFuncSum();
-    } else if (jj_2_27(2147483647)) {
-      pf = CombinationFuncProd();
-    } else {
-      jj_consume_token(-1);
-      throw new ParseException();
-    }
+      if (jj_2_24(3)) {
+        pf = CombinationFuncClassic();
+      } else if (jj_2_25(3)) {
+        pf = CombinationFuncCherry();
+      } else if (jj_2_26(2147483647)) {
+        pf = CombinationFuncSum();
+      } else if (jj_2_27(2147483647)) {
+        pf = CombinationFuncProd();
+      } else {
+        jj_consume_token(-1);
+        throw new ParseException();
+      }
          switch(parseno){
         case 1:
                 {if (true) return null;}
@@ -370,27 +462,32 @@ public class RBNParser3 implements RBNParser3Constants {
         case 2: {if (true) return pf;}
         }
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("CombinationFunc");
+    }
   }
 
   final public ProbFormCombFunc CombinationFuncClassic() throws ParseException, RBNIllegalArgumentException {
+    trace_call("CombinationFuncClassic");
+    try {
   Token tok;
   Vector<ProbForm> pflist;
   Vector<String> arglist;
   ProbForm[] pfarr;
   ProbFormBool cc = new ProbFormBoolConstant(true);
-    // grammar
-            tok = jj_consume_token(CombinationFunction);
-    jj_consume_token(20);
-    pflist = ProbFormList();
-    jj_consume_token(21);
-    arglist = ArgList();
-    jj_consume_token(19);
-    if (jj_2_28(3)) {
-      cc = BoolFormula();
-    } else {
-      ;
-    }
-    jj_consume_token(22);
+      // grammar
+              tok = jj_consume_token(CombinationFunction);
+      jj_consume_token(20);
+      pflist = ProbFormList();
+      jj_consume_token(21);
+      arglist = ArgList();
+      jj_consume_token(19);
+      if (jj_2_28(3)) {
+        cc = BoolFormula();
+      } else {
+        ;
+      }
+      jj_consume_token(22);
          switch(parseno){
         case 1:
                 {if (true) return null;}
@@ -401,26 +498,31 @@ public class RBNParser3 implements RBNParser3Constants {
                 pfarr[i]=pflist.elementAt(i);
         {if (true) return new ProbFormCombFunc(tok.image,pfarr,StringOps.stringVectorToArray(arglist),cc);}}
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("CombinationFuncClassic");
+    }
   }
 
   final public ProbFormCombFunc CombinationFuncCherry() throws ParseException, RBNIllegalArgumentException {
+    trace_call("CombinationFuncCherry");
+    try {
   Token tok;
   Vector<ProbForm> pflist;
   Vector<String> arglist;
   ProbForm[] pfarr;
   ProbFormBool cc = new ProbFormBoolConstant(true);
-    jj_consume_token(COMBCOMB);
-    pflist = ProbFormList();
-    jj_consume_token(COMBWITH);
-    tok = jj_consume_token(CombinationFunction);
-    jj_consume_token(COMBFORALL);
-    arglist = ArgList();
-    if (jj_2_29(3)) {
-      jj_consume_token(COMBWHERE);
-      cc = BoolFormula();
-    } else {
-      ;
-    }
+      jj_consume_token(COMBCOMB);
+      pflist = ProbFormList();
+      jj_consume_token(COMBWITH);
+      tok = jj_consume_token(CombinationFunction);
+      jj_consume_token(COMBFORALL);
+      arglist = ArgList();
+      if (jj_2_29(3)) {
+        jj_consume_token(COMBWHERE);
+        cc = BoolFormula();
+      } else {
+        ;
+      }
          switch(parseno){
         case 1:
                 {if (true) return null;}
@@ -431,27 +533,32 @@ public class RBNParser3 implements RBNParser3Constants {
                 pfarr[i]=pflist.elementAt(i);
         {if (true) return new ProbFormCombFunc(tok.image,pfarr,StringOps.stringVectorToArray(arglist),cc);}}
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("CombinationFuncCherry");
+    }
   }
 
   final public ProbFormCombFunc CombinationFuncProd() throws ParseException, RBNIllegalArgumentException {
+    trace_call("CombinationFuncProd");
+    try {
  Vector<ProbForm> pflist = new Vector<ProbForm>();
 ProbForm nextpf;
 ProbForm[] pfarr;
-    jj_consume_token(12);
-    nextpf = ProbForm();
-         pflist.add(nextpf);
-    label_4:
-    while (true) {
-      jj_consume_token(MULT);
+      jj_consume_token(12);
       nextpf = ProbForm();
+         pflist.add(nextpf);
+      label_4:
+      while (true) {
+        jj_consume_token(MULT);
+        nextpf = ProbForm();
             pflist.add(nextpf);
-      if (jj_2_30(3)) {
-        ;
-      } else {
-        break label_4;
+        if (jj_2_30(3)) {
+          ;
+        } else {
+          break label_4;
+        }
       }
-    }
-    jj_consume_token(13);
+      jj_consume_token(13);
          switch(parseno){
         case 1:
                 {if (true) return null;}
@@ -462,27 +569,32 @@ ProbForm[] pfarr;
                 pfarr[i]=pflist.elementAt(i);
         {if (true) return new ProbFormCombFunc("prod",pfarr,new String[0],new ProbFormBoolConstant(true));}}
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("CombinationFuncProd");
+    }
   }
 
   final public ProbFormCombFunc CombinationFuncSum() throws ParseException, RBNIllegalArgumentException {
+    trace_call("CombinationFuncSum");
+    try {
  Vector<ProbForm> pflist = new Vector<ProbForm>();
 ProbForm nextpf;
 ProbForm[] pfarr;
-    jj_consume_token(12);
-    nextpf = ProbForm();
-         pflist.add(nextpf);
-    label_5:
-    while (true) {
-      jj_consume_token(PLUS);
+      jj_consume_token(12);
       nextpf = ProbForm();
+         pflist.add(nextpf);
+      label_5:
+      while (true) {
+        jj_consume_token(PLUS);
+        nextpf = ProbForm();
             pflist.add(nextpf);
-      if (jj_2_31(3)) {
-        ;
-      } else {
-        break label_5;
+        if (jj_2_31(3)) {
+          ;
+        } else {
+          break label_5;
+        }
       }
-    }
-    jj_consume_token(13);
+      jj_consume_token(13);
          switch(parseno){
         case 1:
                 {if (true) return null;}
@@ -493,145 +605,190 @@ ProbForm[] pfarr;
                 pfarr[i]=pflist.elementAt(i);
         {if (true) return new ProbFormCombFunc("sum",pfarr,new String[0],new ProbFormBoolConstant(true));}}
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("CombinationFuncSum");
+    }
   }
 
   final public Vector<ProbForm> ProbFormList() throws ParseException, RBNIllegalArgumentException {
+    trace_call("ProbFormList");
+    try {
  Vector<ProbForm> pflist = new Vector<ProbForm>();
  ProbForm nextpf;
-    if (jj_2_33(3)) {
-      nextpf = ProbForm();
-           pflist.add(nextpf);
-      label_6:
-      while (true) {
-        if (jj_2_32(3)) {
-          ;
-        } else {
-          break label_6;
-        }
-        jj_consume_token(14);
+      if (jj_2_33(3)) {
         nextpf = ProbForm();
            pflist.add(nextpf);
+        label_6:
+        while (true) {
+          if (jj_2_32(3)) {
+            ;
+          } else {
+            break label_6;
+          }
+          jj_consume_token(14);
+          nextpf = ProbForm();
+           pflist.add(nextpf);
+        }
+      } else {
+        ;
       }
-    } else {
-      ;
-    }
          {if (true) return pflist;}
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("ProbFormList");
+    }
   }
 
   final public ProbFormBool BoolFormula() throws ParseException, RBNIllegalArgumentException {
+    trace_call("BoolFormula");
+    try {
  ProbFormBool pf;
-    if (jj_2_34(2147483647)) {
-      pf = BoolAtom();
-    } else if (jj_2_35(2147483647)) {
-      pf = BoolEquality();
-    } else if (jj_2_36(3)) {
-      pf = BoolNegation();
-    } else if (jj_2_37(2147483647)) {
-      pf = BoolAnd();
-    } else if (jj_2_38(2147483647)) {
-      pf = BoolOr();
-    } else if (jj_2_39(3)) {
-      pf = BoolConstant();
-    } else {
-      jj_consume_token(-1);
-      throw new ParseException();
-    }
+      if (jj_2_34(2147483647)) {
+        pf = BoolAtom();
+      } else if (jj_2_35(2147483647)) {
+        pf = BoolEquality();
+      } else if (jj_2_36(3)) {
+        pf = BoolNegation();
+      } else if (jj_2_37(2147483647)) {
+        pf = BoolAnd();
+      } else if (jj_2_38(2147483647)) {
+        pf = BoolOr();
+      } else if (jj_2_39(3)) {
+        pf = BoolConstant();
+      } else {
+        jj_consume_token(-1);
+        throw new ParseException();
+      }
      {if (true) return pf;}
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("BoolFormula");
+    }
   }
 
   final public ProbFormBoolAtom BoolAtom() throws ParseException, RBNIllegalArgumentException {
+    trace_call("BoolAtom");
+    try {
  RBNReader3.ParsedUnTypedAtom parsedat;
-    // grammar
-            parsedat = UntypedAtom(false);
+      // grammar
+              parsedat = UntypedAtom(false);
          {if (true) return new ProbFormBoolAtom(parsedat.rel(),parsedat.args(),true);}
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("BoolAtom");
+    }
   }
 
   final public ProbFormBoolEquality BoolEquality() throws ParseException, RBNIllegalArgumentException {
+    trace_call("BoolEquality");
+    try {
  Token tok1;
  Token tok2;
-    // grammar
-            tok1 = jj_consume_token(Name);
-    jj_consume_token(10);
-    tok2 = jj_consume_token(Name);
+      // grammar
+              tok1 = jj_consume_token(Name);
+      jj_consume_token(10);
+      tok2 = jj_consume_token(Name);
          {if (true) return new ProbFormBoolEquality(tok1.image,tok2.image,true);}
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("BoolEquality");
+    }
   }
 
   final public ProbFormBoolComposite BoolAnd() throws ParseException, RBNIllegalArgumentException {
+    trace_call("BoolAnd");
+    try {
  Vector<ProbFormBool> comps=new Vector<ProbFormBool>() ;
 ProbFormBool nextpfb;
-    jj_consume_token(12);
-    nextpfb = BoolFormula();
-         comps.add(nextpfb);
-    label_7:
-    while (true) {
-      jj_consume_token(23);
+      jj_consume_token(12);
       nextpfb = BoolFormula();
+         comps.add(nextpfb);
+      label_7:
+      while (true) {
+        jj_consume_token(23);
+        nextpfb = BoolFormula();
             comps.add(nextpfb);
-      if (jj_2_40(3)) {
-        ;
-      } else {
-        break label_7;
+        if (jj_2_40(3)) {
+          ;
+        } else {
+          break label_7;
+        }
       }
-    }
-    jj_consume_token(13);
+      jj_consume_token(13);
  {if (true) return new ProbFormBoolComposite(comps,ProbFormBool.OPERATORAND,true);}
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("BoolAnd");
+    }
   }
 
   final public ProbFormBoolComposite BoolOr() throws ParseException, RBNIllegalArgumentException {
+    trace_call("BoolOr");
+    try {
  Vector<ProbFormBool> comps=new Vector<ProbFormBool>();
 ProbFormBool nextpfb;
-    jj_consume_token(12);
-    nextpfb = BoolFormula();
-         comps.add(nextpfb);
-    label_8:
-    while (true) {
-      jj_consume_token(21);
+      jj_consume_token(12);
       nextpfb = BoolFormula();
+         comps.add(nextpfb);
+      label_8:
+      while (true) {
+        jj_consume_token(21);
+        nextpfb = BoolFormula();
             comps.add(nextpfb);
-      if (jj_2_41(3)) {
-        ;
-      } else {
-        break label_8;
+        if (jj_2_41(3)) {
+          ;
+        } else {
+          break label_8;
+        }
       }
-    }
-    jj_consume_token(13);
+      jj_consume_token(13);
  {if (true) return new ProbFormBoolComposite(comps,ProbFormBool.OPERATOROR,true);}
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("BoolOr");
+    }
   }
 
   final public ProbFormBoolConstant BoolConstant() throws ParseException {
-    if (jj_2_42(3)) {
-      jj_consume_token(24);
+    trace_call("BoolConstant");
+    try {
+      if (jj_2_42(3)) {
+        jj_consume_token(24);
                  {if (true) return new ProbFormBoolConstant(true);}
-    } else if (jj_2_43(3)) {
-      jj_consume_token(25);
+      } else if (jj_2_43(3)) {
+        jj_consume_token(25);
                  {if (true) return new ProbFormBoolConstant(false);}
-    } else {
-      jj_consume_token(-1);
-      throw new ParseException();
-    }
+      } else {
+        jj_consume_token(-1);
+        throw new ParseException();
+      }
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("BoolConstant");
+    }
   }
 
   final public ProbFormBool BoolNegation() throws ParseException, RBNIllegalArgumentException {
+    trace_call("BoolNegation");
+    try {
  ProbFormBool pfb;
-    jj_consume_token(26);
-    pfb = BoolFormula();
+      jj_consume_token(26);
+      pfb = BoolFormula();
    pfb.toggleSign();
   {if (true) return pfb;}
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("BoolNegation");
+    }
   }
 
   final public ProbFormMacroCall MacroCall() throws ParseException, RBNIllegalArgumentException {
+    trace_call("MacroCall");
+    try {
  RBNReader3.ParsedUnTypedAtom parsedat;
  RBNMacro macrodef;
-    jj_consume_token(9);
-    parsedat = UntypedAtom(true);
+      jj_consume_token(9);
+      parsedat = UntypedAtom(true);
         // Add the '@' back to the name:
         parsedat.set_relname("@"+parsedat.rel().name());
         switch(parseno){
@@ -645,12 +802,17 @@ ProbFormBool nextpfb;
           else {if (true) throw new ParseException("Macro @" + parsedat.rel().name.name + " undefined");}
                 }
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("MacroCall");
+    }
   }
 
   final public CatModelSoftMax CatSoftMax() throws ParseException, RBNIllegalArgumentException {
+    trace_call("CatSoftMax");
+    try {
   Vector<ProbForm> pflist;
-    jj_consume_token(SOFTMAX);
-    pflist = ProbFormList();
+      jj_consume_token(SOFTMAX);
+      pflist = ProbFormList();
       switch(parseno){
         case 1:
                 {if (true) return null;}
@@ -659,15 +821,28 @@ ProbFormBool nextpfb;
              {if (true) return new CatModelSoftMax(pflist);}
         }
     throw new Error("Missing return statement in function");
+    } finally {
+      trace_return("CatSoftMax");
+    }
   }
 
 // Java functions
   final public void setReader(RBNReader3 rdr) throws ParseException {
+    trace_call("setReader");
+    try {
          reader = rdr;
+    } finally {
+      trace_return("setReader");
+    }
   }
 
   final public void setParseno(int pn) throws ParseException {
+    trace_call("setParseno");
+    try {
          parseno = pn;
+    } finally {
+      trace_return("setParseno");
+    }
   }
 
   private boolean jj_2_1(int xla) {
@@ -971,8 +1146,14 @@ ProbFormBool nextpfb;
     finally { jj_save(42, xla); }
   }
 
+  private boolean jj_3R_17() {
+    if (jj_scan_token(9)) return true;
+    if (jj_3R_35()) return true;
+    return false;
+  }
+
   private boolean jj_3_28() {
-    if (jj_3R_17()) return true;
+    if (jj_3R_16()) return true;
     return false;
   }
 
@@ -1025,7 +1206,7 @@ ProbFormBool nextpfb;
 
   private boolean jj_3R_28() {
     if (jj_scan_token(26)) return true;
-    if (jj_3R_17()) return true;
+    if (jj_3R_16()) return true;
     return false;
   }
 
@@ -1076,7 +1257,7 @@ ProbFormBool nextpfb;
     return false;
   }
 
-  private boolean jj_3R_16() {
+  private boolean jj_3R_15() {
     Token xsp;
     xsp = jj_scanpos;
     if (jj_3_24()) {
@@ -1094,13 +1275,13 @@ ProbFormBool nextpfb;
 
   private boolean jj_3_41() {
     if (jj_scan_token(21)) return true;
-    if (jj_3R_17()) return true;
+    if (jj_3R_16()) return true;
     return false;
   }
 
   private boolean jj_3R_47() {
     if (jj_scan_token(12)) return true;
-    if (jj_3R_17()) return true;
+    if (jj_3R_16()) return true;
     Token xsp;
     if (jj_3_41()) return true;
     while (true) {
@@ -1119,7 +1300,7 @@ ProbFormBool nextpfb;
 
   private boolean jj_3_40() {
     if (jj_scan_token(23)) return true;
-    if (jj_3R_17()) return true;
+    if (jj_3R_16()) return true;
     return false;
   }
 
@@ -1135,7 +1316,7 @@ ProbFormBool nextpfb;
 
   private boolean jj_3R_46() {
     if (jj_scan_token(12)) return true;
-    if (jj_3R_17()) return true;
+    if (jj_3R_16()) return true;
     Token xsp;
     if (jj_3_40()) return true;
     while (true) {
@@ -1157,11 +1338,6 @@ ProbFormBool nextpfb;
     return false;
   }
 
-  private boolean jj_3_9() {
-    if (jj_3R_16()) return true;
-    return false;
-  }
-
   private boolean jj_3_8() {
     if (jj_3R_15()) return true;
     return false;
@@ -1169,6 +1345,11 @@ ProbFormBool nextpfb;
 
   private boolean jj_3_7() {
     if (jj_3R_14()) return true;
+    return false;
+  }
+
+  private boolean jj_3_6() {
+    if (jj_3R_13()) return true;
     return false;
   }
 
@@ -1189,12 +1370,12 @@ ProbFormBool nextpfb;
     return false;
   }
 
-  private boolean jj_3R_34() {
+  private boolean jj_3_9() {
     if (jj_3R_16()) return true;
     return false;
   }
 
-  private boolean jj_3R_33() {
+  private boolean jj_3R_34() {
     if (jj_3R_15()) return true;
     return false;
   }
@@ -1211,30 +1392,25 @@ ProbFormBool nextpfb;
   }
 
   private boolean jj_3R_32() {
-    if (jj_3R_14()) return true;
-    return false;
-  }
-
-  private boolean jj_3_6() {
     if (jj_3R_13()) return true;
     return false;
   }
 
-  private boolean jj_3R_44() {
-    if (jj_3R_35()) return true;
+  private boolean jj_3R_33() {
+    if (jj_3R_14()) return true;
     return false;
   }
 
   private boolean jj_3R_12() {
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3_6()) {
-    jj_scanpos = xsp;
     if (jj_3R_32()) {
     jj_scanpos = xsp;
     if (jj_3R_33()) {
     jj_scanpos = xsp;
     if (jj_3R_34()) {
+    jj_scanpos = xsp;
+    if (jj_3_9()) {
     jj_scanpos = xsp;
     if (jj_3_10()) {
     jj_scanpos = xsp;
@@ -1247,16 +1423,21 @@ ProbFormBool nextpfb;
     return false;
   }
 
+  private boolean jj_3R_44() {
+    if (jj_3R_35()) return true;
+    return false;
+  }
+
   private boolean jj_3_38() {
     if (jj_scan_token(12)) return true;
-    if (jj_3R_17()) return true;
+    if (jj_3R_16()) return true;
     if (jj_scan_token(21)) return true;
     return false;
   }
 
   private boolean jj_3_37() {
     if (jj_scan_token(12)) return true;
-    if (jj_3R_17()) return true;
+    if (jj_3R_16()) return true;
     if (jj_scan_token(23)) return true;
     return false;
   }
@@ -1278,13 +1459,13 @@ ProbFormBool nextpfb;
     return false;
   }
 
-  private boolean jj_3_22() {
-    if (jj_3R_22()) return true;
+  private boolean jj_3_4() {
+    if (jj_3R_11()) return true;
     return false;
   }
 
-  private boolean jj_3_4() {
-    if (jj_3R_11()) return true;
+  private boolean jj_3_22() {
+    if (jj_3R_22()) return true;
     return false;
   }
 
@@ -1298,7 +1479,7 @@ ProbFormBool nextpfb;
     return false;
   }
 
-  private boolean jj_3R_15() {
+  private boolean jj_3R_14() {
     Token xsp;
     xsp = jj_scanpos;
     if (jj_3_22()) {
@@ -1328,7 +1509,7 @@ ProbFormBool nextpfb;
     return false;
   }
 
-  private boolean jj_3R_17() {
+  private boolean jj_3R_16() {
     Token xsp;
     xsp = jj_scanpos;
     if (jj_3R_38()) {
@@ -1389,7 +1570,7 @@ ProbFormBool nextpfb;
     return false;
   }
 
-  private boolean jj_3R_14() {
+  private boolean jj_3R_13() {
     if (jj_3R_35()) return true;
     return false;
   }
@@ -1484,7 +1665,7 @@ ProbFormBool nextpfb;
     return false;
   }
 
-  private boolean jj_3R_13() {
+  private boolean jj_3R_18() {
     Token xsp;
     xsp = jj_scanpos;
     if (jj_3_18()) {
@@ -1503,7 +1684,7 @@ ProbFormBool nextpfb;
 
   private boolean jj_3_29() {
     if (jj_scan_token(COMBWHERE)) return true;
-    if (jj_3R_17()) return true;
+    if (jj_3R_16()) return true;
     return false;
   }
 
@@ -1563,12 +1744,6 @@ ProbFormBool nextpfb;
     xsp = jj_scanpos;
     if (jj_3_17()) jj_scanpos = xsp;
     if (jj_scan_token(13)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_18() {
-    if (jj_scan_token(9)) return true;
-    if (jj_3R_35()) return true;
     return false;
   }
 
@@ -1689,6 +1864,7 @@ ProbFormBool nextpfb;
           }
         }
       }
+      trace_token(token, "");
       return token;
     }
     token = oldToken;
@@ -1726,6 +1902,7 @@ ProbFormBool nextpfb;
     else token = token.next = token_source.getNextToken();
     jj_ntk = -1;
     jj_gen++;
+      trace_token(token, " (in getNextToken)");
     return token;
   }
 
@@ -1817,12 +1994,55 @@ ProbFormBool nextpfb;
     return new ParseException(token, exptokseq, tokenImage);
   }
 
-  /** Enable tracing. */
+  private int trace_indent = 0;
+  private boolean trace_enabled = true;
+
+/** Enable tracing. */
   final public void enable_tracing() {
+    trace_enabled = true;
   }
 
-  /** Disable tracing. */
+/** Disable tracing. */
   final public void disable_tracing() {
+    trace_enabled = false;
+  }
+
+  private void trace_call(String s) {
+    if (trace_enabled) {
+      for (int i = 0; i < trace_indent; i++) { System.out.print(" "); }
+      System.out.println("Call:   " + s);
+    }
+    trace_indent = trace_indent + 2;
+  }
+
+  private void trace_return(String s) {
+    trace_indent = trace_indent - 2;
+    if (trace_enabled) {
+      for (int i = 0; i < trace_indent; i++) { System.out.print(" "); }
+      System.out.println("Return: " + s);
+    }
+  }
+
+  private void trace_token(Token t, String where) {
+    if (trace_enabled) {
+      for (int i = 0; i < trace_indent; i++) { System.out.print(" "); }
+      System.out.print("Consumed token: <" + tokenImage[t.kind]);
+      if (t.kind != 0 && !tokenImage[t.kind].equals("\"" + t.image + "\"")) {
+        System.out.print(": \"" + t.image + "\"");
+      }
+      System.out.println(" at line " + t.beginLine + " column " + t.beginColumn + ">" + where);
+    }
+  }
+
+  private void trace_scan(Token t1, int t2) {
+    if (trace_enabled) {
+      for (int i = 0; i < trace_indent; i++) { System.out.print(" "); }
+      System.out.print("Visited token: <" + tokenImage[t1.kind]);
+      if (t1.kind != 0 && !tokenImage[t1.kind].equals("\"" + t1.image + "\"")) {
+        System.out.print(": \"" + t1.image + "\"");
+      }
+      System.out.println(" at line " + t1.beginLine + " column " + t1.beginColumn + ">; Expected token: <" + tokenImage[t2] + ">");
+    }
   }
 
   private void jj_rescan_token() {

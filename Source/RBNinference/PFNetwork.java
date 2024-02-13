@@ -63,6 +63,18 @@ public class PFNetwork{
 	private int adaptivemode;
 	private boolean[] samplelogmode;
 
+	private int num_subsamples_minmax;
+	public int getNum_subsamples_minmax() {
+		return num_subsamples_minmax;
+	}
+
+	public void setNum_subsamples_minmax(int num_subsamples_minmax) {
+		this.num_subsamples_minmax = num_subsamples_minmax;
+	}
+
+
+	private int num_subsamples_adapt;
+
 	private int numpar; // Max. number of parents for nodes with full CPT representation
 
 	private double[] allsampleweight; // The sum of weights in importance sampling represented 
@@ -285,6 +297,9 @@ public class PFNetwork{
 	{
 		this.sampleordmode = sampleordmode;
 		this.adaptivemode = adaptivemode;
+		this.num_subsamples_minmax=num_subsamples_minmax;
+		this.num_subsamples_adapt=num_subsamples_adapt;
+
 		this.samplelogmode = samplelogmode;
 		allsampleweight = new double[2];
 		allsampleweight_subsample = new double[num_subsamples_minmax][2];

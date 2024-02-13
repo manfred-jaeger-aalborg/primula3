@@ -56,7 +56,7 @@ public class SampleThread extends Thread{
 	public SampleThread(Observer infmodule, 
 			PFNetwork pfn, 
 			GroundAtomList queryatoms, 
-			int num_subsamples_param,
+//			int num_subsamples_param,
 			boolean[] logmode_param,
 			BufferedWriter logwriter_param){
 
@@ -64,7 +64,7 @@ public class SampleThread extends Thread{
 		this.queryAtomSize = queryatoms.allAtoms().size();
 		this.pfn = pfn;
 		logmode = logmode_param;
-		num_subsamples = num_subsamples_param;
+		num_subsamples = pfn.getNum_subsamples_minmax();
 		logwriter = logwriter_param;
 		sprobs = new SampleProbs(queryatoms);
 		sprobs.addObserver(infmodule);
@@ -99,7 +99,7 @@ public class SampleThread extends Thread{
 			newtime = System.currentTimeMillis();
 			if(newtime - time > 2000 || running == false){
 				time = newtime;
-
+				System.out.println("report! " + numsamp);
 				try{
 					if (logwriter != null && (logmode[2] || logmode[3]))
 						logwriter.write(numsamp + " ");

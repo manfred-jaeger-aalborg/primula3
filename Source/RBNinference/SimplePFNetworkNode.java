@@ -408,8 +408,10 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 		//System.out.print(myatom.asString(A) + " " );
 		double weight = thisdistrprob()/thissampleprob() ;
 		
-		for (PFNetworkNode nextpfnn:children)
+		for (int i=0;i<this.children.size();i++) {
+			PFNetworkNode nextpfnn = (PFNetworkNode)children.elementAt(i);
 			weight = weight * nextpfnn.thisdistrprob()/nextpfnn.thissampleprob();
+		}
 		
 		double smallweight[] = {weight,0};
 		

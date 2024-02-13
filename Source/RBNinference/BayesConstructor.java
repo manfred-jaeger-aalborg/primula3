@@ -449,7 +449,7 @@ public class BayesConstructor extends java.lang.Object {
 		 * exportnodes
 		 */
 		
-		Vector<PFNetworkNode> nodestack;
+		Vector<BNNode> nodestack;
 		Vector<PFNetworkNode> allnodes = new Vector<PFNetworkNode>();
 
 		for (BNNode bnn: groundatomhasht.values()){
@@ -458,7 +458,7 @@ public class BayesConstructor extends java.lang.Object {
 			if (!pfnn.visited[0]){
 				nodestack = pfnn.buildNodeStack();
 				for (int j=0;j<nodestack.size();j++){
-					BNNode bnn2=(BNNode)nodestack.elementAt(j);
+					PFNetworkNode bnn2=(PFNetworkNode)nodestack.elementAt(j);
 					bnn2.visited[0]=true;
 					allnodes.add(bnn2);
 				}
