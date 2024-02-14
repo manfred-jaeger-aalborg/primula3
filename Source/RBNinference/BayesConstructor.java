@@ -184,7 +184,7 @@ public class BayesConstructor extends java.lang.Object {
 			/* Now do the same for evidence atoms */
 			if (evidencemode == Primula.OPTION_EVIDENCE_CONDITIONED) {
 				BNNode newestnode;
-				for (BoolRel br:  instarg.getBoolRels()){
+				for (Rel br:  instarg.getBoolAndCatRels()){
 					/* Only proceed if br has ancestors included in relset
 					 * Otherwise evidence atoms for br will not have common
 					 * ancestors with query atoms

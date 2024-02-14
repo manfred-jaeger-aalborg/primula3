@@ -1309,6 +1309,17 @@ public class OneStrucData {
 		return result;
 	}
 
+	public Vector<Rel> getBoolAndCatRels(){
+		Vector<Rel> result = new Vector<Rel>();
+		for (OneBoolRelData obrd: allonebooldata){
+			result.add(obrd.rel()); 
+		}
+		for (OneCatRelData ocrd: allonecatdata){
+			result.add(ocrd.rel()); 
+		}
+		return result;
+	}
+	
 	public String boolDvAt(int i){
 		return allonebooldata.elementAt(i).dv();
 	}

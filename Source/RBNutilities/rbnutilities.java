@@ -1615,7 +1615,7 @@ public class rbnutilities extends java.lang.Object
 		double rand=Math.random();
 		for (int i=0; i< cpr.length && probsum<rand;i++) { 
 			result++;
-			probsum+=cpr[i];
+			probsum+=cpr[i+1];
 		}
 		return result;
 	}

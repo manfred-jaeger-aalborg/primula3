@@ -99,7 +99,6 @@ public class SampleThread extends Thread{
 			newtime = System.currentTimeMillis();
 			if(newtime - time > 2000 || running == false){
 				time = newtime;
-				System.out.println("report! " + numsamp);
 				try{
 					if (logwriter != null && (logmode[2] || logmode[3]))
 						logwriter.write(numsamp + " ");
