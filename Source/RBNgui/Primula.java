@@ -1721,14 +1721,14 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 	}
 	
 	private void loadDefaults(){
-		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Categorical/catrbn.rbn";
-		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Categorical/inputstruc-1n.rdef";
-	
+//		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Categorical/catrbn.rbn";
+//		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Categorical/inputstruc-1n.rdef";
+//	
 		
 		
-//		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Mendel/mendel.rbn";
-//		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Mendel/mendel_s.rdef";
-//		
+		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Mendel/mendel.rbn";
+		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Mendel/mendel_s.rdef";
+		
 //		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/InformationDiffusion/independent_cascade.rbn";
 //		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/InformationDiffusion/independent_cascade.rdef";
 		

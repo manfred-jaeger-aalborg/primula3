@@ -145,7 +145,7 @@ public class OneCatRelData extends OneRelData {
 	}
 
 
-	/** 
+	/** Returns all tuples for which a value is given ('allTrue' is a legacy name ...)
 	 */ 
 	public TreeSet<int[]> allTrue(){
 		TreeSet<int[]> result = new TreeSet<int[]>(new IntArrayComparator());
@@ -237,23 +237,13 @@ public class OneCatRelData extends OneRelData {
 		return result;
 	}
 
-	int truthValueOf(int[] tuple)
+	int valueOf(int[] tuple)
 	{
-		if (rel.arity ==0){
-			if (values.size() > 0){
-				return 1;
-			}
-			else{
-				return -1;
-			}
-		}
-		else {
-			
-			if (values.containsKey(tuple)) 
-				return 1;
-			else
-				return -1;
-		}
+		if (values.containsKey(tuple)) 
+			return values.get(tuple);
+		else
+			return -1;
+
 	}
 
 

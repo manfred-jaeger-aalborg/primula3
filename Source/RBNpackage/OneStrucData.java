@@ -574,11 +574,18 @@ public class OneStrucData {
 
 	}
 
-	public Vector<int[]> allInstantiated(BoolRel r){
-		Vector<int[]> result = allTrue(r);
-		result.addAll(allFalse(r));
+	public Vector<int[]> allInstantiated(Rel r){
+		Vector<int[]> result = null;
+
+		if (r instanceof BoolRel) {
+			result = allTrue(r);
+			result.addAll(allFalse((BoolRel)r));
+		}
+		if (r instanceof CatRel) {
+			OneCatRelData ocrd = this.findInCatRel(r);
+			result = rbnutilities.treeSetToVector(ocrd.allTrue());
+		}
 		return result;
-		
 	}
 
 	/** Returns all tuples that are instantiated to true in relation r 
@@ -798,7 +805,7 @@ public class OneStrucData {
 			return truthValueOf((NumRel)r,tuple);
 		}
 		else if(r instanceof CatRel){
-			return truthValueOf((CatRel)r,tuple);
+			return valueOf((CatRel)r,tuple);
 		}
 		else{
 			return -1;
@@ -810,9 +817,9 @@ public class OneStrucData {
 		OneRelData thisrelinst = find(r);
 		if (thisrelinst != null){
 			if (thisrelinst instanceof OneBoolRelData)
-				return ((OneBoolRelData)thisrelinst).truthValueOf(tuple);
+				return ((OneBoolRelData)thisrelinst).valueOf(tuple);
 			else if (thisrelinst instanceof OneCatRelData)
-				return ((OneCatRelData)thisrelinst).truthValueOf(tuple);
+				return ((OneCatRelData)thisrelinst).valueOf(tuple);
 			else 
 				return ((OneNumRelData)thisrelinst).truthValueOf(tuple);
 		}
@@ -825,7 +832,7 @@ public class OneStrucData {
 		OneBoolRelData thisrelinst = findInBoolRel(r);
 		if (thisrelinst != null)
 		{
-			return thisrelinst.truthValueOf(tuple);
+			return thisrelinst.valueOf(tuple);
 		}
 		else {
 			return -1;
@@ -843,12 +850,12 @@ public class OneStrucData {
 		}
 	}
 	
-	public int truthValueOf(CatRel r, int[] tuple)
+	public int valueOf(CatRel r, int[] tuple)
 	{
 		OneCatRelData thisrelinst = findInCatRel(r);
 		if (thisrelinst != null)
 		{
-			return thisrelinst.truthValueOf(tuple);
+			return thisrelinst.valueOf(tuple);
 		}
 		else {
 			return -1;
@@ -873,7 +880,7 @@ public class OneStrucData {
 		OneBoolRelData thisboolrelinst = findInBoolRel(r);
 		if (thisboolrelinst != null)
 		{
-			int tv = thisboolrelinst.truthValueOf(tuple);
+			int tv = thisboolrelinst.valueOf(tuple);
 			if (tv != -1)
 				return (double)tv;
 			else 
@@ -882,7 +889,7 @@ public class OneStrucData {
 		OneCatRelData thiscatrelinst = findInCatRel(r);
 		if (thiscatrelinst != null)
 		{
-			int tv = thiscatrelinst.truthValueOf(tuple);
+			int tv = thiscatrelinst.valueOf(tuple);
 			if (tv != -1)
 				return (double)tv;
 			else 

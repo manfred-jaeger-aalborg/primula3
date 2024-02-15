@@ -409,7 +409,7 @@ public class OneBoolRelData extends OneRelData {
 		return result;
 	}
 
-	int truthValueOf(int[] tuple)
+	int valueOf(int[] tuple)
 	{
 		if (rel.arity ==0){
 			if (trueAtoms.size() > 0)
