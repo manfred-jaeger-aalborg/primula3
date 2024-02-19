@@ -1,5 +1,7 @@
 <PrimulaPreferences>
   <DefaultPath>/Users/lz50rg/Dev/primula-workspace/primula3</DefaultPath>
+  <UserSamiamLocation>/Users/lz50rg/Dev/samiam/samiam.jar</UserSamiamLocation>
+  <UserInflibLocation>/Users/lz50rg/Dev/samiam/samiam.jar</UserInflibLocation>
   <aceSettings>
     <aceQueryBased>false</aceQueryBased>
     <aceEncodingMethod>CHAVIRA_DARWICHE_06</aceEncodingMethod>

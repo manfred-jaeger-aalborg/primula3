@@ -67,7 +67,6 @@ public class ProbFormGnn extends ProbForm {
                              OneStrucData inst,
                              String[] vars,
                              int[] tuple,
-                             // not currently used those
                              boolean useCurrentCvals,
                              boolean useCurrentPvals,
                              GroundAtomList mapatoms,
@@ -75,47 +74,38 @@ public class ProbFormGnn extends ProbForm {
                              Hashtable<String, Object[]> evaluated,
                              Hashtable<String, Integer> params,
                              int returntype,
-                             // -----------------------
                              boolean valonly,
                              Profiler profiler)
             throws RBNCompatibilityException {
 
         Double[] result = new Double[2];
+        double value;
 
-        // TODO return NaN by checking if the data is not missing
-
-        // for now only val no gradient computed
+        // only val no gradient computed
         if (valonly) {
             OneStrucData onsd = new OneStrucData(A.getmydata().copy());
-            // hardcoded solution where the sampled parent is blue
-            // we need to sample the entire structure before sending to python
-            int num_features = 0;
             SparseRelStruc sampledRel = new SparseRelStruc(A.getNames(), onsd, A.getCoords(), A.signature());
             sampledRel.getmydata().add(inst.copy());
             for (Rel parent : this.parentRels()) {
                 try {
                     int[][] mat = A.allTypedTuples(parent.getTypes());
-                    // maybe there could be attributes with different number, we keep the biggest
-                    if (parent.arity == 1 && mat.length >= num_features)
-                        num_features = mat.length;
-
+                    // for now, we just check if the attributes values are NaN
                     for (int i = 0; i < mat.length; i++) {
-
-                        result[0] = inst.valueOf(parent, rbnutilities.stringArrayToIntArray(new String[]{this.argument}));
-
-//                        if (sampledRel.truthValueOf(parent, mat[i]) == -1) {
-//                            GroundAtom myatom = new GroundAtom(parent, mat[i]);
-//                            String myatomname = myatom.asString();
-//                            System.out.println(myatomname);
-//                            PFNetworkNode gan = (PFNetworkNode) atomhasht.get(myatomname);
-//                            if (gan != null) {
-//                                double result = (double) gan.sampleinstVal();
-//                                boolean sampledVal = false;
-//                                if (result == 1)
-//                                    sampledVal = true;
-//                                sampledRel.getmydata().findInBoolRel(parent).add(mat[i], sampledVal);
-//                            }
-//                        }
+                        if (parent.ispredefined()) {
+                            value = A.valueOf(parent, mat[i]);
+                            if (Double.isNaN(value)) {
+                                result[0] = Double.NaN;
+                                return result;
+                            } else
+                                System.out.println("Missing implementation!");
+                        } else if (parent.isprobabilistic()) {
+                            value = inst.valueOf(parent, mat[i]);
+                            if (Double.isNaN(value)) {
+                                result[0] = Double.NaN;
+                                return result;
+                            } else
+                                System.out.println("Missing implementation!"); // it should check for all the tuples of the relation if there is at least one NaN
+                        }
                     }
 
                 } catch (RBNIllegalArgumentException e) {
@@ -123,7 +113,6 @@ public class ProbFormGnn extends ProbForm {
                 }
             }
         }
-        result[0] = Double.NaN;
         return result;
     }
 
@@ -131,7 +120,6 @@ public class ProbFormGnn extends ProbForm {
     public Double evalSample(RelStruc A, Hashtable<String, PFNetworkNode> atomhasht, OneStrucData inst, Hashtable<String,Double> evaluated, long[] timers) throws RBNCompatibilityException {
 //            System.out.println("evalSample code");
         OneStrucData onsd = new OneStrucData(A.getmydata().copy());
-        // hardcoded solution where the sampled parent is blue
         // we need to sample the entire structure before sending to python
         int num_features = 0;
         SparseRelStruc sampledRel = new SparseRelStruc(A.getNames(), onsd, A.getCoords(), A.signature());
@@ -259,7 +247,7 @@ public class ProbFormGnn extends ProbForm {
     // we cannot substitute this in smaller prob formula -> return the same object
     @Override
     public ProbForm substitute(String[] vars, int[] args) {
-        System.out.println("substitute code 1");
+//        System.out.println("substitute code 1");
         ProbFormGnn result = new ProbFormGnn(this.argument, this.gnnattr);
 
         result.argument = rbnutilities.array_substitute(new String[]{argument}, vars, args)[0];

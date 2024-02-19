@@ -30,47 +30,47 @@ public class GGGnnNode extends GGProbFormNode {
         this.A = A;
         this.inst = I;
 
-
-
-        // TODO check if pf is ProbFormGnn
-
-        Rel[] pfargs = ((ProbFormGnn)this.pf).getGnnattr();
-        for (int i = 0; i < pfargs.length; i++) {
-            try {
-                int[][] mat = A.allTypedTuples(pfargs[i].getTypes());
-                for (int j = 0; j < mat.length; j++) {
-                    ProbFormAtom atomAsPf = new ProbFormAtom(pfargs[i], mat[j]);
-                    GGProbFormNode ggmn = gg.findInAllnodes(atomAsPf, 0, 0, A);
-                    if (ggmn == null) {
-                        ggmn = GGProbFormNode.constructGGPFN(
-                                gg,
-                                atomAsPf,
-                                allnodes,
-                                A,
-                                I,
-                                inputcaseno,
-                                observcaseno,
-                                parameters,
-                                false,
-                                false,
-                                "",
-                                mapatoms,
-                                evaluated);
+        if (pf instanceof ProbFormGnn) {
+            Rel[] pfargs = ((ProbFormGnn) this.pf).getGnnattr();
+            for (int i = 0; i < pfargs.length; i++) {
+                try {
+                    int[][] mat = A.allTypedTuples(pfargs[i].getTypes());
+                    for (int j = 0; j < mat.length; j++) {
+                        ProbFormAtom atomAsPf = new ProbFormAtom(pfargs[i], mat[j]);
+                        GGProbFormNode ggmn = gg.findInAllnodes(atomAsPf, 0, 0, A);
+                        if (ggmn == null) {
+                            ggmn = GGProbFormNode.constructGGPFN(
+                                    gg,
+                                    atomAsPf,
+                                    allnodes,
+                                    A,
+                                    I,
+                                    inputcaseno,
+                                    observcaseno,
+                                    parameters,
+                                    false,
+                                    false,
+                                    "",
+                                    mapatoms,
+                                    evaluated);
 //                        ggmn = new GGAtomMaxNode(gg, atomAsPf, A, I, 0, 0);
-                        allnodes.put(gg.makeKey(atomAsPf, 0, 0, A), ggmn);
-                        //            fnode.setInstvalToIndicator();
-                        //            ggmn.setUGA(fnode);
+                            allnodes.put(gg.makeKey(atomAsPf, 0, 0, A), ggmn);
+                            //            fnode.setInstvalToIndicator();
+                            //            ggmn.setUGA(fnode);
+                            this.children.add(ggmn);
+                            ggmn.addToParents(this);
+                        }
                         this.children.add(ggmn);
                         ggmn.addToParents(this);
                     }
-                    this.children.add(ggmn);
-                    ggmn.addToParents(this);
+
+                } catch (RBNIllegalArgumentException e) {
+                    throw new RuntimeException(e);
                 }
 
-            } catch (RBNIllegalArgumentException e) {
-                throw new RuntimeException(e);
             }
-
+        } else {
+            System.out.println("GGGnnNode cannot accept " + pf.toString() + " as valid pf");
         }
     }
 

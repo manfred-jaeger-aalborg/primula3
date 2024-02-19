@@ -655,7 +655,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	 * @uml.property  name="logfilename"
 	 */
 	private String logfilename = "";
-
+	private Observer mapObserver;
 	private String modelPath;
 	private String scriptPath;
 	private String scriptName;
@@ -1393,6 +1393,11 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	public GradientGraph startMapThread(){
 		
 		GradientGraph gg = null;
+
+		if (this.mapObserver == null) {
+			this.mapObserver = this;
+		}
+
 		try{
 //			maprestarts = true;
 			RelData evidence = new RelData(myprimula.getRels(),myprimula.getInstantiation());
@@ -1424,7 +1429,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 					 								mode,
 					 								0,
 					 								true);
-			mapthr = new MapThread(this,myprimula,(GradientGraphO)gg);
+			mapthr = new MapThread(this.mapObserver,this,myprimula,(GradientGraphO)gg);
 			if (mapthr.isGnnIntegration()) {
 				mapthr.setPythonHome(this.pythonHome);
 				mapthr.setModelPath(this.modelPath);
@@ -2688,6 +2693,10 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 
 	public MapThread getMapthr() {
 		return mapthr;
+	}
+
+	public void setMapObserver(Observer o) {
+		this.mapObserver = o;
 	}
 
 }

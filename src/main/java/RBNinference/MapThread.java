@@ -30,20 +30,23 @@ public class MapThread extends GGThread {
 	private String pythonHome;
 
 	public boolean isSampling;
-	public MapThread(InferenceModule infmodule,
+	public MapThread(
+			Observer infmoduleObs,
+			InferenceModule infmodule,
 			Primula mypr,
 			GradientGraphO ggarg){
 		myinfmodule = infmodule;
-		myprimula=mypr;
+		myprimula = mypr;
 		gg = ggarg;
 		mapprobs = new MapVals(gg.maxatoms().size());
-		mapprobs.addObserver(infmodule);
+		mapprobs.addObserver(infmoduleObs);
 
 		this.gnnIntegration = this.checkGnnRel(this.myprimula.getRBN());
 		this.isSampling = false;
 	}
 	
 	public void run(){
+//		gg.showAllNodes(6, myprimula.getRels());
 		this.isSampling = true;
 		if (this.gnnIntegration) {
 			try {
@@ -98,6 +101,7 @@ public class MapThread extends GGThread {
 
 		while (running && ((maxrestarts == -1) || (restarts <= maxrestarts))){
 			try {
+				System.out.println("Current restart: " + restarts);
 				newll = gg.mapInference(this);
 
 				// System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" + Arrays.toString(newll));
