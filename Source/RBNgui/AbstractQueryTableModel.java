@@ -29,7 +29,7 @@ import RBNutilities.*;
 //import RBNpackage.Atom;
 import RBNinference.BayesNetIntHuginNet;
 
-public class QueryTableModel extends AbstractQueryTableModel{
+public abstract class AbstractQueryTableModel extends AbstractTableModel{
 
 	/**
 	 * @uml.property  name="queryatomdata"
@@ -37,30 +37,10 @@ public class QueryTableModel extends AbstractQueryTableModel{
 	 */
 	LinkedList queryatomdata = new LinkedList();
 	
-
 	public static final String STR_EMPTY = "";
 
-	/**
-	 * @uml.property  name="column"
-	 */
-	int column = 1;
-	/**
-	 * @uml.property  name="rownum"
-	 */
 	int rownum = 0;
-	/** ... keith cascio */
-
-	public QueryTableModel(){
-	}
-
-	public int getColumnCount(){
-		return column;
-	}
-
-	public int getRowCount(){
-		return rownum;
-	}
-
+	
 	public Object getValueAt( int row, int col )
 	{
 		switch( col ){
@@ -68,7 +48,8 @@ public class QueryTableModel extends AbstractQueryTableModel{
 			if(      queryatomdata.size() > row )
 				return queryatomdata.get(     row );
 			break;
-				default:
+		
+		default:
 			System.err.println( "column " + col + " out of range" );
 		return STR_EMPTY;
 		}
@@ -109,7 +90,6 @@ public class QueryTableModel extends AbstractQueryTableModel{
 	public LinkedList getQuery(){
 		return queryatomdata;
 	}
-
 
 
 }

@@ -29,13 +29,14 @@ import RBNutilities.*;
 //import RBNpackage.Atom;
 import RBNinference.BayesNetIntHuginNet;
 
-public class QueryTableModel extends AbstractQueryTableModel{
+public class MAPTableModel extends AbstractQueryTableModel{
+
 
 	/**
-	 * @uml.property  name="queryatomdata"
+	 * @uml.property  name="mapdata"
 	 * @uml.associationEnd  multiplicity="(0 -1)" elementType="java.lang.String"
 	 */
-	LinkedList queryatomdata = new LinkedList();
+	LinkedList<String> mapdata = new LinkedList<String>();
 	
 
 	public static final String STR_EMPTY = "";
@@ -43,14 +44,14 @@ public class QueryTableModel extends AbstractQueryTableModel{
 	/**
 	 * @uml.property  name="column"
 	 */
-	int column = 1;
+	int column = 2;
 	/**
 	 * @uml.property  name="rownum"
 	 */
-	int rownum = 0;
-	/** ... keith cascio */
 
-	public QueryTableModel(){
+
+	public MAPTableModel(){
+		super();
 	}
 
 	public int getColumnCount(){
@@ -68,7 +69,12 @@ public class QueryTableModel extends AbstractQueryTableModel{
 			if(      queryatomdata.size() > row )
 				return queryatomdata.get(     row );
 			break;
-				default:
+		case 1:
+			if(      mapdata.size() > row )
+				return mapdata.get(     row );
+			break;
+			/** ... keith cascio */
+		default:
 			System.err.println( "column " + col + " out of range" );
 		return STR_EMPTY;
 		}
@@ -77,39 +83,35 @@ public class QueryTableModel extends AbstractQueryTableModel{
 	}
 
 
-
-
 	public void addQuery(String query){
-		rownum++;
-		queryatomdata.add(query);
+		super.addQuery(query);
+		mapdata.add(STR_EMPTY);
 	}
 
-	public void addQuery(LinkedList query){
-		rownum = query.size();
-		queryatomdata = query;
-
+	public void addMapVal(String mv){
+		mapdata.add(mv);
 	}
-
+	
 	public void reset(){
-		rownum = 0;
-		queryatomdata = new LinkedList();
+		super.reset();
 	}
-
 
 	public void removeAllQueries(){
-		queryatomdata = new LinkedList();
-		rownum = 0;
+		super.removeAllQueries();
+		mapdata = new LinkedList();
 	}
 
 	public void removeQuery(int query){
-		queryatomdata.remove(query);
-		rownum--;
+		super.removeQuery(query);
+		mapdata.remove(query);
 	}
 
-	public LinkedList getQuery(){
-		return queryatomdata;
+	public void resetMapVals(){
+		mapdata = new LinkedList();
 	}
-
-
-
+	
+	public LinkedList<String> getMapValues() {
+		return mapdata;
+	}
+	
 }
