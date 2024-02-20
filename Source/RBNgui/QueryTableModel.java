@@ -29,13 +29,13 @@ import RBNutilities.*;
 //import RBNpackage.Atom;
 import RBNinference.BayesNetIntHuginNet;
 
-public class QueryTableModel extends AbstractQueryTableModel{
+public class QueryTableModel extends AbstractTableModel{
 
 	/**
 	 * @uml.property  name="queryatomdata"
 	 * @uml.associationEnd  multiplicity="(0 -1)" elementType="java.lang.String"
 	 */
-	LinkedList queryatomdata = new LinkedList();
+	LinkedList<String> queryatomdata;
 	
 
 	public static final String STR_EMPTY = "";
@@ -43,14 +43,15 @@ public class QueryTableModel extends AbstractQueryTableModel{
 	/**
 	 * @uml.property  name="column"
 	 */
-	int column = 1;
+	private int column = 1;
 	/**
 	 * @uml.property  name="rownum"
 	 */
-	int rownum = 0;
+	protected int rownum = 0;
 	/** ... keith cascio */
 
 	public QueryTableModel(){
+		queryatomdata = new LinkedList<String>();
 	}
 
 	public int getColumnCount(){

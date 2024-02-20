@@ -35,7 +35,7 @@ public abstract class AbstractQueryTableModel extends AbstractTableModel{
 	 * @uml.property  name="queryatomdata"
 	 * @uml.associationEnd  multiplicity="(0 -1)" elementType="java.lang.String"
 	 */
-	LinkedList queryatomdata = new LinkedList();
+	LinkedList<String> queryatomdata = new LinkedList<String>();
 	
 	public static final String STR_EMPTY = "";
 

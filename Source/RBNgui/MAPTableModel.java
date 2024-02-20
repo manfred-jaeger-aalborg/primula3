@@ -29,7 +29,7 @@ import RBNutilities.*;
 //import RBNpackage.Atom;
 import RBNinference.BayesNetIntHuginNet;
 
-public class MAPTableModel extends AbstractQueryTableModel{
+public class MAPTableModel extends QueryTableModel{
 
 
 	/**
@@ -56,10 +56,6 @@ public class MAPTableModel extends AbstractQueryTableModel{
 
 	public int getColumnCount(){
 		return column;
-	}
-
-	public int getRowCount(){
-		return rownum;
 	}
 
 	public Object getValueAt( int row, int col )

@@ -29,28 +29,28 @@ import RBNutilities.*;
 //import RBNpackage.Atom;
 import RBNinference.BayesNetIntHuginNet;
 
-public class MCMCTableModel extends AbstractQueryTableModel{
+public class MCMCTableModel extends QueryTableModel{
 
 	/**
 	 * @uml.property  name="probabilitydata"
 	 * @uml.associationEnd  multiplicity="(0 -1)" elementType="java.lang.String"
 	 */
-	LinkedList probabilitydata = new LinkedList();
+	LinkedList<String> probabilitydata ;
 	/**
 	 * @uml.property  name="minprobabilitydata"
 	 * @uml.associationEnd  multiplicity="(0 -1)" elementType="java.lang.String"
 	 */
-	LinkedList minprobabilitydata = new LinkedList();
+	LinkedList<String> minprobabilitydata;
 	/**
 	 * @uml.property  name="maxprobabilitydata"
 	 * @uml.associationEnd  multiplicity="(0 -1)" elementType="java.lang.String"
 	 */
-	LinkedList maxprobabilitydata = new LinkedList();
+	LinkedList<String> maxprobabilitydata;
 	/**
 	 * @uml.property  name="vardata"
 	 * @uml.associationEnd  multiplicity="(0 -1)" elementType="java.lang.String"
 	 */
-	LinkedList vardata = new LinkedList();
+	LinkedList<String> vardata;
 	/**
 	 * keith cascio 20060511 ...
 	 * @uml.property  name="acedata"
@@ -60,23 +60,20 @@ public class MCMCTableModel extends AbstractQueryTableModel{
 	/**
 	 * @uml.property  name="column"
 	 */
-	int column = 5;
-	/**
-	 * @uml.property  name="rownum"
-	 */
-	int rownum = 0;
-	/** ... keith cascio */
+	private int column = 5;
+	
 
 	public MCMCTableModel(){
 		super();
+		probabilitydata = new LinkedList<String>();
+		minprobabilitydata = new LinkedList<String>();
+		maxprobabilitydata = new LinkedList<String>();
+		vardata = new LinkedList<String>();
+		rownum=super.getRowCount();
 	}
 
 	public int getColumnCount(){
 		return column;
-	}
-
-	public int getRowCount(){
-		return rownum;
 	}
 
 	public Object getValueAt( int row, int col )

@@ -203,17 +203,32 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
 	private JScrollPane queryatomsScrollList = new JScrollPane();
+	
+	private Vector<JScrollPane> queryatomsScrolllists = new Vector<JScrollPane>(); 
+	
+	
 	//den nye queryatom tabel
 	/**
 	 * @uml.property  name="dataModel"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
-	private QueryTableModel dataModel  = new QueryTableModel();;
+	private QueryTableModel queryModel  = new QueryTableModel();;
+	
+	private MAPTableModel mapModel = new MAPTableModel();
+	
+	private MCMCTableModel mcmcModel = new MCMCTableModel();
+	
+	private ACETableModel aceModel = new ACETableModel();
+	
+	private TestTableModel testModel = new TestTableModel();
+	
 	/**
 	 * @uml.property  name="querytable"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
-	private JTable querytable          = new JTable();
+	private JTable querytable = new JTable();
+	private JTable querytable2 = new JTable();
+	
 	/**
 	 * @uml.property  name="trueButton"
 	 * @uml.associationEnd  multiplicity="(1 1)"
@@ -348,7 +363,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	 * @uml.property  name="queryatomsPanel"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
-	private JPanel queryatomsPanel 		 		= new JPanel(new BorderLayout());
+	private JPanel queryatomsPanel 		 		= new JPanel(new FlowLayout());
 	/**
 	 * @uml.property  name="queryatomsButtonsPanel"
 	 * @uml.associationEnd  multiplicity="(1 1)"
@@ -686,7 +701,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		readRBNRelations();
 
 		updateInstantiationList();
-		updateQueryatomsList();
+		updateQueryatomsList(queryModel);
 
 
 		
@@ -781,6 +796,14 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		mapLL.setHorizontalAlignment( JTextField.LEFT );
 		mapLL.setBackground(new Color(255, 255, 255));
 		
+		/* Panel with buttons underneath querytable */
+		queryatomsButtonsPanel.add(delQueryAtomButton);
+		delQueryAtomButton.setToolTipText("Delete query atom");
+		queryatomsButtonsPanel.add(delAllQueryAtomButton);
+		delAllQueryAtomButton.setToolTipText("Delete all query atoms");
+		deletesamplePanel.add(queryatomsButtonsPanel, BorderLayout.NORTH);
+		/* ************************************ */
+		inferencePane.add("Query",queryatomsButtonsPanel);
 		/* Panel for Importance Sampling */
 		JPanel panelSamplingOuter = new JPanel( new GridBagLayout() );
 		GridBagConstraints cSampling = new GridBagConstraints();
@@ -827,38 +850,24 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		/* ************************************ */
 
 
-		/* Panel with buttons underneath querytable */
-		queryatomsButtonsPanel.add(delQueryAtomButton);
-		delQueryAtomButton.setToolTipText("Delete query atom");
-		queryatomsButtonsPanel.add(delAllQueryAtomButton);
-		delAllQueryAtomButton.setToolTipText("Delete all query atoms");
-		deletesamplePanel.add(queryatomsButtonsPanel, BorderLayout.NORTH);
-		/* ************************************ */
-
-		/* Setting up the Query table */
-		querytable.setModel(dataModel);
-		querytable.setShowHorizontalLines(false);
-		querytable.setPreferredScrollableViewportSize(new Dimension(146, 100));
-		//table header values
-		querytable.getColumnModel().getColumn(0).setHeaderValue("Query Atoms");
-		querytable.getColumnModel().getColumn(1).setHeaderValue("MAP");
-		querytable.getColumnModel().getColumn(2).setHeaderValue("P");
-		querytable.getColumnModel().getColumn(3).setHeaderValue("Min");
-		querytable.getColumnModel().getColumn(4).setHeaderValue("Max");
-		querytable.getColumnModel().getColumn(5).setHeaderValue("Var");
-		/** keith cascio 20060511 ... */
-		querytable.getColumnModel().getColumn(6).setHeaderValue( edu.ucla.belief.ace.Settings.STR_ACE_DISPLAY_NAME );
-		/** ... keith cascio */
-
-		querytable.getColumnModel().getColumn(0).setPreferredWidth(150);
-		/* ************************************ */
 		
+
 		
+		this.setQueryTable();
+		querytable2.setModel(queryModel);
+		
+		queryatomsScrolllists.add(new JScrollPane());
+		queryatomsScrolllists.add(new JScrollPane());
+		queryatomsScrolllists.elementAt(0).getViewport().add(querytable);
+		queryatomsScrolllists.elementAt(1).getViewport().add(querytable2);
 		/* Panel consisting of query table and buttons underneath */
-		queryatomsScrollList.getViewport().add(querytable);
+//		queryatomsScrollList.getViewport().add(querytable);
+//		queryatomsScrollList.getViewport().add(querytable2);
+
 		//queryatomsPanel.add(queryatomsLabel, BorderLayout.NORTH);
-		queryatomsPanel.add(queryatomsScrollList, BorderLayout.CENTER);
-		queryatomsPanel.add(deletesamplePanel, BorderLayout.SOUTH);
+		for (int i=0;i<queryatomsScrolllists.size();i++)
+			queryatomsPanel.add(queryatomsScrolllists.elementAt(i));
+		queryatomsPanel.add(deletesamplePanel);
 		/* ************************************ */
 		
 //		atomsPanel.add(instantiationsPanel, BorderLayout.CENTER);
@@ -1165,9 +1174,9 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 
 		else if( source == delQueryAtomButton ){
 			if(selectedQueryAtom != null){
-				dataModel.removeQuery(delAtom);
+				queryModel.removeQuery(delAtom);
 				generateQueryatoms();
-				updateQueryatomsList();
+				updateQueryatomsList(queryModel);
 				Vector queries = queryatoms.allAtoms();
 				int listsize = queries.size()-1;
 				if( delAtom >= listsize ){
@@ -1188,9 +1197,9 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 			}
 		}
 		else if(source == delAllQueryAtomButton){
-			dataModel.removeAllQueries();
+			queryModel.removeAllQueries();
 			generateQueryatoms();
-			updateQueryatomsList();
+			updateQueryatomsList(queryModel);
 		}
 		else if( source == settingsSampling ){
 			if (!settingssamplingwindowopen){
@@ -1203,8 +1212,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		}
 		else if( source == setPrediction){
 			// mostly copy from (source == setMapVals)
-			LinkedList<String> probvals = dataModel.getProbabilities();
-			LinkedList<String> queryats = dataModel.getQuery();
+			LinkedList<String> probvals = mcmcModel.getProbabilities();
+			LinkedList<String> queryats = mcmcModel.getQuery();
 			OneStrucData result = new OneStrucData();
 			result.setParentRelStruc(myprimula.getRels());
 			
@@ -1253,8 +1262,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		}
 		else if (source == setMapVals){
 			if (currentGG != null){
-				LinkedList<String> mapvals = dataModel.getMapValues();
-				LinkedList<String> queryats = dataModel.getQuery();
+				LinkedList<String> mapvals = mapModel.getMapValues();
+				LinkedList<String> queryats = mapModel.getQuery();
 				OneStrucData result = new OneStrucData();
 				result.setParentRelStruc(myprimula.getRels());
 				
@@ -1296,6 +1305,11 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	}
 
 	public SampleThread startSampleThread(){
+		this.setMCMCTable();
+		this.updateQueryatomsList(mcmcModel);
+
+		querytable.updateUI();
+		
 		sampling = true;
 		PFNetwork pfn = null;
 		if (!noLog()){
@@ -1330,7 +1344,6 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		sampthr = new SampleThread(this, 
 				pfn, 
 				queryatoms,
-				num_subsamples_minmax,
 				samplelogmode,
 				logwriter);
 		sampthr.start();
@@ -1354,6 +1367,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	}
 	private GradientGraph startMapThread(){
 
+		this.setMAPTable();
+		this.updateQueryatomsList(mapModel);
 		GradientGraph gg = null;
 		try{
 //			maprestarts = true;
@@ -1424,7 +1439,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 			myACEControl.setProgressBar( InferenceModule.this.getACEProgressBar() );
 			myACEControl.set( myprimula.getPreferences().getACESettings() );
 			myACEControl.addListener( (Control.ACEControlListener) this );
-			myACEControl.setDataModel( InferenceModule.this.dataModel );
+			myACEControl.setDataModel( InferenceModule.this.queryModel );
 			myACEControl.setInfoMessage( InferenceModule.this.infoMessage );
 		}
 		return myACEControl;
@@ -1445,7 +1460,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	@since 20060511 */
 	public void aceStateChange( Control control ){
 		//InferenceModule.this.resetACEEnabledState( control );
-		if( !control.isReadyCompute() ) dataModel.resetACE();
+		if( !control.isReadyCompute() ) aceModel.resetACE();
 		//clearACEMessage();
 	}
 
@@ -1508,7 +1523,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 				infoMessage.setText(rel.name.name+"()");
 				if(queryModeOn){
 					queryatoms.add(rel,new int[0]);
-					updateQueryatomsList();
+					updateQueryatomsList(queryModel);
 				}
 				else{
 					inst.add(new GroundAtom(rel,new int[0]),truthValue,"?");
@@ -1702,7 +1717,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		//instasosd.reset();
 		instantiationsListModel.clear();
 		queryatoms.reset();
-		dataModel.reset();
+		queryModel.reset();
 		infoMessage.setText(" ");
 		first_bin = first_arb = true;
 		selectedInstAtom = null;
@@ -1726,7 +1741,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		elementNamesListModel.clear();
 		readElementNames();
 		updateInstantiationList();
-		updateQueryatomsList();
+		updateQueryatomsList(queryModel);
 		if(selected != -1)
 			elementNamesList.setSelectedIndex(selected);
 	}
@@ -1740,7 +1755,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		updateInstantiationList();
 		queryatoms.delete(node);
 		queryatoms.shiftArgs(node);
-		updateQueryatomsList();
+		updateQueryatomsList(queryModel);
 		for(int i=0; i<tuple.length; ++i){
 			if(tuple[i] == node){
 				infoMessage.setText("Tuple cancelled (included a deleted node)");
@@ -1775,7 +1790,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		//instasosd.reset();
 		instantiationsListModel.clear();
 		queryatoms.reset();
-		dataModel.reset();
+		queryModel.reset();
 		elementNamesList.clearSelection();
 		infoMessage.setText(" ");
 		first_bin = first_arb = true;
@@ -1912,14 +1927,15 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 			}
 			pos++;
 		}
-		updateQueryatomsList();
+		updateQueryatomsList(queryModel);
 		infoMessage.setText(rel.name.name+" ("+addedTuples+") added");
 		temp = null;
 	}
 
-	public void updateQueryatomsList(){
+	
+	public void updateQueryatomsList(QueryTableModel qtm){
 		selectedQueryAtom = null;
-		dataModel.reset();
+		qtm.reset();
 		Vector queries = queryatoms.allAtoms();
 		for(int i=0; i<queries.size(); ++i){
 			GroundAtom temp = (GroundAtom)queries.elementAt(i);
@@ -1936,7 +1952,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 			}
 			names = names + ")";
 			String listItem = names;
-			dataModel.addQuery(listItem);
+			qtm.addQuery(listItem);
 		}
 		querytable.updateUI();
 
@@ -1946,7 +1962,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	private void generateQueryatoms(){
 		LinkedList relstruct = new LinkedList();
 		queryatoms.reset();
-		LinkedList queryatoms = dataModel.getQuery();
+		LinkedList queryatoms = queryModel.getQuery();
 		for(int i=0; i<queryatoms.size(); i++){
 			String atom = ""+queryatoms.get(i);
 			//System.out.println("in generateQueryAtoms: " + atom);
@@ -2550,25 +2566,25 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 
 	public void update(Observable o, Object arg){
 		if (o instanceof SampleProbs){
-			dataModel.resetProb();
-			double [] prob= ((SampleProbs)o).getProbs();
+			mcmcModel.resetProb();
+			double [][] prob= ((SampleProbs)o).getProbs();
 			for(int i=0; i<prob.length; i++){
-				dataModel.addProb(""+prob[i]);
+				mcmcModel.addProb(""+prob[i][1]);
 			}
-			dataModel.resetMinProb();
-			double [] minprob = ((SampleProbs)o).getMinProbs();
+			mcmcModel.resetMinProb();
+			double [][] minprob = ((SampleProbs)o).getMinProbs();
 			for(int i=0; i<minprob.length; i++){
-				dataModel.addMinProb(""+minprob[i]);
+				mcmcModel.addMinProb(""+minprob[i][1]);
 			}
-			dataModel.resetMaxProb();
-			double [] maxprob = ((SampleProbs)o).getMaxProbs();
+			mcmcModel.resetMaxProb();
+			double [][] maxprob = ((SampleProbs)o).getMaxProbs();
 			for(int i=0; i<maxprob.length; i++){
-				dataModel.addMaxProb(""+maxprob[i]);
+				mcmcModel.addMaxProb(""+maxprob[i][1]);
 			}
-			dataModel.resetVar();
-			double [] var = ((SampleProbs)o).getVar();
+			mcmcModel.resetVar();
+			double [][] var = ((SampleProbs)o).getVar();
 			for(int i=0; i<var.length; i++){
-				dataModel.addVar(""+var[i]);
+				mcmcModel.addVar(""+var[i][1]);
 			}
 			sampleSize.setText(""+((SampleProbs)o).getSize());
 			Double dweight = new Double(((SampleProbs)o).getWeight());
@@ -2576,10 +2592,10 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		}
 		
 		if (o instanceof MapVals){
-			dataModel.resetMapVals();
+			mapModel.resetMapVals();
 			int [] mapvals = ((MapVals)o).getMVs();
 			for(int i=0; i<mapvals.length; i++){
-				dataModel.addMapVal(""+mapvals[i]);
+				mapModel.addMapVal(""+mapvals[i]);
 			}
 			mapRestarts.setText("" +((MapVals)o).getRestarts());
 			mapLL.setText("" +((MapVals)o).getLLstring());
@@ -2589,13 +2605,13 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		/** keith cascio 20060511 ... */
 		//dataModel.resetACE();
 		/** ... keith cascio */
-	
+		
 		querytable.updateUI();
 	}
 	
 	public OneStrucData getMapValuesAsInst(){
-		LinkedList<String> mapvals = dataModel.getMapValues();
-		LinkedList<String> queryats = dataModel.getQuery();
+		LinkedList<String> mapvals = mapModel.getMapValues();
+		LinkedList<String> queryats = mapModel.getQuery();
 		OneStrucData result = new OneStrucData();
 		result.setParentRelStruc(myprimula.getRels());
 		
@@ -2609,4 +2625,44 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 //		}
 		return result;
 	}
+	
+	/* Setting up the Query table */
+	private void setQueryTable() {
+		querytable.setModel(queryModel);
+		querytable.setShowHorizontalLines(false);
+		querytable.setPreferredScrollableViewportSize(new Dimension(146, 100));
+		//table header values
+		querytable.getColumnModel().getColumn(0).setHeaderValue("Query Atoms");
+
+		querytable.getColumnModel().getColumn(0).setPreferredWidth(150);
+		/* ************************************ */
+	}
+
+	private void setMCMCTable() {
+		querytable.setModel(mcmcModel);
+		querytable.setShowHorizontalLines(false);
+		querytable.setPreferredScrollableViewportSize(new Dimension(146, 100));
+		//table header values
+		querytable.getColumnModel().getColumn(0).setHeaderValue("Query Atoms");
+		querytable.getColumnModel().getColumn(1).setHeaderValue("P");
+		querytable.getColumnModel().getColumn(2).setHeaderValue("Min");
+		querytable.getColumnModel().getColumn(3).setHeaderValue("Max");
+		querytable.getColumnModel().getColumn(4).setHeaderValue("Var");
+
+		querytable.getColumnModel().getColumn(0).setPreferredWidth(150);
+	}
+	
+	private void setMAPTable() {
+		querytable.setModel(mapModel);
+		querytable.setShowHorizontalLines(false);
+		querytable.setPreferredScrollableViewportSize(new Dimension(146, 100));
+		//table header values
+		querytable.getColumnModel().getColumn(0).setHeaderValue("Query Atoms");
+		querytable.getColumnModel().getColumn(1).setHeaderValue("MAP");
+
+		querytable.getColumnModel().getColumn(0).setPreferredWidth(150);
+	}
+	
+	
+	
 }
