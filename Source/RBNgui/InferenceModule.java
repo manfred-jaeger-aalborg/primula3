@@ -24,23 +24,86 @@
 
 package RBNgui;
 
-import RBNpackage.*;
-import RBNinference.*;
-import RBNExceptions.*;
-import RBNLearning.*;
-import RBNio.*;
-import RBNutilities.*;
-import java.io.*;
-import java.awt.*;
-import java.awt.event.*;
-import javax.swing.*;
-import javax.swing.border.*;
-import javax.swing.table.*;
-import java.util.*;
-import myio.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Insets;
+import java.awt.MediaTracker;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Observable;
+import java.util.Observer;
+import java.util.Vector;
 
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.DefaultListModel;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.border.Border;
+
+import RBNExceptions.RBNCompatibilityException;
+import RBNExceptions.RBNCyclicException;
+import RBNExceptions.RBNIllegalArgumentException;
+import RBNExceptions.RBNInconsistentEvidenceException;
+import RBNLearning.GradientGraph;
+import RBNLearning.GradientGraphO;
+import RBNLearning.RelData;
+import RBNLearning.RelDataForOneInput;
+import RBNinference.BayesConstructor;
+import RBNinference.MapThread;
+import RBNinference.MapVals;
+import RBNinference.PFNetwork;
+import RBNinference.SampleProbs;
+import RBNinference.SampleThread;
+import RBNpackage.BoolRel;
+import RBNpackage.CPModel;
+import RBNpackage.GroundAtom;
+import RBNpackage.GroundAtomList;
+import RBNpackage.InstAtom;
+import RBNpackage.OneStrucData;
+import RBNpackage.ProbForm;
+import RBNpackage.RBN;
+import RBNpackage.Rel;
+import RBNpackage.RelStruc;
+import RBNpackage.Signature;
+import RBNpackage.SparseRelStruc;
+import RBNutilities.rbnutilities;
+import edu.ucla.belief.ace.Control;
+import edu.ucla.belief.ace.SettingsPanel;
 import edu.ucla.belief.ui.primula.SamiamManager;
-import edu.ucla.belief.ace.*;
+import myio.StringOps;
 
 public class InferenceModule extends JFrame implements Observer, 
 ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
@@ -204,6 +267,15 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	 */
 	private JScrollPane queryatomsScrollList = new JScrollPane();
 	
+	
+	/**
+	 * One JScrollPane for each relation for which we have a query atom
+	 * 
+	 * Each JScrollPane contains a JTable associated with a QueryTableModel
+	 * or a subclass thereof (MCMCTableModel, MAPTableModel, ...)
+	 * 
+	 * The queryatomsScrolllists are embedded in the queryAtomsPanel
+	 */
 	private Vector<JScrollPane> queryatomsScrolllists = new Vector<JScrollPane>(); 
 	
 	
@@ -212,22 +284,21 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	 * @uml.property  name="dataModel"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
-	private QueryTableModel queryModel  = new QueryTableModel();;
+	private Vector<QueryTableModel> queryModels  = new Vector<QueryTableModel>();;
 	
-	private MAPTableModel mapModel = new MAPTableModel();
+	private Vector<MAPTableModel> mapModels = new Vector<MAPTableModel>();
 	
-	private MCMCTableModel mcmcModel = new MCMCTableModel();
+	private Vector<MCMCTableModel> mcmcModels = new Vector<MCMCTableModel>();
 	
-	private ACETableModel aceModel = new ACETableModel();
+	private Vector<ACETableModel> aceModels = new Vector<ACETableModel>();
 	
-	private TestTableModel testModel = new TestTableModel();
+	private Vector<TestTableModel> testModels = new Vector<TestTableModel>();
 	
 	/**
 	 * @uml.property  name="querytable"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
-	private JTable querytable = new JTable();
-	private JTable querytable2 = new JTable();
+	private Vector<JTable> querytables = new Vector<JTable>();
 	
 	/**
 	 * @uml.property  name="trueButton"
@@ -516,14 +587,29 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	 * @uml.property  name="queryatoms"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
-	private GroundAtomList queryatoms;
-	public GroundAtomList getQueryatoms() {
-		return queryatoms;
-	}
-
-	public void setQueryatoms(GroundAtomList queryatoms) {
-		this.queryatoms = queryatoms;
-	}
+	private Hashtable<Rel,GroundAtomList> queryatoms;
+	
+//	/**
+//	 * Maps a string representation of a query atom to a two-part index: 
+//	 * first index is the index of the table for the relation (as an element of
+//	 * queryatomsScrollists), the second
+//	 * is the index for this tuple in that table
+//	 */
+//	private Hashtable<String,int[]> groundAtomIndex;
+	
+	/**
+	 * Maps a relation (identified by its name) to the index of the query atoms
+	 * for this relation in the queryatomsScrolllists
+	 */
+	private Hashtable<String,Integer> relIndex = new Hashtable<String,Integer>(); 
+	
+//	public GroundAtomList getQueryatoms() {
+//		return queryatoms;
+//	}
+//
+//	public void setQueryatoms(GroundAtomList queryatoms) {
+//		this.queryatoms = queryatoms;
+//	}
 
 	/**
 	 * @uml.property  name="rel"
@@ -687,7 +773,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		sampling = false;
 //		maprestarts = false;
 		inst = myprimula.instasosd;
-		queryatoms = myprimula.queryatoms;
+		
 		sampleordmode = OPTION_SAMPLEORD_FORWARD;
 		adaptivemode = OPTION_NOT_SAMPLE_ADAPTIVE;
 		for (int i=0;i<samplelogmode.length;i++)
@@ -701,7 +787,17 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		readRBNRelations();
 
 		updateInstantiationList();
-		updateQueryatomsList(queryModel);
+		
+		queryatoms=myprimula.queryatoms.asHashTable();
+		relIndex = new Hashtable<String,Integer>();
+		int idx =0;
+		for (Rel r: queryatoms.keySet()) {
+			
+			idx++;
+		}
+			
+			
+		buildQueryatomsLists(queryModels,queryatoms);
 
 
 		
@@ -854,12 +950,11 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 
 		
 		this.setQueryTable();
-		querytable2.setModel(queryModel);
 		
 		queryatomsScrolllists.add(new JScrollPane());
 		queryatomsScrolllists.add(new JScrollPane());
-		queryatomsScrolllists.elementAt(0).getViewport().add(querytable);
-		queryatomsScrolllists.elementAt(1).getViewport().add(querytable2);
+		queryatomsScrolllists.elementAt(0).getViewport().add(querytables.elementAt(0));
+		queryatomsScrolllists.elementAt(1).getViewport().add(querytables.elementAt(1));
 		/* Panel consisting of query table and buttons underneath */
 //		queryatomsScrollList.getViewport().add(querytable);
 //		queryatomsScrollList.getViewport().add(querytable2);
@@ -879,7 +974,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		arbitraryList.addMouseListener( this );
 		elementNamesList.addMouseListener( this );
 		instantiationsList.addMouseListener( this );
-		querytable.addMouseListener( this);
+		//querytable.addMouseListener( this); // TODO
 		//ActionListerners
 		trueButton.addActionListener( this );
 		falseButton.addActionListener( this );
@@ -1172,35 +1267,35 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 			myprimula.updateBavaria();
 		}
 
-		else if( source == delQueryAtomButton ){
-			if(selectedQueryAtom != null){
-				queryModel.removeQuery(delAtom);
-				generateQueryatoms();
-				updateQueryatomsList(queryModel);
-				Vector queries = queryatoms.allAtoms();
-				int listsize = queries.size()-1;
-				if( delAtom >= listsize ){
-					delAtom--;
-				}
-				if(delAtom != -1){
-					delAtom--;
-					if( delAtom == -1 ){
-						delAtom++;
-						querytable.setRowSelectionInterval(delAtom, delAtom);
-						selectedQueryAtom = (GroundAtom)queries.elementAt(delAtom );
-					}
-					else{
-						querytable.setRowSelectionInterval(delAtom, delAtom);
-						selectedQueryAtom = (GroundAtom)queries.elementAt(delAtom );
-					}
-				}
-			}
-		}
-		else if(source == delAllQueryAtomButton){
-			queryModel.removeAllQueries();
-			generateQueryatoms();
-			updateQueryatomsList(queryModel);
-		}
+//		else if( source == delQueryAtomButton ){
+//			if(selectedQueryAtom != null){
+//				queryModel.removeQuery(delAtom);
+//				generateQueryatoms();
+//				updateQueryatomsList(queryModel);
+//				Vector queries = queryatoms.allAtoms();
+//				int listsize = queries.size()-1;
+//				if( delAtom >= listsize ){
+//					delAtom--;
+//				}
+//				if(delAtom != -1){
+//					delAtom--;
+//					if( delAtom == -1 ){
+//						delAtom++;
+//						querytable.setRowSelectionInterval(delAtom, delAtom);
+//						selectedQueryAtom = (GroundAtom)queries.elementAt(delAtom );
+//					}
+//					else{
+//						querytable.setRowSelectionInterval(delAtom, delAtom);
+//						selectedQueryAtom = (GroundAtom)queries.elementAt(delAtom );
+//					}
+//				}
+//			}
+//		}
+//		else if(source == delAllQueryAtomButton){
+//			queryModel.removeAllQueries();
+//			generateQueryatoms();
+//			updateQueryatomsList(queryModel);
+//		}
 		else if( source == settingsSampling ){
 			if (!settingssamplingwindowopen){
 				swindow = new RBNgui.SettingsSampling( InferenceModule.this );
@@ -1210,26 +1305,26 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		else if( source == startSampling ){
 			startSampleThread();
 		}
-		else if( source == setPrediction){
-			// mostly copy from (source == setMapVals)
-			LinkedList<String> probvals = mcmcModel.getProbabilities();
-			LinkedList<String> queryats = mcmcModel.getQuery();
-			OneStrucData result = new OneStrucData();
-			result.setParentRelStruc(myprimula.getRels());
-			
-			Iterator<String> itq = queryats.iterator();
-			
-			for (Iterator<String> itprob = probvals.iterator(); itprob.hasNext();) {
-				double p = Double.parseDouble(itprob.next());
-				if (p>=0.5)
-					result.add(new GroundAtom(itq.next(),myprimula.getRels(),Rel.BOOLEAN),true,"?");
-				else
-					result.add(new GroundAtom(itq.next(),myprimula.getRels(),Rel.BOOLEAN),false,"?");
-			}
-			inst.add(result);
-			updateInstantiationList();
-			myprimula.updateBavaria();
-		}
+//		else if( source == setPrediction){
+//			// mostly copy from (source == setMapVals)
+//			LinkedList<String> probvals = mcmcModel.getProbabilities();
+//			LinkedList<String> queryats = mcmcModel.getQuery();
+//			OneStrucData result = new OneStrucData();
+//			result.setParentRelStruc(myprimula.getRels());
+//			
+//			Iterator<String> itq = queryats.iterator();
+//			
+//			for (Iterator<String> itprob = probvals.iterator(); itprob.hasNext();) {
+//				double p = Double.parseDouble(itprob.next());
+//				if (p>=0.5)
+//					result.add(new GroundAtom(itq.next(),myprimula.getRels(),Rel.BOOLEAN),true,"?");
+//				else
+//					result.add(new GroundAtom(itq.next(),myprimula.getRels(),Rel.BOOLEAN),false,"?");
+//			}
+//			inst.add(result);
+//			updateInstantiationList();
+//			myprimula.updateBavaria();
+//		}
 		else if( source == stopSampling){
 			stopSampling();
 			
@@ -1260,25 +1355,25 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		else if (source == startMap){
 			currentGG = startMapThread();
 		}
-		else if (source == setMapVals){
-			if (currentGG != null){
-				LinkedList<String> mapvals = mapModel.getMapValues();
-				LinkedList<String> queryats = mapModel.getQuery();
-				OneStrucData result = new OneStrucData();
-				result.setParentRelStruc(myprimula.getRels());
-				
-				Iterator<String> itq = queryats.iterator();
-				
-				for (Iterator<String> itmap = mapvals.iterator(); itmap.hasNext();) {
-					//System.out.println(itq.next() + " " + itmap.next());
-					result.add(new GroundAtom(itq.next(),myprimula.getRels(),Rel.BOOLEAN),Integer.parseInt(itmap.next()),"?");
-				}
-				inst.add(result);
-				updateInstantiationList();
-				myprimula.updateBavaria();
-			}
-			else System.out.println("Do not have GradientGraph defining Map values!");
-		}
+//		else if (source == setMapVals){
+//			if (currentGG != null){
+//				LinkedList<String> mapvals = mapModel.getMapValues();
+//				LinkedList<String> queryats = mapModel.getQuery();
+//				OneStrucData result = new OneStrucData();
+//				result.setParentRelStruc(myprimula.getRels());
+//				
+//				Iterator<String> itq = queryats.iterator();
+//				
+//				for (Iterator<String> itmap = mapvals.iterator(); itmap.hasNext();) {
+//					//System.out.println(itq.next() + " " + itmap.next());
+//					result.add(new GroundAtom(itq.next(),myprimula.getRels(),Rel.BOOLEAN),Integer.parseInt(itmap.next()),"?");
+//				}
+//				inst.add(result);
+//				updateInstantiationList();
+//				myprimula.updateBavaria();
+//			}
+//			else System.out.println("Do not have GradientGraph defining Map values!");
+//		}
 		else if( source == stopMap){
 //			maprestarts = false;
 			mapthr.setRunning(false);
@@ -1306,9 +1401,9 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 
 	public SampleThread startSampleThread(){
 		this.setMCMCTable();
-		this.updateQueryatomsList(mcmcModel);
+		this.buildQueryatomsLists(mcmcModels,queryatoms);
 
-		querytable.updateUI();
+		queryatomsPanel.updateUI(); // may need updateUI on the individual tables
 		
 		sampling = true;
 		PFNetwork pfn = null;
@@ -1321,7 +1416,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 
 		try{
 			BayesConstructor constructor = null;
-			constructor = new BayesConstructor(myprimula.rbn,myprimula.rels,inst,queryatoms,myprimula);
+			constructor = new BayesConstructor(myprimula.rbn,myprimula.rels,inst,myprimula.queryatoms,myprimula);
 			pfn = constructor.constructPFNetwork(myprimula.evidencemode,
 					Primula.OPTION_QUERY_SPECIFIC,
 					myprimula.isolatedzeronodesmode);
@@ -1329,7 +1424,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 					adaptivemode,
 					samplelogmode,
 					cptparents,
-					queryatoms,
+					myprimula.queryatoms,
 					num_subsamples_minmax,
 					num_subsamples_adapt,
 					logwriter);
@@ -1343,7 +1438,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 
 		sampthr = new SampleThread(this, 
 				pfn, 
-				queryatoms,
+				myprimula.queryatoms,
 				samplelogmode,
 				logwriter);
 		sampthr.start();
@@ -1368,7 +1463,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	private GradientGraph startMapThread(){
 
 		this.setMAPTable();
-		this.updateQueryatomsList(mapModel);
+		this.buildQueryatomsLists(mapModels,queryatoms);
 		GradientGraph gg = null;
 		try{
 //			maprestarts = true;
@@ -1397,7 +1492,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 					 								evidence, 
 					 								rbnparamidx,
 					 								this ,
-					 								queryatoms,
+					 								myprimula.queryatoms,
 					 								mode,
 					 								0,
 					 								true);
@@ -1439,7 +1534,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 			myACEControl.setProgressBar( InferenceModule.this.getACEProgressBar() );
 			myACEControl.set( myprimula.getPreferences().getACESettings() );
 			myACEControl.addListener( (Control.ACEControlListener) this );
-			myACEControl.setDataModel( InferenceModule.this.queryModel );
+			//myACEControl.setDataModel( InferenceModule.this.queryModel ); //TODO
 			myACEControl.setInfoMessage( InferenceModule.this.infoMessage );
 		}
 		return myACEControl;
@@ -1460,7 +1555,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	@since 20060511 */
 	public void aceStateChange( Control control ){
 		//InferenceModule.this.resetACEEnabledState( control );
-		if( !control.isReadyCompute() ) aceModel.resetACE();
+		// if( !control.isReadyCompute() ) aceModel.resetACE(); //TODO
 		//clearACEMessage();
 	}
 
@@ -1522,8 +1617,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 			if (rel.arity == 0){
 				infoMessage.setText(rel.name.name+"()");
 				if(queryModeOn){
-					queryatoms.add(rel,new int[0]);
-					updateQueryatomsList(queryModel);
+					addQueryAtoms(rel,new int[0]);
+					updateQueryatomsLists(queryModels);
 				}
 				else{
 					inst.add(new GroundAtom(rel,new int[0]),truthValue,"?");
@@ -1885,12 +1980,79 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	}
 
 
+	private void addQueryAtoms(Rel rel,int[] tuple) {
+		GroundAtomList atstoadd = buildAtoms(rel,tuple);
+		Integer idx = relIndex.get(rel.toString());
+		QueryTableModel qtm = null;
+		if (idx != null) {
+			queryatoms.get(rel).add(atstoadd);
+			queryModels.elementAt(idx).addQuery(atstoadd);
+		}
+		else {
+			idx=relIndex.size();
+			relIndex.put(rel.name(), (Integer)idx);
+			queryatoms.put(rel, atstoadd);
+		}
+		myprimula.queryatoms.add(atstoadd);	
+		
+	}
 
 	//updates the query atoms list
-	private void addAtoms(Rel rel, int[] tuple){
+//	private void addAtoms(Rel rel, int[] tuple){
+//		SparseRelStruc rstnew = new SparseRelStruc();
+//		rstnew = (SparseRelStruc)myprimula.rels;
+//
+//		int[] temp = new int[tuple.length];
+//		int pos = 0;
+//		int length = tuple.length;
+//		for(int x=0; x<tuple.length; x++){
+//			temp[x] = tuple[x];
+//		}
+//		for(int i=0; i<length; i++){
+//			if(elementNamesListModel.elementAt(tuple[i]).equals("*")){
+//				Vector v = rstnew.getNames();
+//				for(int j=0; j<v.size(); j++){
+//					temp[pos] = j;
+//					addAtoms(rel, temp);
+//				}
+//			}
+//			else if(((String)elementNamesListModel.elementAt(tuple[i])).startsWith("[")){
+//				Vector<BoolRel> attributeNames = rstnew.getBoolAttributes();
+//				BoolRel nextattr;
+//				for(int j =0; j<attributeNames.size();j++){
+//					nextattr = attributeNames.elementAt(j);
+//					if(((String)elementNamesListModel.elementAt(tuple[i])).equals("["+ nextattr +"*]")){
+//						Vector<int[]> tuples = rstnew.allTrue(nextattr);
+//						for(int k =0; k<tuples.size(); k++){
+//							int[] temp2 = tuples.elementAt(k);
+//							temp[pos] = temp2[0];
+//							addAtoms(rel, temp);
+//						}
+//					}
+//				}
+//			}
+//			else{
+//				if(pos == length-1){
+//					queryatoms.add(rel, temp);
+//				}
+//			}
+//			pos++;
+//		}
+//		updateQueryatomsList(queryModel);
+//		infoMessage.setText(rel.name.name+" ("+addedTuples+") added");
+//		temp = null;
+//	}
+
+	/*
+	 * Takes an  atom specification with (typed) wildcards (as specified by their
+	 * position in the elements list), and 
+	 * returns a GroundAtomList with all matching atoms
+	 */
+	private GroundAtomList buildAtoms(Rel rel, int[] tuple){
 		SparseRelStruc rstnew = new SparseRelStruc();
 		rstnew = (SparseRelStruc)myprimula.rels;
 
+		GroundAtomList result = new GroundAtomList();
 		int[] temp = new int[tuple.length];
 		int pos = 0;
 		int length = tuple.length;
@@ -1902,7 +2064,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 				Vector v = rstnew.getNames();
 				for(int j=0; j<v.size(); j++){
 					temp[pos] = j;
-					addAtoms(rel, temp);
+					buildAtoms(rel, temp);
 				}
 			}
 			else if(((String)elementNamesListModel.elementAt(tuple[i])).startsWith("[")){
@@ -1915,30 +2077,73 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 						for(int k =0; k<tuples.size(); k++){
 							int[] temp2 = tuples.elementAt(k);
 							temp[pos] = temp2[0];
-							addAtoms(rel, temp);
+							buildAtoms(rel, temp);
 						}
 					}
 				}
 			}
 			else{
 				if(pos == length-1){
-					queryatoms.add(rel, temp);
+					result.add(rel, temp);
 				}
 			}
 			pos++;
 		}
-		updateQueryatomsList(queryModel);
+		
 		infoMessage.setText(rel.name.name+" ("+addedTuples+") added");
 		temp = null;
+		return result;
 	}
 
+//	public void updateQueryatomsList(QueryTableModel qtm){
+//		selectedQueryAtom = null;
+//		qtm.reset();
+//		Vector queries = queryatoms.allAtoms();
+//		for(int i=0; i<queries.size(); ++i){
+//			GroundAtom temp = (GroundAtom)queries.elementAt(i);
+//			int nodes[] = temp.args;
+//			Rel rel = temp.rel;
+//			String names = ""+rel.name.name + "(";
+//			for(int j=0; j<nodes.length; ++j){
+//				if(j+1 < nodes.length){
+//					names = names + elementNamesListModel.elementAt(nodes[j]) + ",";
+//				}
+//				else { //last item
+//					names = names + elementNamesListModel.elementAt(nodes[j]);
+//				}
+//			}
+//			names = names + ")";
+//			String listItem = names;
+//			qtm.addQuery(listItem);
+//		}
+//		querytable.updateUI();
+//
+//		if( myACEControl != null ) myACEControl.primulaQueryChanged();//keith cascio 20060620
+//	}
+
+	public void buildQueryatomsLists(Vector<? extends QueryTableModel> qtm, Hashtable<Rel,GroundAtomList> queries) {
+		for (Rel r: queries.keySet()) {
+			int idx = relIndex.get(r); 
+			buildQueryatomsList(qtm.elementAt(idx),queries.get(r));
+		}
+	}
 	
-	public void updateQueryatomsList(QueryTableModel qtm){
+	/**
+	 * Sets the QueryTableModel 'qtm' to contain the atoms in 'queries'.
+	 * All atoms should be of one relation only
+	 * 
+	 * Callers of this method must ensure that qtm is the appropriate 
+	 * QueryTableModel for this relation.
+	 * 
+	 * @param qtm
+	 * @param queries
+	 */
+	public void buildQueryatomsList(QueryTableModel qtm, GroundAtomList queries){
 		selectedQueryAtom = null;
 		qtm.reset();
-		Vector queries = queryatoms.allAtoms();
+		
 		for(int i=0; i<queries.size(); ++i){
-			GroundAtom temp = (GroundAtom)queries.elementAt(i);
+			GroundAtom temp = (GroundAtom)queries.atomAt(i);
 			int nodes[] = temp.args;
 			Rel rel = temp.rel;
 			String names = ""+rel.name.name + "(";
@@ -1954,72 +2159,73 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 			String listItem = names;
 			qtm.addQuery(listItem);
 		}
-		querytable.updateUI();
+		//querytables.updateUI();
 
 		if( myACEControl != null ) myACEControl.primulaQueryChanged();//keith cascio 20060620
 	}
-
-	private void generateQueryatoms(){
-		LinkedList relstruct = new LinkedList();
-		queryatoms.reset();
-		LinkedList queryatoms = queryModel.getQuery();
-		for(int i=0; i<queryatoms.size(); i++){
-			String atom = ""+queryatoms.get(i);
-			//System.out.println("in generateQueryAtoms: " + atom);
-			String rel = atom.substring(0, atom.indexOf("("));
-			//rel = rel.substring(0, atom.indexOf(" "));
-			LinkedList elementNames = new LinkedList();
-			int comma = atom.indexOf("(")+1;
-			for(int j = atom.indexOf("("); j<atom.length(); j++){
-				String temp =""+ atom.charAt(j);
-				if(temp.equals(",")){
-					String element = atom.substring(comma, j);
-					elementNames.add(element);
-					comma = j+2;
-				}
-			}
-			String element = atom.substring(comma, atom.indexOf(")"));
-			elementNames.add(element);
-			int[] tuple = new int[elementNames.size()];
-			Rel relnew = null;
-			if(elementNames.size() == 1){
-				for(int m=0;m<attributesListModel.size();m++){
-					if(attributesListModel.get(m).toString().equals(rel)){
-						relnew = (Rel)attributesListModel.get(m);
-					}
-				}
-			}
-			else if(elementNames.size() == 2){
-				for(int m=0;m<binaryListModel.size();m++){
-					if(binaryListModel.get(m).toString().equals(rel)){
-						relnew = (Rel)binaryListModel.get(m);
-						//System.out.println("binaryListModel: "+binaryListModel.get(m).toString());
-					}
-				}
-			}
-			else {
-				for(int m=0;m<arbitraryListModel.size();m++){
-					if(((Rel)arbitraryListModel.get(m)).printname().equals(rel)){
-						relnew = (Rel)arbitraryListModel.get(m);
-					}
-				}
-			}
-			int [] args = new int [elementNames.size()];
-			for(int n=0; n<elementNames.size(); n++){
-				for(int o=0; o<elementNamesListModel.size(); o++){
-					if(elementNamesListModel.get(o).equals(elementNames.get(n))){
-						args[n] = o;
-					}
-				}
-			}
-			TempAtoms temp = new TempAtoms(relnew, args);
-			relstruct.add(temp);
-		}
-		for(int t=0; t<relstruct.size(); t++){
-			TempAtoms temp = (TempAtoms)relstruct.get(t);
-			addAtoms(temp.getRel(), temp.getArgs());
-		}
-	}
+	
+	
+//	private void generateQueryatoms(){
+//		LinkedList relstruct = new LinkedList();
+//		queryatoms.reset();
+//		LinkedList queryatoms = queryModel.getQuery();
+//		for(int i=0; i<queryatoms.size(); i++){
+//			String atom = ""+queryatoms.get(i);
+//			//System.out.println("in generateQueryAtoms: " + atom);
+//			String rel = atom.substring(0, atom.indexOf("("));
+//			//rel = rel.substring(0, atom.indexOf(" "));
+//			LinkedList elementNames = new LinkedList();
+//			int comma = atom.indexOf("(")+1;
+//			for(int j = atom.indexOf("("); j<atom.length(); j++){
+//				String temp =""+ atom.charAt(j);
+//				if(temp.equals(",")){
+//					String element = atom.substring(comma, j);
+//					elementNames.add(element);
+//					comma = j+2;
+//				}
+//			}
+//			String element = atom.substring(comma, atom.indexOf(")"));
+//			elementNames.add(element);
+//			int[] tuple = new int[elementNames.size()];
+//			Rel relnew = null;
+//			if(elementNames.size() == 1){
+//				for(int m=0;m<attributesListModel.size();m++){
+//					if(attributesListModel.get(m).toString().equals(rel)){
+//						relnew = (Rel)attributesListModel.get(m);
+//					}
+//				}
+//			}
+//			else if(elementNames.size() == 2){
+//				for(int m=0;m<binaryListModel.size();m++){
+//					if(binaryListModel.get(m).toString().equals(rel)){
+//						relnew = (Rel)binaryListModel.get(m);
+//						//System.out.println("binaryListModel: "+binaryListModel.get(m).toString());
+//					}
+//				}
+//			}
+//			else {
+//				for(int m=0;m<arbitraryListModel.size();m++){
+//					if(((Rel)arbitraryListModel.get(m)).printname().equals(rel)){
+//						relnew = (Rel)arbitraryListModel.get(m);
+//					}
+//				}
+//			}
+//			int [] args = new int [elementNames.size()];
+//			for(int n=0; n<elementNames.size(); n++){
+//				for(int o=0; o<elementNamesListModel.size(); o++){
+//					if(elementNamesListModel.get(o).equals(elementNames.get(n))){
+//						args[n] = o;
+//					}
+//				}
+//			}
+//			TempAtoms temp = new TempAtoms(relnew, args);
+//			relstruct.add(temp);
+//		}
+//		for(int t=0; t<relstruct.size(); t++){
+//			TempAtoms temp = (TempAtoms)relstruct.get(t);
+//			addAtoms(temp.getRel(), temp.getArgs());
+//		}
+//	}
 
 	private double[][] computeQueryBatch(){
 		/* Computes the probability of each query atom in all

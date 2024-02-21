@@ -26,7 +26,7 @@ package RBNgui;
 import java.util.*;
 import javax.swing.table.*;
 import RBNutilities.*;
-//import RBNpackage.Atom;
+import RBNpackage.*;
 import RBNinference.BayesNetIntHuginNet;
 
 public class QueryTableModel extends AbstractTableModel{
@@ -79,6 +79,11 @@ public class QueryTableModel extends AbstractTableModel{
 
 
 
+	public void addQuery(GroundAtomList gal) {
+		for (GroundAtom ga: gal.allAtoms()) {
+			addQuery(ga.asString());
+		}
+	}
 
 	public void addQuery(String query){
 		rownum++;

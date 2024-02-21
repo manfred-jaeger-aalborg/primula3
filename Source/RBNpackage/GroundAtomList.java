@@ -122,6 +122,15 @@ public class GroundAtomList extends java.lang.Object {
         	atoms.add(new GroundAtom(r,a,owner));
     }
 
+    public void add(GroundAtomList gal) {
+    	for (GroundAtom ga: gal.allAtoms())
+    		this.add(ga);
+    }
+    
+    public void add(GroundAtom ga) {
+    	if (!this.contains(ga))
+    		atoms.add(ga);
+    }
 
     public GroundAtom atomAt(int i){
 	return (GroundAtom)atoms.elementAt(i);
@@ -158,6 +167,25 @@ public class GroundAtomList extends java.lang.Object {
 
     public Vector<GroundAtom> allAtoms(){
         return atoms;
+    }
+    
+    /**
+     * Transforms this GroundAtomList into a more structured representation with 
+     * separate GroundAtomList objects for each different relation
+     * @return
+     */
+    public Hashtable<Rel,GroundAtomList> asHashTable(){
+    	Hashtable<Rel,GroundAtomList> result = new Hashtable<Rel,GroundAtomList>();
+    	for (GroundAtom ga: this.atoms) {
+    		GroundAtomList gal = result.get(ga.rel);
+    		if (gal != null)
+    			gal.add(ga);
+    		else {
+    			result.put(ga.rel(), new GroundAtomList());
+    			result.get(ga.rel()).add(ga);
+    		}
+    	}
+    	return result;
     }
 
 }
