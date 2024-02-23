@@ -1079,11 +1079,6 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		SamiamManager.centerWindow( this );
 		/** ... keith cascio */
 		this.setVisible(false);
-
-		this.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
-		this.setModelPath("/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python/primula-gnn");
-		this.setScriptPath("/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python");
-		this.setScriptName("inference_test");
 	}
 
 	public void setVisibility(boolean visibility) {
@@ -1339,10 +1334,10 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 				samplelogmode,
 				logwriter);
 		if (sampthr.isGnnIntegration()) {
-			sampthr.setPythonHome(this.pythonHome);
-			sampthr.setModelPath(this.modelPath);
-			sampthr.setScriptPath(this.scriptPath);
-			sampthr.setScriptName(this.scriptName);
+			sampthr.setPythonHome(this.myprimula.getPythonHome());
+			sampthr.setModelPath(this.myprimula.getModelPath());
+			sampthr.setScriptPath(this.myprimula.getScriptPath());
+			sampthr.setScriptName(this.myprimula.getScriptName());
 		}
 		sampthr.start();
 		infoMessage.setText(" Starting Sampling ");
@@ -1431,10 +1426,10 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 					 								true);
 			mapthr = new MapThread(this.mapObserver,this,myprimula,(GradientGraphO)gg);
 			if (mapthr.isGnnIntegration()) {
-				mapthr.setPythonHome(this.pythonHome);
-				mapthr.setModelPath(this.modelPath);
-				mapthr.setScriptPath(this.scriptPath);
-				mapthr.setScriptName(this.scriptName);
+				mapthr.setPythonHome(this.myprimula.getPythonHome());
+				mapthr.setModelPath(this.myprimula.getModelPath());
+				mapthr.setScriptPath(this.myprimula.getScriptPath());
+				mapthr.setScriptName(this.myprimula.getScriptName());
 				((GradientGraphO) gg).setGnnPy(mapthr.getGnnPy());
 			}
 			mapthr.start();
@@ -2632,8 +2627,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 				dataModel.addVar(""+var[i]);
 			}
 			sampleSize.setText(""+((SampleProbs)o).getSize());
-			Double dweight = new Double(((SampleProbs)o).getWeight());
-			weight.setText(""+ myio.StringOps.doubleConverter(dweight.toString()));
+			double dweight = ((SampleProbs)o).getWeight();
+			weight.setText(""+ myio.StringOps.doubleConverter(Double.toString(dweight)));
 		}
 		
 		if (o instanceof MapVals){
@@ -2671,22 +2666,6 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		return result;
 	}
 
-	public void setModelPath(String modelPath) {
-		this.modelPath = modelPath;
-	}
-
-	public void setScriptPath(String scriptPath) {
-		this.scriptPath = scriptPath;
-	}
-
-	public void setScriptName(String scriptName) {
-		this.scriptName = scriptName;
-	}
-
-	public void setPythonHome(String pythonHome) {
-		this.pythonHome = pythonHome;
-	}
-
 	public QueryTableModel getDataModel() {
 		return dataModel;
 	}
@@ -2697,6 +2676,20 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 
 	public void setMapObserver(Observer o) {
 		this.mapObserver = o;
+	}
+
+	public void setBoolInstArbitrary(BoolRel rel, Boolean truthValue) {
+		first_bin = first_arb = true;
+		if (rel.arity == 0){
+			if(queryModeOn){
+				queryatoms.add(rel,new int[0]);
+				updateQueryatomsList();
+			}
+			else{
+				inst.add(new GroundAtom(rel,new int[0]),truthValue,"?");
+				updateInstantiationList();
+			}
+		}
 	}
 
 }

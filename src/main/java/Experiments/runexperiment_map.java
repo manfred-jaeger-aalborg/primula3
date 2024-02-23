@@ -28,7 +28,7 @@ public class runexperiment_map {
     static String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/models/alpha1_64_64_64_20240126-144611/RBN_acr_graph_alpha1_64_64_64.rbn";
 
 //    static String rdefinputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/alpha1-blue.rdef";
-    static String rdefinputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/big-alpha1-blue.rdef";
+    static String rdefinputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/alpha1-blue.rdef";
 
     public static void main(String[] args) {
         File input_rbn = new File(rbninputfilestring);
@@ -46,7 +46,8 @@ public class runexperiment_map {
                 new String[]{"v"},
                 new ProbFormGnn("v",
                         new Rel[]{
-                                blue_pred.rel()}
+                                blue_pred.rel()},
+                        false
 //                                edge_pred.rel()}
                 )
         );
@@ -83,10 +84,10 @@ public class runexperiment_map {
 
             im.setQueryAtoms(gal);
 
-            im.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
-            im.setModelPath("/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python/primula-gnn");
-            im.setScriptPath("/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python");
-            im.setScriptName("inference_test");
+            primula.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
+            primula.setModelPath("/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python/primula-gnn");
+            primula.setScriptPath("/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python");
+            primula.setScriptName("inference_test");
 
             im.setNumRestarts(10);
 

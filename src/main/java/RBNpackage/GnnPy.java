@@ -11,6 +11,8 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
 public class GnnPy {
+    private final String INFER_NODE = "infer_model_nodes"; // default function name to call in python
+    private final String INFER_GRAPH = "infer_model_graph";
     private String modelPath;
     private String scriptPath;
     private String scriptName;
@@ -62,7 +64,7 @@ public class GnnPy {
             this.sharedInterpreter.exec("sys.path.append('" + this.modelPath + "')");
             this.sharedInterpreter.exec("sys.path.append('" + this.scriptPath + "')");
             this.sharedInterpreter.exec("import " + this.scriptName + " as intt");
-            this.sharedInterpreter.exec("model = intt.set_model_node()");
+            this.sharedInterpreter.exec("model = intt.set_model_graph()");
         } catch (JepException e) {
             System.err.println("Failed to initialize interpreter: " + e);
         }
@@ -111,12 +113,49 @@ public class GnnPy {
             if (!Objects.equals(method, "")) {
                 this.sharedInterpreter.eval("out = intt." + method + "(model, x, edge_index, None)");
             } else {
-                this.sharedInterpreter.eval("out = intt.infer_model_nodes(model, x, edge_index, None)");
+                this.sharedInterpreter.eval("out = intt." + this.INFER_NODE + "(model, x, edge_index, None)");
             }
             this.sharedInterpreter.eval("out = out.detach().numpy().flatten()");
             NDArray ndArray = (NDArray) this.sharedInterpreter.getValue("out");
             this.currentResult = (float[]) ndArray.getData();
             return (double) this.currentResult[node];
+        } catch (JepException e) {
+            System.err.println("Failed to execute inference: " + e);
+            return -1;
+        }
+    }
+
+    public double inferModelGraphDouble(int classId, String x, String edge_index, String method) {
+        assert this.sharedInterpreter != null;
+        try {
+            // check if there is already computed the results for the specific node in the result matrix, otherwise compute for all nodes with one forward propagation
+//            if (this.currentX != null && this.currentEdgeIndex != null && this.currentMethod != null && this.currentResult != null) {
+//                if (this.currentX.equals(x) && this.currentEdgeIndex.equals(edge_index) && this.currentMethod.equals(method)) {
+//                    return (double) this.currentResult[classId];
+//                } else {
+//                    this.currentResult = null;
+//                }
+//            }
+//            this.currentX = x;
+//            this.currentEdgeIndex = edge_index;
+//            this.currentMethod = method;
+            // if there are no edges
+            if (Objects.equals(edge_index, "")) {
+                this.sharedInterpreter.eval("a = torch.tensor([[]], dtype=torch.long)");
+                this.sharedInterpreter.eval("b = torch.tensor([[]], dtype=torch.long)");
+                this.sharedInterpreter.eval("edge_index = torch.cat((a,b), 0)");
+            } else
+                this.sharedInterpreter.eval(edge_index);
+            this.sharedInterpreter.eval(x);
+            if (!Objects.equals(method, "")) {
+                this.sharedInterpreter.eval("out = intt." + method + "(model, x, edge_index, None)");
+            } else {
+                this.sharedInterpreter.eval("out = intt." + this.INFER_GRAPH + "(model, x, edge_index, None)");
+            }
+            this.sharedInterpreter.eval("out = out.detach().numpy().flatten()");
+            NDArray ndArray = (NDArray) this.sharedInterpreter.getValue("out");
+            this.currentResult = (float[]) ndArray.getData();
+            return (double) this.currentResult[classId];
         } catch (JepException e) {
             System.err.println("Failed to execute inference: " + e);
             return -1;
@@ -137,16 +176,34 @@ public class GnnPy {
         }
     }
 
+    private int[][] createBoolEncodingMatrix(int num_nodes, int num_columns) {
+        int[][] node_bool = new int[num_nodes][num_columns * 2];
+        // initialize with all false (i.e. [0,1])
+        for (int i = 0; i < node_bool.length; i++) {
+            for (int j = 0; j < node_bool[i].length; j += 2) {
+                node_bool[i][j] = 0;
+                node_bool[i][j + 1] = 1;
+            }
+        }
+        return node_bool;
+    }
+
+    private int[][] createOneHotEncodingMatrix(int num_nodes, int num_columns) {
+        int[][] node_bool = new int[num_nodes][num_columns];
+        // initialize with all false (i.e. [0])
+        for (int[] ints : node_bool) Arrays.fill(ints, 0);
+        return node_bool;
+    }
+
     /**
      * Write the structure in a graph form for the GNN input using the attributes that will be
      * used in the features matrix for the input
-     * This is only for nodes classification, or everything that needs the matrices of node features
      * @param num_nodes
      * @param finalre
      * @param attributes
      * @return
      */
-    public int[][] nodeToBoolEncoding(int num_nodes, SparseRelStruc finalre, Rel[] attributes) {
+    public int[][] nodeToEncoding(int num_nodes, SparseRelStruc finalre, Rel[] attributes, boolean oneHotEncoding) {
         // table for the encoding of the node features, each feature is represented in a boolean encoding
         // 1 0 true - 0 1 false
         // example: 2 possible features blue and red. the node is red: 0 1 1 0
@@ -160,16 +217,13 @@ public class GnnPy {
             }
         }
 
-        // the features order will respect the order of the attributes
-        int[][] node_bool = new int[num_nodes][num_columns * 2];
-        // initialize with all false (i.e. [0,1])
-        for (int i = 0; i < node_bool.length; i++) {
-            for (int j = 0; j < node_bool[i].length; j += 2) {
-                node_bool[i][j] = 0;
-                node_bool[i][j + 1] = 1;
-            }
-        }
+        int[][] node_bool;
+        if (oneHotEncoding)
+            node_bool = createOneHotEncodingMatrix(num_nodes, num_columns);
+        else
+            node_bool = createBoolEncodingMatrix(num_nodes, num_columns); // we should put different types of encoding, for now leave like that
 
+        int idxFeat = 0;
         for (Rel parent : attributes) {
             if (parent.arity == 1) { // only nodes
                 Vector<int[]> featureTrueData = data.allTrue(parent);
@@ -178,11 +232,11 @@ public class GnnPy {
                 allTrueData.add(featureTrueData);
 
                 // change the true value
-                int idxFeat = 0;
                 for (Vector<int[]> feature : allTrueData) {
                     for (int[] node : feature) {
                         node_bool[node[0]][idxFeat] = 1;
-                        node_bool[node[0]][idxFeat + 1] = 0;
+                        if (!oneHotEncoding) // same, as in the creation of node_bool
+                            node_bool[node[0]][idxFeat + 1] = 0;
                     }
                     idxFeat++;
                 }
@@ -191,8 +245,8 @@ public class GnnPy {
         return node_bool;
     }
 
-    public String stringifyGnnFeatures(int num_nodes, SparseRelStruc finalre, Rel[] attributes) {
-        int[][] bool_nodes = this.nodeToBoolEncoding(num_nodes, finalre, attributes);
+    public String stringifyGnnFeatures(int num_nodes, SparseRelStruc finalre, Rel[] attributes, boolean oneHotEncoding) {
+        int[][] bool_nodes = this.nodeToEncoding(num_nodes, finalre, attributes, oneHotEncoding);
         StringBuilder node_features = new StringBuilder("x=torch.tensor([");
         for (int i = 0; i < bool_nodes.length; i++) {
             node_features.append("[");

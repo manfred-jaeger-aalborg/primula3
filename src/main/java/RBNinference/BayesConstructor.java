@@ -57,6 +57,7 @@ public class BayesConstructor extends java.lang.Object {
 	private GroundAtomList queryatoms;
 	private String myAlternateName;
 	private Primula myprimula;
+	private GnnPy gnnPy;
 
 //	private Rel[] relations;
 //	private int domsize;
@@ -549,6 +550,15 @@ public class BayesConstructor extends java.lang.Object {
 
 			/** ... keith cascio */
 
+			if (this.checkGnnRel(this.rbnarg)) {
+				System.out.println("GNN detected");
+				try {
+					this.gnnPy = new GnnPy(this.myprimula.getModelPath(), this.myprimula.getScriptPath(), this.myprimula.getScriptName(), this.myprimula.getPythonHome());
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+			}
+
 			/* build a standard Bayesian network over the nodes in groundatomhasht:
 			 * in case of a decompose option, additional (auxiliary)  nodes will be introduced
 			 * that are not in groundatomhasht, but are accessible by backward chaining from
@@ -705,6 +715,14 @@ public class BayesConstructor extends java.lang.Object {
 		return true;
 	}
 
+	private boolean checkGnnRel(RBN rbn) {
+		for(int i=0; i<rbn.prelements().length; i++) {
+			if (rbn.probForm_prels_At(i) instanceof ProbFormGnn)
+				return true;
+		}
+		return false;
+	}
+
 	/** @author keith cascio
     	@since 20060515 */
 	public int getProgress(){
@@ -844,7 +862,11 @@ public class BayesConstructor extends java.lang.Object {
 			GroundAtom atom = currentnode.myatom();
 			String name = currentnode.name;
 
-		
+			// to construct a Bayes network usign ProgFormGnn
+			if (pform instanceof ProbFormGnn && this.gnnPy != null) {
+				((ProbFormGnn) pform).setGnnPy(this.gnnPy);
+			}
+
 			/* turn complexnode into simplenode
 			 */
 			cpt = makeCPT(pform,strucarg,inst,parvec);

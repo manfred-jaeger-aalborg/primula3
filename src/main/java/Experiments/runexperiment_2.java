@@ -55,7 +55,8 @@ public class runexperiment_2 {
                 new ProbFormGnn("v",
                         new Rel[]{
                                 blue_pred.rel(),
-                                edge_pred.rel()}
+                                edge_pred.rel()},
+                        false
                 )
         );
 
@@ -88,10 +89,10 @@ public class runexperiment_2 {
             InferenceModule im = primula.openInferenceModule(false);
             im.setQueryAtoms(ga);
 
-            im.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
-            im.setModelPath("/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python/primula-gnn");
-            im.setScriptPath("/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python");
-            im.setScriptName("inference_test");
+            primula.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
+            primula.setModelPath("/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python/primula-gnn");
+            primula.setScriptPath("/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python");
+            primula.setScriptName("inference_test");
 
             im.startSampleThread();
 

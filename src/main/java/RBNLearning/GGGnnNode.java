@@ -14,6 +14,7 @@ public class GGGnnNode extends GGProbFormNode {
     private RelStruc A;
     private OneStrucData inst;
     private GnnPy gnnPy;
+    private boolean oneHotEncoding;
     public GGGnnNode(GradientGraphO gg,
                      ProbForm pf,
                      Hashtable allnodes,
@@ -31,6 +32,7 @@ public class GGGnnNode extends GGProbFormNode {
         this.inst = I;
 
         if (pf instanceof ProbFormGnn) {
+            this.oneHotEncoding = ((ProbFormGnn) pf).isOneHotEncoding();
             Rel[] pfargs = ((ProbFormGnn) this.pf).getGnnattr();
             for (int i = 0; i < pfargs.length; i++) {
                 try {
@@ -118,19 +120,28 @@ public class GGGnnNode extends GGProbFormNode {
             String edge_index = "";
             if (this.pf instanceof ProbFormGnn gnnpf) {
                 for (BoolRel element : boolrel) {
-                    if (Objects.equals(element.name(), gnnpf.getEdge_name())) {
-                        if (Objects.equals(gnnpf.getEdge_direction(), "ABBA"))
-                            edge_index = this.gnnPy.stringifyGnnEdgesABBA(sampledRel, element);
-                        if (Objects.equals(gnnpf.getEdge_direction(), "AB"))
-                            edge_index = this.gnnPy.stringifyGnnEdgesAB(sampledRel, element);
-                        if (Objects.equals(gnnpf.getEdge_direction(), "BA"))
-                            edge_index = this.gnnPy.stringifyGnnEdgesBA(sampledRel, element);
+                    if (sampledRel.getmydata().findInBoolRel(element).allTrue().isEmpty()) {
+                        edge_index = "";
                         break;
+                    } else {
+                        if (Objects.equals(element.name(), gnnpf.getEdge_name())) {
+                            if (Objects.equals(gnnpf.getEdge_direction(), "ABBA"))
+                                edge_index = this.gnnPy.stringifyGnnEdgesABBA(sampledRel, element);
+                            if (Objects.equals(gnnpf.getEdge_direction(), "AB"))
+                                edge_index = this.gnnPy.stringifyGnnEdgesAB(sampledRel, element);
+                            if (Objects.equals(gnnpf.getEdge_direction(), "BA"))
+                                edge_index = this.gnnPy.stringifyGnnEdgesBA(sampledRel, element);
+                            break;
+                        }
                     }
                 }
 
-                String x = this.gnnPy.stringifyGnnFeatures(num_features, sampledRel, gnnpf.getGnnattr());
-                double result = this.gnnPy.inferModelNodeDouble(Integer.parseInt(gnnpf.getArgument()), x, edge_index, "");
+                String x = this.gnnPy.stringifyGnnFeatures(num_features, sampledRel, gnnpf.getGnnattr(), this.oneHotEncoding);
+                double result;
+                if (((ProbFormGnn) this.pf).getClassId() != -1)
+                    result = this.gnnPy.inferModelGraphDouble(gnnpf.getClassId(), x, edge_index, "");
+                else
+                    result = this.gnnPy.inferModelNodeDouble(Integer.parseInt(gnnpf.getArgument()), x, edge_index, "");
                 this.value = result;
                 return result;
             } else {

@@ -21,19 +21,37 @@ import java.util.*;
 public class ProbFormGnn extends ProbForm {
     // the order of attributes need to be respected! this order will be used for the gnn encoding
     private Rel gnnattr[];
-    private String argument; //x
+    private String argument;
+
+    // for graph classification: each probformgnn will represent a class for the classifier
+    // e.g. MUTAG class has 2 classes: mutagenic (0) and non-mutagenic (1)
+    private int classId;
+    // true if we use one-hot encoding for the features representation
+    private boolean oneHotEncoding;
 
     // the name of the edge relation in the RBN definition (usually "edge")
     private String edge_name;
     private String edge_direction;
     private GnnPy gnnPy;
 
-    public ProbFormGnn(String argument, Rel[] attr) {
+    public ProbFormGnn(String argument, Rel[] attr, boolean oneHotEncoding) {
         this.setEdge_name("edge");
         this.setEdge_direction("ABBA");
 
         this.argument = argument;
         this.gnnattr = attr;
+        this.classId = -1;
+        this.oneHotEncoding = oneHotEncoding;
+    }
+
+    public ProbFormGnn(String argument, Rel[] attr, boolean oneHotEncoding, int classId) {
+        this.setEdge_name("edge");
+        this.setEdge_direction("ABBA");
+
+        this.argument = argument;
+        this.gnnattr = attr;
+        this.classId = classId;
+        this.oneHotEncoding = oneHotEncoding;
     }
 
     public ProbFormGnn(String argument, GnnPy gnnpy) {
@@ -46,6 +64,8 @@ public class ProbFormGnn extends ProbForm {
 
     @Override
     public String asString(int syntax, int depth, RelStruc A, boolean paramsAsValue, boolean usealias) {
+        if (this.classId != -1)
+            return "[ gnn("+this.argument+")-" + this.classId + " ]";
         return "gnn("+this.argument+")";
     }
 
@@ -96,15 +116,17 @@ public class ProbFormGnn extends ProbForm {
                             if (Double.isNaN(value)) {
                                 result[0] = Double.NaN;
                                 return result;
-                            } else
-                                System.out.println("Missing implementation!");
+                            } else {
+                                result[0] = evaluateGraph(sampledRel, mat.length);
+                            }
                         } else if (parent.isprobabilistic()) {
                             value = inst.valueOf(parent, mat[i]);
                             if (Double.isNaN(value)) {
                                 result[0] = Double.NaN;
                                 return result;
-                            } else
-                                System.out.println("Missing implementation!"); // it should check for all the tuples of the relation if there is at least one NaN
+                            } else {
+                                result[0] = evaluateGraph(sampledRel, mat.length);
+                            }
                         }
                     }
 
@@ -114,6 +136,29 @@ public class ProbFormGnn extends ProbForm {
             }
         }
         return result;
+    }
+
+    private double evaluateGraph(SparseRelStruc sampledRel, int num_nodes) {
+        Vector<BoolRel> boolrel = sampledRel.getBoolBinaryRelations();
+        String edge_index = "";
+        for (BoolRel element : boolrel) {
+            if (Objects.equals(element.name(), this.edge_name)) {
+                if (Objects.equals(this.edge_direction, "ABBA"))
+                    edge_index = this.gnnPy.stringifyGnnEdgesABBA(sampledRel, element);
+                if (Objects.equals(this.edge_direction, "AB"))
+                    edge_index = this.gnnPy.stringifyGnnEdgesAB(sampledRel, element);
+                if (Objects.equals(this.edge_direction, "BA"))
+                    edge_index = this.gnnPy.stringifyGnnEdgesBA(sampledRel, element);
+                break;
+            }
+        }
+
+        String x = this.gnnPy.stringifyGnnFeatures(num_nodes, sampledRel, this.gnnattr, this.oneHotEncoding);
+
+        if (this.classId != -1)
+            return this.gnnPy.inferModelGraphDouble(this.classId, x, edge_index, "");
+        else
+            return this.gnnPy.inferModelNodeDouble(Integer.parseInt(this.argument), x, edge_index, "");
     }
 
     @Override
@@ -168,7 +213,7 @@ public class ProbFormGnn extends ProbForm {
             }
         }
 
-        String x = this.gnnPy.stringifyGnnFeatures(num_features, sampledRel, this.gnnattr);
+        String x = this.gnnPy.stringifyGnnFeatures(num_features, sampledRel, this.gnnattr, this.oneHotEncoding);
         return this.gnnPy.inferModelNodeDouble(Integer.parseInt(this.argument), x, edge_index, "");
     }
 
@@ -224,7 +269,7 @@ public class ProbFormGnn extends ProbForm {
     @Override
     public boolean multlinOnly() {
         System.out.println("multlinOnly code");
-        return false;
+        return true;
     }
 
     @Override
@@ -247,10 +292,17 @@ public class ProbFormGnn extends ProbForm {
     // we cannot substitute this in smaller prob formula -> return the same object
     @Override
     public ProbForm substitute(String[] vars, int[] args) {
-//        System.out.println("substitute code 1");
-        ProbFormGnn result = new ProbFormGnn(this.argument, this.gnnattr);
+        System.out.println("substitute code 1");
+        ProbFormGnn result;
+        if (this.classId == -1)
+            result = new ProbFormGnn(this.argument, this.gnnattr, this.oneHotEncoding);
+        else
+            result = new ProbFormGnn("-1", this.gnnattr, this.oneHotEncoding, this.classId);
 
-        result.argument = rbnutilities.array_substitute(new String[]{argument}, vars, args)[0];
+        if (vars.length == 0)
+            result.argument = Arrays.toString(new String[0]);
+        else
+            result.argument = rbnutilities.array_substitute(new String[]{argument}, vars, args)[0];
 
         if (this.alias != null)
             result.setAlias(this.alias.substitute(vars, args));
@@ -315,5 +367,13 @@ public class ProbFormGnn extends ProbForm {
 
     public String getArgument() {
         return argument;
+    }
+
+    public int getClassId() {
+        return classId;
+    }
+
+    public boolean isOneHotEncoding() {
+        return oneHotEncoding;
     }
 }
