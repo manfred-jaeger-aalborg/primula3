@@ -56,6 +56,8 @@ public class runexperiment_2 {
                         new Rel[]{
                                 blue_pred.rel(),
                                 edge_pred.rel()},
+                        "edge",
+                        "ABBA",
                         false
                 )
         );

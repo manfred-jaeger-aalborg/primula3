@@ -1826,9 +1826,12 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 					new String[]{"v"},
 					new ProbFormGnn("v",
 							new Rel[]{
-									blue_pred.rel()},
-							false
+									blue_pred.rel()
 //									edge_pred.rel()}
+							},
+							"edge",
+							"ABBA",
+							false
 					)
 			);
 
@@ -1890,6 +1893,8 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 									Ca.rel(),
 									Br.rel(),
 									edge_pred.rel()},
+							"edge",
+							"ABBA",
 							true
 					)
 			);
@@ -1949,6 +1954,8 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 								G_pred.rel(),
 								edge_pred.rel()
 						},
+						"edge",
+						"ABBA",
 						true,
 						0
 				)
@@ -1968,6 +1975,8 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 								G_pred.rel(),
 								edge_pred.rel()
 						},
+						"edge",
+						"ABBA",
 						true,
 						1
 				)
@@ -2009,8 +2018,8 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		win.show();
 
 		win.setGNNPath();
-		win.loadDefaults();
-//		win.loadGNNRBN_blue();
+//		win.loadDefaults();
+		win.loadGNNRBN_blue();
 //		win.loadGNNRBN_triangle();
 	}
 }

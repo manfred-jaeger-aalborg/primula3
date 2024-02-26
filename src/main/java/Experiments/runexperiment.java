@@ -59,7 +59,7 @@ public class runexperiment {
          */
         RBN manual_rbn = new RBN(3, 0);
 
-        RBNPreldef gnn_pred = new RBNPreldef(new BoolRel("gnn", 1), new String[]{"v"}, new ProbFormGnn("v", new Rel[]{}, false));
+        RBNPreldef gnn_pred = new RBNPreldef(new BoolRel("gnn", 1), new String[]{"v"}, new ProbFormGnn("v", new Rel[]{}, "edge", "ABBA", false));
 
         RBNPreldef red_pred = new RBNPreldef(new BoolRel("red", 1), new String[]{"v"}, new ProbFormConstant(0.5));
 

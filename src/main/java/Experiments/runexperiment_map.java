@@ -47,6 +47,8 @@ public class runexperiment_map {
                 new ProbFormGnn("v",
                         new Rel[]{
                                 blue_pred.rel()},
+                        "edge",
+                        "ABBA",
                         false
 //                                edge_pred.rel()}
                 )

@@ -31,6 +31,8 @@ public class GnnPy {
         initJep(modelPath, scriptPath, scriptName, pythonHome);
     }
 
+    public GnnPy() {}
+
     public String loadjep(String pythonHome) throws IOException {
         // taken from https://gist.github.com/vwxyzjn/c054bae6dfa6f80e6c663df70347e238
         // automatically find the library path in the python home it is installed

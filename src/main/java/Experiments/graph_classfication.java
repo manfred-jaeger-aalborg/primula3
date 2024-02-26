@@ -40,6 +40,8 @@ public class graph_classfication {
                                 G_pred.rel(),
                                 edge_pred.rel()
                         },
+                        "edge",
+                        "ABBA",
                         true,
                         0
                 )
@@ -59,6 +61,8 @@ public class graph_classfication {
                                 G_pred.rel(),
                                 edge_pred.rel()
                         },
+                        "edge",
+                        "ABBA",
                         true,
                         1
                 )
@@ -126,7 +130,7 @@ public class graph_classfication {
 
             im.setQueryAtoms(gal);
             // set as true the class we want condition
-            im.setBoolInstArbitrary(new BoolRel("CLASS_0", 0), true);
+            im.setBoolInstArbitrary(new BoolRel("CLASS_1", 0), true);
 
             primula.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
             primula.setModelPath("/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python/primula-gnn");
@@ -150,6 +154,29 @@ public class graph_classfication {
             }
             System.out.println("\nLikelihood: " + mapLikelihood);
             System.out.println("---------------------------------------\n");
+
+            // assign the map values to the current data
+            if (GG != null){
+                OneStrucData result = new OneStrucData();
+                result.setParentRelStruc(primula.getRels());
+
+                for (int i=0; i<gal.size(); i++) {
+                    result.add(new GroundAtom(gal.atomAt(i).rel(), gal.atomAt(i).args), mapValues[i],"?");
+                }
+
+                primula.getInstantiation().add(result);
+                im.updateInstantiationList();
+                primula.updateBavaria();
+            }
+
+//            openBavaria(true, primula, srsfile);
+
+            OneStrucData onsd = new OneStrucData(primula.getRels().getmydata().copy());
+            SparseRelStruc sampledRel = new SparseRelStruc(primula.getRels().getNames(), onsd, primula.getRels().getCoords(), primula.getRels().signature());
+            sampledRel.getmydata().add(primula.getInstantiation().copy());
+
+            PyTorchExport pye = new PyTorchExport(sampledRel, rbn, 7);
+            pye.writePythonDataOnFile("/Users/lz50rg/Dev/primula-workspace/test_rbn_files/python_data.txt");
 
         } catch (RBNIllegalArgumentException | InterruptedException e) {
             throw new RuntimeException(e);

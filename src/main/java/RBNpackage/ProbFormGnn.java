@@ -34,9 +34,9 @@ public class ProbFormGnn extends ProbForm {
     private String edge_direction;
     private GnnPy gnnPy;
 
-    public ProbFormGnn(String argument, Rel[] attr, boolean oneHotEncoding) {
-        this.setEdge_name("edge");
-        this.setEdge_direction("ABBA");
+    public ProbFormGnn(String argument, Rel[] attr, String edge_name, String edge_direction, boolean oneHotEncoding) {
+        this.setEdge_name(edge_name);
+        this.setEdge_direction(edge_direction);
 
         this.argument = argument;
         this.gnnattr = attr;
@@ -44,9 +44,9 @@ public class ProbFormGnn extends ProbForm {
         this.oneHotEncoding = oneHotEncoding;
     }
 
-    public ProbFormGnn(String argument, Rel[] attr, boolean oneHotEncoding, int classId) {
-        this.setEdge_name("edge");
-        this.setEdge_direction("ABBA");
+    public ProbFormGnn(String argument, Rel[] attr, String edge_name, String edge_direction, boolean oneHotEncoding, int classId) {
+        this.setEdge_name(edge_name);
+        this.setEdge_direction(edge_direction);
 
         this.argument = argument;
         this.gnnattr = attr;
@@ -55,9 +55,6 @@ public class ProbFormGnn extends ProbForm {
     }
 
     public ProbFormGnn(String argument, GnnPy gnnpy) {
-        this.setEdge_name("edge");
-        this.setEdge_direction("ABBA");
-
         this.argument = argument;
         this.gnnPy = gnnpy;
     }
@@ -295,9 +292,9 @@ public class ProbFormGnn extends ProbForm {
         System.out.println("substitute code 1");
         ProbFormGnn result;
         if (this.classId == -1)
-            result = new ProbFormGnn(this.argument, this.gnnattr, this.oneHotEncoding);
+            result = new ProbFormGnn(this.argument, this.gnnattr, this.edge_name, this.edge_direction, this.oneHotEncoding);
         else
-            result = new ProbFormGnn("-1", this.gnnattr, this.oneHotEncoding, this.classId);
+            result = new ProbFormGnn("-1", this.gnnattr, this.edge_name, this.edge_direction, this.oneHotEncoding, this.classId);
 
         if (vars.length == 0)
             result.argument = Arrays.toString(new String[0]);
