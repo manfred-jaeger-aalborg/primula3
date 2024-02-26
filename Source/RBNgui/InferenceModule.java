@@ -792,13 +792,12 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		relIndex = new Hashtable<String,Integer>();
 		int idx =0;
 		for (Rel r: queryatoms.keySet()) {
-			
+			relIndex.put(r.name(), (Integer)idx);
 			idx++;
 		}
 			
 			
-		buildQueryatomsLists(queryModels,queryatoms);
-
+		TODO: initialize the QueryTableModels; then invoke rebuildQuerytAtomsPanel
 
 		
 		/* Top panel with list of attributes/binary relations/arbitrary relations */
@@ -962,7 +961,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		//queryatomsPanel.add(queryatomsLabel, BorderLayout.NORTH);
 		for (int i=0;i<queryatomsScrolllists.size();i++)
 			queryatomsPanel.add(queryatomsScrolllists.elementAt(i));
-		queryatomsPanel.add(deletesamplePanel);
+//		queryatomsPanel.add(deletesamplePanel);
 		/* ************************************ */
 		
 //		atomsPanel.add(instantiationsPanel, BorderLayout.CENTER);
@@ -1401,7 +1400,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 
 	public SampleThread startSampleThread(){
 		this.setMCMCTable();
-		this.buildQueryatomsLists(mcmcModels,queryatoms);
+		this.buildQueryatomsTables(mcmcModels);
 
 		queryatomsPanel.updateUI(); // may need updateUI on the individual tables
 		
@@ -1463,7 +1462,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	private GradientGraph startMapThread(){
 
 		this.setMAPTable();
-		this.buildQueryatomsLists(mapModels,queryatoms);
+		this.buildQueryatomsTables(mapModels);
 		GradientGraph gg = null;
 		try{
 //			maprestarts = true;
@@ -1618,7 +1617,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 				infoMessage.setText(rel.name.name+"()");
 				if(queryModeOn){
 					addQueryAtoms(rel,new int[0]);
-					updateQueryatomsLists(queryModels);
+					buildQueryatomsTables(queryModels);
 				}
 				else{
 					inst.add(new GroundAtom(rel,new int[0]),truthValue,"?");
@@ -1640,7 +1639,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 							int[] node = {selected};
 							addedTuples = (String)elementNamesListModel.elementAt(selected);
 							if(queryModeOn){
-								addAtoms(rel, node);
+								addQueryAtoms(rel, node);
 							}
 							else{
 								int [][] instantiations = new int[1][tuple.length];
@@ -1677,7 +1676,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 								first_bin = true;
 								addedTuples = addedTuples + ", " + (String)elementNamesListModel.elementAt(tuple[1]);
 								if(queryModeOn){
-									addAtoms(rel, tuple);
+									addQueryAtoms(rel, tuple);
 								}
 								else{
 									int[][] instantiations = allMatchingTuples(tuple);
@@ -1716,7 +1715,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 									first_arb = true;
 									if(queryModeOn){
 										infoMessage.setText("This can take a few minuts, please wait.");
-										addAtoms(rel, tuple);
+										addQueryAtoms(rel, tuple);
 										tuple = new int[0];
 									}
 									else{
@@ -1762,16 +1761,17 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 			else
 				selectedInstAtom = null;
 		}
-		else if( source == querytable ){
-			int index = querytable.rowAtPoint(e.getPoint());
-			if(index>=0){
-				delAtom = index;
-				Vector queries = queryatoms.allAtoms();
-				selectedQueryAtom = (GroundAtom)queries.elementAt(index);
-			}
-			else{
-				selectedQueryAtom = null;
-			}
+		else if( source == querytables.elementAt(0) ){ // TODO this now dummy solution only for the first table
+			int index = querytables.elementAt(0).rowAtPoint(e.getPoint());
+			System.out.println("select in on query table: effect not yet implemented");
+//			if(index>=0){
+//				delAtom = index;
+//				Vector queries = queryatoms.allAtoms();
+//				selectedQueryAtom = (GroundAtom)queries.elementAt(index);
+//			}
+//			else{
+//				selectedQueryAtom = null;
+//			}
 		}
 	}
 	//          Invoked when a mouse button has been pressed on a component.
@@ -1811,8 +1811,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		readElementNames();
 		//instasosd.reset();
 		instantiationsListModel.clear();
-		queryatoms.reset();
-		queryModel.reset();
+		queryatoms=new Hashtable<Rel,GroundAtomList>();
+		queryModels=new Vector<QueryTableModel>();
 		infoMessage.setText(" ");
 		first_bin = first_arb = true;
 		selectedInstAtom = null;
@@ -1836,7 +1836,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		elementNamesListModel.clear();
 		readElementNames();
 		updateInstantiationList();
-		updateQueryatomsList(queryModel);
+		buildQueryatomsTables(queryModels);
 		if(selected != -1)
 			elementNamesList.setSelectedIndex(selected);
 	}
@@ -1848,9 +1848,11 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		readElementNames();
 		inst.deleteShift(node);
 		updateInstantiationList();
-		queryatoms.delete(node);
-		queryatoms.shiftArgs(node);
-		updateQueryatomsList(queryModel);
+		for (GroundAtomList qats: queryatoms.values()) {
+			qats.delete(node);
+			qats.shiftArgs(node);
+		}
+		buildQueryatomsTables(queryModels);
 		for(int i=0; i<tuple.length; ++i){
 			if(tuple[i] == node){
 				infoMessage.setText("Tuple cancelled (included a deleted node)");
@@ -1884,8 +1886,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		readRBNRelations();
 		//instasosd.reset();
 		instantiationsListModel.clear();
-		queryatoms.reset();
-		queryModel.reset();
+		queryatoms=new Hashtable<Rel,GroundAtomList>();
+		queryModels=new Vector<QueryTableModel>();
 		elementNamesList.clearSelection();
 		infoMessage.setText(" ");
 		first_bin = first_arb = true;
@@ -1980,6 +1982,13 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	}
 
 
+	/**
+	 * The int[] 'tuple' denotes the indices of object identifiers
+	 * in the 'elements' list of the GUI. This may include general (*) 
+	 * or type ([person]) wildcards. 
+	 * @param rel
+	 * @param tuple
+	 */
 	private void addQueryAtoms(Rel rel,int[] tuple) {
 		GroundAtomList atstoadd = buildAtoms(rel,tuple);
 		Integer idx = relIndex.get(rel.toString());
@@ -1994,7 +2003,6 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 			queryatoms.put(rel, atstoadd);
 		}
 		myprimula.queryatoms.add(atstoadd);	
-		
 	}
 
 	//updates the query atoms list
@@ -2121,10 +2129,41 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 //		if( myACEControl != null ) myACEControl.primulaQueryChanged();//keith cascio 20060620
 //	}
 
-	public void buildQueryatomsLists(Vector<? extends QueryTableModel> qtm, Hashtable<Rel,GroundAtomList> queries) {
-		for (Rel r: queries.keySet()) {
+	/**
+	 * Before calling this method this.queryatoms and this.relIndex must contain current
+	 * and consistent data
+	 */
+	private void rebuildQueryAtomsPanel() {
+		queryatomsPanel.removeAll();
+		queryatomsScrolllists=new Vector<JScrollPane>();
+		querytables = new Vector<JTable>();
+		// First construct the appropriate number of gui elements:
+		for (int i =0;i<relIndex.size();i++) {
+			JScrollPane nextjsp = new JScrollPane();
+			JTable nextjt = new JTable();
+			queryatomsScrolllists.add(nextjsp);
+			queryatomsPanel.add(nextjsp);
+			nextjsp.getViewport().add(nextjt);
+		}
+		// Now connect to the data:
+		for (String r: relIndex.keySet()) {
+			int idx = relIndex.get(r);
+			querytables.elementAt(idx).setModel(queryModels.elementAt(idx));
+		}
+			
+		queryatomsPanel.updateUI();
+	}
+	
+	/**
+	 * It is required that a vector 'qtm' of (empty) QueryTableModels is already 
+	 * initialized. That makes it easier to call this method from different contexts
+	 * when 'qtm' consists of different subclasses of QueryTableModel.
+	 * @param qtm
+	 */
+	private void buildQueryatomsTables(Vector<? extends QueryTableModel> qtm) {
+		for (Rel r: queryatoms.keySet()) {
 			int idx = relIndex.get(r); 
-			buildQueryatomsList(qtm.elementAt(idx),queries.get(r));
+			buildQueryatomsTable(qtm.elementAt(idx),queryatoms.get(r));
 		}
 	}
 	
@@ -2138,7 +2177,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	 * @param qtm
 	 * @param queries
 	 */
-	public void buildQueryatomsList(QueryTableModel qtm, GroundAtomList queries){
+	private void buildQueryatomsTable(QueryTableModel qtm, GroundAtomList queries){
 		selectedQueryAtom = null;
 		qtm.reset();
 		
@@ -2227,127 +2266,127 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 //		}
 //	}
 
-	private double[][] computeQueryBatch(){
-		/* Computes the probability of each query atom in all
-		 * data cases contained in myprimula.rdata
-		 * 
-		 * Assumes that all probabilities can be computed by just
-		 * evaluating the probability formula, i.e., no dependence on 
-		 * unobserved atoms. 
-		 * 
-		 * Returns a queryatoms.length x 7 double matrix, containing for each
-		 * query atom:
-		 * 
-		 * count of true positives
-		 * count of false positives
-		 * count of false negatives
-		 * count of true negatives
-		 * count of atoms for which probability was not computed, because of dependence on unobserved atom
-		 * count of atoms for which a truth value was not given in the data case
-		 * average log-likelihood 
-		 */
-		
-		double[][] result = new double[queryatoms.size()][7];
-		
-		RelData rdata = myprimula.getReldata();
-		
-		if (rdata.size() > 1){
-			System.out.println("Warning: data available for more than one input domain. Will evaluate queries only "
-					+ "for first input domain");
-		}
-		RelDataForOneInput rdoi = rdata.caseAt(0);
-		RelStruc A = rdoi.inputDomain();
-		OneStrucData osd;
-		
-		GroundAtom gat;
-		CPModel pf;
-		String[] varargs;
-		int[] intargs;
-		double prob=0;
-		int tv;
-		RBN rbn = myprimula.rbn;
-		Boolean predpos=false;
-		for (int i=0;i<rdoi.numberOfObservations();i++){
-			osd = rdoi.oneStrucDataAt(i);
-			for (int j=0;j<queryatoms.size();j++){
-				gat=queryatoms.atomAt(j);
-				pf = rbn.cpmodel(gat.rel());
-				varargs = rbn.args(gat.rel());
-				intargs = gat.args();
-				try{
-					prob = (double)pf.evaluate(A, 
-							osd, 
-							varargs, 
-							intargs,
-							0,
-							true,  
-							true, 
-							null, 
-							false,
-							null,
-							null,
-							ProbForm.RETURN_ARRAY,
-							true,
-							null)[0];
-				}
-				catch (RBNCompatibilityException ex){System.out.println(ex);}
-				if (prob!=Double.NaN)
-					predpos = (prob>0.5);
-				else {
-					result[j][4]++; // no prediction
-					break;
-				}
-				result[j][6]+= prob;
-				// Now get the actual truth value
-				tv=osd.truthValueOf(gat);
-				switch (tv){
-				case 1:
-					if (predpos)
-						result[j][0]++; // true positive
-					else
-						result[j][2]++; // false negative
-					break;
-				case 0:
-					if (predpos)
-						result[j][1]++; // false positive
-					else
-						result[j][3]++; // true negative
-					break;
-				case -1:
-					result[j][5]++; // no ground truth
-				}
-			} //for (int j=0;j<queryatoms.size();j++)
-		} // (int i=0;i<rdoi.numberOfObservations();i++)
-		
-		/* Normalize the likelihood */
-		double numevaluated;
-		for (int j=0;j<queryatoms.size();j++){
-			numevaluated = result[j][0]+result[j][1]+result[j][2]+result[j][3];
-			result[j][6]=result[j][6]/numevaluated;
-		}
-		
-		// Temporary:
-		double TP=0;
-		double FP=0;
-		double FN=0;
-		double TN=0;
-		
-		System.out.println("[TP,FP,FN,TN,Pred. not evaluated,Ground truth unknown, P(positive)]");
-		for (int i=0;i< result.length;i++){
-			System.out.println(queryatoms.atomAt(i).asString(A)+'\t'+StringOps.arrayToString(result[i], "[", "]"));
-			TP=TP+result[i][0];
-			FP=FP+result[i][1];
-			FN=FN+result[i][2];
-			TN=TN+result[i][3];
-		}
-		
-		double acc= (TP+TN)/(TP+TN+FP+FN);
-		
-		System.out.println("TP: " + TP +" FP: " + FP + " FN: " + FN + " TN: "+ TN);
-		System.out.println("Accuracy: " + acc );
-		return result;
-	}
-	
+//	private double[][] computeQueryBatch(){
+//		/* Computes the probability of each query atom in all
+//		 * data cases contained in myprimula.rdata
+//		 * 
+//		 * Assumes that all probabilities can be computed by just
+//		 * evaluating the probability formula, i.e., no dependence on 
+//		 * unobserved atoms. 
+//		 * 
+//		 * Returns a queryatoms.length x 7 double matrix, containing for each
+//		 * query atom:
+//		 * 
+//		 * count of true positives
+//		 * count of false positives
+//		 * count of false negatives
+//		 * count of true negatives
+//		 * count of atoms for which probability was not computed, because of dependence on unobserved atom
+//		 * count of atoms for which a truth value was not given in the data case
+//		 * average log-likelihood 
+//		 */
+//		
+//		double[][] result = new double[queryatoms.size()][7];
+//		
+//		RelData rdata = myprimula.getReldata();
+//		
+//		if (rdata.size() > 1){
+//			System.out.println("Warning: data available for more than one input domain. Will evaluate queries only "
+//					+ "for first input domain");
+//		}
+//		RelDataForOneInput rdoi = rdata.caseAt(0);
+//		RelStruc A = rdoi.inputDomain();
+//		OneStrucData osd;
+//		
+//		GroundAtom gat;
+//		CPModel pf;
+//		String[] varargs;
+//		int[] intargs;
+//		double prob=0;
+//		int tv;
+//		RBN rbn = myprimula.rbn;
+//		Boolean predpos=false;
+//		for (int i=0;i<rdoi.numberOfObservations();i++){
+//			osd = rdoi.oneStrucDataAt(i);
+//			for (int j=0;j<queryatoms.size();j++){
+//				gat=queryatoms.atomAt(j);
+//				pf = rbn.cpmodel(gat.rel());
+//				varargs = rbn.args(gat.rel());
+//				intargs = gat.args();
+//				try{
+//					prob = (double)pf.evaluate(A, 
+//							osd, 
+//							varargs, 
+//							intargs,
+//							0,
+//							true,  
+//							true, 
+//							null, 
+//							false,
+//							null,
+//							null,
+//							ProbForm.RETURN_ARRAY,
+//							true,
+//							null)[0];
+//				}
+//				catch (RBNCompatibilityException ex){System.out.println(ex);}
+//				if (prob!=Double.NaN)
+//					predpos = (prob>0.5);
+//				else {
+//					result[j][4]++; // no prediction
+//					break;
+//				}
+//				result[j][6]+= prob;
+//				// Now get the actual truth value
+//				tv=osd.truthValueOf(gat);
+//				switch (tv){
+//				case 1:
+//					if (predpos)
+//						result[j][0]++; // true positive
+//					else
+//						result[j][2]++; // false negative
+//					break;
+//				case 0:
+//					if (predpos)
+//						result[j][1]++; // false positive
+//					else
+//						result[j][3]++; // true negative
+//					break;
+//				case -1:
+//					result[j][5]++; // no ground truth
+//				}
+//			} //for (int j=0;j<queryatoms.size();j++)
+//		} // (int i=0;i<rdoi.numberOfObservations();i++)
+//		
+//		/* Normalize the likelihood */
+//		double numevaluated;
+//		for (int j=0;j<queryatoms.size();j++){
+//			numevaluated = result[j][0]+result[j][1]+result[j][2]+result[j][3];
+//			result[j][6]=result[j][6]/numevaluated;
+//		}
+//		
+//		// Temporary:
+//		double TP=0;
+//		double FP=0;
+//		double FN=0;
+//		double TN=0;
+//		
+//		System.out.println("[TP,FP,FN,TN,Pred. not evaluated,Ground truth unknown, P(positive)]");
+//		for (int i=0;i< result.length;i++){
+//			System.out.println(queryatoms.atomAt(i).asString(A)+'\t'+StringOps.arrayToString(result[i], "[", "]"));
+//			TP=TP+result[i][0];
+//			FP=FP+result[i][1];
+//			FN=FN+result[i][2];
+//			TN=TN+result[i][3];
+//		}
+//		
+//		double acc= (TP+TN)/(TP+TN+FP+FN);
+//		
+//		System.out.println("TP: " + TP +" FP: " + FP + " FN: " + FN + " TN: "+ TN);
+//		System.out.println("Accuracy: " + acc );
+//		return result;
+//	}
+//	
 //	private void evaluateAccuracy(){
 //		/* Computes the accuracy of the current rbn 
 //		 * for all probabilistic relations w.r.t. the 
@@ -2771,102 +2810,110 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 
 
 	public void update(Observable o, Object arg){
-		if (o instanceof SampleProbs){
-			mcmcModel.resetProb();
-			double [][] prob= ((SampleProbs)o).getProbs();
-			for(int i=0; i<prob.length; i++){
-				mcmcModel.addProb(""+prob[i][1]);
-			}
-			mcmcModel.resetMinProb();
-			double [][] minprob = ((SampleProbs)o).getMinProbs();
-			for(int i=0; i<minprob.length; i++){
-				mcmcModel.addMinProb(""+minprob[i][1]);
-			}
-			mcmcModel.resetMaxProb();
-			double [][] maxprob = ((SampleProbs)o).getMaxProbs();
-			for(int i=0; i<maxprob.length; i++){
-				mcmcModel.addMaxProb(""+maxprob[i][1]);
-			}
-			mcmcModel.resetVar();
-			double [][] var = ((SampleProbs)o).getVar();
-			for(int i=0; i<var.length; i++){
-				mcmcModel.addVar(""+var[i][1]);
-			}
-			sampleSize.setText(""+((SampleProbs)o).getSize());
-			Double dweight = new Double(((SampleProbs)o).getWeight());
-			weight.setText(""+ myio.StringOps.doubleConverter(dweight.toString()));
-		}
-		
-		if (o instanceof MapVals){
-			mapModel.resetMapVals();
-			int [] mapvals = ((MapVals)o).getMVs();
-			for(int i=0; i<mapvals.length; i++){
-				mapModel.addMapVal(""+mapvals[i]);
-			}
-			mapRestarts.setText("" +((MapVals)o).getRestarts());
-			mapLL.setText("" +((MapVals)o).getLLstring());
-			
-		}
-		
-		/** keith cascio 20060511 ... */
-		//dataModel.resetACE();
-		/** ... keith cascio */
-		
-		querytable.updateUI();
+		// TODO: make this work again!
+//		if (o instanceof SampleProbs){
+//			mcmcModel.resetProb();
+//			double [][] prob= ((SampleProbs)o).getProbs();
+//			for(int i=0; i<prob.length; i++){
+//				mcmcModel.addProb(""+prob[i][1]);
+//			}
+//			mcmcModel.resetMinProb();
+//			double [][] minprob = ((SampleProbs)o).getMinProbs();
+//			for(int i=0; i<minprob.length; i++){
+//				mcmcModel.addMinProb(""+minprob[i][1]);
+//			}
+//			mcmcModel.resetMaxProb();
+//			double [][] maxprob = ((SampleProbs)o).getMaxProbs();
+//			for(int i=0; i<maxprob.length; i++){
+//				mcmcModel.addMaxProb(""+maxprob[i][1]);
+//			}
+//			mcmcModel.resetVar();
+//			double [][] var = ((SampleProbs)o).getVar();
+//			for(int i=0; i<var.length; i++){
+//				mcmcModel.addVar(""+var[i][1]);
+//			}
+//			sampleSize.setText(""+((SampleProbs)o).getSize());
+//			Double dweight = new Double(((SampleProbs)o).getWeight());
+//			weight.setText(""+ myio.StringOps.doubleConverter(dweight.toString()));
+//		}
+//		
+//		if (o instanceof MapVals){
+//			mapModel.resetMapVals();
+//			int [] mapvals = ((MapVals)o).getMVs();
+//			for(int i=0; i<mapvals.length; i++){
+//				mapModel.addMapVal(""+mapvals[i]);
+//			}
+//			mapRestarts.setText("" +((MapVals)o).getRestarts());
+//			mapLL.setText("" +((MapVals)o).getLLstring());
+//			
+//		}
+//		
+//		/** keith cascio 20060511 ... */
+//		//dataModel.resetACE();
+//		/** ... keith cascio */
+//		
+//		querytable.updateUI();
 	}
 	
-	public OneStrucData getMapValuesAsInst(){
-		LinkedList<String> mapvals = mapModel.getMapValues();
-		LinkedList<String> queryats = mapModel.getQuery();
-		OneStrucData result = new OneStrucData();
-		result.setParentRelStruc(myprimula.getRels());
-		
-		Iterator<String> itq = queryats.iterator();
-		
-		for (Iterator<String> itmap = mapvals.iterator(); itmap.hasNext();) {
-			System.out.println(itq.next() + " " + itmap.next());
-		}
-//		for (int i=0;i< mapatoms.size();i++){
-//			result.add(mapatoms.atomAt(i),instvals[i],"?");
+//	public OneStrucData getMapValuesAsInst(){
+//		LinkedList<String> mapvals = mapModel.getMapValues();
+//		LinkedList<String> queryats = mapModel.getQuery();
+//		OneStrucData result = new OneStrucData();
+//		result.setParentRelStruc(myprimula.getRels());
+//		
+//		Iterator<String> itq = queryats.iterator();
+//		
+//		for (Iterator<String> itmap = mapvals.iterator(); itmap.hasNext();) {
+//			System.out.println(itq.next() + " " + itmap.next());
 //		}
-		return result;
-	}
+////		for (int i=0;i< mapatoms.size();i++){
+////			result.add(mapatoms.atomAt(i),instvals[i],"?");
+////		}
+//		return result;
+//	}
 	
 	/* Setting up the Query table */
 	private void setQueryTable() {
-		querytable.setModel(queryModel);
-		querytable.setShowHorizontalLines(false);
-		querytable.setPreferredScrollableViewportSize(new Dimension(146, 100));
+		for (int i=0;i<querytables.size();i++) {
+			JTable qt = querytables.elementAt(i);
+			qt.setModel(queryModels.elementAt(i));
+			qt.setShowHorizontalLines(false);
+			qt.setPreferredScrollableViewportSize(new Dimension(146, 100));
 		//table header values
-		querytable.getColumnModel().getColumn(0).setHeaderValue("Query Atoms");
-
-		querytable.getColumnModel().getColumn(0).setPreferredWidth(150);
+			qt.getColumnModel().getColumn(0).setHeaderValue("Query Atoms");
+			qt.getColumnModel().getColumn(0).setPreferredWidth(150);
+		}
 		/* ************************************ */
 	}
 
 	private void setMCMCTable() {
-		querytable.setModel(mcmcModel);
-		querytable.setShowHorizontalLines(false);
-		querytable.setPreferredScrollableViewportSize(new Dimension(146, 100));
-		//table header values
-		querytable.getColumnModel().getColumn(0).setHeaderValue("Query Atoms");
-		querytable.getColumnModel().getColumn(1).setHeaderValue("P");
-		querytable.getColumnModel().getColumn(2).setHeaderValue("Min");
-		querytable.getColumnModel().getColumn(3).setHeaderValue("Max");
-		querytable.getColumnModel().getColumn(4).setHeaderValue("Var");
+		for (int i=0;i<querytables.size();i++) {
 
-		querytable.getColumnModel().getColumn(0).setPreferredWidth(150);
+			JTable qt = querytables.elementAt(i);
+			qt.setModel(mcmcModels.elementAt(i));
+			qt.setShowHorizontalLines(false);
+			qt.setPreferredScrollableViewportSize(new Dimension(146, 100));
+			//table header values
+			qt.getColumnModel().getColumn(0).setHeaderValue("Query Atoms");
+			qt.getColumnModel().getColumn(1).setHeaderValue("P");
+			qt.getColumnModel().getColumn(2).setHeaderValue("Min");
+			qt.getColumnModel().getColumn(3).setHeaderValue("Max");
+			qt.getColumnModel().getColumn(4).setHeaderValue("Var");
+			qt.getColumnModel().getColumn(0).setPreferredWidth(150);
+		}
 	}
 	
 	private void setMAPTable() {
-		querytable.setModel(mapModel);
-		querytable.setShowHorizontalLines(false);
-		querytable.setPreferredScrollableViewportSize(new Dimension(146, 100));
-		//table header values
-		querytable.getColumnModel().getColumn(0).setHeaderValue("Query Atoms");
-		querytable.getColumnModel().getColumn(1).setHeaderValue("MAP");
-
-		querytable.getColumnModel().getColumn(0).setPreferredWidth(150);
+		for (int i=0;i<querytables.size();i++) {
+			JTable qt = querytables.elementAt(i);
+			qt.setModel(mapModels.elementAt(i));
+			qt.setShowHorizontalLines(false);
+			qt.setPreferredScrollableViewportSize(new Dimension(146, 100));
+			//table header values
+			qt.getColumnModel().getColumn(0).setHeaderValue("Query Atoms");
+			qt.getColumnModel().getColumn(1).setHeaderValue("MAP");
+			qt.getColumnModel().getColumn(0).setPreferredWidth(150);
+		}
 	}
 	
 	

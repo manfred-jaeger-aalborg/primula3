@@ -24,8 +24,10 @@
 
 package RBNpackage;
 
-import java.util.*;
-import RBNutilities.*;
+import java.util.Hashtable;
+import java.util.Vector;
+
+import RBNutilities.rbnutilities;
 
 
 public class GroundAtomList extends java.lang.Object {
@@ -136,6 +138,7 @@ public class GroundAtomList extends java.lang.Object {
 	return (GroundAtom)atoms.elementAt(i);
     }
 
+    // TODO very inefficient! Implementation of GroundAtomList should be changed to an underlying TreeSet. 
     public boolean contains(Rel r, int[] a, String owner){
         GroundAtom thisatom = new GroundAtom(r,a, owner);
          boolean found = false;
