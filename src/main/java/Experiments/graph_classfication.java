@@ -12,8 +12,9 @@ import java.util.*;
 
 public class graph_classfication {
     static String primulahome = System.getenv("PRIMULAHOME");
-    static String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/rbn_acr_graph_triangle_10_8_6_add.rbn";
-    static String rdefinputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/base_class_0_n15_0.rdef";
+//    static String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/rbn_acr_graph_triangle_10_8_6_add.rbn";
+    static String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/models/triangle_10_8_6_20230725-152135/exp_41/rbn_acr_graph_triangle_10_8_6_add.rbn";
+    static String rdefinputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/base_class_0_n6_0_const.rdef";
 
     static public RBN createRBN() {
         RBNPreldef A_pred = new RBNPreldef(new BoolRel("A", 1), new String[]{"v"},  new ProbFormConstant(0.5));
@@ -61,6 +62,7 @@ public class graph_classfication {
                                 G_pred.rel(),
                                 edge_pred.rel()
                         },
+                        // TODO add unique identifier to gnn
                         "edge",
                         "ABBA",
                         true,
@@ -68,7 +70,7 @@ public class graph_classfication {
                 )
         );
 
-        RBN manual_rbn = new RBN(10, 0);
+        RBN manual_rbn = new RBN(32, 0);
 
         manual_rbn.insertPRel(A_pred, 0);
         manual_rbn.insertPRel(B_pred, 1);
@@ -80,6 +82,47 @@ public class graph_classfication {
         manual_rbn.insertPRel(edge_pred, 7);
         manual_rbn.insertPRel(gnn_class_0, 8);
         manual_rbn.insertPRel(gnn_class_1, 9);
+
+        int idx = 10;
+        String[] alphabet = {"A", "B", "C", "D", "E", "F", "G"};
+        RBNPreldef const_perm = null;
+        for (int i = 0; i < alphabet.length - 1; i++) {
+            for (int j = i + 1; j < alphabet.length; j++) {
+//                System.out.println((i+1) + ". " + alphabet[i] + "_" + alphabet[j]);
+                const_perm = new RBNPreldef(new BoolRel("const_" + alphabet[i] + "_" + alphabet[j], 1), new String[]{"v"},
+                        new ProbFormCombFunc(
+                                "prod",
+                                new ProbForm[] {
+                                        new ProbFormBoolComposite(new ProbFormBool[]{
+                                                new ProbFormBoolAtom(new ProbFormAtom(new BoolRel(alphabet[i], 1), new String[]{"v"}), true),
+                                                new ProbFormBoolAtom(new ProbFormAtom(new BoolRel(alphabet[j], 1), new String[]{"v"}), true)
+                                        }, 0, true),
+                                        new ProbFormConstant(0.99)},
+                                new String[0],
+                                new ProbFormBoolConstant(true))
+                );
+                manual_rbn.insertPRel(const_perm, idx);
+                idx++;
+            }
+        }
+
+        RBNPreldef all_const = new RBNPreldef(new BoolRel("all_const", 1),  new String[]{"v"},
+                new ProbFormCombFunc(
+                        "prod",
+                        new ProbForm[] {
+                                new ProbFormBoolComposite(new ProbFormBool[]{
+                                        new ProbFormBoolAtom(new ProbFormAtom(new BoolRel("A", 1), new String[]{"v"}), true),
+                                        new ProbFormBoolAtom(new ProbFormAtom(new BoolRel("B", 1), new String[]{"v"}), true),
+                                        new ProbFormBoolAtom(new ProbFormAtom(new BoolRel("C", 1), new String[]{"v"}), true),
+                                        new ProbFormBoolAtom(new ProbFormAtom(new BoolRel("D", 1), new String[]{"v"}), true),
+                                        new ProbFormBoolAtom(new ProbFormAtom(new BoolRel("E", 1), new String[]{"v"}), true),
+                                        new ProbFormBoolAtom(new ProbFormAtom(new BoolRel("F", 1), new String[]{"v"}), true),
+                                        new ProbFormBoolAtom(new ProbFormAtom(new BoolRel("G", 1), new String[]{"v"}), true)
+                                }, 1, true),
+                                new ProbFormConstant(0.99)},
+                        new String[0],
+                        new ProbFormBoolConstant(true)));
+        manual_rbn.insertPRel(all_const, idx);
 
         return manual_rbn;
     }
@@ -130,14 +173,14 @@ public class graph_classfication {
 
             im.setQueryAtoms(gal);
             // set as true the class we want condition
-            im.setBoolInstArbitrary(new BoolRel("CLASS_1", 0), true);
+            im.setBoolInstArbitrary(new BoolRel("CLASS_0", 0), true);
 
             primula.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
             primula.setModelPath("/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python/primula-gnn");
             primula.setScriptPath("/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python");
             primula.setScriptName("inference_test");
 
-            im.setNumRestarts(10);
+            im.setNumRestarts(5);
 
             ValueObserver valueObserver = new ValueObserver();
             im.setMapObserver(valueObserver);
