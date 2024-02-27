@@ -13,7 +13,7 @@ import java.util.*;
 public class graph_classfication {
     static String primulahome = System.getenv("PRIMULAHOME");
     static String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/rbn_acr_graph_triangle_10_8_6_add.rbn";
-    static String rdefinputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/base_class_0_n6_0.rdef";
+    static String rdefinputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/base_class_0_n15_0.rdef";
 
     static public RBN createRBN() {
         RBNPreldef A_pred = new RBNPreldef(new BoolRel("A", 1), new String[]{"v"},  new ProbFormConstant(0.5));
@@ -169,13 +169,13 @@ public class graph_classfication {
                 primula.updateBavaria();
             }
 
-//            openBavaria(true, primula, srsfile);
+            openBavaria(true, primula, srsfile);
 
             OneStrucData onsd = new OneStrucData(primula.getRels().getmydata().copy());
             SparseRelStruc sampledRel = new SparseRelStruc(primula.getRels().getNames(), onsd, primula.getRels().getCoords(), primula.getRels().signature());
             sampledRel.getmydata().add(primula.getInstantiation().copy());
 
-            PyTorchExport pye = new PyTorchExport(sampledRel, rbn, 7);
+            PyTorchExport pye = new PyTorchExport(sampledRel, rbn);
             pye.writePythonDataOnFile("/Users/lz50rg/Dev/primula-workspace/test_rbn_files/python_data.txt");
 
         } catch (RBNIllegalArgumentException | InterruptedException e) {

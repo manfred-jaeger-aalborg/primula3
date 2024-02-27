@@ -91,7 +91,7 @@ public class GradientGraphO extends GradientGraph{
 	{	
 		super(mypr,data,params,go,maxats,m,obj,showInfoInPrimula);
 
-		this.debugPrint = true;
+		this.debugPrint = false;
 
 		RBN rbn = myPrimula.getRBN();
 		
