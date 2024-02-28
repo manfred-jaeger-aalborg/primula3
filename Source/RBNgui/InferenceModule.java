@@ -791,15 +791,15 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		queryatoms=myprimula.queryatoms.asHashTable();
 		relIndex = new Hashtable<String,Integer>();
 		int idx =0;
+		querytables = new Vector<JTable>();
 		for (Rel r: queryatoms.keySet()) {
 			relIndex.put(r.name(), (Integer)idx);
+			queryModels.add(new QueryTableModel());
 			idx++;
 		}
 			
+		buildQueryatomsTables(queryModels);
 			
-		TODO: initialize the QueryTableModels; then invoke rebuildQuerytAtomsPanel
-
-		
 		/* Top panel with list of attributes/binary relations/arbitrary relations */
 		attributesList.setModel(attributesListModel);
 		attributesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -950,10 +950,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		
 		this.setQueryTable();
 		
-		queryatomsScrolllists.add(new JScrollPane());
-		queryatomsScrolllists.add(new JScrollPane());
-		queryatomsScrolllists.elementAt(0).getViewport().add(querytables.elementAt(0));
-		queryatomsScrolllists.elementAt(1).getViewport().add(querytables.elementAt(1));
+
 		/* Panel consisting of query table and buttons underneath */
 //		queryatomsScrollList.getViewport().add(querytable);
 //		queryatomsScrollList.getViewport().add(querytable2);
@@ -1992,17 +1989,19 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	private void addQueryAtoms(Rel rel,int[] tuple) {
 		GroundAtomList atstoadd = buildAtoms(rel,tuple);
 		Integer idx = relIndex.get(rel.toString());
-		QueryTableModel qtm = null;
 		if (idx != null) {
 			queryatoms.get(rel).add(atstoadd);
-			queryModels.elementAt(idx).addQuery(atstoadd);
 		}
 		else {
 			idx=relIndex.size();
 			relIndex.put(rel.name(), (Integer)idx);
 			queryatoms.put(rel, atstoadd);
+			queryModels.add(new QueryTableModel());
 		}
+		queryModels.elementAt(idx).addQuery(atstoadd);
 		myprimula.queryatoms.add(atstoadd);	
+		this.buildQueryatomsTables(queryModels);
+		this.setQueryTable();
 	}
 
 	//updates the query atoms list
@@ -2072,7 +2071,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 				Vector v = rstnew.getNames();
 				for(int j=0; j<v.size(); j++){
 					temp[pos] = j;
-					buildAtoms(rel, temp);
+					result.add(buildAtoms(rel, temp));
 				}
 			}
 			else if(((String)elementNamesListModel.elementAt(tuple[i])).startsWith("[")){
@@ -2085,7 +2084,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 						for(int k =0; k<tuples.size(); k++){
 							int[] temp2 = tuples.elementAt(k);
 							temp[pos] = temp2[0];
-							buildAtoms(rel, temp);
+							result.add(buildAtoms(rel, temp));
 						}
 					}
 				}
@@ -2162,7 +2161,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	 */
 	private void buildQueryatomsTables(Vector<? extends QueryTableModel> qtm) {
 		for (Rel r: queryatoms.keySet()) {
-			int idx = relIndex.get(r); 
+			int idx = relIndex.get(r.name()); 
 			buildQueryatomsTable(qtm.elementAt(idx),queryatoms.get(r));
 		}
 	}
@@ -2883,6 +2882,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 			qt.getColumnModel().getColumn(0).setHeaderValue("Query Atoms");
 			qt.getColumnModel().getColumn(0).setPreferredWidth(150);
 		}
+		queryatomsPanel.updateUI();
 		/* ************************************ */
 	}
 
