@@ -89,7 +89,7 @@ public class SampleThread extends Thread{
 		// the jep object needs to be in the same thread
 		if (this.gnnIntegration) {
 			try {
-				this.gnnPy = new GnnPy(modelPath, scriptPath, scriptName, pythonHome);
+				this.gnnPy = new GnnPy(scriptPath, scriptName, pythonHome);
 				pfn.setGnnPy(this.gnnPy);
 			} catch (IOException e) {
 				throw new RuntimeException(e);

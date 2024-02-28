@@ -53,6 +53,7 @@ public class runexperiment_2 {
                 new BoolRel("alpha1", 1),
                 new String[]{"v"},
                 new ProbFormGnn("v",
+                        "gnnNode",
                         new Rel[]{
                                 blue_pred.rel(),
                                 edge_pred.rel()},
@@ -92,8 +93,7 @@ public class runexperiment_2 {
             im.setQueryAtoms(ga);
 
             primula.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
-            primula.setModelPath("/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python/primula-gnn");
-            primula.setScriptPath("/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python");
+            primula.setScriptPath("/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python/primula-gnn/");
             primula.setScriptName("inference_test");
 
             im.startSampleThread();

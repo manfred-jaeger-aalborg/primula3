@@ -139,9 +139,9 @@ public class GGGnnNode extends GGProbFormNode {
                 String x = this.gnnPy.stringifyGnnFeatures(num_features, sampledRel, gnnpf.getGnnattr(), this.oneHotEncoding);
                 double result;
                 if (((ProbFormGnn) this.pf).getClassId() != -1)
-                    result = this.gnnPy.inferModelGraphDouble(gnnpf.getClassId(), x, edge_index, "");
+                    result = this.gnnPy.inferModelGraphDouble(gnnpf.getClassId(), x, edge_index, ((ProbFormGnn) this.pf).getIdGnn(), "");
                 else
-                    result = this.gnnPy.inferModelNodeDouble(Integer.parseInt(gnnpf.getArgument()), x, edge_index, "");
+                    result = this.gnnPy.inferModelNodeDouble(Integer.parseInt(gnnpf.getArgument()), x, edge_index, ((ProbFormGnn) this.pf).getIdGnn(), "");
                 this.value = result;
                 return result;
             } else {

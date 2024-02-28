@@ -1,5 +1,7 @@
 package RBNinference;
 
+import RBNutilities.SmallDouble;
+
 import java.util.*;
 
 public class MapVals extends Observable {
@@ -7,6 +9,7 @@ public class MapVals extends Observable {
 	private int[] mapvals;
 	private int restarts;
 	private String llstring;
+	private double[] likelihood;
 	
 	public MapVals(int i){
 		mapvals = new int[i];
@@ -36,7 +39,15 @@ public class MapVals extends Observable {
 		llstring = s;
 		setChanged();
 	}
-	
+
+	public void setLikelihood(double[] likelihood) {
+		this.likelihood = likelihood;
+	}
+
+	public double[] getLikelihood() {
+		return likelihood;
+	}
+
 	public int[] getMVs(){
 		return mapvals;
 	}

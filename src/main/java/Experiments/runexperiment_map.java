@@ -45,6 +45,7 @@ public class runexperiment_map {
                 new BoolRel("alpha1", 1),
                 new String[]{"v"},
                 new ProbFormGnn("v",
+                        "gnnNode",
                         new Rel[]{
                                 blue_pred.rel()},
                         "edge",
@@ -87,8 +88,7 @@ public class runexperiment_map {
             im.setQueryAtoms(gal);
 
             primula.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
-            primula.setModelPath("/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python/primula-gnn");
-            primula.setScriptPath("/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python");
+            primula.setScriptPath("/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python/primula-gnn/");
             primula.setScriptName("inference_test");
 
             im.setNumRestarts(10);

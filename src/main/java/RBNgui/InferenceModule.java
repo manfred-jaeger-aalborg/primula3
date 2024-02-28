@@ -37,6 +37,8 @@ import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
 import java.util.*;
+import java.util.List;
+
 import myio.*;
 
 import edu.ucla.belief.ui.primula.SamiamManager;
@@ -660,7 +662,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	private String scriptPath;
 	private String scriptName;
 	private String pythonHome;
-
+	List<MapThread> threads;
+	int num_threads;
 	public InferenceModule( Primula myprimula_param ){
 
 		myprimula = myprimula_param;
@@ -1079,6 +1082,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		SamiamManager.centerWindow( this );
 		/** ... keith cascio */
 		this.setVisible(false);
+		this.num_threads = 1;
 	}
 
 	public void setVisibility(boolean visibility) {
@@ -1335,7 +1339,6 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 				logwriter);
 		if (sampthr.isGnnIntegration()) {
 			sampthr.setPythonHome(this.myprimula.getPythonHome());
-			sampthr.setModelPath(this.myprimula.getModelPath());
 			sampthr.setScriptPath(this.myprimula.getScriptPath());
 			sampthr.setScriptName(this.myprimula.getScriptName());
 		}
@@ -1415,24 +1418,29 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 //					int m,
 //					int obj,
 //					Boolean showInfoInPrimula)
-			
-			gg = new GradientGraphO(myprimula, 
-					 								evidence, 
-					 								rbnparamidx,
-					 								this ,
-					 								queryatoms,
-					 								mode,
-					 								0,
-					 								true);
-			mapthr = new MapThread(this.mapObserver,this,myprimula,(GradientGraphO)gg);
-			if (mapthr.isGnnIntegration()) {
-				mapthr.setPythonHome(this.myprimula.getPythonHome());
-				mapthr.setModelPath(this.myprimula.getModelPath());
-				mapthr.setScriptPath(this.myprimula.getScriptPath());
-				mapthr.setScriptName(this.myprimula.getScriptName());
-				((GradientGraphO) gg).setGnnPy(mapthr.getGnnPy());
+			this.threads = new ArrayList<>();
+			// default is set to 1 (only for gui)
+			// to go back remove for loop and threads list
+			// last git revision number d60d5a886ef8749e6cb4d6519c34a80f85838e2d
+			for (int i = 0; i < num_threads; i++) {
+				gg = new GradientGraphO(myprimula,
+						evidence,
+						rbnparamidx,
+						this,
+						queryatoms,
+						mode,
+						0,
+						true);
+				mapthr = new MapThread(this.mapObserver,this,myprimula,(GradientGraphO)gg);
+				if (mapthr.isGnnIntegration()) {
+					mapthr.setPythonHome(this.myprimula.getPythonHome());
+					mapthr.setScriptPath(this.myprimula.getScriptPath());
+					mapthr.setScriptName(this.myprimula.getScriptName());
+					((GradientGraphO) gg).setGnnPy(mapthr.getGnnPy());
+				}
+				mapthr.start();
+				threads.add(mapthr);
 			}
-			mapthr.start();
 			trueButton.setEnabled( false );
 			falseButton.setEnabled( false );
 			queryButton.setEnabled( false );
@@ -2672,6 +2680,14 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 
 	public MapThread getMapthr() {
 		return mapthr;
+	}
+
+	public List<MapThread> getThreads() {
+		return threads;
+	}
+
+	public void setNum_threads(int num_threads) {
+		this.num_threads = num_threads;
 	}
 
 	public void setMapObserver(Observer o) {

@@ -50,7 +50,8 @@ public class MapThread extends GGThread {
 		this.isSampling = true;
 		if (this.gnnIntegration) {
 			try {
-				this.gnnPy = new GnnPy(this.modelPath, this.scriptPath, this.scriptName, this.pythonHome);
+				this.gnnPy = new GnnPy(this.scriptPath, this.scriptName, this.pythonHome);
+
 				gg.setGnnPy(this.gnnPy);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
@@ -112,6 +113,7 @@ public class MapThread extends GGThread {
 					newmapvals = gg.getMapVals();
 					mapprobs.setMV(newmapvals);
 					mapprobs.setLL(SmallDouble.asString(oldll));
+					mapprobs.setLikelihood(oldll);
 					if (gg.parameters().size() > 0)
 						myLearnModule.setParameterValues(gg.getParameters());
 				}

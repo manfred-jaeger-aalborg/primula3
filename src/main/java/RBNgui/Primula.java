@@ -733,7 +733,6 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		return myPreferences;
 	}
 
-	private String modelPath;
 	private String scriptPath;
 	private String scriptName;
 	private String pythonHome;
@@ -1732,10 +1731,6 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		return evidenceModule;
 	}
 
-	public void setModelPath(String modelPath) {
-		this.modelPath = modelPath;
-	}
-
 	public void setScriptPath(String scriptPath) {
 		this.scriptPath = scriptPath;
 	}
@@ -1746,10 +1741,6 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 
 	public void setPythonHome(String pythonHome) {
 		this.pythonHome = pythonHome;
-	}
-
-	public String getModelPath() {
-		return this.modelPath;
 	}
 
 	public String getScriptPath() {
@@ -1825,6 +1816,7 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 					new BoolRel("alpha1", 1),
 					new String[]{"v"},
 					new ProbFormGnn("v",
+							"gnnNode",
 							new Rel[]{
 									blue_pred.rel()
 //									edge_pred.rel()}
@@ -1877,6 +1869,7 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 					new BoolRel("mutag", 1),
 					new String[]{"v"},
 					new ProbFormGnn("v",
+							"1",
 							new Rel[]{
 									C.rel(),
 									O.rel(),
@@ -1944,6 +1937,7 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 				new BoolRel("CLASS_0", 0),
 				new String[]{"v"},
 				new ProbFormGnn("v",
+						"gnnGraph",
 						new Rel[]{
 								A_pred.rel(),
 								B_pred.rel(),
@@ -1965,6 +1959,7 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 				new BoolRel("CLASS_1", 0),
 				new String[]{"v"},
 				new ProbFormGnn("v",
+						"gnnGraph",
 						new Rel[]{
 								A_pred.rel(),
 								B_pred.rel(),
@@ -2003,8 +1998,7 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 
 	private void setGNNPath() {
 		this.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
-		this.setModelPath("/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python/primula-gnn");
-		this.setScriptPath("/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python");
+		this.setScriptPath("/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python/primula-gnn/");
 		this.setScriptName("inference_test");
 	}
 

@@ -13,10 +13,10 @@ import java.io.InputStreamReader;
 public class GnnPy {
     private final String INFER_NODE = "infer_model_nodes"; // default function name to call in python
     private final String INFER_GRAPH = "infer_model_graph";
-    private String modelPath;
     private String scriptPath;
     private String scriptName;
-    private Jep sharedInterpreter;
+    private String pythonHome;
+    private Interpreter sharedInterpreter;
 
     // those 4 next vairables are used to save the current query
     private String currentX;
@@ -26,9 +26,31 @@ public class GnnPy {
     private String currentMethod;
 
     private float[] currentResult;
+    private String lastId;
+    private ArrayList<String> gnnModelsId;
 
-    public GnnPy(String modelPath, String scriptPath, String scriptName, String pythonHome) throws IOException {
-        initJep(modelPath, scriptPath, scriptName, pythonHome);
+    public GnnPy(String scriptPath, String scriptName, String pythonHome) throws IOException {
+        this.scriptPath = scriptPath;
+        this.scriptName = scriptName;
+        this.pythonHome = pythonHome;
+        this.gnnModelsId = new ArrayList<>();
+
+        // pip install jep in a miniconda env (torch)
+        try {
+            MainInterpreter.setJepLibraryPath(loadjep(this.pythonHome));
+        } catch (IllegalStateException e) {
+            System.out.println(e);
+        }
+//        JepConfig jepConfig = new JepConfig();
+//        jepConfig.redirectStdout(System.out);
+//        jepConfig.redirectStdErr(System.err);
+//        MainInterpreter.setJepLibraryPath("/Users/lz50rg/miniconda3/envs/torch/lib/python3.10/site-packages/jep/libjep.jnilib");
+//        PyConfig pyConfig = new PyConfig();
+//        pyConfig.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
+
+//        jep.JepConfig jepConf = new JepConfig();
+//        jepConf.addSharedModules("numpy"); // this helps for the warning (https://github.com/ninia/jep/issues/418#issuecomment-1165062651)
+        initializePythonScript();
     }
 
     public GnnPy() {}
@@ -39,34 +61,15 @@ public class GnnPy {
         Process p = Runtime.getRuntime().exec(pythonHome + " python/get_jep_path.py");
         BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
         return in.readLine();
-
-    }
-    private void initJep(String modelPath, String scriptPath, String scriptName, String pythonHome) throws IOException {
-        this.modelPath = modelPath;
-        this.scriptPath = scriptPath;
-        this.scriptName = scriptName;
-
-        // pip install jep in a miniconda env (torch)
-        MainInterpreter.setJepLibraryPath(loadjep(pythonHome));
-
-//        MainInterpreter.setJepLibraryPath("/Users/lz50rg/miniconda3/envs/torch/lib/python3.10/site-packages/jep/libjep.jnilib");
-//        PyConfig pyConfig = new PyConfig();
-//        pyConfig.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
-
-//        jep.JepConfig jepConf = new JepConfig();
-//        jepConf.addSharedModules("numpy"); // this helps for the warning (https://github.com/ninia/jep/issues/418#issuecomment-1165062651)
-        initializeInterpreter();
     }
 
-    private void initializeInterpreter() {
+    private void initializePythonScript() {
         try {
             this.sharedInterpreter = new SharedInterpreter();
             this.sharedInterpreter.exec("import sys");
             this.sharedInterpreter.exec("import torch");
-            this.sharedInterpreter.exec("sys.path.append('" + this.modelPath + "')");
-            this.sharedInterpreter.exec("sys.path.append('" + this.scriptPath + "')");
-            this.sharedInterpreter.exec("import " + this.scriptName + " as intt");
-            this.sharedInterpreter.exec("model = intt.set_model_graph()");
+            this.sharedInterpreter.eval("sys.path.append('" + this.scriptPath + "')");
+            this.sharedInterpreter.eval("import " + this.scriptName + " as intt");
         } catch (JepException e) {
             System.err.println("Failed to initialize interpreter: " + e);
         }
@@ -79,28 +82,33 @@ public class GnnPy {
             System.out.println("Interpreter closed");
         }
     }
-    public Object inferModelNodeObject(String x, String edge_index, String method) {
-        assert this.sharedInterpreter != null;
-        try {
-            this.sharedInterpreter.eval(edge_index);
-            this.sharedInterpreter.eval(x);
-            if (method != null) {
-                this.sharedInterpreter.eval("out = intt."+ method +"(model, x, edge_index, None)");
-            } else {
-                this.sharedInterpreter.eval("out = intt.infer_model_nodes(model, x, edge_index, None)");
+
+    /**
+     * Checks if the model is already instantiated
+     * Each gnn is associated with an id
+     * @param id of the model
+     */
+    private void createModelIfNull(String id) {
+        if (this.gnnModelsId != null) {
+            if (!this.gnnModelsId.contains(id)) {
+                this.sharedInterpreter.exec(id + " = intt.use_model(\"" + id + "\")");
+                this.gnnModelsId.add(id);
             }
-            return this.sharedInterpreter.getValue("out");
-        } catch (JepException e) {
-            System.err.println("Failed to execute inference: " + e);
-            return "None";
+        } else {
+            this.gnnModelsId = new ArrayList<>();
+            this.sharedInterpreter.exec(id + " = intt.use_model(\"" + id + "\")");
+            this.gnnModelsId.add(id);
         }
     }
 
-    public double inferModelNodeDouble(int node, String x, String edge_index, String method) {
+    public double inferModelNodeDouble(int node, String x, String edge_index, String idGnn, String method) {
         assert this.sharedInterpreter != null;
+        this.createModelIfNull(idGnn);
+
         try {
             // check if there is already computed the results for the specific node in the result matrix, otherwise compute for all nodes with one forward propagation
-            if (this.currentX != null && this.currentEdgeIndex != null && this.currentMethod != null && this.currentResult != null) {
+            // needs also to have the same id as before
+            if (this.currentX != null && this.currentEdgeIndex != null && this.currentMethod != null && this.currentResult != null && Objects.equals(this.lastId, idGnn)) {
                 if (this.currentX.equals(x) && this.currentEdgeIndex.equals(edge_index) && this.currentMethod.equals(method)) {
                     return (double) this.currentResult[node];
                 } else {
@@ -110,12 +118,13 @@ public class GnnPy {
             this.currentX = x;
             this.currentEdgeIndex = edge_index;
             this.currentMethod = method;
+            this.lastId = idGnn;
             this.sharedInterpreter.eval(edge_index);
             this.sharedInterpreter.eval(x);
             if (!Objects.equals(method, "")) {
-                this.sharedInterpreter.eval("out = intt." + method + "(model, x, edge_index, None)");
+                this.sharedInterpreter.eval("out = intt." + method + "(" + idGnn + ", x, edge_index, None)");
             } else {
-                this.sharedInterpreter.eval("out = intt." + this.INFER_NODE + "(model, x, edge_index, None)");
+                this.sharedInterpreter.eval("out = intt." + this.INFER_NODE + "(" + idGnn + ", x, edge_index, None)");
             }
             this.sharedInterpreter.eval("out = out.detach().numpy().flatten()");
             NDArray ndArray = (NDArray) this.sharedInterpreter.getValue("out");
@@ -127,8 +136,10 @@ public class GnnPy {
         }
     }
 
-    public double inferModelGraphDouble(int classId, String x, String edge_index, String method) {
+    public double inferModelGraphDouble(int classId, String x, String edge_index, String idGnn, String method) {
         assert this.sharedInterpreter != null;
+        this.createModelIfNull(idGnn);
+
         try {
             // check if there is already computed the results for the specific node in the result matrix, otherwise compute for all nodes with one forward propagation
 //            if (this.currentX != null && this.currentEdgeIndex != null && this.currentMethod != null && this.currentResult != null) {
@@ -141,18 +152,16 @@ public class GnnPy {
 //            this.currentX = x;
 //            this.currentEdgeIndex = edge_index;
 //            this.currentMethod = method;
-            // if there are no edges
+            // if there are no edges we use this trick for pyg
             if (Objects.equals(edge_index, "")) {
-                this.sharedInterpreter.eval("a = torch.tensor([[]], dtype=torch.long)");
-                this.sharedInterpreter.eval("b = torch.tensor([[]], dtype=torch.long)");
-                this.sharedInterpreter.eval("edge_index = torch.cat((a,b), 0)");
+                this.sharedInterpreter.eval("edge_index = torch.cat((torch.tensor([[]], dtype=torch.long), torch.tensor([[]], dtype=torch.long)), 0)");
             } else
                 this.sharedInterpreter.eval(edge_index);
             this.sharedInterpreter.eval(x);
             if (!Objects.equals(method, "")) {
-                this.sharedInterpreter.eval("out = intt." + method + "(model, x, edge_index, None)");
+                this.sharedInterpreter.eval("out = intt." + method + "(" + idGnn + ", x, edge_index, None)");
             } else {
-                this.sharedInterpreter.eval("out = intt." + this.INFER_GRAPH + "(model, x, edge_index, None)");
+                this.sharedInterpreter.eval("out = intt." + this.INFER_GRAPH + "(" + idGnn + ", x, edge_index, None)");
             }
             this.sharedInterpreter.eval("out = out.detach().numpy().flatten()");
             NDArray ndArray = (NDArray) this.sharedInterpreter.getValue("out");

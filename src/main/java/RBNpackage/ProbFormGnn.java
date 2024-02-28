@@ -4,9 +4,7 @@ import RBNExceptions.RBNCompatibilityException;
 import RBNExceptions.RBNIllegalArgumentException;
 import RBNLearning.Profiler;
 import RBNinference.PFNetworkNode;
-import RBNutilities.IntArrayComparator;
 import RBNutilities.rbnutilities;
-import jep.python.PyObject;
 
 import java.util.*;
 
@@ -33,22 +31,25 @@ public class ProbFormGnn extends ProbForm {
     private String edge_name;
     private String edge_direction;
     private GnnPy gnnPy;
-
-    public ProbFormGnn(String argument, Rel[] attr, String edge_name, String edge_direction, boolean oneHotEncoding) {
+    // each gnn will have an id that identify the model
+    private String idGnn;
+    public ProbFormGnn(String argument, String idGnn, Rel[] attr, String edge_name, String edge_direction, boolean oneHotEncoding) {
         this.setEdge_name(edge_name);
         this.setEdge_direction(edge_direction);
 
         this.argument = argument;
+        this.idGnn = idGnn;
         this.gnnattr = attr;
         this.classId = -1;
         this.oneHotEncoding = oneHotEncoding;
     }
 
-    public ProbFormGnn(String argument, Rel[] attr, String edge_name, String edge_direction, boolean oneHotEncoding, int classId) {
+    public ProbFormGnn(String argument, String idGnn, Rel[] attr, String edge_name, String edge_direction, boolean oneHotEncoding, int classId) {
         this.setEdge_name(edge_name);
         this.setEdge_direction(edge_direction);
 
         this.argument = argument;
+        this.idGnn = idGnn;
         this.gnnattr = attr;
         this.classId = classId;
         this.oneHotEncoding = oneHotEncoding;
@@ -114,7 +115,7 @@ public class ProbFormGnn extends ProbForm {
                                 result[0] = Double.NaN;
                                 return result;
                             } else {
-                                result[0] = evaluateGraph(sampledRel, mat.length);
+                                result[0] = this.evaluateGraph(sampledRel, mat.length);
                             }
                         } else if (parent.isprobabilistic()) {
                             value = inst.valueOf(parent, mat[i]);
@@ -122,7 +123,7 @@ public class ProbFormGnn extends ProbForm {
                                 result[0] = Double.NaN;
                                 return result;
                             } else {
-                                result[0] = evaluateGraph(sampledRel, mat.length);
+                                result[0] = this.evaluateGraph(sampledRel, mat.length);
                             }
                         }
                     }
@@ -153,9 +154,9 @@ public class ProbFormGnn extends ProbForm {
         String x = this.gnnPy.stringifyGnnFeatures(num_nodes, sampledRel, this.gnnattr, this.oneHotEncoding);
 
         if (this.classId != -1)
-            return this.gnnPy.inferModelGraphDouble(this.classId, x, edge_index, "");
+            return this.gnnPy.inferModelGraphDouble(this.classId, x, edge_index, this.idGnn,"");
         else
-            return this.gnnPy.inferModelNodeDouble(Integer.parseInt(this.argument), x, edge_index, "");
+            return this.gnnPy.inferModelNodeDouble(Integer.parseInt(this.argument), x, edge_index, this.idGnn, "");
     }
 
     @Override
@@ -211,7 +212,7 @@ public class ProbFormGnn extends ProbForm {
         }
 
         String x = this.gnnPy.stringifyGnnFeatures(num_features, sampledRel, this.gnnattr, this.oneHotEncoding);
-        return this.gnnPy.inferModelNodeDouble(Integer.parseInt(this.argument), x, edge_index, "");
+        return this.gnnPy.inferModelNodeDouble(Integer.parseInt(this.argument), x, edge_index, this.idGnn, "");
     }
 
     @Override
@@ -292,9 +293,9 @@ public class ProbFormGnn extends ProbForm {
         System.out.println("substitute code 1");
         ProbFormGnn result;
         if (this.classId == -1)
-            result = new ProbFormGnn(this.argument, this.gnnattr, this.edge_name, this.edge_direction, this.oneHotEncoding);
+            result = new ProbFormGnn(this.argument, this.idGnn, this.gnnattr, this.edge_name, this.edge_direction, this.oneHotEncoding);
         else
-            result = new ProbFormGnn("-1", this.gnnattr, this.edge_name, this.edge_direction, this.oneHotEncoding, this.classId);
+            result = new ProbFormGnn("-1", this.idGnn, this.gnnattr, this.edge_name, this.edge_direction, this.oneHotEncoding, this.classId);
 
         if (vars.length == 0)
             result.argument = Arrays.toString(new String[0]);
@@ -368,6 +369,10 @@ public class ProbFormGnn extends ProbForm {
 
     public int getClassId() {
         return classId;
+    }
+
+    public String getIdGnn() {
+        return idGnn;
     }
 
     public boolean isOneHotEncoding() {
