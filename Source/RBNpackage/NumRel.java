@@ -102,4 +102,10 @@ public class NumRel extends Rel{
  	public double numvals() {
  		return Double.POSITIVE_INFINITY;
  	}
+ 	
+ 	public String get_String_val(Integer i) {
+ 		// should never be called
+ 		return "undefined";
+ 	}
+ 	
 }

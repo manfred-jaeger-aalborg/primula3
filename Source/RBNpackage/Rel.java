@@ -272,5 +272,10 @@ public abstract class Rel implements Serializable, Comparable<Rel>{
 	public void set_name(String name) {
 			this.name=new RelName(name);
 	}
+	
+	/* For Boolean or categorical relations return the name 
+	 * of the i'th value
+	 */
+	public abstract String get_String_val(Integer i);
 }
 

@@ -41,6 +41,9 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ChangeEvent;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -106,7 +109,7 @@ import edu.ucla.belief.ui.primula.SamiamManager;
 import myio.StringOps;
 
 public class InferenceModule extends JFrame implements Observer, 
-ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
+ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions, ChangeListener{
 
 	public static final int OPTION_SAMPLEORD_FORWARD = 0;
 	public static final int OPTION_SAMPLEORD_RIPPLE = 1;
@@ -602,6 +605,12 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	 * for this relation in the queryatomsScrolllists
 	 */
 	private Hashtable<String,Integer> relIndex = new Hashtable<String,Integer>(); 
+	/**
+	 * Vector of relations defining their order in queryatomsScrolllists:
+	 * 
+	 * relArray[i]= r  <=> relIndex.get(r.name)==i
+	 */
+	private Vector<Rel> relList; 
 	
 //	public GroundAtomList getQueryatoms() {
 //		return queryatoms;
@@ -790,10 +799,12 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		
 		queryatoms=myprimula.queryatoms.asHashTable();
 		relIndex = new Hashtable<String,Integer>();
+		relList = new Vector<Rel>();
 		int idx =0;
-		querytables = new Vector<JTable>();
+		
 		for (Rel r: queryatoms.keySet()) {
 			relIndex.put(r.name(), (Integer)idx);
+			relList.add(r);
 			queryModels.add(new QueryTableModel());
 			idx++;
 		}
@@ -942,27 +953,19 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		panelMapOuter.setBorder(BorderFactory.createTitledBorder("MAP Inference"));
 		
 		inferencePane.add("MAP", panelMapOuter);
-		/* ************************************ */
-
-
 		
-
-		
-		this.setQueryTable();
-		
-
 		/* Panel consisting of query table and buttons underneath */
 //		queryatomsScrollList.getViewport().add(querytable);
 //		queryatomsScrollList.getViewport().add(querytable2);
 
 		//queryatomsPanel.add(queryatomsLabel, BorderLayout.NORTH);
-		for (int i=0;i<queryatomsScrolllists.size();i++)
-			queryatomsPanel.add(queryatomsScrolllists.elementAt(i));
+//		for (int i=0;i<queryatomsScrolllists.size();i++)
+//			queryatomsPanel.add(queryatomsScrolllists.elementAt(i));
 //		queryatomsPanel.add(deletesamplePanel);
 		/* ************************************ */
 		
 //		atomsPanel.add(instantiationsPanel, BorderLayout.CENTER);
-//		atomsPanel.add(queryatomsPanel, BorderLayout.SOUTH);
+		atomsPanel.add(queryatomsPanel, BorderLayout.SOUTH);
 		
 		//MouseListeners
 		attributesList.	addMouseListener( this );
@@ -992,6 +995,9 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		startMap.addActionListener( this );
 		setMapVals.addActionListener( this );
 		stopMap.addActionListener( this );
+		
+		inferencePane.addChangeListener(this);
+		
 		//setting background color
 		trueButton.setBackground(Primula.COLOR_BLUE_SELECTED);
 		trueButton.setToolTipText("Add atoms instantiated to true");
@@ -1396,8 +1402,6 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	}
 
 	public SampleThread startSampleThread(){
-		this.setMCMCTable();
-		this.buildQueryatomsTables(mcmcModels);
 
 		queryatomsPanel.updateUI(); // may need updateUI on the individual tables
 		
@@ -1995,13 +1999,13 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		else {
 			idx=relIndex.size();
 			relIndex.put(rel.name(), (Integer)idx);
+			relList.add(rel);
 			queryatoms.put(rel, atstoadd);
 			queryModels.add(new QueryTableModel());
 		}
 		queryModels.elementAt(idx).addQuery(atstoadd);
 		myprimula.queryatoms.add(atstoadd);	
 		this.buildQueryatomsTables(queryModels);
-		this.setQueryTable();
 	}
 
 	//updates the query atoms list
@@ -2132,27 +2136,27 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	 * Before calling this method this.queryatoms and this.relIndex must contain current
 	 * and consistent data
 	 */
-	private void rebuildQueryAtomsPanel() {
-		queryatomsPanel.removeAll();
-		queryatomsScrolllists=new Vector<JScrollPane>();
-		querytables = new Vector<JTable>();
-		// First construct the appropriate number of gui elements:
-		for (int i =0;i<relIndex.size();i++) {
-			JScrollPane nextjsp = new JScrollPane();
-			JTable nextjt = new JTable();
-			queryatomsScrolllists.add(nextjsp);
-			queryatomsPanel.add(nextjsp);
-			nextjsp.getViewport().add(nextjt);
-		}
-		// Now connect to the data:
-		for (String r: relIndex.keySet()) {
-			int idx = relIndex.get(r);
-			querytables.elementAt(idx).setModel(queryModels.elementAt(idx));
-		}
-			
-		queryatomsPanel.updateUI();
-	}
-	
+//	private void rebuildQueryAtomsPanel() {
+//		queryatomsPanel.removeAll();
+//		queryatomsScrolllists=new Vector<JScrollPane>();
+//		querytables = new Vector<JTable>();
+//		// First construct the appropriate number of gui elements:
+//		for (int i =0;i<relIndex.size();i++) {
+//			JScrollPane nextjsp = new JScrollPane();
+//			JTable nextjt = new JTable();
+//			queryatomsScrolllists.add(nextjsp);
+//			queryatomsPanel.add(nextjsp);
+//			nextjsp.getViewport().add(nextjt);
+//		}
+//		// Now connect to the data:
+//		for (String r: relIndex.keySet()) {
+//			int idx = relIndex.get(r);
+//			querytables.elementAt(idx).setModel(queryModels.elementAt(idx));
+//		}
+//			
+//		queryatomsPanel.updateUI();
+//	}
+
 	/**
 	 * It is required that a vector 'qtm' of (empty) QueryTableModels is already 
 	 * initialized. That makes it easier to call this method from different contexts
@@ -2160,10 +2164,34 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	 * @param qtm
 	 */
 	private void buildQueryatomsTables(Vector<? extends QueryTableModel> qtm) {
+		// Initialize the GUI components:
+		queryatomsPanel.removeAll();
+		querytables = new Vector<JTable>();
+		queryatomsScrolllists = new Vector<JScrollPane>();
+		for (int i=0;i<queryModels.size();i++) {
+			JScrollPane nextjsp = new JScrollPane();
+			JTable nextjt = new JTable();
+			querytables.add(nextjt);
+			nextjt.setModel(qtm.elementAt(i));
+			nextjt.setShowHorizontalLines(false);
+			nextjt.setPreferredScrollableViewportSize(new Dimension(146, 100));
+			nextjt.getColumnModel().getColumn(0).setHeaderValue("Query Atoms");
+			nextjt.getColumnModel().getColumn(0).setPreferredWidth(150);
+			nextjsp.getViewport().add(nextjt);
+			queryatomsScrolllists.add(nextjsp);
+			queryatomsPanel.add(nextjsp);
+			
+		}
+		// Customize the table models
 		for (Rel r: queryatoms.keySet()) {
 			int idx = relIndex.get(r.name()); 
 			buildQueryatomsTable(qtm.elementAt(idx),queryatoms.get(r));
 		}
+//		for (JTable jt: querytables)
+//			jt.updateUI();
+//		for (JScrollPane jsp: queryatomsScrolllists)
+//			jsp.updateUI();
+		queryatomsPanel.updateUI();
 	}
 	
 	/**
@@ -2871,35 +2899,30 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 //		return result;
 //	}
 	
-	/* Setting up the Query table */
-	private void setQueryTable() {
-		for (int i=0;i<querytables.size();i++) {
-			JTable qt = querytables.elementAt(i);
-			qt.setModel(queryModels.elementAt(i));
-			qt.setShowHorizontalLines(false);
-			qt.setPreferredScrollableViewportSize(new Dimension(146, 100));
-		//table header values
-			qt.getColumnModel().getColumn(0).setHeaderValue("Query Atoms");
-			qt.getColumnModel().getColumn(0).setPreferredWidth(150);
-		}
-		queryatomsPanel.updateUI();
-		/* ************************************ */
-	}
 
-	private void setMCMCTable() {
-		for (int i=0;i<querytables.size();i++) {
 
+	private void buildMCMCTables() {
+		/* creating mcmcModels
+		 * It is required that querytables and queryatomsScrolllists exist and have the 
+		 * same length as relList
+		 */
+		mcmcModels=new Vector<MCMCTableModel>();
+		for (int i=0;i<querytables.size();i++) {
+			Rel r = relList.elementAt(i);
+			MCMCTableModel mcmctm = new MCMCTableModel(relList.elementAt(i));
+			mcmcModels.add(mcmctm);
 			JTable qt = querytables.elementAt(i);
-			qt.setModel(mcmcModels.elementAt(i));
+			qt.setModel(mcmctm);
 			qt.setShowHorizontalLines(false);
 			qt.setPreferredScrollableViewportSize(new Dimension(146, 100));
 			//table header values
-			qt.getColumnModel().getColumn(0).setHeaderValue("Query Atoms");
-			qt.getColumnModel().getColumn(1).setHeaderValue("P");
-			qt.getColumnModel().getColumn(2).setHeaderValue("Min");
-			qt.getColumnModel().getColumn(3).setHeaderValue("Max");
-			qt.getColumnModel().getColumn(4).setHeaderValue("Var");
+			qt.getColumnModel().getColumn(0).setHeaderValue("Query");
+			for (int j=0;j<r.getArity();j++) {
+				qt.getColumnModel().getColumn(2*j+1).setHeaderValue(r.get_String_val(j));
+				qt.getColumnModel().getColumn(2*(j+1)).setHeaderValue("+/-");
+			}
 			qt.getColumnModel().getColumn(0).setPreferredWidth(150);
+			
 		}
 	}
 	
@@ -2916,6 +2939,21 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		}
 	}
 	
-	
+	public void stateChanged(ChangeEvent e) {
+		if (e.getSource() == inferencePane) {
+			switch (inferencePane.getSelectedIndex()) {
+			case 0: // Query tab
+				break;
+			case 1: // MCMC tab
+				buildMCMCTables();
+				queryatomsPanel.updateUI();
+				break;
+			case 2: // MAP tab
+				break;
+			case 3: // ACE tab
+				break;
+			}
+		}
+	}
 	
 }

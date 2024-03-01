@@ -55,4 +55,11 @@ public class BoolRel extends Rel {
   	public double numvals() {
   		return 2;
   	}
+  	public String get_String_val(Integer i) {
+  		switch (i){
+  		case 0: return "false";
+  		case 1: return "true";
+  		default: return "undefined";
+  		}
+  	}
 }

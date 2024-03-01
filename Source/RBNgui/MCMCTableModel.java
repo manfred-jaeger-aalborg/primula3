@@ -28,29 +28,29 @@ import javax.swing.table.*;
 import RBNutilities.*;
 //import RBNpackage.Atom;
 import RBNinference.BayesNetIntHuginNet;
+import RBNpackage.Rel;
 
 public class MCMCTableModel extends QueryTableModel{
 
 	/**
-	 * @uml.property  name="probabilitydata"
-	 * @uml.associationEnd  multiplicity="(0 -1)" elementType="java.lang.String"
+	 * Contains the 
 	 */
-	LinkedList<String> probabilitydata ;
+	String[][] p_v_data ;
 	/**
 	 * @uml.property  name="minprobabilitydata"
 	 * @uml.associationEnd  multiplicity="(0 -1)" elementType="java.lang.String"
 	 */
-	LinkedList<String> minprobabilitydata;
-	/**
-	 * @uml.property  name="maxprobabilitydata"
-	 * @uml.associationEnd  multiplicity="(0 -1)" elementType="java.lang.String"
-	 */
-	LinkedList<String> maxprobabilitydata;
-	/**
-	 * @uml.property  name="vardata"
-	 * @uml.associationEnd  multiplicity="(0 -1)" elementType="java.lang.String"
-	 */
-	LinkedList<String> vardata;
+//	LinkedList<String> minprobabilitydata;
+//	/**
+//	 * @uml.property  name="maxprobabilitydata"
+//	 * @uml.associationEnd  multiplicity="(0 -1)" elementType="java.lang.String"
+//	 */
+//	LinkedList<String> maxprobabilitydata;
+//	/**
+//	 * @uml.property  name="vardata"
+//	 * @uml.associationEnd  multiplicity="(0 -1)" elementType="java.lang.String"
+//	 */
+	LinkedList<String>[] vardata;
 	/**
 	 * keith cascio 20060511 ...
 	 * @uml.property  name="acedata"
@@ -60,15 +60,14 @@ public class MCMCTableModel extends QueryTableModel{
 	/**
 	 * @uml.property  name="column"
 	 */
-	private int column = 5;
+	private int column;
 	
 
-	public MCMCTableModel(){
+	public MCMCTableModel(Rel r){
 		super();
-		probabilitydata = new LinkedList<String>();
-		minprobabilitydata = new LinkedList<String>();
-		maxprobabilitydata = new LinkedList<String>();
-		vardata = new LinkedList<String>();
+		column = 1+2*(int)r.numvals(); // first column for query atoms
+		probabilitydata = new Object[(int)r.numvals()];
+		vardata = (LinkedList<String>[])new Object[(int)r.numvals()];
 		rownum=super.getRowCount();
 	}
 
@@ -78,112 +77,74 @@ public class MCMCTableModel extends QueryTableModel{
 
 	public Object getValueAt( int row, int col )
 	{
-		switch( col ){
-		case 0:
-			if(      queryatomdata.size() > row )
+		if (row < this.getRowCount()) {
+			if (col==0) // query atom
 				return queryatomdata.get(     row );
-			break;
-		case 1:
-			if(      probabilitydata.size() > row )
-				return probabilitydata.get(     row );
-			break;
-		case 2:
-			if(      minprobabilitydata.size() > row )
-				return minprobabilitydata.get(     row );
-			break;
-		case 3:
-			if(      maxprobabilitydata.size() > row )
-				return maxprobabilitydata.get(     row );
-			break;
-		case 4:
-			if(      vardata.size() > row )
-				return vardata.get(     row );
-			break;
-			/** keith cascio 20060511 ... */
-
-			/** ... keith cascio */
-		default:
-			System.err.println( "column " + col + " out of range" );
-		return STR_EMPTY;
+			else {
+				if (col%2 == 1) // a probability column
+					return probabilitydata[(col+1)/2].get(row);
+				else // a variance column
+					return vardata[col/2].get(     row );
+			}
 		}
-		System.err.println( "row " + row + " out of range at column " + col );
-		return STR_EMPTY;
+		else {
+			System.err.println( "row " + row + " out of range at column " + col );
+			return STR_EMPTY;
+		}
+
 	}
 
 
 
-
-	public void addQuery(String query){
-		super.addQuery(query);
-		probabilitydata.add(STR_EMPTY);
-		minprobabilitydata.add(STR_EMPTY);
-		maxprobabilitydata.add(STR_EMPTY);
-		vardata.add(STR_EMPTY);
-		/** ... keith cascio */
-	}
-
-
-	public void addProb(String prob){
-		probabilitydata.add(myio.StringOps.doubleConverter(prob));
-	}
-
-	public void addProb(LinkedList prob){
-		probabilitydata = prob;
-	}
-	
-	public void addMinProb(String prob){
-		minprobabilitydata.add(myio.StringOps.doubleConverter(prob));
-	}
-	public void addMaxProb(String prob){
-		maxprobabilitydata.add(myio.StringOps.doubleConverter(prob));
-	}
-	public void addVar(String prob){
-		vardata.add(myio.StringOps.doubleConverter(prob));
-	}
+//	public void addProb(String prob){
+//		probabilitydata.add(myio.StringOps.doubleConverter(prob));
+//	}
+//
+//	public void addProb(LinkedList prob){
+//		probabilitydata = prob;
+//	}
+//	
+//	public void addMinProb(String prob){
+//		minprobabilitydata.add(myio.StringOps.doubleConverter(prob));
+//	}
+//	public void addMaxProb(String prob){
+//		maxprobabilitydata.add(myio.StringOps.doubleConverter(prob));
+//	}
+//	public void addVar(String prob){
+//		vardata.add(myio.StringOps.doubleConverter(prob));
+//	}
 
 
 	public void reset(){
 		super.reset();
-		probabilitydata = new LinkedList();
+		probabilitydata = (LinkedList<String>[])new Object[(column-1)/2];
+		vardata = (LinkedList<String>[])new Object[(column-1)/2];
 	}
 
 
-	public void removeAllQueries(){
-		super.removeAllQueries();
-		probabilitydata = new LinkedList();
-		minprobabilitydata = new LinkedList();
-		maxprobabilitydata = new LinkedList();
-		vardata = new LinkedList();
-	}
-
-	public void removeQuery(int query){
-		super.removeQuery(query);
-		probabilitydata.remove(query);
-		minprobabilitydata.remove(query);
-		maxprobabilitydata.remove(query);
-		vardata.remove(query);
-	}
-
-	public void resetProb(){
-		probabilitydata = new LinkedList();
-	}
-	
-	
-	public void resetMinProb(){
-		minprobabilitydata = new LinkedList();
-	}
-
-	public void resetMaxProb(){
-		maxprobabilitydata = new LinkedList();
-	}
-
-	public void resetVar(){
-		vardata = new LinkedList();
-	}
+//	public void removeAllQueries(){
+//		super.removeAllQueries();
+//		probabilitydata = new LinkedList();
+//		vardata = new LinkedList();
+//	}
+//
+//	public void removeQuery(int query){
+//		super.removeQuery(query);
+//		probabilitydata.remove(query);
+//		vardata.remove(query);
+//	}
+//
+//	public void resetProb(){
+//		probabilitydata = new LinkedList();
+//	}
+//
+//	public void resetVar(){
+//		vardata = new LinkedList();
+//	}
 
 
 	
-	public LinkedList<String> getProbabilities(){
+	public LinkedList<String>[] getProbabilities(){
 		return probabilitydata;
 	}
 }
