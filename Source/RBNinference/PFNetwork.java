@@ -54,8 +54,8 @@ public class PFNetwork{
 
 	private RelStruc A; // Current underlying RelStruc
 	private OneStrucData inst;
-	private PFNetworkNode[] queryPFNnodes; // Contains the PFNnodes corresponding to 
-	// to queryatoms (in the same order as in Primula.queryatoms)
+	private Hashtable<Rel,PFNetworkNode[]> queryPFNnodes; // Contains the PFNnodes corresponding to 
+	// to queryatoms (for each relation, in the same order as in InferenceModule.queryatoms)
 	private Vector sampleord; // Vector of the uninstantiated nodes in the order in 
 	// which they are to be sampled
 
@@ -289,7 +289,7 @@ public class PFNetwork{
 			int adaptivemode, 
 			boolean[] samplelogmode,
 			int numpar, 
-			GroundAtomList queryatoms, 
+			Hashtable<Rel,GroundAtomList> queryatoms, 
 			int num_subsamples_minmax,
 			int num_subsamples_adapt,
 			BufferedWriter logwriter)
@@ -369,20 +369,20 @@ public class PFNetwork{
 				logwriter.write('\n');
 				logwriter.flush();
 			}
-			if (samplelogmode[2] || samplelogmode[3]){
-				logwriter.write("# Iteration ");
-				String nextatom;
-				for (int i=0;i<queryatoms.allAtoms().size();i++){
-					nextatom = ((GroundAtom)queryatoms.atomAt(i)).asString(A);
-					if (samplelogmode[2])
-						logwriter.write(nextatom + " ");
-					if (samplelogmode[3])
-						logwriter.write(nextatom+"_P " + nextatom+"_Min " 
-								+ nextatom+"_Max " + nextatom+"_Var ");
-				}
-				logwriter.write('\n');
-				logwriter.flush();
-			}
+//			if (samplelogmode[2] || samplelogmode[3]){
+//				logwriter.write("# Iteration ");
+//				String nextatom;
+//				for (int i=0;i<queryatoms.allAtoms().size();i++){
+//					nextatom = ((GroundAtom)queryatoms.atomAt(i)).asString(A);
+//					if (samplelogmode[2])
+//						logwriter.write(nextatom + " ");
+//					if (samplelogmode[3])
+//						logwriter.write(nextatom+"_P " + nextatom+"_Min " 
+//								+ nextatom+"_Max " + nextatom+"_Var ");
+//				}
+//				logwriter.write('\n');
+//				logwriter.flush();
+//			}
 		}
 		for (int i=0;i<sampleord.size();i++){
 			((PFNetworkNode)sampleord.elementAt(i)).initializeForSampling(sampleordmode,
@@ -393,13 +393,17 @@ public class PFNetwork{
 		}
 
 		/* Create queryPFNnodes */
-		queryPFNnodes = new PFNetworkNode[queryatoms.allAtoms().size()];
+		queryPFNnodes = new Hashtable<Rel,PFNetworkNode[]>();
 		String nextatomstring;
-		for (int i=0;i<queryatoms.allAtoms().size();i++){
-			nextatomstring  = ((GroundAtom)queryatoms.atomAt(i)).asString();
-			queryPFNnodes[i] = (PFNetworkNode)atomhasht.get(nextatomstring);
+		for (Rel r: queryatoms.keySet()) {
+			GroundAtomList gal = queryatoms.get(r);
+			PFNetworkNode[] pfnn = new PFNetworkNode[gal.size()];
+			queryPFNnodes.put(r,pfnn);
+			for (int i=0;i<gal.size();i++) {
+				nextatomstring  = ((GroundAtom)gal.atomAt(i)).asString();
+				pfnn[i]=(PFNetworkNode)atomhasht.get(nextatomstring);
+			}		
 		}
-
 	}
 
 	/* Compute all instantiatiations that are deterministically
@@ -658,44 +662,35 @@ public class PFNetwork{
 //		}
 //		System.out.println();
 //		System.out.println("************");
-		/* the probs field of sps must have the same length as queryatoms */
+		
 		double[] nextprob;
 		double[] min,max,var,nextprob_subsample;
-		for (int i=0;i<queryPFNnodes.length;i++){
-			int numvals = queryPFNnodes[i].getNumvalues();
-			nextprob = SmallDouble.toStandardDoubleArray(
-						SmallDouble.divide(queryPFNnodes[i].valsampleweight,
-									allsampleweight));
-			if (logwriter != null && (samplelogmode[2] || samplelogmode[3]))
-				logwriter.write(nextprob + " ");
-			sps.setProbs(nextprob,i);
-			
-			min = new double[numvals];
-			min = rbnutilities.arrayAddConst(min, 1);
-			max = new double[numvals];
-			var = new double[numvals];
-			
-			for (int k=0;k<num_subsamples;k++){
-				nextprob_subsample = SmallDouble.toStandardDoubleArray(
-						SmallDouble.divide(queryPFNnodes[i].valsampleweight_subsample[k],
-									allsampleweight_subsample[k]));
-				min = rbnutilities.arrayCompMin(min,nextprob_subsample);
-				max = rbnutilities.arrayCompMax(max,nextprob_subsample);
-				
-				var = rbnutilities.arrayAdd(var ,
-						rbnutilities.arrayCompPow(rbnutilities.arraySubtract(nextprob,nextprob_subsample),2.0));
-			}
-			var = rbnutilities.arrayScalMult(var,1/num_subsamples);
-			sps.setMinProbs(min,i);
-			sps.setMaxProbs(max,i);
-			sps.setVars(var,i);
+		for (Rel r: queryPFNnodes.keySet()) {
+			PFNetworkNode[] pfnns = queryPFNnodes.get(r);
+			for (int i=0;i<pfnns.length;i++){
+				int numvals = pfnns[i].getNumvalues();
+				nextprob = SmallDouble.toStandardDoubleArray(
+						SmallDouble.divide(pfnns[i].valsampleweight,
+								allsampleweight));
+				if (logwriter != null && (samplelogmode[2] || samplelogmode[3]))
+					logwriter.write(nextprob + " ");
+				sps.setProb(r,nextprob,i);
+				var = new double[numvals];
 
-			if (logwriter != null && samplelogmode[3])
-				logwriter.write(min + " " + max  + " " + var + " ");
-		}
-		if (logwriter != null && (samplelogmode[2] || samplelogmode[3])){
-			logwriter.write('\n');
-			logwriter.flush();
+				for (int k=0;k<num_subsamples;k++){
+					nextprob_subsample = SmallDouble.toStandardDoubleArray(
+							SmallDouble.divide(pfnns[i].valsampleweight_subsample[k],
+									allsampleweight_subsample[k]));
+					var = rbnutilities.arrayAdd(var ,
+							rbnutilities.arrayCompPow(rbnutilities.arraySubtract(nextprob,nextprob_subsample),2.0));
+				}
+				var = rbnutilities.arrayScalMult(var,1/num_subsamples);
+				sps.setVar(r,var,i);
+			}
+			if (logwriter != null && (samplelogmode[2] || samplelogmode[3])){
+				logwriter.write('\n');
+				logwriter.flush();
+			}
 		}
 	}
 

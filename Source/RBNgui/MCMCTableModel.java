@@ -50,7 +50,7 @@ public class MCMCTableModel extends QueryTableModel{
 //	 * @uml.property  name="vardata"
 //	 * @uml.associationEnd  multiplicity="(0 -1)" elementType="java.lang.String"
 //	 */
-	LinkedList<String>[] vardata;
+//	LinkedList<String>[] vardata;
 	/**
 	 * keith cascio 20060511 ...
 	 * @uml.property  name="acedata"
@@ -63,12 +63,13 @@ public class MCMCTableModel extends QueryTableModel{
 	private int column;
 	
 
-	public MCMCTableModel(Rel r){
+	public MCMCTableModel(QueryTableModel qtm, Rel r){
 		super();
+		rownum=qtm.getRowCount();
 		column = 1+2*(int)r.numvals(); // first column for query atoms
-		probabilitydata = new Object[(int)r.numvals()];
-		vardata = (LinkedList<String>[])new Object[(int)r.numvals()];
-		rownum=super.getRowCount();
+		p_v_data = new String[rownum][2*(int)r.numvals()];
+		this.setQuery(qtm.getQuery());
+		
 	}
 
 	public int getColumnCount(){
@@ -77,18 +78,14 @@ public class MCMCTableModel extends QueryTableModel{
 
 	public Object getValueAt( int row, int col )
 	{
-		if (row < this.getRowCount()) {
+		if (row < this.getRowCount() && col<column) {
 			if (col==0) // query atom
-				return queryatomdata.get(     row );
-			else {
-				if (col%2 == 1) // a probability column
-					return probabilitydata[(col+1)/2].get(row);
-				else // a variance column
-					return vardata[col/2].get(     row );
-			}
+				return queryatomdata.get(row);
+			else 
+				return p_v_data[row][col-1];
 		}
 		else {
-			System.err.println( "row " + row + " out of range at column " + col );
+			System.err.println( "row " + row + " or column " + col + " out of range" );
 			return STR_EMPTY;
 		}
 
@@ -117,34 +114,9 @@ public class MCMCTableModel extends QueryTableModel{
 
 	public void reset(){
 		super.reset();
-		probabilitydata = (LinkedList<String>[])new Object[(column-1)/2];
-		vardata = (LinkedList<String>[])new Object[(column-1)/2];
+		p_v_data = new String[rownum][column-1];
 	}
 
 
-//	public void removeAllQueries(){
-//		super.removeAllQueries();
-//		probabilitydata = new LinkedList();
-//		vardata = new LinkedList();
-//	}
-//
-//	public void removeQuery(int query){
-//		super.removeQuery(query);
-//		probabilitydata.remove(query);
-//		vardata.remove(query);
-//	}
-//
-//	public void resetProb(){
-//		probabilitydata = new LinkedList();
-//	}
-//
-//	public void resetVar(){
-//		vardata = new LinkedList();
-//	}
 
-
-	
-	public LinkedList<String>[] getProbabilities(){
-		return probabilitydata;
-	}
 }

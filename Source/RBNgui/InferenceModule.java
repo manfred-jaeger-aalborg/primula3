@@ -438,6 +438,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
 	private JPanel queryatomsPanel 		 		= new JPanel(new FlowLayout());
+	private JScrollPane outerQueryPane ;// = new JScrollPane();
 	/**
 	 * @uml.property  name="queryatomsButtonsPanel"
 	 * @uml.associationEnd  multiplicity="(1 1)"
@@ -954,18 +955,11 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		
 		inferencePane.add("MAP", panelMapOuter);
 		
-		/* Panel consisting of query table and buttons underneath */
-//		queryatomsScrollList.getViewport().add(querytable);
-//		queryatomsScrollList.getViewport().add(querytable2);
-
-		//queryatomsPanel.add(queryatomsLabel, BorderLayout.NORTH);
-//		for (int i=0;i<queryatomsScrolllists.size();i++)
-//			queryatomsPanel.add(queryatomsScrolllists.elementAt(i));
-//		queryatomsPanel.add(deletesamplePanel);
-		/* ************************************ */
 		
 //		atomsPanel.add(instantiationsPanel, BorderLayout.CENTER);
-		atomsPanel.add(queryatomsPanel, BorderLayout.SOUTH);
+		outerQueryPane=new JScrollPane();
+		outerQueryPane.getViewport().add(queryatomsPanel);
+		atomsPanel.add(outerQueryPane, BorderLayout.SOUTH);
 		
 		//MouseListeners
 		attributesList.	addMouseListener( this );
@@ -1149,7 +1143,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		//lowerPanel.add(qbPanel, BorderLayout.CENTER );
 		//lowerPanel.add(inferencePane, BorderLayout.CENTER );
 		//lowerPanel.add(infoMessage, BorderLayout.SOUTH );
-		JSplitPane querySampleSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT,buttonsAndInfoPanel,queryatomsPanel);
+		JSplitPane querySampleSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT,buttonsAndInfoPanel,outerQueryPane);
 		//contentPane.setLayout(new BorderLayout());
 		contentPane.setLayout(new BoxLayout(contentPane,BoxLayout.Y_AXIS));
 		//contentPane.add(querySampleSplit);
@@ -1424,7 +1418,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 					adaptivemode,
 					samplelogmode,
 					cptparents,
-					myprimula.queryatoms,
+					this.queryatoms,
 					num_subsamples_minmax,
 					num_subsamples_adapt,
 					logwriter);
@@ -2176,7 +2170,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 			nextjt.setShowHorizontalLines(false);
 			nextjt.setPreferredScrollableViewportSize(new Dimension(146, 100));
 			nextjt.getColumnModel().getColumn(0).setHeaderValue("Query Atoms");
-			nextjt.getColumnModel().getColumn(0).setPreferredWidth(150);
+			nextjt.getColumnModel().getColumn(0).setPreferredWidth(100);
 			nextjsp.getViewport().add(nextjt);
 			queryatomsScrolllists.add(nextjsp);
 			queryatomsPanel.add(nextjsp);
@@ -2838,32 +2832,26 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 
 	public void update(Observable o, Object arg){
 		// TODO: make this work again!
-//		if (o instanceof SampleProbs){
-//			mcmcModel.resetProb();
-//			double [][] prob= ((SampleProbs)o).getProbs();
-//			for(int i=0; i<prob.length; i++){
-//				mcmcModel.addProb(""+prob[i][1]);
-//			}
-//			mcmcModel.resetMinProb();
-//			double [][] minprob = ((SampleProbs)o).getMinProbs();
-//			for(int i=0; i<minprob.length; i++){
-//				mcmcModel.addMinProb(""+minprob[i][1]);
-//			}
-//			mcmcModel.resetMaxProb();
-//			double [][] maxprob = ((SampleProbs)o).getMaxProbs();
-//			for(int i=0; i<maxprob.length; i++){
-//				mcmcModel.addMaxProb(""+maxprob[i][1]);
-//			}
-//			mcmcModel.resetVar();
-//			double [][] var = ((SampleProbs)o).getVar();
-//			for(int i=0; i<var.length; i++){
-//				mcmcModel.addVar(""+var[i][1]);
-//			}
-//			sampleSize.setText(""+((SampleProbs)o).getSize());
-//			Double dweight = new Double(((SampleProbs)o).getWeight());
-//			weight.setText(""+ myio.StringOps.doubleConverter(dweight.toString()));
-//		}
-//		
+		if (o instanceof SampleProbs){
+			for (Rel r: queryatoms.keySet()) {
+				MCMCTableModel mcmct = mcmcModels.elementAt(relIndex.get(r.name()));
+				
+				double [][] prob= ((SampleProbs)o).getProbs();
+				for(int i=0; i<prob.length; i++){
+					mcmcModel.addProb(""+prob[i][1]);
+				}
+				
+				mcmcModel.resetVar();
+				double [][] var = ((SampleProbs)o).getVar();
+				for(int i=0; i<var.length; i++){
+					mcmcModel.addVar(""+var[i][1]);
+				}
+				sampleSize.setText(""+((SampleProbs)o).getSize());
+				Double dweight = new Double(((SampleProbs)o).getWeight());
+				weight.setText(""+ myio.StringOps.doubleConverter(dweight.toString()));
+				}
+		}
+		
 //		if (o instanceof MapVals){
 //			mapModel.resetMapVals();
 //			int [] mapvals = ((MapVals)o).getMVs();
@@ -2907,22 +2895,27 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		 * same length as relList
 		 */
 		mcmcModels=new Vector<MCMCTableModel>();
+		//Vector<JTable> newquerytables = new Vector<JTable>();
 		for (int i=0;i<querytables.size();i++) {
+			
 			Rel r = relList.elementAt(i);
-			MCMCTableModel mcmctm = new MCMCTableModel(relList.elementAt(i));
+			MCMCTableModel mcmctm = new MCMCTableModel(queryModels.elementAt(i),relList.elementAt(i));
+			
 			mcmcModels.add(mcmctm);
 			JTable qt = querytables.elementAt(i);
+			//newquerytables.add(qt);
 			qt.setModel(mcmctm);
+			qt.getColumnModel().getColumn(0).setPreferredWidth(250);
 			qt.setShowHorizontalLines(false);
-			qt.setPreferredScrollableViewportSize(new Dimension(146, 100));
+			qt.setPreferredScrollableViewportSize(new Dimension(300, 100));
 			//table header values
 			qt.getColumnModel().getColumn(0).setHeaderValue("Query");
-			for (int j=0;j<r.getArity();j++) {
+			for (int j=0;j<r.numvals();j++) {
 				qt.getColumnModel().getColumn(2*j+1).setHeaderValue(r.get_String_val(j));
 				qt.getColumnModel().getColumn(2*(j+1)).setHeaderValue("+/-");
 			}
-			qt.getColumnModel().getColumn(0).setPreferredWidth(150);
-			
+//			qt.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+//			qt.doLayout();
 		}
 	}
 	
@@ -2947,6 +2940,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 			case 1: // MCMC tab
 				buildMCMCTables();
 				queryatomsPanel.updateUI();
+				outerQueryPane.updateUI();
 				break;
 			case 2: // MAP tab
 				break;

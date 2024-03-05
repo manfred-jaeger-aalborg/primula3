@@ -41,101 +41,84 @@ public class SampleProbs extends Observable{
 
 	/*
 	 * Represents estimated probabilities for a list of query atoms
+	 * of different relations.
+	 * 
 	 * For each query atom have arrays of length corresponding to the
 	 * the number of values for the atom's relation
 	 */
-	private double[][] probs;
-	private double[][] maxprobs;
-	private double[][] minprobs;
-	private double[][] variance;
+	
+	/* class for holding the data for the queries about 
+	 * one relation
+	 */
+	private class p_v_vals{
+		
+		private double[][] probs;
+		private double[][] variance;
+		
+		public double[][] getProbs() {
+			return probs;
+		}
+
+		public void setProbs(double[][] probs) {
+			this.probs = probs;
+		}
+
+		public double[][] getVariance() {
+			return variance;
+		}
+
+		public void setVariance(double[][] variance) {
+			this.variance = variance;
+		}
+		
+		
+		public p_v_vals(int rows, int numvals) {
+			probs = new double[rows][numvals];
+			variance  = new double[rows][numvals];
+		}
+		
+		public void setprob_row(int row, double[] p) {
+			probs[row]=p;
+		}
+		public void setvar_row(int row, double[] v) {
+			variance[row]=v;
+		}
+		
+		
+	}
+	
+	private Hashtable<Rel,p_v_vals> all_p_v_vals;
 	private int size;
 	private double weight;
 
 
-	public SampleProbs(GroundAtomList queryatoms){
-		int l = queryatoms.size();
-		probs = new double[l][];
-		maxprobs = new double[l][];
-		minprobs = new double[l][];
-		variance = new double[l][];
-		
-		for (int i =0;i<l;i++) {
-			int v = (int)queryatoms.atomAt(i).rel().numvals();
-			probs[i]=new double[v];
-			maxprobs[i]=new double[v];
-			minprobs[i]=new double[v];
-			variance[i]=new double[v];
+	public SampleProbs(Hashtable<Rel,GroundAtomList> qatoms){
+		all_p_v_vals = new Hashtable<Rel,p_v_vals>();
+		for (Rel r: qatoms.keySet()) {
+			all_p_v_vals.put(r,new p_v_vals(qatoms.get(r).size(),(int)r.numvals()));
 		}
 	}
 
-
-
-
-
-	public void setProb(double p, int i, int val){
-		probs[i][val]=p;
-		setChanged();
-	}
-
-	public void setProbs(double[] p, int i){
-		probs[i]=p;
-		setChanged();
-	}
-
-	public void setMinProb(double p, int i, int val){
-		minprobs[i][val]=p;
-		setChanged();
-	}
-
-	public void setMinProbs(double[] p, int i){
-		minprobs[i]=p;
-		setChanged();
-	}
-
-	public void setMaxProb(double p, int i, int val){
-		maxprobs[i][val]=p;
-		setChanged();
-	}
-	public void setMaxProbs(double[] p, int i){
-		maxprobs[i]=p;
-		setChanged();
-	}
-	public void setVar(double p, int i, int val){
-		variance[i][val]=p;
-		setChanged();
-	}
-
-	public void setVars(double[] p, int i){
-		variance[i]=p;
-		setChanged();
-	}
-
-	public void setProbs(double[][] probs){
-		this.probs = probs;
+	public void setProb(Rel r, double[] p, int i){
+		all_p_v_vals.get(r).setprob_row(i, p);
 		setChanged();
 	}
 
 
-
-
-
-	public double[][] getProbs(){
-		return probs;
+	public void setVar(Rel r, double[] v, int i){
+		all_p_v_vals.get(r).setvar_row(i, v);
+		setChanged();
 	}
 
 
-	public double[][] getMinProbs(){
-		return minprobs;
+	public double[][] getProbs(Rel r){
+		return all_p_v_vals.get(r).getProbs();
 	}
-
-	public double[][] getMaxProbs(){
-		return maxprobs;
+	
+	public double[][] getVariance(Rel r){
+		return all_p_v_vals.get(r).getVariance();
 	}
-
-	public double[][] getVar(){
-		return variance;
-	}
-
+	
 
 	public int getSize(){
 		return size;

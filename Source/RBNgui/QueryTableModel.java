@@ -116,6 +116,8 @@ public class QueryTableModel extends AbstractTableModel{
 		return queryatomdata;
 	}
 
-
+	public void setQuery(LinkedList<String> q){
+		queryatomdata = q;
+	}
 
 }

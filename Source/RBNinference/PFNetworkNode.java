@@ -153,12 +153,12 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
 
 	public  void initializeForSampling(int sampleordmode,
 			int adaptivemode,
-			GroundAtomList queryatoms,
+			Hashtable<Rel,GroundAtomList> queryatoms,
 			int num_subsamples_minmax,
 			int num_subsamples_adapt)
 	{
 		valsampleweight = new double[this.numvalues][2];
-		if (queryatoms.contains(myatom)){
+		if (queryatoms.get(myatom.rel()).contains(myatom)){
 			valsampleweight_subsample = new double[num_subsamples_minmax][this.numvalues][2];
 		}
 	}
