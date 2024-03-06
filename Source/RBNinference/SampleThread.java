@@ -40,9 +40,9 @@ public class SampleThread extends Thread{
 	private boolean running;
 	SampleProbs sprobs;
 	private boolean pause;
-	private int queryAtomSize;
+//	private int queryAtomSize;
 	private int num_subsamples;
-	double[] test;
+//	double[] test;
 	double tal = 0;
 	private PFNetwork pfn;
 	boolean[] logmode;
@@ -55,13 +55,13 @@ public class SampleThread extends Thread{
 
 	public SampleThread(Observer infmodule, 
 			PFNetwork pfn, 
-			GroundAtomList queryatoms, 
+			Hashtable<Rel,GroundAtomList> queryatoms, 
 //			int num_subsamples_param,
 			boolean[] logmode_param,
 			BufferedWriter logwriter_param){
 
 		running = true;
-		this.queryAtomSize = queryatoms.allAtoms().size();
+//		this.queryAtomSize = queryatoms.allAtoms().size();
 		this.pfn = pfn;
 		logmode = logmode_param;
 		num_subsamples = pfn.getNum_subsamples_minmax();
@@ -69,7 +69,7 @@ public class SampleThread extends Thread{
 		sprobs = new SampleProbs(queryatoms);
 		sprobs.addObserver(infmodule);
 		pause = false;
-		test = new double[queryAtomSize];
+//		test = new double[queryAtomSize];
 	}
 
 	public void run()

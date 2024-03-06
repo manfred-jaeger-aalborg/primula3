@@ -91,7 +91,18 @@ public class MCMCTableModel extends QueryTableModel{
 
 	}
 
-
+	public void setProb(String[] probs, int row) {
+		for (int i=0;i<probs.length;i++) {
+			p_v_data[row][2*i]=myio.StringOps.doubleConverter(probs[i]);
+		}
+	}
+	
+	public void setVar(String[] vars, int row) {
+		for (int i=0;i<vars.length;i++) {
+			p_v_data[row][2*i+1]=myio.StringOps.doubleConverter(vars[i]);
+		}
+	}
+	
 
 //	public void addProb(String prob){
 //		probabilitydata.add(myio.StringOps.doubleConverter(prob));

@@ -119,75 +119,52 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	private JTabbedPane inferencePane   = new JTabbedPane();
 
 	/**
-	 * @uml.property  name="attributesLabel"
+	 * @uml.property  name="relationsLabel"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
-	private JLabel attributesLabel               = new JLabel("Attributes");
+	private JLabel relationsLabel               = new JLabel("Relations");
 	/**
-	 * @uml.property  name="attributesList"
+	 * @uml.property  name="relationsList"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
-	private JList attributesList                 = new JList();
+	private JList relationsList                 = new JList();
 	/**
-	 * @uml.property  name="attributesListModel"
+	 * @uml.property  name="relationsListModel"
 	 * @uml.associationEnd  multiplicity="(0 -1)" elementType="RBNpackage.Rel"
 	 */
-	private DefaultListModel attributesListModel = new DefaultListModel();
+	private DefaultListModel relationsListModel = new DefaultListModel();
 	/**
 	 * keith cascio 20060511 ...
-	 * @uml.property  name="attributesScrollList"
+	 * @uml.property  name="relationsScrollList"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
-	private JScrollPane attributesScrollList;//     = new JScrollPane();
+	private JScrollPane relationsScrollList;//     = new JScrollPane();
 	/**
 	 * ... keith cascio
-	 * @uml.property  name="binaryLabel"
+	 * @uml.property  name="valuesLabel"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
 
-	private JLabel binaryLabel                   = new JLabel("Binary relations");
+	private JLabel valuesLabel                   = new JLabel("Values");
 	/**
-	 * @uml.property  name="binaryList"
+	 * @uml.property  name="valuesList"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
-	private JList binaryList                     = new JList();
+	private JList valuesList                     = new JList();
 	/**
-	 * @uml.property  name="binaryListModel"
+	 * @uml.property  name="valuesListModel"
 	 * @uml.associationEnd  multiplicity="(0 -1)" elementType="RBNpackage.Rel"
 	 */
-	private DefaultListModel binaryListModel     = new DefaultListModel();
+	private DefaultListModel valuesListModel     = new DefaultListModel();
 	/**
 	 * keith cascio 20060511 ...
-	 * @uml.property  name="binaryScrollList"
+	 * @uml.property  name="valuesScrollList"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
-	private JScrollPane binaryScrollList;//         = new JScrollPane();
+	private JScrollPane valuesScrollList;//         = new JScrollPane();
 	/**
 	 * ... keith cascio
 	 * @uml.property  name="arbitraryLabel"
-	 * @uml.associationEnd  multiplicity="(1 1)"
-	 */
-
-	private JLabel arbitraryLabel                = new JLabel("Arbitrary relations");
-	/**
-	 * @uml.property  name="arbitraryList"
-	 * @uml.associationEnd  multiplicity="(1 1)"
-	 */
-	private JList arbitraryList                  = new JList();
-	/**
-	 * @uml.property  name="arbitraryListModel"
-	 * @uml.associationEnd  multiplicity="(0 -1)" elementType="RBNpackage.Rel"
-	 */
-	private DefaultListModel arbitraryListModel  = new DefaultListModel();
-	/**
-	 * keith cascio 20060511 ...
-	 * @uml.property  name="arbitraryScrollList"
-	 * @uml.associationEnd  multiplicity="(1 1)"
-	 */
-	private JScrollPane arbitraryScrollList;//      = new JScrollPane();
-	/**
-	 * ... keith cascio
-	 * @uml.property  name="elementNamesLabel"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
 
@@ -379,15 +356,15 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	private JPanel deletesamplePanel   = new JPanel(new BorderLayout());
 
 	/**
-	 * @uml.property  name="attributesPanel"
+	 * @uml.property  name="relationsPanel"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
-	private JPanel attributesPanel     = new JPanel(new BorderLayout());
+	private JPanel relationsPanel     = new JPanel(new BorderLayout());
 	/**
-	 * @uml.property  name="binaryPanel"
+	 * @uml.property  name="valuesPanel"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
-	private JPanel binaryPanel         = new JPanel(new BorderLayout());
+	private JPanel valuesPanel         = new JPanel(new BorderLayout());
 	/**
 	 * @uml.property  name="arbitraryPanel"
 	 * @uml.associationEnd  multiplicity="(1 1)"
@@ -624,9 +601,15 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	/**
 	 * @uml.property  name="rel"
 	 * @uml.associationEnd  
+	 * 
+	 * The currently selected relation (for defining queries or evidence)
 	 */
-	private BoolRel rel;
+	private Rel selected_rel;
 	
+	/*
+	 * The selected value for defining evidence (using the internal integer representation)
+	 */
+	private int selected_val;
 	
 	/* The gradient graph structure constructed in current inference 
 	 * process
@@ -643,10 +626,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	 * @uml.associationEnd  
 	 */
 	private GroundAtom selectedQueryAtom;
-	/**
-	 * @uml.property  name="truthValue"
-	 */
-	private boolean truthValue = true;
+
 	/**
 	 * @uml.property  name="queryModeOn"
 	 */
@@ -813,38 +793,30 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		buildQueryatomsTables(queryModels);
 			
 		/* Top panel with list of attributes/binary relations/arbitrary relations */
-		attributesList.setModel(attributesListModel);
-		attributesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		relationsList.setModel(relationsListModel);
+		relationsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		/** keith cascio 20060511 ... */
-		attributesScrollList = new JScrollPane( attributesList );//attributesScrollList.getViewport().add(attributesList);
-		Dimension sizePreferred = attributesScrollList.getPreferredSize();
+		relationsScrollList = new JScrollPane( relationsList );//relationsScrollList.getViewport().add(relationsList);
+		Dimension sizePreferred = relationsScrollList.getPreferredSize();
 		sizePreferred.height = 64;
-		attributesScrollList.setPreferredSize( sizePreferred );
+		relationsScrollList.setPreferredSize( sizePreferred );
 		/** ... keith cascio */
-		attributesPanel.add(attributesLabel, BorderLayout.NORTH);
-		attributesPanel.add(attributesScrollList, BorderLayout.CENTER);
+		relationsPanel.add(relationsLabel, BorderLayout.NORTH);
+		relationsPanel.add(relationsScrollList, BorderLayout.CENTER);
 
-		binaryList.setModel(binaryListModel);
-		binaryList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		valuesList.setModel(valuesListModel);
+		valuesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		/** keith cascio 20060511 ... */
-		binaryScrollList = new JScrollPane( binaryList );//binaryScrollList.getViewport().add(binaryList);
-		binaryScrollList.setPreferredSize( sizePreferred );
+		valuesScrollList = new JScrollPane( valuesList );//valuesScrollList.getViewport().add(binaryList);
+		valuesScrollList.setPreferredSize( sizePreferred );
 		/** ... keith cascio */
-		binaryPanel.add(binaryLabel, BorderLayout.NORTH);
-		binaryPanel.add(binaryScrollList, BorderLayout.CENTER);
+		valuesPanel.add(valuesLabel, BorderLayout.NORTH);
+		valuesPanel.add(valuesScrollList, BorderLayout.CENTER);
 
-		arbitraryList.setModel(arbitraryListModel);
-		arbitraryList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		/** keith cascio 20060511 ... */
-		arbitraryScrollList = new JScrollPane( arbitraryList );//arbitraryScrollList.getViewport().add(arbitraryList);
-		arbitraryScrollList.setPreferredSize( sizePreferred );
-		/** ... keith cascio */
-		arbitraryPanel.add(arbitraryLabel, BorderLayout.NORTH);
-		arbitraryPanel.add(arbitraryScrollList, BorderLayout.CENTER);
 
-		arityPanel.add(attributesPanel);
-		arityPanel.add(binaryPanel);
-		arityPanel.add(arbitraryPanel);
+
+		arityPanel.add(relationsPanel);
+		arityPanel.add(valuesPanel);
 		/* ************************************ */
 
 		
@@ -962,9 +934,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		atomsPanel.add(outerQueryPane, BorderLayout.SOUTH);
 		
 		//MouseListeners
-		attributesList.	addMouseListener( this );
-		binaryList.addMouseListener( this );
-		arbitraryList.addMouseListener( this );
+		relationsList.	addMouseListener( this );
+		valuesList.addMouseListener( this );
 		elementNamesList.addMouseListener( this );
 		instantiationsList.addMouseListener( this );
 		//querytable.addMouseListener( this); // TODO
@@ -1196,7 +1167,6 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 			falseButton.setBackground(Primula.COLOR_BLUE);
 			queryButton.setBackground(Primula.COLOR_BLUE);
 			elementNamesList.clearSelection();
-			truthValue = true;
 			queryModeOn = false;
 			infoMessage.setText(" ");
 		}
@@ -1206,7 +1176,6 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 			trueButton.setBackground(Primula.COLOR_BLUE);
 			queryButton.setBackground(Primula.COLOR_BLUE);
 			elementNamesList.clearSelection();
-			truthValue = false;
 			queryModeOn = false;
 			infoMessage.setText(" ");
 		}
@@ -1232,8 +1201,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 			}
 		}
 		else if( source == cwaButton ){
-			if (rel != null){
-				inst.applyCWA(rel);
+			if (selected_rel != null && selected_rel instanceof BoolRel){
+				inst.applyCWA((BoolRel)selected_rel);
 				updateInstantiationList();
 				myprimula.updateBavaria();
 			}
@@ -1432,7 +1401,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 
 		sampthr = new SampleThread(this, 
 				pfn, 
-				myprimula.queryatoms,
+				this.queryatoms,
 				samplelogmode,
 				logwriter);
 		sampthr.start();
@@ -1576,65 +1545,65 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	public void mousePressed(MouseEvent e) {
 		Object source = e.getSource();
 
-		if(source == attributesList){
+		if(source == relationsList){
 			first_bin = first_arb = true;
-			binaryList.clearSelection();
-			arbitraryList.clearSelection();
+			valuesListModel.removeAllElements();
 			elementNamesList.clearSelection();
-			int index = attributesList.locationToIndex(e.getPoint());
+			int index = relationsList.locationToIndex(e.getPoint());
 			if(index >= 0){
-				rel = (BoolRel)attributesListModel.elementAt(index);
-				infoMessage.setText(rel.name.name);
+				selected_rel = (Rel)relationsListModel.elementAt(index);
+				for (int i=0;i<selected_rel.numvals();i++)
+					valuesListModel.addElement(selected_rel.get_String_val(i));
+				infoMessage.setText(selected_rel.name.name);
 			}
 		}
-		else if( source == binaryList ){
+		else if( source == valuesList ){
 			first_bin = first_arb = true;
-			attributesList.clearSelection();
-			arbitraryList.clearSelection();
+			relationsList.clearSelection();
 			elementNamesList.clearSelection();
-			int index = binaryList.locationToIndex(e.getPoint());
+			int index = valuesList.locationToIndex(e.getPoint());
 			if(index >= 0){
-				rel = (BoolRel)binaryListModel.elementAt(index);
-				infoMessage.setText(rel.name.name);
+				selected_rel = (BoolRel)valuesListModel.elementAt(index);
+				infoMessage.setText(selected_rel.name.name);
 			}
 		}
-		else if( source == arbitraryList ){
-			first_bin = first_arb = true;
-			attributesList.clearSelection();
-			binaryList.clearSelection();
-			elementNamesList.clearSelection();
-			int index = arbitraryList.locationToIndex(e.getPoint());
-			if(index >= 0){
-				rel = (BoolRel)arbitraryListModel.elementAt(index);
-				infoMessage.setText(rel.name.name);
-			}
-			if (rel.arity == 0){
-				infoMessage.setText(rel.name.name+"()");
-				if(queryModeOn){
-					addQueryAtoms(rel,new int[0]);
-					buildQueryatomsTables(queryModels);
-				}
-				else{
-					inst.add(new GroundAtom(rel,new int[0]),truthValue,"?");
-					updateInstantiationList();
-				}
-			}
-		}
+//		else if( source == arbitraryList ){
+//			first_bin = first_arb = true;
+//			attributesList.clearSelection();
+//			valuesList.clearSelection();
+//			elementNamesList.clearSelection();
+//			int index = arbitraryList.locationToIndex(e.getPoint());
+//			if(index >= 0){
+//				rel = (BoolRel)arbitraryListModel.elementAt(index);
+//				infoMessage.setText(rel.name.name);
+//			}
+//			if (rel.arity == 0){
+//				infoMessage.setText(rel.name.name+"()");
+//				if(queryModeOn){
+//					addQueryAtoms(rel,new int[0]);
+//					buildQueryatomsTables(queryModels);
+//				}
+//				else{
+//					inst.add(new GroundAtom(rel,new int[0]),truthValue,"?");
+//					updateInstantiationList();
+//				}
+//			}
+//		}
 		else if( source == elementNamesList ){
-			int selected;
+			int selected_element;
 			if(!sampling){
-				if(rel != null){  //relation should be selected first
-					selected = elementNamesList.locationToIndex(e.getPoint());
-					if(selected >= 0){
+				if(selected_rel != null){  //relation should be selected first
+					selected_element = elementNamesList.locationToIndex(e.getPoint());
+					if(selected_element >= 0){
 						//an attribute
-						if(rel.arity == 1){
+						if(selected_rel.arity == 1){
 							//MJ->
 							tuple = new int[1];
 							//<-MJ
-							int[] node = {selected};
-							addedTuples = (String)elementNamesListModel.elementAt(selected);
+							int[] node = {selected_element};
+							addedTuples = (String)elementNamesListModel.elementAt(selected_element);
 							if(queryModeOn){
-								addQueryAtoms(rel, node);
+								addQueryAtoms(selected_rel, node);
 							}
 							else{
 								int [][] instantiations = new int[1][tuple.length];
@@ -1643,66 +1612,66 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 //								instantiationpos = 0;
 //								size = 1;
 								instantiations=allMatchingTuples(node);
-								inst.add(rel, instantiations, truthValue,"?");
+//								inst.add(selected_rel, instantiations, selectedValue,"?");
 								updateInstantiationList();
-								infoMessage.setText(rel.name.name+" ("+addedTuples+") "+truthValue+" added");
+//								infoMessage.setText(selected_rel.name.name+" ("+addedTuples+") "+truthValue+" added");
 								
 							}
 						}
 						//a binary relation
-						else if(rel.arity == 2){
+						else if(selected_rel.arity == 2){
 							if(first_bin){
 								tuple = new int[2];
-								tuple[0] = selected;
+								tuple[0] = selected_element;
 								addedTuples  = (String)elementNamesListModel.elementAt(tuple[0]);
 								first_bin = false;
-								if(elementNamesListModel.elementAt(selected).equals("*")){
+								if(elementNamesListModel.elementAt(selected_element).equals("*")){
 									firstbinarystar=true;
 								}
 								if(queryModeOn){
-									infoMessage.setText(rel.name.name+" ("+addedTuples+",...)");
+									infoMessage.setText(selected_rel.name.name+" ("+addedTuples+",...)");
 								}
 								else{
-									infoMessage.setText(rel.name.name+" ("+addedTuples+",...) "+truthValue);
+//									infoMessage.setText(selected_rel.name.name+" ("+addedTuples+",...) "+truthValue);
 								}
 							}
 							else if(!first_bin){
-								tuple[1] = selected;
+								tuple[1] = selected_element;
 								first_bin = true;
 								addedTuples = addedTuples + ", " + (String)elementNamesListModel.elementAt(tuple[1]);
 								if(queryModeOn){
-									addQueryAtoms(rel, tuple);
+									addQueryAtoms(selected_rel, tuple);
 								}
 								else{
 									int[][] instantiations = allMatchingTuples(tuple);
-									inst.add(rel, instantiations, truthValue,"?");
+//									inst.add(selected_rel, instantiations, truthValue,"?");
 									updateInstantiationList();
-									infoMessage.setText(rel.name.name+" ("+addedTuples+") "+truthValue+" added");
+//									infoMessage.setText(selected_rel.name.name+" ("+addedTuples+") "+truthValue+" added");
 									tuple = new int[0];
 								}
 							}
 							firstbinarystar = false;
 						}
 						//an arbitrary relation
-						else if(rel.arity >= 3){
+						else if(selected_rel.arity >= 3){
 							if(first_arb){
-								aritynumber = rel.arity;
+								aritynumber = selected_rel.arity;
 								tuple = new int[aritynumber];
 								index = 0;
-								tuple[index] = selected;
+								tuple[index] = selected_element;
 								addedTuples = (String)elementNamesListModel.elementAt(tuple[index]);
 								++index;
 								--aritynumber;
 								first_arb = false;
 								if(queryModeOn){
-									infoMessage.setText(rel.name.name+" ("+addedTuples+",...)");
+									infoMessage.setText(selected_rel.name.name+" ("+addedTuples+",...)");
 								}
 								else{
-									infoMessage.setText(rel.name.name+" ("+addedTuples+",...) "+truthValue);
+//									infoMessage.setText(selected_rel.name.name+" ("+addedTuples+",...) "+truthValue);
 								}
 							}
 							else if(!first_arb){
-								tuple[index] = selected;
+								tuple[index] = selected_element;
 								addedTuples = addedTuples + ", " + (String)elementNamesListModel.elementAt(tuple[index]);
 								++index;
 								--aritynumber;
@@ -1710,7 +1679,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 									first_arb = true;
 									if(queryModeOn){
 										infoMessage.setText("This can take a few minuts, please wait.");
-										addQueryAtoms(rel, tuple);
+										addQueryAtoms(selected_rel, tuple);
 										tuple = new int[0];
 									}
 									else{
@@ -1722,18 +1691,18 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 //										instantiationpos = 0;
 
 										int[][] instantiations = allMatchingTuples(tuple);
-										inst.add(rel, instantiations, truthValue,"?");
+//										inst.add(selected_rel, instantiations, truthValue,"?");
 										updateInstantiationList();
-										infoMessage.setText(rel.name.name+" ("+addedTuples+") "+truthValue+" added");
+//										infoMessage.setText(selected_rel.name.name+" ("+addedTuples+") "+truthValue+" added");
 										tuple = new int[0];
 									}
 									addedTuples = "";
 								}
 								else{
 									if(queryModeOn)
-										infoMessage.setText(rel.name.name+" ("+addedTuples+",...) ");
-									else
-										infoMessage.setText(rel.name.name+" ("+addedTuples+",...) "+truthValue);
+										infoMessage.setText(selected_rel.name.name+" ("+addedTuples+",...) ");
+//									else
+//										infoMessage.setText(selected_rel.name.name+" ("+addedTuples+",...) "+truthValue);
 								}
 							}
 						}
@@ -1861,13 +1830,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		if(myprimula.rbn != null){
 			Rel[] rels = myprimula.rbn.Rels();
 			for(int i=0; i<rels.length; ++i){
-				if(rels[i].arity == 1)
-					attributesListModel.addElement(rels[i]);
-				else if(rels[i].arity == 2)
-					binaryListModel.addElement(rels[i]);
-				//else if(rels[i].arity >= 3)
-				else
-					arbitraryListModel.addElement(rels[i]);
+					relationsListModel.addElement(rels[i]);
 			}
 		}
 	}
@@ -1875,9 +1838,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 
 	//new RBN file loaded
 	public void updateRBNRelations(){
-		attributesListModel.clear();
-		binaryListModel.clear();
-		arbitraryListModel.clear();
+		relationsListModel.clear();
+		valuesListModel.clear();
 		readRBNRelations();
 		//instasosd.reset();
 		instantiationsListModel.clear();
@@ -1886,7 +1848,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		elementNamesList.clearSelection();
 		infoMessage.setText(" ");
 		first_bin = first_arb = true;
-		rel = null;
+		selected_rel = null;
 		selectedInstAtom = null;
 		selectedQueryAtom = null;
 
@@ -2836,15 +2798,19 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 			for (Rel r: queryatoms.keySet()) {
 				MCMCTableModel mcmct = mcmcModels.elementAt(relIndex.get(r.name()));
 				
-				double [][] prob= ((SampleProbs)o).getProbs();
+				double [][] prob= ((SampleProbs)o).getProbs(r);
 				for(int i=0; i<prob.length; i++){
-					mcmcModel.addProb(""+prob[i][1]);
+					String[] probsasstring = new String[prob[i].length];
+					for (int j=0; j<probsasstring.length; j++)
+						probsasstring[j]=""+prob[i][j];
+					mcmct.setProb(probsasstring,i);
 				}
-				
-				mcmcModel.resetVar();
-				double [][] var = ((SampleProbs)o).getVar();
+				double [][] var= ((SampleProbs)o).getVariance(r);
 				for(int i=0; i<var.length; i++){
-					mcmcModel.addVar(""+var[i][1]);
+					String[] varsasstring = new String[var[i].length];
+					for (int j=0; j<varsasstring.length; j++)
+						varsasstring[j]=""+var[i][j];
+					mcmct.setVar(varsasstring,i);
 				}
 				sampleSize.setText(""+((SampleProbs)o).getSize());
 				Double dweight = new Double(((SampleProbs)o).getWeight());
@@ -2867,7 +2833,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 //		//dataModel.resetACE();
 //		/** ... keith cascio */
 //		
-//		querytable.updateUI();
+		queryatomsPanel.updateUI();
 	}
 	
 //	public OneStrucData getMapValuesAsInst(){
@@ -2906,6 +2872,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 			//newquerytables.add(qt);
 			qt.setModel(mcmctm);
 			qt.getColumnModel().getColumn(0).setPreferredWidth(250);
+			for (int c=1;c<qt.getColumnCount();c++)
+				qt.getColumnModel().getColumn(c).setPreferredWidth(100);
 			qt.setShowHorizontalLines(false);
 			qt.setPreferredScrollableViewportSize(new Dimension(300, 100));
 			//table header values
