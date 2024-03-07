@@ -284,12 +284,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	 * @uml.property  name="trueButton"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
-	private JButton trueButton     = new JButton("True");
-	/**
-	 * @uml.property  name="falseButton"
-	 * @uml.associationEnd  multiplicity="(1 1)"
-	 */
-	private JButton falseButton    = new JButton("False");
+	private JButton instButton     = new JButton("Instantiation");
+	
 	/**
 	 * @uml.property  name="queryButton"
 	 * @uml.associationEnd  multiplicity="(1 1)"
@@ -365,11 +361,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
 	private JPanel valuesPanel         = new JPanel(new BorderLayout());
-	/**
-	 * @uml.property  name="arbitraryPanel"
-	 * @uml.associationEnd  multiplicity="(1 1)"
-	 */
-	private JPanel arbitraryPanel      = new JPanel(new BorderLayout());
+	
 	/**
 	 * @uml.property  name="arityPanel"
 	 * @uml.associationEnd  multiplicity="(1 1)"
@@ -525,12 +517,12 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	 */
 
 
-
-	private boolean first_bin = true;  //user has selected the first element
-	/**
-	 * @uml.property  name="first_arb"
-	 */
-	private boolean first_arb = true;
+//
+//	private boolean first_bin = true;  //user has selected the first element
+//	/**
+//	 * @uml.property  name="first_arb"
+//	 */
+//	private boolean first_arb = true;
 	/**
 	 * @uml.property  name="firstbinarystar"
 	 */
@@ -610,6 +602,12 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	 * The selected value for defining evidence (using the internal integer representation)
 	 */
 	private int selected_val;
+	
+	/*
+	 * The position of the currently selected element in the argument list 
+	 * of selected_rel (when building up a query or evidence)
+	 */
+	private int el_pos;
 	
 	/* The gradient graph structure constructed in current inference 
 	 * process
@@ -940,8 +938,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		instantiationsList.addMouseListener( this );
 		//querytable.addMouseListener( this); // TODO
 		//ActionListerners
-		trueButton.addActionListener( this );
-		falseButton.addActionListener( this );
+		instButton.addActionListener( this );
 		queryButton.addActionListener( this );
 		toggleTruthButton.addActionListener( this );
 		cwaButton.addActionListener( this );
@@ -964,10 +961,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		inferencePane.addChangeListener(this);
 		
 		//setting background color
-		trueButton.setBackground(Primula.COLOR_BLUE_SELECTED);
-		trueButton.setToolTipText("Add atoms instantiated to true");
-		falseButton.setBackground(Primula.COLOR_BLUE);
-		falseButton.setToolTipText("Add atoms instantiated to false");
+		instButton.setBackground(Primula.COLOR_BLUE_SELECTED);
+		instButton.setToolTipText("Add atoms instantiated to true");
 		queryButton.setBackground(Primula.COLOR_BLUE);
 		queryButton.setToolTipText("Add atoms to query list");
 
@@ -1079,8 +1074,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		//resetACEEnabledState( getACEControl() );
 		/** ... keith cascio */
 
-		buttonsPanel.add(trueButton);
-		buttonsPanel.add(falseButton);
+		buttonsPanel.add(instButton);
 		buttonsPanel.add(queryButton);
 		
 		eiPanel.add(instantiationsPanel);
@@ -1161,36 +1155,26 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	{
 		Object source = e.getSource();
 
-		if( source == trueButton ){
-			first_bin = first_arb = true;
-			trueButton.setBackground(Primula.COLOR_BLUE_SELECTED);
-			falseButton.setBackground(Primula.COLOR_BLUE);
+		if( source == instButton ){
+			el_pos=0;
+			instButton.setBackground(Primula.COLOR_BLUE_SELECTED);
 			queryButton.setBackground(Primula.COLOR_BLUE);
 			elementNamesList.clearSelection();
 			queryModeOn = false;
 			infoMessage.setText(" ");
 		}
-		else if( source == falseButton ){
-			first_bin = first_arb = true;
-			falseButton.setBackground(Primula.COLOR_BLUE_SELECTED);
-			trueButton.setBackground(Primula.COLOR_BLUE);
-			queryButton.setBackground(Primula.COLOR_BLUE);
-			elementNamesList.clearSelection();
-			queryModeOn = false;
-			infoMessage.setText(" ");
-		}
+
 		else if( source == queryButton ){
-			first_bin = first_arb = true;
+			el_pos=0;
 			queryButton.setBackground(Primula.COLOR_BLUE_SELECTED);
-			trueButton.setBackground(Primula.COLOR_BLUE);
-			falseButton.setBackground(Primula.COLOR_BLUE);
+			instButton.setBackground(Primula.COLOR_BLUE);
 			elementNamesList.clearSelection();
 			queryModeOn = true;
 			infoMessage.setText(" ");
 		}
 		else if( source == toggleTruthButton ){
 			if(selectedInstAtom != null){
-				if(selectedInstAtom.truthval == true){
+				if(selectedInstAtom.val == 1){
 					inst.add((BoolRel)selectedInstAtom.rel, selectedInstAtom.args, false,"?");
 				}
 				else{
@@ -1304,8 +1288,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 			infoMessage.setText(" Stop Sampling ");
 			pausemcmc = false;
 			startSampling.setEnabled( true );
-			trueButton.setEnabled( true );
-			falseButton.setEnabled( true );
+			instButton.setEnabled( true );
 			queryButton.setEnabled( true );
 			toggleTruthButton.setEnabled( true );
 			delInstButton.setEnabled( true );
@@ -1344,8 +1327,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 			mapthr.setRunning(false);
 			infoMessage.setText(" Stop MAP ");
 			startSampling.setEnabled( true );
-			trueButton.setEnabled( true );
-			falseButton.setEnabled( true );
+			instButton.setEnabled( true );
 			queryButton.setEnabled( true );
 			toggleTruthButton.setEnabled( true );
 			delInstButton.setEnabled( true );
@@ -1407,8 +1389,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		sampthr.start();
 		infoMessage.setText(" Starting Sampling ");
 		startSampling.setEnabled( false );
-		trueButton.setEnabled( false );
-		falseButton.setEnabled( false );
+		instButton.setEnabled( false );
 		queryButton.setEnabled( false );
 		toggleTruthButton.setEnabled( false );
 		delInstButton.setEnabled( false );
@@ -1461,8 +1442,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 					 								true);
 			mapthr = new MapThread(this,myprimula,(GradientGraphO)gg);
 			mapthr.start();
-			trueButton.setEnabled( false );
-			falseButton.setEnabled( false );
+			instButton.setEnabled( false );
 			queryButton.setEnabled( false );
 			toggleTruthButton.setEnabled( false );
 			delInstButton.setEnabled( false );
@@ -1546,175 +1526,68 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		Object source = e.getSource();
 
 		if(source == relationsList){
-			first_bin = first_arb = true;
+			
 			valuesListModel.removeAllElements();
 			elementNamesList.clearSelection();
 			int index = relationsList.locationToIndex(e.getPoint());
 			if(index >= 0){
 				selected_rel = (Rel)relationsListModel.elementAt(index);
+				el_pos=0;
+				tuple = new int[selected_rel.getArity()];
+				addedTuples ="";
 				for (int i=0;i<selected_rel.numvals();i++)
 					valuesListModel.addElement(selected_rel.get_String_val(i));
 				infoMessage.setText(selected_rel.name.name);
 			}
 		}
 		else if( source == valuesList ){
-			first_bin = first_arb = true;
-			relationsList.clearSelection();
+			el_pos=0;
 			elementNamesList.clearSelection();
 			int index = valuesList.locationToIndex(e.getPoint());
 			if(index >= 0){
-				selected_rel = (BoolRel)valuesListModel.elementAt(index);
-				infoMessage.setText(selected_rel.name.name);
+				String valstring = (String)valuesListModel.elementAt(index);
+				selected_val=selected_rel.get_Int_val(valstring);
 			}
 		}
-//		else if( source == arbitraryList ){
-//			first_bin = first_arb = true;
-//			attributesList.clearSelection();
-//			valuesList.clearSelection();
-//			elementNamesList.clearSelection();
-//			int index = arbitraryList.locationToIndex(e.getPoint());
-//			if(index >= 0){
-//				rel = (BoolRel)arbitraryListModel.elementAt(index);
-//				infoMessage.setText(rel.name.name);
-//			}
-//			if (rel.arity == 0){
-//				infoMessage.setText(rel.name.name+"()");
-//				if(queryModeOn){
-//					addQueryAtoms(rel,new int[0]);
-//					buildQueryatomsTables(queryModels);
-//				}
-//				else{
-//					inst.add(new GroundAtom(rel,new int[0]),truthValue,"?");
-//					updateInstantiationList();
-//				}
-//			}
-//		}
-		else if( source == elementNamesList ){
-			int selected_element;
-			if(!sampling){
-				if(selected_rel != null){  //relation should be selected first
-					selected_element = elementNamesList.locationToIndex(e.getPoint());
-					if(selected_element >= 0){
-						//an attribute
-						if(selected_rel.arity == 1){
-							//MJ->
-							tuple = new int[1];
-							//<-MJ
-							int[] node = {selected_element};
-							addedTuples = (String)elementNamesListModel.elementAt(selected_element);
-							if(queryModeOn){
-								addQueryAtoms(selected_rel, node);
-							}
-							else{
-								int [][] instantiations = new int[1][tuple.length];
-								//System.out.println("tuple.length: " + tuple.length);
-//								firstrunstar = true;
-//								instantiationpos = 0;
-//								size = 1;
-								instantiations=allMatchingTuples(node);
-//								inst.add(selected_rel, instantiations, selectedValue,"?");
-								updateInstantiationList();
-//								infoMessage.setText(selected_rel.name.name+" ("+addedTuples+") "+truthValue+" added");
-								
-							}
-						}
-						//a binary relation
-						else if(selected_rel.arity == 2){
-							if(first_bin){
-								tuple = new int[2];
-								tuple[0] = selected_element;
-								addedTuples  = (String)elementNamesListModel.elementAt(tuple[0]);
-								first_bin = false;
-								if(elementNamesListModel.elementAt(selected_element).equals("*")){
-									firstbinarystar=true;
-								}
-								if(queryModeOn){
-									infoMessage.setText(selected_rel.name.name+" ("+addedTuples+",...)");
-								}
-								else{
-//									infoMessage.setText(selected_rel.name.name+" ("+addedTuples+",...) "+truthValue);
-								}
-							}
-							else if(!first_bin){
-								tuple[1] = selected_element;
-								first_bin = true;
-								addedTuples = addedTuples + ", " + (String)elementNamesListModel.elementAt(tuple[1]);
-								if(queryModeOn){
-									addQueryAtoms(selected_rel, tuple);
-								}
-								else{
-									int[][] instantiations = allMatchingTuples(tuple);
-//									inst.add(selected_rel, instantiations, truthValue,"?");
-									updateInstantiationList();
-//									infoMessage.setText(selected_rel.name.name+" ("+addedTuples+") "+truthValue+" added");
-									tuple = new int[0];
-								}
-							}
-							firstbinarystar = false;
-						}
-						//an arbitrary relation
-						else if(selected_rel.arity >= 3){
-							if(first_arb){
-								aritynumber = selected_rel.arity;
-								tuple = new int[aritynumber];
-								index = 0;
-								tuple[index] = selected_element;
-								addedTuples = (String)elementNamesListModel.elementAt(tuple[index]);
-								++index;
-								--aritynumber;
-								first_arb = false;
-								if(queryModeOn){
-									infoMessage.setText(selected_rel.name.name+" ("+addedTuples+",...)");
-								}
-								else{
-//									infoMessage.setText(selected_rel.name.name+" ("+addedTuples+",...) "+truthValue);
-								}
-							}
-							else if(!first_arb){
-								tuple[index] = selected_element;
-								addedTuples = addedTuples + ", " + (String)elementNamesListModel.elementAt(tuple[index]);
-								++index;
-								--aritynumber;
-								if(aritynumber==0){
-									first_arb = true;
-									if(queryModeOn){
-										infoMessage.setText("This can take a few minuts, please wait.");
-										addQueryAtoms(selected_rel, tuple);
-										tuple = new int[0];
-									}
-									else{
-										infoMessage.setText("This can take a few minuts, please wait.");
-										//************
-//										size = 1;
-	//									int[][] instantiations = new int[1][tuple.length];
-//										firstrunstar = true;
-//										instantiationpos = 0;
 
-										int[][] instantiations = allMatchingTuples(tuple);
-//										inst.add(selected_rel, instantiations, truthValue,"?");
-										updateInstantiationList();
-//										infoMessage.setText(selected_rel.name.name+" ("+addedTuples+") "+truthValue+" added");
-										tuple = new int[0];
-									}
-									addedTuples = "";
-								}
-								else{
-									if(queryModeOn)
-										infoMessage.setText(selected_rel.name.name+" ("+addedTuples+",...) ");
-//									else
-//										infoMessage.setText(selected_rel.name.name+" ("+addedTuples+",...) "+truthValue);
-								}
-							}
-						}
-						myprimula.updateBavaria();
+		else if( source == elementNamesList ){
+			int selected_element = elementNamesList.locationToIndex(e.getPoint());
+			if(!sampling){
+				if(selected_rel != null && selected_rel.getArity()>0){  //relation should be selected first
+					tuple[el_pos] = selected_element;
+
+					if (el_pos<selected_rel.getArity()-1) {
+						el_pos++;
+						addedTuples += (String)elementNamesListModel.elementAt(tuple[index]) +", ...";
 					}
-				}
-				else
+					else { // tuple now complete
+						addedTuples += (String)elementNamesListModel.elementAt(tuple[index]);
+						if(queryModeOn){
+							addQueryAtoms(selected_rel, tuple);		
+							infoMessage.setText(selected_rel.name.name+" ("+addedTuples+")");
+						}
+						else{
+							int[][] instantiations = allMatchingTuples(tuple);
+							inst.add(selected_rel, instantiations, selected_val,"?");
+							updateInstantiationList();
+							infoMessage.setText(selected_rel.name.name+"("+addedTuples+ ") = "
+									+selected_rel.get_String_val(selected_val));
+						}
+
+						// re-init for next tuple construction
+						tuple = new int[0];
+						addedTuples = "";
+					}
+
+				} 
+				else{// if(selected_rel != null && selected_rel.getArity()>0)
 					infoMessage.setText("Please, choose the relation first");
+				}
 			}
-			else{
+			else { // if(!sampling)
 				JOptionPane.showMessageDialog(null, "Stop sampling before adding a new query", "Stop sampling", JOptionPane.ERROR_MESSAGE);
 			}
+			myprimula.updateBavaria();
 		}
 		else if( source == instantiationsList){
 			int index = instantiationsList.locationToIndex(e.getPoint());
@@ -1728,7 +1601,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		else if( source == querytables.elementAt(0) ){ // TODO this now dummy solution only for the first table
 			int index = querytables.elementAt(0).rowAtPoint(e.getPoint());
 			System.out.println("select in on query table: effect not yet implemented");
-//			if(index>=0){
+			//			if(index>=0){
 //				delAtom = index;
 //				Vector queries = queryatoms.allAtoms();
 //				selectedQueryAtom = (GroundAtom)queries.elementAt(index);
@@ -1778,7 +1651,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		queryatoms=new Hashtable<Rel,GroundAtomList>();
 		queryModels=new Vector<QueryTableModel>();
 		infoMessage.setText(" ");
-		first_bin = first_arb = true;
+		el_pos=0;
 		selectedInstAtom = null;
 		selectedQueryAtom = null;
 
@@ -1820,7 +1693,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		for(int i=0; i<tuple.length; ++i){
 			if(tuple[i] == node){
 				infoMessage.setText("Tuple cancelled (included a deleted node)");
-				first_bin = first_arb = true;
+				el_pos=0;
 			}
 		}
 	}
@@ -1847,7 +1720,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		queryModels=new Vector<QueryTableModel>();
 		elementNamesList.clearSelection();
 		infoMessage.setText(" ");
-		first_bin = first_arb = true;
+		el_pos=0;
 		selected_rel = null;
 		selectedInstAtom = null;
 		selectedQueryAtom = null;
@@ -1931,10 +1804,10 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 				}
 			}
 			names = names + ")";
-			String listItem = (String)(temp.rel.name.name)  + names + " = " + temp.truthval;
+			String listItem = (String)(temp.rel.name.name)  + names + " = " + temp.val_string();
 			instantiationsListModel.addElement(listItem);
 		}
-
+		instantiationsPanel.updateUI();
 		if( myACEControl != null ) myACEControl.primulaEvidenceChanged();//keith cascio 20061010
 	}
 

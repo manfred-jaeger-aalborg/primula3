@@ -108,4 +108,9 @@ public class NumRel extends Rel{
  		return "undefined";
  	}
  	
+ 	public Integer get_Int_val(String s) {
+ 		// should never be called
+ 		return -1;
+ 	}
+ 	
 }

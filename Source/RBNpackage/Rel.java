@@ -277,5 +277,7 @@ public abstract class Rel implements Serializable, Comparable<Rel>{
 	 * of the i'th value
 	 */
 	public abstract String get_String_val(Integer i);
+	
+	public abstract Integer get_Int_val(String s); 
 }
 

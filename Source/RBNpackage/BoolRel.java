@@ -62,4 +62,11 @@ public class BoolRel extends Rel {
   		default: return "undefined";
   		}
   	}
+	public Integer get_Int_val(String s) {
+		if (s.equals("false"))
+			return 0;
+		if (s.equals("true"))
+			return 1;
+		return -1;
+	}
 }

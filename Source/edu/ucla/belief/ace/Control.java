@@ -8,7 +8,7 @@ import edu.ucla.belief.ace.PrimulaSystemSnapshot.RunWriteHuginNet;
 
 import RBNinference.BayesConstructor;
 import RBNgui.Primula;
-import RBNgui.QueryTableModel;
+import RBNgui.ACETableModel;
 import RBNpackage.OneStrucData;
 
 import java.util.List;
@@ -185,7 +185,7 @@ public class Control implements Settings.ACESettingsListener
 	}*/
 
 	/** @since 20060608 */
-	public void setDataModel( QueryTableModel dataModel ){
+	public void setDataModel( ACETableModel dataModel ){
 		myDataModel = dataModel;
 	}
 
@@ -1082,7 +1082,7 @@ public class Control implements Settings.ACESettingsListener
 	private SoftwareEntity myPackageC2D;
 	private RuntimeSoftwareLocationBrowser myRuntimeSoftwareLocationBrowser;
 	private AceInterfaceForPrimula                   myAceInt;
-	private QueryTableModel                myDataModel;
+	private ACETableModel                myDataModel;
 	private Action                         myActionCancel;
 	private Action myActionFastForward;
 	private Action myActionCompile;

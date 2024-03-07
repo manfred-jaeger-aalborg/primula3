@@ -399,7 +399,22 @@ public class OneStrucData {
 		}
 	}
 	
-	
+	public void add(Rel r, int[][] tuples, int v ,String dv)
+	{
+		if (r instanceof BoolRel) {
+			switch(v) {
+			case 0: 
+				add((BoolRel)r,tuples,false,dv);
+				break;
+			case 1: 
+				add((BoolRel)r,tuples,true,dv);
+				break;
+			}
+		}
+		if (r instanceof CatRel)
+			add((CatRel)r, tuples, v ,dv);
+	}
+
 	/* Initializes an empty OneBoolRelData for the
 	 * relation r, if there is none already
 	 */
@@ -900,8 +915,6 @@ public class OneStrucData {
 
 
 	public Vector<InstAtom> allInstAtoms(){
-		System.out.println("Warning: OneStrucData.allInstAtoms not yet handling categorical relations");
-		// returns Vecor of InstAtom
 		Vector<InstAtom>  result = new Vector<InstAtom> ();
 		for (int i=0;i<allonebooldata.size();i++){
 			OneBoolRelData thisrelinst = (OneBoolRelData)allonebooldata.elementAt(i);
@@ -909,17 +922,23 @@ public class OneStrucData {
 			Vector<int[]> allfalse = (Vector<int[]>) rbnutilities.treeSetToVector(thisrelinst.allFalse(this.parentrelstruc));
 			if (thisrelinst.rel.arity == 0){
 				if (alltrues.size() > 0)
-					result.add(new InstAtom(thisrelinst.rel,new int[0],true));
+					result.add(new InstAtom(thisrelinst.rel,new int[0],1));
 				if (allfalse.size() > 0)
-					result.add(new InstAtom(thisrelinst.rel,new int[0],false));
+					result.add(new InstAtom(thisrelinst.rel,new int[0],0));
 
 			}
 			else{
 				for (Iterator<int[]> it = alltrues.iterator();it.hasNext();)
-					result.add(new InstAtom(thisrelinst.rel,it.next(),true));
+					result.add(new InstAtom(thisrelinst.rel,it.next(),1));
 				for (Iterator<int[]> it = allfalse.iterator();it.hasNext();)
-					result.add(new InstAtom(thisrelinst.rel,it.next(),false));
+					result.add(new InstAtom(thisrelinst.rel,it.next(),0));
 			}
+		}
+		for (int i=0;i<allonecatdata.size();i++){
+			OneCatRelData thisrelinst = (OneCatRelData)allonecatdata.elementAt(i);
+			TreeSet<int[]> alltups = thisrelinst.allTrue();
+			for (int[] t: alltups)
+				result.add(new InstAtom(thisrelinst.rel,t,thisrelinst.valueOf(t)));
 		}
 		return result;
 	}

@@ -120,4 +120,5 @@ public class QueryTableModel extends AbstractTableModel{
 		queryatomdata = q;
 	}
 
+
 }

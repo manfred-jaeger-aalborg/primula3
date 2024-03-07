@@ -33,23 +33,22 @@ public class InstAtom extends GroundAtom {
     /**
 	 * @uml.property  name="truthval"
 	 */
-    public boolean truthval;
+    public int val;
 
     /** Creates new InstAtom */
     public InstAtom() {
     }
 
-    public InstAtom(Rel r, int[] a, boolean tv){
+    public InstAtom(Rel r, int[] a, int tv){
         super(r,a);
-        truthval = tv;
-
+        val = tv;
     }
 
     /** @author keith cascio
 	@since 20061020 */
     public boolean equals( Object instatom ){
     	if(            !( instatom instanceof GroundAtom     ) ) return false;
-    	boolean truth = ( instatom instanceof InstAtom ) ? (this.truthval == ((InstAtom)instatom).truthval) : true;
+    	boolean truth = ( instatom instanceof InstAtom ) ? (this.val == ((InstAtom)instatom).val) : true;
     	//System.out.println( this + ".equals( " + instatom + " )?" + (super.isIdenticalTo( instatom ) && (this.truthval == instatom.truthval)) );
 	return super.isIdenticalTo( (GroundAtom)instatom ) && truth;
     }
@@ -57,12 +56,16 @@ public class InstAtom extends GroundAtom {
     /** @author keith cascio
 	@since 20061020 */
     public int hashCodeImpl(){
-    	return super.hashCodeImpl() + (this.truthval ? 1 : 0);
+    	return super.hashCodeImpl() + (this.val);
     }
 
     /** @author keith cascio
 	@since 20061023 */
     public String toString(){
-    	return super.asString() + "=" + (this.truthval ? "true" : "false") + "h" + hashCode() + "ih" + System.identityHashCode( this );
+    	return super.asString() + "=" + (this.rel.get_String_val(val)) + "h" + hashCode() + "ih" + System.identityHashCode( this );
+    }
+    
+    public String val_string() {
+    	return this.rel.get_String_val(val);
     }
 }
