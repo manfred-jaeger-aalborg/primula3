@@ -84,7 +84,7 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 
 	public void initializeForSampling(int sampleordmode, 
 			int adaptivemode,
-			GroundAtomList queryatoms, 
+			Hashtable<Rel,GroundAtomList> queryatoms, 
 			int num_subsamples_minmax,
 			int num_subsamples_adapt){
 		super.initializeForSampling(sampleordmode,

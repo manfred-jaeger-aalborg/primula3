@@ -32,7 +32,7 @@ import RBNutilities.*;
 import RBNinference.*;
 
 
-public class GGCombFuncNode extends GGProbFormNode{
+public class GGCombFuncNode extends GGCPMNode{
 
 	int typeOfComb; /* The combination function used */
 
@@ -73,7 +73,7 @@ public class GGCombFuncNode extends GGProbFormNode{
 		//thisgg.profiler.time1 +=(System.currentTimeMillis()-starttime);
 		//System.out.println("tt1:" + thisgg.profiler.time1);
 				
-		children = new Vector<GGProbFormNode>();
+		children = new Vector<GGCPMNode>();
 
 
 		/* For all probability formulas in the argument of the combination function, and all
@@ -84,7 +84,7 @@ public class GGCombFuncNode extends GGProbFormNode{
 		ProbForm nextsubpf;
 		ProbForm groundnextsubpf;
 		double evalOfSubPF;
-		GGProbFormNode constructedchild;
+		GGCPMNode constructedchild;
 		
 		for (int i=0; i<pfcomb.numPFargs(); i++)
 		{
@@ -103,7 +103,7 @@ public class GGCombFuncNode extends GGProbFormNode{
 				
 				
 				if (Double.isNaN(evalOfSubPF)){
-					constructedchild = GGProbFormNode.constructGGPFN(gg,
+					constructedchild = GGCPMNode.constructGGPFN(gg,
 							groundnextsubpf,
 							allnodes, 
 							A, 

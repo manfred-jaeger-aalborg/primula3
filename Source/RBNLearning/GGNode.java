@@ -37,7 +37,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 	GradientGraphO thisgg;
 	
 
-	Vector<GGProbFormNode> children;
+	Vector<GGCPMNode> children;
 	TreeSet<GGNode> parents;
 	TreeSet<GGNode> ancestors;
 	
@@ -75,7 +75,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 
 	public GGNode(GradientGraphO gg){
 		thisgg = gg;
-		children = new Vector<GGProbFormNode>();
+		children = new Vector<GGCPMNode>();
 		parents = new TreeSet<GGNode>();
 		ancestors = null;
 		identifier = new Integer(gg.getNextId());
@@ -84,7 +84,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 	}
 
 	
-	public void addToChildren(GGProbFormNode ggpfn){
+	public void addToChildren(GGCPMNode ggpfn){
 		children.add(ggpfn);
 	}
 
@@ -261,7 +261,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 //	}
 
 	public void setDependsOn(String param){
-		if (this instanceof GGProbFormNode)
+		if (this instanceof GGCPMNode)
 			gradient.put(param, Double.NaN);
 	}
 
@@ -275,7 +275,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 	}
 	
 	public void printChildren(){
-		for (Iterator<GGProbFormNode> e=children.iterator() ; e.hasNext();){
+		for (Iterator<GGCPMNode> e=children.iterator() ; e.hasNext();){
 			Object o = e.next();
 			if (! (o == null)) // GGConvCombNodes contain null objects in their children vectors!
 				System.out.print(((GGNode)o).identifier() + " ");

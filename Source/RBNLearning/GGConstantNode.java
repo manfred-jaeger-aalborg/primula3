@@ -32,7 +32,7 @@ import RBNutilities.*;
 import RBNinference.*;
 
 
-public class GGConstantNode extends GGProbFormNode{
+public class GGConstantNode extends GGCPMNode{
 
 	/** True if this is a parameter to be learned */
 	Boolean isUnknown;

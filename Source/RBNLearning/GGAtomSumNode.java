@@ -96,7 +96,7 @@ public class GGAtomSumNode extends GGAtomNode{
 			sampledVals = new boolean[size];
 	}
 
-	public void addMeToIndicators(GGProbFormNode ggpfn){
+	public void addMeToIndicators(GGCPMNode ggpfn){
 		ggpfn.addToSumIndicators(this);
 	}
 

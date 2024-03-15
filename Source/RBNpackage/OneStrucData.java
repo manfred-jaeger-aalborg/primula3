@@ -367,7 +367,7 @@ public class OneStrucData {
 		}
 	}
 
-	public int add(CatRel r, int[] tuple, Integer v,String dv)
+	public int add(CatRel r, int[] tuple, int v,String dv)
 	{
 		int temp;
 		OneCatRelData thisrelinst = findInCatRel(r);
@@ -384,6 +384,20 @@ public class OneStrucData {
 			else return 0;
 		}
 	}
+	
+	public void add(CatRel r, int[][] tuples, int v, String dv)
+	{
+		OneCatRelData thisrelinst = findInCatRel(r);
+		if (thisrelinst != null){
+			thisrelinst.add(tuples,v);
+		}
+		else{
+			thisrelinst = new OneCatRelData(r,dv);
+			allonecatdata.add(thisrelinst);
+			thisrelinst.add(tuples,v);
+		}
+	}
+	
 	
 	public void add(BoolRel r, int[][] tuples, boolean tv,String dv)
 	{
@@ -652,6 +666,12 @@ public class OneStrucData {
 		}
 	}
 
+	public void delete(CatRel r, int[] tuple)
+	{
+		OneCatRelData thisrelinst = findInCatRel(r);
+		if (thisrelinst != null)
+			thisrelinst.delete(tuple);
+	}
 	
 	public void delete(BoolRel r, int[] tuple, boolean tv){
 		OneBoolRelData thisrelinst = findInBoolRel(r);

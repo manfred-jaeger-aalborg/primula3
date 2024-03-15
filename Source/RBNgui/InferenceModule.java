@@ -528,9 +528,9 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	 */
 	private boolean firstbinarystar = false;
 	/**
-	 * @uml.property  name="tuple" multiplicity="(0 -1)" dimension="1"
+	 * the tuple of element identifiers (including wildcards) selected from the element names list
 	 */
-	private int[] tuple = new int[1];
+	private int[] element_tuple = new int[1];
 	/**
 	 * @uml.property  name="index"
 	 * @uml.associationEnd  multiplicity="(0 -1)" elementType="java.lang.String"
@@ -972,8 +972,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		delAllInstButton.setBackground(Primula.COLOR_YELLOW);
 //		saveInstButton.setBackground(Primula.COLOR_RED);
 //		loadInstButton.setBackground(Primula.COLOR_RED);
-		delQueryAtomButton.setBackground(Primula.COLOR_YELLOW);
-		delAllQueryAtomButton.setBackground(Primula.COLOR_YELLOW);
+		delQueryAtomButton.setBackground(Primula.COLOR_GREEN);
+		delAllQueryAtomButton.setBackground(Primula.COLOR_GREEN);
 		settingsSampling.setBackground(Primula.COLOR_BLUE);
 		startSampling.setBackground(Primula.COLOR_GREEN);
 		stopSampling.setBackground(Primula.COLOR_GREEN);
@@ -1168,12 +1168,16 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 			el_pos=0;
 			queryButton.setBackground(Primula.COLOR_BLUE_SELECTED);
 			instButton.setBackground(Primula.COLOR_BLUE);
+			toggleTruthButton.setEnabled(false);
+			cwaButton.setEnabled(false);
+			delInstButton.setEnabled(false);
+			delAllInstButton.setEnabled(false);
 			elementNamesList.clearSelection();
 			queryModeOn = true;
 			infoMessage.setText(" ");
 		}
 		else if( source == toggleTruthButton ){
-			if(selectedInstAtom != null){
+			if(selectedInstAtom != null && selectedInstAtom.rel instanceof BoolRel){
 				if(selectedInstAtom.val == 1){
 					inst.add((BoolRel)selectedInstAtom.rel, selectedInstAtom.args, false,"?");
 				}
@@ -1532,8 +1536,12 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 			int index = relationsList.locationToIndex(e.getPoint());
 			if(index >= 0){
 				selected_rel = (Rel)relationsListModel.elementAt(index);
+				if (selected_rel instanceof BoolRel)
+					cwaButton.setEnabled( true );
+				else
+					cwaButton.setEnabled( false );
 				el_pos=0;
-				tuple = new int[selected_rel.getArity()];
+				element_tuple = new int[selected_rel.getArity()];
 				addedTuples ="";
 				for (int i=0;i<selected_rel.numvals();i++)
 					valuesListModel.addElement(selected_rel.get_String_val(i));
@@ -1554,20 +1562,20 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 			int selected_element = elementNamesList.locationToIndex(e.getPoint());
 			if(!sampling){
 				if(selected_rel != null && selected_rel.getArity()>0){  //relation should be selected first
-					tuple[el_pos] = selected_element;
+					element_tuple[el_pos] = selected_element;
 
 					if (el_pos<selected_rel.getArity()-1) {
 						el_pos++;
-						addedTuples += (String)elementNamesListModel.elementAt(tuple[index]) +", ...";
+						addedTuples += (String)elementNamesListModel.elementAt(element_tuple[index]) +", ...";
 					}
 					else { // tuple now complete
-						addedTuples += (String)elementNamesListModel.elementAt(tuple[index]);
+						addedTuples += (String)elementNamesListModel.elementAt(element_tuple[index]);
 						if(queryModeOn){
-							addQueryAtoms(selected_rel, tuple);		
+							addQueryAtoms(selected_rel, element_tuple);		
 							infoMessage.setText(selected_rel.name.name+" ("+addedTuples+")");
 						}
 						else{
-							int[][] instantiations = allMatchingTuples(tuple);
+							int[][] instantiations = allMatchingTuples(element_tuple);
 							inst.add(selected_rel, instantiations, selected_val,"?");
 							updateInstantiationList();
 							infoMessage.setText(selected_rel.name.name+"("+addedTuples+ ") = "
@@ -1575,7 +1583,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 						}
 
 						// re-init for next tuple construction
-						tuple = new int[0];
+						element_tuple = new int[selected_rel.getArity()];
 						addedTuples = "";
 					}
 
@@ -1690,8 +1698,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 			qats.shiftArgs(node);
 		}
 		buildQueryatomsTables(queryModels);
-		for(int i=0; i<tuple.length; ++i){
-			if(tuple[i] == node){
+		for(int i=0; i<element_tuple.length; ++i){
+			if(element_tuple[i] == node){
 				infoMessage.setText("Tuple cancelled (included a deleted node)");
 				el_pos=0;
 			}
@@ -1764,7 +1772,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		Vector<int[]> elementsForCoordinate = new Vector<int[]>();
 		int[] nextComponent;
 		String nextstr;
-		for(int i=0; i<tuple.length; i++){
+		for(int i=0; i<element_tuple.length; i++){
 			nextstr = strtuple[i];
 			if(nextstr.equals("*")){
 				nextComponent = new int[myprimula.getRels().domSize()];
@@ -1779,7 +1787,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 			}
 			else{ /* tuple[i] is the name of a domain element*/
 				nextComponent = new int[1];
-				nextComponent[0]=tuple[i];
+				nextComponent[0]=element_tuple[i];
 			}
 			elementsForCoordinate.add(nextComponent);
 		}
@@ -2748,7 +2756,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 			for (int c=1;c<qt.getColumnCount();c++)
 				qt.getColumnModel().getColumn(c).setPreferredWidth(100);
 			qt.setShowHorizontalLines(false);
-			qt.setPreferredScrollableViewportSize(new Dimension(300, 100));
+			qt.setPreferredScrollableViewportSize(new Dimension(100+80*(int)r.numvals(), 100));
 			//table header values
 			qt.getColumnModel().getColumn(0).setHeaderValue("Query");
 			for (int j=0;j<r.numvals();j++) {
@@ -2777,6 +2785,9 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		if (e.getSource() == inferencePane) {
 			switch (inferencePane.getSelectedIndex()) {
 			case 0: // Query tab
+				buildQueryatomsTables(queryModels);
+				queryatomsPanel.updateUI();
+				outerQueryPane.updateUI();
 				break;
 			case 1: // MCMC tab
 				buildMCMCTables();

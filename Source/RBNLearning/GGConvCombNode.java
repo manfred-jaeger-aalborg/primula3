@@ -40,7 +40,7 @@ import RBNinference.*;
  *  An element is set to null if the formula  does not actually
  *  need to be contained in this vector.
  */
-public class GGConvCombNode extends GGProbFormNode{
+public class GGConvCombNode extends GGCPMNode{
 
 
 	double[] evalOfSubPFs;
@@ -49,7 +49,7 @@ public class GGConvCombNode extends GGProbFormNode{
 	/** pf must be a ground ProbForm ! */
 	public GGConvCombNode(GradientGraphO gg,
 			ProbForm pf, 
-			Hashtable<String,GGProbFormNode> allnodes, 
+			Hashtable<String,GGCPMNode> allnodes, 
 			RelStruc A, 
 			OneStrucData I,
 			int inputcaseno,
@@ -115,7 +115,7 @@ public class GGConvCombNode extends GGProbFormNode{
 
 
 		boolean constructthis;
-		GGProbFormNode constructedchild;
+		GGCPMNode constructedchild;
 
 		for (int i = 0; i<3; i++){
 			constructthis = true;
@@ -126,7 +126,7 @@ public class GGConvCombNode extends GGProbFormNode{
 			if (i==2 && evalOfSubPFs[0]==1)
 				constructthis = false;
 			if (constructthis){
-				constructedchild = GGProbFormNode.constructGGPFN(gg,
+				constructedchild = GGCPMNode.constructGGPFN(gg,
 						((ProbFormConvComb)pf).subPF(i+1),
 						allnodes, 
 						A, 
@@ -165,9 +165,9 @@ public class GGConvCombNode extends GGProbFormNode{
 			return (double)value;
 		}
 		double result = 0;
-		GGProbFormNode F0 = children.elementAt(0);
-		GGProbFormNode F1 = children.elementAt(1);
-		GGProbFormNode F2 = children.elementAt(2);
+		GGCPMNode F0 = children.elementAt(0);
+		GGCPMNode F1 = children.elementAt(1);
+		GGCPMNode F2 = children.elementAt(2);
 
 		double f0val;
 		double f1val;
@@ -207,9 +207,9 @@ public class GGConvCombNode extends GGProbFormNode{
 	public void evaluateBounds(){
 		if (bounds[0]==-1){ /* Not yet evaluated for current indicator setting */
 			//	    System.out.println("convcombnode.evaluateBounds");
-			GGProbFormNode F0 = children.elementAt(0);
-			GGProbFormNode F1 = children.elementAt(1);
-			GGProbFormNode F2 = children.elementAt(2);
+			GGCPMNode F0 = children.elementAt(0);
+			GGCPMNode F1 = children.elementAt(1);
+			GGCPMNode F2 = children.elementAt(2);
 			double lowF0;
 			double uppF0;
 			double lowF1;
@@ -274,9 +274,9 @@ public class GGConvCombNode extends GGProbFormNode{
 			
 		
 		double result = 0;
-		GGProbFormNode F0 = children.elementAt(0);
-		GGProbFormNode F1 = children.elementAt(1);
-		GGProbFormNode F2 = children.elementAt(2);
+		GGCPMNode F0 = children.elementAt(0);
+		GGCPMNode F1 = children.elementAt(1);
+		GGCPMNode F2 = children.elementAt(2);
 
 
 		/* F0'F1: */

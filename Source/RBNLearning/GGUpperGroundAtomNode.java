@@ -7,7 +7,7 @@ import RBNpackage.OneStrucData;
 import RBNpackage.ProbForm;
 import RBNpackage.RelStruc;
 
-public class GGUpperGroundAtomNode extends GGProbFormNode {
+public class GGUpperGroundAtomNode extends GGCPMNode {
 
 	/* The atom for which this is the upper ground atom node;
 	 */

@@ -106,7 +106,7 @@ public  class GGLikelihoodNode extends GGNode{
 	/* Maps parameters to the UGA nodes that
 	 * depend on that parameter
 	 */
-	Hashtable<String,Vector<GGProbFormNode>> ugasForParam;
+	Hashtable<String,Vector<GGCPMNode>> ugasForParam;
 	
 	
 	public GGLikelihoodNode(GradientGraphO gg){
@@ -117,7 +117,7 @@ public  class GGLikelihoodNode extends GGNode{
 		ssqe=0;
 		isEvaluated = false;
 		bounds = new double[2][2];
-		ugasForParam = new Hashtable<String,Vector<GGProbFormNode>>();
+		ugasForParam = new Hashtable<String,Vector<GGCPMNode>>();
 	}
 
 	public void initllgrads(int k){
@@ -174,7 +174,7 @@ public  class GGLikelihoodNode extends GGNode{
 		ssqe=0;
 		
 		double childlik;
-		GGProbFormNode nextchild;
+		GGCPMNode nextchild;
 		int ival;
 		
 		for (int i=0;i<batchelements.length;i++){
@@ -310,9 +310,9 @@ public  class GGLikelihoodNode extends GGNode{
 
 		if (relevantlikelihood[0]!=0 || thisgg.objective()==LearnModule.UseSquaredError){
 
-			Vector<GGProbFormNode> children = ugasForParam.get(param);
+			Vector<GGCPMNode> children = ugasForParam.get(param);
 			if (children != null) {  // can be null if no uga depends on param; e.g. when gradient graph only is for a subset (batch) of the data
-				for (GGProbFormNode child: children){
+				for (GGCPMNode child: children){
 
 					//System.out.println("debug:  evaluateSmallGrad for uga " + child.getMyatom() );
 
@@ -458,7 +458,7 @@ public  class GGLikelihoodNode extends GGNode{
 		return getInstVal(children.elementAt(i));
 	}
 
-	private int getInstVal(GGProbFormNode uga){
+	private int getInstVal(GGCPMNode uga){
 		Object ival = uga.getInstval();
 		if (ival instanceof Integer)
 			return (Integer)ival;
@@ -661,10 +661,10 @@ public  class GGLikelihoodNode extends GGNode{
 		return null;
 	}
 	
-	public void addUgaForParam(String par, GGProbFormNode uga) {
-		Vector<GGProbFormNode> u = ugasForParam.get(par); 
+	public void addUgaForParam(String par, GGCPMNode uga) {
+		Vector<GGCPMNode> u = ugasForParam.get(par); 
 		if (u == null) {
-			Vector<GGProbFormNode> newvec = new Vector<GGProbFormNode>();
+			Vector<GGCPMNode> newvec = new Vector<GGCPMNode>();
 			newvec.add(uga);
 			ugasForParam.put(par,newvec);
 		}

@@ -48,7 +48,7 @@ public class OneCatRelData extends OneRelData {
 	/* For relations of arity 0 (globals): values contains
 	 * the single key [0] (=new int[1])
 	 */
-	 public HashMap<int[],Integer> values;  
+	 public TreeMap<int[],Integer> values;  
 	 
 	
 	 /*
@@ -73,14 +73,14 @@ public class OneCatRelData extends OneRelData {
 		
 		super(r,dv);
 		
-		values = new HashMap<int[],Integer>();
+		values = new TreeMap<int[],Integer>(new IntArrayComparator());
 		knownValues = (HashMap<Integer,TreeSet<int[]>>[])new HashMap[r.arity];
 		for (int i=0;i<r.arity;i++) {
 			knownValues[i]=new HashMap<Integer,TreeSet<int[]>>();
 		}
 	}
 
-	public OneCatRelData(CatRel r, String dv, HashMap<int[],Integer> vals){
+	public OneCatRelData(CatRel r, String dv, TreeMap<int[],Integer> vals){
 		rel = r;
 		defaultval = dv;
 		values=vals;
@@ -322,10 +322,10 @@ public class OneCatRelData extends OneRelData {
 		  * Therefore vector, even though length is known to
 		  * be numfolds
 		  */
-		 Vector<HashMap<int[],Integer>> split_values = new Vector<HashMap<int[],Integer>>();
+		 Vector<TreeMap<int[],Integer>> split_values = new Vector<TreeMap<int[],Integer>>();
 		 
 		 for (int i=0;i<numfolds;i++)
-			 split_values.add(new HashMap<int[],Integer>());
+			 split_values.add(new TreeMap<int[],Integer>(new IntArrayComparator()));
 		 
 		 for (int[] k: values.keySet())
 			 split_values.elementAt(randomGenerators.randInt(0, numfolds-1)).put(k,values.get(k));

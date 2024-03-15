@@ -684,7 +684,7 @@ public class PFNetwork{
 					var = rbnutilities.arrayAdd(var ,
 							rbnutilities.arrayCompPow(rbnutilities.arraySubtract(nextprob,nextprob_subsample),2.0));
 				}
-				var = rbnutilities.arrayScalMult(var,1/num_subsamples);
+				var = rbnutilities.arrayScalMult(var,1/(double)num_subsamples);
 				sps.setVar(r,var,i);
 			}
 			if (logwriter != null && (samplelogmode[2] || samplelogmode[3])){

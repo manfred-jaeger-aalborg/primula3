@@ -62,7 +62,7 @@ import myio.StringOps;
 public class GradientGraphO extends GradientGraph{
 
 	
-	private Hashtable<String,GGProbFormNode> allNodes;
+	private Hashtable<String,GGCPMNode> allNodes;
 	
 	/* Maximum identifier value currently assigned to a node;
 	 * 
@@ -91,7 +91,7 @@ public class GradientGraphO extends GradientGraph{
 		RBN rbn = myPrimula.getRBN();
 		
 		//parameters = myPrimula.getParamNumRels();
-		allNodes = new Hashtable<String,GGProbFormNode>();
+		allNodes = new Hashtable<String,GGCPMNode>();
 		
 		
 		sumindicators = new Vector<GGAtomSumNode>();
@@ -103,7 +103,7 @@ public class GradientGraphO extends GradientGraph{
 		RelDataForOneInput rdoi;
 		RelStruc A;
 		OneStrucData osd;
-		ProbForm nextpf;
+		CPModel nextcpm;
 		int[] nexttup;
 		
 		
@@ -125,9 +125,9 @@ public class GradientGraphO extends GradientGraph{
 		Rel nextrel;
 		Vector<int[]> inrel;
 		String[] vars; /* The argument list for nextpf */
-		ProbForm groundnextpf;
+		CPModel groundnextcpm;
 		String atomstring;
-		GGProbFormNode fnode;
+		GGCPMNode fnode;
 		double pfeval;
 		boolean dependsonmissing = false;
 		
@@ -144,8 +144,7 @@ public class GradientGraphO extends GradientGraph{
 					osd = rdoi.oneStrucDataAt(observcaseno);
 					for (int i=0; i<rbn.NumPFs(); i++){
 						nextrel = rbn.relAt(i);
-						ugacounter = ugacounter + osd.allFalse(nextrel).size();
-						ugacounter = ugacounter + osd.allTrue(nextrel).size();
+						ugacounter = ugacounter + osd.allInstantiated(nextrel).size();
 					}
 				}
 			}
@@ -175,9 +174,9 @@ public class GradientGraphO extends GradientGraph{
 				nextatom = mapatoms.atomAt(qano);
 				narel = nextatom.rel();
 				naargs = nextatom.args();
-				nextpf = rbn.cpmodel(narel);
+				nextcpm = rbn.cpmodel(narel);
 				vars = rbn.args(narel);
-				groundnextpf = nextpf.substitute(vars,naargs);
+				groundnextcpm = nextcpm.substitute(vars,naargs);
 				
 				/* When MAP inference is performed, then there only is a single 
 				 * input structure, and a single observed case for the input 
@@ -194,8 +193,8 @@ public class GradientGraphO extends GradientGraph{
 					
 
 
-				fnode = GGProbFormNode.constructGGPFN(this,
-						groundnextpf,
+				fnode = GGCPMNode.constructGGPFN(this,
+						groundnextcpm,
 						allNodes,
 						A,									 						 
 						osd,
@@ -253,18 +252,14 @@ public class GradientGraphO extends GradientGraph{
 				
 				Hashtable<String,Object[]>  evaluated = new Hashtable<String,Object[]>();
 				for (int i=0; i<rbn.NumPFs(); i++){
-					nextpf = rbn.cpmod_prelements_At(i);
+					nextcpm = rbn.cpmod_prelements_At(i);
 					vars = rbn.arguments_prels_At(i);
 					nextrel = rbn.relAt(i);
-					for (int ti = 0; ti <= 1 ; ti++) {
-
-						if (ti == 0)
-							inrel = osd.allFalse(nextrel);
-						else
-							inrel = osd.allTrue(nextrel);
+					for (int ti = 0; ti < nextrel.numvals() ; ti++) {
+						inrel=osd.allInstantiated(nextrel);
 						for (int k=0;k<inrel.size();k++){
 							nexttup = (int[])inrel.elementAt(k);
-							groundnextpf = nextpf.substitute(vars,nexttup);
+							groundnextcpm = nextcpm.substitute(vars,nexttup);
 							atomstring = nextrel.name()+StringOps.arrayToString((int[])inrel.elementAt(k),"(",")");
 							
 							/* check whether this atom has already been included as an upper ground atom node because
@@ -272,7 +267,7 @@ public class GradientGraphO extends GradientGraph{
 							 */
 							if (mapatoms == null || !mapatoms.contains(nextrel,nexttup)){
 								
-								pfeval = (double)groundnextpf.evaluate(A,
+								pfeval = (double)groundnextcpm.evaluate(A,
 										osd,
 										new String[0],
 										new int[0],
@@ -287,7 +282,7 @@ public class GradientGraphO extends GradientGraph{
 										null)[0];
 
 								if (myggoptions.aca()){
-									dependsonmissing = groundnextpf.dependsOn("unknown_atom",A,osd);
+									dependsonmissing = groundnextcpm.dependsOn("unknown_atom",A,osd);
 								}
 
 								if (Double.isNaN(pfeval) && !(myggoptions.aca() && dependsonmissing)){
@@ -297,8 +292,8 @@ public class GradientGraphO extends GradientGraph{
 									 * would need to be considered, but for maximizing the likelihood
 									 * it is irrelevant
 									 */
-									fnode = GGProbFormNode.constructGGPFN(this,
-											groundnextpf,
+									fnode = GGCPMNode.constructGGPFN(this,
+											groundnextcpm,
 											allNodes,
 											A,									 						 
 											osd,
@@ -384,15 +379,15 @@ public class GradientGraphO extends GradientGraph{
 			nextarg = at.args();
 			inputcaseno = nextggin.inputcaseno();
 			observcaseno = nextggin.observcaseno();
-			nextpf = rbn.cpmodel(at.rel());
+			nextcpm = rbn.cpmodel(at.rel());
 			vars = rbn.args(at.rel());
-			groundnextpf = nextpf.substitute(vars,nextarg);
+			groundnextcpm = nextcpm.substitute(vars,nextarg);
 			/** Note that (arbitrarily) the truthval of the constructed
 			 * node is set to true. This initial setting must always be overridden
 			 * by some sample value for this node
 			 */
-			fnode =  GGProbFormNode.constructGGPFN(this,
-					groundnextpf,
+			fnode =  GGCPMNode.constructGGPFN(this,
+					groundnextcpm,
 					allNodes,
 					data.elementAt(inputcaseno).inputDomain(),
 					new OneStrucData(data.elementAt(inputcaseno).oneStrucDataAt(observcaseno)),
@@ -485,8 +480,8 @@ public class GradientGraphO extends GradientGraph{
 				for (Iterator<GGNode> it = ancs.iterator(); it.hasNext();){
 					nextggn = it.next();
 					nextggn.setDependsOn(par);
-					if ( (nextggn instanceof GGProbFormNode) &&   ((GGProbFormNode)nextggn).isuga()) {
-						llnode.addUgaForParam(par, (GGProbFormNode)nextggn); 			
+					if ( (nextggn instanceof GGCPMNode) &&   ((GGCPMNode)nextggn).isuga()) {
+						llnode.addUgaForParam(par, (GGCPMNode)nextggn); 			
 					}
 				}
 			}
@@ -674,7 +669,7 @@ public class GradientGraphO extends GradientGraph{
 		llnode.resetValue();
 		if (!valueonly)
 			llnode.resetGradient();
-		Enumeration<GGProbFormNode> e = allNodes.elements();
+		Enumeration<GGCPMNode> e = allNodes.elements();
 		GGNode ggn;
 		while (e.hasMoreElements()){
 			ggn = (GGNode)e.nextElement();
@@ -687,10 +682,10 @@ public class GradientGraphO extends GradientGraph{
 	/** Resets to [-1,-1] the bounds in all nodes */
 	public void resetBounds(){
 		llnode.resetBounds();
-		Enumeration<GGProbFormNode> e = allNodes.elements();
-		GGProbFormNode ggn;
+		Enumeration<GGCPMNode> e = allNodes.elements();
+		GGCPMNode ggn;
 		while (e.hasMoreElements()){
-			ggn = (GGProbFormNode)e.nextElement();
+			ggn = (GGCPMNode)e.nextElement();
 			ggn.resetBounds();
 		}
 	}
@@ -891,7 +886,7 @@ public class GradientGraphO extends GradientGraph{
 			return currentllratio;
 		}
 		
-		Vector<GGProbFormNode> ugas = startnode.getAllugas();
+		Vector<GGCPMNode> ugas = startnode.getAllugas();
 		double[] oldvalues = new double[ugas.size()];
 		double oldll = computePartialLikelihood(ugas,oldvalues);
 		
@@ -921,7 +916,7 @@ public class GradientGraphO extends GradientGraph{
 				minind = i;
 			}
 		}
-		GGProbFormNode minuga = ugas.elementAt(minind);
+		GGCPMNode minuga = ugas.elementAt(minind);
 		//System.out.println("next uga: " + minuga.getMyatom());
 		
 		double recsearch = mapSearch(allreadyflipped,minuga.getMaxIndicators(),currentllratio,depth-1);
@@ -1810,11 +1805,11 @@ public class GradientGraphO extends GradientGraph{
 
 
 
-	public GGProbFormNode findInAllnodes(String key){
+	public GGCPMNode findInAllnodes(String key){
 		return allNodes.get(key);
 	}
 	
-	public GGProbFormNode findInAllnodes(ProbForm pf, int inputcaseno, int observcaseno, RelStruc A ){
+	public GGCPMNode findInAllnodes(CPModel pf, int inputcaseno, int observcaseno, RelStruc A ){
 	
 		if (pf == null) System.out.println("pf is null");
 		return allNodes.get(makeKey(pf,inputcaseno,observcaseno,A));
@@ -1854,8 +1849,8 @@ public class GradientGraphO extends GradientGraph{
 	 * of singlells values)
 	 * 
 	 */
-	public static double computePartialLikelihood(Vector<GGProbFormNode> ugas, double[] singlells){
-		GGProbFormNode nextggpfn;
+	public static double computePartialLikelihood(Vector<GGCPMNode> ugas, double[] singlells){
+		GGCPMNode nextggpfn;
 		Object nextival;
 		double val;
 		
@@ -1946,7 +1941,7 @@ public class GradientGraphO extends GradientGraph{
 	
 	private int numLinks() {
 		int result =0;
-		for (GGProbFormNode pfn:allNodes.values()) {
+		for (GGCPMNode pfn:allNodes.values()) {
 			result += pfn.childrenSize();
 		}
 		return result;

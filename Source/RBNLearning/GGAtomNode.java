@@ -31,7 +31,7 @@ import RBNutilities.*;
 import RBNinference.*;
 
 
-public abstract class GGAtomNode extends GGProbFormNode{
+public abstract class GGAtomNode extends GGCPMNode{
 
 	/** Ground atom represented by this node */
 	GroundAtom myatom;
@@ -53,13 +53,13 @@ public abstract class GGAtomNode extends GGProbFormNode{
 	/* Pointer to the Upper Ground Atom Node defining the probability of this.myatom 
 	 * 
 	 */
-	protected GGProbFormNode myuppergroundatom;
+	protected GGCPMNode myuppergroundatom;
 	
 	/* The set of all Upper Ground Atom Nodes whose value depend on the 
 	 * value of this indicator. The converse of GGProbFormNode.mymaxindicators 
 	 * and GGProbFormNode.mysumindicators 
 	 */
-	protected Vector<GGProbFormNode> allugas;
+	protected Vector<GGCPMNode> allugas;
 	
 	public GGAtomNode(GradientGraphO gg,
 			ProbForm pf,  
@@ -74,7 +74,7 @@ public abstract class GGAtomNode extends GGProbFormNode{
 		observcaseno = observcasenoarg;
 		currentInst = -1;
 		myuppergroundatom = null;
-		allugas = new Vector<GGProbFormNode>();
+		allugas = new Vector<GGCPMNode>();
 		if (!(pf instanceof ProbFormAtom)){
 			System.out.println("Cannot create GGAtomNode from ProbForm " + pf.asString(Primula.CLASSICSYNTAX,0,null,false,false));
 		}
@@ -154,41 +154,41 @@ public abstract class GGAtomNode extends GGProbFormNode{
 		currentInst = -1;
 	}
 	
-	public void setUGA(GGProbFormNode uga){
+	public void setUGA(GGCPMNode uga){
 		myuppergroundatom = uga;
 		//System.out.println("setUGA: setting  " + uga.getMyatom() + " as uga for " + this.getMyatom() );
 	}
 	
-	public abstract void addMeToIndicators(GGProbFormNode ggpfn);
+	public abstract void addMeToIndicators(GGCPMNode ggpfn);
 	
 	public void setAllugas(){
 		TreeSet<GGNode> ancs = this.ancestors();
 		GGNode nextggn;
 		for (Iterator<GGNode> it = ancs.iterator(); it.hasNext();){
 			nextggn = it.next();
-			if ((nextggn instanceof GGProbFormNode) && ((GGProbFormNode)nextggn).isuga()){
-				allugas.add((GGProbFormNode)nextggn);
-				addMeToIndicators((GGProbFormNode)nextggn);
+			if ((nextggn instanceof GGCPMNode) && ((GGCPMNode)nextggn).isuga()){
+				allugas.add((GGCPMNode)nextggn);
+				addMeToIndicators((GGCPMNode)nextggn);
 			}
 		}
 		addMeToIndicators(myuppergroundatom);
 		allugas.add(myuppergroundatom);
 	}
 	
-	public Vector<GGProbFormNode> getAllugas(){
+	public Vector<GGCPMNode> getAllugas(){
 		return allugas;
 	}
 	
-	public GGProbFormNode getMyUga(){
+	public GGCPMNode getMyUga(){
 		return myuppergroundatom;
 	}
 	
 	public void printAllUgas(){
-		GGProbFormNode nextuga;
+		GGCPMNode nextuga;
 		System.out.print("My own uga: ");
 		System.out.println(myuppergroundatom.getMyatom());
 		System.out.println("My other ugas:  " );
-		for (Iterator<GGProbFormNode> it = allugas.iterator(); it.hasNext();){
+		for (Iterator<GGCPMNode> it = allugas.iterator(); it.hasNext();){
 			nextuga = it.next();
 			System.out.print("UGA: ");
 			System.out.println(nextuga.getMyatom());

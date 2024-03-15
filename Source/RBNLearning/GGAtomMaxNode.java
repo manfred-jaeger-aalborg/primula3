@@ -79,7 +79,7 @@ private int index;
 
 	public void setScore(int scoremode){
 
-		GGProbFormNode nextuga;
+		GGCPMNode nextuga;
 		double nextscore;
 
 //		if ((scoremode == USEMINSCORE || scoremode == USEAVGSCORE)){
@@ -130,7 +130,7 @@ private int index;
 		}
 	}
 
-	public void addMeToIndicators(GGProbFormNode ggpfn){
+	public void addMeToIndicators(GGCPMNode ggpfn){
 		ggpfn.addToMaxIndicators(this);
 	}
 }

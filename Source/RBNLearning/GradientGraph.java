@@ -96,7 +96,7 @@ public abstract class GradientGraph{
 	protected Primula myPrimula;
 	protected GradientGraphOptions myggoptions;
 
-	private Hashtable<String,GGProbFormNode> allNodes;
+	private Hashtable<String,GGCPMNode> allNodes;
 	
 	/* Maximum identifier value currently assigned to a node;
 	 * 
@@ -589,30 +589,15 @@ public abstract class GradientGraph{
 	public abstract double[] computeObjectiveandConfusion(GGThread mythread)
 			throws RBNNaNException;
 
-//	public String makeKey(ProbForm pf, int inputcaseno, int observcaseno, RelStruc A){
-//		String key;
-//		//System.out.println("make key for " + pf.toString() + " " + inputcaseno  + " " + observcaseno);
-//		if (pf instanceof ProbFormConstant)
-//			key = pf.asString(Primula.CLASSICSYNTAX,0,A,false,false);
-//		else 
-//			key = inputcaseno + "."  + observcaseno + "."  +  pf.asString(Primula.CLASSICSYNTAX,-1,A,false,false);
-//		//System.out.println("return " + key); 
-//		return key;
-//	}
 
-	public static String makeKey(ProbForm pf, int inputcaseno, int observcaseno, RelStruc A){
+
+	public static String makeKey(CPModel cpm, int inputcaseno, int observcaseno, RelStruc A){
 		String key;
-//		System.out.println("make key for " + pf.toString() + " " + inputcaseno  + " " + observcaseno);
-		String pfstring= pf.asString(Primula.CLASSICSYNTAX,0,A,false,false);
-//		if (pf.getAlias()!=null)
-//			pfstring=pf.getAlias();
-//		else 
-//			pfstring = pf.asString(Primula.CLASSICSYNTAX,0,A,false,false);
-		if (pf instanceof ProbFormConstant)
+		String pfstring= cpm.asString(Primula.CLASSICSYNTAX,0,A,false,false);
+		if (cpm instanceof ProbFormConstant)
 			key = pfstring;
 		else 
 			key = inputcaseno + "."  + observcaseno + "."  +  pfstring;
-//		System.out.println("return " + key); 
 		return key;
 	}
 	
