@@ -1454,6 +1454,14 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		return gg;
 	}
 
+	private boolean checkGnnRel(RBN rbn) {
+		for(int i=0; i<rbn.prelements().length; i++) {
+			if (rbn.probForm_prels_At(i) instanceof ProbFormGnn)
+				return true;
+		}
+		return false;
+	}
+
 	public void stopMapThread() {
 		mapthr.setRunning(false);
 		infoMessage.setText(" Stop MAP ");

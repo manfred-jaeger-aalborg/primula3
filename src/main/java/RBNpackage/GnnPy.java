@@ -187,8 +187,8 @@ public class GnnPy {
         }
     }
 
-    private int[][] createBoolEncodingMatrix(int num_nodes, int num_columns) {
-        int[][] node_bool = new int[num_nodes][num_columns * 2];
+    private double[][] createBoolEncodingMatrix(int num_nodes, int num_columns) {
+        double[][] node_bool = new double[num_nodes][num_columns * 2];
         // initialize with all false (i.e. [0,1])
         for (int i = 0; i < node_bool.length; i++) {
             for (int j = 0; j < node_bool[i].length; j += 2) {
@@ -199,10 +199,10 @@ public class GnnPy {
         return node_bool;
     }
 
-    private int[][] createOneHotEncodingMatrix(int num_nodes, int num_columns) {
-        int[][] node_bool = new int[num_nodes][num_columns];
+    private double[][] createOneHotEncodingMatrix(int num_nodes, int num_columns) {
+        double[][] node_bool = new double[num_nodes][num_columns];
         // initialize with all false (i.e. [0])
-        for (int[] ints : node_bool) Arrays.fill(ints, 0);
+        for (double[] ints : node_bool) Arrays.fill(ints, 0);
         return node_bool;
     }
 
@@ -214,7 +214,7 @@ public class GnnPy {
      * @param attributes
      * @return
      */
-    public int[][] nodeToEncoding(int num_nodes, SparseRelStruc finalre, Rel[] attributes, boolean oneHotEncoding) {
+    public double[][] nodeToEncoding(int num_nodes, SparseRelStruc finalre, Rel[] attributes, boolean oneHotEncoding) {
         // table for the encoding of the node features, each feature is represented in a boolean encoding
         // 1 0 true - 0 1 false
         // example: 2 possible features blue and red. the node is red: 0 1 1 0
@@ -228,7 +228,7 @@ public class GnnPy {
             }
         }
 
-        int[][] node_bool;
+        double[][] node_bool;
         if (oneHotEncoding)
             node_bool = createOneHotEncodingMatrix(num_nodes, num_columns);
         else
@@ -239,17 +239,26 @@ public class GnnPy {
             if (parent.arity == 1) { // only nodes
                 Vector<int[]> featureTrueData = data.allTrue(parent);
                 Vector<Vector<int[]>> allTrueData = new Vector<>();
-
                 allTrueData.add(featureTrueData);
-
-                // change the true value
-                for (Vector<int[]> feature : allTrueData) {
-                    for (int[] node : feature) {
-                        node_bool[node[0]][idxFeat] = 1;
-                        if (!oneHotEncoding) // same, as in the creation of node_bool
-                            node_bool[node[0]][idxFeat + 1] = 0;
+                // TODO find a method to handle node encoding for numeric feature !!
+                if (parent.valtype() == 2) { // if numeric
+                    OneNumRelData num_data = (OneNumRelData) data.find(parent);
+                    for (Vector<int[]> feature : allTrueData) {
+                        for (int[] node : feature) {
+                            node_bool[node[0]][idxFeat] = num_data.valueOf(node);
+                        }
+                        idxFeat++;
                     }
-                    idxFeat++;
+                } else {
+                    // change the true value
+                    for (Vector<int[]> feature : allTrueData) {
+                        for (int[] node : feature) {
+                            node_bool[node[0]][idxFeat] = 1;
+                            if (!oneHotEncoding) // same, as in the creation of node_bool
+                                node_bool[node[0]][idxFeat + 1] = 0;
+                        }
+                        idxFeat++;
+                    }
                 }
             }
         }
@@ -257,13 +266,13 @@ public class GnnPy {
     }
 
     public String stringifyGnnFeatures(int num_nodes, SparseRelStruc finalre, Rel[] attributes, boolean oneHotEncoding) {
-        int[][] bool_nodes = this.nodeToEncoding(num_nodes, finalre, attributes, oneHotEncoding);
+        double[][] bool_nodes = this.nodeToEncoding(num_nodes, finalre, attributes, oneHotEncoding);
         StringBuilder node_features = new StringBuilder("x=torch.tensor([");
         for (int i = 0; i < bool_nodes.length; i++) {
             node_features.append("[");
             for (int j = 0; j < bool_nodes[i].length; j++) {
                 node_features.append(bool_nodes[i][j]);
-                node_features.append(".");
+//                node_features.append(".");
                 if (j < bool_nodes[i].length - 1) {
                     node_features.append(",");
                 }

@@ -6,7 +6,9 @@ import RBNpackage.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.TreeSet;
 import java.util.Vector;
 
 public class PyTorchExport {
@@ -28,7 +30,12 @@ public class PyTorchExport {
             }
         }
 
-        for (Rel parent : this.pfgnn.parentRels()) {
+        TreeSet<Rel> attr_parents = this.pfgnn.parentRels();
+        // if it has no parents we use the current attributes (should work for numeric rel)
+        if (attr_parents.isEmpty()) {
+            attr_parents.addAll(Arrays.asList(this.pfgnn.getGnnattr()));
+        }
+        for (Rel parent : attr_parents) {
             try {
                 int[][] mat = sparseRelStruc.allTypedTuples(parent.getTypes());
                 // maybe there could be attributes with different number, we keep the biggest

@@ -435,7 +435,7 @@ public  class ProbFormAtom extends ProbForm {
 		
 		if (evaluated != null) {
 			//System.out.println("putting " + key + " = " + result[0]);
-			evaluated.put(key, result);
+			evaluated.put(key, result.clone());
 		}
 		
 		return result;

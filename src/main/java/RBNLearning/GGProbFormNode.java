@@ -201,8 +201,10 @@ public abstract class GGProbFormNode extends GGNode{
 								rbnutilities.stringArrayToIntArray(((ProbFormAtom)pf).getArguments()));
 					}
 					if (pf instanceof ProbFormBoolAtom){
-						pfvalue = A.truthValueOf( ((ProbFormAtom)pf).getRelation(), 
-								rbnutilities.stringArrayToIntArray(((ProbFormAtom)pf).getArguments()));
+						// TODO check
+						System.out.println(pf.asString(0, 0, null, true, false));
+						pfvalue = A.truthValueOf( (((ProbFormBoolAtom) pf).getPfatom()).getRelation(),
+								rbnutilities.stringArrayToIntArray((((ProbFormBoolAtom) pf).getPfatom()).getArguments()));
 						if (!((ProbFormBool)pf).sign())
 							pfvalue = Math.abs(1-pfvalue);
 					}

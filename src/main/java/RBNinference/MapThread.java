@@ -179,6 +179,10 @@ public class MapThread extends GGThread {
 		return false;
 	}
 
+	public void setGg(GradientGraphO gg) {
+		this.gg = gg;
+	}
+
 	public GnnPy getGnnPy() {
 		return gnnPy;
 	}

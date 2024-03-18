@@ -255,4 +255,8 @@ public class ProbFormBoolAtom extends ProbFormBool {
 	public TreeSet<Rel> parentRels(TreeSet<String> processed){
 		return pfatom.parentRels(processed);
 	}
+
+	public ProbFormAtom getPfatom() {
+		return pfatom;
+	}
 }

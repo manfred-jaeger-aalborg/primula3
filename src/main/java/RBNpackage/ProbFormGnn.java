@@ -10,7 +10,7 @@ import java.util.*;
 
 /**
  * alpha(a) = COMPUTE WITH
- *      <gnn>
+ *      <gnn> {path/of/the/weights}
  * FOR INPUTS
  *      <list of attributes>
  * FORALL b
@@ -104,7 +104,12 @@ public class ProbFormGnn extends ProbForm {
             OneStrucData onsd = new OneStrucData(A.getmydata().copy());
             SparseRelStruc sampledRel = new SparseRelStruc(A.getNames(), onsd, A.getCoords(), A.signature());
             sampledRel.getmydata().add(inst.copy());
-            for (Rel parent : this.parentRels()) {
+            TreeSet<Rel> attr_parents = this.parentRels();
+            // if it has no parents we use the current attributes (should work for numeric rel)
+            if (attr_parents.isEmpty()) {
+                attr_parents.addAll(Arrays.asList(this.getGnnattr()));
+            }
+            for (Rel parent : attr_parents) {
                 try {
                     int[][] mat = A.allTypedTuples(parent.getTypes());
                     // for now, we just check if the attributes values are NaN
@@ -167,7 +172,12 @@ public class ProbFormGnn extends ProbForm {
         int num_features = 0;
         SparseRelStruc sampledRel = new SparseRelStruc(A.getNames(), onsd, A.getCoords(), A.signature());
         sampledRel.getmydata().add(inst.copy());
-        for (Rel parent : this.parentRels()) {
+        TreeSet<Rel> attr_parents = this.parentRels();
+        // if it has no parents we use the current attributes (should work for numeric rel)
+        if (attr_parents.isEmpty()) {
+            attr_parents.addAll(Arrays.asList(this.getGnnattr()));
+        }
+        for (Rel parent : attr_parents) {
                 try {
                     int[][] mat = A.allTypedTuples(parent.getTypes());
                     // maybe there could be attributes with different number, we keep the biggest
@@ -327,7 +337,12 @@ public class ProbFormGnn extends ProbForm {
     @Override
     public TreeSet<Rel> parentRels() {
 //        System.out.println("parentRels code 1");
-        return new TreeSet<Rel>(Arrays.asList(this.gnnattr));
+        TreeSet<Rel> parent = new TreeSet<>();
+        for (Rel rel: this.getGnnattr())
+            if (rel.isprobabilistic())
+                parent.add(rel);
+        return parent;
+//        return new TreeSet<Rel>(Arrays.asList(this.gnnattr));
     }
 
     @Override
@@ -336,7 +351,16 @@ public class ProbFormGnn extends ProbForm {
         TreeSet<Rel> result = new TreeSet<Rel>();
         // this checks if processed makes sense here
         assert !processed.isEmpty();
-        return new TreeSet<Rel>(Arrays.asList(this.gnnattr));
+        TreeSet<Rel> parent = new TreeSet<>();
+        for (Rel rel: this.getGnnattr())
+            if (rel.isprobabilistic())
+                parent.add(rel);
+//        return new TreeSet<Rel>(Arrays.asList(this.gnnattr));
+        return parent;
+    }
+
+    public GnnPy getGnnPy() {
+        return gnnPy;
     }
 
     public void setGnnPy(GnnPy gnnPy) {

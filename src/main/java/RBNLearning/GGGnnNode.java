@@ -90,7 +90,13 @@ public class GGGnnNode extends GGProbFormNode {
             int num_features = 0;
             SparseRelStruc sampledRel = new SparseRelStruc(this.A.getNames(), onsd, this.A.getCoords(), this.A.signature());
             sampledRel.getmydata().add(this.inst.copy());
-            for (Rel parent : this.pf.parentRels()) {
+
+            TreeSet<Rel> attr_parents = this.pf.parentRels();
+            // if it has no parents we use the current attributes (should work for numeric rel)
+            if (attr_parents.isEmpty()) {
+                attr_parents.addAll(Arrays.asList(((ProbFormGnn) this.pf).getGnnattr()));
+            }
+            for (Rel parent : attr_parents) {
                 try {
                     int[][] mat = A.allTypedTuples(parent.getTypes());
                     // maybe there could be attributes with different number, we keep the biggest

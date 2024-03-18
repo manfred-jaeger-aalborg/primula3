@@ -94,6 +94,19 @@ public class GradientGraphO extends GradientGraph{
 		this.debugPrint = false;
 
 		RBN rbn = myPrimula.getRBN();
+		// this is a temporary solution to handle the evaluate method when the gnnPy object is not created
+		// by the MapThread (the Jep Object needs to work in the same thread it is created)
+		// the at the end of this constructor the Jep interpreter will be closed!
+		// (at the moment I don't fin better ideas)
+		GnnPy temp_gnnPy = null;
+		if (this.checkGnnRel(rbn)) {
+			try {
+				temp_gnnPy = new GnnPy(myPrimula.getScriptPath(), myPrimula.getScriptName(), myPrimula.getPythonHome());
+				this.gnnPy = temp_gnnPy;
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
 		
 		//parameters = myPrimula.getParamNumRels();
 		allNodes = new Hashtable<String,GGProbFormNode>();
@@ -276,7 +289,10 @@ public class GradientGraphO extends GradientGraph{
 							 * it is a map atom
 							 */
 							if (mapatoms == null || !mapatoms.contains(nextrel,nexttup)){
-								
+
+								if (groundnextpf instanceof ProbFormGnn && ((ProbFormGnn) groundnextpf).getGnnPy() == null)
+									((ProbFormGnn) groundnextpf).setGnnPy(this.gnnPy);
+
 								pfeval = (double)groundnextpf.evaluate(A,
 										osd,
 										new String[0],
@@ -565,8 +581,12 @@ public class GradientGraphO extends GradientGraph{
 			myPrimula.showMessageThis("");
 		}
 		//showAllNodes(6,null);
-		
 
+		if (this.gnnPy != null) {
+			this.gnnPy.closeInterpreter();
+			temp_gnnPy = null;
+			this.gnnPy = null;
+		}
 //		System.out.println("Calls to constructGGPFN:" + profiler.constructGGPFNcalls);
 //		System.out.println("Found nodes:" + profiler.foundnodes);
 //		System.out.println("Time 1:" + profiler.time1);
@@ -1969,6 +1989,14 @@ public class GradientGraphO extends GradientGraph{
 			result += pfn.childrenSize();
 		}
 		return result;
+	}
+
+	private boolean checkGnnRel(RBN rbn) {
+		for(int i=0; i<rbn.prelements().length; i++) {
+			if (rbn.probForm_prels_At(i) instanceof ProbFormGnn)
+				return true;
+		}
+		return false;
 	}
 
 	public void setGnnPyToNodes() {

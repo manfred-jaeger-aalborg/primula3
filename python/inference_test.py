@@ -1,7 +1,5 @@
-
 import sys
 sys.path.append('/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python')
-print(sys.path)
 from rbn import *
 from gnn.ACR_graph import *
 from gnn.ACR_node import *
@@ -10,15 +8,17 @@ def infer_model_nodes(model, x, edge_index, batch=None):
     if batch is None:
         batch = torch.zeros(x.size()[0]).type(torch.LongTensor)
     out = model(x, edge_index, batch)
-    out = torch.sigmoid(out)
     return out
+#     out = torch.sigmoid(out)
+#     return out
 
 def infer_model_graph(model, x, edge_index, batch=None):
     if batch is None:
         batch = torch.zeros(x.size()[0]).type(torch.LongTensor)
     out = model(x, edge_index, batch)
-    m = nn.Softmax(dim=1)
-    return m(out)[0]
+#     m = nn.Softmax(dim=1)
+#     return m(out)[0]
+    return out
 
 def set_model(model_class, weights_path, **kwargs):
     model = model_class(**kwargs)
@@ -64,6 +64,16 @@ models_info = {
                 "input_dim": 2,
                 "hidden_dim": [64, 64, 64],
                 "num_layers": 3,
+                "mlp_layers": 0,
+                "final_read": "add",
+                "num_classes": 1
+            }
+        ),
+    "gnnHomophily": (MYACRGnnNode, "/Users/lz50rg/Dev/homophily/gnn_trained_model_0.7.pt",
+            {
+                "input_dim": 2,
+                "hidden_dim": [4],
+                "num_layers": 1,
                 "mlp_layers": 0,
                 "final_read": "add",
                 "num_classes": 1
