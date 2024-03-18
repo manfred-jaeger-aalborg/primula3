@@ -271,6 +271,7 @@ public class GradientGraphO extends GradientGraph{
 										osd,
 										new String[0],
 										new int[0],
+										0, // irrelevant because valonly=true
 										false,
 										false,
 										mapatoms,
@@ -278,7 +279,7 @@ public class GradientGraphO extends GradientGraph{
 										evaluated,
 										parameters,
 										ProbForm.RETURN_ARRAY,
-										true,
+										true, //valonly
 										null)[0];
 
 								if (myggoptions.aca()){

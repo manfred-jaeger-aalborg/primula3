@@ -238,5 +238,9 @@ public class CatModelSoftMax extends CPModel {
 	public int numvals() {
 		return probforms.size();
 	}
+	
+	public ProbForm pfAt(int i) {
+		return probforms.elementAt(i);
+	}
 
 }

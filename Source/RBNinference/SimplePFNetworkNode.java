@@ -255,7 +255,7 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 
 	public void initializeForSampling(int sampleordmode, 
 			int adaptivemode, 
-			GroundAtomList queryatoms, 
+			Hashtable<Rel,GroundAtomList> queryatoms, 
 			int nsm,
 			int nsa){
 		//truesampleweight = 0;
