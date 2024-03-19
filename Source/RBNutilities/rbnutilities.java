@@ -1627,4 +1627,16 @@ public class rbnutilities extends java.lang.Object
 		}
 		return true;
 	}
+	
+	public static double[] softmax(double[] weights) {
+		double[] result= new double[weights.length];
+		double sum=0;
+		for (int i=0;i<weights.length;i++) {
+			result[i]=Math.exp(weights[i]);
+			sum+=result[i];
+		}
+		for (int i=0;i<weights.length;i++) 
+			result[i]=result[i]/sum;
+		return result;
+	}
 }
