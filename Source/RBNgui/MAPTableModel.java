@@ -28,6 +28,7 @@ import javax.swing.table.*;
 import RBNutilities.*;
 //import RBNpackage.Atom;
 import RBNinference.BayesNetIntHuginNet;
+import RBNpackage.Rel;
 
 public class MAPTableModel extends QueryTableModel{
 
@@ -36,8 +37,7 @@ public class MAPTableModel extends QueryTableModel{
 	 * @uml.property  name="mapdata"
 	 * @uml.associationEnd  multiplicity="(0 -1)" elementType="java.lang.String"
 	 */
-	LinkedList<String> mapdata = new LinkedList<String>();
-	
+	String[] mapdata;
 
 	public static final String STR_EMPTY = "";
 
@@ -54,6 +54,14 @@ public class MAPTableModel extends QueryTableModel{
 		super();
 	}
 
+	public MAPTableModel(QueryTableModel qtm, Rel r){
+		super();
+		rownum=qtm.getRowCount();
+		column = 2; // first column for query atoms
+		mapdata = new String[rownum];
+		this.setQuery(qtm.getQuery());
+	}
+	
 	public int getColumnCount(){
 		return column;
 	}
@@ -66,9 +74,7 @@ public class MAPTableModel extends QueryTableModel{
 				return queryatomdata.get(     row );
 			break;
 		case 1:
-			if(      mapdata.size() > row )
-				return mapdata.get(     row );
-			break;
+			return mapdata[row];
 			/** ... keith cascio */
 		default:
 			System.err.println( "column " + col + " out of range" );
@@ -78,36 +84,14 @@ public class MAPTableModel extends QueryTableModel{
 		return STR_EMPTY;
 	}
 
-
-	public void addQuery(String query){
-		super.addQuery(query);
-		mapdata.add(STR_EMPTY);
-	}
-
-	public void addMapVal(String mv){
-		mapdata.add(mv);
-	}
 	
 	public void reset(){
 		super.reset();
 	}
 
-	public void removeAllQueries(){
-		super.removeAllQueries();
-		mapdata = new LinkedList();
-	}
-
-	public void removeQuery(int query){
-		super.removeQuery(query);
-		mapdata.remove(query);
-	}
-
 	public void resetMapVals(){
-		mapdata = new LinkedList();
+		mapdata = new String[rownum];
 	}
 	
-	public LinkedList<String> getMapValues() {
-		return mapdata;
-	}
 	
 }

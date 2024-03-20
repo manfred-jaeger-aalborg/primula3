@@ -1409,9 +1409,6 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		sampthr.setRunning(false);
 	}
 	private GradientGraph startMapThread(){
-
-		this.setMAPTable();
-		this.buildQueryatomsTables(mapModels);
 		GradientGraph gg = null;
 		try{
 //			maprestarts = true;
@@ -1426,15 +1423,6 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 				mode = GradientGraphO.LEARNANDMAPMODE;
 			else 
 				mode = GradientGraphO.MAPMODE;
-			
-//			public GradientGraphO(Primula mypr, 
-//					RelData data, 
-//					Hashtable<String,Integer> params,
-//					GradientGraphOptions go, 
-//					GroundAtomList maxats, 
-//					int m,
-//					int obj,
-//					Boolean showInfoInPrimula)
 			
 			gg = new GradientGraphO(myprimula, 
 					 								evidence, 
@@ -2736,6 +2724,32 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	
 
 
+	private void buildMAPTables() {
+		/* creating MapModels
+		 * It is required that querytables and queryatomsScrolllists exist and have the 
+		 * same length as relList
+		 */
+		mapModels=new Vector<MAPTableModel>();
+		for (int i=0;i<querytables.size();i++) {
+			
+			Rel r = relList.elementAt(i);
+			MAPTableModel maptm = new MAPTableModel(queryModels.elementAt(i),relList.elementAt(i));
+			
+			mapModels.add(maptm);
+			JTable qt = querytables.elementAt(i);
+			
+			qt.setModel(maptm);
+			qt.getColumnModel().getColumn(0).setPreferredWidth(150);
+			qt.getColumnModel().getColumn(1).setPreferredWidth(100);
+			qt.setShowHorizontalLines(false);
+			qt.setPreferredScrollableViewportSize(new Dimension(300, 100));
+			//table header values
+			qt.getColumnModel().getColumn(0).setHeaderValue("Query");
+			qt.getColumnModel().getColumn(1).setHeaderValue("MAP value");
+		}
+	}
+	
+	
 	private void buildMCMCTables() {
 		/* creating mcmcModels
 		 * It is required that querytables and queryatomsScrolllists exist and have the 
@@ -2768,18 +2782,18 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		}
 	}
 	
-	private void setMAPTable() {
-		for (int i=0;i<querytables.size();i++) {
-			JTable qt = querytables.elementAt(i);
-			qt.setModel(mapModels.elementAt(i));
-			qt.setShowHorizontalLines(false);
-			qt.setPreferredScrollableViewportSize(new Dimension(146, 100));
-			//table header values
-			qt.getColumnModel().getColumn(0).setHeaderValue("Query Atoms");
-			qt.getColumnModel().getColumn(1).setHeaderValue("MAP");
-			qt.getColumnModel().getColumn(0).setPreferredWidth(150);
-		}
-	}
+//	private void setMAPTable() {
+//		for (int i=0;i<querytables.size();i++) {
+//			JTable qt = querytables.elementAt(i);
+//			qt.setModel(mapModels.elementAt(i));
+//			qt.setShowHorizontalLines(false);
+//			qt.setPreferredScrollableViewportSize(new Dimension(146, 100));
+//			//table header values
+//			qt.getColumnModel().getColumn(0).setHeaderValue("Query Atoms");
+//			qt.getColumnModel().getColumn(1).setHeaderValue("MAP");
+//			qt.getColumnModel().getColumn(0).setPreferredWidth(150);
+//		}
+//	}
 	
 	public void stateChanged(ChangeEvent e) {
 		if (e.getSource() == inferencePane) {
@@ -2794,9 +2808,14 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 				queryatomsPanel.updateUI();
 				outerQueryPane.updateUI();
 				break;
-			case 2: // MAP tab
+			case 2: // Test tab
 				break;
-			case 3: // ACE tab
+			case 3: // MAP tab
+				buildMAPTables();
+				queryatomsPanel.updateUI();
+				outerQueryPane.updateUI();
+				break;
+			case 4: // ACE tab
 				break;
 			}
 		}
