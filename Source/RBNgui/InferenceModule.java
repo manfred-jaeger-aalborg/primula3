@@ -2687,16 +2687,17 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 				}
 		}
 		
-//		if (o instanceof MapVals){
-//			mapModel.resetMapVals();
-//			int [] mapvals = ((MapVals)o).getMVs();
-//			for(int i=0; i<mapvals.length; i++){
-//				mapModel.addMapVal(""+mapvals[i]);
-//			}
-//			mapRestarts.setText("" +((MapVals)o).getRestarts());
-//			mapLL.setText("" +((MapVals)o).getLLstring());
-//			
-//		}
+		if (o instanceof MapVals){
+			for (Rel r: queryatoms.keySet()) {
+				MAPTableModel mapt = mapModels.elementAt(relIndex.get(r.name()));
+				int[] mvals = ((MapVals) o).getMVs(r);
+				for(int i=0; i<mvals.length; i++){
+					mapt.setValue(r.get_String_val(mvals[i]), i);
+				}
+			}
+			mapRestarts.setText("" +((MapVals)o).getRestarts());
+			mapLL.setText("" +((MapVals)o).getLLstring());
+		}
 //		
 //		/** keith cascio 20060511 ... */
 //		//dataModel.resetACE();

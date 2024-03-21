@@ -2,30 +2,57 @@ package RBNinference;
 
 import java.util.*;
 
+import RBNinference.SampleProbs.p_v_vals;
+import RBNpackage.GroundAtomList;
+import RBNpackage.Rel;
+
 public class MapVals extends Observable {
 	
-	private int[] mapvals;
+	/* class for holding the data for the queries about 
+	 * one relation
+	 */
+	private class m_vals{
+		private int[] mapvals;
+		
+		public m_vals(int size) {
+			mapvals = new int[size];
+		}
+		
+		protected void setMV(int val, int i){
+			mapvals[i]=val;
+			setChanged();
+		}
+		
+		protected int[] getMV() {
+			return mapvals;
+		}
+		
+		protected void setMV(int[] vals){
+			if (vals.length != mapvals.length)
+				System.out.println("Inconsistent integer arrays in MapVals");
+			for (int i=0;i<mapvals.length;i++)
+				mapvals[i]=vals[i];
+			setChanged();
+		}
+	}
+	
+	private Hashtable<Rel,m_vals> all_m_vals;
+	
 	private int restarts;
 	private String llstring;
 	
-	public MapVals(int i){
-		mapvals = new int[i];
+	
+	public MapVals(Hashtable<Rel,GroundAtomList> qatoms){
 	    restarts = 0;
 	    llstring = "";
+		all_m_vals = new Hashtable<Rel,m_vals>();
+		for (Rel r: qatoms.keySet()) {
+			all_m_vals.put(r,new m_vals(qatoms.get(r).size()));
+		}
 	}
 
-	public void setMV(int val, int i){
-		mapvals[i]=val;
-		setChanged();
-	}
 	
-	public void setMV(int[] vals){
-		if (vals.length != mapvals.length)
-			System.out.println("Inconsistent integer arrays in MapVals");
-		for (int i=0;i<mapvals.length;i++)
-			mapvals[i]=vals[i];
-		setChanged();
-	}
+
 	
 	public void setRestarts(int r){
 		restarts = r;
@@ -37,9 +64,14 @@ public class MapVals extends Observable {
 		setChanged();
 	}
 	
-	public int[] getMVs(){
-		return mapvals;
+	public int[] getMVs(Rel r){
+		return all_m_vals.get(r).getMV();
 	}
+	
+	public void setMVs(Rel r,int val, int i){
+		all_m_vals.get(r).setMV(val,i);
+	}
+	
 	
 	public int getRestarts(){
 		return restarts;

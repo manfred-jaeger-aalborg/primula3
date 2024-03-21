@@ -137,10 +137,11 @@ public abstract class GradientGraph{
 //	int maxrbnparam;
 	
 
-	/* list of atoms for which MAP inference is to be performed
+	/* Atoms for which MAP inference is to be performed
+	 * Same as InferenceModule.queryatoms
 	 * 
 	 */
-	GroundAtomList mapatoms;
+	Hashtable<Rel,GroundAtomList> mapatoms;
 	
 	/* For estimating likelihood and gradient from Gibbs sampling
 	 * values for unobserved atoms: 'numchains' Markov chains are 

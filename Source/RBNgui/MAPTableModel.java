@@ -93,5 +93,8 @@ public class MAPTableModel extends QueryTableModel{
 		mapdata = new String[rownum];
 	}
 	
+	public void setValue(String val, int row) {
+		mapdata[row]=val;
+	}
 	
 }
