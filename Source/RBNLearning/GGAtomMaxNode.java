@@ -48,7 +48,7 @@ private double score;
  * Needed in order to sort the GradientGraphIndicatorMaxNodes according to
  * the queryatom list in the InferenceModule 
  */
-private int index;
+//private int index;
 
 
 
@@ -68,14 +68,14 @@ private int index;
 		return score;
 	}
 	
-	public void setIndex(int i){
-		index = i;
-	}
-	
-	public int getIndex(){
-		return index;
-	}
-	
+//	public void setIndex(int i){
+//		index = i;
+//	}
+//	
+//	public int getIndex(){
+//		return index;
+//	}
+//	
 
 	public void setScore(int scoremode){
 

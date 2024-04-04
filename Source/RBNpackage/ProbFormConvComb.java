@@ -112,9 +112,9 @@ public class ProbFormConvComb extends ProbForm {
 		Vector<GroundAtom> result = atomvec1;
 		double v1,v2,v3;
 	    
-		v1=(Double)F1.evaluate(A,inst,new String[0],new int[0],false,false,new GroundAtomList(),false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
-		v2=(Double)F2.evaluate(A,inst,new String[0],new int[0],false,false,new GroundAtomList(),false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
-		v3=(Double)F3.evaluate(A,inst,new String[0],new int[0],false,false,new GroundAtomList(),false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
+		v1=(Double)F1.evaluate(A,inst,new String[0],new int[0],false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
+		v2=(Double)F2.evaluate(A,inst,new String[0],new int[0],false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
+		v3=(Double)F3.evaluate(A,inst,new String[0],new int[0],false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
 
 		if (!Double.isNaN(v1))
 			atomvec1 = new Vector<GroundAtom>();
@@ -237,7 +237,7 @@ public class ProbFormConvComb extends ProbForm {
 			boolean useCurrentCvals, 
 			// String[] numrelparameters,
 			boolean useCurrentPvals,
-			GroundAtomList mapatoms,
+			Hashtable<Rel,GroundAtomList> mapatoms,
 			boolean useCurrentMvals,
 			Hashtable<String,Object[]> evaluated,
 			Hashtable<String,Integer> params,

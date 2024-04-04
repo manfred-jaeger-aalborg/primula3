@@ -59,7 +59,7 @@ public class Sampler{
 					InferenceModule.OPTION_NOT_SAMPLE_ADAPTIVE,
 					new boolean[5],
 					3, 
-					new GroundAtomList(), 
+					null,
 					1,
 					1,
 					null);

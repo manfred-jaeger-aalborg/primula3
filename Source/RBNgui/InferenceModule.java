@@ -570,6 +570,10 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 //	 */
 //	private Hashtable<String,int[]> groundAtomIndex;
 	
+	public Hashtable<Rel, GroundAtomList> getQueryatoms() {
+		return queryatoms;
+	}
+
 	/**
 	 * Maps a relation (identified by its name) to the index of the query atoms
 	 * for this relation in the queryatomsScrolllists

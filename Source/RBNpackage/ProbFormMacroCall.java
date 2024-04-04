@@ -71,7 +71,7 @@ public class ProbFormMacroCall extends ProbForm {
 
 	@Override
 	public Object[] evaluate(RelStruc A, OneStrucData inst, String[] vars, int[] tuple, boolean useCurrentCvals,
-			boolean useCurrentPvals, GroundAtomList mapatoms, boolean useCurrentMvals,
+			boolean useCurrentPvals, Hashtable<Rel,GroundAtomList> mapatoms, boolean useCurrentMvals,
 			Hashtable<String, Object[]> evaluated, Hashtable<String, Integer> params, int returntype, boolean valonly,
 			Profiler profiler) throws RBNCompatibilityException {
 			setpf();

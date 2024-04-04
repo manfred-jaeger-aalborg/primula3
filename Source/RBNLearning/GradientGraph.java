@@ -186,7 +186,7 @@ public abstract class GradientGraph{
 			RelData data, 
 			Hashtable<String,Integer> params,
 			GradientGraphOptions go, 
-			GroundAtomList maxats, 
+			Hashtable<Rel,GroundAtomList> mapats, 
 			int m,
 			int obj,
 			Boolean showInfoInPrimula)
@@ -195,7 +195,7 @@ public abstract class GradientGraph{
 		myPrimula = mypr;
 		parameters = params;
 		myggoptions = go;
-		mapatoms = maxats;
+		mapatoms = mapats;
 		mode = m;
 		objective = obj;
 		combFuncNOr = new CombFuncNOr();
@@ -602,8 +602,8 @@ public abstract class GradientGraph{
 		return key;
 	}
 	
-	public GroundAtomList maxatoms(){
-		return mapatoms;
+	public GroundAtomList mapatoms(Rel r){
+		return mapatoms.get(r);
 	}
 	
 	
@@ -612,17 +612,18 @@ public abstract class GradientGraph{
 	}
 	
 
-	public abstract int[] getMapVals();
+	public abstract Hashtable<Rel,int[]> getMapVals();
 	
-	public OneStrucData getMapValuesAsInst(int[] instvals){
-//		int[] instvals = getMapVals();
-		OneStrucData result = new OneStrucData();
-		result.setParentRelStruc(myPrimula.getRels());
-		for (int i=0;i< mapatoms.size();i++){
-			result.add(mapatoms.atomAt(i),instvals[i],"?");
-		}
-		return result;
-	}
+//	public OneStrucData getMapValuesAsInst(int[] instvals){
+////		int[] instvals = getMapVals();
+//		OneStrucData result = new OneStrucData();
+//		result.setParentRelStruc(myPrimula.getRels());
+//		for (int i=0;i< mapatoms.size();i++){
+//			result.add(mapatoms.atomAt(i),instvals[i],"?");
+//		}
+//		return result;
+//	}
+	
 	public int objective(){
 		return objective;
 	}

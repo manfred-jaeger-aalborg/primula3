@@ -73,6 +73,9 @@ public class GradientGraphO extends GradientGraph{
 	GGLikelihoodNode llnode;
 	Vector<GGAtomSumNode> sumindicators; /* All the indicators for atoms to be summed over */
 	Vector<GGAtomMaxNode> maxindicators; /* All the indicators for atoms to be maximized */
+	Hashtable<Rel,Vector<GGAtomMaxNode>> maxindicators_for_r; /* for given rel, contains the GGAtomMaxNodes in the same order as 
+	defined by the GroundAtomList mapatoms.get(rel) */
+	
 	GGConstantNode[] paramNodes; /* All the constant (i.e. parameter) nodes */
 
 
@@ -80,13 +83,13 @@ public class GradientGraphO extends GradientGraph{
 			RelData data, 
 			Hashtable<String,Integer> params,
 			GradientGraphOptions go, 
-			GroundAtomList maxats, 
+			Hashtable<Rel,GroundAtomList> mapats, 
 			int m,
 			int obj,
 			Boolean showInfoInPrimula)
 	throws RBNCompatibilityException
 	{	
-		super(mypr,data,params,go,maxats,m,obj,showInfoInPrimula);
+		super(mypr,data,params,go,mapats,m,obj,showInfoInPrimula);
 		
 		RBN rbn = myPrimula.getRBN();
 		
@@ -96,7 +99,7 @@ public class GradientGraphO extends GradientGraph{
 		
 		sumindicators = new Vector<GGAtomSumNode>();
 		maxindicators = new Vector<GGAtomMaxNode>();
-		
+		maxindicators_for_r = new Hashtable<Rel,Vector<GGAtomMaxNode>> ();
 
 		int inputcaseno;
 		int observcaseno;
@@ -164,78 +167,78 @@ public class GradientGraphO extends GradientGraph{
 		 */
 		
 		if (mode == MAPMODE || mode == LEARNANDMAPMODE){
-			GroundAtom nextatom;
-			Rel narel;
 			int[] naargs;
+			GroundAtom nextatom;
 			GGAtomMaxNode ggmn;
-			
-			
-			for (int qano=0; qano<mapatoms.size(); qano++){
-				nextatom = mapatoms.atomAt(qano);
-				narel = nextatom.rel();
-				naargs = nextatom.args();
-				nextcpm = rbn.cpmodel(narel);
-				vars = rbn.args(narel);
-				groundnextcpm = nextcpm.substitute(vars,naargs);
-				
-				/* When MAP inference is performed, then there only is a single 
-				 * input structure, and a single observed case for the input 
-				 * (= evidence). Therefore, here always inputcaseno=observcaseno=0.
-				 * 
-				 * In principle, one can also have mode != LEARNMODE, and still
-				 * inputcaseno > 0 or observcaseno > 0. In that case, the query 
-				 * atoms would be interpreted as relating to the first data case
-				 * given by inputcaseno=observcaseno=0.
-				 */
-				rdoi = data.caseAt(0);
-				A = rdoi.inputDomain();
-				osd = rdoi.oneStrucDataAt(0);
-					
+
+			for (Rel narel: mapatoms.keySet()) {
+				for (int qano=0; qano<mapatoms.get(narel).size(); qano++){
+					nextatom = mapatoms.get(narel).atomAt(qano);
+					narel = nextatom.rel();
+					naargs = nextatom.args();
+					nextcpm = rbn.cpmodel(narel);
+					vars = rbn.args(narel);
+					groundnextcpm = nextcpm.substitute(vars,naargs);
+
+					/* When MAP inference is performed, then there only is a single 
+					 * input structure, and a single observed case for the input 
+					 * (= evidence). Therefore, here always inputcaseno=observcaseno=0.
+					 * 
+					 * In principle, one can also have mode != LEARNMODE, and still
+					 * inputcaseno > 0 or observcaseno > 0. In that case, the query 
+					 * atoms would be interpreted as relating to the first data case
+					 * given by inputcaseno=observcaseno=0.
+					 */
+					rdoi = data.caseAt(0);
+					A = rdoi.inputDomain();
+					osd = rdoi.oneStrucDataAt(0);
 
 
-				fnode = GGCPMNode.constructGGPFN(this,
-						groundnextcpm,
-						allNodes,
-						A,									 						 
-						osd,
-						0,
-						0,
-						parameters,
-						false,
-						true,
-						nextatom.asString(),
-						mapatoms,
-						null); /* TODO: optimization with a non-null Hashtable here */
-				
-				fnode.setMyatom(nextatom.asString());
-				
-				/* Need to find/construct a GGAtomMaxNode for this query atom
-				 * If no other probform in the graph depends on this query atom, then this node
-				 * will not be connected to the rest of the graph (except by its membership in
-				 * llnode.instvals). It is then only needed to 
-				 * store the current instantiation for the query atom.
-				 */
-				
-				
-				ProbFormAtom atomAsPf = new ProbFormAtom(narel,naargs);
-				ggmn = (GGAtomMaxNode)findInAllnodes(atomAsPf,0,0,A);
-				if (ggmn == null){
-					ggmn = new GGAtomMaxNode(this,atomAsPf,A,osd,0,0);
-					allNodes.put(makeKey(atomAsPf,0,0,A),ggmn);
+
+					fnode = GGCPMNode.constructGGPFN(this,
+							groundnextcpm,
+							allNodes,
+							A,									 						 
+							osd,
+							0,
+							0,
+							parameters,
+							false,
+							true,
+							nextatom.asString(),
+							mapatoms,
+							null); /* TODO: optimization with a non-null Hashtable here */
+
+					fnode.setMyatom(nextatom.asString());
+
+					/* Need to find/construct a GGAtomMaxNode for this query atom
+					 * If no other probform in the graph depends on this query atom, then this node
+					 * will not be connected to the rest of the graph (except by its membership in
+					 * llnode.instvals). It is then only needed to 
+					 * store the current instantiation for the query atom.
+					 */
+
+
+					ProbFormAtom atomAsPf = new ProbFormAtom(narel,naargs);
+					ggmn = (GGAtomMaxNode)findInAllnodes(atomAsPf,0,0,A);
+					if (ggmn == null){
+						ggmn = new GGAtomMaxNode(this,atomAsPf,A,osd,0,0);
+						allNodes.put(makeKey(atomAsPf,0,0,A),ggmn);
+					}
+					//llnode.addToChildren(fnode,ggmn);
+					llnode.addToChildren(fnode);
+					fnode.setIsuga(true);
+					fnode.setMyindicator(ggmn);
+					fnode.setInstvalToIndicator();
+					ggmn.setUGA(fnode);
+					processedcounter++;
+					if (showInfoInPrimula && (10*processedcounter)/ugacounter > currentpercentage){
+						myPrimula.appendMessageThis("X");
+						currentpercentage++;
+					}
 				}
-				//llnode.addToChildren(fnode,ggmn);
-				llnode.addToChildren(fnode);
-				fnode.setIsuga(true);
-				fnode.setMyindicator(ggmn);
-				fnode.setInstvalToIndicator();
-				ggmn.setUGA(fnode);
-				processedcounter++;
-				if (showInfoInPrimula && (10*processedcounter)/ugacounter > currentpercentage){
-					myPrimula.appendMessageThis("X");
-					currentpercentage++;
-				}
-			}
-		}
+			} //for (Rel narel: mapatoms.keySet()) 
+		} // if (mode == MAPMODE || mode == LEARNANDMAPMODE)
 		
 		//this.showMaxNodes();
 	
@@ -265,7 +268,7 @@ public class GradientGraphO extends GradientGraph{
 							/* check whether this atom has already been included as an upper ground atom node because
 							 * it is a map atom
 							 */
-							if (mapatoms == null || !mapatoms.contains(nextrel,nexttup)){
+							if (mapatoms == null || !mapatoms.get(nextrel).contains(nextrel,nexttup)){
 								
 								pfeval = (double)groundnextcpm.evaluate(A,
 										osd,
@@ -516,21 +519,21 @@ public class GradientGraphO extends GradientGraph{
 			}
 		}
 	
-		System.out.println("line 521");
 		llnode.initllgrads(parameters.size());
 
-		/* Set the index fields of the maxindicators */
-
-		if (mode == MAPMODE || mode == LEARNANDMAPMODE){
-			GroundAtom nextat;
-			GGAtomMaxNode ggimn;
-
-			for (int i=0;i<maxats.size();i++){
-				nextat = maxats.atomAt(i);
-				ggimn = findInMaxindicators(nextat);
-				ggimn.setIndex(i);
-			}
+		/* build maxindicators_for_r
+		 */
+		
+		Vector<GGAtomMaxNode> newmaxind = new Vector<GGAtomMaxNode>();
+		for (Rel r: mapatoms.keySet()) {
+			Vector<GGAtomMaxNode> rnodes = new Vector<GGAtomMaxNode>();
+			
+			for (GroundAtom gat: mapatoms.get(r).allAtoms())
+				rnodes.add(findInMaxindicators(gat)); // Inefficient, but only done once!
+			maxindicators_for_r.put(r, rnodes);
 		}
+		maxindicators=newmaxind;
+		
 		
 		/* Set the references between Upper Ground Atom nodes and Indicator nodes *
 		 * 
@@ -540,7 +543,6 @@ public class GradientGraphO extends GradientGraph{
 		GGAtomMaxNode nextimaxn;
 		
 		//this.showMaxNodes();
-		System.out.println("line 545");
 		for (Iterator<GGAtomMaxNode> it = maxindicators.iterator(); it.hasNext();){
 			nextimaxn = it.next();
 			nextimaxn.setAllugas();
@@ -1834,14 +1836,19 @@ public class GradientGraphO extends GradientGraph{
 		}
 	}
 	
-	public int[] getMapVals(){
-		int[] result = new int[maxindicators.size()];
-		Collections.sort(maxindicators, new GGAtomMaxNodeComparator(CompareIndicatorMaxNodesByIndex));
-		// System.out.println("New Map values:");
-		for (int i=0;i<maxindicators.size();i++) {
-		//	System.out.println(maxindicators.elementAt(i).getMyatom() + " " + maxindicators.elementAt(i).getCurrentInst());
-			result[i]=maxindicators.elementAt(i).getCurrentInst();
-		}	
+	public Hashtable<Rel,int[]> getMapVals(){
+		
+		Hashtable<Rel,int[]> result = new Hashtable<Rel,int[]>();
+		
+		for (Rel r: mapatoms.keySet()) {
+			int[] rvals = new int[mapatoms.get(r).size()];
+			int idx=0;
+			for (GGAtomMaxNode mnode: maxindicators_for_r.get(r)) 
+				rvals[idx]=mnode.getCurrentInst();
+			result.put(r, rvals);
+			
+		}
+		
 		return result;
 	}
 	

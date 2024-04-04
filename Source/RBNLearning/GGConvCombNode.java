@@ -56,7 +56,7 @@ public class GGConvCombNode extends GGCPMNode{
 			int observcaseno,
 			Hashtable<String,Integer> parameters,
 			boolean useCurrentPvals,
-			GroundAtomList mapatoms,
+			Hashtable<Rel,GroundAtomList> mapatoms,
     		Hashtable<String,Object[]>  evaluated )
 					throws RBNCompatibilityException
 					{

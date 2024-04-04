@@ -104,7 +104,7 @@ public class ProbFormBoolComposite extends ProbFormBool {
 			boolean useCurrentCvals, 
     		// String[] numrelparameters,
     		boolean useCurrentPvals,
-    		GroundAtomList mapatoms,
+    		Hashtable<Rel,GroundAtomList> mapatoms,
     		boolean useCurrentMvals,
     		Hashtable<String,Object[]> evaluated,
     		Hashtable<String,Integer> params,

@@ -74,7 +74,7 @@ public class ProbFormBoolAtom extends ProbFormBool {
 //		return result;
 //	}
 
-	
+
 
 	public Object[] evaluate(RelStruc A, 
 			OneStrucData inst, 
@@ -82,7 +82,7 @@ public class ProbFormBoolAtom extends ProbFormBool {
 			int[] tuple, 
 			boolean useCurrentCvals, 
     		boolean useCurrentPvals,
-    		GroundAtomList mapatoms,
+    		Hashtable<Rel,GroundAtomList> mapatoms,
     		boolean useCurrentMvals,
     		Hashtable<String,Object[]> evaluated,
     		Hashtable<String,Integer>params,

@@ -155,7 +155,7 @@ public  class ProbFormAtom extends ProbForm {
 			throws RBNCompatibilityException
 			{
 		if (relation.isprobabilistic() && variable.equals("unknown_atom")){
-			double v = (double)this.evaluate(A, data, new String[0], new int[0], false, false, new GroundAtomList(), false, null, null, ProbForm.RETURN_ARRAY, true,null)[0];
+			double v = (double)this.evaluate(A, data, new String[0], new int[0], false, false, null , false, null, null, ProbForm.RETURN_ARRAY, true,null)[0];
 			if (Double.isNaN(v))
 				return true;
 			else return false;
@@ -256,7 +256,7 @@ public  class ProbFormAtom extends ProbForm {
 				new int[0],
 				false,
 				false,
-				new GroundAtomList(),
+				new Hashtable<Rel,GroundAtomList>(),
 				false,
 				null,
 				null,
@@ -366,7 +366,7 @@ public  class ProbFormAtom extends ProbForm {
 			boolean useCurrentCvals, 
     		// String[] numrelparameters,
     		boolean useCurrentPvals,
-    		GroundAtomList mapatoms,
+    		Hashtable<Rel,GroundAtomList> mapatoms,
     		boolean useCurrentMvals,
     		Hashtable<String,Object[]> evaluated,
     		Hashtable<String,Integer> params,
@@ -402,7 +402,7 @@ public  class ProbFormAtom extends ProbForm {
 		}
 		else if (relation.isprobabilistic()){
 			value = inst.valueOf(substituted.relation, rbnutilities.stringArrayToIntArray(substituted.getArguments()));
-			if (value != -1 && (mapatoms == null || !mapatoms.contains(relation,substituted.argsIfGround()) || useCurrentMvals))
+			if (value != -1 && (mapatoms == null || !mapatoms.get(relation).contains(relation,substituted.argsIfGround()) || useCurrentMvals))
 				result[0] = value;
 			else
 				result[0] = Double.NaN;

@@ -24,7 +24,7 @@ public class MapThread extends GGThread {
 		myinfmodule = infmodule;
 		myprimula=mypr;
 		gg = ggarg;
-		mapprobs = new MapVals(gg.maxatoms().size());
+		mapprobs = new MapVals(infmodule.getQueryatoms());
 		mapprobs.addObserver(infmodule);
 	}
 	
