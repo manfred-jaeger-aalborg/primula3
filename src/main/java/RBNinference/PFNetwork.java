@@ -552,9 +552,8 @@ public class PFNetwork{
 		 */
 		for (int i=0;i<allnodes.size();i++){
 			((PFNetworkNode)allnodes.elementAt(i)).initializeForNextSample();
-			if (((PFNetworkNode)allnodes.elementAt(i)).probform() instanceof ProbFormGnn) {
+			if (((PFNetworkNode)allnodes.elementAt(i)).probform() instanceof ProbFormGnn && ((PFNetworkNode)allnodes.elementAt(i)).getGnnPy() == null)
 				((PFNetworkNode)allnodes.elementAt(i)).setGnnPy(this.gnnPy);
-			}
 		}
 		
 		Hashtable<String,Double> evaluated = new Hashtable<String,Double>();

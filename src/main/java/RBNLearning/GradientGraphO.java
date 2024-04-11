@@ -91,7 +91,7 @@ public class GradientGraphO extends GradientGraph{
 	{	
 		super(mypr,data,params,go,maxats,m,obj,showInfoInPrimula);
 
-		this.debugPrint = false;
+		this.debugPrint = true;
 
 		RBN rbn = myPrimula.getRBN();
 		// this is a temporary solution to handle the evaluate method when the gnnPy object is not created
@@ -181,14 +181,15 @@ public class GradientGraphO extends GradientGraph{
 		/* Start by constructing upper ground atom nodes for the map-query atoms
 		 * 
 		 */
-		
+		System.out.println("Building GG:");
 		if (mode == MAPMODE || mode == LEARNANDMAPMODE){
 			GroundAtom nextatom;
 			Rel narel;
 			int[] naargs;
 			GGAtomMaxNode ggmn;
-			
-			
+
+			System.out.println("\t-constructing uga nodes for map-query atom...");
+			long startTime = System.currentTimeMillis();
 			for (int qano=0; qano<mapatoms.size(); qano++){
 				nextatom = mapatoms.atomAt(qano);
 				narel = nextatom.rel();
@@ -254,14 +255,16 @@ public class GradientGraphO extends GradientGraph{
 					currentpercentage++;
 				}
 			}
+			System.out.println("\t-uga map-query atoms constructed in: " + (System.currentTimeMillis()-((double)startTime))/1000.0 + " sec.");
 		}
-		
 		//this.showMaxNodes();
 	
 		/* Now construct the nodes for the data/evidence atoms 
 		 * 
 		 */
-		
+		System.out.println("\t-constructing nodes for data/evidence atom...");
+		int numNodes = 0;
+		long startTime = System.currentTimeMillis();
 		for (inputcaseno=0; inputcaseno<data.size(); inputcaseno++){
 			
 			rdoi = data.caseAt(inputcaseno);
@@ -292,7 +295,6 @@ public class GradientGraphO extends GradientGraph{
 
 								if (groundnextpf instanceof ProbFormGnn && ((ProbFormGnn) groundnextpf).getGnnPy() == null)
 									((ProbFormGnn) groundnextpf).setGnnPy(this.gnnPy);
-
 								pfeval = (double)groundnextpf.evaluate(A,
 										osd,
 										new String[0],
@@ -340,6 +342,7 @@ public class GradientGraphO extends GradientGraph{
 									fnode.addToParents(llnode);
 									fnode.setMyatom(atomstring);
 									fnode.setIsuga(true);
+									numNodes++;
 								}
 								else if (!Double.isNaN(pfeval)){
 									if (ti==0) {
@@ -381,8 +384,7 @@ public class GradientGraphO extends GradientGraph{
 			} /* int j=0; j<rdoi.numObservations(); */
 			
 		}
-		
-		
+		System.out.println("\t-finished constructing " + numNodes + " nodes in " + (System.currentTimeMillis()-((double)startTime))/1000.0 + " sec.");
 		
 		if (showInfoInPrimula) 
 			myPrimula.appendMessageThis("100%");
@@ -592,6 +594,10 @@ public class GradientGraphO extends GradientGraph{
 //		System.out.println("Time 1:" + profiler.time1);
 //		System.out.println("Time 2:" + profiler.time2);
 //		System.out.println("Count 1:" + profiler.count1);
+		System.out.println("#Ground atoms:" + llnode.childrenSize());
+		System.out.println("#Sum atoms:" + sumindicators.size());
+		System.out.println("#Max atoms:" + maxindicators.size());
+		System.out.println("#Internal nodes:" + allNodes.size());
 	}
 
 
@@ -872,6 +878,65 @@ public class GradientGraphO extends GradientGraph{
 //		
 //	}
 
+	public void reEvaluateUpstreamSet(Vector<GGAtomMaxNode> flipcandidates) {
+		TreeSet<GGNode> all_ancestors = new TreeSet<>();
+		for (Iterator<GGAtomMaxNode> it = flipcandidates.iterator(); (it.hasNext());) {
+			GGAtomMaxNode nextimn = it.next();
+			all_ancestors.addAll(nextimn.ancestors());
+		}
+
+		for (Iterator<GGNode> it = all_ancestors.iterator(); it.hasNext();)
+			it.next().resetValue();
+		for (Iterator<GGNode> it = all_ancestors.iterator(); it.hasNext();)
+			it.next().evaluate();
+	}
+
+	public double mapSearchGreedy(Vector<GGAtomMaxNode> allreadyflipped,
+								  Vector<GGAtomMaxNode> flipcandidates,
+								  double flipPerc,
+								  double currentllratio) {
+		int last_idx = 0;
+		while (currentllratio >= 1) {
+			// compute and the score for each node and sort from the lowest to the highest (lowest are first)
+			for (Iterator<GGAtomMaxNode> it = flipcandidates.iterator(); it.hasNext(); )
+				it.next().setScore(GGAtomMaxNode.USELLSCORE);
+			Collections.sort(flipcandidates, new GGAtomMaxNodeComparator(CompareIndicatorMaxNodesByScore));
+
+			int candidates = (int)(flipcandidates.size() * flipPerc);
+			Vector<GGAtomMaxNode> batch_flip = new Vector<>();
+			int i = last_idx;
+			int j = 0;
+			for (Iterator<GGAtomMaxNode> it = flipcandidates.iterator(); (it.hasNext());){
+				if (j >= last_idx && i < candidates + last_idx) {
+					GGAtomMaxNode nextimn = it.next();
+					batch_flip.add(nextimn);
+					i++;
+					j++;
+				} else
+					break;
+			}
+			last_idx = i;
+
+			TreeSet<GGProbFormNode> ugas = new TreeSet<>();
+			for (GGAtomMaxNode ggAtomMaxNode : batch_flip) {
+				Vector<GGProbFormNode> allugas = ggAtomMaxNode.getAllugas();
+				ugas.addAll(allugas);
+			}
+
+			double[] oldvalues = new double[ugas.size()];
+			double oldll = computePartialLikelihood(new Vector<>(ugas),oldvalues);
+
+			for (GGAtomMaxNode ggAtomMaxNode : batch_flip) ggAtomMaxNode.toggleCurrentInst();
+			this.reEvaluateUpstreamSet(batch_flip);
+
+			double[] newvalues = new double[ugas.size()];
+			double newll = computePartialLikelihood(new Vector<>(ugas),newvalues);
+			currentllratio = currentllratio*newll/oldll;
+			System.out.println(currentllratio);
+		}
+		return currentllratio;
+	}
+
 	
 	public double mapSearch(Vector<GGAtomMaxNode> allreadyflipped,
 										Vector<GGAtomMaxNode> flipcandidates,	
@@ -895,6 +960,7 @@ public class GradientGraphO extends GradientGraph{
 			for (Iterator<GGAtomMaxNode> it = flipcandidates.iterator(); it.hasNext(); ) {
 				GGAtomMaxNode nextgimn = it.next();
 				System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst() + " " + nextgimn.getScore() + " " + nextgimn.getMyUga().value());
+				System.out.println(nextgimn.allugas.size());
 			}
 		}
 		
@@ -988,8 +1054,12 @@ public class GradientGraphO extends GradientGraph{
 				System.out.println("likelihood= " + SmallDouble.toStandardDouble(llnode.likelihood()) + "   " + StringOps.arrayToString(llnode.likelihood(), "(", ")"));
 
 			score = mapSearch(new Vector<GGAtomMaxNode>(), maxindicators, 1, 3);
-			if (score <= 1)
+//			score = mapSearchGreedy(new Vector<GGAtomMaxNode>(), maxindicators, 0.3, 3);
+			System.out.println(score);
+			if (score <= 1) {
 				terminate = true;
+				System.out.println("terminate");
+			}
 			
 			learnParameters(mythread,GradientGraph.FullLearn,false);
 		}
@@ -1057,6 +1127,19 @@ public class GradientGraphO extends GradientGraph{
 		}
 	}
 
+	public void showAllNodes2(RelStruc A) {
+		GGNode nextggn;
+		for (Enumeration<String> e = allNodes.keys();e.hasMoreElements();){
+			String nextkey = e.nextElement();
+			nextggn = (GGNode)allNodes.get(nextkey);
+			System.out.println("**** Node" + " " + nextggn.identifier()+ "   "  +nextggn.getClass().getName() + '\n' + nextkey);
+
+			if 	(nextggn instanceof GGAtomNode)
+				((GGAtomNode)nextggn).printAllUgas();
+			System.out.println();
+//				}
+		}
+	}
 
 
 

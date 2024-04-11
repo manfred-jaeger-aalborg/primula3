@@ -2,13 +2,11 @@ package Experiments;
 
 import RBNExceptions.RBNIllegalArgumentException;
 import RBNLearning.GradientGraph;
-import RBNLearning.RelData;
 import RBNLearning.RelDataForOneInput;
 import RBNgui.Bavaria;
 import RBNgui.InferenceModule;
 import RBNgui.Primula;
 import RBNpackage.*;
-import com.sun.source.tree.Tree;
 
 import java.io.File;
 import java.util.*;
@@ -29,13 +27,13 @@ public class homophily {
                                 attr2
                         },
                         "edge",
-                        "AB", // in this case the adjacency matrix in the dataset is not symmetric !
+                        "ABBA", // in this case the adjacency matrix in the dataset is symmetric !
                         true
                 )
         );
 
         if (rbn) {
-            File input_file = new File("/Users/lz50rg/Dev/homophily/const.rbn");
+            File input_file = new File("/Users/lz50rg/Dev/homophily/const_old.rbn");
             RBN file_rbn = new RBN(input_file);
 
             RBNPreldef[] preledef = file_rbn.prelements();
@@ -107,6 +105,7 @@ public class homophily {
         RBN rbn = createRBN(primula, true);
         primula.setRbn(rbn);
         primula.getInstantiation().init(rbn);
+//        primula.loadRBNFunction(new File("/Users/lz50rg/Dev/homophily/gnn_trained_model_log.rbn"));
 
         File srsfile = new File("/Users/lz50rg/Dev/homophily/graph.rdef");
         primula.loadSparseRelFile(srsfile);
@@ -157,10 +156,10 @@ public class homophily {
             primula.setScriptPath("/Users/lz50rg/Dev/primula-workspace/primula3/python/");
             primula.setScriptName("inference_test");
 
-            im.setNumRestarts(10);
+            im.setNumRestarts(20);
 
             ValueObserver valueObserver = new ValueObserver();
-            im.setMapObserver(valueObserver);
+            im.setValueObserver(valueObserver);
 
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();
@@ -226,6 +225,7 @@ public class homophily {
             accuracy = computeAccuracy(true_pred, false_pred, int_true_gt, int_false_gt);
             System.out.println("MAP node accuracy: " + accuracy);
 
+//            primula.exitProgram();
 
         } catch (RBNIllegalArgumentException | InterruptedException e) {
             throw new RuntimeException(e);

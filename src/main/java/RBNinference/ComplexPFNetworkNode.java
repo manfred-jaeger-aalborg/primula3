@@ -64,12 +64,11 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 			throws RBNCompatibilityException
 	{
 		if (probform instanceof ProbFormGnn) {
-			((ProbFormGnn) probform).setGnnPy(gnnPy);
-			return probform.evalSample(A,atomhasht,inst,evaluated,timers);
-		} else {
-			return probform.evalSample(A,atomhasht,inst,evaluated,timers);
-		}
-		//System.out.print(" cP: " + result);
+			if (((ProbFormGnn) probform).getGnnPy() == null)
+				((ProbFormGnn) probform).setGnnPy(gnnPy);
+        }
+        return probform.evalSample(A,atomhasht,inst,evaluated,timers);
+        //System.out.print(" cP: " + result);
 	}
 
 	public  int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, Hashtable atomhasht )
@@ -119,33 +118,34 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 			throws RBNCompatibilityException
 			/* adaptivemode argument not used (adaptive=non-adaptive in forward sampling for ComplexPFNNodes) */
 			{
-		//System.out.println("<" + myatom().asString(A));
-		double prob = condProb(A,atomhasht,inst,evaluated,timers);
-		if (prob > 1 || prob <0)
-			System.out.println("#####################found prob " + prob);
-		if (instantiated == -1){
+				//System.out.println("<" + myatom().asString(A));
+				double prob = condProb(A,atomhasht,inst,evaluated,timers);
+//				System.out.println(prob);
+				if (prob > 1 || prob <0)
+					System.out.println("#####################found prob " + prob);
+				if (instantiated == -1){
 
-			double rand = Math.random();
-			if (rand < prob){
-				sampleinst = 1;
-				thissampleprob = prob;
-				thisdistrprob = prob; 
-			}
-			else{
-				sampleinst = 0;
-				thissampleprob = 1-prob;
-				thisdistrprob = 1-prob; 
-			}
-		}
-		else {
-			sampleinst = instantiated;
-			thissampleprob = 1;
-			switch (instantiated){
-			case 1: thisdistrprob = prob;
-			break;
-			case 0: thisdistrprob = (1-prob);
-			}
-		}
+					double rand = Math.random();
+					if (rand < prob){
+						sampleinst = 1;
+						thissampleprob = prob;
+						thisdistrprob = prob;
+					}
+					else{
+						sampleinst = 0;
+						thissampleprob = 1-prob;
+						thisdistrprob = 1-prob;
+					}
+				}
+				else {
+					sampleinst = instantiated;
+					thissampleprob = 1;
+					switch (instantiated){
+					case 1: thisdistrprob = prob;
+					break;
+					case 0: thisdistrprob = (1-prob);
+					}
+				}
 			}
 
 	public  void setDistrProb(RelStruc A,

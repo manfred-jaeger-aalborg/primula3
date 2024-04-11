@@ -485,6 +485,10 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
 	return upstreamofevidence;
     }
 
+	public GnnPy getGnnPy() {
+		return gnnPy;
+	}
+
 	public void setGnnPy(GnnPy gnnPy) {
 		this.gnnPy = gnnPy;
 	}

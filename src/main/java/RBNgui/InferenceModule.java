@@ -28,14 +28,12 @@ import RBNpackage.*;
 import RBNinference.*;
 import RBNExceptions.*;
 import RBNLearning.*;
-import RBNio.*;
 import RBNutilities.*;
 import java.io.*;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.border.*;
-import javax.swing.table.*;
 import java.util.*;
 import java.util.List;
 
@@ -657,7 +655,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 	 * @uml.property  name="logfilename"
 	 */
 	private String logfilename = "";
-	private Observer mapObserver;
+	private Observer valueObserver;
 	private String modelPath;
 	private String scriptPath;
 	private String scriptName;
@@ -1300,6 +1298,9 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 
 	// set to public for experiments
 	public void startSampleThread(){
+		if (this.valueObserver == null) {
+			this.valueObserver = this;
+		}
 		sampling = true;
 		PFNetwork pfn = null;
 		if (!noLog()){
@@ -1331,7 +1332,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		catch (IOException ex){System.out.println(ex.toString());}
 
 
-		sampthr = new SampleThread(this, 
+		sampthr = new SampleThread(this.valueObserver,
+				this,
 				pfn, 
 				queryatoms,
 				num_subsamples_minmax,
@@ -1392,8 +1394,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		
 		GradientGraph gg = null;
 
-		if (this.mapObserver == null) {
-			this.mapObserver = this;
+		if (this.valueObserver == null) {
+			this.valueObserver = this;
 		}
 
 		try{
@@ -1431,7 +1433,10 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 						mode,
 						0,
 						true);
-				mapthr = new MapThread(this.mapObserver,this,myprimula,(GradientGraphO)gg);
+//				((GradientGraphO) gg).showGraphInfo(6, myprimula.getRels());
+//				System.out.println("-----------------------");
+//				((GradientGraphO) gg).showAllNodes2( myprimula.getRels());
+				mapthr = new MapThread(this.valueObserver,this,myprimula,(GradientGraphO)gg);
 				if (mapthr.isGnnIntegration()) {
 					mapthr.setPythonHome(this.myprimula.getPythonHome());
 					mapthr.setScriptPath(this.myprimula.getScriptPath());
@@ -2690,6 +2695,10 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		return mapthr;
 	}
 
+	public SampleThread getSamThr() {
+		return sampthr;
+	}
+
 	public List<MapThread> getThreads() {
 		return threads;
 	}
@@ -2698,8 +2707,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions{
 		this.num_threads = num_threads;
 	}
 
-	public void setMapObserver(Observer o) {
-		this.mapObserver = o;
+	public void setValueObserver(Observer o) {
+		this.valueObserver = o;
 	}
 
 	public void setBoolInstArbitrary(BoolRel rel, Boolean truthValue) {

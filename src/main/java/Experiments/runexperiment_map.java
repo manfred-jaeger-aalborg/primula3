@@ -1,24 +1,14 @@
 package Experiments;
 
-import RBNExceptions.RBNCompatibilityException;
-import RBNExceptions.RBNCyclicException;
 import RBNExceptions.RBNIllegalArgumentException;
-import RBNExceptions.RBNInconsistentEvidenceException;
 import RBNLearning.*;
 import RBNgui.Bavaria;
 import RBNgui.InferenceModule;
 import RBNgui.Primula;
-import RBNgui.QueryTableModel;
-import RBNinference.*;
 import RBNpackage.*;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.LinkedList;
 
 public class runexperiment_map {
 
@@ -94,7 +84,7 @@ public class runexperiment_map {
             im.setNumRestarts(10);
 
             ValueObserver valueObserver = new ValueObserver();
-            im.setMapObserver(valueObserver);
+            im.setValueObserver(valueObserver);
 
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();

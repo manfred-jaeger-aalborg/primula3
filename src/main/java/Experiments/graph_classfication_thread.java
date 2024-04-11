@@ -151,7 +151,7 @@ public class graph_classfication_thread {
 
 
             ValueObserver valueObserver = new ValueObserver();
-            im.setMapObserver(valueObserver);
+            im.setValueObserver(valueObserver);
 
             GradientGraph GG = im.startMapThread();
 //            im.getMapthr().join();

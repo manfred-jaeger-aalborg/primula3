@@ -108,10 +108,13 @@ public class ProbFormGnn extends ProbForm {
             // if it has no parents we use the current attributes (should work for numeric rel)
             if (attr_parents.isEmpty()) {
                 attr_parents.addAll(Arrays.asList(this.getGnnattr()));
+
             }
-            for (Rel parent : attr_parents) {
-                try {
+            try {
+                int num_nodes = 0;
+                for (Rel parent : attr_parents) {
                     int[][] mat = A.allTypedTuples(parent.getTypes());
+                    num_nodes = mat.length;
                     // for now, we just check if the attributes values are NaN
                     for (int i = 0; i < mat.length; i++) {
                         if (parent.ispredefined()) {
@@ -119,23 +122,19 @@ public class ProbFormGnn extends ProbForm {
                             if (Double.isNaN(value)) {
                                 result[0] = Double.NaN;
                                 return result;
-                            } else {
-                                result[0] = this.evaluateGraph(sampledRel, mat.length);
                             }
                         } else if (parent.isprobabilistic()) {
                             value = inst.valueOf(parent, mat[i]);
                             if (Double.isNaN(value)) {
                                 result[0] = Double.NaN;
                                 return result;
-                            } else {
-                                result[0] = this.evaluateGraph(sampledRel, mat.length);
                             }
                         }
                     }
-
-                } catch (RBNIllegalArgumentException e) {
-                    throw new RuntimeException(e);
                 }
+                result[0] = this.evaluateGraph(sampledRel, num_nodes);
+            } catch(RBNIllegalArgumentException e){
+                throw new RuntimeException(e);
             }
         }
         return result;
@@ -255,7 +254,7 @@ public class ProbFormGnn extends ProbForm {
 
     @Override
     public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone) throws RBNCompatibilityException {
-        System.out.println("makeParentVec code 2");
+//        System.out.println("makeParentVec code 2");
         // use parentRels to obtain the parents and see thorugh the arguments which is one that is not ground and add to result
         Vector<GroundAtom> result = new Vector<GroundAtom>();
         for (Rel parent : this.parentRels()) {
@@ -293,14 +292,14 @@ public class ProbFormGnn extends ProbForm {
      */
     @Override
     public ProbForm sEval(RelStruc A) throws RBNCompatibilityException {
-        System.out.println("sEval code");
+//        System.out.println("sEval code");
         return this;
     }
 
     // we cannot substitute this in smaller prob formula -> return the same object
     @Override
     public ProbForm substitute(String[] vars, int[] args) {
-        System.out.println("substitute code 1");
+//        System.out.println("substitute code 1");
         ProbFormGnn result;
         if (this.classId == -1)
             result = new ProbFormGnn(this.argument, this.idGnn, this.gnnattr, this.edge_name, this.edge_direction, this.oneHotEncoding);

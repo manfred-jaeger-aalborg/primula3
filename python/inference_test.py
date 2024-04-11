@@ -1,6 +1,6 @@
 import sys
 sys.path.append('/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python')
-from rbn import *
+# from rbn import *
 from gnn.ACR_graph import *
 from gnn.ACR_node import *
 
@@ -69,7 +69,7 @@ models_info = {
                 "num_classes": 1
             }
         ),
-    "gnnHomophily": (MYACRGnnNode, "/Users/lz50rg/Dev/homophily/gnn_trained_model_0.7.pt",
+    "gnnHomophily": (MYACRGnnNode, "/Users/lz50rg/Dev/homophily/gnn_trained_model_0.5.pt",
             {
                 "input_dim": 2,
                 "hidden_dim": [4],

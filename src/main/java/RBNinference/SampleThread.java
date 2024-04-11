@@ -37,7 +37,7 @@ import java.io.*;
 
 public class SampleThread extends Thread{
 
-	private boolean running;
+	private volatile boolean running;
 	SampleProbs sprobs;
 	private boolean pause;
 	private int queryAtomSize;
@@ -47,7 +47,7 @@ public class SampleThread extends Thread{
 	private PFNetwork pfn;
 	boolean[] logmode;
 	BufferedWriter logwriter;
-	private int numsamp = 0; // number of current sample
+	private volatile int numsamp = 0; // number of current sample
 	private int subsind = 0; // index of current subsample
 
 	long time;
@@ -62,7 +62,8 @@ public class SampleThread extends Thread{
 	private String scriptPath;
 	private String scriptName;
 	private String pythonHome;
-	public SampleThread(Observer infmodule, 
+	public SampleThread(Observer infmoduleobs,
+			InferenceModule infmodule,
 			PFNetwork pfn, 
 			GroundAtomList queryatoms, 
 			int num_subsamples_param,
@@ -76,7 +77,7 @@ public class SampleThread extends Thread{
 		num_subsamples = num_subsamples_param;
 		logwriter = logwriter_param;
 		sprobs = new SampleProbs(queryAtomSize);
-		sprobs.addObserver(infmodule);
+		sprobs.addObserver(infmoduleobs);
 		pause = false;
 		test = new double[queryAtomSize];
         this.gnnIntegration = this.pfn.checkGnnRel();
@@ -124,7 +125,6 @@ public class SampleThread extends Thread{
 			newtime = System.currentTimeMillis();
 			if(newtime - time > 2000 || running == false){
 				time = newtime;
-
 				try{
 					if (logwriter != null && (logmode[2] || logmode[3]))
 						logwriter.write(numsamp + " ");
@@ -141,6 +141,10 @@ public class SampleThread extends Thread{
 		// the interpreter needs to be closed from the same thread
 		if (this.gnnIntegration)
 			this.closeGnnIntepreter();
+	}
+
+	public int getNumsamp() {
+		return numsamp;
 	}
 
 	public void closeGnnIntepreter() {
