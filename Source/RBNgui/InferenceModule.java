@@ -1432,7 +1432,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 					 								evidence, 
 					 								rbnparamidx,
 					 								this ,
-					 								myprimula.queryatoms,
+					 								queryatoms,
 					 								mode,
 					 								0,
 					 								true);

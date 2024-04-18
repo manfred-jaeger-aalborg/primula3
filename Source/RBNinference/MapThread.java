@@ -5,6 +5,7 @@ import java.util.*;
 import RBNExceptions.RBNNaNException;
 import RBNLearning.*;
 import RBNutilities.*;
+import RBNpackage.*;
 import RBNgui.InferenceModule;
 import RBNgui.LearnModule;
 import RBNgui.Primula;
@@ -42,12 +43,12 @@ public class MapThread extends GGThread {
 			gg.setLearnModule(myLearnModule);
 		}
 		
-		int[] lastmapvals=new int[gg.getMapVals().length];
+		//int[] lastmapvals=new int[gg.getMapVals().length];
 		/* Make sure initial values are not equal to result of 
 		 * first iteration: */
-		for (int i=0;i<lastmapvals.length;i++)
-			lastmapvals[i]=-1;
-		int[] newmapvals;
+		//for (int i=0;i<lastmapvals.length;i++)
+		//	lastmapvals[i]=-1;
+		Hashtable<Rel,int[]> newmapvals;
 		
 		int maxrestarts = myinfmodule.getMAPRestarts();
 		int restarts =1;
@@ -60,7 +61,7 @@ public class MapThread extends GGThread {
 				if (SmallDouble.compareSD(newll,oldll)==1){
 					oldll=newll;
 					newmapvals = gg.getMapVals();
-					mapprobs.setMV(newmapvals);
+					mapprobs.setMVs(newmapvals);
 					mapprobs.setLL(SmallDouble.asString(oldll));
 					if (gg.parameters().size() > 0)
 						myLearnModule.setParameterValues(gg.getParameters());

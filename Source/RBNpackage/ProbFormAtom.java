@@ -402,7 +402,9 @@ public  class ProbFormAtom extends ProbForm {
 		}
 		else if (relation.isprobabilistic()){
 			value = inst.valueOf(substituted.relation, rbnutilities.stringArrayToIntArray(substituted.getArguments()));
-			if (value != -1 && (mapatoms == null || !mapatoms.get(relation).contains(relation,substituted.argsIfGround()) || useCurrentMvals))
+			if (value != -1 && (mapatoms == null || 
+					(mapatoms.get(relation)!= null && !mapatoms.get(relation).contains(relation,substituted.argsIfGround())) 
+					|| useCurrentMvals))
 				result[0] = value;
 			else
 				result[0] = Double.NaN;

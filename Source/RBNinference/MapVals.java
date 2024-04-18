@@ -2,7 +2,6 @@ package RBNinference;
 
 import java.util.*;
 
-import RBNinference.SampleProbs.p_v_vals;
 import RBNpackage.GroundAtomList;
 import RBNpackage.Rel;
 
@@ -66,6 +65,14 @@ public class MapVals extends Observable {
 	
 	public int[] getMVs(Rel r){
 		return all_m_vals.get(r).getMV();
+	}
+	
+	public void setMVs(Hashtable<Rel,int[]> mvalshasht) {
+		for (Rel r: mvalshasht.keySet()) {
+			int[] vals = mvalshasht.get(r);
+			for (int i =0; i<vals.length;i++)
+				setMVs(r,vals[i],i);
+		}
 	}
 	
 	public void setMVs(Rel r,int val, int i){
