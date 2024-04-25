@@ -115,7 +115,7 @@ public abstract class GradientGraph{
 
 	GGLikelihoodNode llnode;
 	Vector<GGAtomSumNode> sumindicators; /* All the indicators for atoms to be summed over */
-	Vector<GGAtomMaxNode> maxindicators; /* All the indicators for atoms to be maximized */
+	//Vector<GGAtomMaxNode> maxindicators; /* All the indicators for atoms to be maximized */
 	Vector<GGConstantNode> paramNodes; /* All the constant (i.e. parameter) nodes */
 
 	 /* Hashtable containing all the parameters as keys, with an integer index as value. 

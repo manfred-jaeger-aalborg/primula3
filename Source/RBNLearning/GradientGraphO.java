@@ -72,7 +72,7 @@ public class GradientGraphO extends GradientGraph{
 	
 	GGLikelihoodNode llnode;
 	Vector<GGAtomSumNode> sumindicators; /* All the indicators for atoms to be summed over */
-	Vector<GGAtomMaxNode> maxindicators; /* All the indicators for atoms to be maximized */
+	//Vector<GGAtomMaxNode> maxindicators; /* All the indicators for atoms to be maximized */
 	Hashtable<Rel,Vector<GGAtomMaxNode>> maxindicators_for_r; /* for given rel, contains the GGAtomMaxNodes in the same order as 
 	defined by the GroundAtomList mapatoms.get(rel) */
 	
@@ -98,7 +98,7 @@ public class GradientGraphO extends GradientGraph{
 		
 		
 		sumindicators = new Vector<GGAtomSumNode>();
-		maxindicators = new Vector<GGAtomMaxNode>();
+		//maxindicators = new Vector<GGAtomMaxNode>();
 		maxindicators_for_r = new Hashtable<Rel,Vector<GGAtomMaxNode>> ();
 
 		int inputcaseno;
@@ -532,7 +532,7 @@ public class GradientGraphO extends GradientGraph{
 				rnodes.add(findInMaxindicators(gat)); // Inefficient, but only done once!
 			maxindicators_for_r.put(r, rnodes);
 		}
-		maxindicators=newmaxind;
+		//maxindicators=newmaxind;
 		
 		
 		/* Set the references between Upper Ground Atom nodes and Indicator nodes *
@@ -542,10 +542,11 @@ public class GradientGraphO extends GradientGraph{
 		GGAtomSumNode nextisumn;
 		GGAtomMaxNode nextimaxn;
 		
-		//this.showMaxNodes();
-		for (Iterator<GGAtomMaxNode> it = maxindicators.iterator(); it.hasNext();){
-			nextimaxn = it.next();
-			nextimaxn.setAllugas();
+
+		for (Rel r: maxindicators_for_r.keySet()) {
+			for (GGAtomMaxNode maxn: maxindicators_for_r.get(r) ) {
+				maxn.setAllugas();
+			}
 		}
 		for (Iterator<GGAtomSumNode> it = sumindicators.iterator(); it.hasNext();){
 			nextisumn = it.next();
@@ -555,7 +556,7 @@ public class GradientGraphO extends GradientGraph{
 		if (showInfoInPrimula){
 			myPrimula.showMessageThis("#Ground atoms:" + llnode.childrenSize());
 			myPrimula.showMessageThis("#Sum atoms:" + sumindicators.size());
-			myPrimula.showMessageThis("#Max atoms:" + maxindicators.size());
+			myPrimula.showMessageThis("#Max atoms:" + this.numberOfMaxIndicators() );
 			myPrimula.showMessageThis("#Internal nodes:" + allNodes.size());
 			//myPrimula.showMessageThis("#Links:" + numLinks());
 			myPrimula.showMessageThis("");
@@ -576,7 +577,8 @@ public class GradientGraphO extends GradientGraph{
 	}
 
 	protected void addToMaxIndicators(GGAtomMaxNode ggin){
-		maxindicators.add(ggin);
+		Rel r = ggin.myatom().rel();
+		maxindicators_for_r.get(r).add(ggin);
 	}
 
 
@@ -721,12 +723,11 @@ public class GradientGraphO extends GradientGraph{
 		
 		while (!success && !abort){
 			/* First instantiate the Max nodes */
-			for (int j=0; j<maxindicators.size(); j++){
-				coin = Math.random();
-				if (coin>0.5)
-					maxindicators.elementAt(j).setCurrentInst(true);
-				else
-					maxindicators.elementAt(j).setCurrentInst(false);
+			for (Rel r: maxindicators_for_r.keySet()) {
+				int numvals = (int)r.numvals();
+				for (GGAtomMaxNode mxnode: maxindicators_for_r.get(r)) {
+					mxnode.setCurrentInst((int)Math.random()*numvals);
+				}
 			}
 			/* Now find initial values for the k Markov chains */
 			for (int k=0;k<numchains && !abortforsum;k++){
@@ -941,10 +942,9 @@ public class GradientGraphO extends GradientGraph{
 //		this.showAllNodes(6, myPrimula.getRels());
 
 		System.out.println("Initial max values:");
-		for (Iterator<GGAtomMaxNode> it=maxindicators.iterator(); it.hasNext();){
-			GGAtomMaxNode nextgimn = it.next();
-			System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst());
-		}
+		for (Rel r: maxindicators_for_r.keySet())
+			for (GGAtomMaxNode nextgimn: maxindicators_for_r.get(r))
+				System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst());
 		
 		setParametersRandom();
 		while (!terminate){
@@ -955,7 +955,7 @@ public class GradientGraphO extends GradientGraph{
 			System.out.println("likelihood= " 
 					+ SmallDouble.toStandardDouble(llnode.likelihood())
 					+ "   " + StringOps.arrayToString(llnode.likelihood(), "(", ")"));
-			score = mapSearch(new Vector<GGAtomMaxNode>(), maxindicators, 1, 3);
+			score = mapSearch(new Vector<GGAtomMaxNode>(), maxindicators_for_r, 1, 3);
 			if (score <= 1)
 				terminate = true;
 			
@@ -1750,6 +1750,13 @@ public class GradientGraphO extends GradientGraph{
 		return sumindicators.size();
 	}
 
+	public int numberOfMaxIndicators() {
+		int result = 0;
+		for (Rel r: maxindicators_for_r.keySet()) {
+			result+=maxindicators_for_r.get(r).size();
+		}
+		return result;
+	}
 
 	/** Returns the number of links in the graph */
 	public int numberOfEdges(){

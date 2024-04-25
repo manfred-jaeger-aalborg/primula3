@@ -129,11 +129,8 @@ public abstract class GGAtomNode extends GGCPMNode{
 	/** Sets the current instantiation according to 
 	 * the truth value tv
 	 */
-	public void setCurrentInst(boolean tv){
-		if (tv)
-			currentInst = 1;
-		else
-			currentInst = 0;
+	public void setCurrentInst(int val){
+			currentInst = val;
 	}
 
 	public int getCurrentInst(){
