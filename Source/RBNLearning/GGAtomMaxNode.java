@@ -81,31 +81,12 @@ private double score;
 
 		GGCPMNode nextuga;
 		double nextscore;
-
-//		if ((scoremode == USEMINSCORE || scoremode == USEAVGSCORE)){
-//			score = 0;
-//			for (int i=0; i<allugas.size();i++){
-//				nextuga = allugas.elementAt(i);
-//				nextscore = nextuga.value();
-//				if (nextuga.instval()==1)
-//					nextscore = nextuga.value();
-//				if (nextuga.instval()==0)
-//					nextscore = 1 - nextuga.value();
-//				if (scoremode == USEMINSCORE)
-//					score = Math.min(score, nextscore);
-//				if (scoremode == USEAVGSCORE)
-//					score = score + nextscore;
-//			}
-//			if (scoremode == USEAVGSCORE)
-//				score = score/(1+allugas.size());
-//		}
 		
 		if (scoremode == USELLSCORE){
 			System.out.println("Compute score for " + this.getMyatom());
 			
 			double[] oldvalues = new double[allugas.size()];
 			double oldll = GradientGraphO.computePartialLikelihood(allugas,oldvalues);
-			
 			
 			
 			System.out.println("values for ugas: old="  

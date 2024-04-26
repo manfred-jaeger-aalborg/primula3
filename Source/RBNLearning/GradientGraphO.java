@@ -72,9 +72,9 @@ public class GradientGraphO extends GradientGraph{
 	
 	GGLikelihoodNode llnode;
 	Vector<GGAtomSumNode> sumindicators; /* All the indicators for atoms to be summed over */
-	//Vector<GGAtomMaxNode> maxindicators; /* All the indicators for atoms to be maximized */
-	Hashtable<Rel,Vector<GGAtomMaxNode>> maxindicators_for_r; /* for given rel, contains the GGAtomMaxNodes in the same order as 
+	Hashtable<Rel,Vector<GGAtomMaxNode>> maxindicators; /* for given rel, contains the GGAtomMaxNodes in the same order as 
 	defined by the GroundAtomList mapatoms.get(rel) */
+	
 	
 	GGConstantNode[] paramNodes; /* All the constant (i.e. parameter) nodes */
 
@@ -99,7 +99,7 @@ public class GradientGraphO extends GradientGraph{
 		
 		sumindicators = new Vector<GGAtomSumNode>();
 		//maxindicators = new Vector<GGAtomMaxNode>();
-		maxindicators_for_r = new Hashtable<Rel,Vector<GGAtomMaxNode>> ();
+		maxindicators = new Hashtable<Rel,Vector<GGAtomMaxNode>> ();
 
 		int inputcaseno;
 		int observcaseno;
@@ -530,7 +530,7 @@ public class GradientGraphO extends GradientGraph{
 			
 			for (GroundAtom gat: mapatoms.get(r).allAtoms())
 				rnodes.add(findInMaxindicators(gat)); // Inefficient, but only done once!
-			maxindicators_for_r.put(r, rnodes);
+			maxindicators.put(r, rnodes);
 		}
 		//maxindicators=newmaxind;
 		
@@ -543,8 +543,8 @@ public class GradientGraphO extends GradientGraph{
 		GGAtomMaxNode nextimaxn;
 		
 
-		for (Rel r: maxindicators_for_r.keySet()) {
-			for (GGAtomMaxNode maxn: maxindicators_for_r.get(r) ) {
+		for (Rel r: maxindicators.keySet()) {
+			for (GGAtomMaxNode maxn: maxindicators.get(r) ) {
 				maxn.setAllugas();
 			}
 		}
@@ -578,7 +578,7 @@ public class GradientGraphO extends GradientGraph{
 
 	protected void addToMaxIndicators(GGAtomMaxNode ggin){
 		Rel r = ggin.myatom().rel();
-		maxindicators_for_r.get(r).add(ggin);
+		maxindicators.get(r).add(ggin);
 	}
 
 
@@ -723,9 +723,9 @@ public class GradientGraphO extends GradientGraph{
 		
 		while (!success && !abort){
 			/* First instantiate the Max nodes */
-			for (Rel r: maxindicators_for_r.keySet()) {
+			for (Rel r: maxindicators.keySet()) {
 				int numvals = (int)r.numvals();
-				for (GGAtomMaxNode mxnode: maxindicators_for_r.get(r)) {
+				for (GGAtomMaxNode mxnode: maxindicators.get(r)) {
 					mxnode.setCurrentInst((int)Math.random()*numvals);
 				}
 			}
@@ -849,88 +849,97 @@ public class GradientGraphO extends GradientGraph{
 //		
 //	}
 
-	
-	public double mapSearch(Vector<GGAtomMaxNode> allreadyflipped,
-										Vector<GGAtomMaxNode> flipcandidates,	
-										double currentllratio, 
-										int depth)
-	{
-		if (depth==0)
-			return currentllratio;
+	public double mapSearch(TreeSet<GGAtomMaxNode> flipcandidates,	
+			int depth) {
+		System.out.println("mapSearch with depth " + depth); 
 		
 		
-		System.out.println("mapSearch with depth " + depth + " currentllratio=" + currentllratio); 
-		// System.out.println("current map values: " + StringOps.arrayToString(getMapVals(), "", "")); 
 		
-		/* Compute scores for flipcandidates, and order */
-		//GGAtomMaxNode nextggmn;
-		for (Iterator<GGAtomMaxNode> it = flipcandidates.iterator(); it.hasNext(); )
-			it.next().setScore(GGAtomMaxNode.USELLSCORE);
-		Collections.sort(flipcandidates, new GGAtomMaxNodeComparator(CompareIndicatorMaxNodesByScore));
+		return 0;
 		
-		for (Iterator<GGAtomMaxNode> it=flipcandidates.iterator(); it.hasNext();){
-			GGAtomMaxNode nextgimn = it.next();
-			System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst() + " " 
-			+ nextgimn.getScore() + " " + nextgimn.getMyUga().value() );
-		}
-		
-		/* Now take the first element not already flipped, and flip it*/
-		
-		GGAtomMaxNode startnode = null;
-		
-		for (Iterator<GGAtomMaxNode> it = flipcandidates.iterator(); (it.hasNext() && startnode==null);){
-			GGAtomMaxNode nextimn = it.next();
-			if ( !allreadyflipped.contains(nextimn))
-					startnode=nextimn;
-		}
-		
-		if (startnode == null){
-			System.out.println("could not find new candidate for flipping");
-			System.out.println("1 returning " + currentllratio);
-			return currentllratio;
-		}
-		
-		Vector<GGCPMNode> ugas = startnode.getAllugas();
-		double[] oldvalues = new double[ugas.size()];
-		double oldll = computePartialLikelihood(ugas,oldvalues);
-		
-		System.out.println("flipping " + startnode.myatom().asString());
-		
-		startnode.toggleCurrentInst();
-		startnode.reEvaluateUpstream();
-		
-		double[] newvalues = new double[ugas.size()];
-		double newll = computePartialLikelihood(ugas,newvalues);
-		currentllratio = currentllratio*newll/oldll;
-		/* If we have obtained an improvement in likelihood, then we terminate
-		 * here. Otherwise we determine the next indicator to flip.
-		 */
-		if (currentllratio > 1){
-			System.out.println("2 returning " + currentllratio);
-			return currentllratio;
-		}
-		
-		/* Find the uga that had the worst change in likelihood */
-		allreadyflipped.add(startnode);
-		int minind =0;
-		double minratio = newvalues[0]/oldvalues[0];
-		for (int i=0;i<newvalues.length;i++){
-			if (newvalues[i]/oldvalues[i]<minratio){
-				minratio = newvalues[i]/oldvalues[i];
-				minind = i;
-			}
-		}
-		GGCPMNode minuga = ugas.elementAt(minind);
-		//System.out.println("next uga: " + minuga.getMyatom());
-		
-		double recsearch = mapSearch(allreadyflipped,minuga.getMaxIndicators(),currentllratio,depth-1);
-		if (recsearch < 1) /* Recursive search was unsuccessful. Undo flip and return */
-			startnode.toggleCurrentInst();
-		//System.out.println("3 returning " + recsearch);
-		return recsearch;
 	}
-
 	
+//	public double mapSearch_old(Vector<GGAtomMaxNode> allreadyflipped,
+//										Vector<GGAtomMaxNode> flipcandidates,	
+//										double currentllratio, 
+//										int depth)
+//	{
+//		if (depth==0)
+//			return currentllratio;
+//		
+//		
+//		System.out.println("mapSearch with depth " + depth + " currentllratio=" + currentllratio); 
+//		// System.out.println("current map values: " + StringOps.arrayToString(getMapVals(), "", "")); 
+//		
+//		/* Compute scores for flipcandidates, and order */
+//		//GGAtomMaxNode nextggmn;
+//		for (Iterator<GGAtomMaxNode> it = flipcandidates.iterator(); it.hasNext(); )
+//			it.next().setScore(GGAtomMaxNode.USELLSCORE);
+//		Collections.sort(flipcandidates, new GGAtomMaxNodeComparator(CompareIndicatorMaxNodesByScore));
+//		
+//		for (Iterator<GGAtomMaxNode> it=flipcandidates.iterator(); it.hasNext();){
+//			GGAtomMaxNode nextgimn = it.next();
+//			System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst() + " " 
+//			+ nextgimn.getScore() + " " + nextgimn.getMyUga().value() );
+//		}
+//		
+//		/* Now take the first element not already flipped, and flip it*/
+//		
+//		GGAtomMaxNode startnode = null;
+//		
+//		for (Iterator<GGAtomMaxNode> it = flipcandidates.iterator(); (it.hasNext() && startnode==null);){
+//			GGAtomMaxNode nextimn = it.next();
+//			if ( !allreadyflipped.contains(nextimn))
+//					startnode=nextimn;
+//		}
+//		
+//		if (startnode == null){
+//			System.out.println("could not find new candidate for flipping");
+//			System.out.println("1 returning " + currentllratio);
+//			return currentllratio;
+//		}
+//		
+//		Vector<GGCPMNode> ugas = startnode.getAllugas();
+//		double[] oldvalues = new double[ugas.size()];
+//		double oldll = computePartialLikelihood(ugas,oldvalues);
+//		
+//		System.out.println("flipping " + startnode.myatom().asString());
+//		
+//		startnode.toggleCurrentInst();
+//		startnode.reEvaluateUpstream();
+//		
+//		double[] newvalues = new double[ugas.size()];
+//		double newll = computePartialLikelihood(ugas,newvalues);
+//		currentllratio = currentllratio*newll/oldll;
+//		/* If we have obtained an improvement in likelihood, then we terminate
+//		 * here. Otherwise we determine the next indicator to flip.
+//		 */
+//		if (currentllratio > 1){
+//			System.out.println("2 returning " + currentllratio);
+//			return currentllratio;
+//		}
+//		
+//		/* Find the uga that had the worst change in likelihood */
+//		allreadyflipped.add(startnode);
+//		int minind =0;
+//		double minratio = newvalues[0]/oldvalues[0];
+//		for (int i=0;i<newvalues.length;i++){
+//			if (newvalues[i]/oldvalues[i]<minratio){
+//				minratio = newvalues[i]/oldvalues[i];
+//				minind = i;
+//			}
+//		}
+//		GGCPMNode minuga = ugas.elementAt(minind);
+//		//System.out.println("next uga: " + minuga.getMyatom());
+//		
+//		double recsearch = mapSearch(allreadyflipped,minuga.getMaxIndicators(),currentllratio,depth-1);
+//		if (recsearch < 1) /* Recursive search was unsuccessful. Undo flip and return */
+//			startnode.toggleCurrentInst();
+//		//System.out.println("3 returning " + recsearch);
+//		return recsearch;
+//	}
+//
+//	
 
 	
 	public double[] mapInference(GGThread mythread)
@@ -942,8 +951,8 @@ public class GradientGraphO extends GradientGraph{
 //		this.showAllNodes(6, myPrimula.getRels());
 
 		System.out.println("Initial max values:");
-		for (Rel r: maxindicators_for_r.keySet())
-			for (GGAtomMaxNode nextgimn: maxindicators_for_r.get(r))
+		for (Rel r: maxindicators.keySet())
+			for (GGAtomMaxNode nextgimn: maxindicators.get(r))
 				System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst());
 		
 		setParametersRandom();
@@ -955,7 +964,7 @@ public class GradientGraphO extends GradientGraph{
 			System.out.println("likelihood= " 
 					+ SmallDouble.toStandardDouble(llnode.likelihood())
 					+ "   " + StringOps.arrayToString(llnode.likelihood(), "(", ")"));
-			score = mapSearch(new Vector<GGAtomMaxNode>(), maxindicators_for_r, 1, 3);
+			score = mapSearch(maxind_as_ts(), 3);
 			if (score <= 1)
 				terminate = true;
 			
@@ -1752,8 +1761,8 @@ public class GradientGraphO extends GradientGraph{
 
 	public int numberOfMaxIndicators() {
 		int result = 0;
-		for (Rel r: maxindicators_for_r.keySet()) {
-			result+=maxindicators_for_r.get(r).size();
+		for (Rel r: maxindicators.keySet()) {
+			result+=maxindicators.get(r).size();
 		}
 		return result;
 	}
@@ -1826,22 +1835,16 @@ public class GradientGraphO extends GradientGraph{
 	}
 
 	public GGAtomMaxNode findInMaxindicators(GroundAtom at){
-		for (int i=0; i<maxindicators.size();i++){
-			if (maxindicators.elementAt(i).myatom().equals(at))
-				return maxindicators.elementAt(i);
-		}
-		System.out.println("Did not find indicator node for atom " + at.asString());
+		Rel r = at.rel();
+		Vector<GGAtomMaxNode>  mxnodes = maxindicators.get(r);
+		if (mxnodes != null) 
+			for (GGAtomMaxNode mxn: mxnodes) 
+				if (mxn.myatom().equals(at))
+					return mxn;
 		return null;
+		
 	}
 	
-	
-	public void showMaxNodes(){
-		// GGAtomMaxNode ggimn;
-		for (GGAtomMaxNode ggimn : maxindicators){
-			
-			System.out.println(ggimn.myatom().asString() + ":  " + ggimn.getCurrentInst());
-		}
-	}
 	
 	public Hashtable<Rel,int[]> getMapVals(){
 		
@@ -1850,7 +1853,7 @@ public class GradientGraphO extends GradientGraph{
 		for (Rel r: mapatoms.keySet()) {
 			int[] rvals = new int[mapatoms.get(r).size()];
 			int idx=0;
-			for (GGAtomMaxNode mnode: maxindicators_for_r.get(r)) 
+			for (GGAtomMaxNode mnode: maxindicators.get(r)) 
 				rvals[idx]=mnode.getCurrentInst();
 			result.put(r, rvals);
 			
@@ -1962,5 +1965,12 @@ public class GradientGraphO extends GradientGraph{
 		return result;
 	}
 	
-
+	private TreeSet<GGAtomMaxNode> maxind_as_ts(){
+		TreeSet<GGAtomMaxNode> result = new TreeSet<GGAtomMaxNode>();
+		for (Rel r: maxindicators.keySet()) {
+			for (GGAtomMaxNode mn: maxindicators.get(r))
+				result.add(mn);
+		}
+		return result;
+	}
 }
