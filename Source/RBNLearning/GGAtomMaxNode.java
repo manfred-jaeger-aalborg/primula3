@@ -38,11 +38,28 @@ public static int USEMINSCORE = 0;
 public static int USEAVGSCORE = 1;
 public static int USELLSCORE = 2;
 
-/* A value that represents the contribution of this node with its
- * current instantiation value to the likelihood. Used as a selection
- * heuristic for flipping instantiation values during MAP inference  
+///* A value that represents the contribution of this node with its
+// * current instantiation value to the likelihood. Used as a selection
+// * heuristic for flipping instantiation values during MAP inference  
+// */
+//private double score;
+
+/* The log-likelihood change induced by changing the current instantiation
+ * value of this Atom to one of the alternative.
+ * 
+ * Note: the flipscores array is currently only produced as a by-product of
+ * computing highscore/highvalue. May be used in future developments.
  */
-private double score;
+private double[] flipscores;
+
+/* The maximum flipscore value, without the flipscore corresponding to the current value
+ * Thus, highscore can be <0 (if all possible changes of the current instantiation lead to a 
+ * decrease in likelihood.
+ */
+private double highscore; 
+
+/* The value for which highscore is obtained */
+private int highvalue;
 
 /* The index of this.myatom in the list GradientGraphO.maxatoms.
  * Needed in order to sort the GradientGraphIndicatorMaxNodes according to
@@ -65,7 +82,11 @@ private double score;
 	}
 
 	public double getScore(){
-		return score;
+		return highscore;
+	}
+	
+	public int getHighvalue() {
+		return highvalue;
 	}
 	
 //	public void setIndex(int i){
@@ -77,39 +98,68 @@ private double score;
 //	}
 //	
 
-	public void setScore(int scoremode){
-
-		GGCPMNode nextuga;
-		double nextscore;
-		
-		if (scoremode == USELLSCORE){
-			System.out.println("Compute score for " + this.getMyatom());
-			
-			double[] oldvalues = new double[allugas.size()];
-			double oldll = GradientGraphO.computePartialLikelihood(allugas,oldvalues);
-			
-			
-			System.out.println("values for ugas: old="  
-			+ StringOps.arrayToString(oldvalues, "(", ")") );
-			toggleCurrentInst();
-			reEvaluateUpstream();
-			
-			double[] newvalues = new double[allugas.size()];		
-			double newll = GradientGraphO.computePartialLikelihood(allugas,newvalues);
-			
-			System.out.println("   new="  
-					+ StringOps.arrayToString(newvalues, "(", ")")  );
-			
-			toggleCurrentInst();
-			reEvaluateUpstream();
-			
-			score=0;
-			for (int i=0;i<allugas.size();i++){
-				score = score + Math.log( oldvalues[i]/newvalues[i]);
+	public void setScore() {
+		double oldll = GradientGraphO.computePartialLikelihood(allugas);
+		double newll,fs;
+		highscore = Double.NEGATIVE_INFINITY;
+		highvalue = 0;
+		int ci = this.currentInst; // Remember the current value
+		for (int v=0; v< (int)this.myatom().rel().numvals(); v++) {
+			if (v==ci) {
+				fs=newll=oldll;
 			}
-			System.out.println("result = " + score);
+			else {
+				this.setCurrentInst(v);
+				reEvaluateUpstream();
+				newll = GradientGraphO.computePartialLikelihood(allugas);
+				fs=newll-oldll;
+				if (fs>highscore) {
+					highscore = fs;
+					highvalue=v;
+				}
+			}
+			flipscores[v]=fs;
 		}
+		// Reset to original configuration
+		this.setCurrentInst(ci);
+		reEvaluateUpstream();
+		
+		
 	}
+	
+//	public void setScore(int scoremode){
+//
+//		GGCPMNode nextuga;
+//		double nextscore;
+//		
+//		if (scoremode == USELLSCORE){
+//			System.out.println("Compute score for " + this.getMyatom());
+//			
+//			double[] oldvalues = new double[allugas.size()];
+//			double oldll = GradientGraphO.computePartialLikelihood(allugas,oldvalues);
+//			
+//			
+//			System.out.println("values for ugas: old="  
+//			+ StringOps.arrayToString(oldvalues, "(", ")") );
+//			toggleCurrentInst();
+//			reEvaluateUpstream();
+//			
+//			double[] newvalues = new double[allugas.size()];		
+//			double newll = GradientGraphO.computePartialLikelihood(allugas,newvalues);
+//			
+//			System.out.println("   new="  
+//					+ StringOps.arrayToString(newvalues, "(", ")")  );
+//			
+//			toggleCurrentInst();
+//			reEvaluateUpstream();
+//			
+//			score=0;
+//			for (int i=0;i<allugas.size();i++){
+//				score = score + Math.log( oldvalues[i]/newvalues[i]);
+//			}
+//			System.out.println("result = " + score);
+//		}
+//	}
 
 	public void addMeToIndicators(GGCPMNode ggpfn){
 		ggpfn.addToMaxIndicators(this);

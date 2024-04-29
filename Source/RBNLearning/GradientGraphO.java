@@ -853,7 +853,8 @@ public class GradientGraphO extends GradientGraph{
 			int depth) {
 		System.out.println("mapSearch with depth " + depth); 
 		
-		
+		PriorityQueue<GGAtomMaxNode> scored_atoms = 
+				new PriorityQueue<GGAtomMaxNode>(new GGAtomMaxNode_Comparator()); 
 		
 		return 0;
 		
@@ -1862,21 +1863,53 @@ public class GradientGraphO extends GradientGraph{
 		return result;
 	}
 	
-	/* Computes the likelihood contribution of the upper ground atom nodes contained in ugas,
-	 * and writes into singlells the factors of the individual nodes (return value is product
-	 * of singlells values)
+//	/* Computes the likelihood contribution of the upper ground atom nodes contained in ugas,
+//	 * and writes into singlells the factors of the individual nodes (return value is product
+//	 * of singlells values)
+//	 * 
+//	 */
+//	public static double computePartialLikelihood(Vector<GGCPMNode> ugas, double[] singlells){
+//		GGCPMNode nextggpfn;
+//		Object nextival;
+//		double val;
+//		
+//		//System.out.println("computePartialLikelihood: ");
+//		for (int i=0;i<ugas.size();i++){
+//			nextggpfn=ugas.elementAt(i);
+//			val=nextggpfn.value();
+//			nextival=nextggpfn.getInstval();
+//			//System.out.print(nextggpfn.getMyatom() + ":" );
+//			if (nextival instanceof Integer){
+//				if ((Integer)nextival==1)
+//					singlells[i]=val;
+//				else
+//					singlells[i]=1-val;
+//			}
+//			if (nextival instanceof GGAtomNode){
+//				if (((GGAtomNode)nextival).getCurrentInst()==1)
+//					singlells[i]=val;
+//				else
+//					singlells[i]=1-val;
+//			}
+//			//System.out.print(singlells[i] + " ");
+//		}
+//		//System.out.println();
+//		double result =1;
+//		for (int k=0;k<singlells.length;k++)
+//			result = result*singlells[k];
+//		return result;
+//	}
+	
+	/* Computes the likelihood contribution of the upper ground atom nodes contained in ugas)
 	 * 
 	 */
-	public static double computePartialLikelihood(Vector<GGCPMNode> ugas, double[] singlells){
-		GGCPMNode nextggpfn;
+	public static double computePartialLikelihood(Vector<GGCPMNode> ugas){
 		Object nextival;
 		double val;
 		
-		//System.out.println("computePartialLikelihood: ");
-		for (int i=0;i<ugas.size();i++){
-			nextggpfn=ugas.elementAt(i);
-			val=nextggpfn.value();
-			nextival=nextggpfn.getInstval();
+		for (GGCPMNode next_uga: ugas){
+			val=next_uga.value();
+			nextival=next_uga.getInstval();
 			//System.out.print(nextggpfn.getMyatom() + ":" );
 			if (nextival instanceof Integer){
 				if ((Integer)nextival==1)
