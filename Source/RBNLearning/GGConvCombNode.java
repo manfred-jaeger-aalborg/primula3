@@ -196,9 +196,18 @@ public class GGConvCombNode extends GGCPMNode{
 		if (f0val != 1)
 			result = result + (1-f0val)*f2val;
 		
-		value = result;
+		
 		if (Double.isNaN(result))
 			System.out.println("result = NaN in evaluate for convcomb.func " );
+		if (this.isuga()) {
+			int iv = this.instval(); // Can only be 0,1, or -1, because if a relation is defined by ProbFormConvComb
+			                         // it can only be Boolean
+			if (iv == -1)
+				System.out.println("Warning: undefined instantiation value in GGConvCombNode.evaluate()");
+			if (iv == 0)
+				result = 1- result;
+		}
+		value = result;
 		return result;
 	}
 

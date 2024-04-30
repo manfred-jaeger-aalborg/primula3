@@ -44,7 +44,7 @@ public abstract class GGAtomNode extends GGCPMNode{
 	int observcaseno;
 
 
-	/** The current instantiation for this indicator (used for computing
+	/** The current instantiation for this atom (used for computing
 	 * likelihood at the root of the gradient graph);
 	 * currentInst = -1 if not currently instantiated
 	 */
@@ -83,6 +83,24 @@ public abstract class GGAtomNode extends GGCPMNode{
 
 
 	public double evaluate(){
+		/*
+		 * A GGAtomNode that also is uga would mean that one relation is defined as a copy
+		 * of another relation, i.e., in the rbn:
+		 * 
+		 * rel1(v) = rel2(v);
+		 * 
+		 * So this case should rarely ever happen ...
+		 */
+		if (this.isuga()) {
+			int iv = this.instval(); // Can only be 0,1, or -1, because if a relation is defined by ProbFormAtom
+			                         // it can only be Boolean
+			if (iv == -1)
+				System.out.println("Warning: undefined instantiation value in GGAtomNode.evaluate()");
+			if (iv == 0)
+				return 1-currentInst;
+			if (iv == 1)
+				return currentInst;
+		}
 		return currentInst;
 	}
 

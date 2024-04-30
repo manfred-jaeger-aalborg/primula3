@@ -851,10 +851,45 @@ public class GradientGraphO extends GradientGraph{
 
 	public double mapSearch(TreeSet<GGAtomMaxNode> flipcandidates,	
 			int depth) {
-		System.out.println("mapSearch with depth " + depth); 
+		System.out.println("mapSearch with depth " + depth); // Currently depth is not used!
 		
 		PriorityQueue<GGAtomMaxNode> scored_atoms = 
 				new PriorityQueue<GGAtomMaxNode>(new GGAtomMaxNode_Comparator()); 
+		
+		for (GGAtomMaxNode mxnode: flipcandidates) {
+			mxnode.setScore();
+			scored_atoms.add(mxnode);
+		}
+		
+		Boolean terminate = false;
+		GGAtomMaxNode flipnext;
+		while (!terminate) {
+			flipnext = scored_atoms.poll();
+			if (flipnext.getScore() < 0) {
+				terminate = true;
+			}
+			else {
+				flipnext.setCurrentInst(flipnext.getHighvalue());
+				flipnext.reEvaluateUpstream();
+				
+				/*
+				 * Collect all the GGAtomMaxNodes whose score has to be re-calculated:
+				 * flipnext, and all MaxNodes who have a shared uga with flipnext 
+				 */
+				TreeSet<GGAtomMaxNode> update_us = new TreeSet<GGAtomMaxNode>();
+				update_us.add(flipnext);
+				for (GGCPMNode uga: flipnext.getAllugas()) {
+					for (GGAtomMaxNode mx: uga.getMaxIndicators()) {
+						update_us.add(mx);
+					}
+				}
+				for (GGAtomMaxNode mx: update_us) {
+					scored_atoms.remove(mx);
+					mx.setScore();
+					scored_atoms.add(mx);
+				}
+			}
+		}
 		
 		return 0;
 		
@@ -1903,32 +1938,12 @@ public class GradientGraphO extends GradientGraph{
 	/* Computes the likelihood contribution of the upper ground atom nodes contained in ugas)
 	 * 
 	 */
-	public static double computePartialLikelihood(Vector<GGCPMNode> ugas){
-		Object nextival;
-		double val;
+	public static double computePartialLogLikelihood(Vector<GGCPMNode> ugas){
 		
-		for (GGCPMNode next_uga: ugas){
-			val=next_uga.value();
-			nextival=next_uga.getInstval();
-			//System.out.print(nextggpfn.getMyatom() + ":" );
-			if (nextival instanceof Integer){
-				if ((Integer)nextival==1)
-					singlells[i]=val;
-				else
-					singlells[i]=1-val;
-			}
-			if (nextival instanceof GGAtomNode){
-				if (((GGAtomNode)nextival).getCurrentInst()==1)
-					singlells[i]=val;
-				else
-					singlells[i]=1-val;
-			}
-			//System.out.print(singlells[i] + " ");
-		}
-		//System.out.println();
-		double result =1;
-		for (int k=0;k<singlells.length;k++)
-			result = result*singlells[k];
+		double result=0;
+		
+		for (GGCPMNode next_uga: ugas)
+			result+= Math.log(next_uga.instval());
 		return result;
 	}
 	
