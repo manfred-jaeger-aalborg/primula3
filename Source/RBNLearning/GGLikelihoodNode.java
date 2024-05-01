@@ -175,32 +175,29 @@ public  class GGLikelihoodNode extends GGNode{
 		
 		double childlik;
 		GGCPMNode nextchild;
-		int ival;
+//		int ival;
 		
 		for (int i=0;i<batchelements.length;i++){
 			nextchild=children.elementAt(batchelements[i]);
 			childlik = nextchild.evaluate();
-			ival = nextchild.instval();
-			switch (ival) {
-				case 0:
-					if (childlik<0.5)
-						confusion[this.TN]++;
-					else
-						confusion[this.FP]++;
-					ssqe=ssqe-Math.pow(childlik, 2);
-					break;
-				case 1:
-					if (childlik<0.5)
-						confusion[this.FN]++;
-					else
-						confusion[this.TP]++;
-					ssqe=ssqe-Math.pow(1-childlik, 2);
-					break;
-			}
+//			ival = nextchild.instval();
+//			switch (ival) {
+//				case 0:
+//					if (childlik<0.5)
+//						confusion[this.TN]++;
+//					else
+//						confusion[this.FP]++;
+//					ssqe=ssqe-Math.pow(childlik, 2);
+//					break;
+//				case 1:
+//					if (childlik<0.5)
+//						confusion[this.FN]++;
+//					else
+//						confusion[this.TP]++;
+//					ssqe=ssqe-Math.pow(1-childlik, 2);
+//					break;
+//			}
 				
-			
-			if (ival==0)
-				childlik = 1-childlik;
 			
 			switch (thisgg.objective()){
 			case LearnModule.UseLik:

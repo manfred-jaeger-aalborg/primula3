@@ -99,7 +99,10 @@ private int highvalue;
 //	
 
 	public void setScore() {
-		double oldll = GradientGraphO.computePartialLikelihood(allugas);
+		if (this.flipscores == null) { // First time we do MAP inference on this node
+			flipscores = new double[(int)this.myatom().rel().numvals()];
+		}
+		double oldll = GradientGraphO.computePartialLogLikelihood(allugas);
 		double newll,fs;
 		highscore = Double.NEGATIVE_INFINITY;
 		highvalue = 0;
@@ -111,7 +114,7 @@ private int highvalue;
 			else {
 				this.setCurrentInst(v);
 				reEvaluateUpstream();
-				newll = GradientGraphO.computePartialLikelihood(allugas);
+				newll = GradientGraphO.computePartialLogLikelihood(allugas);
 				fs=newll-oldll;
 				if (fs>highscore) {
 					highscore = fs;

@@ -578,7 +578,14 @@ public class GradientGraphO extends GradientGraph{
 
 	protected void addToMaxIndicators(GGAtomMaxNode ggin){
 		Rel r = ggin.myatom().rel();
-		maxindicators.get(r).add(ggin);
+		Vector<GGAtomMaxNode> v = maxindicators.get(r);
+		if (v!=null)
+			v.add(ggin);
+		else {
+			v=new Vector<GGAtomMaxNode>();
+			v.add(ggin);
+			maxindicators.put(r, v);
+		}
 	}
 
 
@@ -726,7 +733,7 @@ public class GradientGraphO extends GradientGraph{
 			for (Rel r: maxindicators.keySet()) {
 				int numvals = (int)r.numvals();
 				for (GGAtomMaxNode mxnode: maxindicators.get(r)) {
-					mxnode.setCurrentInst((int)Math.random()*numvals);
+					mxnode.setCurrentInst((int)(Math.random()*numvals));
 				}
 			}
 			/* Now find initial values for the k Markov chains */
@@ -983,7 +990,9 @@ public class GradientGraphO extends GradientGraph{
 		boolean terminate = false;
 		double score;
 		int itcount = 0;
-		initIndicators(mythread);
+		Boolean gotinit = initIndicators(mythread);
+		if (!gotinit)
+			System.out.println("No successful initialization of max/sum indicators");
 //		this.showAllNodes(6, myPrimula.getRels());
 
 		System.out.println("Initial max values:");
