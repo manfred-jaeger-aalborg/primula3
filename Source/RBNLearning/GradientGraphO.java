@@ -268,7 +268,7 @@ public class GradientGraphO extends GradientGraph{
 							/* check whether this atom has already been included as an upper ground atom node because
 							 * it is a map atom
 							 */
-							if (mapatoms == null || !mapatoms.get(nextrel).contains(nextrel,nexttup)){
+							if (mapatoms == null || mapatoms.get(nextrel)==null || !mapatoms.get(nextrel).contains(nextrel,nexttup)){
 								
 								pfeval = (double)groundnextcpm.evaluate(A,
 										osd,
@@ -1952,7 +1952,7 @@ public class GradientGraphO extends GradientGraph{
 		double result=0;
 		
 		for (GGCPMNode next_uga: ugas)
-			result+= Math.log(next_uga.instval());
+			result+= Math.log(next_uga.value());
 		return result;
 	}
 	

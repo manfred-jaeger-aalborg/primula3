@@ -109,7 +109,7 @@ private int highvalue;
 		int ci = this.currentInst; // Remember the current value
 		for (int v=0; v< (int)this.myatom().rel().numvals(); v++) {
 			if (v==ci) {
-				fs=newll=oldll;
+				fs=0.0;
 			}
 			else {
 				this.setCurrentInst(v);
@@ -126,8 +126,6 @@ private int highvalue;
 		// Reset to original configuration
 		this.setCurrentInst(ci);
 		reEvaluateUpstream();
-		
-		
 	}
 	
 //	public void setScore(int scoremode){
