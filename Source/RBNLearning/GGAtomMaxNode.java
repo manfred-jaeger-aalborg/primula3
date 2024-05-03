@@ -165,4 +165,12 @@ private int highvalue;
 	public void addMeToIndicators(GGCPMNode ggpfn){
 		ggpfn.addToMaxIndicators(this);
 	}
+	
+	public void reEvaluateUpstream(){
+		super.reEvaluateUpstream();
+		// Also need to re-evaluate the upper ground atom node, which
+		// usually is not an ancestor of this in the gradient graph
+		this.getMyUga().resetValue();
+		this.getMyUga().evaluate();
+	}
 }
