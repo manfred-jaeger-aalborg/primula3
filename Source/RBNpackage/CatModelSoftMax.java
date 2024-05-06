@@ -87,7 +87,7 @@ public class CatModelSoftMax extends CPModel {
 		Object[][] evaluatedpfs = new Object[probforms.size()][2];
 		Object[] result = new Object[2];
 		result[0]=new double[probforms.size()];
-		double nextval;
+		Double nextval;
 		double valsum =0;
 
 		for (int i = 0;i<probforms.size();i++) {
@@ -108,7 +108,7 @@ public class CatModelSoftMax extends CPModel {
 			nextval = (Double)pfval[0];
 			evaluatedpfs[i][0]=nextval;
 			evaluatedpfs[i][1]=pfval[1];
-			if (nextval==Double.NaN) {
+			if (nextval.isNaN()) {
 				Arrays.fill((double[])result[0],Double.NaN);
 				return result;
 			}
