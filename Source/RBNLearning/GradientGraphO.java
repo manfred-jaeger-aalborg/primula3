@@ -1898,8 +1898,10 @@ public class GradientGraphO extends GradientGraph{
 		for (Rel r: mapatoms.keySet()) {
 			int[] rvals = new int[mapatoms.get(r).size()];
 			int idx=0;
-			for (GGAtomMaxNode mnode: maxindicators.get(r)) 
+			for (GGAtomMaxNode mnode: maxindicators.get(r)) { 
 				rvals[idx]=mnode.getCurrentInst();
+				idx++;
+			}
 			result.put(r, rvals);
 			
 		}
