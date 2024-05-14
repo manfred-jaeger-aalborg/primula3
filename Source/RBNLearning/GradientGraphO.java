@@ -366,19 +366,11 @@ public class GradientGraphO extends GradientGraph{
 			myPrimula.appendMessageThis("100%");
 		
 		/* Construct ProbFormNodes for all SumIndicator nodes.
-		 * lastindicator is the index of the last indicator
-		 * node for which a ProbFormNode has already been
-		 * constructed
 		 */
-		int lastindicator = -1;
-		GroundAtom at;
-
-		GGAtomSumNode nextggin;
+		GroundAtom at;		
 		int[] nextarg;
 		
-		while (sumindicators.size() - lastindicator -1 >0){
-			lastindicator++;
-			nextggin = sumindicators.elementAt(lastindicator);
+		for (GGAtomSumNode nextggin: sumindicators) {
 			at = nextggin.myatom();
 			nextarg = at.args();
 			inputcaseno = nextggin.inputcaseno();
@@ -417,8 +409,19 @@ public class GradientGraphO extends GradientGraph{
 		if (sumindicators.size() > 0){
 			numchains = myggoptions.getNumChains();
 			windowsize = myggoptions.getWindowSize();
+			
+			/* 
+			 * Initialize values_for_samples arrays for all ancestors of sumindicators
+			 */
+			for (GGAtomSumNode nextggin: sumindicators) {
+				for (GGNode anc: nextggin.ancestors())
+					anc.init_values_for_samples();
+			}
+			
 		}
 		else numchains = 0;
+		
+		
 		
 		if (numchains >1 && objective != LearnModule.UseLik)
 		 throw new RBNRuntimeException("Inconsistent combination of options: use log-likelihood and numchains = " +numchains);	
@@ -656,6 +659,7 @@ public class GradientGraphO extends GradientGraph{
 				setTruthVals(i);
 				llnode.evaluate();
 				llnode.updateLikelihoodSum();
+				llnode.set_value_for_sample(i);
 				if (!likelihoodonly){
 					llnode.evaluateGradients();
 					llnode.updateGradSum();

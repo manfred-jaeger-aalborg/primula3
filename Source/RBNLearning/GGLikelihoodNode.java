@@ -670,4 +670,8 @@ public  class GGLikelihoodNode extends GGNode{
 		
 	}
 	
+	public void set_value_for_sample(int sno) {
+		for (GGCPMNode uga: this.children)
+			uga.set_value_for_sample(sno);
+	}
 }

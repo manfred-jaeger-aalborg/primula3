@@ -43,9 +43,16 @@ public abstract class GGNode implements Comparable<GGNode>{
 	
 	Integer identifier;
 	
-	/** The value returned by the last call of evaluate(sno); null if node not 
+	/** The value returned by the last call of evaluate(); null if node not 
 	 * yet evaluated or method resetValue() has been called */
 	Double value;
+	
+	/**
+	 * If there are sum atoms: the values obtained for the numchains*windowsize different
+	 * settings of sample values at GGAtomSumNodes. Only used for nodes that are ancestors of 
+	 * GGAtomSum nodes.
+	 */
+	Double[] values_for_samples;
 
 //	/** The result of the most recent call to evaluatesTo()
 //	*  0: evaluatesTo() = 0
@@ -92,11 +99,16 @@ public abstract class GGNode implements Comparable<GGNode>{
 	 * and the current instantiation for unobserved atoms. Returns the
 	 * value and sets the value field of the node.
 	 * 
-	 * If the value is not null, then the this value is assumed to be 
+	 * If this.value is not null, then this value is assumed to be 
 	 * the currently correct value, and is returned
 	 * 
 	 */
 	public abstract double evaluate();
+	
+	/* For nodes depending on a sum node: evaluation relative 
+	 * to the the values in the sample with index sno.
+	 */
+	public abstract double evaluate(int sno);
 
 	public abstract double evaluateGrad(String param) throws RBNNaNException;
 
@@ -219,15 +231,14 @@ public abstract class GGNode implements Comparable<GGNode>{
 	 * indicator has been changed in Gibbs sampling or MAP inference
 	 */
 	public void reEvaluateUpstream(){
-		TreeSet<GGNode> myancestors;
-		if (ancestors != null) 
-			myancestors = ancestors;
-		else
-			myancestors = ancestors();
-		for (Iterator<GGNode> it = myancestors.iterator(); it.hasNext();)
-			it.next().resetValue();
-		for (Iterator<GGNode> it = myancestors.iterator(); it.hasNext();)
-			it.next().evaluate();
+		
+		if (ancestors == null) 
+			ancestors = ancestors();
+		
+		for (GGNode anc: ancestors)
+			anc.resetValue();
+		for (GGNode anc: ancestors)
+			anc.evaluate();
 	}
 	
 	/* Re-evaluate values and partial derivatives for parameter param 
@@ -282,4 +293,17 @@ public abstract class GGNode implements Comparable<GGNode>{
 		}
 	}
 	
+	public void init_values_for_samples() {
+		values_for_samples = new Double[thisgg.numchains*thisgg.windowsize];
+	}
+	
+	public double evaluate_top() {
+		if (this.values_for_samples == null)
+			return this.evaluate();
+		else {
+			for (int sno =0;sno<thisgg.numchains*thisgg.windowsize;sno++)
+				this.evaluate(sno);
+			return Double.NaN; /* this should not be used .... */
+		}
+	}
 }
