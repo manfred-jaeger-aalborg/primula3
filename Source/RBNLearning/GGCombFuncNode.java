@@ -185,16 +185,16 @@ public class GGCombFuncNode extends GGCPMNode{
 		return result;
 	}
 
-	public double evaluate(){
+	public double evaluate(Integer sno){
 
 //		if (this.isuga()) {
 //			System.out.print("evaluating " + this.getMyatom());
 //		}
-		if (value != null) {
-//			if (this.isuga()) {
-//				System.out.println(" return old value " + value);
-//			}
+		if (values_for_samples == null && value != null) {
 			return value;
+		}
+		if (values_for_samples != null) {
+			return values_for_samples[sno];
 		}
 		/* Construct an argument array for the combination function: */
 		double[] args = new double[valuesOfSubPFs.length+ children.size()];

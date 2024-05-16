@@ -52,7 +52,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 	 * settings of sample values at GGAtomSumNodes. Only used for nodes that are ancestors of 
 	 * GGAtomSum nodes.
 	 */
-	Double[] values_for_samples;
+	double[] values_for_samples;
 
 //	/** The result of the most recent call to evaluatesTo()
 //	*  0: evaluatesTo() = 0
@@ -103,12 +103,24 @@ public abstract class GGNode implements Comparable<GGNode>{
 	 * the currently correct value, and is returned
 	 * 
 	 */
-	public abstract double evaluate();
+	public double evaluate() {
+		if (this.values_for_samples==null) {
+			value=this.evaluate(null);
+		}
+		else {
+			for (int i=0;i<thisgg.numchains*thisgg.windowsize;i++)
+				this.values_for_samples[i]=this.evaluate(i);
+			value=null;
+		}
+		return value;	
+	};
 	
 	/* For nodes depending on a sum node: evaluation relative 
 	 * to the the values in the sample with index sno.
+	 * 
+	 * For nodes not depending on a sum node: call evaluate(null)
 	 */
-	public abstract double evaluate(int sno);
+	public abstract double evaluate(Integer sno);
 
 	public abstract double evaluateGrad(String param) throws RBNNaNException;
 
@@ -294,16 +306,9 @@ public abstract class GGNode implements Comparable<GGNode>{
 	}
 	
 	public void init_values_for_samples() {
-		values_for_samples = new Double[thisgg.numchains*thisgg.windowsize];
+		values_for_samples = new double[thisgg.numchains*thisgg.windowsize];
 	}
 	
-	public double evaluate_top() {
-		if (this.values_for_samples == null)
-			return this.evaluate();
-		else {
-			for (int sno =0;sno<thisgg.numchains*thisgg.windowsize;sno++)
-				this.evaluate(sno);
-			return Double.NaN; /* this should not be used .... */
-		}
-	}
+
+	
 }

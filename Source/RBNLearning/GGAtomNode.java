@@ -82,7 +82,7 @@ public abstract class GGAtomNode extends GGCPMNode{
 	}
 
 
-	public double evaluate(){
+	public double evaluate(Integer sno){
 		/*
 		 * A GGAtomNode that also is uga would mean that one relation is defined as a copy
 		 * of another relation, i.e., in the rbn:

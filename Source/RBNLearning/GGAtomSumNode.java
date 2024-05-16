@@ -39,7 +39,7 @@ public class GGAtomSumNode extends GGAtomNode{
 	 * Summation over all configurations of IndicatorSumNodes is approximated
 	 * by summation over the configurations defined by the sampledVals.
 	 */
-	boolean[] sampledVals;
+	//boolean[] sampledVals;
 
 	public GGAtomSumNode(GradientGraphO gg,
 			ProbForm pf,  
@@ -50,7 +50,6 @@ public class GGAtomSumNode extends GGAtomNode{
 	throws RuntimeException, RBNCompatibilityException
 	{
 		super(gg,pf,A,I,inputcasenoarg,observcasenoarg);
-		sampledVals = new boolean[0];
 		gg.addToSumIndicators(this);
 	}
 
@@ -59,42 +58,29 @@ public class GGAtomSumNode extends GGAtomNode{
 	 * the value in the sno's sample
 	 */
 	public void setCurrentInst(int sno){
-		if (sampledVals[sno])
-			currentInst = 1;
-		else
-			currentInst = 0;
+		currentInst = (int)values_for_samples[sno];
 	}
 
 	/** Sets value in sno's sample to tv */
-	public void setSampleVal(int sno, boolean tv){
-		sampledVals[sno]=tv;
+	public void setSampleVal(int sno, int val){
+		values_for_samples[sno]=val;
 	}
 
 	/** Sets value in sno's sample to current instantiation */
 	public void setSampleVal(int sno){
-		if (currentInst==1)
-			sampledVals[sno]=true;
-		else if (currentInst==0)
-			sampledVals[sno]=false;
-		else
-			throw new RBNRuntimeException("Trying to set undefined truth value");
-			
+		setSampleVal(sno,currentInst);
 	}
 
 	/** Toggles value in sno's sample */
 	public void toggleSampleVal(int sno){
-		if (sampledVals[sno])
-			sampledVals[sno]=false;
-		else
-			sampledVals[sno]=true;
+		values_for_samples[sno]=1-values_for_samples[sno];
 	}
 
 
-
-	/** initializes  sampledVals to an array of size 'size' */
-	public void initSampledVals(int size){
-			sampledVals = new boolean[size];
-	}
+//	/** initializes  sampledVals to an array of size 'size' */
+//	public void initSampledVals(int size){
+//			sampledVals = new boolean[size];
+//	}
 
 	public void addMeToIndicators(GGCPMNode ggpfn){
 		ggpfn.addToSumIndicators(this);
