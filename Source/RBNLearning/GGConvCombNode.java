@@ -157,7 +157,7 @@ public class GGConvCombNode extends GGCPMNode{
 
 
 
-	public double evaluate(){
+	public double evaluate(Integer sno){
 
 
 		if (value != null) {
@@ -174,17 +174,17 @@ public class GGConvCombNode extends GGCPMNode{
 		double f2val;
 
 		if (F0 != null)
-			f0val = F0.evaluate();
+			f0val = F0.evaluate(sno);
 		else
 			f0val = evalOfSubPFs[0];
 
 		if (F1 != null)
-			f1val = F1.evaluate();
+			f1val = F1.evaluate(sno);
 		else
 			f1val = evalOfSubPFs[1];
 
 		if (F2 != null)
-			f2val = F2.evaluate();
+			f2val = F2.evaluate(sno);
 		else
 			f2val = evalOfSubPFs[2];
 
@@ -207,7 +207,10 @@ public class GGConvCombNode extends GGCPMNode{
 			if (iv == 0)
 				result = 1- result;
 		}
-		value = result;
+		if (sno==null)
+			value = result;
+		else
+			values_for_samples[sno]=result;
 		return result;
 	}
 

@@ -101,6 +101,7 @@ public abstract class GGAtomNode extends GGCPMNode{
 			if (iv == 1)
 				return currentInst;
 		}
+		
 		return currentInst;
 	}
 

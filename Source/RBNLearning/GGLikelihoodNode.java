@@ -169,9 +169,9 @@ public  class GGLikelihoodNode extends GGNode{
 			likelihood[0]=0.0;
 		}
 		likelihood[1]=0.0;
-		for (int i=0;i<4;i++)
-			confusion[i]=0;
-		ssqe=0;
+//		for (int i=0;i<4;i++)
+//			confusion[i]=0;
+//		ssqe=0;
 		
 		double childlik;
 		GGCPMNode nextchild;

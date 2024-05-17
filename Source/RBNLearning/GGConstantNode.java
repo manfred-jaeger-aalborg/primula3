@@ -75,7 +75,7 @@ public class GGConstantNode extends GGCPMNode{
 
 
 
-	public double evaluate(){
+	public double evaluate(Integer sno){
 		double result = 0;
 		if (!isUnknown){
 			result = cval;

@@ -86,4 +86,7 @@ public class GGAtomSumNode extends GGAtomNode{
 		ggpfn.addToSumIndicators(this);
 	}
 
+	public double evaluate(Integer sno){
+		return values_for_samples[sno];
+	}
 }

@@ -190,18 +190,13 @@ public class GGCombFuncNode extends GGCPMNode{
 //		if (this.isuga()) {
 //			System.out.print("evaluating " + this.getMyatom());
 //		}
-		if (values_for_samples == null && value != null) {
-			return value;
-		}
-		if (values_for_samples != null) {
-			return values_for_samples[sno];
-		}
+
 		/* Construct an argument array for the combination function: */
 		double[] args = new double[valuesOfSubPFs.length+ children.size()];
 		for (int i=0;i<valuesOfSubPFs.length;i++)
 			args[i]=valuesOfSubPFs[i];
 		for (int i=0;i<children.size();i++)
-			args[i+valuesOfSubPFs.length]= children.elementAt(i).evaluate();
+			args[i+valuesOfSubPFs.length]= children.elementAt(i).evaluate(sno);
 		double result = computeCombFunc(args);
 		if (Double.isNaN(result))
 			System.out.println("result = NaN in evaluate for comb.func " );
@@ -214,7 +209,10 @@ public class GGCombFuncNode extends GGCPMNode{
 			if (iv == 0)
 				result = 1- result;
 		}
-		value = result;
+		if (sno==null)
+			value = result;
+		else
+			values_for_samples[sno]=result;
 		return result;
 	}
 
