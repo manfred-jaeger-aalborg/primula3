@@ -191,6 +191,13 @@ public class GGCombFuncNode extends GGCPMNode{
 //			System.out.print("evaluating " + this.getMyatom());
 //		}
 
+		if (is_evaluated) {
+			if (this.values_for_samples==null)
+				return (double)value;
+			else
+				return this.values_for_samples[sno];
+		}
+		
 		/* Construct an argument array for the combination function: */
 		double[] args = new double[valuesOfSubPFs.length+ children.size()];
 		for (int i=0;i<valuesOfSubPFs.length;i++)

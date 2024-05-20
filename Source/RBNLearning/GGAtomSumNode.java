@@ -77,11 +77,6 @@ public class GGAtomSumNode extends GGAtomNode{
 	}
 
 
-//	/** initializes  sampledVals to an array of size 'size' */
-//	public void initSampledVals(int size){
-//			sampledVals = new boolean[size];
-//	}
-
 	public void addMeToIndicators(GGCPMNode ggpfn){
 		ggpfn.addToSumIndicators(this);
 	}

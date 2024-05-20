@@ -77,6 +77,11 @@ public  class GGLikelihoodNode extends GGNode{
 //	/** Likelihood values for all samples, at current parameter settings */
 //	double[][] samplelikelihoods;
 	
+	/** Corresponds to values_for_samples at other GGNodes. Here implemented
+	 * as small doubles
+	 */
+	private double[][] small_values_for_samples;
+	
 	/** The sum of likelihoods for a current set of samples */
 	private double[] likelihoodsum;
 
@@ -143,13 +148,39 @@ public  class GGLikelihoodNode extends GGNode{
 //	}
 
 	public double evaluate() {
+		super.evaluate();
+		double[] small_result=new double[2];
+		if (this.small_values_for_samples == null) {
+			return SmallDouble.toStandardDouble(this.likelihood);
+		}
+		else {
+			switch (thisgg.objective()){
+			case LearnModule.UseLik:
+				small_result[0]=1.0;
+				for (int i=0; i<small_values_for_samples.length;i++)
+					small_result=SmallDouble.multiply(small_result, small_values_for_samples[i]);
+				break;
+			case LearnModule.UseLogLik:
+				small_result[0]=0.0;
+				for (int i=0; i<small_values_for_samples.length;i++)
+					small_result=SmallDouble.add(small_result, small_values_for_samples[i]);
+				break;
+			}
+		}
+			
+		return SmallDouble.toStandardDouble(small_result);	
+	}
+	
+	public double evaluate(Integer sno) {
 		int[] idx = rbnutilities.indexArray(children.size());
-		return evaluate(idx);
+		return evaluate(sno,idx);
 	}
 	
 	/** Computes the (log-)likelihood and confusion matrix 
 	 * (ignoring those terms that are not dependent
 	 * on unknown atoms or parameters)
+	 * 
+	 * CONFUSION MATRIX currently disabled (needs revision for categorical variables)!
 	 * 
 	 * Returns the SmallDouble likelihood value as double. 
 	 * Risk of underflow! This return value should not be used --
@@ -158,17 +189,19 @@ public  class GGLikelihoodNode extends GGNode{
 	 * 
 	 * See this.evaluateSmallGrad for batchelements parameter
 	 */
-	public double evaluate(int[] batchelements){
+	public double evaluate(Integer sno, int[] batchelements){
 
 
+		double[] sno_likelihood = new double[2];
+		
 		switch (thisgg.objective()){
 		case LearnModule.UseLik:
-			likelihood[0]=1.0;
+			sno_likelihood[0]=1.0;
 			break;
 		case LearnModule.UseLogLik:
-			likelihood[0]=0.0;
+			sno_likelihood[0]=0.0;
 		}
-		likelihood[1]=0.0;
+		sno_likelihood[1]=0.0;
 //		for (int i=0;i<4;i++)
 //			confusion[i]=0;
 //		ssqe=0;
@@ -179,7 +212,7 @@ public  class GGLikelihoodNode extends GGNode{
 		
 		for (int i=0;i<batchelements.length;i++){
 			nextchild=children.elementAt(batchelements[i]);
-			childlik = nextchild.evaluate();
+			childlik = nextchild.evaluate(sno);
 //			ival = nextchild.instval();
 //			switch (ival) {
 //				case 0:
@@ -201,14 +234,18 @@ public  class GGLikelihoodNode extends GGNode{
 			
 			switch (thisgg.objective()){
 			case LearnModule.UseLik:
-				likelihood = SmallDouble.multiply(likelihood,childlik);
+				sno_likelihood = SmallDouble.multiply(sno_likelihood,childlik);
 				break;
 			case LearnModule.UseLogLik:
-				likelihood = SmallDouble.add(likelihood,SmallDouble.asSmallDouble(Math.log(childlik)));
+				sno_likelihood = SmallDouble.add(sno_likelihood,SmallDouble.asSmallDouble(Math.log(childlik)));
 			}
 		}
+		if (sno==null)
+			likelihood = sno_likelihood;
+		else
+			small_values_for_samples[sno]=sno_likelihood;
 		isEvaluated = true;
-		return SmallDouble.toStandardDouble(likelihood);
+		return SmallDouble.toStandardDouble(sno_likelihood);
 	}
 
 	/** for compatibility with GGNode ....use with care */

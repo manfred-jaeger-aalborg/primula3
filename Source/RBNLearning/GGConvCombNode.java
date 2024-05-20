@@ -159,10 +159,11 @@ public class GGConvCombNode extends GGCPMNode{
 
 	public double evaluate(Integer sno){
 
-
-		if (value != null) {
-			//System.out.println("evaluate in Conv Comb 1: "  + (double)value);
-			return (double)value;
+		if (is_evaluated) {
+			if (this.values_for_samples==null)
+				return (double)value;
+			else
+				return this.values_for_samples[sno];
 		}
 		double result = 0;
 		GGCPMNode F0 = children.elementAt(0);

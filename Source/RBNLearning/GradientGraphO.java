@@ -720,11 +720,6 @@ public class GradientGraphO extends GradientGraph{
 		boolean success = false;
 		boolean successforsum = false;
 		
-//		llnode.initSampleLikelihoods(numchains*windowsize);
-		for (int i=0;i<sumindicators.size();i++)
-			sumindicators.elementAt(i).initSampledVals(numchains*windowsize);
-
-		
 		int failcount=0;
 		int failcountforsum=0;
 		int maxfailcount = 10; //This should be defined in the settings
@@ -748,9 +743,9 @@ public class GradientGraphO extends GradientGraph{
 					for (int i=0;i<sumindicators.size();i++){
 						coin = Math.random();
 						if (coin>0.5)
-							sumindicators.elementAt(i).setSampleVal(k,true);
+							sumindicators.elementAt(i).setSampleVal(k,1);
 						else
-							sumindicators.elementAt(i).setSampleVal(k,false);
+							sumindicators.elementAt(i).setSampleVal(k,0);
 					}
 					resetValues(true);
 					setTruthVals(k);

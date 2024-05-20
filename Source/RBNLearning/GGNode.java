@@ -47,6 +47,8 @@ public abstract class GGNode implements Comparable<GGNode>{
 	 * yet evaluated or method resetValue() has been called */
 	Double value;
 	
+	Boolean is_evaluated;
+	
 	/**
 	 * If there are sum atoms: the values obtained for the numchains*windowsize different
 	 * settings of sample values at GGAtomSumNodes. Only used for nodes that are ancestors of 
@@ -112,6 +114,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 				this.values_for_samples[i]=this.evaluate(i);
 			value=null;
 		}
+		is_evaluated=true;
 		return value;	
 	};
 	
@@ -146,6 +149,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 	}
 	
 	public void resetValue(){
+		is_evaluated=false;
 		value = null;
 	}
 
