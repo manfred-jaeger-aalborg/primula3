@@ -414,6 +414,7 @@ public class GradientGraphO extends GradientGraph{
 			 * Initialize values_for_samples arrays for all ancestors of sumindicators
 			 */
 			for (GGAtomSumNode nextggin: sumindicators) {
+				nextggin.init_values_for_samples();
 				for (GGNode anc: nextggin.ancestors())
 					anc.init_values_for_samples();
 			}
