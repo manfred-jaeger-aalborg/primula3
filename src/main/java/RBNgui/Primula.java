@@ -1801,8 +1801,8 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		// String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/rbn.rbn";
 		// String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/test.rdef";
 
-		String rbninputfilestring = "/Users/lz50rg/Dev/homophily/gnn_trained_model_log_2.rbn";
-		String rstinputfilestring = "/Users/lz50rg/Dev/homophily/graph_small.rdef";
+		String rbninputfilestring = "/Users/lz50rg/Dev/homophily/const.rbn";
+		String rstinputfilestring = "/Users/lz50rg/Dev/homophily/graph.rdef";
 
 		srsfile = new File(rstinputfilestring);
 		rbnfile = new File(rbninputfilestring);
@@ -1826,7 +1826,9 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 							},
 							"edge",
 							"ABBA",
-							false
+							"node",
+							false,
+							0
 					)
 			);
 
@@ -1983,10 +1985,9 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 	}
 
 	private void setGNNPath() {
-		this.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
-//		this.setScriptPath("/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python/primula-gnn/");
-		this.setScriptPath("/Users/lz50rg/Dev/primula-workspace/primula3/python/");
-		this.setScriptName("inference_test");
+		setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
+		setScriptPath("/Users/lz50rg/Dev/primula-workspace/primula3/python/");
+		setScriptName("inference_test");
 	}
 
 	public static void main( String[] args ){
@@ -1999,8 +2000,8 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		win.show();
 
 		win.setGNNPath();
-		win.loadDefaults();
-//		win.loadGNNRBN_blue();
+//		win.loadDefaults();
+		win.loadGNNRBN_blue();
 //		win.loadGNNRBN_triangle();
 //		win.loadHomophilyGraph();
 	}

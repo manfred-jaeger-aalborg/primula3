@@ -21,7 +21,7 @@ public class GGGnnNode extends GGProbFormNode {
     static private SparseRelStruc sampledRel;
     private TreeSet<Rel> attr_parents;
     static private String x;
-    private int num_nodes;
+    static private int num_nodes = -1;
     static private Vector<BoolRel> boolrel;
     static private String edge_index;
     private boolean edge_pred; // true if the edges are predefined --> avoid to reconstruct again in evaluate
@@ -51,14 +51,16 @@ public class GGGnnNode extends GGProbFormNode {
             this.oneHotEncoding = ((ProbFormGnn) pf).isOneHotEncoding();
             x = "";
 
-            for (Rel attr : ((ProbFormGnn)this.pf).getGnnattr()) {
-                try {
-                    int[][] mat = A.allTypedTuples(attr.getTypes());
-                    // maybe there could be attributes with different number, we keep the biggest
-                    if (attr.arity == 1 && mat.length >= this.num_nodes)
-                        this.num_nodes = mat.length;
-                } catch (RBNIllegalArgumentException e) {
-                    throw new RuntimeException("Error in GGGnnNode for features creation: " + e);
+            if (num_nodes == -1) { // we do not need to compute it again
+                for (Rel attr : ((ProbFormGnn) this.pf).getGnnattr()) {
+                    try {
+                        int[][] mat = A.allTypedTuples(attr.getTypes());
+                        // maybe there could be attributes with different number, we keep the biggest
+                        if (attr.arity == 1 && mat.length >= this.num_nodes)
+                            this.num_nodes = mat.length;
+                    } catch (RBNIllegalArgumentException e) {
+                        throw new RuntimeException("Error in GGGnnNode for features creation: " + e);
+                    }
                 }
             }
 
@@ -202,12 +204,19 @@ public class GGGnnNode extends GGProbFormNode {
                     }
                 }
 
-                if (((ProbFormGnn) this.pf).getClassId() != -1)
-                    result = this.gnnPy.inferModelGraphDouble(gnnpf.getClassId(), x, this.edge_index, ((ProbFormGnn) this.pf).getIdGnn(), "");
-                else
-                    result = this.gnnPy.inferModelNodeDouble(Integer.parseInt(gnnpf.getArgument()), x, this.edge_index, ((ProbFormGnn) this.pf).getIdGnn(), "");
-                this.value = result;
-                return result;
+                if (Objects.equals(((ProbFormGnn) this.pf).getGnn_inference(), "node"))
+                    this.value = this.gnnPy.inferModelNodeDouble(Integer.parseInt(gnnpf.getArgument()), gnnpf.getClassId(), x, edge_index, ((ProbFormGnn) this.pf).getIdGnn(), "");
+                else if (Objects.equals(((ProbFormGnn) this.pf).getGnn_inference(), "graph")) {
+                    this.value = this.gnnPy.inferModelGraphDouble(gnnpf.getClassId(), x, edge_index, ((ProbFormGnn) this.pf).getIdGnn(),"");
+                } else
+                    throw new IllegalArgumentException("not valid keyword used: " + ((ProbFormGnn) this.pf).getGnn_inference());
+
+//                if (((ProbFormGnn) this.pf).getClassId() != -1)
+//                    result = this.gnnPy.inferModelGraphDouble(gnnpf.getClassId(), x, this.edge_index, ((ProbFormGnn) this.pf).getIdGnn(), "");
+//                else
+//                    result = this.gnnPy.inferModelNodeDouble(Integer.parseInt(gnnpf.getArgument()), gnnpf.getClassId(), x, this.edge_index, ((ProbFormGnn) this.pf).getIdGnn(), "");
+//                this.value = result;
+                return this.value;
             } else {
                 System.out.println("Not a correct instance of PF");
                 return -1;

@@ -27,6 +27,9 @@ public class GnnPy {
 
     private float[] currentResult;
     private String lastId;
+
+    private long dimOut;
+    private int numClass;
     private ArrayList<String> gnnModelsId;
 
     public GnnPy(String scriptPath, String scriptName, String pythonHome) throws IOException {
@@ -34,6 +37,8 @@ public class GnnPy {
         this.scriptName = scriptName;
         this.pythonHome = pythonHome;
         this.gnnModelsId = new ArrayList<>();
+        this.numClass = -1;
+        this.dimOut = -1;
 
         // pip install jep in a miniconda env (torch)
         try {
@@ -68,6 +73,7 @@ public class GnnPy {
             this.sharedInterpreter = new SharedInterpreter();
             this.sharedInterpreter.exec("import sys");
             this.sharedInterpreter.exec("import torch");
+            this.sharedInterpreter.exec("import numpy as np");
             this.sharedInterpreter.eval("sys.path.append('" + this.scriptPath + "')");
             this.sharedInterpreter.eval("import " + this.scriptName + " as intt");
         } catch (JepException e) {
@@ -101,7 +107,7 @@ public class GnnPy {
         }
     }
 
-    public double inferModelNodeDouble(int node, String x, String edge_index, String idGnn, String method) {
+    public double inferModelNodeDouble(int node, int classId, String x, String edge_index, String idGnn, String method) {
         assert this.sharedInterpreter != null;
         this.createModelIfNull(idGnn);
 
@@ -110,7 +116,10 @@ public class GnnPy {
             // needs also to have the same id as before
             if (this.currentX != null && this.currentEdgeIndex != null && this.currentMethod != null && this.currentResult != null && Objects.equals(this.lastId, idGnn)) {
                 if (this.currentX.equals(x) && this.currentEdgeIndex.equals(edge_index) && this.currentMethod.equals(method)) {
-                    return (double) this.currentResult[node];
+                    if (this.dimOut == 1)
+                        return (double) this.currentResult[node];
+                    else if (this.dimOut == 2)
+                        return (double) this.currentResult[(node * this.numClass) + classId];
                 } else {
                     this.currentResult = null;
                 }
@@ -122,14 +131,43 @@ public class GnnPy {
             this.sharedInterpreter.eval(edge_index);
             this.sharedInterpreter.eval(x);
             if (!Objects.equals(method, "")) {
-                this.sharedInterpreter.eval("out = intt." + method + "(" + idGnn + ", x, edge_index, None)");
+                this.sharedInterpreter.eval("out = intt." + method + "(" + idGnn + ", x, edge_index)");
             } else {
-                this.sharedInterpreter.eval("out = intt." + this.INFER_NODE + "(" + idGnn + ", x, edge_index, None)");
+                this.sharedInterpreter.eval("out = intt." + this.INFER_NODE + "(" + idGnn + ", x, edge_index)");
             }
-            this.sharedInterpreter.eval("out = out.detach().numpy().flatten()");
-            NDArray ndArray = (NDArray) this.sharedInterpreter.getValue("out");
-            this.currentResult = (float[]) ndArray.getData();
-            return (double) this.currentResult[node];
+            this.sharedInterpreter.eval("out_size = len(out.shape)");
+
+            if (this.numClass == -1) {
+                this.sharedInterpreter.eval("class_num = out.shape[1] if out_size == 2 else 1");
+                long nc = (Long) this.sharedInterpreter.getValue("class_num");
+                this.numClass = (int) nc;
+            }
+
+            this.dimOut = (Long) this.sharedInterpreter.getValue("out_size");
+            if (dimOut == 1) {
+                this.sharedInterpreter.eval("out = out.detach().numpy().flatten()");
+                NDArray ndArray = (NDArray) this.sharedInterpreter.getValue("out");
+                this.currentResult = (float[]) ndArray.getData();
+                return (double) this.currentResult[node];
+            } else if (dimOut == 2) {
+//                this.sharedInterpreter.eval("out = out.detach().numpy()");
+//                float res = (Float) this.sharedInterpreter.getValue("out["+node+"]["+classId+"]");
+//                return (double) res;
+
+                this.sharedInterpreter.eval("out = out.detach().numpy().flatten()");
+                NDArray ndArray = (NDArray) this.sharedInterpreter.getValue("out");
+                this.currentResult = (float[]) ndArray.getData();
+                double res = (double) this.currentResult[(node * numClass) + classId];
+                if (res == 1.0)
+                    return res-0.01;
+                else if (res == 0.0) {
+                    return res+0.01;
+                } else {
+                    return res;
+                }
+            }
+            // else nothing
+            return -1.0;
         } catch (JepException e) {
             System.err.println("Failed to execute inference: " + e);
             return -1;

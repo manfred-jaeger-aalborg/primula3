@@ -33,6 +33,9 @@ public class ProbFormGnn extends ProbForm {
     private GnnPy gnnPy;
     // each gnn will have an id that identify the model
     private String idGnn;
+
+    // this variable is used to set the inference for node or graph classification. Keyword: "node" or "graph"
+    private String gnn_inference;
     public ProbFormGnn(String argument, String idGnn, Rel[] attr, String edge_name, String edge_direction, boolean oneHotEncoding) {
         this.setEdge_name(edge_name);
         this.setEdge_direction(edge_direction);
@@ -44,6 +47,7 @@ public class ProbFormGnn extends ProbForm {
         this.oneHotEncoding = oneHotEncoding;
     }
 
+    // used only to remove errors during compilation: TODO REMOVE
     public ProbFormGnn(String argument, String idGnn, Rel[] attr, String edge_name, String edge_direction, boolean oneHotEncoding, int classId) {
         this.setEdge_name(edge_name);
         this.setEdge_direction(edge_direction);
@@ -52,6 +56,18 @@ public class ProbFormGnn extends ProbForm {
         this.idGnn = idGnn;
         this.gnnattr = attr;
         this.classId = classId;
+        this.oneHotEncoding = oneHotEncoding;
+    }
+
+    public ProbFormGnn(String argument, String idGnn, Rel[] attr, String edge_name, String edge_direction, String gnn_inference, boolean oneHotEncoding, int classId) {
+        this.setEdge_name(edge_name);
+        this.setEdge_direction(edge_direction);
+
+        this.argument = argument;
+        this.idGnn = idGnn;
+        this.gnnattr = attr;
+        this.classId = classId;
+        this.gnn_inference = gnn_inference;
         this.oneHotEncoding = oneHotEncoding;
     }
 
@@ -108,10 +124,13 @@ public class ProbFormGnn extends ProbForm {
             // if it has no parents we use the current attributes (should work for numeric rel)
             if (attr_parents.isEmpty()) {
                 attr_parents.addAll(Arrays.asList(this.getGnnattr()));
-
+                int num_nodes = A.domSize(); // the number of nodes should correspond to the domain size
+                result[0] = this.evaluateGraph(sampledRel, num_nodes); // for now just return like this, checking if the attributes are NaN (below) maybe here can be avoided
+                return result;
             }
             try {
                 int num_nodes = 0;
+
                 for (Rel parent : attr_parents) {
                     int[][] mat = A.allTypedTuples(parent.getTypes());
                     num_nodes = mat.length;
@@ -157,10 +176,17 @@ public class ProbFormGnn extends ProbForm {
 
         String x = this.gnnPy.stringifyGnnFeatures(num_nodes, sampledRel, this.gnnattr, this.oneHotEncoding);
 
-        if (this.classId != -1)
+        if (Objects.equals(this.gnn_inference, "node"))
+            return this.gnnPy.inferModelNodeDouble(Integer.parseInt(this.argument), this.classId, x, edge_index, this.idGnn, "");
+        else if (Objects.equals(this.gnn_inference, "graph")) {
             return this.gnnPy.inferModelGraphDouble(this.classId, x, edge_index, this.idGnn,"");
-        else
-            return this.gnnPy.inferModelNodeDouble(Integer.parseInt(this.argument), x, edge_index, this.idGnn, "");
+        } else
+            throw new IllegalArgumentException("not valid keyword used: " + this.gnn_inference);
+
+//        if (this.classId != -1)
+//            return this.gnnPy.inferModelGraphDouble(this.classId, x, edge_index, this.idGnn,"");
+//        else
+//            return this.gnnPy.inferModelNodeDouble(Integer.parseInt(this.argument), x, edge_index, this.idGnn, "");
     }
 
     @Override
@@ -221,7 +247,7 @@ public class ProbFormGnn extends ProbForm {
         }
 
         String x = this.gnnPy.stringifyGnnFeatures(num_features, sampledRel, this.gnnattr, this.oneHotEncoding);
-        return this.gnnPy.inferModelNodeDouble(Integer.parseInt(this.argument), x, edge_index, this.idGnn, "");
+        return this.gnnPy.inferModelNodeDouble(Integer.parseInt(this.argument), this.classId, x, edge_index, this.idGnn, "");
     }
 
     @Override
@@ -304,7 +330,7 @@ public class ProbFormGnn extends ProbForm {
         if (this.classId == -1)
             result = new ProbFormGnn(this.argument, this.idGnn, this.gnnattr, this.edge_name, this.edge_direction, this.oneHotEncoding);
         else
-            result = new ProbFormGnn("-1", this.idGnn, this.gnnattr, this.edge_name, this.edge_direction, this.oneHotEncoding, this.classId);
+            result = new ProbFormGnn("-1", this.idGnn, this.gnnattr, this.edge_name, this.edge_direction, this.gnn_inference, this.oneHotEncoding, this.classId);
 
         if (vars.length == 0)
             result.argument = Arrays.toString(new String[0]);
@@ -325,7 +351,7 @@ public class ProbFormGnn extends ProbForm {
 
     @Override
     public void updateSig(Signature s) {
-        System.out.println("updateSig code");
+//        System.out.println("updateSig code");
     }
 
     @Override
@@ -400,5 +426,9 @@ public class ProbFormGnn extends ProbForm {
 
     public boolean isOneHotEncoding() {
         return oneHotEncoding;
+    }
+
+    public String getGnn_inference() {
+        return gnn_inference;
     }
 }

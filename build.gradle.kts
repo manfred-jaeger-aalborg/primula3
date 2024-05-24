@@ -19,8 +19,17 @@ dependencies {
 
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
 application {
-    mainClass.set("RBNgui.Primula")
+//    mainClass.set("RBNgui.Primula")
+    applicationDefaultJvmArgs = listOf("-Djava.awt.headless=true")
+    mainClass.set("Experiments.homophily_mcmc")
+
 }
 
 tasks.test {

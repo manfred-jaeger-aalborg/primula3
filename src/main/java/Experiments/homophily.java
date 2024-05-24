@@ -33,7 +33,7 @@ public class homophily {
         );
 
         if (rbn) {
-            File input_file = new File("/Users/lz50rg/Dev/homophily/const_old.rbn");
+            File input_file = new File("/Users/lz50rg/Dev/homophily/const_new.rbn");
             RBN file_rbn = new RBN(input_file);
 
             RBNPreldef[] preledef = file_rbn.prelements();

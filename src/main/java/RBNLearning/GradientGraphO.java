@@ -24,6 +24,8 @@ package RBNLearning;
 
 import java.util.*;
 import java.io.*;
+import java.util.concurrent.TimeUnit;
+
 import RBNpackage.*;
 import RBNgui.*;
 import RBNExceptions.*;
@@ -79,6 +81,32 @@ public class GradientGraphO extends GradientGraph{
 	private GnnPy gnnPy;
 	private boolean gnnIntegration;
 
+	// https://stackoverflow.com/questions/4573123/java-updating-text-in-the-command-line-without-a-new-line
+	private static void printProgress(long startTime, long total, long current) {
+		long eta = current == 0 ? 0 :
+				(total - current) * (System.currentTimeMillis() - startTime) / current;
+
+		String etaHms = current == 0 ? "N/A" :
+				String.format("%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(eta),
+						TimeUnit.MILLISECONDS.toMinutes(eta) % TimeUnit.HOURS.toMinutes(1),
+						TimeUnit.MILLISECONDS.toSeconds(eta) % TimeUnit.MINUTES.toSeconds(1));
+
+		StringBuilder string = new StringBuilder(140);
+		int percent = (int) (current * 100 / total);
+		string
+				.append('\r')
+				.append(String.join("", Collections.nCopies(percent == 0 ? 2 : 2 - (int) (Math.log10(percent)), " ")))
+				.append(String.format(" %d%% [", percent))
+				.append(String.join("", Collections.nCopies(percent, "=")))
+				.append('>')
+				.append(String.join("", Collections.nCopies(100 - percent, " ")))
+				.append(']')
+				.append(String.join("", Collections.nCopies((int) (Math.log10(total)) - (int) (Math.log10(current)), " ")))
+				.append(String.format(" %d/%d, ETA: %s", current, total, etaHms));
+
+		System.out.print(string);
+	}
+
 	public GradientGraphO(Primula mypr, 
 			RelData data, 
 			Hashtable<String,Integer> params,
@@ -91,7 +119,7 @@ public class GradientGraphO extends GradientGraph{
 	{	
 		super(mypr,data,params,go,maxats,m,obj,showInfoInPrimula);
 
-		this.debugPrint = true;
+		this.debugPrint = false;
 
 		RBN rbn = myPrimula.getRBN();
 		// this is a temporary solution to handle the evaluate method when the gnnPy object is not created
@@ -273,20 +301,27 @@ public class GradientGraphO extends GradientGraph{
 				osd = rdoi.oneStrucDataAt(observcaseno);
 				
 				Hashtable<String,Object[]>  evaluated = new Hashtable<String,Object[]>();
+				System.out.println("\t\tnum rbn pfs: " + rbn.NumPFs());
 				for (int i=0; i<rbn.NumPFs(); i++){
 					nextpf = rbn.probForm_prels_At(i);
 					vars = rbn.arguments_prels_At(i);
 					nextrel = rbn.relAt(i);
 					for (int ti = 0; ti <= 1 ; ti++) {
 
-						if (ti == 0)
+						if (ti == 0) {
 							inrel = osd.allFalse(nextrel);
-						else
+							System.out.println("\t\t\tconstructing (false atoms) of " + nextrel.toString() + " : " + inrel.size());
+						} else {
 							inrel = osd.allTrue(nextrel);
+							System.out.println("\t\t\tconstructing(true atoms) of " + nextrel.toString() + " : " + inrel.size());
+						}
+						long startTimeProg = System.currentTimeMillis();
 						for (int k=0;k<inrel.size();k++){
 							nexttup = (int[])inrel.elementAt(k);
 							groundnextpf = nextpf.substitute(vars,nexttup);
 							atomstring = nextrel.name()+StringOps.arrayToString((int[])inrel.elementAt(k),"(",")");
+//							System.out.print("\r\t\t\tcurrent atom: " + atomstring);
+							printProgress(startTimeProg, inrel.size(), k+1);
 							
 							/* check whether this atom has already been included as an upper ground atom node because
 							 * it is a map atom
@@ -379,6 +414,7 @@ public class GradientGraphO extends GradientGraph{
 								}
 							} /* if (!mapatoms.contains(nextrel,nexttup)) */
 						} /* for (int k=0;k<inrel.size();k++) */
+						System.out.println();
 					}/* for  truefalse  */
 				} /* for int i; i<rbn.NumPFs()*/
 			} /* int j=0; j<rdoi.numObservations(); */
