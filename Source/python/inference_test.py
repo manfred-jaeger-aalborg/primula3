@@ -3,7 +3,7 @@ sys.path.append('/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python')
 # from rbn import *
 from gnn.ACR_graph import *
 from gnn.ACR_node import *
-from ggcn_model_def import *
+# from ggcn_model_def import *
 from gcn_model_def import Net, Net2, Net3
 
 # this function will be called by Primula with: model, x and edge_index, **kwargs

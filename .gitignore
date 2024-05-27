@@ -9,6 +9,11 @@
 # Ignore Gradle build output directory
 build
 
+# eclipse
+.classpath
+.project
+.settings/
+
 primularc.xml
 samiamrc.xml
 .vscode
