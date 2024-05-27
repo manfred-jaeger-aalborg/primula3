@@ -1,0 +1,20 @@
+# Ignore Gradle project-specific cache directory
+.gradle
+/Source/gradle/
+# /Source/gradlew
+# /Source/build.gradle.kts
+# /Source/settings.gradle.kts
+.gitattributes
+
+# Ignore Gradle build output directory
+build
+
+primularc.xml
+samiamrc.xml
+.vscode
+.DS_Store
+bin
+.idea
+# /Source/src/main/java/Experiments/
+/primula-experiments/
+
