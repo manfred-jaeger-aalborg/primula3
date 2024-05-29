@@ -1,24 +1,24 @@
 /*
-* 
-* Copyright (C) 2009 Aalborg University
-*
-* contact:
-* jaeger@cs.aau.dk   http://www.cs.aau.dk/~jaeger/Primula.html
-*
-* This program is free software; you can redistribute it and/or
-* modify it under the terms of the GNU General Public License
-* as published by the Free Software Foundation; either version 2
-* of the License, or (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-*/
+ * 
+ * Copyright (C) 2009 Aalborg University
+ *
+ * contact:
+ * jaeger@cs.aau.dk   http://www.cs.aau.dk/~jaeger/Primula.html
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
 
 package RBNLearning;
 
@@ -62,15 +62,15 @@ import myio.StringOps;
  */
 public class GradientGraphO extends GradientGraph{
 
-	
+
 	private Hashtable<String,GGCPMNode> allNodes;
-	
+
 	/* Maximum identifier value currently assigned to a node;
 	 * 
 	 */
 	private int maxid;
 
-	
+
 	GGLikelihoodNode llnode;
 	Vector<GGAtomSumNode> sumindicators; /* All the indicators for atoms to be summed over */
 	Hashtable<Rel,Vector<GGAtomMaxNode>> maxindicators; /* for given rel, contains the GGAtomMaxNodes in the same order as
@@ -84,28 +84,28 @@ public class GradientGraphO extends GradientGraph{
 	private boolean gnnIntegration;
 
 	// https://stackoverflow.com/questions/4573123/java-updating-text-in-the-command-line-without-a-new-line
-    // for now the function will not be integrated (merging conflicts)
+	// for now the function will not be integrated (merging conflicts)
 	private static void printProgress(long startTime, long total, long current) {
 		long eta = current == 0 ? 0 :
-				(total - current) * (System.currentTimeMillis() - startTime) / current;
+			(total - current) * (System.currentTimeMillis() - startTime) / current;
 
 		String etaHms = current == 0 ? "N/A" :
-				String.format("%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(eta),
-						TimeUnit.MILLISECONDS.toMinutes(eta) % TimeUnit.HOURS.toMinutes(1),
-						TimeUnit.MILLISECONDS.toSeconds(eta) % TimeUnit.MINUTES.toSeconds(1));
+			String.format("%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(eta),
+					TimeUnit.MILLISECONDS.toMinutes(eta) % TimeUnit.HOURS.toMinutes(1),
+					TimeUnit.MILLISECONDS.toSeconds(eta) % TimeUnit.MINUTES.toSeconds(1));
 
 		StringBuilder string = new StringBuilder(140);
 		int percent = (int) (current * 100 / total);
 		string
-				.append('\r')
-				.append(String.join("", Collections.nCopies(percent == 0 ? 2 : 2 - (int) (Math.log10(percent)), " ")))
-				.append(String.format(" %d%% [", percent))
-				.append(String.join("", Collections.nCopies(percent, "=")))
-				.append('>')
-				.append(String.join("", Collections.nCopies(100 - percent, " ")))
-				.append(']')
-				.append(String.join("", Collections.nCopies((int) (Math.log10(total)) - (int) (Math.log10(current)), " ")))
-				.append(String.format(" %d/%d, ETA: %s", current, total, etaHms));
+		.append('\r')
+		.append(String.join("", Collections.nCopies(percent == 0 ? 2 : 2 - (int) (Math.log10(percent)), " ")))
+		.append(String.format(" %d%% [", percent))
+		.append(String.join("", Collections.nCopies(percent, "=")))
+		.append('>')
+		.append(String.join("", Collections.nCopies(100 - percent, " ")))
+		.append(']')
+		.append(String.join("", Collections.nCopies((int) (Math.log10(total)) - (int) (Math.log10(current)), " ")))
+		.append(String.format(" %d/%d, ETA: %s", current, total, etaHms));
 
 		System.out.print(string);
 	}
@@ -118,31 +118,31 @@ public class GradientGraphO extends GradientGraph{
 			int m,
 			int obj,
 			Boolean showInfoInPrimula)
-	throws RBNCompatibilityException
+					throws RBNCompatibilityException
 	{	
 		super(mypr,data,params,go,mapats,m,obj,showInfoInPrimula);
 
-        this.debugPrint = false;
-		
+		this.debugPrint = false;
+
 		RBN rbn = myPrimula.getRBN();
 		// this is a temporary solution to handle the evaluate method when the gnnPy object is not created
 		// by the MapThread (the Jep Object needs to work in the same thread it is created)
 		// the at the end of this constructor the Jep interpreter will be closed!
 		// (at the moment I don't fin better ideas)
 		GnnPy temp_gnnPy = null;
-//		if (this.checkGnnRel(rbn)) {
-//			try {
-//				temp_gnnPy = new GnnPy(myPrimula.getScriptPath(), myPrimula.getScriptName(), myPrimula.getPythonHome());
-//				this.gnnPy = temp_gnnPy;
-//			} catch (IOException e) {
-//				throw new RuntimeException(e);
-//			}
-//		}
+		//		if (this.checkGnnRel(rbn)) {
+		//			try {
+		//				temp_gnnPy = new GnnPy(myPrimula.getScriptPath(), myPrimula.getScriptName(), myPrimula.getPythonHome());
+		//				this.gnnPy = temp_gnnPy;
+		//			} catch (IOException e) {
+		//				throw new RuntimeException(e);
+		//			}
+		//		}
 
 		//parameters = myPrimula.getParamNumRels();
 		allNodes = new Hashtable<String,GGCPMNode>();
-		
-		
+
+
 		sumindicators = new Vector<GGAtomSumNode>();
 		//maxindicators = new Vector<GGAtomMaxNode>();
 		maxindicators = new Hashtable<Rel,Vector<GGAtomMaxNode>> ();
@@ -154,18 +154,18 @@ public class GradientGraphO extends GradientGraph{
 		OneStrucData osd;
 		CPModel nextcpm;
 		int[] nexttup;
-		
-		
-	
-//		/* Determine how many of the parameters are rbn parameters 
-//		 * NOTE: it is required that in parameters all rbn parameters come 
-//		 * first, followed by numeric relations parameters. Otherwise the subsequent
-//		 * usage made of maxrbnparam would be false */
-//		maxrbnparam = -1;
-//		for (int i=0;i<parameters.size();i++)
-//			if (myPrimula.isRBNParameter(parameters[i]))
-//				maxrbnparam ++;
-		
+
+
+
+		//		/* Determine how many of the parameters are rbn parameters 
+		//		 * NOTE: it is required that in parameters all rbn parameters come 
+		//		 * first, followed by numeric relations parameters. Otherwise the subsequent
+		//		 * usage made of maxrbnparam would be false */
+		//		maxrbnparam = -1;
+		//		for (int i=0;i<parameters.size();i++)
+		//			if (myPrimula.isRBNParameter(parameters[i]))
+		//				maxrbnparam ++;
+
 		llnode = new GGLikelihoodNode(this);
 		/* Create all the ground probability formulas for the atoms in data 
 		 *  
@@ -177,37 +177,36 @@ public class GradientGraphO extends GradientGraph{
 		CPModel groundnextcpm;
 		String atomstring;
 		GGCPMNode fnode;
-		double pfeval;
 		boolean dependsonmissing = false;
-		
+
 		/* First get (approximate) count of all upper ground atom nodes that 
 		 * need to be constructed (to support progress report)
 		 * 
 		 * Includes count for atoms that will actually not be included, because they
-	     * do not depend on parameters. 
+		 * do not depend on parameters. 
 		 */
 		int ugacounter = 0;
-			for ( inputcaseno=0; inputcaseno<data.size(); inputcaseno++){
-				rdoi = data.caseAt(inputcaseno);
-				for (observcaseno=0; observcaseno<rdoi.numObservations(); observcaseno++){
-					osd = rdoi.oneStrucDataAt(observcaseno);
-					for (int i=0; i<rbn.NumPFs(); i++){
-						nextrel = rbn.relAt(i);
-						ugacounter = ugacounter + osd.allInstantiated(nextrel).size();
-					}
+		for ( inputcaseno=0; inputcaseno<data.size(); inputcaseno++){
+			rdoi = data.caseAt(inputcaseno);
+			for (observcaseno=0; observcaseno<rdoi.numObservations(); observcaseno++){
+				osd = rdoi.oneStrucDataAt(observcaseno);
+				for (int i=0; i<rbn.NumPFs(); i++){
+					nextrel = rbn.relAt(i);
+					ugacounter = ugacounter + osd.allInstantiated(nextrel).size();
 				}
 			}
-		
+		}
+
 		if (mode == MAPMODE || mode == LEARNANDMAPMODE)
 			ugacounter = ugacounter + mapatoms.size();
-		
+
 		int processedcounter = 0;
 		int currentpercentage = 0;
 		if (showInfoInPrimula)
 			myPrimula.appendMessageThis("0%");
 
-		
-		
+
+
 		/* Start by constructing upper ground atom nodes for the map-query atoms
 		 * 
 		 */
@@ -217,8 +216,8 @@ public class GradientGraphO extends GradientGraph{
 			GroundAtom nextatom;
 			GGAtomMaxNode ggmn;
 
-            System.out.println("\t-constructing uga nodes for map-query atom...");
-            long startTime = System.currentTimeMillis();
+			System.out.println("\t-constructing uga nodes for map-query atom...");
+			long startTime = System.currentTimeMillis();
 			for (Rel narel: mapatoms.keySet()) {
 				for (int qano=0; qano<mapatoms.get(narel).size(); qano++){
 					nextatom = mapatoms.get(narel).atomAt(qano);
@@ -285,12 +284,12 @@ public class GradientGraphO extends GradientGraph{
 						currentpercentage++;
 					}
 				}
-                System.out.println("\t-uga map-query atoms constructed in: " + (System.currentTimeMillis()-((double)startTime))/1000.0 + " sec.");
+				System.out.println("\t-uga map-query atoms constructed in: " + (System.currentTimeMillis()-((double)startTime))/1000.0 + " sec.");
 			} //for (Rel narel: mapatoms.keySet())
 		} // if (mode == MAPMODE || mode == LEARNANDMAPMODE)
-		
+
 		//this.showMaxNodes();
-	
+
 		/* Now construct the nodes for the data/evidence atoms 
 		 * 
 		 */
@@ -298,162 +297,137 @@ public class GradientGraphO extends GradientGraph{
 		int numNodes = 0;
 		long startTime = System.currentTimeMillis();
 		for (inputcaseno=0; inputcaseno<data.size(); inputcaseno++){
-			
+
 			rdoi = data.caseAt(inputcaseno);
 			A = rdoi.inputDomain();
 			for (observcaseno=0; observcaseno<rdoi.numObservations(); observcaseno++){
 				osd = rdoi.oneStrucDataAt(observcaseno);
-				
+
 				Hashtable<String,Object[]>  evaluated = new Hashtable<String,Object[]>();
 				System.out.println("\t\tnum rbn pfs: " + rbn.NumPFs());
 				for (int i=0; i<rbn.NumPFs(); i++){
 					nextcpm = rbn.cpmod_prelements_At(i);
 					vars = rbn.arguments_prels_At(i);
 					nextrel = rbn.relAt(i);
-					for (int ti = 0; ti < nextrel.numvals() ; ti++) {
-//                        if (ti == 0) {
-//                            inrel = osd.allFalse(nextrel);
-//                            System.out.println("\t\t\tconstructing (false atoms) of " + nextrel.toString() + " : " + inrel.size());
-//                        } else {
-//                            inrel = osd.allTrue(nextrel);
-//                            System.out.println("\t\t\tconstructing(true atoms) of " + nextrel.toString() + " : " + inrel.size());
-//                        }
-                        long startTimeProg = System.currentTimeMillis();
 
-						inrel=osd.allInstantiated(nextrel);
-						for (int k=0;k<inrel.size();k++){
-							nexttup = (int[])inrel.elementAt(k);
-							groundnextcpm = nextcpm.substitute(vars,nexttup);
-							atomstring = nextrel.name()+StringOps.arrayToString((int[])inrel.elementAt(k),"(",")");
-//							System.out.print("\r\t\t\tcurrent atom: " + atomstring);
-//							printProgress(startTimeProg, inrel.size(), k+1); // we keep deatciate for now
+					long startTimeProg = System.currentTimeMillis();
 
-							/* check whether this atom has already been included as an upper ground atom node because
-							 * it is a map atom
-							 */
-							if (mapatoms == null || mapatoms.get(nextrel)==null || !mapatoms.get(nextrel).contains(nextrel,nexttup)){
+					inrel=osd.allInstantiated(nextrel);
+					for (int k=0;k<inrel.size();k++){
+						nexttup = (int[])inrel.elementAt(k);
+						int instvalue = (int)osd.valueOf(nextrel,nexttup); // A bit complicated; should directly get 
+						// from osd instantiated and their values.
+						groundnextcpm = nextcpm.substitute(vars,nexttup);
+						atomstring = nextrel.name()+StringOps.arrayToString((int[])inrel.elementAt(k),"(",")");
+						//							System.out.print("\r\t\t\tcurrent atom: " + atomstring);
+						//							printProgress(startTimeProg, inrel.size(), k+1); // we keep deatciate for now
+
+						/* check whether this atom has already been included as an upper ground atom node because
+						 * it is a map atom
+						 */
+						if (mapatoms == null || mapatoms.get(nextrel)==null || !mapatoms.get(nextrel).contains(nextrel,nexttup)){
 
 
-                                if (groundnextcpm instanceof ProbFormGnn && ((ProbFormGnn) groundnextcpm).getGnnPy() == null)
-                                    ((ProbFormGnn) groundnextcpm).setGnnPy(this.gnnPy);
-                                
-                                System.out.println(groundnextcpm.toString());
-                                Object obj1 = groundnextcpm.evaluate(A,
+							if (groundnextcpm instanceof ProbFormGnn && ((ProbFormGnn) groundnextcpm).getGnnPy() == null)
+								((ProbFormGnn) groundnextcpm).setGnnPy(this.gnnPy);
+
+							Object pfeval = groundnextcpm.evaluate(A,
+									osd,
+									new String[0],
+									new int[0],
+									0, // irrelevant because valonly=true
+									false,
+									false,
+									mapatoms,
+									false,
+									evaluated,
+									parameters,
+									ProbForm.RETURN_ARRAY,
+									true, //valonly
+									null)[0];
+
+							if (myggoptions.aca()){
+								dependsonmissing = groundnextcpm.dependsOn("unknown_atom",A,osd);
+							}
+
+							boolean undefined = ((pfeval instanceof Double && Double.isNaN((Double)pfeval))||
+									pfeval instanceof double[] && Double.isNaN(((double[])pfeval)[0]));
+
+							System.out.println("undefined = " + undefined);
+							
+							if (undefined && !(myggoptions.aca() && dependsonmissing)){
+								/* if pfeval != Double.NaN, then this groundnextpf has a constant value
+								 * independent of parameter settings or instantiation of unknown
+								 * atoms. For a correct numeric value of the likelihood this value
+								 * would need to be considered, but for maximizing the likelihood
+								 * it is irrelevant
+								 */
+								fnode = GGCPMNode.constructGGPFN(this,
+										groundnextcpm,
+										allNodes,
+										A,									 						 
 										osd,
-										new String[0],
-										new int[0],
-										0, // irrelevant because valonly=true
-										false,
-										false,
-										mapatoms,
-										false,
-										evaluated,
+										inputcaseno,
+										observcaseno,
 										parameters,
-										ProbForm.RETURN_ARRAY,
-										true, //valonly
-										null)[0];
-                                
-								pfeval = (double)groundnextcpm.evaluate(A,
-										osd,
-										new String[0],
-										new int[0],
-										0, // irrelevant because valonly=true
-										false,
-										false,
+										false, //use current Pvals
+										true,  // is uga
+										atomstring,
 										mapatoms,
-										false,
-										evaluated,
-										parameters,
-										ProbForm.RETURN_ARRAY,
-										true, //valonly
-										null)[0];
+										evaluated);
+								llnode.addToChildren(fnode);
+								fnode.setInstval(instvalue);
 
-								if (myggoptions.aca()){
-									dependsonmissing = groundnextcpm.dependsOn("unknown_atom",A,osd);
-								}
-
-								if (Double.isNaN(pfeval) && !(myggoptions.aca() && dependsonmissing)){
-									/* if pfeval != Double.NaN, then this groundnextpf has a constant value
-									 * independent of parameter settings or instantiation of unknown
-									 * atoms. For a correct numeric value of the likelihood this value
-									 * would need to be considered, but for maximizing the likelihood
-									 * it is irrelevant
-									 */
-									fnode = GGCPMNode.constructGGPFN(this,
-											groundnextcpm,
-											allNodes,
-											A,									 						 
-											osd,
-											inputcaseno,
-											observcaseno,
-											parameters,
-											false, //use current Pvals
-											true,  // is uga
-											atomstring,
-											mapatoms,
-											evaluated);
-									llnode.addToChildren(fnode);
-									if (ti==0)			
-										fnode.setInstval(0);
-									else
-										fnode.setInstval(1);
-									//	if (!fnode.parents().contains(llnode))
-									fnode.addToParents(llnode);
-									fnode.setMyatom(atomstring);
-									fnode.setIsuga(true);
-									numNodes++;
-								}
-								else if (!Double.isNaN(pfeval)){
-									if (ti==0) {
-										switch (objective) {
-										case LearnModule.UseLogLik:
-											objectiveconstant = objectiveconstant + Math.log(1-pfeval);
-											break;
-										case LearnModule.UseSquaredError:
-											objectiveconstant = objectiveconstant - Math.pow(pfeval,2);
-										}
-										if (pfeval<0.5)
-											confusionconst[3]++;
-										else 
-											confusionconst[1]++;
-									}
-									else {
-										switch (objective) {
-										case LearnModule.UseLogLik:
-											objectiveconstant = objectiveconstant + Math.log(pfeval);
-											break;
-										case LearnModule.UseSquaredError:
-											objectiveconstant = objectiveconstant - Math.pow(1-pfeval,2);
-										}
-										if (pfeval<0.5)
-											confusionconst[2]++;
-										else 
-											confusionconst[0]++;
+								fnode.addToParents(llnode);
+								fnode.setMyatom(atomstring);
+								fnode.setIsuga(true);
+								numNodes++;
+							}
+							else if (!undefined){
+								double likfactor =0;
+								if (pfeval instanceof Double) {
+									switch (instvalue) {
+									case 0:
+										likfactor = 1-(Double)pfeval;
+										break;
+									case 1: 
+										likfactor = (Double)pfeval;
 									}
 								}
-								processedcounter++;
-								if (showInfoInPrimula && (10*processedcounter)/ugacounter > currentpercentage){
-									myPrimula.appendMessageThis("X");
-									currentpercentage++;
+								if (pfeval instanceof Double[]) {
+									likfactor = ((Double[])pfeval)[instvalue];
 								}
-							} /* if (!mapatoms.contains(nextrel,nexttup)) */
-						} /* for (int k=0;k<inrel.size();k++) */
-						System.out.println();
-					}/* for  truefalse  */
+
+								switch (objective) {
+								case LearnModule.UseLogLik:
+									objectiveconstant = objectiveconstant + Math.log(likfactor);
+									break;
+								case LearnModule.UseSquaredError:
+									objectiveconstant = objectiveconstant - Math.pow(likfactor,2);
+								}
+							}
+							processedcounter++;
+							if (showInfoInPrimula && (10*processedcounter)/ugacounter > currentpercentage){
+								myPrimula.appendMessageThis("X");
+								currentpercentage++;
+							}
+						} /* if (!mapatoms.contains(nextrel,nexttup)) */
+					} /* for (int k=0;k<inrel.size();k++) */
+					System.out.println();
 				} /* for int i; i<rbn.NumPFs()*/
 			} /* int j=0; j<rdoi.numObservations(); */
-			
+
 		}
 		System.out.println("\t-finished constructing " + numNodes + " nodes in " + (System.currentTimeMillis()-((double)startTime))/1000.0 + " sec.");
-		
+
 		if (showInfoInPrimula) 
 			myPrimula.appendMessageThis("100%");
-		
+
 		/* Construct ProbFormNodes for all SumIndicator nodes.
 		 */
 		GroundAtom at;
 		int[] nextarg;
-		
+
 		for (GGAtomSumNode nextggin: sumindicators) {
 			at = nextggin.myatom();
 			nextarg = at.args();
@@ -485,11 +459,11 @@ public class GradientGraphO extends GradientGraph{
 			fnode.setMyindicator(nextggin);
 			fnode.setInstvalToIndicator();
 			nextggin.setUGA(fnode);	
-//			System.out.println("*** setting uga for ind node " + nextggin.getMyatom() +
-//					" as " + fnode.getMyatom());
+			//			System.out.println("*** setting uga for ind node " + nextggin.getMyatom() +
+			//					" as " + fnode.getMyatom());
 		}
 
-		
+
 		if (sumindicators.size() > 0){
 			numchains = myggoptions.getNumChains();
 			windowsize = myggoptions.getWindowSize();
@@ -505,35 +479,35 @@ public class GradientGraphO extends GradientGraph{
 
 		}
 		else numchains = 0;
-		
+
 
 
 		if (numchains >1 && objective != LearnModule.UseLik)
-		 throw new RBNRuntimeException("Inconsistent combination of options: use log-likelihood and numchains = " +numchains);	
-		
-/* Construct vector ParamNodes, and array parameters containing the names of 
- * the parameters in the same order
- */
+			throw new RBNRuntimeException("Inconsistent combination of options: use log-likelihood and numchains = " +numchains);	
+
+		/* Construct vector ParamNodes, and array parameters containing the names of 
+		 * the parameters in the same order
+		 */
 
 		paramNodes = new GGConstantNode[parameters.size()];
 		GGConstantNode nextcn;
-	
-//		/* The index of a current parameter in the final parameters array,
-//		 * which is obtained from the current one by deleting parameters for 
-//		 * which there does not exist parameter nodes in the graph (parameters 
-//		 * on which the likelihood of the data does not depend).
-//		 */
-//		int newindex = 0;
-//		boolean[] deletethese = new boolean[parameters.length];
-//		for (int i=0;i<deletethese.length;i++)
-//			deletethese[i]=false;
-		
+
+		//		/* The index of a current parameter in the final parameters array,
+		//		 * which is obtained from the current one by deleting parameters for 
+		//		 * which there does not exist parameter nodes in the graph (parameters 
+		//		 * on which the likelihood of the data does not depend).
+		//		 */
+		//		int newindex = 0;
+		//		boolean[] deletethese = new boolean[parameters.length];
+		//		for (int i=0;i<deletethese.length;i++)
+		//			deletethese[i]=false;
+
 		TreeSet<GGNode> ancs;
-		
+
 		for (String par : parameters.keySet()){
 			System.out.println("paramaeter " + par);
 			int pidx = parameters.get(par);
-			
+
 			nextcn = (GGConstantNode)allNodes.get(par);
 			/* Set the dependsOn array entries */
 			if (nextcn == null){
@@ -545,12 +519,12 @@ public class GradientGraphO extends GradientGraph{
 				 * respectively RelStruc A
 				 */
 				GGConstantNode constparam = new GGConstantNode(this,
-							new ProbFormConstant(par),
-							null,
-							null);
-				
+						new ProbFormConstant(par),
+						null,
+						null);
+
 				double pval;
-				
+
 				if (myPrimula.isRBNParameter(par)){
 					pval=rbn.getParameterValue(par);
 				}
@@ -581,12 +555,12 @@ public class GradientGraphO extends GradientGraph{
 
 		/* Construct upper and lower bounds for parameters */
 		minmaxbounds = new double[parameters.size()][2];
-		
-//		for (int i=0;i<=maxrbnparam;i++){
-//			minmaxbounds[i][0] = 0.001;
-//			minmaxbounds[i][1] = 0.999;
-//		}
-		
+
+		//		for (int i=0;i<=maxrbnparam;i++){
+		//			minmaxbounds[i][0] = 0.001;
+		//			minmaxbounds[i][1] = 0.999;
+		//		}
+
 		for (String par: parameters.keySet()){
 			int pidx = parameters.get(par);
 			if (myPrimula.isRBNParameter(par)) {
@@ -625,10 +599,10 @@ public class GradientGraphO extends GradientGraph{
 		/* Set the references between Upper Ground Atom nodes and Indicator nodes *
 		 * 
 		 */
-		
+
 		GGAtomSumNode nextisumn;
 		GGAtomMaxNode nextimaxn;
-		
+
 
 		for (Rel r: maxindicators.keySet()) {
 			for (GGAtomMaxNode maxn: maxindicators.get(r) ) {
@@ -655,11 +629,11 @@ public class GradientGraphO extends GradientGraph{
 			temp_gnnPy = null;
 			this.gnnPy = null;
 		}
-//		System.out.println("Calls to constructGGPFN:" + profiler.constructGGPFNcalls);
-//		System.out.println("Found nodes:" + profiler.foundnodes);
-//		System.out.println("Time 1:" + profiler.time1);
-//		System.out.println("Time 2:" + profiler.time2);
-//		System.out.println("Count 1:" + profiler.count1);
+		//		System.out.println("Calls to constructGGPFN:" + profiler.constructGGPFNcalls);
+		//		System.out.println("Found nodes:" + profiler.foundnodes);
+		//		System.out.println("Time 1:" + profiler.time1);
+		//		System.out.println("Time 2:" + profiler.time2);
+		//		System.out.println("Count 1:" + profiler.count1);
 		System.out.println("#Ground atoms:" + llnode.childrenSize());
 		System.out.println("#Sum atoms:" + sumindicators.size());
 		System.out.println("#Max atoms:" + maxindicators.size());
@@ -703,12 +677,12 @@ public class GradientGraphO extends GradientGraph{
 			result[i]=(double)intconf[i];
 		return result;
 	}
-	
+
 	public double getAccuracy() {
 		double[] conf = this.getConfusionDouble();
 		return (conf[0] + conf[3])/(conf[0]+conf[1]+conf[2]+conf[3]);
 	}
-	
+
 	public double[] currentParameters(){
 		double[] result = new double[paramNodes.length];
 		for (int i=0;i<paramNodes.length;i++){
@@ -742,7 +716,7 @@ public class GradientGraphO extends GradientGraph{
 				llnode.evaluateGradients();
 			}
 			llnode.updateLikelihoodSum(); // For compatibility reasons, set the likelihoodsum 
-			                              // field also when there are no Markov chains
+			// field also when there are no Markov chains
 		}
 		else{
 			for (int i=0;i<numchains*windowsize;i++){
@@ -818,7 +792,7 @@ public class GradientGraphO extends GradientGraph{
 		int maxfailcountforsum = myggoptions.getMaxFails()*numchains;
 
 		/* Find initial instantiations with nonzero probability */
-		
+
 		while (!success && !abort){
 			/* First instantiate the Max nodes */
 			for (Rel r: maxindicators.keySet()) {
@@ -831,7 +805,7 @@ public class GradientGraphO extends GradientGraph{
 			for (int k=0;k<numchains && !abortforsum;k++){
 				successforsum = false;
 				while (!successforsum && !abortforsum){
-					
+
 					for (int i=0;i<sumindicators.size();i++){
 						coin = Math.random();
 						if (coin>0.5)
@@ -858,7 +832,7 @@ public class GradientGraphO extends GradientGraph{
 			}
 			else success = true;
 		}
-		
+
 		/* Perform windowsize-1 many steps of Gibbs sampling */
 		if (!abort){
 			for (int j=1;j<windowsize;j++){
@@ -917,40 +891,40 @@ public class GradientGraphO extends GradientGraph{
 		if (windowindex == windowsize)
 			windowindex = 0;
 	}
-	
-//	/* Similar to gibbsSample, but operates on the maxindicators, and
-//	 * greedily  toggles truth values if it leads to an improvement in 
-//	 * likelihood 
-//	 */
-//	public void mapStep(){
-//		double[] oldlik;
-//		double[] newlik;
-//
-//		GGAtomMaxNode ggin;
-//		
-//			for (int i=0;i<maxindicators.size();i++){
-//				evaluateLikelihoodAndPartDerivs(true);
-//				oldlik=llnode.likelihoodsum();
-//				
-//				ggin = (GGAtomMaxNode)maxindicators.elementAt(i);
-//				
-//				ggin.toggleCurrentInst();
-//				
-//				evaluateLikelihoodAndPartDerivs(true);
-//				newlik=llnode.likelihoodsum();
-//				
-//				if (SmallDouble.compareSD(newlik, oldlik) == -1){
-//					ggin.toggleCurrentInst();
-//				}
-//				
-//			}
-//		
-//	}
+
+	//	/* Similar to gibbsSample, but operates on the maxindicators, and
+	//	 * greedily  toggles truth values if it leads to an improvement in 
+	//	 * likelihood 
+	//	 */
+	//	public void mapStep(){
+	//		double[] oldlik;
+	//		double[] newlik;
+	//
+	//		GGAtomMaxNode ggin;
+	//		
+	//			for (int i=0;i<maxindicators.size();i++){
+	//				evaluateLikelihoodAndPartDerivs(true);
+	//				oldlik=llnode.likelihoodsum();
+	//				
+	//				ggin = (GGAtomMaxNode)maxindicators.elementAt(i);
+	//				
+	//				ggin.toggleCurrentInst();
+	//				
+	//				evaluateLikelihoodAndPartDerivs(true);
+	//				newlik=llnode.likelihoodsum();
+	//				
+	//				if (SmallDouble.compareSD(newlik, oldlik) == -1){
+	//					ggin.toggleCurrentInst();
+	//				}
+	//				
+	//			}
+	//		
+	//	}
 
 	public double mapSearch(TreeSet<GGAtomMaxNode> flipcandidates,
 			int depth) {
 		System.out.println("mapSearch with depth " + depth); // Currently depth is not used!
-		
+
 		PriorityQueue<GGAtomMaxNode> scored_atoms =
 				new PriorityQueue<GGAtomMaxNode>(new GGAtomMaxNode_Comparator());
 
@@ -958,7 +932,7 @@ public class GradientGraphO extends GradientGraph{
 			mxnode.setScore();
 			scored_atoms.add(mxnode);
 		}
-		
+
 		Boolean terminate = false;
 		GGAtomMaxNode flipnext;
 		while (!terminate) {
@@ -988,91 +962,91 @@ public class GradientGraphO extends GradientGraph{
 				}
 			}
 		}
-		
+
 		return 0;
 
 	}
-	
-//	public double mapSearch_old(Vector<GGAtomMaxNode> allreadyflipped,
-//										Vector<GGAtomMaxNode> flipcandidates,
-//										double currentllratio,
-//										int depth)
-//	{
-//		if (depth==0)
-//			return currentllratio;
-//
-//
-//		System.out.println("mapSearch with depth " + depth + " currentllratio=" + currentllratio);
-//		// System.out.println("current map values: " + StringOps.arrayToString(getMapVals(), "", ""));
-//
-//		/* Compute scores for flipcandidates, and order */
-//		//GGAtomMaxNode nextggmn;
-//		for (Iterator<GGAtomMaxNode> it = flipcandidates.iterator(); it.hasNext(); )
-//			it.next().setScore(GGAtomMaxNode.USELLSCORE);
-//		Collections.sort(flipcandidates, new GGAtomMaxNodeComparator(CompareIndicatorMaxNodesByScore));
-//
-//		for (Iterator<GGAtomMaxNode> it=flipcandidates.iterator(); it.hasNext();){
-//			GGAtomMaxNode nextgimn = it.next();
-//			System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst() + " "
-//			+ nextgimn.getScore() + " " + nextgimn.getMyUga().value() );
-//		}
-//
-//		/* Now take the first element not already flipped, and flip it*/
-//
-//		GGAtomMaxNode startnode = null;
-//
-//		for (Iterator<GGAtomMaxNode> it = flipcandidates.iterator(); (it.hasNext() && startnode==null);){
-//			GGAtomMaxNode nextimn = it.next();
-//			if ( !allreadyflipped.contains(nextimn))
-//					startnode=nextimn;
-//		}
-//
-//		if (startnode == null){
-//			System.out.println("could not find new candidate for flipping");
-//			System.out.println("1 returning " + currentllratio);
-//			return currentllratio;
-//		}
-//
-//		Vector<GGCPMNode> ugas = startnode.getAllugas();
-//		double[] oldvalues = new double[ugas.size()];
-//		double oldll = computePartialLikelihood(ugas,oldvalues);
-//
-//		System.out.println("flipping " + startnode.myatom().asString());
-//
-//		startnode.toggleCurrentInst();
-//		startnode.reEvaluateUpstream();
-//
-//		double[] newvalues = new double[ugas.size()];
-//		double newll = computePartialLikelihood(ugas,newvalues);
-//		currentllratio = currentllratio*newll/oldll;
-//		/* If we have obtained an improvement in likelihood, then we terminate
-//		 * here. Otherwise we determine the next indicator to flip.
-//		 */
-//		if (currentllratio > 1){
-//			System.out.println("2 returning " + currentllratio);
-//			return currentllratio;
-//		}
-//
-//		/* Find the uga that had the worst change in likelihood */
-//		allreadyflipped.add(startnode);
-//		int minind =0;
-//		double minratio = newvalues[0]/oldvalues[0];
-//		for (int i=0;i<newvalues.length;i++){
-//			if (newvalues[i]/oldvalues[i]<minratio){
-//				minratio = newvalues[i]/oldvalues[i];
-//				minind = i;
-//			}
-//		}
-//		GGCPMNode minuga = ugas.elementAt(minind);
-//		//System.out.println("next uga: " + minuga.getMyatom());
-//
-//		double recsearch = mapSearch(allreadyflipped,minuga.getMaxIndicators(),currentllratio,depth-1);
-//		if (recsearch < 1) /* Recursive search was unsuccessful. Undo flip and return */
-//			startnode.toggleCurrentInst();
-//		//System.out.println("3 returning " + recsearch);
-//		return recsearch;
-//	}
-	
+
+	//	public double mapSearch_old(Vector<GGAtomMaxNode> allreadyflipped,
+	//										Vector<GGAtomMaxNode> flipcandidates,
+	//										double currentllratio,
+	//										int depth)
+	//	{
+	//		if (depth==0)
+	//			return currentllratio;
+	//
+	//
+	//		System.out.println("mapSearch with depth " + depth + " currentllratio=" + currentllratio);
+	//		// System.out.println("current map values: " + StringOps.arrayToString(getMapVals(), "", ""));
+	//
+	//		/* Compute scores for flipcandidates, and order */
+	//		//GGAtomMaxNode nextggmn;
+	//		for (Iterator<GGAtomMaxNode> it = flipcandidates.iterator(); it.hasNext(); )
+	//			it.next().setScore(GGAtomMaxNode.USELLSCORE);
+	//		Collections.sort(flipcandidates, new GGAtomMaxNodeComparator(CompareIndicatorMaxNodesByScore));
+	//
+	//		for (Iterator<GGAtomMaxNode> it=flipcandidates.iterator(); it.hasNext();){
+	//			GGAtomMaxNode nextgimn = it.next();
+	//			System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst() + " "
+	//			+ nextgimn.getScore() + " " + nextgimn.getMyUga().value() );
+	//		}
+	//
+	//		/* Now take the first element not already flipped, and flip it*/
+	//
+	//		GGAtomMaxNode startnode = null;
+	//
+	//		for (Iterator<GGAtomMaxNode> it = flipcandidates.iterator(); (it.hasNext() && startnode==null);){
+	//			GGAtomMaxNode nextimn = it.next();
+	//			if ( !allreadyflipped.contains(nextimn))
+	//					startnode=nextimn;
+	//		}
+	//
+	//		if (startnode == null){
+	//			System.out.println("could not find new candidate for flipping");
+	//			System.out.println("1 returning " + currentllratio);
+	//			return currentllratio;
+	//		}
+	//
+	//		Vector<GGCPMNode> ugas = startnode.getAllugas();
+	//		double[] oldvalues = new double[ugas.size()];
+	//		double oldll = computePartialLikelihood(ugas,oldvalues);
+	//
+	//		System.out.println("flipping " + startnode.myatom().asString());
+	//
+	//		startnode.toggleCurrentInst();
+	//		startnode.reEvaluateUpstream();
+	//
+	//		double[] newvalues = new double[ugas.size()];
+	//		double newll = computePartialLikelihood(ugas,newvalues);
+	//		currentllratio = currentllratio*newll/oldll;
+	//		/* If we have obtained an improvement in likelihood, then we terminate
+	//		 * here. Otherwise we determine the next indicator to flip.
+	//		 */
+	//		if (currentllratio > 1){
+	//			System.out.println("2 returning " + currentllratio);
+	//			return currentllratio;
+	//		}
+	//
+	//		/* Find the uga that had the worst change in likelihood */
+	//		allreadyflipped.add(startnode);
+	//		int minind =0;
+	//		double minratio = newvalues[0]/oldvalues[0];
+	//		for (int i=0;i<newvalues.length;i++){
+	//			if (newvalues[i]/oldvalues[i]<minratio){
+	//				minratio = newvalues[i]/oldvalues[i];
+	//				minind = i;
+	//			}
+	//		}
+	//		GGCPMNode minuga = ugas.elementAt(minind);
+	//		//System.out.println("next uga: " + minuga.getMyatom());
+	//
+	//		double recsearch = mapSearch(allreadyflipped,minuga.getMaxIndicators(),currentllratio,depth-1);
+	//		if (recsearch < 1) /* Recursive search was unsuccessful. Undo flip and return */
+	//			startnode.toggleCurrentInst();
+	//		//System.out.println("3 returning " + recsearch);
+	//		return recsearch;
+	//	}
+
 	public double[] mapInference(GGThread mythread)
 			throws RBNNaNException{
 		boolean terminate = false;
@@ -1081,24 +1055,24 @@ public class GradientGraphO extends GradientGraph{
 		Boolean gotinit = initIndicators(mythread);
 		if (!gotinit)
 			System.out.println("No successful initialization of max/sum indicators");
-//		this.showAllNodes(6, myPrimula.getRels());
+		//		this.showAllNodes(6, myPrimula.getRels());
 
-        if (debugPrint) {
-            System.out.println("Initial max values:");
-            for (Rel r: maxindicators.keySet())
-                for (GGAtomMaxNode nextgimn: maxindicators.get(r))
-                    System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst());
-        }
-		
+		if (debugPrint) {
+			System.out.println("Initial max values:");
+			for (Rel r: maxindicators.keySet())
+				for (GGAtomMaxNode nextgimn: maxindicators.get(r))
+					System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst());
+		}
+
 		setParametersRandom();
 		while (!terminate){
-            if (debugPrint)
-			    System.out.println("starting from the top ..." + itcount);
-	//		showParameterValues("Current parameters: ");
+			if (debugPrint)
+				System.out.println("starting from the top ..." + itcount);
+			//		showParameterValues("Current parameters: ");
 			itcount++;
 			evaluateLikelihoodAndPartDerivs(true);
-            if (debugPrint)
-			    System.out.println("likelihood= " + SmallDouble.toStandardDouble(llnode.likelihood()) + "   " + StringOps.arrayToString(llnode.likelihood(), "(", ")"));
+			if (debugPrint)
+				System.out.println("likelihood= " + SmallDouble.toStandardDouble(llnode.likelihood()) + "   " + StringOps.arrayToString(llnode.likelihood(), "(", ")"));
 			score = mapSearch(maxind_as_ts(), 3);
 			if (score <= 1) {
 				terminate = true;
@@ -1107,21 +1081,21 @@ public class GradientGraphO extends GradientGraph{
 
 			learnParameters(mythread,GradientGraph.FullLearn,false);
 		}
-		
+
 		evaluateLikelihoodAndPartDerivs(true);
 		//showParameterValues("Final Parameters: ");
 
-//		if (debugPrint) {
-//			System.out.println("Final max values:");
-//			for (Iterator<GGAtomMaxNode> it = maxindicators.iterator(); it.hasNext(); ) {
-//				GGAtomMaxNode nextgimn = it.next();
-//				System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst());
-//			}
-//		}
+		//		if (debugPrint) {
+		//			System.out.println("Final max values:");
+		//			for (Iterator<GGAtomMaxNode> it = maxindicators.iterator(); it.hasNext(); ) {
+		//				GGAtomMaxNode nextgimn = it.next();
+		//				System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst());
+		//			}
+		//		}
 
 		return llnode.likelihood();
 	}
-	
+
 	/** Sets the truthval fields in the ProbFormNodes corresponding
 	 * to unobserved atoms to the truthvalues in the sno's sample
 	 *
@@ -1162,11 +1136,11 @@ public class GradientGraphO extends GradientGraph{
 				System.out.println();
 				System.out.print("Children: ");
 				nextggn.printChildren();
-				
+
 				if 	(nextggn instanceof GGAtomNode)
 					((GGAtomNode)nextggn).printAllUgas();
 				System.out.println();
-//				}
+				//				}
 			}
 		}
 	}
@@ -1181,7 +1155,7 @@ public class GradientGraphO extends GradientGraph{
 			if 	(nextggn instanceof GGAtomNode)
 				((GGAtomNode)nextggn).printAllUgas();
 			System.out.println();
-//				}
+			//				}
 		}
 	}
 
@@ -1228,7 +1202,7 @@ public class GradientGraphO extends GradientGraph{
 
 		double[] result = new double[currenttheta.length+4];
 
-		
+
 		/* Initialize ascent strategy specific variables:*/
 		switch(myggoptions.ggascentstrategy()){		
 		case LearnModule.AscentAdagrad:
@@ -1242,8 +1216,8 @@ public class GradientGraphO extends GradientGraph{
 		case LearnModule.AscentFletcherReeves:
 			olddirection = new double[parameters.size()];
 		}
-		
-		
+
+
 
 		int llwindow = myggoptions.getWindowSize();
 		int itindx = 0;
@@ -1252,23 +1226,23 @@ public class GradientGraphO extends GradientGraph{
 		double[] llgains = new double[llwindow];
 		for (int i=0;i<llgains.length;i++)
 			llgains[i]=Double.POSITIVE_INFINITY;
-		
 
-		
 
-		
+
+
+
 
 		int itcounter =0;
 		int maxiterations = myggoptions.getMaxIterations();
 		int lbfgs_iterationcount =0;
-		
+
 		evaluateLikelihoodAndPartDerivs(true);
 		double llikhood =  llnode.objective() + this.objectiveconstant;
 		double newllikhood;
-		
-		
+
+
 		//System.out.println("Initial likelihood: " + llikhood);
-		
+
 		if(Double.isInfinite(llikhood)){
 			result[currenttheta.length+3]=Double.NEGATIVE_INFINITY;
 			System.out.println("Zero likelihood at initial parameters");
@@ -1289,28 +1263,28 @@ public class GradientGraphO extends GradientGraph{
 			 * the actual gradient, but a normalized version 
 			 *
 			 * */
-			
-			evaluateLikelihoodAndPartDerivs(false);
-			
-			
-			if (numchains==0)
-					gradient = llnode.gradientAsDouble();
-			else
-					gradient = llnode.gradientsumAsDouble();
 
-			
+			evaluateLikelihoodAndPartDerivs(false);
+
+
+			if (numchains==0)
+				gradient = llnode.gradientAsDouble();
+			else
+				gradient = llnode.gradientsumAsDouble();
+
+
 			/* If the gradient at llnode is not representable as a standard double vector
 			 * (usually only when useloglik == false) then gradient now is a scaled version of the actual
 			 * gradient. When useloglik == true, then this will usually not cause any loss
 			 * in precision.
 			 */
-			
+
 
 			/* Now get the direction for the linesearch: */
-			
+
 			switch (myggoptions.ggascentstrategy()){
 			case LearnModule.AscentAdagrad:
-				
+
 				direction = getDirectionAscentAdagrad(gradient);
 				break;
 			case LearnModule.AscentDirectGradient:
@@ -1324,31 +1298,31 @@ public class GradientGraphO extends GradientGraph{
 					rhos[idx] = 1/rbnutilities.arrayDotProduct(graddiffhistory[idx], thetadiffhistory[idx]); 
 					//System.out.println("# rho: " + rhos[idx]);
 				}
-				
+
 				direction = getDirectionLBFGS(gradient,lbfgs_iterationcount);
-				
+
 				break;
 			case LearnModule.AscentFletcherReeves:
 				direction = getDirectionFletcherReeves(gradient,oldgradient,olddirection);
 			}
-			
+
 			double gtimesd = rbnutilities.arrayDotProduct(rbnutilities.normalizeDoubleArray(gradient), 
 					rbnutilities.normalizeDoubleArray(direction));
-			
 
-			
+
+
 			/****************************************
 			 * call linesearch
 			 ****************************************/
 			if (myggoptions.learnverbose() )
 				System.out.print("linesearch: ");
 
-			
+
 			currenttheta = linesearch(currenttheta,
 					constrainedDirection(currenttheta,direction),
 					mythread);
-			
-			
+
+
 			// If there was no progress on this linesearch, then this may 
 			// have been caused by the lbfgs direction being too orthogonal to 
 			// the gradient.
@@ -1368,18 +1342,18 @@ public class GradientGraphO extends GradientGraph{
 			setParameters(currenttheta);
 			if (fullorincremental == GradientGraph.OneLineSearch)
 				terminate = true;
-			
+
 			evaluateLikelihoodAndPartDerivs(true);
-			
+
 			if (verbose) { 
 				long tick = System.currentTimeMillis()-timestart;
 				System.out.print(""+ itcounter + '\t' + " " + tick +  '\t'+ gtimesd + '\t' 
 						+ rbnutilities.euclidDist(oldthetas, currenttheta) +'\t' 
 						+ llnode.objective() + '\t'  + llnode.getAccuracy()); 
 			}
-				
-			
-			
+
+
+
 			/****************************************
 			 * Gibbs sample
 			 ****************************************/
@@ -1394,7 +1368,7 @@ public class GradientGraphO extends GradientGraph{
 					System.out.print("<sampling ... ");
 
 				gibbsSample(mythread);
-				
+
 				if (myggoptions.learnverbose()  && numchains > 0)
 					System.out.println("done>");
 
@@ -1413,12 +1387,12 @@ public class GradientGraphO extends GradientGraph{
 			oldthetas = currenttheta;
 			oldgradient = gradient;
 			olddirection = direction;
-			
+
 			if (verbose)
 				System.out.println();
 		} /* end main while loop */
 
-		
+
 		for (int i=0;i<currenttheta.length;i++){
 			result[i]=currenttheta[i];
 			if (Double.isNaN(currenttheta[i]))
@@ -1428,9 +1402,9 @@ public class GradientGraphO extends GradientGraph{
 		result[currenttheta.length+1]=newlikelihood[1];	
 		result[currenttheta.length+2]=SmallDouble.nthRoot(newlikelihood,llnode.numChildren());
 		result[currenttheta.length+3] = llnode.loglikelihood() +this.objectiveconstant; 
-		
+
 		long timespent = System.currentTimeMillis()-timestart;
-		
+
 		if (verbose){
 			System.out.println();
 			System.out.println("# Iterations: " + itcounter);
@@ -1467,11 +1441,11 @@ public class GradientGraphO extends GradientGraph{
 		 * initial sample, such that at least a proportion of
 		 * sampleSuccessRate samples were not aborted
 		 */
-		
+
 		boolean success = false;
 		if (myggoptions.learnverbose())
 			System.out.print("< Initialize Markov Chains ... ");
-		
+
 		if (mode==LEARNMODE){
 			while (!success && !mythread.isstopped()){
 				if (initIndicators(mythread))
@@ -1480,15 +1454,15 @@ public class GradientGraphO extends GradientGraph{
 					myPrimula.showMessageThis("Failed to sample missing values");
 			}
 		}
-		
-		
+
+
 		if (myggoptions.learnverbose())
 			System.out.println("done >");
 
 		double[] currenttheta = currentParameters();
 		double[] firstthetas = currenttheta.clone();
 
-		
+
 		/************************************************
 		 *
 		 *  call thetasearch 
@@ -1507,7 +1481,7 @@ public class GradientGraphO extends GradientGraph{
 			resultArray[3]=likelihoods[1];
 		}
 
-		
+
 		return resultArray;
 	}
 
@@ -1520,7 +1494,7 @@ public class GradientGraphO extends GradientGraph{
 	 * 
 	 * returns new parameter settings
 	 * 
-	
+
 	 */
 	protected double[] linesearch(double[] oldthetas, 
 			double[] gradient, 
@@ -1530,19 +1504,19 @@ public class GradientGraphO extends GradientGraph{
 		if (iszero(gradient))
 			return oldthetas;
 
-//		/* check whether the gradient is of the form (0,...,0,1,0,...0), i.e.,
-//		 * optimzation is w.r.t. to the single parameter at the '1' index
-//		 */		
-//		int partderiv = isPartDeriv(gradient);
-//		GGConstantNode currentparamnode = null;
+		//		/* check whether the gradient is of the form (0,...,0,1,0,...0), i.e.,
+		//		 * optimzation is w.r.t. to the single parameter at the '1' index
+		//		 */		
+		//		int partderiv = isPartDeriv(gradient);
+		//		GGConstantNode currentparamnode = null;
 		//TODO replace the earlier 'partderiv' case with a more general 'lazy evaluation' strategy 
 		// where values are updated only for selected ugas affected by changes in selected parameters
-		
-		
-//		if (partderiv != -1){
-//			currentparamnode = paramNodes.elementAt(partderiv);
-//			currentparamnode.setAncestors();
-//		}
+
+
+		//		if (partderiv != -1){
+		//			currentparamnode = paramNodes.elementAt(partderiv);
+		//			currentparamnode.setAncestors();
+		//		}
 
 		double[] leftbound=oldthetas.clone();
 		double[] rightbound = new double[oldthetas.length];
@@ -1563,31 +1537,31 @@ public class GradientGraphO extends GradientGraph{
 		 * in the direction of gradient
 		 */
 		double lambda = getAlphaBound(gradient, oldthetas);
-		
+
 		/* In case no bound is encountered in the direction of gradient,
 		 * determine a lambda so that the likelihood at leftbound + lambda*gradient 
 		 * is less than the likelihood at leftbound
 		 */
-		
+
 		/* First get the value at oldthetas (leftbound) */
 		setParameters(oldthetas);
 		evaluateLikelihoodAndPartDerivs(true);
 		leftvalue = llnode.objectiveAsSmallDouble();
-		
+
 		if (lambda == Double.POSITIVE_INFINITY){
 			if (myggoptions.learnverbose())
 				System.out.print("lambdasearch: ");
 			lambda = 1;
 			boolean terminate =false;
 			lastrightvalue = new double[2];
-			
+
 
 			//System.out.print("left: " + StringOps.arrayToString(leftbound,"[","]") + "   " + StringOps.arrayToString(leftvalue,"(",")"));
 			while (!terminate && lambda != Double.POSITIVE_INFINITY){
 				//System.out.print("l: " + lambda + " ");
 				rightbound = rbnutilities.arrayAdd(leftbound, rbnutilities.arrayScalMult(gradient,lambda));
 				//System.out.print(">");
-				
+
 				//				if (currentparamnode == null){
 				setParameters(rightbound);
 				evaluateLikelihoodAndPartDerivs(true);
@@ -1609,37 +1583,37 @@ public class GradientGraphO extends GradientGraph{
 				if (myggoptions.learnverbose())
 					System.out.print(".");
 			}
-		if (myggoptions.learnverbose())
-			System.out.println();
+			if (myggoptions.learnverbose())
+				System.out.println();
 		}
 		else{
 			rightbound = rbnutilities.arrayAdd(leftbound, rbnutilities.arrayScalMult(gradient,lambda));
 		}
-		
-		
+
+
 		if (lambda == Double.POSITIVE_INFINITY){
 			System.out.println("# Warning:  linesearch failed. Leftval: " + rbnutilities.arrayToString(leftvalue) +
 					" Rightval: " + rbnutilities.arrayToString(rightvalue));
 			return leftbound;
 		}
-		
 
-	
-		
+
+
+
 		/** The following can easily result in rightvalue = NaN or -infinity:
-		* setParameters(rightbound);
-		* evaluateLikelihoodAndPartDerivs(true);
-		*/
-		
+		 * setParameters(rightbound);
+		 * evaluateLikelihoodAndPartDerivs(true);
+		 */
+
 		/** Pro forma initialization of rightvalue */
 		rightvalue = llnode.objectiveAsSmallDouble();
 		boolean terminate = false;
 		boolean moveleftprobe = true;
 		boolean moverightprobe = true;
 		//boolean leftboundhasmoved = false;
-		
+
 		//System.out.print("|");
-		
+
 		while (!terminate && !mythread.isstopped()) {
 
 
@@ -1698,24 +1672,24 @@ public class GradientGraphO extends GradientGraph{
 				moveleftprobe = false;
 			}
 
-//			if (moverightprobe)
-//				System.out.print(">");
-//			else 
-//				System.out.print("<");
-			
+			//			if (moverightprobe)
+			//				System.out.print(">");
+			//			else 
+			//				System.out.print("<");
+
 			double leftasdouble = SmallDouble.toStandardDouble(leftvalue);
-			
+
 			/* also terminate if the updated rightvalue is better than the original leftvalue; */
-//			if ( fullorincremental == GradientGraph.StochUpdate &&  likelihoodGreaterEqual(rightvalue,leftvalue) )
-//				terminate=true;
-			
-//			lratio = SmallDouble.toStandardDouble(SmallDouble.divide(leftvalue,rightvalue));
-//			System.out.println("Dist: " + mymath.MyMathOps.euclDist(rightbound,leftbound) +
-//					       "  Lik: " + lratio);
-			
+			//			if ( fullorincremental == GradientGraph.StochUpdate &&  likelihoodGreaterEqual(rightvalue,leftvalue) )
+			//				terminate=true;
+
+			//			lratio = SmallDouble.toStandardDouble(SmallDouble.divide(leftvalue,rightvalue));
+			//			System.out.println("Dist: " + mymath.MyMathOps.euclDist(rightbound,leftbound) +
+			//					       "  Lik: " + lratio);
+
 			double bounddist = mymath.MyMathOps.euclDist(rightbound,leftbound)/(rbnutilities.euclidNorm(rightbound)*rbnutilities.euclidNorm(leftbound));
 
-			
+
 			if ( bounddist < myggoptions.getLineDistThresh())
 				terminate = true;
 
@@ -1724,25 +1698,25 @@ public class GradientGraphO extends GradientGraph{
 		if (myggoptions.learnverbose())
 			System.out.println();
 
-//		System.out.println();
-		
-//		if (currentparamnode != null)
-//			currentparamnode.deleteAncestors();
-//		
-//		
+		//		System.out.println();
+
+		//		if (currentparamnode != null)
+		//			currentparamnode.deleteAncestors();
+		//		
+		//		
 
 		if (likelihoodGreaterEqual(leftvalue,rightvalue)){
-//			if (!leftboundhasmoved){
-//				System.out.println();
-//				System.out.println("# Warning: linesearch returns initial point");
-//			}
+			//			if (!leftboundhasmoved){
+			//				System.out.println();
+			//				System.out.println("# Warning: linesearch returns initial point");
+			//			}
 			return leftbound;
 		}
 		else 
 			return rightbound;
 	}
 
-	
+
 	protected double[] linesearch_wolfe(double[] oldthetas, 
 			double[] direction, 
 			GGThread mythread)
@@ -1760,31 +1734,31 @@ public class GradientGraphO extends GradientGraph{
 		double[] newgrad;
 		double olddot;
 		double newdot;
-		
+
 		setParameters(oldthetas);
 		evaluateLikelihoodAndPartDerivs(false);
-		 
+
 		oldval = llnode.loglikelihood();
 		oldgrad = llnode.gradientAsDouble();
-		
+
 		while (!mythread.isstopped() && !wolfecond){
-			
+
 			alphathetas = rbnutilities.arrayAdd(oldthetas, rbnutilities.arrayScalMult(direction, alpha));
 			setParameters(alphathetas);
 			evaluateLikelihoodAndPartDerivs(false);
 			newval = llnode.loglikelihood();
 			newgrad = llnode.gradientAsDouble();
-			
-			
+
+
 			wolfecond = wolfe_cond(oldthetas,alphathetas,oldgrad,newgrad,newval,oldval,direction,beta1,beta2,alpha);
 
 			alpha = 0.5*alpha;
 			System.out.println("alpha: " + alpha + " Lik.: " + newval);
 		} 
-		
+
 		return alphathetas;
 	}
-	
+
 	/* Determine the maximal value alpha, such that 
 	 * oldthetas + alpha*direction is within the
 	 * feasible parameter region
@@ -1841,23 +1815,23 @@ public class GradientGraphO extends GradientGraph{
 		return llnode.gradientAsDouble();
 	}
 
-	
-//	public double[] getGradientBatch(int batchsize) 
-//			throws RBNNaNException
-//	{
-//		llnode.evaluateGradients(batchsize);
-//		return llnode.gradientAsDouble();
-//	}
-	
+
+	//	public double[] getGradientBatch(int batchsize) 
+	//			throws RBNNaNException
+	//	{
+	//		llnode.evaluateGradients(batchsize);
+	//		return llnode.gradientAsDouble();
+	//	}
+
 	protected void setParametersRandom(){
 		for (int i=0;i<paramNodes.length;i++)
 			if (paramNodes[i]!=null)
 				paramNodes[i].setCurrentParamVal(randomGenerators.getRandom(minmaxbounds[i][0],minmaxbounds[i][1],1.0));
 	}
-	
+
 	public void setParametersFromAandRBN(){
 		GGConstantNode nextnode ;
-//		for (Iterator<GGConstantNode> it = paramNodes.iterator();it.hasNext();){
+		//		for (Iterator<GGConstantNode> it = paramNodes.iterator();it.hasNext();){
 		for (int i =0;i<paramNodes.length;i++) {	
 			String paramname;
 			nextnode=paramNodes[i];
@@ -1879,7 +1853,7 @@ public class GradientGraphO extends GradientGraph{
 
 
 
-	
+
 	public String showGraphInfo(int learnverbose, RelStruc A){
 		String result = "";
 		result = result + "% Number of indicator nodes: " + sumindicators.size() +'\n';
@@ -1901,10 +1875,10 @@ public class GradientGraphO extends GradientGraph{
 
 
 
-//	private void unsetSumIndicators(){
-//		for (int i=0;i<sumindicators.size();i++)
-//			sumindicators.elementAt(i).unset();	
-//	}
+	//	private void unsetSumIndicators(){
+	//		for (int i=0;i<sumindicators.size();i++)
+	//			sumindicators.elementAt(i).unset();	
+	//	}
 
 
 
@@ -1970,7 +1944,7 @@ public class GradientGraphO extends GradientGraph{
 
 		result[0] = nodelik;
 		result [1] =  llnode.objective()+this.objectiveconstant;
-		
+
 		int[] conf = llnode.getConfusion();
 		for (int i=0;i<4;i++)
 			conf[i] += confusionconst[i];
@@ -1986,9 +1960,9 @@ public class GradientGraphO extends GradientGraph{
 	public GGCPMNode findInAllnodes(String key){
 		return allNodes.get(key);
 	}
-	
+
 	public GGCPMNode findInAllnodes(CPModel pf, int inputcaseno, int observcaseno, RelStruc A ){
-	
+
 		if (pf == null) System.out.println("pf is null");
 		return allNodes.get(makeKey(pf,inputcaseno,observcaseno,A));
 	}
@@ -2003,8 +1977,8 @@ public class GradientGraphO extends GradientGraph{
 		return null;
 
 	}
-	
-	
+
+
 	public Hashtable<Rel,int[]> getMapVals(){
 
 		Hashtable<Rel,int[]> result = new Hashtable<Rel,int[]>();
@@ -2022,61 +1996,61 @@ public class GradientGraphO extends GradientGraph{
 
 		return result;
 	}
-	
-//	/* Computes the likelihood contribution of the upper ground atom nodes contained in ugas,
-//	 * and writes into singlells the factors of the individual nodes (return value is product
-//	 * of singlells values)
-//	 *
-//	 */
-//	public static double computePartialLikelihood(Vector<GGCPMNode> ugas, double[] singlells){
-//		GGCPMNode nextggpfn;
-//		Object nextival;
-//		double val;
-//
-//		//System.out.println("computePartialLikelihood: ");
-//		for (int i=0;i<ugas.size();i++){
-//			nextggpfn=ugas.elementAt(i);
-//			val=nextggpfn.value();
-//			nextival=nextggpfn.getInstval();
-//			//System.out.print(nextggpfn.getMyatom() + ":" );
-//			if (nextival instanceof Integer){
-//				if ((Integer)nextival==1)
-//					singlells[i]=val;
-//				else
-//					singlells[i]=1-val;
-//			}
-//			if (nextival instanceof GGAtomNode){
-//				if (((GGAtomNode)nextival).getCurrentInst()==1)
-//					singlells[i]=val;
-//				else
-//					singlells[i]=1-val;
-//			}
-//			//System.out.print(singlells[i] + " ");
-//		}
-//		//System.out.println();
-//		double result =1;
-//		for (int k=0;k<singlells.length;k++)
-//			result = result*singlells[k];
-//		return result;
-//	}
+
+	//	/* Computes the likelihood contribution of the upper ground atom nodes contained in ugas,
+	//	 * and writes into singlells the factors of the individual nodes (return value is product
+	//	 * of singlells values)
+	//	 *
+	//	 */
+	//	public static double computePartialLikelihood(Vector<GGCPMNode> ugas, double[] singlells){
+	//		GGCPMNode nextggpfn;
+	//		Object nextival;
+	//		double val;
+	//
+	//		//System.out.println("computePartialLikelihood: ");
+	//		for (int i=0;i<ugas.size();i++){
+	//			nextggpfn=ugas.elementAt(i);
+	//			val=nextggpfn.value();
+	//			nextival=nextggpfn.getInstval();
+	//			//System.out.print(nextggpfn.getMyatom() + ":" );
+	//			if (nextival instanceof Integer){
+	//				if ((Integer)nextival==1)
+	//					singlells[i]=val;
+	//				else
+	//					singlells[i]=1-val;
+	//			}
+	//			if (nextival instanceof GGAtomNode){
+	//				if (((GGAtomNode)nextival).getCurrentInst()==1)
+	//					singlells[i]=val;
+	//				else
+	//					singlells[i]=1-val;
+	//			}
+	//			//System.out.print(singlells[i] + " ");
+	//		}
+	//		//System.out.println();
+	//		double result =1;
+	//		for (int k=0;k<singlells.length;k++)
+	//			result = result*singlells[k];
+	//		return result;
+	//	}
 
 	/* Computes the likelihood contribution of the upper ground atom nodes contained in ugas)
 	 * 
 	 */
 	public static double computePartialLogLikelihood(Vector<GGCPMNode> ugas){
-		
+
 		double result=0;
 
 		for (GGCPMNode next_uga: ugas)
 			result+= Math.log(next_uga.value());
 		return result;
 	}
-	
+
 	public int getNextId(){
 		maxid++;
 		return maxid;
 	}
-	
+
 	private double[] getDirectionAscentAdagrad(double[] gradient){
 		double[] result = new double[gradient.length];
 		/* Manipulate gradient */
@@ -2089,29 +2063,29 @@ public class GradientGraphO extends GradientGraph{
 		}
 		return result;
 	}
-	
 
 
-	
+
+
 	private double[] getDirectionLBFGS(double[] gradient,int itercount){
-		
+
 		double[] result = gradient.clone();
-		
+
 		int bound = Math.min(itercount, myggoptions.lbfgsmemory() );
 		double[] alphas = new double[bound];
 		double[] betas = new double[bound];
 		int offset = (itercount<=myggoptions.lbfgsmemory())? 0: itercount-myggoptions.lbfgsmemory(); 
-		
+
 		for (int i = bound-1; i>=0; i--){
 			int j = (i+offset) % myggoptions.lbfgsmemory();
 			alphas[i]=rhos[j]*rbnutilities.arrayDotProduct(thetadiffhistory[j], result);
 			result = rbnutilities.arraySubtract(result,rbnutilities.arrayScalMult(graddiffhistory[j], alphas[i])); 
 		}
-		
+
 		/* Now should come the multiplication with the initial inverse pseudo-Hessian H_0.
 		 * Taking H_0 to be the identity matrix, nothing to do at this point!
 		 */
-		
+
 		for (int i = 0; i< bound; i++){
 			int j = (i+offset) % myggoptions.lbfgsmemory();
 			betas[i]=rhos[j]*rbnutilities.arrayDotProduct(graddiffhistory[j],result);
@@ -2129,7 +2103,7 @@ public class GradientGraphO extends GradientGraph{
 		}
 		return result;
 	}
-	
+
 	private int numLinks() {
 		int result =0;
 		for (GGCPMNode pfn:allNodes.values()) {
@@ -2137,7 +2111,7 @@ public class GradientGraphO extends GradientGraph{
 		}
 		return result;
 	}
-	
+
 	private TreeSet<GGAtomMaxNode> maxind_as_ts(){
 		TreeSet<GGAtomMaxNode> result = new TreeSet<GGAtomMaxNode>();
 		for (Rel r: maxindicators.keySet()) {
@@ -2147,23 +2121,23 @@ public class GradientGraphO extends GradientGraph{
 		return result;
 	}
 
-//    private boolean checkGnnRel(RBN rbn) {
-//        for(int i=0; i<rbn.prelements().length; i++) {
-//            if (rbn.probForm_prels_At(i) instanceof ProbFormGnn)
-//                return true;
-//        }
-//        return false;
-//    }
+	//    private boolean checkGnnRel(RBN rbn) {
+	//        for(int i=0; i<rbn.prelements().length; i++) {
+	//            if (rbn.probForm_prels_At(i) instanceof ProbFormGnn)
+	//                return true;
+	//        }
+	//        return false;
+	//    }
 
-    public void setGnnPyToNodes() {
-        for (GGNode node: this.llnode.children){
-            if (node instanceof GGGnnNode)
-                ((GGGnnNode) node).setGnnPy(this.gnnPy);
-        }
-    }
+	public void setGnnPyToNodes() {
+		for (GGNode node: this.llnode.children){
+			if (node instanceof GGGnnNode)
+				((GGGnnNode) node).setGnnPy(this.gnnPy);
+		}
+	}
 
-    public void setGnnPy(GnnPy gnnPy) {
-        this.gnnPy = gnnPy;
-        setGnnPyToNodes();
-    }
+	public void setGnnPy(GnnPy gnnPy) {
+		this.gnnPy = gnnPy;
+		setGnnPyToNodes();
+	}
 }
