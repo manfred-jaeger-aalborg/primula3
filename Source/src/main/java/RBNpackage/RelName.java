@@ -24,9 +24,6 @@
 
 package RBNpackage;
 
-import RBNutilities.*;
-
-
 
 public class RelName{
 

@@ -919,20 +919,20 @@ public abstract class RelStruc implements Cloneable{
 		mydata = dat;
 	}
 
-	public void addDomainDec(Element el){
-		Element domel = el.addElement("Domain");
-		boolean havenames = (elementnames.size() == dom);
-		boolean havecoords = (coordinates.size() == dom);
-		for (int i=0;i<dom;i++){
-			Element nextdel = domel.addElement("obj");
-			nextdel.addAttribute("ind",Integer.toString(i));
-			if (havenames)
-				nextdel.addAttribute("name",nameAt(i));
-			if (havecoords)
-				nextdel.addAttribute("coords",rbnutilities.arrayToString(coordinates.elementAt(i)));
-		}
-
-	}
+//	public void addDomainDec(Element el){
+//		Element domel = el.addElement("Domain");
+//		boolean havenames = (elementnames.size() == dom);
+//		boolean havecoords = (coordinates.size() == dom);
+//		for (int i=0;i<dom;i++){
+//			Element nextdel = domel.addElement("obj");
+//			nextdel.addAttribute("ind",Integer.toString(i));
+//			if (havenames)
+//				nextdel.addAttribute("name",nameAt(i));
+//			if (havecoords)
+//				nextdel.addAttribute("coords",rbnutilities.arrayToString(coordinates.elementAt(i)));
+//		}
+//
+//	}
 
 
 	

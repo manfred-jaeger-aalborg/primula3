@@ -25,7 +25,6 @@ package RBNgui;
 import java.awt.*;
 import javax.swing.*; 
 import java.awt.event.*;
-import java.util.Vector;
 import java.io.*;
 
 public class SettingsSampling extends JFrame implements ActionListener, ItemListener, KeyListener{

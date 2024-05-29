@@ -29,7 +29,7 @@ import java.util.*;
 
 import RBNExceptions.RBNIllegalArgumentException;
 import RBNpackage.*;
-import javax.swing.event.*;
+
 import javax.swing.table.TableModel;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;

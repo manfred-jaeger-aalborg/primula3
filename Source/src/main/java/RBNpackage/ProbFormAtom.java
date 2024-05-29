@@ -9,7 +9,6 @@ import RBNExceptions.RBNCompatibilityException;
 import RBNLearning.*;
 import RBNinference.PFNetworkNode;
 import RBNutilities.rbnutilities;
-import RBNgui.Primula;
 
 public  class ProbFormAtom extends ProbForm {
 

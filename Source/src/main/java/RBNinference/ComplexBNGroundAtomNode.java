@@ -27,8 +27,7 @@ package RBNinference;
 
 import java.util.*;
 import RBNpackage.*;
-import RBNExceptions.*;
-import RBNutilities.*; 
+import RBNutilities.*;
 
 
 

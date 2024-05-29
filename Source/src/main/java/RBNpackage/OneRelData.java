@@ -25,11 +25,9 @@ package RBNpackage;
 
 import java.util.*;
 
-import mymath.MyMathOps;
 import RBNutilities.IntArrayComparator;
-import RBNutilities.rbnutilities;
-import myio.*;
 
+import RBNutilities.rbnutilities;
 import org.dom4j.Element;
 
 /** An object of the class OneRelData represents a complete or incomplete

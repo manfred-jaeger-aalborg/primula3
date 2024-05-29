@@ -27,7 +27,6 @@ import RBNpackage.*;
 import RBNinference.*;
 import RBNExceptions.*;
 import RBNio.*;
-import RBNutilities.*;
 import RBNLearning.*;
 
 import java.io.*;
@@ -35,8 +34,6 @@ import java.awt.*;
 import java.awt.event.*;
 
 import javax.swing.*;
-
-import myio.StringOps;
 
 import java.util.*;
 

@@ -23,14 +23,12 @@
 package RBNLearning;
 
 import java.util.*;
-import java.io.*;
+
 import RBNpackage.*;
 import RBNgui.*;
 import RBNExceptions.*;
 import RBNutilities.*;
 import RBNinference.*;
-import mymath.MyMathOps.*;
-import myio.StringOps;
 
 /** Main class for RBN parameter learning. The Gradient Graph is a representation of the
  * likelihood function given data consisting of pairs of relational input domains (objects of

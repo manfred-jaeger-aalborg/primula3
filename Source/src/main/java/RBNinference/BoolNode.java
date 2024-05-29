@@ -24,8 +24,6 @@
 
 package RBNinference;
 
-import java.io.*;
-
 public class BoolNode extends java.lang.Object {
 
     String varname;

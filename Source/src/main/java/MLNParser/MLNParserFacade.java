@@ -9,7 +9,7 @@ import RBNpackage.OneStrucData;
 import RBNpackage.RBN;
 import RBNpackage.SparseRelStruc;
 import java.io.File;
-import myio.StringOps;
+
 /**
  *
  * @author Alberto García Collado

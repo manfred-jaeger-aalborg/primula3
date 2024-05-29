@@ -213,6 +213,10 @@ public class OneBoolRelData extends OneRelData {
 		return trueAtoms;
 	}
 
+	public TreeSet<int[]> allFalse(){
+		return falseAtoms;
+	}
+
 	public TreeSet<int[]> allTrue(String[] args){
 		return this.allTrue(args, trueAtomsIndex);
 	}

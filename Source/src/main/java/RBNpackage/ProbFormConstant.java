@@ -26,10 +26,6 @@ package RBNpackage;
 
 import java.util.*;
 
-import RBNExceptions.RBNCompatibilityException;
-
-import java.io.*;
-import RBNutilities.*;
 import RBNLearning.*;
 import RBNinference.PFNetworkNode;
 

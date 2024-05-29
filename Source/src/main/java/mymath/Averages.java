@@ -1,8 +1,5 @@
 package mymath;
 
-import java.util.*;
-import myio.*;
-
 
 public class Averages{
 

@@ -2,7 +2,6 @@ package edu.ucla.belief.ace;
 
 import edu.ucla.belief.ace.AceInterfaceForPrimula.EncodingMethod;
 import edu.ucla.belief.ace.AceInterfaceForPrimula.DtreeMethod;
-import edu.ucla.belief.ace.Settings;
 
 import java.awt.*;
 import javax.swing.*;

@@ -1,8 +1,6 @@
 package edu.ucla.belief.ui.primula;
 
-import java.util.*;
 import javax.swing.*;
-import java.awt.*;
 import java.io.*;
 
 /**

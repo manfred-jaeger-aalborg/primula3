@@ -23,13 +23,9 @@
 
 package RBNLearning;
 
-import java.util.*;
-import java.io.*;
 import RBNpackage.*;
 import RBNgui.*;
 import RBNExceptions.*;
-import RBNutilities.*;
-import RBNinference.*;
 
 
 public class GGConstantNode extends GGCPMNode{

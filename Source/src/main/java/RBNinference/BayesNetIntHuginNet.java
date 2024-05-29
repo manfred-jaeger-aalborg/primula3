@@ -35,6 +35,7 @@ import java.io.*;
 import RBNio.*;
 import RBNpackage.*;
 import RBNutilities.rbnutilities;
+
 import edu.ucla.belief.ui.primula.*;
 
 public class BayesNetIntHuginNet implements BayesNetInt {
@@ -216,7 +217,7 @@ public class BayesNetIntHuginNet implements BayesNetInt {
     		else { // categorical
     			bufwr.write('\t' + "subtype = labeled;" + '\n');
     		}
-    		
+
     		bufwr.write("}" + '\n' + '\n');
 
     		bufwr.write("potential (" + internalname );

@@ -37,7 +37,7 @@ import java.io.*;
 
 public class SampleThread extends Thread{
 
-	private boolean running;
+	private volatile boolean running;
 	SampleProbs sprobs;
 	private boolean pause;
 //	private int queryAtomSize;
@@ -47,15 +47,25 @@ public class SampleThread extends Thread{
 	private PFNetwork pfn;
 	boolean[] logmode;
 	BufferedWriter logwriter;
-	private int numsamp = 0; // number of current sample
+	private volatile int numsamp = 0; // number of current sample
 	private int subsind = 0; // index of current subsample
 
 	long time;
 	long newtime;
 
-	public SampleThread(Observer infmodule, 
+	// FOR GNN INTERACTION the jep library needs to be on the same thread
+	// the jep object then will be shared across all the probforms that need it
+	// probably only one jep object can be created at time --> close it when it is not needed anymore
+	private GnnPy gnnPy;
+	private final boolean gnnIntegration;
+	private String modelPath;
+	private String scriptPath;
+	private String scriptName;
+	private String pythonHome;
+	public SampleThread(Observer infmoduleobs,
+			InferenceModule infmodule,
 			PFNetwork pfn, 
-			Hashtable<Rel,GroundAtomList> queryatoms, 
+			Hashtable<Rel,GroundAtomList> queryatoms,
 //			int num_subsamples_param,
 			boolean[] logmode_param,
 			BufferedWriter logwriter_param){
@@ -70,10 +80,26 @@ public class SampleThread extends Thread{
 		sprobs.addObserver(infmodule);
 		pause = false;
 //		test = new double[queryAtomSize];
+        this.gnnIntegration = this.pfn.checkGnnRel();
 	}
 
 	public void run()
 	{
+		// if we use the python-java interface we create the object
+		// this variable needs to be defined apriori
+		// the jep object needs to be in the same thread
+		if (this.gnnIntegration) {
+			try {
+				this.gnnPy = new GnnPy(scriptPath, scriptName, pythonHome);
+				pfn.setGnnPy(this.gnnPy);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		else {
+			this.gnnPy = null;
+		}
+
 		time = System.currentTimeMillis();
 		while(running){
 			try{
@@ -112,8 +138,18 @@ public class SampleThread extends Thread{
 			}
 
 		}
+		// the interpreter needs to be closed from the same thread
+		if (this.gnnIntegration)
+			this.closeGnnIntepreter();
 	}
 
+	public int getNumsamp() {
+		return numsamp;
+	}
+
+	public void closeGnnIntepreter() {
+		this.gnnPy.closeInterpreter();
+	}
 	public void setRunning(boolean running){
 		this.running = running;
 	}
@@ -122,4 +158,27 @@ public class SampleThread extends Thread{
 		this.pause = pause;
 	}
 
+	public SampleProbs getSprobs() {
+		return sprobs;
+	}
+
+	public void setModelPath(String modelPath) {
+		this.modelPath = modelPath;
+	}
+
+	public void setScriptPath(String scriptPath) {
+		this.scriptPath = scriptPath;
+	}
+
+	public void setScriptName(String scriptName) {
+		this.scriptName = scriptName;
+	}
+
+	public void setPythonHome(String pythonHome) {
+		this.pythonHome = pythonHome;
+	}
+
+	public boolean isGnnIntegration() {
+		return gnnIntegration;
+	}
 }

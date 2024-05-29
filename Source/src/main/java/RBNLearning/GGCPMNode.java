@@ -24,12 +24,11 @@
 package RBNLearning;
 
 import java.util.*;
-import java.io.*;
+
 import RBNpackage.*;
 import RBNgui.*;
 import RBNExceptions.*;
 import RBNutilities.*;
-import RBNinference.*;
 
 public abstract class GGCPMNode extends GGNode{
 
@@ -238,7 +237,10 @@ public abstract class GGCPMNode extends GGNode{
 				result = new GGConstantNode(gg,(ProbForm)cpm,A,I);
 				((GGConstantNode)result).setCurrentParamVal(((ProbFormBoolEquality)cpm).evaluate(A,I));
 			}
-			
+
+			if (cpm instanceof ProbFormGnn) {
+				result = new GGGnnNode(gg,cpm,allnodes,A,I,inputcaseno,observcaseno,parameters,useCurrentPvals,mapatoms,evaluated);
+			}
 			String key = gg.makeKey(cpm, inputcaseno, observcaseno, A);
 			
 			if (isuga) 

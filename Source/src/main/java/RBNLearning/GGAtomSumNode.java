@@ -22,13 +22,8 @@
 */
 package RBNLearning;
 
-import java.util.*;
-import java.io.*;
 import RBNpackage.*;
-import RBNgui.*;
 import RBNExceptions.*;
-import RBNutilities.*;
-import RBNinference.*;
 
 
 public class GGAtomSumNode extends GGAtomNode{

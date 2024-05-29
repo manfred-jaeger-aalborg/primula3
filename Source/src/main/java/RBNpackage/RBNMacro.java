@@ -1,8 +1,5 @@
 package RBNpackage;
 
-import RBNpackage.BoolRel;
-import RBNpackage.ProbForm;
-
 public class RBNMacro extends RBNElement{
 	
 	/* Can only have a ProbForm (not other CPModel) on the right side.

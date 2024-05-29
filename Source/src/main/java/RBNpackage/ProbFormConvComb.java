@@ -25,7 +25,7 @@
 package RBNpackage;
 
 import java.util.*;
-import java.io.*;
+
 import RBNExceptions.*;
 import RBNutilities.*;
 import RBNgui.Primula;

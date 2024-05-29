@@ -25,7 +25,6 @@ package RBNgui;
 
 import java.util.*;
 import javax.swing.table.*;
-import RBNutilities.*;
 //import RBNpackage.Atom;
 import RBNinference.BayesNetIntHuginNet;
 

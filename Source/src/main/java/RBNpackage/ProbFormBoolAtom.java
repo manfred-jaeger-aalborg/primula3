@@ -6,9 +6,7 @@ import java.util.TreeSet;
 
 
 import RBNExceptions.RBNCompatibilityException;
-import RBNLearning.GradientGraph;
 import RBNinference.PFNetworkNode;
-import RBNutilities.rbnutilities;
 import RBNLearning.Profiler;
 
 /* This is basically a wrapper class around
@@ -254,5 +252,9 @@ public class ProbFormBoolAtom extends ProbFormBool {
 	}
 	public TreeSet<Rel> parentRels(TreeSet<String> processed){
 		return pfatom.parentRels(processed);
+	}
+
+	public ProbFormAtom getPfatom() {
+		return pfatom;
 	}
 }

@@ -23,11 +23,8 @@
 
 package RBNLearning;
 
-import java.io.BufferedWriter;
-
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.util.*;
 
 import org.dom4j.Document;
@@ -36,7 +33,6 @@ import org.dom4j.Element;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.XMLWriter;
 
-import RBNio.FileIO;
 import RBNpackage.*;
 import RBNutilities.rbnutilities;
 import RBNExceptions.RBNRuntimeException;

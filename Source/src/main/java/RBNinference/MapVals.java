@@ -49,9 +49,6 @@ public class MapVals extends Observable {
 			all_m_vals.put(r,new m_vals(qatoms.get(r).size()));
 		}
 	}
-
-	
-
 	
 	public void setRestarts(int r){
 		restarts = r;

@@ -1,10 +1,6 @@
 package RBNpackage;
 
-import RBNpackage.BoolRel;
-import RBNpackage.ProbForm;
-import RBNpackage.Type;
-
-public class RBNElement 
+public class RBNElement
 {
 	/*
 	 * An RBNelement represents a single definition of either a macro,

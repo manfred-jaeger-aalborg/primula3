@@ -27,7 +27,6 @@ package RBNpackage;
 import java.util.*;
 import RBNExceptions.*;
 import RBNinference.*;
-import RBNutilities.rbnutilities;
 import RBNgui.Primula;
 import RBNLearning.Profiler;
 
@@ -117,8 +116,8 @@ public abstract class CPModel
      */
     public abstract Object[] evaluate(RelStruc A, 
     		OneStrucData inst, 
-    		String[] vars, 
-    		int[] tuple, 
+    		String[] vars,
+    		int[] tuple,
     		int gradindx,
     		boolean useCurrentCvals, 
     		//String[] numrelparameters,
@@ -128,7 +127,7 @@ public abstract class CPModel
     		Hashtable<String,Object[]> evaluated,
     		Hashtable<String,Integer> params,
     		int returntype,
-    		boolean valonly,
+    		boolean valonly, // true for gnn
     		Profiler profiler)
     throws RBNCompatibilityException;  
     

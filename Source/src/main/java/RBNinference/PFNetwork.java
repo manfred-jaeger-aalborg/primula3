@@ -83,7 +83,7 @@ public class PFNetwork{
 
 	private long[] timers = new long[5];
 
-
+	private GnnPy gnnPy;
 
 	public PFNetwork(){
 		allnodes = new Vector<PFNetworkNode>();
@@ -132,7 +132,9 @@ public class PFNetwork{
 		ComplexPFNetworkNode cpfn;
 		for (int i=0;i<allnodes.size();i++){
 			cpfn = (ComplexPFNetworkNode)allnodes.elementAt(i);
-			if (cpfn.parents.size() <= numpar){
+			// since the jep object needs to be inside the sample thread, we cannot pre-sample before
+			// for this reason we skip this even if the number of parents could be less than numpar
+			if (cpfn.parents.size() <= numpar && !(cpfn.cpmodel() instanceof ProbFormGnn)){
 				SimplePFNetworkNode spfn = new SimplePFNetworkNode(cpfn,inst,A);
 				allnodes.remove(i);
 				allnodes.add(i,spfn);
@@ -562,6 +564,8 @@ public class PFNetwork{
 		 */
 		for (int i=0;i<allnodes.size();i++){
 			((PFNetworkNode)allnodes.elementAt(i)).initializeForNextSample();
+			if (((PFNetworkNode)allnodes.elementAt(i)).cpmodel() instanceof ProbFormGnn && ((PFNetworkNode)allnodes.elementAt(i)).getGnnPy() == null)
+				((PFNetworkNode)allnodes.elementAt(i)).setGnnPy(this.gnnPy);
 		}
 		
 		Hashtable<String,Double> evaluated = new Hashtable<String,Double>();
@@ -707,10 +711,6 @@ public class PFNetwork{
 //	logwriter.write('\n');
 //	}
 
-
-
-
-
 	private void sEval(RelStruc A)
 	throws RBNCompatibilityException
 	{
@@ -719,4 +719,15 @@ public class PFNetwork{
 				((ComplexPFNetworkNode)allnodes.elementAt(i)).sEval(A);
 	}
 
+	public void setGnnPy(GnnPy gnnPy) {
+		this.gnnPy = gnnPy;
+	}
+
+	public boolean checkGnnRel() {
+		for (PFNetworkNode node: allnodes) {
+			if (node.cpmodel() instanceof ProbFormGnn)
+				return true;
+		}
+		return false;
+	}
 }

@@ -5,7 +5,6 @@ import java.io.File;
 
 import myio.StringOps;
 
-import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Document;
 import org.dom4j.io.*;

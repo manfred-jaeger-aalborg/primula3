@@ -10,7 +10,6 @@ import RBNpackage.*;
 import MLNParser.*;
 
 import RBNExceptions.RBNIllegalArgumentException;
-import RBNExceptions.RBNCompatibilityException;
 
 import RBNpackage.Type;
 import java.io.FileNotFoundException;
@@ -18,7 +17,6 @@ import java.io.FileInputStream;
 import java.io.File;
 import java.util.Map;
 import java.util.Vector;
-import java.util.Collection;
 import java.util.Iterator;
 
 

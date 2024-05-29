@@ -75,15 +75,16 @@ public class RelDataForOneInput {
 	public void addCase(OneStrucData osd){
 		D.add(osd);
 	}
-	
+
+	// TODO check RelStruc.addDomainDec
 	public void addToElement(Element el){
-		A.addDomainDec(el);
-		Element prelel = el.addElement("PredefinedRels");
-		A.getData().addAtomsToElement(prelel,A);
-		for (int i=0;i<D.size();i++){
-			Element probrelel = el.addElement("ProbabilisticRelsCase");
-			D.elementAt(i).addAtomsToElement(probrelel,A);
-		}
+//		A.addDomainDec(el); // here the function addDomainDec has been commented
+//		Element prelel = el.addElement("PredefinedRels");
+//		A.getData().addAtomsToElement(prelel,A);
+//		for (int i=0;i<D.size();i++){
+//			Element probrelel = el.addElement("ProbabilisticRelsCase");
+//			D.elementAt(i).addAtomsToElement(probrelel,A);
+//		}
 	}
 	
 	public void setA(RelStruc Aarg){

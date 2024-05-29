@@ -24,7 +24,6 @@
 package RBNgui;
 
 import RBNpackage.*;
-import java.util.*;
 
 class TempAtoms{
 	

@@ -1,6 +1,5 @@
 package mymath;
 
-import java.util.*;
 import myio.*;
 
 

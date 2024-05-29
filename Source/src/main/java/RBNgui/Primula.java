@@ -576,7 +576,7 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 	 * @uml.property  name="myFlagSystemExitEnabled"
 	 */
 	private boolean myFlagSystemExitEnabled = true;
-	public static final String STR_FILENAME_LOGO = "Icons/small_logo.jpg";
+	public static final String STR_FILENAME_LOGO = "src/main/java/Icons/small_logo.jpg";
 	/**
 	 * @uml.property  name="myPreferences"
 	 * @uml.associationEnd  multiplicity="(1 1)"
@@ -655,7 +655,7 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 	private void init()
 	{
 		//ImageIcon icon = new ImageIcon("small_logo.jpg");
-		ImageIcon icon = getIcon( STR_FILENAME_LOGO );
+		ImageIcon icon = new ImageIcon( STR_FILENAME_LOGO );
 
 		if( icon.getImageLoadStatus() == MediaTracker.COMPLETE ){//image ok
 			this.setIconImage(icon.getImage());
@@ -736,6 +736,10 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 	public Preferences getPreferences(){
 		return myPreferences;
 	}
+
+	private String scriptPath;
+	private String scriptName;
+	private String pythonHome;
 
 	public Primula()
 	{
@@ -1169,8 +1173,8 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		else if( source == evModule ){
 			//actionlistener for opening the evidence module
 			if(!isEvModuleOpen){
-				evidenceModule = new InferenceModule(this
-				);
+				evidenceModule = new InferenceModule(this);
+				evidenceModule.setVisibility(true);
 				isEvModuleOpen = true;
 			}
 		}
@@ -1719,28 +1723,68 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		}
 		return learnModule;
 	}
-	
+
+	public InferenceModule openInferenceModule(boolean visible) {
+		if(!isEvModuleOpen){
+			evidenceModule = new InferenceModule(this);
+			evidenceModule.setVisibility(visible);
+			isEvModuleOpen = true;
+		}
+		return evidenceModule;
+	}
+
+	public void setScriptPath(String scriptPath) {
+		this.scriptPath = scriptPath;
+	}
+
+	public void setScriptName(String scriptName) {
+		this.scriptName = scriptName;
+	}
+
+	public void setPythonHome(String pythonHome) {
+		this.pythonHome = pythonHome;
+	}
+
+	public String getScriptPath() {
+		return this.scriptPath;
+	}
+
+	public String getScriptName() {
+		return this.scriptName;
+	}
+
+	public String getPythonHome() {
+		return this.pythonHome;
+	}
+
+	// add in order to use the RBN without the file
+	public void setRbn(RBN rbn) {
+		this.rbn = rbn;
+	}
+
 	private void loadDefaults(){
-//		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Categorical/catrbn.rbn";
-//		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Categorical/inputstruc.rdef";
-	
-		
-		
-		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Mendel/mendel_cat1.rbn";
-		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Mendel/mendel_xs_cat.rdef";
-		
-//		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/InformationDiffusion/independent_cascade.rbn";
-//		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/InformationDiffusion/independent_cascade.rdef";
-		
-//		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Community/community_softclus_2c.rbn";
-//		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Community/zachary.rdef";
-	
-	
+
+//		// alpha example
+//		String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-github-examples/tex_file/GNN-RBN-alpha/rbn_acr.rbn";
+
+//		String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/models/only_blue_alpha1_10_5_20240123-151213/RBN_acr_graph_alpha1_10_5.rbn";
+//		String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/alpha1-blue.rdef";
+		//		String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/RBN_alpha_stupid.rbn";
+
+//		String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/RBN_acr_graph_alpha1_10_5.rbn";
+
+// 		String rstinputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-github-examples/tex_file/GNN-RBN-alpha/alpha1-blue.rdef";
+//		String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/purple.rbn";
+//		String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/purple_data.rdef";
+		// String rstinputfilestring = "/Users/lz50rg/Desktop/GNN-RBN-alpha-edge/alpha1-edge.rdef";
+
+		// explainer gnn
+//		String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-github-examples/tex_file/GNN-RBN-explainer/rbn_acr.rbn";
+//		String rstinputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-github-examples/tex_file/GNN-RBN-explainer/base_class_0_n6_0.rdef";
 
 //		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/GNN-RBN-alpha/rbn_acr_3layers.rbn";
-//		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/GNN-RBN-alpha/alpha1-blue.rdef"; 
-		
-		
+//		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/GNN-RBN-alpha/alpha1-blue.rdef";
+
 //		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Mutag/MAP/manual_no2.rbn";
 //		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Mutag/MAP/base_class_0_n3.rdef"; 
 		
@@ -1748,33 +1792,209 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 //		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/SWF/swf_nodefeat.rbn";
 //		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/SWF/swf_coordinates_nodefeat_learned-ods-sheet2-l47.rdef";
 
-			
+        String rbninputfilestring = "/Users/lz50rg/Desktop/primu/mendel_cat1.rbn";
+        String rstinputfilestring = "/Users/lz50rg/Desktop/primu/mendel_xs_cat.rdef";
 		
-	
 		srsfile = new File(rstinputfilestring);
 		rbnfile = new File(rbninputfilestring);
 
 		loadSparseRelFile(srsfile);
 		loadRBNFunction(rbnfile);
-		
-
-
 	}
 
-	
+    public void loadManualRBN_blue(){
+        try{
+            RBNPreldef blue_pred = new RBNPreldef(new BoolRel("blue", 1), new String[]{"v"},  new ProbFormConstant(0.5));
+//			RBNPreldef edge_pred = new RBNPreldef(new BoolRel("edge", 2), new String[]{"v", "w"},  new ProbFormConstant(0.5));
+            RBNPreldef gnn_pred = new RBNPreldef(
+                    new BoolRel("alpha1", 1),
+                    new String[]{"v"},
+                    new ProbFormGnn("v",
+                            "gnnNode",
+                            new Rel[]{
+                                    blue_pred.rel()
+//									edge_pred.rel()}
+                            },
+                            "edge",
+                            "ABBA",
+                            "node",
+                            false,
+                            0
+                    )
+            );
+
+            RBN manual_rbn = new RBN(2, 0);
+            manual_rbn.insertPRel(blue_pred, 0);
+//			manual_rbn.insertPRel(edge_pred, 2);
+            manual_rbn.insertPRel(gnn_pred, 1);
+            this.setRbn(manual_rbn);
+            this.getInstantiation().init(manual_rbn);
+            rbnfile = new File("TEST INTERNAL GNN BLUE");
+            rbnfilename.setText(rbnfile.getPath());
+        }catch (Exception ex){
+            rbn = null;
+            rbnfile = null;
+            rbnfilename.setText("");
+            this.showMessage(ex.toString());
+        }
+        if(isEvModuleOpen)
+            evidenceModule.updateRBNRelations();
+
+        instasosd.init(rbn);
+    }
+
+	public void loadGNNRBN_blue() {
+		String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/alpha1-blue.rdef";
+		srsfile = new File(rstinputfilestring);
+		this.loadSparseRelFile(srsfile);
+		this.loadManualRBN_blue();
+	}
+
+	public void loadGNNRBN_triangle() {
+		String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/base_class_0_n6_0.rdef";
+		srsfile = new File(rstinputfilestring);
+		this.loadSparseRelFile(srsfile);
+		RBNPreldef A_pred = new RBNPreldef(new BoolRel("A", 1), new String[]{"v"},  new ProbFormConstant(0.5));
+		RBNPreldef B_pred = new RBNPreldef(new BoolRel("B", 1), new String[]{"v"},  new ProbFormConstant(0.5));
+		RBNPreldef C_pred = new RBNPreldef(new BoolRel("C", 1), new String[]{"v"},  new ProbFormConstant(0.5));
+		RBNPreldef D_pred = new RBNPreldef(new BoolRel("D", 1), new String[]{"v"},  new ProbFormConstant(0.5));
+		RBNPreldef E_pred = new RBNPreldef(new BoolRel("E", 1), new String[]{"v"},  new ProbFormConstant(0.5));
+		RBNPreldef F_pred = new RBNPreldef(new BoolRel("F", 1), new String[]{"v"},  new ProbFormConstant(0.5));
+		RBNPreldef G_pred = new RBNPreldef(new BoolRel("G", 1), new String[]{"v"},  new ProbFormConstant(0.5));
+
+		RBNPreldef edge_pred = new RBNPreldef(new BoolRel("edge", 2), new String[]{"v", "w"},  new ProbFormConstant(0.5));
+
+		RBNPreldef gnn_class_0 = new RBNPreldef(
+				new BoolRel("CLASS_0", 0),
+				new String[]{"v"},
+				new ProbFormGnn("v",
+						"gnnGraph",
+						new Rel[]{
+								A_pred.rel(),
+								B_pred.rel(),
+								C_pred.rel(),
+								D_pred.rel(),
+								E_pred.rel(),
+								F_pred.rel(),
+								G_pred.rel(),
+								edge_pred.rel()
+						},
+						"edge",
+						"ABBA",
+						true,
+						0
+				)
+		);
+
+		RBNPreldef gnn_class_1 = new RBNPreldef(
+				new BoolRel("CLASS_1", 0),
+				new String[]{"v"},
+				new ProbFormGnn("v",
+						"gnnGraph",
+						new Rel[]{
+								A_pred.rel(),
+								B_pred.rel(),
+								C_pred.rel(),
+								D_pred.rel(),
+								E_pred.rel(),
+								F_pred.rel(),
+								G_pred.rel(),
+								edge_pred.rel()
+						},
+						"edge",
+						"ABBA",
+						true,
+						1
+				)
+		);
+
+		RBN manual_rbn = new RBN(10, 0);
+
+		manual_rbn.insertPRel(A_pred, 0);
+		manual_rbn.insertPRel(B_pred, 1);
+		manual_rbn.insertPRel(C_pred, 2);
+		manual_rbn.insertPRel(D_pred, 3);
+		manual_rbn.insertPRel(E_pred, 4);
+		manual_rbn.insertPRel(F_pred, 5);
+		manual_rbn.insertPRel(G_pred, 6);
+		manual_rbn.insertPRel(edge_pred, 7);
+		manual_rbn.insertPRel(gnn_class_0, 8);
+		manual_rbn.insertPRel(gnn_class_1, 9);
+
+		this.setRbn(manual_rbn);
+		this.getInstantiation().init(manual_rbn);
+		rbnfile = new File("TEST INTERNAL GNN TRIANGLE");
+		rbnfilename.setText(rbnfile.getPath());
+	}
+
+	public void loadHomophilyGraph() {
+		// RBNPreldef pos = new RBNPreldef(new BoolRel("pos", 1), new String[]{"v"},  new ProbFormConstant(0.5));
+		NumRel attr1 = new NumRel("attr1", 1);
+		NumRel attr2 = new NumRel("attr2", 1);
+
+		RBNPreldef gnn_pos = new RBNPreldef(
+				new BoolRel("pos", 1),
+				new String[]{"v"},
+				new ProbFormGnn("v",
+						"gnnHomophily",
+						new Rel[]{
+								attr1,
+								attr2
+						},
+						"edge",
+						"AB",
+						true
+				)
+		);
+
+		File input_file = new File("/Users/lz50rg/Dev/homophily/const.rbn");
+		RBN file_rbn = new RBN(input_file, getSignature());
+		rbnfile = input_file;
+		rbnfilename.setText(rbnfile.getName());
+
+		RBNPreldef[] preledef = file_rbn.prelements();
+		RBN manual_rbn = new RBN(2, 0);
+
+		manual_rbn.insertPRel(gnn_pos, 0);
+		manual_rbn.insertPRel(preledef[0], 1);
+
+		this.setRbn(manual_rbn);
+
+		Rel.resetTheColorCounters();
+		if(isEvModuleOpen)
+			evidenceModule.updateRBNRelations();
+
+		instasosd.init(manual_rbn);
+
+		this.getInstantiation().init(manual_rbn);
+		rbnfile = new File("TEST INTERNAL GNN HOMOPHILY");
+		rbnfilename.setText(rbnfile.getPath());
+
+		String rstinputfilestring = "/Users/lz50rg/Dev/homophily/graph.rdef";
+		srsfile = new File(rstinputfilestring);
+		this.loadSparseRelFile(srsfile);
+	}
+
+	private void setGNNPath() {
+		setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
+		setScriptPath("/Users/lz50rg/Dev/primula-workspace/primula3/python/");
+		setScriptName("inference_test");
+	}
+
 	public static void main( String[] args ){
 		
 		for( String arg : args ){
 			if( STR_OPTION_DEBUG.equals( arg ) ) FLAG_DEBUG = true;
 		}
-
 		Primula win = new Primula();
 		SamiamManager.centerWindow( win );
 		win.show();
 		win.loadDefaults();
 
+//		win.setGNNPath();
+//		win.loadDefaults();
+//		win.loadGNNRBN_blue();
+//		win.loadGNNRBN_triangle();
+//		win.loadHomophilyGraph();
 	}
-	
-
-
 }

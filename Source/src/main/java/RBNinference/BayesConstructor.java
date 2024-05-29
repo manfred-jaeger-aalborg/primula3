@@ -65,6 +65,7 @@ public class BayesConstructor extends java.lang.Object {
 
 	private String myAlternateName;
 	private Primula myprimula;
+	private GnnPy gnnPy;
 
 //	private Rel[] relations;
 //	private int domsize;
@@ -454,7 +455,7 @@ public class BayesConstructor extends java.lang.Object {
 
 		for (BNNode bnn: groundatomhasht.values()){
 			PFNetworkNode pfnn=(PFNetworkNode)bnn;
-			
+
 			if (!pfnn.visited[0]){
 				nodestack = pfnn.buildNodeStack();
 				for (int j=0;j<nodestack.size();j++){
@@ -547,6 +548,15 @@ public class BayesConstructor extends java.lang.Object {
 			/** keith cascio 20060515 ... */
 
 			/** ... keith cascio */
+
+			if (this.checkGnnRel(this.rbnarg)) {
+				System.out.println("GNN detected");
+				try {
+					this.gnnPy = new GnnPy(this.myprimula.getScriptPath(), this.myprimula.getScriptName(), this.myprimula.getPythonHome());
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+			}
 
 			/* build a standard Bayesian network over the nodes in groundatomhasht:
 			 * in case of a decompose option, additional (auxiliary)  nodes will be introduced
@@ -705,6 +715,14 @@ public class BayesConstructor extends java.lang.Object {
 		return true;
 	}
 
+	private boolean checkGnnRel(RBN rbn) {
+		for(int i=0; i<rbn.prelements().length; i++) {
+			if (rbn.probForm_prels_At(i) instanceof ProbFormGnn)
+				return true;
+		}
+		return false;
+	}
+
 	/** @author keith cascio
     	@since 20060515 */
 	public int getProgress(){
@@ -729,15 +747,15 @@ public class BayesConstructor extends java.lang.Object {
 	 * by pform. parentatoms contains the atoms on which pform effectively
 	 * depends given inst. The computed cpt is w.r.t. the parent order defined
 	 * by parentatoms
-	 * 
-	 * the cpt has dimensions (#parent configurations) x (#values of relation) 
-	 * 
+	 *
+	 * the cpt has dimensions (#parent configurations) x (#values of relation)
+	 *
 	 * The probability values are listed in the order defined by their integer
 	 * indices (Boolean case: first false, then true)
-	 * 
+	 *
 	 * Also returns a hashmap <Integer,int[]> that maps indices of parent configurations
-	 * to the tuple of parent values at that index. 
-	 * 
+	 * to the tuple of parent values at that index.
+	 *
 	 * Also returns a hashmap <int[],double[]> mapping a parent configuration to a cpt row.
 	 */
 	public static Object[] makeCPT(CPModel cpmodel,RelStruc A,OneStrucData inst,Vector<GroundAtom> parentatoms)
@@ -745,20 +763,20 @@ public class BayesConstructor extends java.lang.Object {
 	{
 		boolean iscatmodel = (cpmodel instanceof CatModelSoftMax);
 		boolean isboolmodel = !iscatmodel;
-		
+
 		int[] numparvals = new int[parentatoms.size()];
-		
+
 		int numparconfigs =1;
 		for (int i=0;i<parentatoms.size();i++) {
 			numparvals[i]=(int)parentatoms.elementAt(i).rel.numvals();
 			numparconfigs*=numparvals[i];
 		}
-		
+
 		int numvals = cpmodel.numvals();
 		double[][] cpt = new double[numparconfigs][numvals];
 		HashMap<Integer,String> indxToParConfig = new HashMap<Integer,String>();
 		HashMap<String,double[]> parconfigToCPT = new HashMap<String,double[]>();
-		
+
 		int[]  oldinst;
 		int[]  newinst;
 		int[]  diffinst;
@@ -791,7 +809,7 @@ public class BayesConstructor extends java.lang.Object {
 					new String[0], 
 					new int[0], 
 					0,
-					true, 
+					true,
 					true,
 					null,
 					false,
@@ -805,10 +823,10 @@ public class BayesConstructor extends java.lang.Object {
 			if (iscatmodel) {
 				cpt[h] =(double[])cpmodel.evaluate(A,
 						copyinst,
-						new String[0], 
-						new int[0], 
+						new String[0],
+						new int[0],
 						0,
-						true, 
+						true,
 						true,
 						null,
 						false,
@@ -882,7 +900,11 @@ public class BayesConstructor extends java.lang.Object {
 			GroundAtom atom = currentnode.myatom();
 			String name = currentnode.name;
 
-		
+			// to construct a Bayes network usign ProgFormGnn
+			if (pform instanceof ProbFormGnn && this.gnnPy != null) {
+				((ProbFormGnn) pform).setGnnPy(this.gnnPy);
+			}
+
 			/* turn complexnode into simplenode
 			 */
 			cpt = (double[][])makeCPT(cpmodel,strucarg,inst,parvec)[0];
@@ -1330,7 +1352,7 @@ public class BayesConstructor extends java.lang.Object {
 			throw new RBNRuntimeException("Equality with undefined value in BayesConstructor");
 		cpt[0][1] = val;
 		cpt[0][0]=1-val;
-		
+
 		switch (typeofnode)
 		{
 		case 0:
@@ -1543,7 +1565,7 @@ public class BayesConstructor extends java.lang.Object {
 //	/** Merges all equivalent deterministic auxiliary nodes in
 //	 * network component given by bnn
 //	 * returns true if at least one merge operation has taken place
-//	 * 
+//	 *
 //	 * Currently disabled for maintainability!
 //	 */
 //	private boolean mergeEquivalentDetNodes(SimpleBNNode bnn){
@@ -2548,6 +2570,6 @@ public class BayesConstructor extends java.lang.Object {
 		this.strucarg = strucarg;
 	}
 
-	
+
 
 }

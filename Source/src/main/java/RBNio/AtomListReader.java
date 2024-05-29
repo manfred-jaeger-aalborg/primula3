@@ -27,10 +27,7 @@ import java.io.*;
 import java.util.*;
 
 import RBNpackage.*;
-import RBNutilities.*;
-import RBNExceptions.*;
 import RBNLearning.*;
-import RBNpackage.*;
 import RBNgui.TypeSelectionPanel;
 import myio.*;
 

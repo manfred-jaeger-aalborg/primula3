@@ -54,6 +54,20 @@ import java.util.LinkedList;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Vector;
+import RBNpackage.*;
+import RBNinference.*;
+import RBNExceptions.*;
+import RBNLearning.*;
+import RBNutilities.*;
+import java.io.*;
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import javax.swing.border.*;
+import java.util.*;
+import java.util.List;
+
+import myio.*;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -246,46 +260,46 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
 	private JScrollPane queryatomsScrollList = new JScrollPane();
-	
-	
+
+
 	/**
 	 * One JScrollPane for each relation for which we have a query atom
-	 * 
+	 *
 	 * Each JScrollPane contains a JTable associated with a QueryTableModel
 	 * or a subclass thereof (MCMCTableModel, MAPTableModel, ...)
-	 * 
+	 *
 	 * The queryatomsScrolllists are embedded in the queryAtomsPanel
 	 */
-	private Vector<JScrollPane> queryatomsScrolllists = new Vector<JScrollPane>(); 
-	
-	
+	private Vector<JScrollPane> queryatomsScrolllists = new Vector<JScrollPane>();
+
+
 	//den nye queryatom tabel
 	/**
 	 * @uml.property  name="dataModel"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
 	private Vector<QueryTableModel> queryModels  = new Vector<QueryTableModel>();;
-	
+
 	private Vector<MAPTableModel> mapModels = new Vector<MAPTableModel>();
-	
+
 	private Vector<MCMCTableModel> mcmcModels = new Vector<MCMCTableModel>();
-	
+
 	private Vector<ACETableModel> aceModels = new Vector<ACETableModel>();
-	
+
 	private Vector<TestTableModel> testModels = new Vector<TestTableModel>();
-	
+
 	/**
 	 * @uml.property  name="querytable"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
 	private Vector<JTable> querytables = new Vector<JTable>();
-	
+
 	/**
 	 * @uml.property  name="trueButton"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
 	private JButton instButton     = new JButton("Instantiation");
-	
+
 	/**
 	 * @uml.property  name="queryButton"
 	 * @uml.associationEnd  multiplicity="(1 1)"
@@ -308,17 +322,17 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	 */
 
 
-	ImageIcon toggleicon = new ImageIcon("./Icons/toggle.png");
+	ImageIcon toggleicon = new ImageIcon("src/main/java/Icons/toggle.png");
 	private JButton  toggleTruthButton  		= new JButton(toggleicon);
 	
-	ImageIcon cwaicon = new ImageIcon("./Icons/cwa.png");
+	ImageIcon cwaicon = new ImageIcon("src/main/java/Icons/cwa.png");
 	private JButton cwaButton = new JButton(cwaicon);
 	
 	
-	ImageIcon deleteicon = new ImageIcon("./Icons/delete.png");
+	ImageIcon deleteicon = new ImageIcon("src/main/java/Icons/delete.png");
 	private JButton delInstButton      		= new JButton(deleteicon);
 	
-	ImageIcon clearicon = new ImageIcon("./Icons/clear.png");
+	ImageIcon clearicon = new ImageIcon("src/main/java/Icons/clear.png");
 	private JButton delAllInstButton   		= new JButton(clearicon);
 	
 //	ImageIcon saveicon = new ImageIcon("./Icons/save.png");
@@ -361,7 +375,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
 	private JPanel valuesPanel         = new JPanel(new BorderLayout());
-	
+
 	/**
 	 * @uml.property  name="arityPanel"
 	 * @uml.associationEnd  multiplicity="(1 1)"
@@ -561,15 +575,15 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
 	private Hashtable<Rel,GroundAtomList> queryatoms;
-	
+
 //	/**
-//	 * Maps a string representation of a query atom to a two-part index: 
+//	 * Maps a string representation of a query atom to a two-part index:
 //	 * first index is the index of the table for the relation (as an element of
 //	 * queryatomsScrollists), the second
 //	 * is the index for this tuple in that table
 //	 */
 //	private Hashtable<String,int[]> groundAtomIndex;
-	
+
 	public Hashtable<Rel, GroundAtomList> getQueryatoms() {
 		return queryatoms;
 	}
@@ -578,14 +592,14 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	 * Maps a relation (identified by its name) to the index of the query atoms
 	 * for this relation in the queryatomsScrolllists
 	 */
-	private Hashtable<String,Integer> relIndex = new Hashtable<String,Integer>(); 
+	private Hashtable<String,Integer> relIndex = new Hashtable<String,Integer>();
 	/**
 	 * Vector of relations defining their order in queryatomsScrolllists:
-	 * 
+	 *
 	 * relArray[i]= r  <=> relIndex.get(r.name)==i
 	 */
-	private Vector<Rel> relList; 
-	
+	private Vector<Rel> relList;
+
 //	public GroundAtomList getQueryatoms() {
 //		return queryatoms;
 //	}
@@ -597,22 +611,22 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	/**
 	 * @uml.property  name="rel"
 	 * @uml.associationEnd  
-	 * 
+	 *
 	 * The currently selected relation (for defining queries or evidence)
 	 */
 	private Rel selected_rel;
-	
+
 	/*
 	 * The selected value for defining evidence (using the internal integer representation)
 	 */
 	private int selected_val;
 	
 	/*
-	 * The position of the currently selected element in the argument list 
+	 * The position of the currently selected element in the argument list
 	 * of selected_rel (when building up a query or evidence)
 	 */
 	private int el_pos;
-	
+
 	/* The gradient graph structure constructed in current inference 
 	 * process
 	 */
@@ -756,16 +770,20 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	 * @uml.property  name="logfilename"
 	 */
 	private String logfilename = "";
-
-
-
+	private Observer valueObserver;
+	private String modelPath;
+	private String scriptPath;
+	private String scriptName;
+	private String pythonHome;
+	List<MapThread> threads;
+	int num_threads;
 	public InferenceModule( Primula myprimula_param ){
 
 		myprimula = myprimula_param;
 		sampling = false;
 //		maprestarts = false;
 		inst = myprimula.instasosd;
-		
+
 		sampleordmode = OPTION_SAMPLEORD_FORWARD;
 		adaptivemode = OPTION_NOT_SAMPLE_ADAPTIVE;
 		for (int i=0;i<samplelogmode.length;i++)
@@ -773,27 +791,27 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 
 		numchains = 2;
 		windowsize = 2;
-		numrestarts = 1;
+		numrestarts = 10;
 		
 		readElementNames();
 		readRBNRelations();
 
 		updateInstantiationList();
-		
+
 		queryatoms=myprimula.queryatoms.asHashTable();
 		relIndex = new Hashtable<String,Integer>();
 		relList = new Vector<Rel>();
 		int idx =0;
-		
+
 		for (Rel r: queryatoms.keySet()) {
 			relIndex.put(r.name(), (Integer)idx);
 			relList.add(r);
 			queryModels.add(new QueryTableModel());
 			idx++;
 		}
-			
+
 		buildQueryatomsTables(queryModels);
-			
+
 		/* Top panel with list of attributes/binary relations/arbitrary relations */
 		relationsList.setModel(relationsListModel);
 		relationsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -929,7 +947,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		
 		inferencePane.add("MAP", panelMapOuter);
 		
-		
+
 //		atomsPanel.add(instantiationsPanel, BorderLayout.CENTER);
 		outerQueryPane=new JScrollPane();
 		outerQueryPane.getViewport().add(queryatomsPanel);
@@ -961,9 +979,9 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		startMap.addActionListener( this );
 		setMapVals.addActionListener( this );
 		stopMap.addActionListener( this );
-		
+
 		inferencePane.addChangeListener(this);
-		
+
 		//setting background color
 		instButton.setBackground(Primula.COLOR_BLUE_SELECTED);
 		instButton.setToolTipText("Add atoms instantiated to true");
@@ -1152,10 +1170,15 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		/** keith cascio 20060511 ... */
 		SamiamManager.centerWindow( this );
 		/** ... keith cascio */
-		this.setVisible(true);
+		this.setVisible(false);
+		this.num_threads = 1;
 	}
 
-	public void actionPerformed( ActionEvent e ) 
+	public void setVisibility(boolean visibility) {
+		this.setVisible(visibility);
+	}
+
+	public void actionPerformed( ActionEvent e )
 	{
 		Object source = e.getSource();
 
@@ -1268,9 +1291,9 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 //			LinkedList<String> queryats = mcmcModel.getQuery();
 //			OneStrucData result = new OneStrucData();
 //			result.setParentRelStruc(myprimula.getRels());
-//			
+//
 //			Iterator<String> itq = queryats.iterator();
-//			
+//
 //			for (Iterator<String> itprob = probvals.iterator(); itprob.hasNext();) {
 //				double p = Double.parseDouble(itprob.next());
 //				if (p>=0.5)
@@ -1284,7 +1307,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 //		}
 		else if( source == stopSampling){
 			stopSampling();
-			
+
 			if (!noLog()){
 				try{
 					logwriter.flush();
@@ -1317,9 +1340,9 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 //				LinkedList<String> queryats = mapModel.getQuery();
 //				OneStrucData result = new OneStrucData();
 //				result.setParentRelStruc(myprimula.getRels());
-//				
+//
 //				Iterator<String> itq = queryats.iterator();
-//				
+//
 //				for (Iterator<String> itmap = mapvals.iterator(); itmap.hasNext();) {
 //					//System.out.println(itq.next() + " " + itmap.next());
 //					result.add(new GroundAtom(itq.next(),myprimula.getRels(),Rel.BOOLEAN),Integer.parseInt(itmap.next()),"?");
@@ -1357,7 +1380,9 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	public SampleThread startSampleThread(){
 
 		queryatomsPanel.updateUI(); // may need updateUI on the individual tables
-		
+        if (this.valueObserver == null) {
+            this.valueObserver = this;
+        }
 		sampling = true;
 		PFNetwork pfn = null;
 		if (!noLog()){
@@ -1389,11 +1414,17 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		catch (IOException ex){System.out.println(ex.toString());}
 
 
-		sampthr = new SampleThread(this, 
+		sampthr = new SampleThread(this.valueObserver,
+				this,
 				pfn, 
 				this.queryatoms,
 				samplelogmode,
 				logwriter);
+		if (sampthr.isGnnIntegration()) {
+			sampthr.setPythonHome(this.myprimula.getPythonHome());
+			sampthr.setScriptPath(this.myprimula.getScriptPath());
+			sampthr.setScriptName(this.myprimula.getScriptName());
+		}
 		sampthr.start();
 		infoMessage.setText(" Starting Sampling ");
 		startSampling.setEnabled( false );
@@ -1404,16 +1435,54 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		delAllInstButton.setEnabled( false );
 		delQueryAtomButton.setEnabled( false );
 		delAllQueryAtomButton.setEnabled( false );
-		
+
 		return sampthr;
 	}
 
-	public void stopSampling() {
-		sampling = false;
-		sampthr.setRunning(false);
-	}
-	private GradientGraph startMapThread(){
+    public void stopSampling() {
+        sampling = false;
+        sampthr.setRunning(false);
+    }
+
+//    public void setQueryAtoms(GroundAtomList atomsList) {
+//        this.queryatoms = atomsList;
+//    }
+
+    public void stopSampleThread(){
+        sampling = false;
+        sampthr.setRunning(false);
+        if (!noLog()){
+            try{
+                logwriter.flush();
+                if (logfilename != "")
+                    logwriter.close();
+            }
+            catch (java.io.IOException ex){System.err.println(ex);};
+        }
+        infoMessage.setText(" Stop Sampling ");
+        pausemcmc = false;
+        startSampling.setEnabled( true );
+        queryButton.setEnabled( true );
+        toggleTruthButton.setEnabled( true );
+        delInstButton.setEnabled( true );
+        delAllInstButton.setEnabled( true );
+        delQueryAtomButton.setEnabled( true );
+        delAllQueryAtomButton.setEnabled( true );
+    }
+
+    public SampleThread getSampthr() {
+        return sampthr;
+    }
+
+    // set to public for experiments
+    public GradientGraph startMapThread(){
+
 		GradientGraph gg = null;
+
+		if (this.valueObserver == null) {
+			this.valueObserver = this;
+		}
+
 		try{
 //			maprestarts = true;
 			RelData evidence = new RelData(myprimula.getRels(),myprimula.getInstantiation());
@@ -1427,18 +1496,33 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 				mode = GradientGraphO.LEARNANDMAPMODE;
 			else 
 				mode = GradientGraphO.MAPMODE;
-			
-			gg = new GradientGraphO(myprimula, 
-					 								evidence, 
-					 								rbnparamidx,
-					 								this ,
-					 								queryatoms,
-					 								mode,
-					 								0,
-					 								true);
-			mapthr = new MapThread(this,myprimula,(GradientGraphO)gg);
-			mapthr.start();
-			instButton.setEnabled( false );
+
+            this.threads = new ArrayList<>();
+
+            // default is set to 1 (only for gui)
+            // to go back remove for loop and threads list
+            // last git revision number d60d5a886ef8749e6cb4d6519c34a80f85838e2d
+            for (int i = 0; i < num_threads; i++) {
+                gg = new GradientGraphO(myprimula,
+                        evidence,
+                        rbnparamidx,
+                        this,
+                        queryatoms,
+                        mode,
+                        0,
+                        true);
+                mapthr = new MapThread(this.valueObserver, this, myprimula, (GradientGraphO) gg);
+                // mapthr = new MapThread(this,myprimula,(GradientGraphO)gg); or this?
+                if (mapthr.isGnnIntegration()) {
+                    mapthr.setPythonHome(this.myprimula.getPythonHome());
+                    mapthr.setScriptPath(this.myprimula.getScriptPath());
+                    mapthr.setScriptName(this.myprimula.getScriptName());
+                    ((GradientGraphO) gg).setGnnPy(mapthr.getGnnPy());
+                }
+                mapthr.start();
+                threads.add(mapthr);
+            }
+            instButton.setEnabled(false);
 			queryButton.setEnabled( false );
 			toggleTruthButton.setEnabled( false );
 			delInstButton.setEnabled( false );
@@ -1450,7 +1534,27 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		return gg;
 	}
 
-	
+	private boolean checkGnnRel(RBN rbn) {
+		for(int i=0; i<rbn.prelements().length; i++) {
+			if (rbn.cpmod_prelements_At(i) instanceof ProbFormGnn)
+				return true;
+		}
+		return false;
+	}
+
+	public void stopMapThread() {
+		mapthr.setRunning(false);
+		infoMessage.setText(" Stop MAP ");
+		startSampling.setEnabled( true );
+		queryButton.setEnabled( true );
+		toggleTruthButton.setEnabled( true );
+		delInstButton.setEnabled( true );
+		delAllInstButton.setEnabled( true );
+		delQueryAtomButton.setEnabled( true );
+		delAllQueryAtomButton.setEnabled( true );
+	}
+
+
 	/** @author keith cascio
 	@since 20060602 */
 	public void forgetAll(){
@@ -1522,7 +1626,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		Object source = e.getSource();
 
 		if(source == relationsList){
-			
+
 			valuesListModel.removeAllElements();
 			elementNamesList.clearSelection();
 			int index = relationsList.locationToIndex(e.getPoint());
@@ -1563,7 +1667,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 					else { // tuple now complete
 						addedTuples += (String)elementNamesListModel.elementAt(element_tuple[index]);
 						if(queryModeOn){
-							addQueryAtoms(selected_rel, element_tuple);		
+							addQueryAtoms(selected_rel, element_tuple);
 							infoMessage.setText(selected_rel.name.name+" ("+addedTuples+")");
 						}
 						else{
@@ -1579,7 +1683,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 						addedTuples = "";
 					}
 
-				} 
+				}
 				else{// if(selected_rel != null && selected_rel.getArity()>0)
 					infoMessage.setText("Please, choose the relation first");
 				}
@@ -1814,8 +1918,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 
 	/**
 	 * The int[] 'tuple' denotes the indices of object identifiers
-	 * in the 'elements' list of the GUI. This may include general (*) 
-	 * or type ([person]) wildcards. 
+	 * in the 'elements' list of the GUI. This may include general (*)
+	 * or type ([person]) wildcards.
 	 * @param rel
 	 * @param tuple
 	 */
@@ -1833,7 +1937,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 			queryModels.add(new QueryTableModel());
 		}
 		queryModels.elementAt(idx).addQuery(atstoadd);
-		myprimula.queryatoms.add(atstoadd);	
+		myprimula.queryatoms.add(atstoadd);
 		this.buildQueryatomsTables(queryModels);
 	}
 
@@ -1885,7 +1989,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 
 	/*
 	 * Takes an  atom specification with (typed) wildcards (as specified by their
-	 * position in the elements list), and 
+	 * position in the elements list), and
 	 * returns a GroundAtomList with all matching atoms
 	 */
 	private GroundAtomList buildAtoms(Rel rel, int[] tuple){
@@ -1929,7 +2033,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 			}
 			pos++;
 		}
-		
+
 		infoMessage.setText(rel.name.name+" ("+addedTuples+") added");
 		temp = null;
 		return result;
@@ -1982,12 +2086,12 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 //			int idx = relIndex.get(r);
 //			querytables.elementAt(idx).setModel(queryModels.elementAt(idx));
 //		}
-//			
+//
 //		queryatomsPanel.updateUI();
 //	}
 
 	/**
-	 * It is required that a vector 'qtm' of (empty) QueryTableModels is already 
+	 * It is required that a vector 'qtm' of (empty) QueryTableModels is already
 	 * initialized. That makes it easier to call this method from different contexts
 	 * when 'qtm' consists of different subclasses of QueryTableModel.
 	 * @param qtm
@@ -2009,11 +2113,11 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 			nextjsp.getViewport().add(nextjt);
 			queryatomsScrolllists.add(nextjsp);
 			queryatomsPanel.add(nextjsp);
-			
+
 		}
 		// Customize the table models
 		for (Rel r: queryatoms.keySet()) {
-			int idx = relIndex.get(r.name()); 
+			int idx = relIndex.get(r.name());
 			buildQueryatomsTable(qtm.elementAt(idx),queryatoms.get(r));
 		}
 //		for (JTable jt: querytables)
@@ -2022,21 +2126,21 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 //			jsp.updateUI();
 		queryatomsPanel.updateUI();
 	}
-	
+
 	/**
 	 * Sets the QueryTableModel 'qtm' to contain the atoms in 'queries'.
 	 * All atoms should be of one relation only
-	 * 
-	 * Callers of this method must ensure that qtm is the appropriate 
+	 *
+	 * Callers of this method must ensure that qtm is the appropriate
 	 * QueryTableModel for this relation.
-	 * 
+	 *
 	 * @param qtm
 	 * @param queries
 	 */
 	private void buildQueryatomsTable(QueryTableModel qtm, GroundAtomList queries){
 		selectedQueryAtom = null;
 		qtm.reset();
-		
+
 		for(int i=0; i<queries.size(); ++i){
 			GroundAtom temp = (GroundAtom)queries.atomAt(i);
 			int nodes[] = temp.args;
@@ -2058,8 +2162,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 
 		if( myACEControl != null ) myACEControl.primulaQueryChanged();//keith cascio 20060620
 	}
-	
-	
+
+
 //	private void generateQueryatoms(){
 //		LinkedList relstruct = new LinkedList();
 //		queryatoms.reset();
@@ -2125,27 +2229,27 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 //	private double[][] computeQueryBatch(){
 //		/* Computes the probability of each query atom in all
 //		 * data cases contained in myprimula.rdata
-//		 * 
+//		 *
 //		 * Assumes that all probabilities can be computed by just
-//		 * evaluating the probability formula, i.e., no dependence on 
-//		 * unobserved atoms. 
-//		 * 
+//		 * evaluating the probability formula, i.e., no dependence on
+//		 * unobserved atoms.
+//		 *
 //		 * Returns a queryatoms.length x 7 double matrix, containing for each
 //		 * query atom:
-//		 * 
+//		 *
 //		 * count of true positives
 //		 * count of false positives
 //		 * count of false negatives
 //		 * count of true negatives
 //		 * count of atoms for which probability was not computed, because of dependence on unobserved atom
 //		 * count of atoms for which a truth value was not given in the data case
-//		 * average log-likelihood 
+//		 * average log-likelihood
 //		 */
-//		
+//
 //		double[][] result = new double[queryatoms.size()][7];
-//		
+//
 //		RelData rdata = myprimula.getReldata();
-//		
+//
 //		if (rdata.size() > 1){
 //			System.out.println("Warning: data available for more than one input domain. Will evaluate queries only "
 //					+ "for first input domain");
@@ -2153,7 +2257,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 //		RelDataForOneInput rdoi = rdata.caseAt(0);
 //		RelStruc A = rdoi.inputDomain();
 //		OneStrucData osd;
-//		
+//
 //		GroundAtom gat;
 //		CPModel pf;
 //		String[] varargs;
@@ -2170,14 +2274,14 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 //				varargs = rbn.args(gat.rel());
 //				intargs = gat.args();
 //				try{
-//					prob = (double)pf.evaluate(A, 
-//							osd, 
-//							varargs, 
+//					prob = (double)pf.evaluate(A,
+//							osd,
+//							varargs,
 //							intargs,
 //							0,
-//							true,  
-//							true, 
-//							null, 
+//							true,
+//							true,
+//							null,
 //							false,
 //							null,
 //							null,
@@ -2213,20 +2317,20 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 //				}
 //			} //for (int j=0;j<queryatoms.size();j++)
 //		} // (int i=0;i<rdoi.numberOfObservations();i++)
-//		
+//
 //		/* Normalize the likelihood */
 //		double numevaluated;
 //		for (int j=0;j<queryatoms.size();j++){
 //			numevaluated = result[j][0]+result[j][1]+result[j][2]+result[j][3];
 //			result[j][6]=result[j][6]/numevaluated;
 //		}
-//		
+//
 //		// Temporary:
 //		double TP=0;
 //		double FP=0;
 //		double FN=0;
 //		double TN=0;
-//		
+//
 //		System.out.println("[TP,FP,FN,TN,Pred. not evaluated,Ground truth unknown, P(positive)]");
 //		for (int i=0;i< result.length;i++){
 //			System.out.println(queryatoms.atomAt(i).asString(A)+'\t'+StringOps.arrayToString(result[i], "[", "]"));
@@ -2235,14 +2339,14 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 //			FN=FN+result[i][2];
 //			TN=TN+result[i][3];
 //		}
-//		
+//
 //		double acc= (TP+TN)/(TP+TN+FP+FN);
-//		
+//
 //		System.out.println("TP: " + TP +" FP: " + FP + " FN: " + FN + " TN: "+ TN);
 //		System.out.println("Accuracy: " + acc );
 //		return result;
 //	}
-//	
+//
 //	private void evaluateAccuracy(){
 //		/* Computes the accuracy of the current rbn 
 //		 * for all probabilistic relations w.r.t. the 
@@ -2404,7 +2508,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 										varargs, 
 										intargs, 
 										0,
-										true, 
+										true,
 										true, 
 										null, 
 										false,
@@ -2438,7 +2542,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 										varargs, 
 										intargs, 
 										0,
-										true, 
+										true,
 										true, 
 										null, 
 										false,
@@ -2670,7 +2774,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		if (o instanceof SampleProbs){
 			for (Rel r: queryatoms.keySet()) {
 				MCMCTableModel mcmct = mcmcModels.elementAt(relIndex.get(r.name()));
-				
+
 				double [][] prob= ((SampleProbs)o).getProbs(r);
 				for(int i=0; i<prob.length; i++){
 					String[] probsasstring = new String[prob[i].length];
@@ -2702,22 +2806,22 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 			mapRestarts.setText("" +((MapVals)o).getRestarts());
 			mapLL.setText("" +((MapVals)o).getLLstring());
 		}
-//		
+//
 //		/** keith cascio 20060511 ... */
 //		//dataModel.resetACE();
 //		/** ... keith cascio */
-//		
+//
 		queryatomsPanel.updateUI();
 	}
-	
+
 //	public OneStrucData getMapValuesAsInst(){
 //		LinkedList<String> mapvals = mapModel.getMapValues();
 //		LinkedList<String> queryats = mapModel.getQuery();
 //		OneStrucData result = new OneStrucData();
 //		result.setParentRelStruc(myprimula.getRels());
-//		
+//
 //		Iterator<String> itq = queryats.iterator();
-//		
+//
 //		for (Iterator<String> itmap = mapvals.iterator(); itmap.hasNext();) {
 //			System.out.println(itq.next() + " " + itmap.next());
 //		}
@@ -2726,23 +2830,23 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 ////		}
 //		return result;
 //	}
-	
+
 
 
 	private void buildMAPTables() {
 		/* creating MapModels
-		 * It is required that querytables and queryatomsScrolllists exist and have the 
+		 * It is required that querytables and queryatomsScrolllists exist and have the
 		 * same length as relList
 		 */
 		mapModels=new Vector<MAPTableModel>();
 		for (int i=0;i<querytables.size();i++) {
-			
+
 			Rel r = relList.elementAt(i);
 			MAPTableModel maptm = new MAPTableModel(queryModels.elementAt(i),relList.elementAt(i));
-			
+
 			mapModels.add(maptm);
 			JTable qt = querytables.elementAt(i);
-			
+
 			qt.setModel(maptm);
 			qt.getColumnModel().getColumn(0).setPreferredWidth(150);
 			qt.getColumnModel().getColumn(1).setPreferredWidth(100);
@@ -2754,19 +2858,19 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		}
 	}
 	
-	
+
 	private void buildMCMCTables() {
 		/* creating mcmcModels
-		 * It is required that querytables and queryatomsScrolllists exist and have the 
+		 * It is required that querytables and queryatomsScrolllists exist and have the
 		 * same length as relList
 		 */
 		mcmcModels=new Vector<MCMCTableModel>();
 		//Vector<JTable> newquerytables = new Vector<JTable>();
 		for (int i=0;i<querytables.size();i++) {
-			
+
 			Rel r = relList.elementAt(i);
 			MCMCTableModel mcmctm = new MCMCTableModel(queryModels.elementAt(i),relList.elementAt(i));
-			
+
 			mcmcModels.add(mcmctm);
 			JTable qt = querytables.elementAt(i);
 			//newquerytables.add(qt);
@@ -2786,7 +2890,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 //			qt.doLayout();
 		}
 	}
-	
+
 //	private void setMAPTable() {
 //		for (int i=0;i<querytables.size();i++) {
 //			JTable qt = querytables.elementAt(i);
@@ -2799,7 +2903,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 //			qt.getColumnModel().getColumn(0).setPreferredWidth(150);
 //		}
 //	}
-	
+
 	public void stateChanged(ChangeEvent e) {
 		if (e.getSource() == inferencePane) {
 			switch (inferencePane.getSelectedIndex()) {
@@ -2825,5 +2929,43 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 			}
 		}
 	}
-	
+
+//	public QueryTableModel getDataModel() {
+//		return dataModel;
+//	}
+
+	public MapThread getMapthr() {
+		return mapthr;
+	}
+
+	public SampleThread getSamThr() {
+		return sampthr;
+	}
+
+	public List<MapThread> getThreads() {
+		return threads;
+	}
+
+	public void setNum_threads(int num_threads) {
+		this.num_threads = num_threads;
+	}
+
+	public void setValueObserver(Observer o) {
+		this.valueObserver = o;
+	}
+
+//	public void setBoolInstArbitrary(BoolRel rel, Boolean truthValue) {
+//		first_bin = first_arb = true;
+//		if (rel.arity == 0){
+//			if(queryModeOn){
+//				queryatoms.add(rel,new int[0]);
+//				updateQueryatomsList();
+//			}
+//			else{
+//				inst.add(new GroundAtom(rel,new int[0]),truthValue,"?");
+//				updateInstantiationList();
+//			}
+//		}
+//	}
+
 }

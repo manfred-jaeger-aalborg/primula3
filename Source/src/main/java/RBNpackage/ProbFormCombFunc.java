@@ -26,7 +26,6 @@ package RBNpackage;
 
 import java.util.*;
 import RBNExceptions.*;
-import RBNLearning.GradientGraph;
 import RBNgui.Primula;
 import RBNinference.PFNetworkNode;
 import RBNutilities.*;

@@ -26,7 +26,6 @@ package RBNpackage;
 import java.util.*;
 import RBNExceptions.*;
 import RBNutilities.*;
-import myio.StringOps;
 
 
 public class SparseRelStruc extends RelStruc {

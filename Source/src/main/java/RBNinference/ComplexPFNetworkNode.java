@@ -62,11 +62,15 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
     		Hashtable<String,Double> evaluated,
 			long[] timers)
 			throws RBNCompatibilityException
-			{
-		double result = cpmodel.evalSample(A,atomhasht,inst,evaluated,timers);
-		//System.out.print(" cP: " + result);
-		return result;
-			}
+    {
+        if (cpmodel instanceof ProbFormGnn) {
+            if (((ProbFormGnn) cpmodel).getGnnPy() == null)
+                ((ProbFormGnn) cpmodel).setGnnPy(gnnPy);
+        }
+        double result = cpmodel.evalSample(A,atomhasht,inst,evaluated,timers);
+        //System.out.print(" cP: " + result);
+        return result;
+    }
 
 
 	public  int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, Hashtable atomhasht )
@@ -84,7 +88,7 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 
 	public void initializeForSampling(int sampleordmode, 
 			int adaptivemode,
-			Hashtable<Rel,GroundAtomList> queryatoms, 
+			Hashtable<Rel,GroundAtomList> queryatoms,
 			int num_subsamples_minmax,
 			int num_subsamples_adapt){
 		super.initializeForSampling(sampleordmode,
@@ -126,34 +130,30 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 			System.out.println("#####################found prob " + prob);
 		if (instantiated == -1){
 
-			double rand = Math.random();
-			if (rand < prob){
-				sampleinst = 1;
-				thissampleprob = prob;
-				thisdistrprob = prob; 
+					double rand = Math.random();
+					if (rand < prob){
+						sampleinst = 1;
+						thissampleprob = prob;
+						thisdistrprob = prob;
+					}
+					else{
+						sampleinst = 0;
+						thissampleprob = 1-prob;
+						thisdistrprob = 1-prob;
+					}
+				}
+				else {
+					sampleinst = instantiated;
+					thissampleprob = 1;
+					switch (instantiated){
+					case 1: thisdistrprob = prob;
+					break;
+					case 0: thisdistrprob = (1-prob);
+					}
+				}
 			}
-			else{
-				sampleinst = 0;
-				thissampleprob = 1-prob;
-				thisdistrprob = 1-prob; 
-			}
-		}
-		else {
-			sampleinst = instantiated;
-			thissampleprob = 1;
-			switch (instantiated){
-			case 1: thisdistrprob = prob;
-			break;
-			case 0: thisdistrprob = (1-prob);
-			}
-		}
-			}
 
-
-
-
-
-	public  void setDistrProb(RelStruc A, 
+	public  void setDistrProb(RelStruc A,
 			Hashtable<String,PFNetworkNode> atomhasht,
 			OneStrucData inst,
     		Hashtable<String,Double> evaluated,

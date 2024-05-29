@@ -26,11 +26,9 @@ package RBNinference;
 
 import javax.swing.JOptionPane;
 import javax.swing.Icon;
-import java.util.*;
 import java.io.*;
 import java.text.DecimalFormat;
 
-import RBNio.*;
 import RBNgui.*;
 
 import edu.ucla.belief.ui.primula.*;

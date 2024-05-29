@@ -2,7 +2,6 @@ package RBNio;
 
 import RBNpackage.*;
 import RBNExceptions.*;
-import RBNLearning.GGNode;
 import myio.StringOps;
 import java.io.*;
 import java.util.*;

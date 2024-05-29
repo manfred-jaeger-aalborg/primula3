@@ -28,8 +28,6 @@ import java.awt.Color;
 import java.io.*;
 import java.util.Vector;
 import org.dom4j.Element;
-import org.dom4j.Document;
-
 
 
 public abstract class Rel implements Serializable, Comparable<Rel>{

@@ -1,7 +1,6 @@
 package RBNpackage;
 
 import java.util.Hashtable;
-import java.util.Vector;
 
 import RBNExceptions.RBNCompatibilityException;
 

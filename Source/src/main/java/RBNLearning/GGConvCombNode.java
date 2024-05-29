@@ -24,15 +24,10 @@
 package RBNLearning;
 
 import java.util.*;
-import java.io.*;
 
-import myio.StringOps;
 import RBNpackage.*;
 import RBNgui.*;
 import RBNExceptions.*;
-import RBNutilities.*;
-import RBNinference.*;
-
 
 
 /** In a GGConvCombNode the children vector has exactly
