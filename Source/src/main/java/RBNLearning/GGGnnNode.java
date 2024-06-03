@@ -40,18 +40,18 @@ public class GGGnnNode extends GGCPMNode {
         this.A = A;
         this.inst = I;
 
-        if (this.cpm instanceof ProbFormGnn) {
+        if (this.cpm instanceof CPMGnn) {
             if (onsd == null && sampledRel == null) {
                 onsd = new OneStrucData(this.A.getmydata().copy()); // only one copy per time
                 sampledRel = new SparseRelStruc(this.A.getNames(), onsd, this.A.getCoords(), this.A.signature());
                 sampledRel.getmydata().add(this.inst.copy());
             }
             this.attr_parents = this.cpm.parentRels();
-            this.oneHotEncoding = ((ProbFormGnn) this.cpm).isOneHotEncoding();
+            this.oneHotEncoding = ((CPMGnn) this.cpm).isOneHotEncoding();
             x = "";
 
             if (num_nodes == -1) { // we do not need to compute it again
-                for (Rel attr : ((ProbFormGnn) this.cpm).getGnnattr()) {
+                for (Rel attr : ((CPMGnn) this.cpm).getGnnattr()) {
                     try {
                         int[][] mat = A.allTypedTuples(attr.getTypes());
                         // maybe there could be attributes with different number, we keep the biggest
@@ -68,7 +68,7 @@ public class GGGnnNode extends GGCPMNode {
                 boolrel = sampledRel.getBoolBinaryRelations();
             edge_index = "";
             this.edge_pred = false;
-            if (this.cpm instanceof ProbFormGnn gnnpf) {
+            if (this.cpm instanceof CPMGnn gnnpf) {
                 for (BoolRel element : boolrel) {
                     if (element.ispredefined()) {
                         if (Objects.equals(element.name(), gnnpf.getEdge_name()))
@@ -77,7 +77,7 @@ public class GGGnnNode extends GGCPMNode {
                 }
             }
 
-            Rel[] pfargs = ((ProbFormGnn) this.cpm).getGnnattr();
+            Rel[] pfargs = ((CPMGnn) this.cpm).getGnnattr();
             for (int i = 0; i < pfargs.length; i++) {
                 if (!pfargs[i].ispredefined()) { // do not add predefined values
                     try {
@@ -134,10 +134,10 @@ public class GGGnnNode extends GGCPMNode {
             throw new NullPointerException("GnnPy object null!");
         } else {
 
-            if (this.cpm instanceof ProbFormGnn gnnpf) {
+            if (this.cpm instanceof CPMGnn gnnpf) {
                 // this first part set the x and edge_index object once only if predefined
                 if (attr_parents.isEmpty() && Objects.equals(x, "")) {
-                    x = this.gnnPy.stringifyGnnFeatures(num_nodes, sampledRel, ((ProbFormGnn)this.cpm).getGnnattr(), this.oneHotEncoding);
+                    x = this.gnnPy.stringifyGnnFeatures(num_nodes, sampledRel, ((CPMGnn)this.cpm).getGnnattr(), this.oneHotEncoding);
                 }
                 if (this.edge_pred && Objects.equals(edge_index, "")) {
                     for (BoolRel element : boolrel) {
@@ -203,18 +203,26 @@ public class GGGnnNode extends GGCPMNode {
                     }
                 }
 
-                if (Objects.equals(((ProbFormGnn) this.cpm).getGnn_inference(), "node"))
-                    this.value = this.gnnPy.inferModelNodeDouble(Integer.parseInt(gnnpf.getArgument()), gnnpf.getClassId(), x, edge_index, ((ProbFormGnn) this.cpm).getIdGnn(), "");
-                else if (Objects.equals(((ProbFormGnn) this.cpm).getGnn_inference(), "graph")) {
-                    this.value = this.gnnPy.inferModelGraphDouble(gnnpf.getClassId(), x, edge_index, ((ProbFormGnn) this.cpm).getIdGnn(),"");
+                if (Objects.equals(((CPMGnn) this.cpm).getGnn_inference(), "node"))
+                    this.value = this.gnnPy.inferModelNodeDouble(Integer.parseInt(gnnpf.getArgument()), gnnpf.getClassId(), x, edge_index, ((CPMGnn) this.cpm).getIdGnn(), "");
+                else if (Objects.equals(((CPMGnn) this.cpm).getGnn_inference(), "graph")) {
+                    this.value = this.gnnPy.inferModelGraphDouble(gnnpf.getClassId(), x, edge_index, ((CPMGnn) this.cpm).getIdGnn(),"");
                 } else
-                    throw new IllegalArgumentException("not valid keyword used: " + ((ProbFormGnn) this.cpm).getGnn_inference());
+                    throw new IllegalArgumentException("not valid keyword used: " + ((CPMGnn) this.cpm).getGnn_inference());
 
 //                if (((ProbFormGnn) this.pf).getClassId() != -1)
 //                    result = this.gnnPy.inferModelGraphDouble(gnnpf.getClassId(), x, this.edge_index, ((ProbFormGnn) this.pf).getIdGnn(), "");
 //                else
 //                    result = this.gnnPy.inferModelNodeDouble(Integer.parseInt(gnnpf.getArgument()), gnnpf.getClassId(), x, this.edge_index, ((ProbFormGnn) this.pf).getIdGnn(), "");
-//                this.value = result;
+                // this.value = result;
+                if (this.isuga()) {
+                    int iv = this.instval(); // Can only be 0,1, or -1, because if a relation is defined by ProbFormCombFunc
+                    // it can only be Boolean
+                    if (iv == -1)
+                        System.out.println("Warning: undefined instantiation value in GGCombFuncNode.evaluate()");
+                    if (iv == 0)
+                        this.value = 1 - this.value;
+                }
                 return this.value;
             } else {
                 System.out.println("Not a correct instance of PF");

@@ -33,6 +33,7 @@ import java.awt.event.*;
 import java.awt.*;
 import java.io.*;
 import java.util.Hashtable;
+import java.util.Objects;
 import java.util.Vector;
 
 import MLNParser.MLNParserFacade;
@@ -85,6 +86,9 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 	 * @uml.property  name="loadOrdered"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
+
+	private JMenuItem gnnSettingsModule = new JMenuItem("GNN settings");
+
 //	private JMenuItem loadOrdered     = new JMenuItem("Create OrderedStruc");
 	/**
 	 * @uml.property  name="loadSparse"
@@ -278,6 +282,7 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 	private static boolean isBavariaOpen  = false;
 	private static boolean isEvModuleOpen = false;
 	private static boolean isLrnModuleOpen = false;
+	private static boolean isGNNSettingsOpen = false;
 	/**
 	 * @uml.property  name="strucEdited"
 	 */
@@ -481,6 +486,7 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 	 * @uml.property  name="rels"
 	 * @uml.associationEnd  
 	 */
+	protected GNNSettings gnnSettings;
 	protected RelStruc rels;
 	
 	protected Signature sig;
@@ -576,7 +582,8 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 	 * @uml.property  name="myFlagSystemExitEnabled"
 	 */
 	private boolean myFlagSystemExitEnabled = true;
-	public static final String STR_FILENAME_LOGO = "src/main/java/Icons/small_logo.jpg";
+//	public static final String STR_FILENAME_LOGO = "src/main/java/Icons/small_logo.jpg";
+	public static final String STR_FILENAME_LOGO = "small_logo.jpg";
 	/**
 	 * @uml.property  name="myPreferences"
 	 * @uml.associationEnd  multiplicity="(1 1)"
@@ -820,6 +827,7 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		optionsmenu.add(inferenceOptions);
 		optionsmenu.add(itemForgetAll);
 		optionsmenu.add(syntaxOptions);
+		optionsmenu.add(gnnSettingsModule);
 		itemForgetAll.setToolTipText( "Forget the locations of all external software dependencies, i.e. samiam, inflib, ace, etc." );
 		mb.add(optionsmenu);
 		setJMenuBar(mb);
@@ -927,6 +935,8 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 
 		itemabout.addActionListener( this );
 
+		gnnSettingsModule.addActionListener(this);
+
 		//creating the layout
 //		srcLabels.add(rstsrcLabel);
 		srcLabels.add(rbnsrcLabel);
@@ -978,233 +988,234 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 	public void actionPerformed( ActionEvent e ) {
 		Object source = e.getSource();
 
-	 if( source == datasrcBrowseButton ){
-			domainFileChooser.setFileFilter( myFilterRDEF );
-			int value = domainFileChooser.showDialog(Primula.this, "Select");
-			if (value == JFileChooser.APPROVE_OPTION){
-				rdeffile = domainFileChooser.getSelectedFile();
-				if (confirm(UNSAVED_DATA_LOST)){
-					loadSparseRelFile(rdeffile);
-					datasrcfilename.setText(rdeffile.getName());
-					
-
+		 if( source == datasrcBrowseButton ){
+				domainFileChooser.setFileFilter( myFilterRDEF );
+				int value = domainFileChooser.showDialog(Primula.this, "Select");
+				if (value == JFileChooser.APPROVE_OPTION){
+					rdeffile = domainFileChooser.getSelectedFile();
+					if (confirm(UNSAVED_DATA_LOST)){
+						loadSparseRelFile(rdeffile);
+						datasrcfilename.setText(rdeffile.getName());
+					}
 				}
 			}
-		}
 
-		else if( source == loadRBN ){
-			relmodelFileChooser.resetChoosableFileFilters();
-			relmodelFileChooser.addChoosableFileFilter(myFilterRBN);
-			relmodelFileChooser.addChoosableFileFilter(myFilterMLN);
-			relmodelFileChooser.setFileFilter(myFilterRBN);
-			int value = relmodelFileChooser.showDialog(Primula.this, "Load");
-			if (value == JFileChooser.APPROVE_OPTION) {
-				File selectedFile = relmodelFileChooser.getSelectedFile();
-				if (myFilterRBN.accept(selectedFile))
-					loadRBNFunction(selectedFile);
-				else if (myFilterMLN.accept(selectedFile)){
-					File mlnFile = selectedFile;
-					relmodelFileChooser.resetChoosableFileFilters();
-					Filter_db cwdbFilter = new Filter_db(false);
-					relmodelFileChooser.addChoosableFileFilter(cwdbFilter);
-					relmodelFileChooser.setFileFilter(cwdbFilter);
-					value = relmodelFileChooser.showDialog(Primula.this, "Load domain data");
+			else if( source == loadRBN ){
+				relmodelFileChooser.resetChoosableFileFilters();
+				relmodelFileChooser.addChoosableFileFilter(myFilterRBN);
+				relmodelFileChooser.addChoosableFileFilter(myFilterMLN);
+				relmodelFileChooser.setFileFilter(myFilterRBN);
+				int value = relmodelFileChooser.showDialog(Primula.this, "Load");
+				if (value == JFileChooser.APPROVE_OPTION) {
+					File selectedFile = relmodelFileChooser.getSelectedFile();
+					if (myFilterRBN.accept(selectedFile))
+						loadRBNFunction(selectedFile);
+					else if (myFilterMLN.accept(selectedFile)){
+						File mlnFile = selectedFile;
+						relmodelFileChooser.resetChoosableFileFilters();
+						Filter_db cwdbFilter = new Filter_db(false);
+						relmodelFileChooser.addChoosableFileFilter(cwdbFilter);
+						relmodelFileChooser.setFileFilter(cwdbFilter);
+						value = relmodelFileChooser.showDialog(Primula.this, "Load domain data");
 
-					File cwdbfile = null;
-					if (value == JFileChooser.APPROVE_OPTION) 
-						cwdbfile = relmodelFileChooser.getSelectedFile();
+						File cwdbfile = null;
+						if (value == JFileChooser.APPROVE_OPTION)
+							cwdbfile = relmodelFileChooser.getSelectedFile();
 
-					relmodelFileChooser.resetChoosableFileFilters();
-					Filter_db owdbFilter = new Filter_db(true);
-					relmodelFileChooser.addChoosableFileFilter(owdbFilter);
-					value = relmodelFileChooser.showDialog(Primula.this, "Load evidence data");
-					File owdbfile = null;
-					if (value == JFileChooser.APPROVE_OPTION) 
-						owdbfile = relmodelFileChooser.getSelectedFile();
+						relmodelFileChooser.resetChoosableFileFilters();
+						Filter_db owdbFilter = new Filter_db(true);
+						relmodelFileChooser.addChoosableFileFilter(owdbFilter);
+						value = relmodelFileChooser.showDialog(Primula.this, "Load evidence data");
+						File owdbfile = null;
+						if (value == JFileChooser.APPROVE_OPTION)
+							owdbfile = relmodelFileChooser.getSelectedFile();
 
-					this.LoadMLN(mlnFile,cwdbfile,owdbfile);
-					if (cwdbfile != null)
-						this.rstsrc.setText(" "+cwdbfile.getName());
-					else
-						this.rstsrc.setText(" "+mlnFile.getName());
+						this.LoadMLN(mlnFile,cwdbfile,owdbfile);
+						if (cwdbfile != null)
+							this.rstsrc.setText(" "+cwdbfile.getName());
+						else
+							this.rstsrc.setText(" "+mlnFile.getName());
 
-				}/* end extension mln */
+					}/* end extension mln */
+				}
 			}
-		}
-		else if( source == startBavaria ){
-			//actionlistener for starting the Bavaria editor
-			//rst loaded from file
-			if(rels != null && rels instanceof SparseRelStruc && !isBavariaOpen && srsfile != null){
-				SparseRelStruc temp = (SparseRelStruc)rels;
-				if(temp.getCoords().size() == 0)
-					temp.createCoords();
-				bavaria = new Bavaria(temp, srsfile, Primula.this, strucEdited);
-				isBavariaOpen = true;
-				rstsrc.setText("Bavaria RelStruc Editor");
-			}
+			else if( source == startBavaria ){
+				//actionlistener for starting the Bavaria editor
+				//rst loaded from file
+				if(rels != null && rels instanceof SparseRelStruc && !isBavariaOpen && srsfile != null){
+					SparseRelStruc temp = (SparseRelStruc)rels;
+					if(temp.getCoords().size() == 0)
+						temp.createCoords();
+					bavaria = new Bavaria(temp, srsfile, Primula.this, strucEdited);
+					isBavariaOpen = true;
+					rstsrc.setText("Bavaria RelStruc Editor");
+				}
 
+				//rst file created in Bavaria
+				else if (rels != null && rels instanceof SparseRelStruc && !isBavariaOpen && srsfile == null){
+					bavaria = new Bavaria((SparseRelStruc)rels, null, Primula.this, strucEdited);
+					isBavariaOpen = true;
+					rstsrc.setText("Bavaria RelStruc Editor");
+				}
 
-			//rst file created in Bavaria
-			else if (rels != null && rels instanceof SparseRelStruc && !isBavariaOpen && srsfile == null){
-				bavaria = new Bavaria((SparseRelStruc)rels, null, Primula.this, strucEdited);
-				isBavariaOpen = true;
-				rstsrc.setText("Bavaria RelStruc Editor");
+				//create a new rst file
+				else if (rels == null && !isBavariaOpen){
+					rels = new SparseRelStruc();
+					bavaria = new Bavaria((SparseRelStruc)rels, Primula.this, strucEdited);
+					isBavariaOpen = true;
+					rstsrc.setText("Bavaria RelStruc Editor");
+				}
 			}
-
-			//create a new rst file
-			else if (rels == null && !isBavariaOpen){
-				rels = new SparseRelStruc();
-				bavaria = new Bavaria((SparseRelStruc)rels, Primula.this, strucEdited);
-				isBavariaOpen = true;
-				rstsrc.setText("Bavaria RelStruc Editor");
-			}
-		}
-		else if( source == constructCPTBN ){
-			//actionlistener for constructing standard BN
-			boolean nogo = false;
-			String message = "";
-			if (rbn == null){
-				nogo = true;
-				message = message + " Please load rbn first";
-			}
-			if (rels == null){
-				nogo = true;
-				message = message + " Please load RelStruc first";
-			}
-			if (rbn != null){
-				if (!rbn.multlinOnly() & decomposemode != OPTION_NOT_DECOMPOSE){
+			else if( source == constructCPTBN ){
+				//actionlistener for constructing standard BN
+				boolean nogo = false;
+				String message = "";
+				if (rbn == null){
 					nogo = true;
-					message = message + " Please choose decompose:none for rbn containing non multilinear comb. functions";
+					message = message + " Please load rbn first";
 				}
-			}
-			if(!nogo){
-				try {
-					BayesConstructor constructor = null;
-					if( bnsystem == OPTION_SAMIAM )
-						constructor = new BayesConstructor(Primula.this ,
+				if (rels == null){
+					nogo = true;
+					message = message + " Please load RelStruc first";
+				}
+				if (rbn != null){
+					if (!rbn.multlinOnly() & decomposemode != OPTION_NOT_DECOMPOSE){
+						nogo = true;
+						message = message + " Please choose decompose:none for rbn containing non multilinear comb. functions";
+					}
+				}
+				if(!nogo){
+					try {
+						BayesConstructor constructor = null;
+						if( bnsystem == OPTION_SAMIAM )
+							constructor = new BayesConstructor(Primula.this ,
+									instasosd,
+									queryatoms,
+									makeNetworkName());
+
+						else { setBnoutfile();
+						constructor = new BayesConstructor(rbn,
+								rels,
 								instasosd,
 								queryatoms,
-								makeNetworkName());
-
-					else { setBnoutfile();
-					constructor = new BayesConstructor(rbn,
-							rels,
-							instasosd,
-							queryatoms,
-							bnoutfile);
+								bnoutfile);
+						}
+						constructor.constructCPTNetwork(evidencemode,
+								querymode,
+								decomposemode,
+								isolatedzeronodesmode,
+								layoutmode,
+								bnsystem);
 					}
-					constructor.constructCPTNetwork(evidencemode,
-							querymode,
-							decomposemode,
-							isolatedzeronodesmode,
-							layoutmode,
-							bnsystem);
+					catch(RBNCyclicException ex) {this.showMessage(ex.toString());}
+					catch(RBNCompatibilityException ex){this.showMessage(ex.toString());}
+					catch(RBNIllegalArgumentException ex){this.showMessage(ex.toString());};
 				}
-				catch(RBNCyclicException ex) {this.showMessage(ex.toString());}
-				catch(RBNCompatibilityException ex){this.showMessage(ex.toString());}
-				catch(RBNIllegalArgumentException ex){this.showMessage(ex.toString());};
+				else this.showMessage(message);
 			}
-			else this.showMessage(message);
-		}
-		else if (source == saveRBN){
-			File rbnfile;
-			relmodelFileChooser.setFileFilter(myFilterRBN);
-			int value = relmodelFileChooser.showDialog(Primula.this, "Save");
-			if (value == JFileChooser.APPROVE_OPTION) {
-				rbnfile = relmodelFileChooser.getSelectedFile();
-				rbn.saveToFile(rbnfile,rbnsyntax,true);
+			else if (source == saveRBN){
+				File rbnfile;
+				relmodelFileChooser.setFileFilter(myFilterRBN);
+				int value = relmodelFileChooser.showDialog(Primula.this, "Save");
+				if (value == JFileChooser.APPROVE_OPTION) {
+					rbnfile = relmodelFileChooser.getSelectedFile();
+					rbn.saveToFile(rbnfile,rbnsyntax,true);
+				}
 			}
-		}
-		else if (source == saveData){
-			domainFileChooser.setFileFilter( myFilterRDEF );
-			int value = domainFileChooser.showDialog(Primula.this, "Save");
-			if (value == JFileChooser.APPROVE_OPTION) {
-				File savefile = domainFileChooser.getSelectedFile();
-				rdata.saveToRDEF(savefile);
+			else if (source == saveData){
+				domainFileChooser.setFileFilter( myFilterRDEF );
+				int value = domainFileChooser.showDialog(Primula.this, "Save");
+				if (value == JFileChooser.APPROVE_OPTION) {
+					File savefile = domainFileChooser.getSelectedFile();
+					rdata.saveToRDEF(savefile);
+				}
 			}
-		}
-		else if (source == dataConvert){
-			File sourcefile;
-			File targetfile;
-			RelData inrdata = new RelData(); 
+			else if (source == dataConvert){
+				File sourcefile;
+				File targetfile;
+				RelData inrdata = new RelData();
 
-			domainFileChooser.resetChoosableFileFilters();
-			//			domainFileChooser.addChoosableFileFilter(myFilterRDEF);
-			domainFileChooser.addChoosableFileFilter(myFilterPL);
-			int value = domainFileChooser.showDialog(Primula.this, "Load");
-			if (value == JFileChooser.APPROVE_OPTION) {
-				try{
-					sourcefile = domainFileChooser.getSelectedFile();
-					//					if (myFilterRDEF.accept(sourcefile)){
-					//						RDEFReader rdefreader = new RDEFReader();
-					//						rdata = (RelData)rdefreader.readRDEF(sourcefile.getPath(),null);
-					//					}
-					if (myFilterPL.accept(sourcefile)){
-						AtomListReader alreader = new AtomListReader();
-						inrdata = alreader.readAL(sourcefile);
+				domainFileChooser.resetChoosableFileFilters();
+				//			domainFileChooser.addChoosableFileFilter(myFilterRDEF);
+				domainFileChooser.addChoosableFileFilter(myFilterPL);
+				int value = domainFileChooser.showDialog(Primula.this, "Load");
+				if (value == JFileChooser.APPROVE_OPTION) {
+					try{
+						sourcefile = domainFileChooser.getSelectedFile();
+						//					if (myFilterRDEF.accept(sourcefile)){
+						//						RDEFReader rdefreader = new RDEFReader();
+						//						rdata = (RelData)rdefreader.readRDEF(sourcefile.getPath(),null);
+						//					}
+						if (myFilterPL.accept(sourcefile)){
+							AtomListReader alreader = new AtomListReader();
+							inrdata = alreader.readAL(sourcefile);
+						}
 					}
+					catch (Exception ex){ ex.printStackTrace();}
 				}
-				catch (Exception ex){ ex.printStackTrace();}
-			}
-			domainFileChooser.resetChoosableFileFilters();
-			domainFileChooser.addChoosableFileFilter(myFilterRDEF);
-			//			domainFileChooser.addChoosableFileFilter(myFilterFOIL);	
-			value = domainFileChooser.showDialog(Primula.this, "Save");
-			if (value == JFileChooser.APPROVE_OPTION) {
-				try{
-					targetfile = domainFileChooser.getSelectedFile();
-					if (myFilterRDEF.accept(targetfile))
-						inrdata.saveToRDEF(targetfile);
-					//					if (myFilterFOIL.accept(targetfile))
-					//						rdata.saveToFOIL(targetfile);
+				domainFileChooser.resetChoosableFileFilters();
+				domainFileChooser.addChoosableFileFilter(myFilterRDEF);
+				//			domainFileChooser.addChoosableFileFilter(myFilterFOIL);
+				value = domainFileChooser.showDialog(Primula.this, "Save");
+				if (value == JFileChooser.APPROVE_OPTION) {
+					try{
+						targetfile = domainFileChooser.getSelectedFile();
+						if (myFilterRDEF.accept(targetfile))
+							inrdata.saveToRDEF(targetfile);
+						//					if (myFilterFOIL.accept(targetfile))
+						//						rdata.saveToFOIL(targetfile);
 
+					}
+					catch (Exception ex){ ex.printStackTrace();}
 				}
-				catch (Exception ex){ ex.printStackTrace();}
-			}	
-		}
-		else if( source == itemInvokeSamIam ){
-			//SamiamUIInt ui = getSamIamUIInstanceThis();
-			//if( ui != null ) ui.asJFrame().setVisible( true );
-			getSamiamManager().openSamiam();
-		}
-		else if( source == itemForgetAll ){
-			Primula.this.forgetAll();
-		}
-		else if( source == evModule ){
-			//actionlistener for opening the evidence module
-			if(!isEvModuleOpen){
-				evidenceModule = new InferenceModule(this);
-				evidenceModule.setVisibility(true);
-				isEvModuleOpen = true;
 			}
-		}
-		// +Learn
-		else if( source == lrnModule ){
-			//actionlistener for opening the learn module
-			openLearnModule(true);
-		}
-		else if( source == exit ){
-			if(strucEdited){
-				if(confirm(STRUCTURE_MODIFIED) == true)
+			else if( source == itemInvokeSamIam ){
+				//SamiamUIInt ui = getSamIamUIInstanceThis();
+				//if( ui != null ) ui.asJFrame().setVisible( true );
+				getSamiamManager().openSamiam();
+			}
+			else if( source == itemForgetAll ){
+				Primula.this.forgetAll();
+			}
+			else if( source == evModule ){
+				//actionlistener for opening the evidence module
+				if(!isEvModuleOpen){
+					evidenceModule = new InferenceModule(this);
+					evidenceModule.setVisibility(true);
+					isEvModuleOpen = true;
+				}
+			}
+			// +Learn
+			else if( source == lrnModule ){
+				//actionlistener for opening the learn module
+				openLearnModule(true);
+			}
+			else if( source == exit ){
+				if(strucEdited){
+					if(confirm(STRUCTURE_MODIFIED) == true)
+						exitProgram();
+				}
+				else
 					exitProgram();
 			}
-			else
-				exitProgram();
-		}
-		else if( source == btnDebugAceCompile ){
-			//String pathRST = "./blockmap_large.rst";
-			//String pathRBN = "./randblock_trans.rbn";
-			String pathRST = "./holmes_2.rst";
-			String pathRBN = "./holmes_2.rbn";
-			loadSparseRelFile( srsfile = new File( pathRST ) );
-			loadRBNFunction(             new File( pathRBN ) );
-			evModule.doClick();
-			//evidenceModule.aceCompile();
-			//evidenceModule.getACEControl().getActionCompile().actionPerformed( null );
-		}
-		else if( source == itemabout ){
-			JOptionPane.showMessageDialog(null,"Primula version 2.2 " + '\n' + "(C) 2009");
-		}
+			else if( source == btnDebugAceCompile ){
+				//String pathRST = "./blockmap_large.rst";
+				//String pathRBN = "./randblock_trans.rbn";
+				String pathRST = "./holmes_2.rst";
+				String pathRBN = "./holmes_2.rbn";
+				loadSparseRelFile( srsfile = new File( pathRST ) );
+				loadRBNFunction(             new File( pathRBN ) );
+				evModule.doClick();
+				//evidenceModule.aceCompile();
+				//evidenceModule.getACEControl().getActionCompile().actionPerformed( null );
+			}
+			else if( source == itemabout ){
+				JOptionPane.showMessageDialog(null,"Primula version 2.2 " + '\n' + "(C) 2009");
+			}
+			else if (source == gnnSettingsModule) {
+				System.out.println("ciao");
+				openGNNSettings();
+			}
 	}
 
 	public void keyPressed(KeyEvent e){
@@ -1356,7 +1367,7 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 	public void loadRBNFunction(File input_file){
 		if(instasosd.isEmpty() && queryatoms.isEmpty()){
 		
-				rbn = new RBN(input_file,this.sig);
+				rbn = new RBN(input_file, this.sig);
 			
 			rbnfile = input_file;
 			rbnfilename.setText(rbnfile.getName());
@@ -1368,7 +1379,7 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		else{
 //			if(confirm(INST_AND_QUERIES_LOST)){
 				try{
-					rbn = new RBN(input_file,this.sig);
+					rbn = new RBN(input_file, this.sig);
 					rbnfile = input_file;
 					rbnfilename.setText(rbnfile.getPath());
 				}catch (Exception ex){
@@ -1733,6 +1744,12 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		return evidenceModule;
 	}
 
+	public void openGNNSettings() {
+		if (!isGNNSettingsOpen) {
+			gnnSettings = new GNNSettings(this);
+			isGNNSettingsOpen = true;
+		}
+	}
 	public void setScriptPath(String scriptPath) {
 		this.scriptPath = scriptPath;
 	}
@@ -1809,8 +1826,9 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
             RBNPreldef gnn_pred = new RBNPreldef(
                     new BoolRel("alpha1", 1),
                     new String[]{"v"},
-                    new ProbFormGnn("v",
+                    new CPMGnn("v",
                             "gnnNode",
+							false,
                             new Rel[]{
                                     blue_pred.rel()
 //									edge_pred.rel()}
@@ -1867,7 +1885,7 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		RBNPreldef gnn_class_0 = new RBNPreldef(
 				new BoolRel("CLASS_0", 0),
 				new String[]{"v"},
-				new ProbFormGnn("v",
+				new CPMGnn("v",
 						"gnnGraph",
 						new Rel[]{
 								A_pred.rel(),
@@ -1889,7 +1907,7 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		RBNPreldef gnn_class_1 = new RBNPreldef(
 				new BoolRel("CLASS_1", 0),
 				new String[]{"v"},
-				new ProbFormGnn("v",
+				new CPMGnn("v",
 						"gnnGraph",
 						new Rel[]{
 								A_pred.rel(),
@@ -1935,8 +1953,9 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		RBNPreldef gnn_pos = new RBNPreldef(
 				new BoolRel("pos", 1),
 				new String[]{"v"},
-				new ProbFormGnn("v",
+				new CPMGnn("v",
 						"gnnHomophily",
+						false,
 						new Rel[]{
 								attr1,
 								attr2
@@ -1982,7 +2001,13 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 	}
 
 	public static void main( String[] args ){
-		
+		// cross platform look
+		try {
+			UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+
+		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
+			e.printStackTrace();
+		}
 		for( String arg : args ){
 			if( STR_OPTION_DEBUG.equals( arg ) ) FLAG_DEBUG = true;
 		}

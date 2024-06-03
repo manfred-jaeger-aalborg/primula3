@@ -114,7 +114,8 @@ public abstract class CPModel
      * 
      * If valonly==true, then only the value (no gradient) is computed
      */
-    public abstract Object[] evaluate(RelStruc A, 
+    public abstract Object[] evaluate(
+			RelStruc A,
     		OneStrucData inst, 
     		String[] vars,
     		int[] tuple,

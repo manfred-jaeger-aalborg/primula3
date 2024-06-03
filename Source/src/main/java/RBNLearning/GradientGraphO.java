@@ -122,7 +122,7 @@ public class GradientGraphO extends GradientGraph{
 	{	
 		super(mypr,data,params,go,mapats,m,obj,showInfoInPrimula);
 
-		this.debugPrint = false;
+		this.debugPrint = true;
 
 		RBN rbn = myPrimula.getRBN();
 		// this is a temporary solution to handle the evaluate method when the gnnPy object is not created
@@ -130,14 +130,14 @@ public class GradientGraphO extends GradientGraph{
 		// the at the end of this constructor the Jep interpreter will be closed!
 		// (at the moment I don't fin better ideas)
 		GnnPy temp_gnnPy = null;
-		//		if (this.checkGnnRel(rbn)) {
-		//			try {
-		//				temp_gnnPy = new GnnPy(myPrimula.getScriptPath(), myPrimula.getScriptName(), myPrimula.getPythonHome());
-		//				this.gnnPy = temp_gnnPy;
-		//			} catch (IOException e) {
-		//				throw new RuntimeException(e);
-		//			}
-		//		}
+		if (this.checkGnnRel(rbn)) {
+			try {
+				temp_gnnPy = new GnnPy(myPrimula.getScriptPath(), myPrimula.getScriptName(), myPrimula.getPythonHome());
+				this.gnnPy = temp_gnnPy;
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
 
 		//parameters = myPrimula.getParamNumRels();
 		allNodes = new Hashtable<String,GGCPMNode>();
@@ -327,9 +327,8 @@ public class GradientGraphO extends GradientGraph{
 						 */
 						if (mapatoms == null || mapatoms.get(nextrel)==null || !mapatoms.get(nextrel).contains(nextrel,nexttup)){
 
-
-							if (groundnextcpm instanceof ProbFormGnn && ((ProbFormGnn) groundnextcpm).getGnnPy() == null)
-								((ProbFormGnn) groundnextcpm).setGnnPy(this.gnnPy);
+							if (groundnextcpm instanceof CPMGnn && ((CPMGnn) groundnextcpm).getGnnPy() == null)
+								((CPMGnn) groundnextcpm).setGnnPy(this.gnnPy);
 
 							Object pfeval = groundnextcpm.evaluate(A,
 									osd,
@@ -353,7 +352,7 @@ public class GradientGraphO extends GradientGraph{
 							boolean undefined = ((pfeval instanceof Double && Double.isNaN((Double)pfeval))||
 									pfeval instanceof double[] && Double.isNaN(((double[])pfeval)[0]));
 
-							System.out.println("undefined = " + undefined);
+//							System.out.println("undefined = " + undefined);
 							
 							if (undefined && !(myggoptions.aca() && dependsonmissing)){
 								/* if pfeval != Double.NaN, then this groundnextpf has a constant value
@@ -932,12 +931,11 @@ public class GradientGraphO extends GradientGraph{
 			mxnode.setScore();
 			scored_atoms.add(mxnode);
 		}
-
 		Boolean terminate = false;
 		GGAtomMaxNode flipnext;
 		while (!terminate) {
 			flipnext = scored_atoms.poll();
-			if (flipnext.getScore() < 0) {
+			if (flipnext.getScore() <= 0) {
 				terminate = true;
 			}
 			else {
@@ -964,7 +962,6 @@ public class GradientGraphO extends GradientGraph{
 		}
 
 		return 0;
-
 	}
 
 	//	public double mapSearch_old(Vector<GGAtomMaxNode> allreadyflipped,
@@ -2121,13 +2118,17 @@ public class GradientGraphO extends GradientGraph{
 		return result;
 	}
 
-	//    private boolean checkGnnRel(RBN rbn) {
-	//        for(int i=0; i<rbn.prelements().length; i++) {
-	//            if (rbn.probForm_prels_At(i) instanceof ProbFormGnn)
-	//                return true;
-	//        }
-	//        return false;
-	//    }
+	public Hashtable<Rel, Vector<GGAtomMaxNode>> getMaxindicators() {
+		return maxindicators;
+	}
+
+	private boolean checkGnnRel(RBN rbn) {
+		for(int i=0; i<rbn.prelements().length; i++) {
+			if (rbn.cpmod_prelements_At(i) instanceof CPMGnn)
+				return true;
+		}
+		return false;
+	}
 
 	public void setGnnPyToNodes() {
 		for (GGNode node: this.llnode.children){

@@ -134,7 +134,7 @@ public class PFNetwork{
 			cpfn = (ComplexPFNetworkNode)allnodes.elementAt(i);
 			// since the jep object needs to be inside the sample thread, we cannot pre-sample before
 			// for this reason we skip this even if the number of parents could be less than numpar
-			if (cpfn.parents.size() <= numpar && !(cpfn.cpmodel() instanceof ProbFormGnn)){
+			if (cpfn.parents.size() <= numpar && !(cpfn.cpmodel() instanceof CPMGnn)){
 				SimplePFNetworkNode spfn = new SimplePFNetworkNode(cpfn,inst,A);
 				allnodes.remove(i);
 				allnodes.add(i,spfn);
@@ -564,7 +564,7 @@ public class PFNetwork{
 		 */
 		for (int i=0;i<allnodes.size();i++){
 			((PFNetworkNode)allnodes.elementAt(i)).initializeForNextSample();
-			if (((PFNetworkNode)allnodes.elementAt(i)).cpmodel() instanceof ProbFormGnn && ((PFNetworkNode)allnodes.elementAt(i)).getGnnPy() == null)
+			if (((PFNetworkNode)allnodes.elementAt(i)).cpmodel() instanceof CPMGnn && ((PFNetworkNode)allnodes.elementAt(i)).getGnnPy() == null)
 				((PFNetworkNode)allnodes.elementAt(i)).setGnnPy(this.gnnPy);
 		}
 		
@@ -725,7 +725,7 @@ public class PFNetwork{
 
 	public boolean checkGnnRel() {
 		for (PFNetworkNode node: allnodes) {
-			if (node.cpmodel() instanceof ProbFormGnn)
+			if (node.cpmodel() instanceof CPMGnn)
 				return true;
 		}
 		return false;

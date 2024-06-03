@@ -1,7 +1,9 @@
 package Experiments;
 
 import RBNExceptions.RBNIllegalArgumentException;
+import RBNLearning.GGAtomMaxNode;
 import RBNLearning.GradientGraph;
+import RBNLearning.GradientGraphO;
 import RBNLearning.RelDataForOneInput;
 import RBNgui.Bavaria;
 import RBNgui.InferenceModule;
@@ -9,10 +11,7 @@ import RBNgui.Primula;
 import RBNpackage.*;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.TreeSet;
+import java.util.*;
 
 public class homophily_wisconsin {
     static String primulahome = System.getenv("PRIMULAHOME");
@@ -29,8 +28,9 @@ public class homophily_wisconsin {
             gnn_rbn[i] = new  RBNPreldef(
                     new BoolRel("class_"+i, 1),
                     new String[]{"v"},
-                    new ProbFormGnn("v",
+                    new CPMGnn("v",
                             "GCNwis",
+                            false,
                             attrs_rels,
                             "edge",
                             "AB",
@@ -43,7 +43,7 @@ public class homophily_wisconsin {
 
         if (rbn) {
             File input_file = new File("/Users/lz50rg/Dev/homophily/experiments_wisconsin/const_wis.rbn");
-            RBN file_rbn = new RBN(input_file);
+            RBN file_rbn = new RBN(input_file ,primula.getSignature());
 
             RBNPreldef[] preledef = file_rbn.prelements();
             RBN manual_rbn = new RBN(2, 0);
@@ -128,14 +128,14 @@ public class homophily_wisconsin {
 
     public static void main(String[] args) {
         Primula primula = new Primula();
+        File srsfile = new File("/Users/lz50rg/Dev/homophily/experiments_wisconsin/wis_small.rdef");
+        primula.loadSparseRelFile(srsfile);
 
         RBN rbn = createRBN(primula, false);
         primula.setRbn(rbn);
         primula.getInstantiation().init(rbn);
 //        primula.loadRBNFunction(new File("/Users/lz50rg/Dev/homophily/gnn_trained_model_log.rbn"));
 
-        File srsfile = new File("/Users/lz50rg/Dev/homophily/experiments_wisconsin/wis_small.rdef");
-        primula.loadSparseRelFile(srsfile);
 
 //        openBavaria(true, primula, srsfile);
 
@@ -156,6 +156,8 @@ public class homophily_wisconsin {
         RelDataForOneInput prob_data = primula.getReldata().elementAt(0);
         int num_nodes = input_struct.domSize();
         try {
+            InferenceModule im = primula.openInferenceModule(false);
+
             GroundAtomList gal = new GroundAtomList();
 
             OneBoolRelData query_nodes = prob_data.inputDomain().getData().findInBoolRel("query_nodes");
@@ -165,22 +167,24 @@ public class homophily_wisconsin {
                 instantiated_nodes.add(node[0]);
             }
 
+            Hashtable<Rel,GroundAtomList> queryatoms = new Hashtable<>();
+
             for (BoolRel brel: queryList) {
                 int[][] mat = input_struct.allTypedTuples(brel.getTypes());
                 for (int[] ints : mat) {
                     if (instantiated_nodes.contains(ints[0]))
                         gal.add(brel, ints);
                 }
+                queryatoms.put(brel, gal);
+                im.addQueryAtoms(brel, gal);
             }
 
             // ****************************************************
 
-            InferenceModule im = primula.openInferenceModule(false);
-
-            im.setQueryAtoms(gal);
+//            im.setQueryAtoms(queryatoms);
 
             primula.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
-            primula.setScriptPath("/Users/lz50rg/Dev/primula-workspace/primula3/python/");
+            primula.setScriptPath("/Users/lz50rg/Dev/primula-workspace/primula3/Source/python/");
             primula.setScriptName("inference_test");
 
             im.setNumRestarts(1);
@@ -191,23 +195,25 @@ public class homophily_wisconsin {
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();
 
-            int[] mapValues = valueObserver.getMapVals();
-            String mapLikelihood = valueObserver.getLikelihood();
-            System.out.println("\n---------------------------------------");
-            System.out.println("Query atoms results:");
-            for (int i=0; i<gal.size(); i++) {
-                System.out.println(gal.atomAt(i).rel + Arrays.toString(gal.atomAt(i).args) + ": " + mapValues[i]);
-            }
-            System.out.println("\nLikelihood: " + mapLikelihood);
-            System.out.println("---------------------------------------\n");
+            // get the last instantiation for the atoms in the gradient graph through the maxindicators
+            Hashtable<Rel, Vector<GGAtomMaxNode>> lastMaxIndicators = ((GradientGraphO) GG).getMaxindicators();
 
-            // assign the map values to the current data
+//            for (Rel r: lastMaxIndicators.keySet()) {
+//                for (GGAtomMaxNode nextgimn: lastMaxIndicators.get(r))
+//                    System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst());
+//            }
+
             OneStrucData result = new OneStrucData();
             if (GG != null){
                 result.setParentRelStruc(primula.getRels());
 
-                for (int i=0; i<gal.size(); i++) {
-                    result.add(new GroundAtom(gal.atomAt(i).rel(), gal.atomAt(i).args), mapValues[i],"?");
+//                for (int i=0; i<gal.size(); i++) {
+//                    result.add(new GroundAtom(gal.atomAt(i).rel(), gal.atomAt(i).args), mapValues[i],"?");
+//                }
+
+                for (Rel r: lastMaxIndicators.keySet()) {
+                    for (GGAtomMaxNode nextgimn: lastMaxIndicators.get(r))
+                        result.add(nextgimn.myatom(), nextgimn.getCurrentInst(), "?");
                 }
 
                 primula.getInstantiation().add(result);
