@@ -43,7 +43,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 	 * yet evaluated or method resetValue() has been called */
 	Double value;
 	
-	Boolean is_evaluated;
+	Boolean is_evaluated = false;
 	
 	/**
 	 * If there are sum atoms: the values obtained for the numchains*windowsize different

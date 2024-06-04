@@ -124,6 +124,13 @@ public class MapThread extends GGThread {
 			restarts++;
 		}
 
+		System.out.println("Best likelihood found: " + SmallDouble.toStandardDouble(oldll));
+		System.out.println("Best combination found: ");
+		for (Rel r: gg.getMaxindicators().keySet()) {
+			for (GGAtomMaxNode nextgimn: gg.getMaxindicators().get(r))
+				System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst());
+		}
+
         if (this.gnnIntegration)
             this.gnnPy.closeInterpreter();
         this.isSampling = false;

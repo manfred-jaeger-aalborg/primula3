@@ -158,14 +158,15 @@ public class GnnPy {
                 NDArray ndArray = (NDArray) this.sharedInterpreter.getValue("out");
                 this.currentResult = (float[]) ndArray.getData();
                 double res = (double) this.currentResult[(node * numClass) + classId];
+                return res;
 
-                if (res == 1.0) // this serves to help MAP inference
-                    return res-0.01;
-                else if (res == 0.0) {
-                    return res+0.01;
-                } else {
-                    return res;
-                }
+//                if (res == 1.0) // this serves to help MAP inference (avoid infinite in the score)
+//                    return res-0.0001;
+//                else if (res == 0.0) {
+//                    return res+0.00001;
+//                } else {
+//                    return res;
+//                }
             }
             // else nothing
             return -1.0;

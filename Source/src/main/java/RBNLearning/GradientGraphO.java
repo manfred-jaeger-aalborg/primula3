@@ -828,8 +828,18 @@ public class GradientGraphO extends GradientGraph{
 				failcount++;
 				if (failcount > maxfailcount)
 					abort = true;
+			} else if (numchains != 0) success = true;
+
+			if (numchains == 0) {
+				llnode.evaluate();
+				if (llnode.likelihood()[0] != 0)
+					success = true;
+				else{
+					failcount++;
+					if (failcount > maxfailcount)
+						abort = true;
+				}
 			}
-			else success = true;
 		}
 
 		/* Perform windowsize-1 many steps of Gibbs sampling */
@@ -920,12 +930,10 @@ public class GradientGraphO extends GradientGraph{
 	//		
 	//	}
 
-	public double mapSearch(TreeSet<GGAtomMaxNode> flipcandidates,
-			int depth) {
+	public double mapSearch(TreeSet<GGAtomMaxNode> flipcandidates, int depth) {
 		System.out.println("mapSearch with depth " + depth); // Currently depth is not used!
 
-		PriorityQueue<GGAtomMaxNode> scored_atoms =
-				new PriorityQueue<GGAtomMaxNode>(new GGAtomMaxNode_Comparator());
+		PriorityQueue<GGAtomMaxNode> scored_atoms = new PriorityQueue<GGAtomMaxNode>(new GGAtomMaxNode_Comparator());
 
 		for (GGAtomMaxNode mxnode: flipcandidates) {
 			mxnode.setScore();
@@ -935,10 +943,9 @@ public class GradientGraphO extends GradientGraph{
 		GGAtomMaxNode flipnext;
 		while (!terminate) {
 			flipnext = scored_atoms.poll();
-			if (flipnext.getScore() <= 0) {
-				terminate = true;
-			}
-			else {
+
+			// check if it is not null (why??)
+			if (flipnext != null) {
 				flipnext.setCurrentInst(flipnext.getHighvalue());
 				flipnext.reEvaluateUpstream();
 
@@ -948,18 +955,30 @@ public class GradientGraphO extends GradientGraph{
 				 */
 				TreeSet<GGAtomMaxNode> update_us = new TreeSet<GGAtomMaxNode>();
 				update_us.add(flipnext);
-				for (GGCPMNode uga: flipnext.getAllugas()) {
-					for (GGAtomMaxNode mx: uga.getMaxIndicators()) {
+				for (GGCPMNode uga : flipnext.getAllugas()) {
+					for (GGAtomMaxNode mx : uga.getMaxIndicators()) {
 						update_us.add(mx);
 					}
 				}
-				for (GGAtomMaxNode mx: update_us) {
+				for (GGAtomMaxNode mx : update_us) {
 					scored_atoms.remove(mx);
 					mx.setScore();
 					scored_atoms.add(mx);
 				}
+//				System.out.println("Current likelihood: " + SmallDouble.toStandardDouble(llnode.likelihood()));
+
+				if (flipnext.getScore() <= 0) {
+					terminate = true;
+				}
 			}
 		}
+
+		System.out.println("Map search result");
+		for (Rel r: maxindicators.keySet()) {
+			for (GGAtomMaxNode nextgimn: maxindicators.get(r))
+				System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst());
+		}
+		System.out.println("-----------------");
 
 		return 0;
 	}

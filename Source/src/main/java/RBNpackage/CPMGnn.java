@@ -23,12 +23,14 @@ public class CPMGnn extends CPModel {
 
     // for graph classification: each probformgnn will represent a class for the classifier
     // e.g. MUTAG class has 2 classes: mutagenic (0) and non-mutagenic (1)
+    // for binary output represent the index of the True vale in the final logits/probabilities of the GNNs
     private int classId;
     // true if we use one-hot encoding for the features representation
     private boolean oneHotEncoding;
 
     // the name of the edge relation in the RBN definition (usually "edge")
     private String edge_name;
+    // AB, BA, ABBA (edge direction in the adjacency matrix)
     private String edge_direction;
     private GnnPy gnnPy;
     // each gnn will have an id that identify the model
@@ -51,18 +53,18 @@ public class CPMGnn extends CPModel {
         this.oneHotEncoding = oneHotEncoding;
     }
 
-    // used only to remove errors during compilation: TODO REMOVE
-    public CPMGnn(String argument, String idGnn, Rel[] attr, String edge_name, String edge_direction, boolean oneHotEncoding, int classId) {
-        this.setEdge_name(edge_name);
-        this.setEdge_direction(edge_direction);
-
-        this.argument = argument;
-        this.idGnn = idGnn;
-        this.gnnattr = attr;
-        this.classId = classId;
-        this.oneHotEncoding = oneHotEncoding;
-    }
-
+    /**
+     *
+     * @param argument argument
+     * @param idGnn id used in the load_gnn.py to load the GNN weights
+     * @param categorical boolean flag, True if the GNN is used for multiple classes
+     * @param attr array of Rel for the GNN attributes
+     * @param edge_name the name of the edge relation in the formula
+     * @param edge_direction how the adjacency matrix is composed (AB, BA, ABBA)
+     * @param gnn_inference "node" if the GNN is used for node classification, "graph" for graph classification
+     * @param oneHotEncoding true if the representation of the features are in a one-hot encoding representation
+     * @param classId index of the True value for which the CPMGnn will evaluate the probability
+     */
     public CPMGnn(String argument, String idGnn, Boolean categorical, Rel[] attr, String edge_name, String edge_direction, String gnn_inference, boolean oneHotEncoding, int classId) {
         this.setEdge_name(edge_name);
         this.setEdge_direction(edge_direction);
@@ -126,6 +128,9 @@ public class CPMGnn extends CPModel {
             OneStrucData onsd = new OneStrucData(A.getmydata().copy());
             SparseRelStruc sampledRel = new SparseRelStruc(A.getNames(), onsd, A.getCoords(), A.signature());
             sampledRel.getmydata().add(inst.copy());
+
+//            SparseRelStruc sampledRel = new SparseRelStruc(A.getNames(), A.getmydata(), A.getCoords(), A.signature());
+
             TreeSet<Rel> attr_parents = this.parentRels();
             // if it has no parents we use the current attributes (should work for numeric rel)
             if (attr_parents.isEmpty()) {
@@ -158,6 +163,7 @@ public class CPMGnn extends CPModel {
                     }
                 }
                 result[0] = this.evaluateGraph(sampledRel, num_nodes);
+//                result[0] = this.evaluateGraph((SparseRelStruc) A, num_nodes);
             } catch(RBNIllegalArgumentException e){
                 throw new RuntimeException(e);
             }

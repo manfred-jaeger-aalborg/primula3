@@ -163,6 +163,7 @@ public class GGGnnNode extends GGCPMNode {
                     for (Rel parent : attr_parents) {
                         int[][] mat = A.allTypedTuples(parent.getTypes());
                         for (int i = 0; i < mat.length; i++) {
+                            // find the nodes that have no values (-1) and assign the values form the currentInst in the maxIndicator to the sampledRel
                             if (sampledRel.truthValueOf(parent, mat[i]) == -1) {
                                 GroundAtom myatom = new GroundAtom(parent, mat[i]);
                                 GGAtomMaxNode currentMaxNode = this.thisgg.findInMaxindicators(myatom); // I don't like this so much, I keep now for greediness
@@ -210,11 +211,6 @@ public class GGGnnNode extends GGCPMNode {
                 } else
                     throw new IllegalArgumentException("not valid keyword used: " + ((CPMGnn) this.cpm).getGnn_inference());
 
-//                if (((ProbFormGnn) this.pf).getClassId() != -1)
-//                    result = this.gnnPy.inferModelGraphDouble(gnnpf.getClassId(), x, this.edge_index, ((ProbFormGnn) this.pf).getIdGnn(), "");
-//                else
-//                    result = this.gnnPy.inferModelNodeDouble(Integer.parseInt(gnnpf.getArgument()), gnnpf.getClassId(), x, this.edge_index, ((ProbFormGnn) this.pf).getIdGnn(), "");
-                // this.value = result;
                 if (this.isuga()) {
                     int iv = this.instval(); // Can only be 0,1, or -1, because if a relation is defined by ProbFormCombFunc
                     // it can only be Boolean
@@ -223,6 +219,14 @@ public class GGGnnNode extends GGCPMNode {
                     if (iv == 0)
                         this.value = 1 - this.value;
                 }
+
+//                double eps = 0.000000001;
+//                if (this.value == 1.0)
+//                    this.value -= eps;
+//                else if (this.value == 0.0) {
+//                    this.value += eps;
+//                }
+
                 return this.value;
             } else {
                 System.out.println("Not a correct instance of PF");

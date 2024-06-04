@@ -185,7 +185,7 @@ public class homophily_wisconsin {
 
             primula.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
             primula.setScriptPath("/Users/lz50rg/Dev/primula-workspace/primula3/Source/python/");
-            primula.setScriptName("inference_test");
+            primula.setScriptName("load_gnn");
 
             im.setNumRestarts(1);
 
