@@ -325,6 +325,7 @@ public class GradientGraphO extends GradientGraph{
 						/* check whether this atom has already been included as an upper ground atom node because
 						 * it is a map atom
 						 */
+						// TODO: current code means that evidence on atoms that also are MAP query atoms is ignored!
 						if (mapatoms == null || mapatoms.get(nextrel)==null || !mapatoms.get(nextrel).contains(nextrel,nexttup)){
 
 							if (groundnextcpm instanceof CPMGnn && ((CPMGnn) groundnextcpm).getGnnPy() == null)
@@ -943,7 +944,10 @@ public class GradientGraphO extends GradientGraph{
 		GGAtomMaxNode flipnext;
 		while (!terminate) {
 			flipnext = scored_atoms.poll();
-
+			if (flipnext.getScore() <= 0) {
+				terminate = true;
+				break;
+			}
 			// check if it is not null (why??)
 			if (flipnext != null) {
 				flipnext.setCurrentInst(flipnext.getHighvalue());
@@ -967,9 +971,7 @@ public class GradientGraphO extends GradientGraph{
 				}
 //				System.out.println("Current likelihood: " + SmallDouble.toStandardDouble(llnode.likelihood()));
 
-				if (flipnext.getScore() <= 0) {
-					terminate = true;
-				}
+
 			}
 		}
 
