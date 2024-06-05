@@ -37,7 +37,7 @@ def set_model(model_class, weights_path, **kwargs):
 # Define a dictionary to store model information with IDs
 models_info = {
     "gnnNode": (MYACRGnnNode, 
-        "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/models/alpha1_8_4_20240514-153123/RBN_acr_graph_alpha1_8_4.pt",
+        "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/models/alpha1_8_4_20240604-164429/RBN_acr_graph_alpha1_8_4.pt",
             {
                 "input_dim": 2,
                 "hidden_dim": [8,4],

@@ -238,7 +238,7 @@ public abstract class GGCPMNode extends GGNode{
 				((GGConstantNode)result).setCurrentParamVal(((ProbFormBoolEquality)cpm).evaluate(A,I));
 			}
 
-			if (cpm instanceof ProbFormGnn) {
+			if (cpm instanceof CPMGnn) {
 				result = new GGGnnNode(gg,cpm,allnodes,A,I,inputcaseno,observcaseno,parameters,useCurrentPvals,mapatoms,evaluated);
 			}
 			String key = gg.makeKey(cpm, inputcaseno, observcaseno, A);

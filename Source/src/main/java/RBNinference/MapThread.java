@@ -124,6 +124,13 @@ public class MapThread extends GGThread {
 			restarts++;
 		}
 
+		System.out.println("Best likelihood found: " + SmallDouble.toStandardDouble(oldll));
+		System.out.println("Best combination found: ");
+		for (Rel r: gg.getMaxindicators().keySet()) {
+			for (GGAtomMaxNode nextgimn: gg.getMaxindicators().get(r))
+				System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst());
+		}
+
         if (this.gnnIntegration)
             this.gnnPy.closeInterpreter();
         this.isSampling = false;
@@ -164,8 +171,8 @@ public class MapThread extends GGThread {
 
 	private boolean checkGnnRel(RBN rbn) {
 		for(int i=0; i<rbn.prelements().length; i++) {
-			//if (rbn.cpmod_prelements_At(i) instanceof ProbFormGnn)
-			//	return true;
+			if (rbn.cpmod_prelements_At(i) instanceof CPMGnn)
+				return true;
 		}
 		return false;
 	}

@@ -1444,9 +1444,9 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
         sampthr.setRunning(false);
     }
 
-//    public void setQueryAtoms(GroundAtomList atomsList) {
-//        this.queryatoms = atomsList;
-//    }
+    public void setQueryAtoms(Hashtable<Rel,GroundAtomList> atomsList) {
+        this.queryatoms = atomsList;
+    }
 
     public void stopSampleThread(){
         sampling = false;
@@ -1536,7 +1536,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 
 	private boolean checkGnnRel(RBN rbn) {
 		for(int i=0; i<rbn.prelements().length; i++) {
-			if (rbn.cpmod_prelements_At(i) instanceof ProbFormGnn)
+			if (rbn.cpmod_prelements_At(i) instanceof CPMGnn)
 				return true;
 		}
 		return false;
@@ -1938,6 +1938,24 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		}
 		queryModels.elementAt(idx).addQuery(atstoadd);
 		myprimula.queryatoms.add(atstoadd);
+		this.buildQueryatomsTables(queryModels);
+	}
+
+	// this function is to add query atom without the GUI
+	public void addQueryAtoms(Rel rel, GroundAtomList gal) {
+		Integer idx = relIndex.get(rel.toString());
+		if (idx != null) {
+			queryatoms.get(rel).add(gal);
+		}
+		else {
+			idx=relIndex.size();
+			relIndex.put(rel.name(), (Integer)idx);
+			relList.add(rel);
+			queryatoms.put(rel, gal);
+			queryModels.add(new QueryTableModel());
+		}
+		queryModels.elementAt(idx).addQuery(gal);
+		myprimula.queryatoms.add(gal);
 		this.buildQueryatomsTables(queryModels);
 	}
 
@@ -2796,15 +2814,17 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		}
 		
 		if (o instanceof MapVals){
-			for (Rel r: queryatoms.keySet()) {
-				MAPTableModel mapt = mapModels.elementAt(relIndex.get(r.name()));
-				int[] mvals = ((MapVals) o).getMVs(r);
-				for(int i=0; i<mvals.length; i++){
-					mapt.setValue(r.get_String_val(mvals[i]), i);
+			if (!mapModels.isEmpty()) { // if we do not use the GUI mapModels can or should be empty
+				for (Rel r : queryatoms.keySet()) {
+					MAPTableModel mapt = mapModels.elementAt(relIndex.get(r.name()));
+					int[] mvals = ((MapVals) o).getMVs(r);
+					for (int i = 0; i < mvals.length; i++) {
+						mapt.setValue(r.get_String_val(mvals[i]), i);
+					}
 				}
+				mapRestarts.setText("" + ((MapVals) o).getRestarts());
+				mapLL.setText("" + ((MapVals) o).getLLstring());
 			}
-			mapRestarts.setText("" +((MapVals)o).getRestarts());
-			mapLL.setText("" +((MapVals)o).getLLstring());
 		}
 //
 //		/** keith cascio 20060511 ... */

@@ -16,62 +16,69 @@ import java.util.*;
  * FORALL b
  *      WITH edge(a, b) <> WITH edge(b, a) <> WITH edge(a, b) || WITH edge(b, a)
  */
-public class ProbFormGnn extends ProbForm {
+public class CPMGnn extends CPModel {
     // the order of attributes need to be respected! this order will be used for the gnn encoding
     private Rel gnnattr[];
     private String argument;
 
     // for graph classification: each probformgnn will represent a class for the classifier
     // e.g. MUTAG class has 2 classes: mutagenic (0) and non-mutagenic (1)
+    // for binary output represent the index of the True vale in the final logits/probabilities of the GNNs
     private int classId;
     // true if we use one-hot encoding for the features representation
     private boolean oneHotEncoding;
 
     // the name of the edge relation in the RBN definition (usually "edge")
     private String edge_name;
+    // AB, BA, ABBA (edge direction in the adjacency matrix)
     private String edge_direction;
     private GnnPy gnnPy;
     // each gnn will have an id that identify the model
     private String idGnn;
 
+    // if is set to true, means that the GNN is for categorical output, if false is boolean
+    private boolean categorical;
+
     // this variable is used to set the inference for node or graph classification. Keyword: "node" or "graph"
     private String gnn_inference;
-    public ProbFormGnn(String argument, String idGnn, Rel[] attr, String edge_name, String edge_direction, boolean oneHotEncoding) {
+    public CPMGnn(String argument, String idGnn, Boolean categorical, Rel[] attr, String edge_name, String edge_direction, boolean oneHotEncoding) {
         this.setEdge_name(edge_name);
         this.setEdge_direction(edge_direction);
 
         this.argument = argument;
         this.idGnn = idGnn;
+        this.categorical = categorical;
         this.gnnattr = attr;
         this.classId = -1;
         this.oneHotEncoding = oneHotEncoding;
     }
 
-    // used only to remove errors during compilation: TODO REMOVE
-    public ProbFormGnn(String argument, String idGnn, Rel[] attr, String edge_name, String edge_direction, boolean oneHotEncoding, int classId) {
+    /**
+     *
+     * @param argument argument
+     * @param idGnn id used in the load_gnn.py to load the GNN weights
+     * @param categorical boolean flag, True if the GNN is used for multiple classes
+     * @param attr array of Rel for the GNN attributes
+     * @param edge_name the name of the edge relation in the formula
+     * @param edge_direction how the adjacency matrix is composed (AB, BA, ABBA)
+     * @param gnn_inference "node" if the GNN is used for node classification, "graph" for graph classification
+     * @param oneHotEncoding true if the representation of the features are in a one-hot encoding representation
+     * @param classId index of the True value for which the CPMGnn will evaluate the probability
+     */
+    public CPMGnn(String argument, String idGnn, Boolean categorical, Rel[] attr, String edge_name, String edge_direction, String gnn_inference, boolean oneHotEncoding, int classId) {
         this.setEdge_name(edge_name);
         this.setEdge_direction(edge_direction);
 
         this.argument = argument;
         this.idGnn = idGnn;
-        this.gnnattr = attr;
-        this.classId = classId;
-        this.oneHotEncoding = oneHotEncoding;
-    }
-
-    public ProbFormGnn(String argument, String idGnn, Rel[] attr, String edge_name, String edge_direction, String gnn_inference, boolean oneHotEncoding, int classId) {
-        this.setEdge_name(edge_name);
-        this.setEdge_direction(edge_direction);
-
-        this.argument = argument;
-        this.idGnn = idGnn;
+        this.categorical = categorical;
         this.gnnattr = attr;
         this.classId = classId;
         this.gnn_inference = gnn_inference;
         this.oneHotEncoding = oneHotEncoding;
     }
 
-    public ProbFormGnn(String argument, GnnPy gnnpy) {
+    public CPMGnn(String argument, GnnPy gnnpy) {
         this.argument = argument;
         this.gnnPy = gnnpy;
     }
@@ -101,9 +108,10 @@ public class ProbFormGnn extends ProbForm {
                              OneStrucData inst,
                              String[] vars,
                              int[] tuple,
+                             int gradindx,
                              boolean useCurrentCvals,
                              boolean useCurrentPvals,
-                             GroundAtomList mapatoms,
+                             Hashtable<Rel, GroundAtomList> mapatoms,
                              boolean useCurrentMvals,
                              Hashtable<String, Object[]> evaluated,
                              Hashtable<String, Integer> params,
@@ -120,6 +128,9 @@ public class ProbFormGnn extends ProbForm {
             OneStrucData onsd = new OneStrucData(A.getmydata().copy());
             SparseRelStruc sampledRel = new SparseRelStruc(A.getNames(), onsd, A.getCoords(), A.signature());
             sampledRel.getmydata().add(inst.copy());
+
+//            SparseRelStruc sampledRel = new SparseRelStruc(A.getNames(), A.getmydata(), A.getCoords(), A.signature());
+
             TreeSet<Rel> attr_parents = this.parentRels();
             // if it has no parents we use the current attributes (should work for numeric rel)
             if (attr_parents.isEmpty()) {
@@ -152,6 +163,7 @@ public class ProbFormGnn extends ProbForm {
                     }
                 }
                 result[0] = this.evaluateGraph(sampledRel, num_nodes);
+//                result[0] = this.evaluateGraph((SparseRelStruc) A, num_nodes);
             } catch(RBNIllegalArgumentException e){
                 throw new RuntimeException(e);
             }
@@ -250,17 +262,17 @@ public class ProbFormGnn extends ProbForm {
         return this.gnnPy.inferModelNodeDouble(Integer.parseInt(this.argument), this.classId, x, edge_index, this.idGnn, "");
     }
 
-    @Override
-    public int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, Hashtable<String, GroundAtom> atomhasht) throws RBNCompatibilityException {
-        System.out.println("evaluatesTo code 1");
-        return 0;
-    }
+//    @Override
+//    public int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, Hashtable<String, GroundAtom> atomhasht) throws RBNCompatibilityException {
+//        System.out.println("evaluatesTo code 1");
+//        return 0;
+//    }
 
-    @Override
-    public int evaluatesTo(RelStruc A) throws RBNCompatibilityException {
-        System.out.println("evaluatesTo code 2");
-        return 0;
-    }
+//    @Override
+//    public int evaluatesTo(RelStruc A) throws RBNCompatibilityException {
+//        System.out.println("evaluatesTo code 2");
+//        return 0;
+//    }
 
     @Override
     public String[] freevars() {
@@ -272,11 +284,11 @@ public class ProbFormGnn extends ProbForm {
         this.argument = freevar;
     }
 
-    @Override
-    public Vector<GroundAtom> makeParentVec(RelStruc A) throws RBNCompatibilityException {
-        System.out.println("makeParentVec code 1");
-        return makeParentVec(A, new OneStrucData(), null);
-    }
+//    @Override
+//    public Vector<GroundAtom> makeParentVec(RelStruc A) throws RBNCompatibilityException {
+//        System.out.println("makeParentVec code 1");
+//        return makeParentVec(A, new OneStrucData(), null);
+//    }
 
     @Override
     public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone) throws RBNCompatibilityException {
@@ -317,20 +329,20 @@ public class ProbFormGnn extends ProbForm {
      * combination functions, and values of ProbFormSFormula)
      */
     @Override
-    public ProbForm sEval(RelStruc A) throws RBNCompatibilityException {
-//        System.out.println("sEval code");
+    public CPModel sEval(RelStruc A) throws RBNCompatibilityException {
+        System.out.println("sEval code");
         return this;
     }
 
     // we cannot substitute this in smaller prob formula -> return the same object
     @Override
-    public ProbForm substitute(String[] vars, int[] args) {
+    public CPModel substitute(String[] vars, int[] args) {
 //        System.out.println("substitute code 1");
-        ProbFormGnn result;
+        CPMGnn result;
         if (this.classId == -1)
-            result = new ProbFormGnn(this.argument, this.idGnn, this.gnnattr, this.edge_name, this.edge_direction, this.oneHotEncoding);
+            result = new CPMGnn(this.argument, this.idGnn, this.categorical, this.gnnattr, this.edge_name, this.edge_direction, this.oneHotEncoding);
         else
-            result = new ProbFormGnn("-1", this.idGnn, this.gnnattr, this.edge_name, this.edge_direction, this.gnn_inference, this.oneHotEncoding, this.classId);
+            result = new CPMGnn("-1", this.idGnn, this.categorical, this.gnnattr, this.edge_name, this.edge_direction, this.gnn_inference, this.oneHotEncoding, this.classId);
 
         if (vars.length == 0)
             result.argument = Arrays.toString(new String[0]);
@@ -349,10 +361,10 @@ public class ProbFormGnn extends ProbForm {
         return null;
     }
 
-    @Override
-    public void updateSig(Signature s) {
-//        System.out.println("updateSig code");
-    }
+//    @Override
+//    public void updateSig(Signature s) {
+////        System.out.println("updateSig code");
+//    }
 
     @Override
     public void setCvals(String paramname, double val) {
@@ -382,6 +394,11 @@ public class ProbFormGnn extends ProbForm {
                 parent.add(rel);
 //        return new TreeSet<Rel>(Arrays.asList(this.gnnattr));
         return parent;
+    }
+
+    @Override
+    public int numvals() {
+        return 0; // TODO what numvals should return?
     }
 
     public GnnPy getGnnPy() {

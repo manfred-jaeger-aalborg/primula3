@@ -717,7 +717,7 @@ public class BayesConstructor extends java.lang.Object {
 
 	private boolean checkGnnRel(RBN rbn) {
 		for(int i=0; i<rbn.prelements().length; i++) {
-			if (rbn.probForm_prels_At(i) instanceof ProbFormGnn)
+			if (rbn.cpmod_prelements_At(i) instanceof CPMGnn)
 				return true;
 		}
 		return false;
@@ -901,8 +901,8 @@ public class BayesConstructor extends java.lang.Object {
 			String name = currentnode.name;
 
 			// to construct a Bayes network usign ProgFormGnn
-			if (pform instanceof ProbFormGnn && this.gnnPy != null) {
-				((ProbFormGnn) pform).setGnnPy(this.gnnPy);
+			if (cpmodel instanceof CPMGnn && this.gnnPy != null) {
+				((CPMGnn) cpmodel).setGnnPy(this.gnnPy);
 			}
 
 			/* turn complexnode into simplenode
