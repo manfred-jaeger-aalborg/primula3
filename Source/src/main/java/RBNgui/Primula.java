@@ -1792,8 +1792,8 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 //		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/SWF/swf_nodefeat.rbn";
 //		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/SWF/swf_coordinates_nodefeat_learned-ods-sheet2-l47.rdef";
 
-        String rbninputfilestring = "/Users/lz50rg/Desktop/primu/mendel_cat1.rbn";
-        String rstinputfilestring = "/Users/lz50rg/Desktop/primu/mendel_xs_cat.rdef";
+        String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Mendel/mendel_cat1.rbn";
+        String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Mendel/mendel_xs_cat.rdef";
 		
 		srsfile = new File(rstinputfilestring);
 		rbnfile = new File(rbninputfilestring);
