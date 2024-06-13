@@ -152,11 +152,11 @@ public class GGConvCombNode extends GGCPMNode{
 
 
 
-	public double evaluate(Integer sno){
+	public Double[] evaluate(Integer sno){
 
 		if (is_evaluated) {
 			if (this.values_for_samples==null)
-				return (double)value;
+				return value;
 			else
 				return this.values_for_samples[sno];
 		}
@@ -170,22 +170,19 @@ public class GGConvCombNode extends GGCPMNode{
 		double f2val;
 
 		if (F0 != null)
-			f0val = F0.evaluate(sno);
+			f0val = F0.evaluate(sno)[0];
 		else
 			f0val = evalOfSubPFs[0];
 
 		if (F1 != null)
-			f1val = F1.evaluate(sno);
+			f1val = F1.evaluate(sno)[0];
 		else
 			f1val = evalOfSubPFs[1];
 
 		if (F2 != null)
-			f2val = F2.evaluate(sno);
+			f2val = F2.evaluate(sno)[0];
 		else
 			f2val = evalOfSubPFs[2];
-
-
-
 
 		if (f0val != 0)
 			result = f0val*f1val;
@@ -204,10 +201,10 @@ public class GGConvCombNode extends GGCPMNode{
 				result = 1- result;
 		}
 		if (sno==null)
-			value = result;
+			value = new Double[]{result};
 		else
-			values_for_samples[sno]=result;
-		return result;
+			values_for_samples[sno]=new Double[]{result};
+		return new Double[]{result};
 	}
 
 
@@ -291,7 +288,7 @@ public class GGConvCombNode extends GGCPMNode{
 		if (F0 != null){
 			if (F0.dependsOn(param)){
 				if (F1 != null)
-					result = result + F0.evaluateGrad(param)*F1.evaluate();
+					result = result + F0.evaluateGrad(param)*F1.evaluate()[0];
 				else 
 					result = result + F0.evaluateGrad(param)*evalOfSubPFs[1];
 			}
@@ -300,7 +297,7 @@ public class GGConvCombNode extends GGCPMNode{
 		if (F1 != null){
 			if (F1.dependsOn(param)){
 				if (F0 != null)
-					result = result + F1.evaluateGrad(param)*F0.evaluate();
+					result = result + F1.evaluateGrad(param)*F0.evaluate()[0];
 				else 
 					result = result + F1.evaluateGrad(param)*evalOfSubPFs[0];
 			}
@@ -309,7 +306,7 @@ public class GGConvCombNode extends GGCPMNode{
 		if (F0 != null){
 			if (F0.dependsOn(param)){
 				if (F2 != null)
-					result = result - F0.evaluateGrad(param)*F2.evaluate();
+					result = result - F0.evaluateGrad(param)*F2.evaluate()[0];
 				else
 					result = result - F0.evaluateGrad(param)*evalOfSubPFs[2];
 			}
@@ -318,7 +315,7 @@ public class GGConvCombNode extends GGCPMNode{
 		if (F2 != null){
 			if (F2.dependsOn(param)){
 				if (F0 != null)
-					result = result - F2.evaluateGrad(param)*F0.evaluate();
+					result = result - F2.evaluateGrad(param)*F0.evaluate()[0];
 				else
 					result = result - F2.evaluateGrad(param)*evalOfSubPFs[0];
 			}
@@ -333,7 +330,8 @@ public class GGConvCombNode extends GGCPMNode{
 		return result;
 	}
 
-
-
-
+	@Override
+	public boolean isBoolean() {
+		return true;
+	}
 }

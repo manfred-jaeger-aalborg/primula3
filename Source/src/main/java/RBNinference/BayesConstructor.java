@@ -761,7 +761,7 @@ public class BayesConstructor extends java.lang.Object {
 	public static Object[] makeCPT(CPModel cpmodel,RelStruc A,OneStrucData inst,Vector<GroundAtom> parentatoms)
 	throws RBNCompatibilityException
 	{
-		boolean iscatmodel = (cpmodel instanceof CatModelSoftMax);
+		boolean iscatmodel = (cpmodel instanceof CatModelSoftMax || (cpmodel instanceof CPMGnn && !((CPMGnn) cpmodel).isBoolean()));
 		boolean isboolmodel = !iscatmodel;
 
 		int[] numparvals = new int[parentatoms.size()];
@@ -901,9 +901,8 @@ public class BayesConstructor extends java.lang.Object {
 			String name = currentnode.name;
 
 			// to construct a Bayes network usign ProgFormGnn
-			if (cpmodel instanceof CPMGnn && this.gnnPy != null) {
+			if ((cpmodel instanceof CPMGnn) && this.gnnPy != null)
 				((CPMGnn) cpmodel).setGnnPy(this.gnnPy);
-			}
 
 			/* turn complexnode into simplenode
 			 */

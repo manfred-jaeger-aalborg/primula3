@@ -49,25 +49,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Vector;
 import RBNpackage.*;
-import RBNinference.*;
-import RBNExceptions.*;
-import RBNLearning.*;
-import RBNutilities.*;
-import java.io.*;
-import java.awt.*;
-import java.awt.event.*;
-import javax.swing.*;
-import javax.swing.border.*;
+
 import java.util.*;
 import java.util.List;
-
-import myio.*;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -120,7 +108,6 @@ import RBNutilities.rbnutilities;
 import edu.ucla.belief.ace.Control;
 import edu.ucla.belief.ace.SettingsPanel;
 import edu.ucla.belief.ui.primula.SamiamManager;
-import myio.StringOps;
 
 public class InferenceModule extends JFrame implements Observer, 
 ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions, ChangeListener{

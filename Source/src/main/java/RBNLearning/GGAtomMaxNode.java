@@ -118,7 +118,7 @@ private int highvalue;
 				fs=newll-oldll;
 				if (fs>highscore) {
 					highscore = fs;
-					highvalue=v;
+					highvalue = v;
 				}
 			}
 			flipscores[v]=fs;
@@ -172,5 +172,10 @@ private int highvalue;
 		// usually is not an ancestor of this in the gradient graph
 		this.getMyUga().resetValue();
 		this.getMyUga().evaluate();
+	}
+
+	@Override
+	public boolean isBoolean() {
+		return !(myatom.rel() instanceof CatRel);
 	}
 }

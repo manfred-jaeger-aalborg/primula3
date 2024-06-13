@@ -183,7 +183,7 @@ public class GGCombFuncNode extends GGCPMNode{
 		return result;
 	}
 
-	public double evaluate(Integer sno){
+	public Double[] evaluate(Integer sno){
 
 //		if (this.isuga()) {
 //			System.out.print("evaluating " + this.getMyatom());
@@ -191,7 +191,7 @@ public class GGCombFuncNode extends GGCPMNode{
 
 		if (is_evaluated) {
 			if (this.values_for_samples==null)
-				return (double)value;
+				return value;
 			else
 				return this.values_for_samples[sno];
 		}
@@ -201,7 +201,7 @@ public class GGCombFuncNode extends GGCPMNode{
 		for (int i=0;i<valuesOfSubPFs.length;i++)
 			args[i]=valuesOfSubPFs[i];
 		for (int i=0;i<children.size();i++)
-			args[i+valuesOfSubPFs.length]= children.elementAt(i).evaluate(sno);
+			args[i+valuesOfSubPFs.length]= children.elementAt(i).evaluate(sno)[0];
 		double result = computeCombFunc(args);
 		if (Double.isNaN(result))
 			System.out.println("result = NaN in evaluate for comb.func " );
@@ -215,10 +215,10 @@ public class GGCombFuncNode extends GGCPMNode{
 				result = 1- result;
 		}
 		if (sno==null)
-			value = result;
+			value = new Double[]{result};
 		else
-			values_for_samples[sno]=result;
-		return result;
+			values_for_samples[sno]=new Double[]{result};
+		return new Double[]{result};
 	}
 
 	public void evaluateBounds(){
@@ -324,7 +324,7 @@ public class GGCombFuncNode extends GGCPMNode{
         double factor = aggregateOfSubPFs;
         
         for (int i=0;i<children.size();i++)
-                factor = factor*(1-children.elementAt(i).evaluate());
+                factor = factor*(1-children.elementAt(i).evaluate()[0]);
         
         if (factor == 0)
         	return 0.0;
@@ -335,7 +335,7 @@ public class GGCombFuncNode extends GGCPMNode{
          */
         for (int i=0;i<children.size();i++){
                 if (children.elementAt(i).dependsOn(param))
-                        result = result + (factor/(1-children.elementAt(i).evaluate()))*(children.elementAt(i).evaluateGrad(param));
+                        result = result + (factor/(1-children.elementAt(i).evaluate()[0]))*(children.elementAt(i).evaluateGrad(param));
         }
         
 		return result;
@@ -348,7 +348,7 @@ public class GGCombFuncNode extends GGCPMNode{
         double factor = aggregateOfSubPFs;
         
         for (int i=0;i<children.size();i++)
-                factor = factor*children.elementAt(i).evaluate();
+                factor = factor*children.elementAt(i).evaluate()[0];
         
         if (factor == 0)
         	return 0.0;
@@ -359,7 +359,7 @@ public class GGCombFuncNode extends GGCPMNode{
          */
         for (int i=0;i<children.size();i++){
                 if (children.elementAt(i).dependsOn(param))
-                        result = result + (factor/children.elementAt(i).evaluate())*(children.elementAt(i).evaluateGrad(param));
+                        result = result + (factor/children.elementAt(i).evaluate()[0])*(children.elementAt(i).evaluateGrad(param));
         }
 		return result;
 	}
@@ -379,7 +379,7 @@ public class GGCombFuncNode extends GGCPMNode{
 		double sum = aggregateOfSubPFs;
 		double sumpr = 0;
 		for (int i=0;i<children.size();i++){
-			sum = sum + children.elementAt(i).evaluate();
+			sum = sum + children.elementAt(i).evaluate()[0];
 			sumpr = sumpr + children.elementAt(i).evaluateGrad(param);
 		}
 		double esum = Math.exp(sum);
@@ -400,7 +400,7 @@ public class GGCombFuncNode extends GGCPMNode{
 		double sum = aggregateOfSubPFs;
 		double sumpr = 0;
 		for (int i=0;i<children.size();i++){
-			sum = sum + children.elementAt(i).evaluate();
+			sum = sum + children.elementAt(i).evaluate()[0];
 			sumpr = sumpr + children.elementAt(i).evaluateGrad(param);
 		}
 		
@@ -414,14 +414,14 @@ public class GGCombFuncNode extends GGCPMNode{
 		for (int i=0;i<valuesOfSubPFs.length;i++)
 			args[i]=valuesOfSubPFs[i];
 		for (int i=0;i<children.size();i++)
-			args[i+valuesOfSubPFs.length]= children.elementAt(i).evaluate();
+			args[i+valuesOfSubPFs.length]= children.elementAt(i).evaluate()[0];
 		return thisgg.computeCombFunc(CombFunc.INVSUM,args);
 	}
 
 	private double computeDerivINVSUM(String param )
 			throws RBNNaNException{
 		double result = 0;
-		double val = this.evaluate();
+		double val = this.evaluate()[0];
 		if (val == 1.0)
 			return 0;
 		else{
@@ -437,7 +437,7 @@ public class GGCombFuncNode extends GGCPMNode{
 	private double computeDerivESUM(String param )
 			throws RBNNaNException{
 		double result = 0;
-		double val = this.evaluate();
+		double val = this.evaluate()[0];
 
 		double derivsum = 0;
 		result = -val;
@@ -457,5 +457,8 @@ public class GGCombFuncNode extends GGCPMNode{
 		return derivsum;
 	}
 
-
+	@Override
+	public boolean isBoolean() {
+		return true;
+	}
 }

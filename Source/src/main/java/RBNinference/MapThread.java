@@ -48,7 +48,6 @@ public class MapThread extends GGThread {
         if (this.gnnIntegration) {
             try {
                 this.gnnPy = new GnnPy(this.scriptPath, this.scriptName, this.pythonHome);
-
                 gg.setGnnPy(this.gnnPy);
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -76,7 +75,7 @@ public class MapThread extends GGThread {
 		 * first iteration: */
 		//for (int i=0;i<lastmapvals.length;i++)
 		//	lastmapvals[i]=-1;
-		Hashtable<Rel,int[]> newmapvals;
+		Hashtable<Rel,int[]> newmapvals = new Hashtable<>();
 		
 		int maxrestarts = myinfmodule.getMAPRestarts();
 		int restarts =1;
@@ -100,13 +99,17 @@ public class MapThread extends GGThread {
 			try {
                 System.out.println("Current restart: " + restarts);
 				newll = gg.mapInference(this);
-				if (SmallDouble.compareSD(newll,oldll)==1){
-					oldll=newll;
-					newmapvals = gg.getMapVals();
-					mapprobs.setMVs(newmapvals);
-					mapprobs.setLL(SmallDouble.asString(oldll));
-					if (gg.parameters().size() > 0)
-						myLearnModule.setParameterValues(gg.getParameters());
+				if (newll != null) {
+					if (SmallDouble.compareSD(newll, oldll) == 1) {
+						oldll = newll;
+						newmapvals = gg.getMapVals();
+						mapprobs.setMVs(newmapvals);
+						mapprobs.setLL(SmallDouble.asString(oldll));
+						if (gg.parameters().size() > 0)
+							myLearnModule.setParameterValues(gg.getParameters());
+					}
+				} else {
+					System.out.println("MAP search aborted");
 				}
 			}
 			catch (RBNNaNException e) 
@@ -126,9 +129,15 @@ public class MapThread extends GGThread {
 
 		System.out.println("Best likelihood found: " + SmallDouble.toStandardDouble(oldll));
 		System.out.println("Best combination found: ");
-		for (Rel r: gg.getMaxindicators().keySet()) {
-			for (GGAtomMaxNode nextgimn: gg.getMaxindicators().get(r))
-				System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst());
+//		for (Rel r: newmapvals.keySet()) {
+//			for (int nextgimn: newmapvals.get(r))
+//				System.out.println(r.toString() + ": " + nextgimn);
+////				System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst());
+//		}
+		for (Rel r: newmapvals.keySet()) {
+			int[] vals = newmapvals.get(r);
+			for (int i =0; i<vals.length;i++)
+				System.out.println(r.toString() + " " + i + " " + vals[i]);
 		}
 
         if (this.gnnIntegration)

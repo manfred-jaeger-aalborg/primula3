@@ -27,13 +27,13 @@ package RBNgui;
 
 import javax.swing.*;
 
+import RBNutilities.rbnutilities;
 import myio.StringOps;
 
 import java.awt.event.*;
 import java.awt.*;
 import java.io.*;
 import java.util.Hashtable;
-import java.util.Objects;
 import java.util.Vector;
 
 import MLNParser.MLNParserFacade;
@@ -1810,8 +1810,8 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 //		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/SWF/swf_coordinates_nodefeat_learned-ods-sheet2-l47.rdef";
 
 
-        String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Mendel/mendel_cat1.rbn";
-        String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Mendel/mendel_xs_cat.rdef";
+        String rbninputfilestring = "/Users/lz50rg/Desktop/primu/mendel_cat1.rbn";
+        String rstinputfilestring = "/Users/lz50rg/Desktop/primu/mendel_xs_cat.rdef";
 		
 
 		srsfile = new File(rstinputfilestring);
@@ -1835,18 +1835,15 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
             RBNPreldef gnn_pred = new RBNPreldef(
                     new BoolRel("alpha1", 1),
                     new String[]{"v"},
-                    new CPMGnn("v",
+                    new ProbFormGnn("v",
                             "gnnNode",
-							false,
                             new Rel[]{
                                     blue_pred.rel()
-//									edge_pred.rel()}
                             },
                             "edge",
                             "ABBA",
                             "node",
-                            false,
-                            0
+                            false
                     )
             );
 
@@ -1893,85 +1890,13 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/alpha1-blue.rdef";
 		srsfile = new File(rstinputfilestring);
 		this.loadSparseRelFile(srsfile);
+
+//		String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/alpha.rbn";
+//		rbnfile = new File(rbninputfilestring);
+//		loadRBNFunction(rbnfile);
+
 		this.loadManualRBN_blue(false);
 	}
-
-//	public void loadGNNRBN_triangle() {
-//		String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/base_class_0_n6_0.rdef";
-//		srsfile = new File(rstinputfilestring);
-//		this.loadSparseRelFile(srsfile);
-//		RBNPreldef A_pred = new RBNPreldef(new BoolRel("A", 1), new String[]{"v"},  new ProbFormConstant(0.5));
-//		RBNPreldef B_pred = new RBNPreldef(new BoolRel("B", 1), new String[]{"v"},  new ProbFormConstant(0.5));
-//		RBNPreldef C_pred = new RBNPreldef(new BoolRel("C", 1), new String[]{"v"},  new ProbFormConstant(0.5));
-//		RBNPreldef D_pred = new RBNPreldef(new BoolRel("D", 1), new String[]{"v"},  new ProbFormConstant(0.5));
-//		RBNPreldef E_pred = new RBNPreldef(new BoolRel("E", 1), new String[]{"v"},  new ProbFormConstant(0.5));
-//		RBNPreldef F_pred = new RBNPreldef(new BoolRel("F", 1), new String[]{"v"},  new ProbFormConstant(0.5));
-//		RBNPreldef G_pred = new RBNPreldef(new BoolRel("G", 1), new String[]{"v"},  new ProbFormConstant(0.5));
-//
-//		RBNPreldef edge_pred = new RBNPreldef(new BoolRel("edge", 2), new String[]{"v", "w"},  new ProbFormConstant(0.5));
-//
-//		RBNPreldef gnn_class_0 = new RBNPreldef(
-//				new BoolRel("CLASS_0", 0),
-//				new String[]{"v"},
-//				new CPMGnn("v",
-//						"gnnGraph",
-//						new Rel[]{
-//								A_pred.rel(),
-//								B_pred.rel(),
-//								C_pred.rel(),
-//								D_pred.rel(),
-//								E_pred.rel(),
-//								F_pred.rel(),
-//								G_pred.rel(),
-//								edge_pred.rel()
-//						},
-//						"edge",
-//						"ABBA",
-//						true,
-//						0
-//				)
-//		);
-//
-//		RBNPreldef gnn_class_1 = new RBNPreldef(
-//				new BoolRel("CLASS_1", 0),
-//				new String[]{"v"},
-//				new CPMGnn("v",
-//						"gnnGraph",
-//						new Rel[]{
-//								A_pred.rel(),
-//								B_pred.rel(),
-//								C_pred.rel(),
-//								D_pred.rel(),
-//								E_pred.rel(),
-//								F_pred.rel(),
-//								G_pred.rel(),
-//								edge_pred.rel()
-//						},
-//						"edge",
-//						"ABBA",
-//						true,
-//						1
-//				)
-//		);
-//
-//		RBN manual_rbn = new RBN(10, 0);
-//
-//		manual_rbn.insertPRel(A_pred, 0);
-//		manual_rbn.insertPRel(B_pred, 1);
-//		manual_rbn.insertPRel(C_pred, 2);
-//		manual_rbn.insertPRel(D_pred, 3);
-//		manual_rbn.insertPRel(E_pred, 4);
-//		manual_rbn.insertPRel(F_pred, 5);
-//		manual_rbn.insertPRel(G_pred, 6);
-//		manual_rbn.insertPRel(edge_pred, 7);
-//		manual_rbn.insertPRel(gnn_class_0, 8);
-//		manual_rbn.insertPRel(gnn_class_1, 9);
-//
-//		this.setRbn(manual_rbn);
-//		this.getInstantiation().init(manual_rbn);
-//		rbnfile = new File("TEST INTERNAL GNN TRIANGLE");
-//		rbnfilename.setText(rbnfile.getPath());
-//	}
 
 	public void loadHomophilyGraph() {
 		// RBNPreldef pos = new RBNPreldef(new BoolRel("pos", 1), new String[]{"v"},  new ProbFormConstant(0.5));
@@ -1981,7 +1906,7 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		RBNPreldef gnn_pos = new RBNPreldef(
 				new BoolRel("pos", 1),
 				new String[]{"v"},
-				new CPMGnn("v",
+				new CatGnn("v",
 						"gnnHomophily",
 						false,
 						new Rel[]{
@@ -1990,6 +1915,7 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 						},
 						"edge",
 						"AB",
+						"node",
 						true
 				)
 		);
@@ -2022,6 +1948,65 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		this.loadSparseRelFile(srsfile);
 	}
 
+	private static RBNpackage.Type[] typeStringToArray(String ts, int arity){
+		RBNpackage.Type[] result = new RBNpackage.Type[arity];
+		String nexttype;
+		int nextcomma;
+		for (int i=0;i<arity;i++)
+		{
+			nextcomma = ts.indexOf(",");
+			if (nextcomma != -1){
+				nexttype = ts.substring(0,nextcomma);
+				ts = ts.substring(nextcomma+1);
+			}
+			else{
+				nexttype = ts;
+				ts = "";
+			}
+			if (nexttype.equals("Domain"))
+				result[i]=new TypeDomain();
+			else
+				result[i]=new TypeRel(nexttype);
+		}
+		return result;
+	}
+
+	private static  String[] valStringToArray(String vs) {
+		return rbnutilities.stringToArray(vs,",");
+	}
+	public void loadCat() {
+		File srsfile = new File("/Users/lz50rg/Dev/homophily/categorical_gnn/graph.rdef");
+		this.loadSparseRelFile(srsfile);
+
+		int num_attr = 2;
+		Rel[] attrs_rels = new Rel[num_attr];
+		for (int i = 1; i <= num_attr; i++) {
+			attrs_rels[i-1] = new NumRel("attr" + i, 1);
+		}
+
+		RBNPreldef[] gnn_rbn = new RBNPreldef[1];
+		gnn_rbn[0] = new  RBNPreldef(
+				new CatRel("CAT", 1, typeStringToArray("node",1), valStringToArray("A,B,C,D")),
+				new String[]{"v"},
+				new CatGnn("v",
+						"GCNcat",
+						true,
+						attrs_rels,
+						"edge",
+						"ABBA",
+						"node",
+						true
+				)
+		);
+
+		RBN manual_rbn = new RBN(1, 0);
+		manual_rbn.insertPRel(gnn_rbn[0], 0);
+		this.setRbn(manual_rbn);
+		this.getInstantiation().init(manual_rbn);
+		rbnfile = new File("TEST CATEGORICAL");
+		rbnfilename.setText(rbnfile.getPath());
+	}
+
 	private void setGNNPath() {
 		setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
 		setScriptPath("/Users/lz50rg/Dev/primula-workspace/primula3/Source/python/");
@@ -2045,7 +2030,8 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 //		win.loadDefaults();
 
 		win.setGNNPath();
-		win.loadGNNRBN_blue();
+		win.loadCat();
+//		win.loadGNNRBN_blue();
 //		win.loadGNNRBN_triangle();
 //		win.loadHomophilyGraph();
 	}
