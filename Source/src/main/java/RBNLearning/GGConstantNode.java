@@ -57,7 +57,7 @@ public class GGConstantNode extends GGCPMNode{
 			isUnknown = true;
 			cval = 0;
 			currentParamVal = 0.5;
-			value = currentParamVal;
+			value = new Double[]{currentParamVal};
 		}
 		else{ // This represents a known constant 
 			isUnknown = false;
@@ -71,7 +71,7 @@ public class GGConstantNode extends GGCPMNode{
 
 
 
-	public double evaluate(Integer sno){
+	public Double[] evaluate(Integer sno){
 		double result = 0;
 		if (!isUnknown){
 			result = cval;
@@ -89,8 +89,8 @@ public class GGConstantNode extends GGCPMNode{
 			if (iv == 0)
 				result = 1- result;
 		}
-		value = result;
-		return result;
+		value = new Double[]{result};
+		return value;
 	}
 
 	public void evaluateBounds(){
@@ -149,10 +149,15 @@ public class GGConstantNode extends GGCPMNode{
 		/* The following assumes that setCurrentParamVal is only called when 
 		 * isUnknown=true 
 		 */
-		value = currentParamVal;
+		value = new Double[]{currentParamVal};
 	}
 
 	public double getCurrentParamVal(){
 		return currentParamVal;
+	}
+
+	@Override
+	public boolean isBoolean() {
+		return true;
 	}
 }

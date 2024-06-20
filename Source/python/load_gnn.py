@@ -4,7 +4,7 @@ sys.path.append('/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python')
 from gnn.ACR_graph import *
 from gnn.ACR_node import *
 # from ggcn_model_def import *
-from gcn_model_def import Net, Net2, Net3
+from gcn_model_def import Net, Net2, Net3, NetG
 
 # this function will be called by Primula with: model, x and edge_index, **kwargs
 # the model needs to output a probability for each node! (if not -> out = torch.sigmoid(out))
@@ -114,7 +114,14 @@ models_info = {
                         "dim":32,
                         "num_classes":2
                     }
-    )
+    ),
+    "GCNcat": (NetG, "/Users/lz50rg/Dev/homophily/categorical_gnn/cat_gnn.pt",
+                        {
+                            "num_features":2,
+                            "dim":8,
+                            "num_classes":4
+                        }
+        )
 }
 
 def use_model(model_id):

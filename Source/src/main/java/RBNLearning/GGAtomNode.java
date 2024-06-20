@@ -80,7 +80,7 @@ public abstract class GGAtomNode extends GGCPMNode{
 	}
 
 
-	public double evaluate(Integer sno){
+	public Double[] evaluate(Integer sno){
 		/*
 		 * A GGAtomNode that also is uga would mean that one relation is defined as a copy
 		 * of another relation, i.e., in the rbn:
@@ -95,12 +95,12 @@ public abstract class GGAtomNode extends GGCPMNode{
 			if (iv == -1)
 				System.out.println("Warning: undefined instantiation value in GGAtomNode.evaluate()");
 			if (iv == 0)
-				return 1-currentInst;
+				return new Double[]{1 - (double) currentInst};
 			if (iv == 1)
-				return currentInst;
+				return new Double[]{(double) currentInst};
 		}
 		
-		return currentInst;
+		return new Double[]{(double) currentInst};
 	}
 
 

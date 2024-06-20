@@ -329,7 +329,7 @@ public class GradientGraphO extends GradientGraph{
 						if (mapatoms == null || mapatoms.get(nextrel)==null || !mapatoms.get(nextrel).contains(nextrel,nexttup)){
 
 							if (groundnextcpm instanceof CPMGnn && ((CPMGnn) groundnextcpm).getGnnPy() == null)
-								((CPMGnn) groundnextcpm).setGnnPy(this.gnnPy);
+								((CPMGnn) groundnextcpm).setGnnPy(gnnPy);
 
 							Object pfeval = groundnextcpm.evaluate(A,
 									osd,
@@ -472,9 +472,9 @@ public class GradientGraphO extends GradientGraph{
 			 * Initialize values_for_samples arrays for all ancestors of sumindicators
 			 */
 			for (GGAtomSumNode nextggin: sumindicators) {
-				nextggin.init_values_for_samples();
+				nextggin.init_values_for_samples(nextggin.getNumvals());
 				for (GGNode anc: nextggin.ancestors())
-					anc.init_values_for_samples();
+					anc.init_values_for_samples(nextggin.getNumvals());
 			}
 
 		}
@@ -687,7 +687,7 @@ public class GradientGraphO extends GradientGraph{
 		double[] result = new double[paramNodes.length];
 		for (int i=0;i<paramNodes.length;i++){
 			if (paramNodes[i]!= null)
-				result[i]=paramNodes[i].value();
+				result[i]=paramNodes[i].value()[0]; // since it is coming from a constant, take the first element
 			else result[i] = 0.5;
 		}
 		return result;
@@ -788,7 +788,7 @@ public class GradientGraphO extends GradientGraph{
 
 		int failcount=0;
 		int failcountforsum=0;
-		int maxfailcount = 10; //This should be defined in the settings
+		int maxfailcount = 100; //This should be defined in the settings
 		int maxfailcountforsum = myggoptions.getMaxFails()*numchains;
 
 		/* Find initial instantiations with nonzero probability */
@@ -940,19 +940,33 @@ public class GradientGraphO extends GradientGraph{
 			mxnode.setScore();
 			scored_atoms.add(mxnode);
 		}
+
+		System.out.println("Flip scores");
+		Iterator<GGAtomMaxNode> it = scored_atoms.iterator();
+		while (it.hasNext()) {
+			GGAtomMaxNode el = it.next();
+			System.out.println(el.getMyatom() + ": " + el.getScore());
+		}
+
+		int num_flipped = 0;
 		Boolean terminate = false;
 		GGAtomMaxNode flipnext;
 		while (!terminate) {
 			flipnext = scored_atoms.poll();
 			if (flipnext.getScore() <= 0) {
 				terminate = true;
+				if (num_flipped == 0)
+					System.out.println("Ineffective search, no atoms flipped!");
+				else
+					System.out.println("Flipped " + num_flipped + " atoms");
 				break;
 			}
 			// check if it is not null (why??)
 			if (flipnext != null) {
+				System.out.println("Flipping: " + flipnext.getMyatom() + " to " + flipnext.getHighvalue());
 				flipnext.setCurrentInst(flipnext.getHighvalue());
 				flipnext.reEvaluateUpstream();
-
+				num_flipped++;
 				/*
 				 * Collect all the GGAtomMaxNodes whose score has to be re-calculated:
 				 * flipnext, and all MaxNodes who have a shared uga with flipnext
@@ -970,8 +984,6 @@ public class GradientGraphO extends GradientGraph{
 					scored_atoms.add(mx);
 				}
 //				System.out.println("Current likelihood: " + SmallDouble.toStandardDouble(llnode.likelihood()));
-
-
 			}
 		}
 
@@ -980,6 +992,7 @@ public class GradientGraphO extends GradientGraph{
 			for (GGAtomMaxNode nextgimn: maxindicators.get(r))
 				System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst());
 		}
+		System.out.println("Likelihood: " + currentLikelihood()[0]);
 		System.out.println("-----------------");
 
 		return 0;
@@ -1071,8 +1084,10 @@ public class GradientGraphO extends GradientGraph{
 		double score;
 		int itcount = 0;
 		Boolean gotinit = initIndicators(mythread);
-		if (!gotinit)
+		if (!gotinit) {
 			System.out.println("No successful initialization of max/sum indicators");
+			return null;
+		}
 		//		this.showAllNodes(6, myPrimula.getRels());
 
 		if (debugPrint) {
@@ -2060,7 +2075,10 @@ public class GradientGraphO extends GradientGraph{
 		double result=0;
 
 		for (GGCPMNode next_uga: ugas)
-			result+= Math.log(next_uga.value());
+			if (next_uga.isBoolean())
+				result+= Math.log(next_uga.value()[0]);
+			else
+				result += Math.log(next_uga.value()[next_uga.instval()]);
 		return result;
 	}
 
@@ -2153,8 +2171,8 @@ public class GradientGraphO extends GradientGraph{
 
 	public void setGnnPyToNodes() {
 		for (GGNode node: this.llnode.children){
-			if (node instanceof GGGnnNode)
-				((GGGnnNode) node).setGnnPy(this.gnnPy);
+			if (node instanceof GGCPMGnn)
+				((GGCPMGnn) node).setGnnPy(this.gnnPy);
 		}
 	}
 

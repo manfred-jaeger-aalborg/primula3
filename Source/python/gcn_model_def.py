@@ -40,3 +40,19 @@ class Net3(torch.nn.Module):
         h = F.relu(self.conv2(h, edge_index))
         h = self.lin(h)
         return F.softmax(h, dim=1)
+
+class NetG(torch.nn.Module):
+    def __init__(self, num_features, dim=16, num_classes=1):
+        super(NetG, self).__init__()
+        self.num_classes = num_classes
+        self.conv1 = GCNConv(num_features, dim, improved=True)
+        self.conv2 = GCNConv(dim, num_classes, improved=True)
+
+    def forward(self, x, edge_index):
+        h = F.relu(self.conv1(x, edge_index))
+        h = F.dropout(h, p=0.5, training=self.training)
+        h = self.conv2(h, edge_index)
+        if self.num_classes == 1:
+            return F.sigmoid(h)
+        else:
+            return F.softmax(h, dim=1)

@@ -149,6 +149,10 @@ public class GGSoftMaxNode extends GGCPMNode{
 		return result;
 	}
 
+	@Override
+	public boolean isBoolean() {
+		return false;
+	}
 
 
 	public void evaluateBounds(){

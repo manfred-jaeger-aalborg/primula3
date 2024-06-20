@@ -53,12 +53,12 @@ public class GGAtomSumNode extends GGAtomNode{
 	 * the value in the sno's sample
 	 */
 	public void setCurrentInst(int sno){
-		currentInst = (int)values_for_samples[sno];
+		currentInst = values_for_samples[sno][currentInst].intValue();
 	}
 
 	/** Sets value in sno's sample to tv */
 	public void setSampleVal(int sno, int val){
-		values_for_samples[sno]=val;
+		values_for_samples[sno][currentInst] = (double) val;
 	}
 
 	/** Sets value in sno's sample to current instantiation */
@@ -68,7 +68,7 @@ public class GGAtomSumNode extends GGAtomNode{
 
 	/** Toggles value in sno's sample */
 	public void toggleSampleVal(int sno){
-		values_for_samples[sno]=1-values_for_samples[sno];
+		values_for_samples[sno][currentInst] = 1 - values_for_samples[sno][currentInst];
 	}
 
 
@@ -76,7 +76,12 @@ public class GGAtomSumNode extends GGAtomNode{
 		ggpfn.addToSumIndicators(this);
 	}
 
-	public double evaluate(Integer sno){
+	public Double[] evaluate(Integer sno){
 		return values_for_samples[sno];
+	}
+
+	@Override
+	public boolean isBoolean() {
+		return !(myatom.rel() instanceof CatRel);
 	}
 }

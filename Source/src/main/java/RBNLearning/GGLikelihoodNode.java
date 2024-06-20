@@ -147,11 +147,11 @@ public  class GGLikelihoodNode extends GGNode{
 //		ggin.setUGA(ggpfn);
 //	}
 
-	public double evaluate() {
+	public Double[] evaluate() {
 		super.evaluate();
 		double[] small_result=new double[2];
 		if (this.small_values_for_samples == null) {
-			return SmallDouble.toStandardDouble(this.likelihood);
+			return new Double[]{SmallDouble.toStandardDouble(this.likelihood)};
 		}
 		else {
 			switch (thisgg.objective()){
@@ -168,12 +168,12 @@ public  class GGLikelihoodNode extends GGNode{
 			}
 		}
 			
-		return SmallDouble.toStandardDouble(small_result);	
+		return new Double[]{SmallDouble.toStandardDouble(small_result)};
 	}
 	
-	public double evaluate(Integer sno) {
+	public Double[] evaluate(Integer sno) {
 		int[] idx = rbnutilities.indexArray(children.size());
-		return evaluate(sno,idx);
+		return new Double[]{evaluate(sno,idx)};
 	}
 	
 	/** Computes the (log-)likelihood and confusion matrix 
@@ -206,13 +206,23 @@ public  class GGLikelihoodNode extends GGNode{
 //			confusion[i]=0;
 //		ssqe=0;
 		
-		double childlik;
+		Double[] childlik;
 		GGCPMNode nextchild;
 //		int ival;
 		
 		for (int i=0;i<batchelements.length;i++){
 			nextchild=children.elementAt(batchelements[i]);
 			childlik = nextchild.evaluate(sno);
+
+			// esempio per il nuovo evaluate per il llnode
+			// prima devo controllare che sia booleano o cat
+			// childlik è un array di array (un elemento solo se è boolean) altrimenti risultato di una softmax (quello che la gnn ritorna)
+			// se cat, praticamente prendi l'indice dall' instval di nexchild (il valode in evidence) ed assegna res
+			double res = childlik[0];
+			if (!nextchild.isBoolean()) {
+				res = childlik[nextchild.instval()];
+			}
+
 //			ival = nextchild.instval();
 //			switch (ival) {
 //				case 0:
@@ -234,10 +244,10 @@ public  class GGLikelihoodNode extends GGNode{
 			
 			switch (thisgg.objective()){
 			case LearnModule.UseLik:
-				sno_likelihood = SmallDouble.multiply(sno_likelihood,childlik);
+				sno_likelihood = SmallDouble.multiply(sno_likelihood,res);
 				break;
 			case LearnModule.UseLogLik:
-				sno_likelihood = SmallDouble.add(sno_likelihood,SmallDouble.asSmallDouble(Math.log(childlik)));
+				sno_likelihood = SmallDouble.add(sno_likelihood,SmallDouble.asSmallDouble(Math.log(res)));
 			}
 		}
 		if (sno==null)
@@ -349,7 +359,11 @@ public  class GGLikelihoodNode extends GGNode{
 				for (GGCPMNode child: children){
 
 					//System.out.println("debug:  evaluateSmallGrad for uga " + child.getMyatom() );
-
+					double res = child.value()[0];
+					if (!child.isBoolean()) {
+						res = child.value()[child.instval()];
+					}
+					// !! can we use res to substitute child.value() here??
 
 					//System.out.println("debug: child depends on param ");
 					ival = getInstVal(child);
@@ -369,10 +383,10 @@ public  class GGLikelihoodNode extends GGNode{
 						break;
 					case LearnModule.UseLogLik:
 						if (ival ==1)
-							smallgrad = SmallDouble.add(smallgrad, 
+							smallgrad = SmallDouble.add(smallgrad,
 									SmallDouble.asSmallDouble(child.evaluateGrad(param)/child.value()));
 						else
-							smallgrad = SmallDouble.add(smallgrad, 
+							smallgrad = SmallDouble.add(smallgrad,
 									SmallDouble.asSmallDouble(-child.evaluateGrad(param)/(1-child.value())));
 						break;
 					case LearnModule.UseSquaredError:
@@ -381,7 +395,7 @@ public  class GGLikelihoodNode extends GGNode{
 						 * the objective function
 						 */
 						if (ival ==1)
-							smallgrad = SmallDouble.add(smallgrad, 
+							smallgrad = SmallDouble.add(smallgrad,
 									SmallDouble.asSmallDouble(child.evaluateGrad(param)*(1-child.value())));
 						else
 							smallgrad = SmallDouble.add(smallgrad, 
@@ -528,7 +542,7 @@ public  class GGLikelihoodNode extends GGNode{
 	 * Corresponds to taking partial derivatives, ignoring
 	 * parameters with index i.
 	 * 
-	 * @param zeros
+	 * @param partial
 	 * @return
 	 */ 
 	public double[] gradientAsDouble(int partial){

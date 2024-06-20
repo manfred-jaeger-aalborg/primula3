@@ -80,6 +80,8 @@ public abstract class GGCPMNode extends GGNode{
 	 * this node depends. Otherwise null.
 	 */
 	private Vector<GGAtomSumNode> mysumindicators;
+	private int numvals;
+	private boolean isBoolean;
 	
 	public GGCPMNode(GradientGraphO gg,
 			CPModel cpm,
@@ -101,6 +103,7 @@ public abstract class GGCPMNode extends GGNode{
 		mymaxindicators = new Vector<GGAtomMaxNode>();
 		mysumindicators = new Vector<GGAtomSumNode>();	
 		isuga = false;
+		numvals = cpm.numvals();
 //		dependsOnParam = new boolean[gg.numberOfParameters()];
 //		for (int i=0; i< dependsOnParam.length; i++)
 //			dependsOnParam[i]=false;
@@ -238,9 +241,12 @@ public abstract class GGCPMNode extends GGNode{
 				((GGConstantNode)result).setCurrentParamVal(((ProbFormBoolEquality)cpm).evaluate(A,I));
 			}
 
-			if (cpm instanceof CPMGnn) {
+			if (cpm instanceof ProbFormGnn || cpm instanceof CatGnn ) {
 				result = new GGGnnNode(gg,cpm,allnodes,A,I,inputcaseno,observcaseno,parameters,useCurrentPvals,mapatoms,evaluated);
 			}
+//			if (cpm instanceof CatGnn) {
+//				result = new GGCatGnnNode(gg,cpm,A,I);
+//			}
 			String key = gg.makeKey(cpm, inputcaseno, observcaseno, A);
 			
 			if (isuga) 
@@ -384,13 +390,16 @@ public abstract class GGCPMNode extends GGNode{
 	public void reset_value() {
 		super.resetValue();
 		if (this.isuga)
-			this.init_values_for_samples();
+			this.init_values_for_samples(numvals);
 	}
 	
 	public void set_value_for_sample(int sno) {
 		values_for_samples[sno]=value;
 	}
 	
-	public abstract double evaluate(Integer sno);
-	
+	public abstract Double[] evaluate(Integer sno);
+
+	public int getNumvals() { return this.numvals; }
+
+	public abstract boolean isBoolean();
 }

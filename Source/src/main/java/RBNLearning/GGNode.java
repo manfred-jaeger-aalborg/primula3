@@ -41,8 +41,11 @@ public abstract class GGNode implements Comparable<GGNode>{
 	
 	/** The value returned by the last call of evaluate(); null if node not 
 	 * yet evaluated or method resetValue() has been called */
-	Double value;
-	
+//	Double value;
+
+	// It is an array of doubles. For ProbFrom will use the first index only.
+	Double[] value;
+
 	Boolean is_evaluated = false;
 	
 	/**
@@ -50,7 +53,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 	 * settings of sample values at GGAtomSumNodes. Only used for nodes that are ancestors of 
 	 * GGAtomSum nodes.
 	 */
-	double[] values_for_samples;
+	Double[][] values_for_samples;
 
 //	/** The result of the most recent call to evaluatesTo()
 //	*  0: evaluatesTo() = 0
@@ -76,14 +79,15 @@ public abstract class GGNode implements Comparable<GGNode>{
 	 */
 	TreeMap<String,Double> gradient;
 
-
+	// if true the GGNode have boolean value, not a list of probabilities
+	boolean isBoolean;
 
 	public GGNode(GradientGraphO gg){
 		thisgg = gg;
 		children = new Vector<GGCPMNode>();
 		parents = new TreeSet<GGNode>();
 		ancestors = null;
-		identifier = new Integer(gg.getNextId());
+		identifier = Integer.valueOf(gg.getNextId());
 		value = null;
 		gradient = new TreeMap<String,Double>();
 	}
@@ -101,7 +105,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 	 * the currently correct value, and is returned
 	 * 
 	 */
-	public double evaluate() {
+	public Double[] evaluate() {
 		if (this.values_for_samples==null) {
 			value=this.evaluate(null);
 		}
@@ -119,7 +123,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 	 * 
 	 * For nodes not depending on a sum node: call evaluate(null)
 	 */
-	public abstract double evaluate(Integer sno);
+	public abstract Double[] evaluate(Integer sno);
 
 	public abstract double evaluateGrad(String param) throws RBNNaNException;
 
@@ -135,7 +139,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 
 
 
-	public double value(){
+	public Double[] value(){
 		return value;
 	}
 
@@ -304,9 +308,9 @@ public abstract class GGNode implements Comparable<GGNode>{
 				System.out.print(((GGNode)o).identifier() + " ");
 		}
 	}
-	
-	public void init_values_for_samples() {
-		values_for_samples = new double[thisgg.numchains*thisgg.windowsize];
+	public void init_values_for_samples(int numvals) {
+//		values_for_samples = new double[thisgg.numchains*thisgg.windowsize];
+		values_for_samples = new Double[numvals][thisgg.numchains*thisgg.windowsize];
 	}
 	
 
