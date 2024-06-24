@@ -214,13 +214,18 @@ public  class GGLikelihoodNode extends GGNode{
 			nextchild=children.elementAt(batchelements[i]);
 			childlik = nextchild.evaluate(sno);
 
-			// esempio per il nuovo evaluate per il llnode
-			// prima devo controllare che sia booleano o cat
-			// childlik è un array di array (un elemento solo se è boolean) altrimenti risultato di una softmax (quello che la gnn ritorna)
-			// se cat, praticamente prendi l'indice dall' instval di nexchild (il valode in evidence) ed assegna res
+			// we manage the value returned by the nextchild by checking if the node is boolean or not
+			// if boolean we need to flip the value if instval() == 0 (all the nodes in GG return the probability of being true)
 			double res = childlik[0];
 			if (!nextchild.isBoolean()) {
 				res = childlik[nextchild.instval()];
+			} else {
+				int iv = nextchild.instval(); // Can only be 0,1, or -1, because if a relation is defined by ProbFormCombFunc
+				// it can only be Boolean
+				if (iv == -1)
+					System.out.println("Warning: undefined instantiation value in GGCombFuncNode.evaluate()");
+				if (iv == 0)
+					res = 1 - childlik[0];
 			}
 
 //			ival = nextchild.instval();

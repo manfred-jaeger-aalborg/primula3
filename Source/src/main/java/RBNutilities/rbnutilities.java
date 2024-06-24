@@ -1628,8 +1628,8 @@ public class rbnutilities extends java.lang.Object
 		return true;
 	}
 	
-	public static double[] softmax(double[] weights) {
-		double[] result= new double[weights.length];
+	public static Double[] softmax(double[] weights) {
+		Double[] result= new Double[weights.length];
 		double sum=0;
 		for (int i=0;i<weights.length;i++) {
 			result[i]=Math.exp(weights[i]);

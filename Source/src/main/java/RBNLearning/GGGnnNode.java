@@ -100,120 +100,13 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
         }
         this.value = gnnPy.GGevaluate_gnn(A, thisgg, (CPMGnn) cpm, this);
 
-        if (this.isuga() && isBoolean()) {
-            int iv = this.instval(); // Can only be 0,1, or -1, because if a relation is defined by ProbFormCombFunc
-            // it can only be Boolean
-            if (iv == -1)
-                System.out.println("Warning: undefined instantiation value in GGCombFuncNode.evaluate()");
-            if (iv == 0)
-                this.value[0] = 1 - this.value[0];
-        }
-
         return this.value;
-
-//        if (this.gnnPy == null) {
-//            throw new NullPointerException("GnnPy object null!");
-//        } else {
-//
-//            if (this.cpm instanceof ProbFormGnn gnnpf) {
-//                // this first part set the x and edge_index object once only if predefined
-//                if (attr_parents.isEmpty() && Objects.equals(x, "")) {
-//                    x = this.gnnPy.stringifyGnnFeatures(num_nodes, sampledRel, ((ProbFormGnn)this.cpm).getGnnattr(), this.oneHotEncoding);
-//                }
-//                if (this.edge_pred && Objects.equals(edge_index, "")) {
-//                    for (BoolRel element : boolrel) {
-//                        if (sampledRel.getmydata().findInBoolRel(element).allTrue().isEmpty()) {
-//                            edge_index = "";
-//                            break;
-//                        } else {
-//                            if (Objects.equals(element.name(), gnnpf.getEdge_name())) {
-//                                this.edge_pred = true;
-//                                if (Objects.equals(gnnpf.getEdge_direction(), "ABBA"))
-//                                    edge_index = this.gnnPy.stringifyGnnEdgesABBA(sampledRel, element);
-//                                if (Objects.equals(gnnpf.getEdge_direction(), "AB"))
-//                                    edge_index = this.gnnPy.stringifyGnnEdgesAB(sampledRel, element);
-//                                if (Objects.equals(gnnpf.getEdge_direction(), "BA"))
-//                                    edge_index = this.gnnPy.stringifyGnnEdgesBA(sampledRel, element);
-//                                break;
-//                            }
-//                        }
-//                    }
-//                }
-//                // else this
-//                try {
-//                    for (Rel parent : attr_parents) {
-//                        int[][] mat = A.allTypedTuples(parent.getTypes());
-//                        for (int i = 0; i < mat.length; i++) {
-//                            // find the nodes that have no values (-1) and assign the values form the currentInst in the maxIndicator to the sampledRel
-//                            if (Objects.equals(sampledRel.getData().find(parent).dv(), "?")) {
-////                            if (sampledRel.truthValueOf(parent, mat[i]) == -1) {
-//                                GroundAtom myatom = new GroundAtom(parent, mat[i]);
-//                                GGAtomMaxNode currentMaxNode = this.thisgg.findInMaxindicators(myatom); // I don't like this so much, I keep now for greediness
-//                                boolean sampledVal = false;
-//                                if (currentMaxNode.getCurrentInst() == 1)
-//                                    sampledVal = true;
-//                                sampledRel.getmydata().findInBoolRel(parent).add(mat[i], sampledVal);
-//                            }
-//                        }
-//                    }
-//                    if (!attr_parents.isEmpty())
-//                        x = this.gnnPy.stringifyGnnFeatures(num_nodes, sampledRel, gnnpf.getGnnattr(), this.oneHotEncoding);
-//                } catch (RBNIllegalArgumentException e) {
-//                    throw new RuntimeException(e);
-//                }
-//
-//                // take only the "edge" relation
-//                // this can be later changed to a more general approach
-//                // find the boolean relations that should represent edges
-//                double result;
-//                if (!edge_pred) {
-//                    boolrel = sampledRel.getBoolBinaryRelations();
-//                    for (BoolRel element : boolrel) {
-//                        if (sampledRel.getmydata().findInBoolRel(element).allTrue().isEmpty()) {
-//                            edge_index = "";
-//                            break;
-//                        } else {
-//                            if (Objects.equals(element.name(), gnnpf.getEdge_name())) {
-//                                if (Objects.equals(gnnpf.getEdge_direction(), "ABBA"))
-//                                    edge_index = this.gnnPy.stringifyGnnEdgesABBA(sampledRel, element);
-//                                if (Objects.equals(gnnpf.getEdge_direction(), "AB"))
-//                                    edge_index = this.gnnPy.stringifyGnnEdgesAB(sampledRel, element);
-//                                if (Objects.equals(gnnpf.getEdge_direction(), "BA"))
-//                                    edge_index = this.gnnPy.stringifyGnnEdgesBA(sampledRel, element);
-//                                break;
-//                            }
-//                        }
-//                    }
-//                }
-//
-//                if (Objects.equals(((ProbFormGnn) this.cpm).getGnn_inference(), "node"))
-//                    this.value = this.gnnPy.inferModelNodeDouble(Integer.parseInt(gnnpf.getArgument()), gnnpf.getClassId(), x, edge_index, ((ProbFormGnn) this.cpm).getIdGnn(), "", true);
-//                else if (Objects.equals(((ProbFormGnn) this.cpm).getGnn_inference(), "graph")) {
-//                    this.value = this.gnnPy.inferModelGraphDouble(gnnpf.getClassId(), x, edge_index, ((ProbFormGnn) this.cpm).getIdGnn(),"");
-//                } else
-//                    throw new IllegalArgumentException("not valid keyword used: " + ((ProbFormGnn) this.cpm).getGnn_inference());
-//
-//                if (this.isuga()) {
-//                    int iv = this.instval(); // Can only be 0,1, or -1, because if a relation is defined by ProbFormCombFunc
-//                    // it can only be Boolean
-//                    if (iv == -1)
-//                        System.out.println("Warning: undefined instantiation value in GGCombFuncNode.evaluate()");
-//                    if (iv == 0)
-//                        this.value = 1 - this.value;
-//                }
-//
-//                return this.value;
-//            } else {
-//                System.out.println("Not a correct instance of PF");
-//                return -1;
-//            }
-//        }
     }
 
     @Override
     public boolean isBoolean() {
         return !(cpm instanceof CatGnn);
-    }
+    } // for now, we return true if is not CatGnn
 
     @Override
     public double evaluateGrad(String param) throws RBNNaNException {
