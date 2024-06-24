@@ -2075,8 +2075,12 @@ public class GradientGraphO extends GradientGraph{
 		double result=0;
 
 		for (GGCPMNode next_uga: ugas)
-			if (next_uga.isBoolean())
-				result+= Math.log(next_uga.value()[0]);
+			if (next_uga.isBoolean()) {
+				if (next_uga.instval() == 1)
+					result+= Math.log(next_uga.value()[0]);
+				else
+					result+= Math.log(1-next_uga.value()[0]);
+			}
 			else
 				result += Math.log(next_uga.value()[next_uga.instval()]);
 		return result;
