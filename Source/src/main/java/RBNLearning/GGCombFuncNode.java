@@ -206,14 +206,6 @@ public class GGCombFuncNode extends GGCPMNode{
 		if (Double.isNaN(result))
 			System.out.println("result = NaN in evaluate for comb.func " );
 
-		if (this.isuga()) {
-			int iv = this.instval(); // Can only be 0,1, or -1, because if a relation is defined by ProbFormCombFunc
-			                         // it can only be Boolean
-			if (iv == -1)
-				System.out.println("Warning: undefined instantiation value in GGCombFuncNode.evaluate()");
-			if (iv == 0)
-				result = 1- result;
-		}
 		if (sno==null)
 			value = new Double[]{result};
 		else

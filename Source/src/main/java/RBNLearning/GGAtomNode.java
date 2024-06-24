@@ -89,16 +89,6 @@ public abstract class GGAtomNode extends GGCPMNode{
 		 * 
 		 * So this case should rarely ever happen ...
 		 */
-		if (this.isuga()) {
-			int iv = this.instval(); // Can only be 0,1, or -1, because if a relation is defined by ProbFormAtom
-			                         // it can only be Boolean
-			if (iv == -1)
-				System.out.println("Warning: undefined instantiation value in GGAtomNode.evaluate()");
-			if (iv == 0)
-				return new Double[]{1 - (double) currentInst};
-			if (iv == 1)
-				return new Double[]{(double) currentInst};
-		}
 		
 		return new Double[]{(double) currentInst};
 	}

@@ -120,11 +120,11 @@ public class GGSoftMaxNode extends GGCPMNode{
 	private void evaluatePFs(Integer sno) {
 		for (int i=0;i<current_evalofpfs.length;i++) {
 			if (children.elementAt(i)!=null)
-				current_evalofpfs[i]=children.elementAt(i).evaluate(sno);		
+				current_evalofpfs[i] = children.elementAt(i).evaluate(sno)[0]; // return the first element, all the child must be boolean! (scalar values for the softmax function)
 		}
 	}
 
-	public double evaluate(Integer sno){
+	public Double[] evaluate(Integer sno){
 
 		// Returns the probability value for the this.instval value
 		// Since GGSoftMaxNodes can only be upper ground atom nodes, this.instval
@@ -132,20 +132,19 @@ public class GGSoftMaxNode extends GGCPMNode{
 		
 		if (is_evaluated) {
 			if (this.values_for_samples==null)
-				return (double)value;
+				return (Double[]) value;
 			else
 				return this.values_for_samples[sno];
 		}
 		
 		this.evaluatePFs(sno);
-		double[] softm_pfs=rbnutilities.softmax(current_evalofpfs);
-		
-		double result =softm_pfs[this.instval()];
-		
+		Double[] result = rbnutilities.softmax(current_evalofpfs);
+//		double result =softm_pfs[this.instval()];
+
 		if (sno==null)
 			value = result;
 		else
-			values_for_samples[sno]=result;
+			values_for_samples[sno] = result;
 		return result;
 	}
 

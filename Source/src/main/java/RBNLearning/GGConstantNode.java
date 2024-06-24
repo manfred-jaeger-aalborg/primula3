@@ -81,14 +81,7 @@ public class GGConstantNode extends GGCPMNode{
 			if (Double.isNaN(currentParamVal))
 				System.out.println("evaluate constant for  " + this.paramname()+  " gives " + currentParamVal);
 		}
-		if (this.isuga()) {
-			int iv = this.instval(); // Can only be 0,1, or -1, because if a relation is defined by ProbFormConstant
-			                         // it can only be Boolean
-			if (iv == -1)
-				System.out.println("Warning: undefined instantiation value in GGConstantNode.evaluate()");
-			if (iv == 0)
-				result = 1- result;
-		}
+
 		value = new Double[]{result};
 		return value;
 	}
