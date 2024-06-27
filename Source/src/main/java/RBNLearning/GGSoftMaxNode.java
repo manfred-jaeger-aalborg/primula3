@@ -72,6 +72,7 @@ public class GGSoftMaxNode extends GGCPMNode{
 					throws RBNCompatibilityException
 	{
 		super(gg,cpmsm,A,I);
+		isScalar = false;
 
 		evalOfPFs = new Double[cpmsm.numvals()];
 		current_evalofpfs = new double[cpmsm.numvals()];

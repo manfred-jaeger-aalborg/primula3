@@ -730,4 +730,18 @@ public  class GGLikelihoodNode extends GGNode{
 		for (GGCPMNode uga: this.children)
 			uga.set_value_for_sample(sno);
 	}
+	
+	/*
+	 * Default implementation of method required for GGNode. Should not be used. 
+	 * The outputs of the GGLikelihoodNode differ in dimensions and are retrieved 
+	 * by the functions likelihood(), getSmallGradient() etc.
+	 */
+	public int outDim() {
+		return 1;
+	}
+	
+	/* Overrides default */
+	public void init_values_for_samples() {
+		small_values_for_samples = new double[thisgg.numchains*thisgg.windowsize][2];
+	}
 }

@@ -59,6 +59,7 @@ public class GGCombFuncNode extends GGCPMNode{
 	throws RBNCompatibilityException
 	{
 		super(gg,pf,A,I);
+		isScalar = true;
 		
 		
 		DoubleVector vals = new DoubleVector();

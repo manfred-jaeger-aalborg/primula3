@@ -81,7 +81,6 @@ public abstract class GGCPMNode extends GGNode{
 	 */
 	private Vector<GGAtomSumNode> mysumindicators;
 	private int numvals;
-	private boolean isBoolean;
 	
 	public GGCPMNode(GradientGraphO gg,
 			CPModel cpm,
@@ -390,7 +389,7 @@ public abstract class GGCPMNode extends GGNode{
 	public void reset_value() {
 		super.resetValue();
 		if (this.isuga)
-			this.init_values_for_samples(numvals);
+			this.init_values_for_samples();
 	}
 	
 	public void set_value_for_sample(int sno) {
@@ -400,6 +399,13 @@ public abstract class GGCPMNode extends GGNode{
 	public abstract Double[] evaluate(Integer sno);
 
 	public int getNumvals() { return this.numvals; }
+	
+	public int outDim() {
+		if (this.isScalar)
+			return 1;
+		else
+			return this.numvals;
+	}
 
 	public abstract boolean isBoolean();
 }

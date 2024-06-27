@@ -43,7 +43,9 @@ public abstract class GGNode implements Comparable<GGNode>{
 	 * yet evaluated or method resetValue() has been called */
 //	Double value;
 
-	// It is an array of doubles. For ProbFrom will use the first index only.
+	// For nodes representing categorical variables: value contains the probabilities for all
+	// possible values. For nodes representing Boolean variables: value is an array of length
+	// 1 containing the probability of the 'true' value.
 	Double[] value;
 
 	Boolean is_evaluated = false;
@@ -52,6 +54,8 @@ public abstract class GGNode implements Comparable<GGNode>{
 	 * If there are sum atoms: the values obtained for the numchains*windowsize different
 	 * settings of sample values at GGAtomSumNodes. Only used for nodes that are ancestors of 
 	 * GGAtomSum nodes.
+	 * 
+	 * Dimensions: (numchains*windowsize)x numvalues (numvalues =1 when isBoolean==true).
 	 */
 	Double[][] values_for_samples;
 
@@ -79,9 +83,17 @@ public abstract class GGNode implements Comparable<GGNode>{
 	 */
 	TreeMap<String,Double> gradient;
 
-	// if true the GGNode have boolean value, not a list of probabilities
-	boolean isBoolean;
+	// indicates whether this node computes a scalar value, or a vector
+	// When the node computes the probability of an atom (as upper ground atom nodes)
+	// then isScalar=true indicates that the atom is a Boolean relation, and the
+	// returned value is the probability of 'true'
+	boolean isScalar;
 
+	// The dimension of the output computed by this GGNode. isScalar = true iff outDim=1.
+	// If this is an upper ground atom node representing a categorical atom, then
+	// outDim is equal to the number of possible values for the relation of the atom.
+	int outDim;
+	
 	public GGNode(GradientGraphO gg){
 		thisgg = gg;
 		children = new Vector<GGCPMNode>();
@@ -103,6 +115,10 @@ public abstract class GGNode implements Comparable<GGNode>{
 	 * 
 	 * If this.value is not null, then this value is assumed to be 
 	 * the currently correct value, and is returned
+	 * 
+	 * When this GGNode depends on GGAtomSumNodes, then the evaluation is
+	 * done for every sample number and the result stored in 
+	 * values_for_samples
 	 * 
 	 */
 	public Double[] evaluate() {
@@ -308,11 +324,13 @@ public abstract class GGNode implements Comparable<GGNode>{
 				System.out.print(((GGNode)o).identifier() + " ");
 		}
 	}
-	public void init_values_for_samples(int numvals) {
-//		values_for_samples = new double[thisgg.numchains*thisgg.windowsize];
-		values_for_samples = new Double[numvals][thisgg.numchains*thisgg.windowsize];
+	public void init_values_for_samples() {
+		if (this.isScalar)
+			values_for_samples = new Double[thisgg.numchains*thisgg.windowsize][1];
+		else
+			values_for_samples = new Double[thisgg.numchains*thisgg.windowsize][this.outDim()];
 	}
 	
-
+	public abstract int outDim();
 	
 }

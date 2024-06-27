@@ -132,4 +132,9 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
     public void setValue(Double[] value) {
         this.value = value;
     }
+    
+    public int outDim() {
+    	System.out.println("outDim still needs to be implemented for GGGnnNode");
+    	return 0;
+    }
 }

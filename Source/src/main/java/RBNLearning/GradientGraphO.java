@@ -472,9 +472,9 @@ public class GradientGraphO extends GradientGraph{
 			 * Initialize values_for_samples arrays for all ancestors of sumindicators
 			 */
 			for (GGAtomSumNode nextggin: sumindicators) {
-				nextggin.init_values_for_samples(nextggin.getNumvals());
-				for (GGNode anc: nextggin.ancestors())
-					anc.init_values_for_samples(nextggin.getNumvals());
+				nextggin.init_values_for_samples();
+				for (GGNode anc: nextggin.ancestors()) 
+					anc.init_values_for_samples();
 			}
 
 		}
@@ -876,7 +876,7 @@ public class GradientGraphO extends GradientGraph{
 		GGAtomSumNode ggin;
 		for (int k=0;k<numchains && (mythread == null || mythread.isAlive()) ;k++){
 
-			setTruthVals(recentindex*numchains+k);
+			setTruthVals(k*numchains+recentindex);
 			resetValues(true);
 			llnode.evaluate();
 			for (int i=0;i<sumindicators.size() && (mythread == null || mythread.isAlive());i++){

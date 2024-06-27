@@ -46,6 +46,7 @@ public class GGConstantNode extends GGCPMNode{
 	throws RBNCompatibilityException
 	{
 		super(gg,pf,A,data);
+		isScalar = true;
 		
 		if (!(pf instanceof ProbFormConstant)){
 			System.out.println("Cannot create GGConstantNode from ProbForm " + pf.asString(Primula.CLASSICSYNTAX,0,null,false,false));

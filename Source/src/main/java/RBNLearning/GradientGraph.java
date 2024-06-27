@@ -455,40 +455,42 @@ public abstract class GradientGraph{
 
 	
 
-	/** Prints a list of  likelihood values for all possible parameter settings
-	 * obtained by varying each parameter from 0.0 to 1.0 using a stepsize of incr
-	 * (debugging method, not in use)
-	 */
-	public void showAllLikelihoods(double incr)
-			throws RBNNaNException{
-		double[] nextsetting = new double[paramNodes.size()];
-		for (int i=0;i<nextsetting.length;i++)
-			nextsetting[i] = 0.0;
-		int nextindex = nextsetting.length - 1;
-		double nextll;
-		double max = 0;
-		double[] best = nextsetting.clone();
-		while (nextindex >= 0){
-			setParameters(nextsetting);
-			evaluateLikelihoodAndPartDerivs(true);
-			nextll = llnode.value();
-			if (nextll > max){
-				max = nextll;
-				best = nextsetting.clone();
-			}
-			//System.out.println(rbnutilities.arrayToString(nextsetting)+": " + nextll);
-			/* Find the next parameter setting */
-			nextindex = nextsetting.length - 1;
-			while (nextindex >= 0 && nextsetting[nextindex]>=0.9999)
-				nextindex--;
-			if (nextindex >=0){
-				nextsetting[nextindex]=nextsetting[nextindex]+incr;	
-				for (int i=nextsetting.length - 1;i>nextindex;i--)
-					nextsetting[i]=0.0;
-			}
-		}	   
-		System.out.println("Best: " + rbnutilities.arrayToString(best)+": " + max);
-	}
+//	/** Prints a list of  likelihood values for all possible parameter settings
+//	 * obtained by varying each parameter from 0.0 to 1.0 using a stepsize of incr
+//	 * (debugging method, not in use)
+//	
+//    *  NEEDS UPDATE IF TO BE RE-USED	
+//	 */
+//	public void showAllLikelihoods(double incr)
+//			throws RBNNaNException{
+//		double[] nextsetting = new double[paramNodes.size()];
+//		for (int i=0;i<nextsetting.length;i++)
+//			nextsetting[i] = 0.0;
+//		int nextindex = nextsetting.length - 1;
+//		double nextll;
+//		double max = 0;
+//		double[] best = nextsetting.clone();
+//		while (nextindex >= 0){
+//			setParameters(nextsetting);
+//			evaluateLikelihoodAndPartDerivs(true);
+//			nextll = llnode.value();
+//			if (nextll > max){
+//				max = nextll;
+//				best = nextsetting.clone();
+//			}
+//			//System.out.println(rbnutilities.arrayToString(nextsetting)+": " + nextll);
+//			/* Find the next parameter setting */
+//			nextindex = nextsetting.length - 1;
+//			while (nextindex >= 0 && nextsetting[nextindex]>=0.9999)
+//				nextindex--;
+//			if (nextindex >=0){
+//				nextsetting[nextindex]=nextsetting[nextindex]+incr;	
+//				for (int i=nextsetting.length - 1;i>nextindex;i--)
+//					nextsetting[i]=0.0;
+//			}
+//		}	   
+//		System.out.println("Best: " + rbnutilities.arrayToString(best)+": " + max);
+//	}
 
 //	private void unsetSumIndicators(){
 //		for (int i=0;i<sumindicators.size();i++)

@@ -42,9 +42,12 @@ public abstract class GGAtomNode extends GGCPMNode{
 	int observcaseno;
 
 
-	/** The current instantiation for this atom (used for computing
+	/** The current instantiation (according to a current MAP configuration 
+	 * or sample number) for this atom (used for computing
 	 * likelihood at the root of the gradient graph);
 	 * currentInst = -1 if not currently instantiated
+	 * 
+	 * 
 	 */
 	int currentInst;
 

@@ -56,6 +56,7 @@ public class GGConvCombNode extends GGCPMNode{
 					throws RBNCompatibilityException
 					{
 		super(gg,pf,A,I);
+		isScalar=true;
 		
 //		System.out.println("construct ggConvC " + pf.asString(Primula.CLASSICSYNTAX, 0, A));
 		

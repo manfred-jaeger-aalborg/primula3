@@ -33,8 +33,15 @@ public class GGAtomSumNode extends GGAtomNode{
 	 * 
 	 * Summation over all configurations of IndicatorSumNodes is approximated
 	 * by summation over the configurations defined by the sampledVals.
+	 * 
+	 * Array of length numchains*windowsize (as defined in GradientGraph)
+	 * Values for the k'th chain are stored at indices k*numchains,...,(k+1)*numchains-1
+	 * The oldest sample for chain k is stored at k*numchans+windowindex, where windowindex is 
+	 * defined by the GradientGraph. New samples overwrite the oldest sample (cyclic in the
+	 * part of the array allocated to the chain)
+	 * 
 	 */
-	//boolean[] sampledVals;
+	int[] sampledVals;
 
 	public GGAtomSumNode(GradientGraphO gg,
 			ProbForm pf,  
@@ -45,6 +52,7 @@ public class GGAtomSumNode extends GGAtomNode{
 	throws RuntimeException, RBNCompatibilityException
 	{
 		super(gg,pf,A,I,inputcasenoarg,observcasenoarg);
+		isScalar = true;
 		gg.addToSumIndicators(this);
 	}
 
@@ -53,12 +61,12 @@ public class GGAtomSumNode extends GGAtomNode{
 	 * the value in the sno's sample
 	 */
 	public void setCurrentInst(int sno){
-		currentInst = values_for_samples[sno][currentInst].intValue();
+		currentInst = values_for_samples[sno][0].intValue();
 	}
 
 	/** Sets value in sno's sample to tv */
 	public void setSampleVal(int sno, int val){
-		values_for_samples[sno][currentInst] = (double) val;
+		values_for_samples[sno][0] = (double) val;
 	}
 
 	/** Sets value in sno's sample to current instantiation */
@@ -68,7 +76,7 @@ public class GGAtomSumNode extends GGAtomNode{
 
 	/** Toggles value in sno's sample */
 	public void toggleSampleVal(int sno){
-		values_for_samples[sno][currentInst] = 1 - values_for_samples[sno][currentInst];
+		values_for_samples[sno][0] = 1 - values_for_samples[sno][0];
 	}
 
 
@@ -77,7 +85,10 @@ public class GGAtomSumNode extends GGAtomNode{
 	}
 
 	public Double[] evaluate(Integer sno){
-		return values_for_samples[sno];
+		if (sno==null)
+			return new Double[]{(double)currentInst};
+		else
+			return values_for_samples[sno];
 	}
 
 	@Override
