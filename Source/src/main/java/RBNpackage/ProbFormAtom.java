@@ -410,7 +410,7 @@ public  class ProbFormAtom extends ProbForm {
 				)
 				result[0] = value;
 			else
-				result[0] = Double.NaN;
+				result[0] = Double.NaN; // TODO use mapatoms
 			result[1]=new Hashtable<String,Double>();
 		}
 		else if (relation.ispredefined()) {		
