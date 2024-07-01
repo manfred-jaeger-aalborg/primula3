@@ -13,10 +13,7 @@ import java.util.Vector;
 public class ProbFormBoolAtomEquality extends ProbFormBool {
 
 
-//			int[] tuple, boolean useCurrentCvals, String[] numrelparameters,
-//			boolean useCurrentPvals,
-//    		GroundAtomList mapatoms,
-//    		boolean useCurrentMvals,
+	// arg1,arg2 are either ProbFormAtoms or Integers (i.e., indices of possible values of categorical relations)
     private Object arg1, arg2;
 
     public ProbFormBoolAtomEquality(Object a1, Object a2, boolean s){
@@ -24,7 +21,21 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
         arg2 = a2;
         sign = s;
     }
-
+    public ProbFormBoolAtomEquality(Object a1, Object a2, boolean s, Signature sig){
+        if (a1 instanceof String) {
+        	// Turn the string representation of a value into its integer index
+        	Rel r = ((ProbFormAtom)a2).getRelation();
+        	a1=r.get_Int_val((String)a1);
+        }
+        if (a2 instanceof String) {
+        	// Turn the string representation of a value into its integer index
+        	Rel r = ((ProbFormAtom)a1).getRelation();
+        	a2=r.get_Int_val((String)a2);
+        }
+        arg1 = a1;
+        arg2 = a2;
+        sign = s;
+    }
 
     @Override
     public int evaluatesTo(RelStruc A, OneStrucData inst,
