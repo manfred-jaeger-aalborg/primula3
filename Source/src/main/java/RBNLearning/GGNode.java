@@ -164,9 +164,12 @@ public abstract class GGNode implements Comparable<GGNode>{
 		return gradient;
 	}
 	
-	public void resetValue(){
+	public void resetValue(Integer sno){
 		is_evaluated=false;
-		value = null;
+		if (sno == null)
+			value = null;
+		else
+			values_for_samples[sno]=null;
 	}
 
 
@@ -262,41 +265,41 @@ public abstract class GGNode implements Comparable<GGNode>{
 	 * a GGAtomNode, and the value of this
 	 * indicator has been changed in Gibbs sampling or MAP inference
 	 */
-	public void reEvaluateUpstream(){
+	public void reEvaluateUpstream(Integer sno){
 		
 		if (ancestors == null) 
 			ancestors = ancestors();
 		
 		for (GGNode anc: ancestors)
-			anc.resetValue();
+			anc.resetValue(sno);
 		for (GGNode anc: ancestors)
-			anc.evaluate();
+			anc.evaluate(sno);
 	}
 	
-	/* Re-evaluate values and partial derivatives for parameter param 
-	 * Usually called when in coordinate-gradient descent a single 
-	 * parameter has changed value */
-	public void reEvaluateUpstream(String param)
-			throws RBNNaNException
-	{
-		TreeSet<GGNode> myancestors;
-		if (ancestors != null) 
-			myancestors = ancestors;
-		else
-			myancestors = ancestors();
-		GGNode nextggn;
-		for (Iterator<GGNode> it = myancestors.iterator(); it.hasNext();){
-			nextggn = it.next();
-			nextggn.resetValue();
-			nextggn.resetGradient(param);
-		}
-		for (Iterator<GGNode> it = myancestors.iterator(); it.hasNext();){
-			nextggn = it.next();
-			nextggn.evaluate();
-			nextggn.evaluateGrad(param);
-		}
-			
-	}
+//	/* Re-evaluate values and partial derivatives for parameter param 
+//	 * Usually called when in coordinate-gradient descent a single 
+//	 * parameter has changed value */
+//	public void reEvaluateUpstream(String param)
+//			throws RBNNaNException
+//	{
+//		TreeSet<GGNode> myancestors;
+//		if (ancestors != null) 
+//			myancestors = ancestors;
+//		else
+//			myancestors = ancestors();
+//		GGNode nextggn;
+//		for (Iterator<GGNode> it = myancestors.iterator(); it.hasNext();){
+//			nextggn = it.next();
+//			nextggn.resetValue();
+//			nextggn.resetGradient(param);
+//		}
+//		for (Iterator<GGNode> it = myancestors.iterator(); it.hasNext();){
+//			nextggn = it.next();
+//			nextggn.evaluate();
+//			nextggn.evaluateGrad(param);
+//		}
+//			
+//	}
 	
 //	public void setDependsOn(int param){
 //		if (this instanceof GGProbFormNode)

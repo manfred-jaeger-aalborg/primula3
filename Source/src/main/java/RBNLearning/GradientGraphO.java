@@ -747,7 +747,7 @@ public class GradientGraphO extends GradientGraph{
 	 * If valueonly=false, then also the gradients are reset
 	 *  
 	 */
-	public void resetValues(boolean valueonly){
+	public void resetValues(int sno, boolean valueonly){
 		llnode.resetValue();
 		if (!valueonly)
 			llnode.resetGradient();
@@ -755,7 +755,7 @@ public class GradientGraphO extends GradientGraph{
 		GGNode ggn;
 		while (e.hasMoreElements()){
 			ggn = (GGNode)e.nextElement();
-			ggn.resetValue();
+			ggn.resetValue(sno);
 			if (!valueonly)
 				ggn.resetGradient();
 		}	
@@ -809,12 +809,12 @@ public class GradientGraphO extends GradientGraph{
 					for (int i=0;i<sumindicators.size();i++){
 						coin = Math.random();
 						if (coin>0.5)
-							sumindicators.elementAt(i).setSampleVal(k,1);
+							sumindicators.elementAt(i).setSampleVal(k*windowsize,1);
 						else
-							sumindicators.elementAt(i).setSampleVal(k,0);
+							sumindicators.elementAt(i).setSampleVal(k*windowsize,0);
 					}
 					resetValues(true);
-					setTruthVals(k);
+					setTruthVals(k*windowsize);
 					llnode.evaluate();
 					if (llnode.likelihood()[0]!=0)
 						successforsum=true;   
@@ -842,6 +842,10 @@ public class GradientGraphO extends GradientGraph{
 				}
 			}
 		}
+		
+		windowindex =1; // Only relevant when numchains>0. At this point, the sampledVals at GGAtomSumNodes look like this:
+		                // [0,null,null,1,null,null] (here:  numchains=2, windowsize=3) Setting windowindex=1 means that 
+		                // in the next round of Gibbs sampling the first 'null' values of each chain will be overwritten
 
 		/* Perform windowsize-1 many steps of Gibbs sampling */
 		if (!abort){

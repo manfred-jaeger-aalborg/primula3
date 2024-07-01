@@ -114,7 +114,7 @@ private int highvalue;
 			}
 			else {
 				this.setCurrentInst(v);
-				reEvaluateUpstream();
+				reEvaluateUpstream(null);
 				newll = GradientGraphO.computePartialLogLikelihood(allugas);
 				fs=newll-oldll;
 				if (fs>highscore) {
@@ -126,7 +126,7 @@ private int highvalue;
 		}
 		// Reset to original configuration
 		this.setCurrentInst(ci);
-		reEvaluateUpstream();
+		reEvaluateUpstream(null);
 	}
 	
 //	public void setScore(int scoremode){
@@ -167,12 +167,12 @@ private int highvalue;
 		ggpfn.addToMaxIndicators(this);
 	}
 	
-	public void reEvaluateUpstream(){
-		super.reEvaluateUpstream();
+	public void reEvaluateUpstream(Integer sno){
+		super.reEvaluateUpstream(sno);
 		// Also need to re-evaluate the upper ground atom node, which
 		// usually is not an ancestor of this in the gradient graph
-		this.getMyUga().resetValue();
-		this.getMyUga().evaluate();
+		this.getMyUga().resetValue(sno);
+		this.getMyUga().evaluate(sno);
 	}
 
 	@Override

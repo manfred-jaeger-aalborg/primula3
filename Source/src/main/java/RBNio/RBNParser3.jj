@@ -480,7 +480,8 @@ ProbFormBool BoolFormula()  throws RBNIllegalArgumentException:
     | pf = BoolNegation() 
     | LOOKAHEAD( "(" BoolFormula() "&"  )pf = BoolAnd() 
     | LOOKAHEAD( "(" BoolFormula() "|"  )pf = BoolOr() 
-    | pf = BoolConstant() 
+    | pf = BoolConstant()
+    | pf = BoolCatEquality()
     )
     {return pf;}
 }
@@ -503,6 +504,17 @@ ProbFormBoolEquality BoolEquality()  throws RBNIllegalArgumentException:
 	tok1= <Name> "=" tok2 = <Name>
 	{return new ProbFormBoolEquality(tok1.image,tok2.image,true);}
 }
+
+ProbFormBoolAtomEquality BoolCatEquality()  throws RBNIllegalArgumentException:
+{
+ Object tok1;
+ Object tok2;
+}
+{// grammar
+	(tok1=UntypedAtom(false)|tok1=String=<Name>) "=" (tok2=UntypedAtom(false)|tok2=String=<Name>)
+	{return new ProbFormBoolAtoomEquality(tok1,tok2,true);}
+}
+xxx
 
 ProbFormBoolComposite BoolAnd()  throws RBNIllegalArgumentException:
 {Vector<ProbFormBool> comps=new Vector<ProbFormBool>() ;
