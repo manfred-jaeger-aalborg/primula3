@@ -135,19 +135,20 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
 
         Integer a1 = null;
         if (arg1 instanceof ProbFormAtom) {
-            a1 = (Integer) ((ProbFormAtom) thissubstituted.arg1).evaluate(A, inst, vars, tuple, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly, profiler)[0];
+            a1 = (Integer) ((Double) ((ProbFormAtom) thissubstituted.arg1).evaluate(A, inst, vars, tuple, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly, profiler)[0]).intValue();
         } else if (arg1 instanceof Integer) {
             a1 = (Integer) arg1;
         }
 
         Integer a2 = null;
         if (arg2 instanceof ProbFormAtom) {
-            a2 = (Integer) ((ProbFormAtom) thissubstituted.arg2).evaluate(A, inst, vars, tuple, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly, profiler)[0];
+            a2 = (Integer) ((Double) ((ProbFormAtom) thissubstituted.arg2).evaluate(A, inst, vars, tuple, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly, profiler)[0]).intValue();
         } else if (arg2 instanceof Integer) {
             a2 = (Integer) arg2;
         }
 
-        if (a1.equals(a2)) result[0] =1.0;
+        assert a1 != null;
+        if (a1.equals(a2)) result[0] = 1.0;
         else result[0]=0.0;
         return result;
     }
@@ -304,7 +305,10 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
     }
 
     private boolean isGround(){
-        return (rbnutilities.IsInteger(arg1) && rbnutilities.IsInteger(arg2));
+        if (arg1 instanceof ProbFormAtom && ((ProbFormAtom) arg1).isGround())
+            return arg2 instanceof ProbFormAtom && ((ProbFormAtom) arg2).isGround();
+
+       return (arg1 instanceof Integer && arg2 instanceof Integer);
     }
 
     public ProbForm toStandardPF(boolean recursive){
