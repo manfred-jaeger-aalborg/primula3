@@ -139,6 +139,14 @@ public class RBNReader3{
 
 	Signature sig;
 	
+	public Signature getSig() {
+		return sig;
+	}
+
+	public void setSig(Signature sig) {
+		this.sig = sig;
+	}
+
 	/**
 	 * Contains the probabilistic relations defined in the RBN	
 	 * 
