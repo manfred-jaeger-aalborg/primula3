@@ -3,8 +3,8 @@
 options {
       STATIC = false ;
     FORCE_LA_CHECK = true;
-	DEBUG_PARSER = false;
-	DEBUG_LOOKAHEAD = false;
+	DEBUG_PARSER = true;
+	DEBUG_LOOKAHEAD = true;
 //	DEBUG_TOKEN_MANAGER = true;
 	LOOKAHEAD = 3;
 }
@@ -108,10 +108,11 @@ ProbForm ProbForm()  throws RBNIllegalArgumentException:
 {ProbForm parsedpf;
 }
 {// grammar
-	(  LOOKAHEAD(Atom()) parsedpf=Atom() 
+	( LOOKAHEAD(Atom() "=" ) parsedpf= BoolCatEquality()
+ 	| LOOKAHEAD(Atom()) parsedpf=Atom() 
 	| LOOKAHEAD(ConvCombination()) parsedpf=ConvCombination() 
 	| LOOKAHEAD(CombinationFunc()) parsedpf=CombinationFunc() 
-	| parsedpf=BoolFormula() 
+	| parsedpf=BoolFormula()
 	| parsedpf=MacroCall()
 	| parsedpf=Constant() 
 	)
@@ -511,10 +512,16 @@ ProbFormBoolAtomEquality BoolCatEquality()  throws RBNIllegalArgumentException:
  Object tok2;
 }
 {// grammar
-	(tok1=UntypedAtom(false)|tok1=String=<Name>) "=" (tok2=UntypedAtom(false)|tok2=String=<Name>)
-	{return new ProbFormBoolAtoomEquality(tok1,tok2,true);}
+	tok1=UntypedAtom(false) "=" tok2=<Name>.image
+		{switch(parseno){
+	case 1: 
+		return null;
+		break;
+	case 2: 
+	     return new ProbFormBoolAtomEquality(tok1,tok2,true);
+	     }
+	     }
 }
-xxx
 
 ProbFormBoolComposite BoolAnd()  throws RBNIllegalArgumentException:
 {Vector<ProbFormBool> comps=new Vector<ProbFormBool>() ;
