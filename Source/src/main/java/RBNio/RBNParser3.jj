@@ -4,7 +4,7 @@ options {
       STATIC = false ;
     FORCE_LA_CHECK = true;
 	DEBUG_PARSER = true;
-	DEBUG_LOOKAHEAD = true;
+	DEBUG_LOOKAHEAD = false;
 //	DEBUG_TOKEN_MANAGER = true;
 	LOOKAHEAD = 3;
 }
@@ -517,8 +517,9 @@ ProbFormBoolAtomEquality BoolCatEquality()  throws RBNIllegalArgumentException:
 	case 1: 
 		return null;
 		break;
-	case 2: 
-	     return new ProbFormBoolAtomEquality(tok1,tok2,true);
+	case 2:
+	     ProbFormAtom pfa = new ProbFormAtom(((RBNReader3.ParsedUnTypedAtom)tok1).rel(),((RBNReader3.ParsedUnTypedAtom)tok1).args());
+	     return new ProbFormBoolAtomEquality(pfa,tok2,true,reader.getSig());
 	     }
 	     }
 }
