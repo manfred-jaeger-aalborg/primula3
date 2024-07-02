@@ -385,12 +385,6 @@ public abstract class GGCPMNode extends GGNode{
 		printMySumIndicators();
 	}
 
-
-	public void reset_value() {
-		super.resetValue();
-		if (this.isuga)
-			this.init_values_for_samples();
-	}
 	
 	public void set_value_for_sample(int sno) {
 		values_for_samples[sno]=value;
