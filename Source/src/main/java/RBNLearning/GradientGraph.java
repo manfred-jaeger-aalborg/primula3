@@ -326,7 +326,7 @@ public abstract class GradientGraph{
 	 *
 	 * If sno<0 do nothing!
 	 */
-	public abstract void setTruthVals(int sno);
+	public abstract void setTruthVals(Integer sno);
 
 	public void setLearnModule(LearnModule lm){
 		myggoptions = lm;

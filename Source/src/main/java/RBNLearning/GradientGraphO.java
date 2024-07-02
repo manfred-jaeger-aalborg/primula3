@@ -694,17 +694,16 @@ public class GradientGraphO extends GradientGraph{
 	}
 
 
-	/** Computes the empirical likelihood and empirical partial derivatives 
-	 * of the current sample.
-	 * The value and gradient fields contain the values for the last sample.
-	 *
-	 * When numchains=0, then value = likelihoodsum and gradient = gradientsum 
-	 * are the correct values, and the confusion matrix values are also computed
+	/** Computes the  likelihood and  partial derivatives 
+	 * defined by the values in the value and gradient field of the the GGNodes
+	 * 
+	 * If evaluation is relative to a specific sample, then the relevant sample values 
+	 * have to be copied into the value/gradient fields.
 	 *
 	 */ 
 	public void evaluateLikelihoodAndPartDerivs(boolean likelihoodonly)
 			throws RBNNaNException{
-		resetValues(likelihoodonly);
+		resetValues(null,likelihoodonly);
 		llnode.resetLikelihoodSum();
 		if (!likelihoodonly){
 			llnode.resetGradientSum();
@@ -721,7 +720,7 @@ public class GradientGraphO extends GradientGraph{
 		else{
 			for (int i=0;i<numchains*windowsize;i++){
 
-				resetValues(likelihoodonly);
+				resetValues(i,likelihoodonly);
 				setTruthVals(i);
 				llnode.evaluate();
 				llnode.updateLikelihoodSum();
@@ -747,7 +746,7 @@ public class GradientGraphO extends GradientGraph{
 	 * If valueonly=false, then also the gradients are reset
 	 *  
 	 */
-	public void resetValues(int sno, boolean valueonly){
+	public void resetValues(Integer sno, boolean valueonly){
 		llnode.resetValue();
 		if (!valueonly)
 			llnode.resetGradient();
@@ -813,7 +812,7 @@ public class GradientGraphO extends GradientGraph{
 						else
 							sumindicators.elementAt(i).setSampleVal(k*windowsize,0);
 					}
-					resetValues(true);
+					resetValues(k*windowsize,true);
 					setTruthVals(k*windowsize);
 					llnode.evaluate();
 					if (llnode.likelihood()[0]!=0)
@@ -880,14 +879,15 @@ public class GradientGraphO extends GradientGraph{
 		GGAtomSumNode ggin;
 		for (int k=0;k<numchains && (mythread == null || mythread.isAlive()) ;k++){
 
+			resetValues(null,true);
 			setTruthVals(k*numchains+recentindex);
-			resetValues(true);
+			
 			llnode.evaluate();
 			for (int i=0;i<sumindicators.size() && (mythread == null || mythread.isAlive());i++){
 				ggin = (GGAtomSumNode)sumindicators.elementAt(i);
 				oldsamplelik=llnode.likelihood();
 				ggin.toggleCurrentInst();
-				ggin.reEvaluateUpstream();
+				ggin.reEvaluateUpstream(null);
 				newsamplelik=llnode.likelihood();
 				likratio=SmallDouble.toStandardDouble(SmallDouble.divide(newsamplelik,oldsamplelik));
 				coin = Math.random();
@@ -896,7 +896,7 @@ public class GradientGraphO extends GradientGraph{
 				 */
 				if (coin>likratio/(1+likratio)){
 					ggin.toggleCurrentInst();
-					ggin.reEvaluateUpstream();
+					ggin.reEvaluateUpstream(null);
 				}
 				ggin.setSampleVal(windowindex*numchains+k);
 			}
@@ -969,7 +969,7 @@ public class GradientGraphO extends GradientGraph{
 			if (flipnext != null) {
 				System.out.println("Flipping: " + flipnext.getMyatom() + " to " + flipnext.getHighvalue());
 				flipnext.setCurrentInst(flipnext.getHighvalue());
-				flipnext.reEvaluateUpstream();
+				flipnext.reEvaluateUpstream(null);
 				num_flipped++;
 				/*
 				 * Collect all the GGAtomMaxNodes whose score has to be re-calculated:
@@ -1136,10 +1136,10 @@ public class GradientGraphO extends GradientGraph{
 	/** Sets the truthval fields in the ProbFormNodes corresponding
 	 * to unobserved atoms to the truthvalues in the sno's sample
 	 *
-	 * If sno<0 do nothing!
+	 * If sno=null do nothing!
 	 */
-	public void setTruthVals(int sno){
-		if (sno >=0)
+	public void setTruthVals(Integer sno){
+		if (sno != null)
 			for (int i=0;i<sumindicators.size();i++){
 				sumindicators.elementAt(i).setCurrentInst(sno);
 			}

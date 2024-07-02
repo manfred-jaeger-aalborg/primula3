@@ -133,22 +133,33 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
         if (!thissubstituted.isGround())
             throw new IllegalArgumentException("Attempt to evaluate non-ground equality");
 
-        Integer a1 = null;
+        double a1=0,a2=0;
         if (arg1 instanceof ProbFormAtom) {
-            a1 = (Integer) ((Double) ((ProbFormAtom) thissubstituted.arg1).evaluate(A, inst, vars, tuple, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly, profiler)[0]).intValue();
+        	a1= (double) ((ProbFormAtom) thissubstituted.arg1).evaluate(A, inst, vars, 
+            		tuple, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, 
+            		params, returntype, valonly, profiler)[0];
+        	if (Double.isNaN(a1)) {
+        		result[0]=Double.NaN;
+        		return result;
+        	}
         } else if (arg1 instanceof Integer) {
-            a1 = (Integer) arg1;
+            a1 = (Integer)arg1;
         }
 
-        Integer a2 = null;
         if (arg2 instanceof ProbFormAtom) {
-            a2 = (Integer) ((Double) ((ProbFormAtom) thissubstituted.arg2).evaluate(A, inst, vars, tuple, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly, profiler)[0]).intValue();
+        	a2= (double) ((ProbFormAtom) thissubstituted.arg2).evaluate(A, inst, vars, 
+            		tuple, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, 
+            		params, returntype, valonly, profiler)[0];
+        	if (Double.isNaN(a2)) {
+        		result[0]=Double.NaN;
+        		return result;
+        	}
         } else if (arg2 instanceof Integer) {
-            a2 = (Integer) arg2;
+            a2 = (Integer)arg2;
         }
 
-        assert a1 != null;
-        if (a1.equals(a2)) result[0] = 1.0;
+ 
+        if (a1 == a2) result[0] = 1.0;
         else result[0]=0.0;
         return result;
     }
@@ -214,16 +225,19 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
     public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone)
             throws RBNCompatibilityException {
 
-        Vector<GroundAtom> a1 = new Vector<>();
-        Vector<GroundAtom> a2 = new Vector<>();
+        Vector<GroundAtom> result = new Vector<GroundAtom>();
+        GroundAtom par1=null,par2=null;
+        
         if (arg1 instanceof ProbFormAtom) {
-            a1 = ((ProbFormAtom) arg1).makeParentVec(A, inst, macrosdone);
+        	par1=((ProbFormAtom)arg1).atom();
+            result.add(par1);
         }
         if (arg2 instanceof ProbFormAtom) {
-            a2 = ((ProbFormAtom) arg2).makeParentVec(A, inst, macrosdone);
+        	par2 = ((ProbFormAtom)arg2).atom();
+        	if (par1==null || (par1 != null && !par1.equals(par2)))
+        		result.add(par2);
         }
-
-        return rbnutilities.combineAtomVecs(a1, a2);
+        return result;
     }
 
     @Override
@@ -304,11 +318,12 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
         return arg2;
     }
 
+    private boolean isGroundComponent(Object o) {
+    	return (o instanceof ProbFormAtom && ((ProbFormAtom)o).isGround()  || o instanceof Integer);
+    }
+    
     private boolean isGround(){
-        if (arg1 instanceof ProbFormAtom && ((ProbFormAtom) arg1).isGround())
-            return arg2 instanceof ProbFormAtom && ((ProbFormAtom) arg2).isGround();
-
-       return (arg1 instanceof Integer && arg2 instanceof Integer);
+    	return (isGroundComponent(arg1) && isGroundComponent(arg2));
     }
 
     public ProbForm toStandardPF(boolean recursive){

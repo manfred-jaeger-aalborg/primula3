@@ -77,19 +77,19 @@ public class GroundAtomList extends java.lang.Object {
          }
     }
 //Thrane
-    public void delete(String owner){
-      GroundAtom thisatom;
-      int pos = 0;
-      System.out.println("owner "+owner);
-      while (pos < atoms.size()){
-      	thisatom = (GroundAtom)atoms.elementAt(pos);
-      	if((thisatom.getOwner()).equals(owner)){
-      		atoms.remove(pos);
-      	}
-        else
-          pos++;
-      }
-    }
+//    public void delete(String owner){
+//      GroundAtom thisatom;
+//      int pos = 0;
+//      System.out.println("owner "+owner);
+//      while (pos < atoms.size()){
+//      	thisatom = (GroundAtom)atoms.elementAt(pos);
+//      	if((thisatom.getOwner()).equals(owner)){
+//      		atoms.remove(pos);
+//      	}
+//        else
+//          pos++;
+//      }
+//    }
 
 //Thrane
 

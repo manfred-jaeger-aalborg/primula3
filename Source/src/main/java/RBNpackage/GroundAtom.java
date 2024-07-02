@@ -45,8 +45,8 @@ public class GroundAtom extends java.lang.Object {
     /**
 	 * @uml.property  name="owner"
 	 */
-    private String owner = "";
-    //Thrane
+//    private String owner = "";
+//    //Thrane
 
     public GroundAtom(){
     }
@@ -77,21 +77,21 @@ public class GroundAtom extends java.lang.Object {
 	rel = r;
 	args = a;
 	//Thrane
-	for(int i =0; i<args.length; i++ ){
-	    if(i==0){
-		owner = owner + args[i];
-	    }
-	    else{
-		owner = owner+ ", " + args[i];
-	    }
-
-	}
+//	for(int i =0; i<args.length; i++ ){
+//	    if(i==0){
+//		owner = owner + args[i];
+//	    }
+//	    else{
+//		owner = owner+ ", " + args[i];
+//	    }
+//
+//	}
     }
 
     public GroundAtom(Rel r, int[] a, String owner){
   	rel = r;
   	args = a;
-  	this.owner = owner;
+//  	this.owner = owner;
   	System.out.println("owner "+owner );
     }
 
@@ -104,17 +104,22 @@ public class GroundAtom extends java.lang.Object {
 	 * @return
 	 * @uml.property  name="owner"
 	 */
-    public String getOwner(){
-	return owner;
-    }
+//    public String getOwner(){
+//	return owner;
+//    }
 
 
+
+//    //Thrane
+//    public boolean equals( GroundAtom a ){
+//	return this.rel.equals( a.rel ) && java.util.Arrays.equals( this.args, a.args ) && this.owner.equals( a.getOwner() );
+//    }
 
     //Thrane
     public boolean equals( GroundAtom a ){
-	return this.rel.equals( a.rel ) && java.util.Arrays.equals( this.args, a.args ) && this.owner.equals( a.getOwner() );
+	return this.rel.equals( a.rel ) && java.util.Arrays.equals( this.args, a.args );
     }
-
+    
     /** @author keith cascio
 	@since 20061020 */
     public boolean isIdenticalTo( GroundAtom atom ){

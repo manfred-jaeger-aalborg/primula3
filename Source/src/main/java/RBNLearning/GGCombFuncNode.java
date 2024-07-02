@@ -191,7 +191,7 @@ public class GGCombFuncNode extends GGCPMNode{
 //		}
 
 		if (is_evaluated) {
-			if (this.values_for_samples==null)
+			if (sno==null)
 				return value;
 			else
 				return this.values_for_samples[sno];

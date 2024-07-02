@@ -4,7 +4,7 @@ options {
       STATIC = false ;
     FORCE_LA_CHECK = true;
 	DEBUG_PARSER = true;
-	DEBUG_LOOKAHEAD = false;
+	DEBUG_LOOKAHEAD = true;
 //	DEBUG_TOKEN_MANAGER = true;
 	LOOKAHEAD = 3;
 }
@@ -109,6 +109,7 @@ ProbForm ProbForm()  throws RBNIllegalArgumentException:
 }
 {// grammar
 	( LOOKAHEAD(Atom() "=" ) parsedpf= BoolCatEquality()
+	| LOOKAHEAD(<Name> "=" Atom()) parsedpf= BoolCatEquality()
  	| LOOKAHEAD(Atom()) parsedpf=Atom() 
 	| LOOKAHEAD(ConvCombination()) parsedpf=ConvCombination() 
 	| LOOKAHEAD(CombinationFunc()) parsedpf=CombinationFunc() 
@@ -512,14 +513,19 @@ ProbFormBoolAtomEquality BoolCatEquality()  throws RBNIllegalArgumentException:
  Object tok2;
 }
 {// grammar
-	tok1=UntypedAtom(false) "=" tok2=<Name>.image
+	(tok1=UntypedAtom(false) | tok1=<Name>.image) "=" (tok2=UntypedAtom(false) | tok2=<Name>.image)
 		{switch(parseno){
 	case 1: 
 		return null;
 		break;
 	case 2:
-	     ProbFormAtom pfa = new ProbFormAtom(((RBNReader3.ParsedUnTypedAtom)tok1).rel(),((RBNReader3.ParsedUnTypedAtom)tok1).args());
-	     return new ProbFormBoolAtomEquality(pfa,tok2,true,reader.getSig());
+	     if (tok1 instanceof RBNReader3.ParsedUnTypedAtom){
+	     	tok1= new ProbFormAtom(((RBNReader3.ParsedUnTypedAtom)tok1).rel(),((RBNReader3.ParsedUnTypedAtom)tok1).args());
+	     }
+	     if (tok2 instanceof RBNReader3.ParsedUnTypedAtom){
+	     	tok2= new ProbFormAtom(((RBNReader3.ParsedUnTypedAtom)tok2).rel(),((RBNReader3.ParsedUnTypedAtom)tok2).args());
+	     }
+	     return new ProbFormBoolAtomEquality(tok1,tok2,true,reader.getSig());
 	     }
 	     }
 }

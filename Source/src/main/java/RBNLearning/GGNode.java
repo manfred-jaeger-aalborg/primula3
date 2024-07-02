@@ -138,6 +138,8 @@ public abstract class GGNode implements Comparable<GGNode>{
 	 * to the the values in the sample with index sno.
 	 * 
 	 * For nodes not depending on a sum node: call evaluate(null)
+	 * 
+	 * evaluate(null) at nodes with values_for_samples: evaluate for all samples!
 	 */
 	public abstract Double[] evaluate(Integer sno);
 
@@ -166,8 +168,11 @@ public abstract class GGNode implements Comparable<GGNode>{
 	
 	public void resetValue(Integer sno){
 		is_evaluated=false;
-		if (sno == null)
+		if (sno == null) {
 			value = null;
+			if (values_for_samples != null)
+				init_values_for_samples();
+		}
 		else
 			values_for_samples[sno]=null;
 	}
