@@ -158,12 +158,7 @@ public class GnnPy {
                         System.out.println("not implemented");
 //                        return (double) this.currentResult[node];
                     else if (this.dimOut == 2) {
-                        Double[] catres = currentResult[node];
-                        // this serves to help MAP inference (avoid infinite in the score)
-                        for (int i = 0; boundValue && i < catres.length; i++) {
-                            catres[i] = catres[i]*0.99999 + (1-catres[i])*0.00001;
-                        }
-                        return catres;
+                        return currentResult[node];
                     }
                 } else {
                     this.currentResult = null;
@@ -203,9 +198,9 @@ public class GnnPy {
 
                 Double[] catres = currentResult[node];
                 // this serves to help MAP inference (avoid infinite in the score)
-                for (int i = 0; boundValue && i < catres.length; i++) {
-                        catres[i] = catres[i]*0.9999 + (1-catres[i])*0.0001;
-                }
+//                for (int i = 0; boundValue && i < catres.length; i++) {
+//                    catres[i] = catres[i]*0.9999 + (1-catres[i])*0.0001;
+//                }
 
                 return catres;
             }
