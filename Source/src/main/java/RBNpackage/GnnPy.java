@@ -161,7 +161,7 @@ public class GnnPy {
                         Double[] catres = currentResult[node];
                         // this serves to help MAP inference (avoid infinite in the score)
                         for (int i = 0; boundValue && i < catres.length; i++) {
-                            catres[i] = catres[i]*0.9999 + (1-catres[i])*0.0001;
+                            catres[i] = catres[i]*0.99999 + (1-catres[i])*0.00001;
                         }
                         return catres;
                     }
@@ -650,7 +650,7 @@ public class GnnPy {
 
             Double[] value = new Double[0];
             if (Objects.equals(cpmGnn.getGnn_inference(), "node"))
-                value = this.inferModelNodeDouble(Integer.parseInt(cpmGnn.getArgument()), GGx, GGedge_index, cpmGnn.getIdGnn(), "", cpmGnn.isBoolean());
+                value = this.inferModelNodeDouble(Integer.parseInt(cpmGnn.getArgument()), GGx, GGedge_index, cpmGnn.getIdGnn(), "", true);
             else if (Objects.equals(cpmGnn.getGnn_inference(), "graph")) {
 //                value = this.inferModelGraphDouble(cpmGnn.getClassId(), GGx, GGedge_index, cpmGnn.getIdGnn(),"");
             } else
