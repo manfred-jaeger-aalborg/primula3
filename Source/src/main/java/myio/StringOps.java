@@ -13,6 +13,14 @@ public class StringOps{
 		return result;
 	}
 
+	public static String arrayToString(Double[] arr, String leftpar, String rightpar){
+		String result = leftpar ;
+		for (int i=0;i<arr.length-1;i++) result = result + arr[i] + ",";
+		if (arr.length>0) result=result+arr[arr.length-1];
+		result = result + rightpar;
+		return result;
+	}
+
 	public static String arrayToString(double[] arr, int digits, String leftpar, String rightpar){ 
 		String result = leftpar;
 		for (int i=0;i<arr.length-1;i++) result = result + MyMathOps.formatDouble(arr[i],digits) + ", ";

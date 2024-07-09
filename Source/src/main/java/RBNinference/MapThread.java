@@ -79,8 +79,8 @@ public class MapThread extends GGThread {
 		
 		int maxrestarts = myinfmodule.getMAPRestarts();
 		int restarts =1;
-		double[] oldll=new double[2];
-		double[] newll;
+		double oldll=Double.NEGATIVE_INFINITY;
+		double newll=0;
 
         /**
          * SAVE LIKELIHOOD ON FILE
@@ -99,12 +99,12 @@ public class MapThread extends GGThread {
 			try {
                 System.out.println("Current restart: " + restarts);
 				newll = gg.mapInference(this);
-				if (newll != null) {
-					if (SmallDouble.compareSD(newll, oldll) == 1) {
+				if (!Double.isNaN(newll)) {
+					if (newll>oldll) {
 						oldll = newll;
 						newmapvals = gg.getMapVals();
 						mapprobs.setMVs(newmapvals);
-						mapprobs.setLL(SmallDouble.asString(oldll));
+						mapprobs.setLL(String.valueOf(oldll));
 						if (gg.parameters().size() > 0)
 							myLearnModule.setParameterValues(gg.getParameters());
 					}
@@ -127,7 +127,7 @@ public class MapThread extends GGThread {
 			restarts++;
 		}
 
-		System.out.println("Best likelihood found: " + SmallDouble.toStandardDouble(oldll));
+		System.out.println("Best likelihood found: " + String.valueOf(oldll));
 		System.out.println("Best combination found: ");
 //		for (Rel r: newmapvals.keySet()) {
 //			for (int nextgimn: newmapvals.get(r))

@@ -1330,6 +1330,7 @@ public class rbnutilities extends java.lang.Object
     	return result;
     }
 
+    
     public static double euclidNorm(double[] ar){
     	double norm = 0;
     	for (int i=0;i<ar.length;i++)
@@ -1606,6 +1607,21 @@ public class rbnutilities extends java.lang.Object
 	
 	
 	public static int sampledValue(double[] cpr) {
+		/* For probability vector cpr, returns the index of the value sampled
+		 * according to the cpr probabilities.
+		 * 
+		 */
+		int result=0;
+		double probsum =cpr[0];
+		double rand=Math.random();
+		for (int i=0; i< cpr.length && probsum<rand;i++) { 
+			result++;
+			probsum+=cpr[i+1];
+		}
+		return result;
+	}
+	
+	public static int sampledValue(Double[] cpr) {
 		/* For probability vector cpr, returns the index of the value sampled
 		 * according to the cpr probabilities.
 		 * 

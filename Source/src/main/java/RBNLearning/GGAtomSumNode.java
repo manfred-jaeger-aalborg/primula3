@@ -35,13 +35,13 @@ public class GGAtomSumNode extends GGAtomNode{
 	 * by summation over the configurations defined by the sampledVals.
 	 * 
 	 * Array of length numchains*windowsize (as defined in GradientGraph)
-	 * Values for the k'th chain are stored at indices k*numchains,...,(k+1)*numchains-1
-	 * The oldest sample for chain k is stored at k*numchans+windowindex, where windowindex is 
+	 * Values for the k'th chain are stored at indices k*windowsize,...,(k+1)*windowsize-1
+	 * The oldest sample for chain k is stored at k*windowsize+windowindex, where windowindex is 
 	 * defined by the GradientGraph. New samples overwrite the oldest sample (cyclic in the
 	 * part of the array allocated to the chain)
 	 * 
 	 */
-	int[] sampledVals;
+
 
 	public GGAtomSumNode(GradientGraphO gg,
 			ProbForm pf,  
@@ -53,26 +53,27 @@ public class GGAtomSumNode extends GGAtomNode{
 	{
 		super(gg,pf,A,I,inputcasenoarg,observcasenoarg);
 		isScalar = true;
+		depends_on_sample = true;
 		gg.addToSumIndicators(this);
 	}
 
 
-	/** Sets the current instantiation according to 
-	 * the value in the sno's sample
-	 */
-	public void setCurrentInst(int sno){
-		currentInst = values_for_samples[sno][0].intValue();
-	}
+//	/** Sets the current instantiation according to 
+//	 * the value in the sno's sample
+//	 */
+//	public void setCurrentInst(int sno){
+//		currentInst = values_for_samples[sno][0].intValue();
+//	}
 
 	/** Sets value in sno's sample to tv */
 	public void setSampleVal(int sno, int val){
-		values_for_samples[sno][0] = (double) val;
+		values_for_samples[sno] = new Double[] {(double) val};
 	}
 
-	/** Sets value in sno's sample to current instantiation */
-	public void setSampleVal(int sno){
-		setSampleVal(sno,currentInst);
-	}
+//	/** Sets value in sno's sample to current instantiation */
+//	public void setSampleVal(int sno){
+//		setSampleVal(sno,currentInst);
+//	}
 
 	/** Toggles value in sno's sample */
 	public void toggleSampleVal(int sno){
@@ -85,8 +86,10 @@ public class GGAtomSumNode extends GGAtomNode{
 	}
 
 	public Double[] evaluate(Integer sno){
-		if (sno==null)
-			return new Double[]{(double)currentInst};
+		if (sno==null) {
+			System.out.println("Called GGAtomSumNode.evaluate without sample number!");
+			return null;
+		}
 		else
 			return values_for_samples[sno];
 	}
@@ -94,5 +97,12 @@ public class GGAtomSumNode extends GGAtomNode{
 	@Override
 	public boolean isBoolean() {
 		return !(myatom.rel() instanceof CatRel);
+	}
+	
+	public int[] getSampledVals() {
+		int[] result  = new int[values_for_samples.length];
+		for (int i=0;i<result.length;i++)
+			result[i]=values_for_samples[i][0].intValue();
+		return result;
 	}
 }

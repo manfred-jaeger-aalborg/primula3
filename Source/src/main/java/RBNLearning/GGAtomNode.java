@@ -42,14 +42,7 @@ public abstract class GGAtomNode extends GGCPMNode{
 	int observcaseno;
 
 
-	/** The current instantiation (according to a current MAP configuration 
-	 * or sample number) for this atom (used for computing
-	 * likelihood at the root of the gradient graph);
-	 * currentInst = -1 if not currently instantiated
-	 * 
-	 * 
-	 */
-	int currentInst;
+
 
 	/* Pointer to the Upper Ground Atom Node defining the probability of this.myatom 
 	 * 
@@ -73,7 +66,7 @@ public abstract class GGAtomNode extends GGCPMNode{
 		super(gg,pf,A,I);
 		inputcaseno = inputcasenoarg;
 		observcaseno = observcasenoarg;
-		currentInst = -1;
+//		currentInst = -1;
 		myuppergroundatom = null;
 		allugas = new Vector<GGCPMNode>();
 		if (!(pf instanceof ProbFormAtom)){
@@ -83,38 +76,26 @@ public abstract class GGAtomNode extends GGCPMNode{
 	}
 
 
-	public Double[] evaluate(Integer sno){
-		/*
-		 * A GGAtomNode that also is uga would mean that one relation is defined as a copy
-		 * of another relation, i.e., in the rbn:
-		 * 
-		 * rel1(v) = rel2(v);
-		 * 
-		 * So this case should rarely ever happen ...
-		 */
-		
-		return new Double[]{(double) currentInst};
-	}
 
 
-	public void evaluateBounds(){
-		switch(currentInst){
-		case -1:
-			bounds[0]=0;
-			bounds[1]=1;
-			break;
-		case 0:
-			bounds[0]=0;
-			bounds[1]=0;
-			break;
-		case 1:
-			bounds[0]=1;
-			bounds[1]=1;
-			break;
-		}
-	}
+//	public void evaluateBounds(){
+//		switch(currentInst){
+//		case -1:
+//			bounds[0]=0;
+//			bounds[1]=1;
+//			break;
+//		case 0:
+//			bounds[0]=0;
+//			bounds[1]=0;
+//			break;
+//		case 1:
+//			bounds[0]=1;
+//			bounds[1]=1;
+//			break;
+//		}
+//	}
 
-	public double evaluateGrad(String param){
+	public double evaluateGrad(Integer sno,String param){
 		return 0.0;
 	}
 
@@ -136,30 +117,30 @@ public abstract class GGAtomNode extends GGCPMNode{
 	
 	
 
-	/** Sets the current instantiation according to 
-	 * the truth value tv
-	 */
-	public void setCurrentInst(int val){
-			currentInst = val;
-	}
+//	/** Sets the current instantiation according to 
+//	 * the truth value tv
+//	 */
+//	public void setCurrentInst(int val){
+//			currentInst = val;
+//	}
+//
+//	public int getCurrentInst(){
+//		return currentInst;
+//	}
+//
+//	public void toggleCurrentInst(){
+//		if (currentInst==1)
+//			currentInst=0;
+//		else
+//			currentInst=1;
+//	}
 
-	public int getCurrentInst(){
-		return currentInst;
-	}
-
-	public void toggleCurrentInst(){
-		if (currentInst==1)
-			currentInst=0;
-		else
-			currentInst=1;
-	}
-
-	/** Resets the currentInst field to -1, i.e. node 
-	 * becomes un-instantiated
-	 */
-	public void unset(){
-		currentInst = -1;
-	}
+//	/** Resets the currentInst field to -1, i.e. node 
+//	 * becomes un-instantiated
+//	 */
+//	public void unset(){
+//		currentInst = -1;
+//	}
 	
 	public void setUGA(GGCPMNode uga){
 		myuppergroundatom = uga;
@@ -169,11 +150,9 @@ public abstract class GGAtomNode extends GGCPMNode{
 	public abstract void addMeToIndicators(GGCPMNode ggpfn);
 	
 	public void setAllugas(){
-		TreeSet<GGNode> ancs = this.ancestors();
-		GGNode nextggn;
-		for (Iterator<GGNode> it = ancs.iterator(); it.hasNext();){
-			nextggn = it.next();
-			if ((nextggn instanceof GGCPMNode) && ((GGCPMNode)nextggn).isuga()){
+		TreeSet<GGCPMNode> ancs = this.ancestors();
+		for (GGCPMNode nextggn: ancs){
+			if (nextggn.isuga()){
 				allugas.add((GGCPMNode)nextggn);
 				addMeToIndicators((GGCPMNode)nextggn);
 			}

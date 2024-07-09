@@ -186,16 +186,19 @@ public class GGCombFuncNode extends GGCPMNode{
 
 	public Double[] evaluate(Integer sno){
 
-//		if (this.isuga()) {
-//			System.out.print("evaluating " + this.getMyatom());
-//		}
-
-		if (is_evaluated) {
-			if (sno==null)
-				return value;
-			else
-				return this.values_for_samples[sno];
+		
+		if (this.depends_on_sample && sno==null) {
+			for (int i=0;i<thisgg.numchains*thisgg.windowsize;i++)
+				this.evaluate(i);
+			return null;
 		}
+			
+		if (this.depends_on_sample && is_evaluated_for_samples[sno]) 
+				return this.values_for_samples[sno];
+		
+		if (!this.depends_on_sample && is_evaluated)
+			return this.value;
+
 		
 		/* Construct an argument array for the combination function: */
 		double[] args = new double[valuesOfSubPFs.length+ children.size()];
@@ -203,53 +206,60 @@ public class GGCombFuncNode extends GGCPMNode{
 			args[i]=valuesOfSubPFs[i];
 		for (int i=0;i<children.size();i++)
 			args[i+valuesOfSubPFs.length]= children.elementAt(i).evaluate(sno)[0];
-		double result = computeCombFunc(args);
-		if (Double.isNaN(result))
+		double r = computeCombFunc(args);
+		if (Double.isNaN(r))
 			System.out.println("result = NaN in evaluate for comb.func " );
 
-		if (sno==null)
-			value = new Double[]{result};
-		else
-			values_for_samples[sno]=new Double[]{result};
-		return new Double[]{result};
-	}
-
-	public void evaluateBounds(){
-		if (bounds[0]== -1){
-			//	    System.out.println("combfuncnode.evaluateBounds");
-			/* First set bounds at children: */
-			for (int i=0;i<children.size();i++)
-				children.elementAt(i).evaluateBounds();
-			/* Determine arrays of lower and upper bounds for sub-formulas */
-			double[] lowargs = new double[valuesOfSubPFs.length+ children.size()];
-			for (int i=0;i<valuesOfSubPFs.length;i++)
-				lowargs[i]=valuesOfSubPFs[i];
-			for (int i=0;i<children.size();i++)
-				lowargs[i+valuesOfSubPFs.length]= children.elementAt(i).lowerBound();
-			double[] uppargs = new double[valuesOfSubPFs.length+ children.size()];
-			for (int i=0;i<valuesOfSubPFs.length;i++)
-				uppargs[i]=valuesOfSubPFs[i];
-			for (int i=0;i<children.size();i++)
-				uppargs[i+valuesOfSubPFs.length]= children.elementAt(i).upperBound();
-			/* NOR and MEAN are monotone in their arguments, INVSUM anti-monotone */
-			switch (typeOfComb){
-			case CombFunc.NOR:
-				bounds[0] = thisgg.computeCombFunc(CombFunc.NOR,lowargs);
-				bounds[1] = thisgg.computeCombFunc(CombFunc.NOR,uppargs);
-				break;
-			case CombFunc.MEAN: 
-				bounds[0] = thisgg.computeCombFunc(CombFunc.MEAN,lowargs);
-				bounds[1] = thisgg.computeCombFunc(CombFunc.MEAN,uppargs);
-				break;
-			case CombFunc.INVSUM:		
-				bounds[0] = thisgg.computeCombFunc(CombFunc.INVSUM,uppargs);
-				bounds[1] = thisgg.computeCombFunc(CombFunc.INVSUM,lowargs);
-				break;
-			}
+		Double[] result = new Double[]{r};
+		
+		if (this.depends_on_sample) {
+			values_for_samples[sno] = result;
+			is_evaluated_for_samples[sno]=true;
 		}
+		else {
+			value = result;
+			is_evaluated = true;
+		}
+		
+		return result;
 	}
 
-	public double evaluateGrad(String param)
+//	public void evaluateBounds(){
+//		if (bounds[0]== -1){
+//			//	    System.out.println("combfuncnode.evaluateBounds");
+//			/* First set bounds at children: */
+//			for (int i=0;i<children.size();i++)
+//				children.elementAt(i).evaluateBounds();
+//			/* Determine arrays of lower and upper bounds for sub-formulas */
+//			double[] lowargs = new double[valuesOfSubPFs.length+ children.size()];
+//			for (int i=0;i<valuesOfSubPFs.length;i++)
+//				lowargs[i]=valuesOfSubPFs[i];
+//			for (int i=0;i<children.size();i++)
+//				lowargs[i+valuesOfSubPFs.length]= children.elementAt(i).lowerBound();
+//			double[] uppargs = new double[valuesOfSubPFs.length+ children.size()];
+//			for (int i=0;i<valuesOfSubPFs.length;i++)
+//				uppargs[i]=valuesOfSubPFs[i];
+//			for (int i=0;i<children.size();i++)
+//				uppargs[i+valuesOfSubPFs.length]= children.elementAt(i).upperBound();
+//			/* NOR and MEAN are monotone in their arguments, INVSUM anti-monotone */
+//			switch (typeOfComb){
+//			case CombFunc.NOR:
+//				bounds[0] = thisgg.computeCombFunc(CombFunc.NOR,lowargs);
+//				bounds[1] = thisgg.computeCombFunc(CombFunc.NOR,uppargs);
+//				break;
+//			case CombFunc.MEAN: 
+//				bounds[0] = thisgg.computeCombFunc(CombFunc.MEAN,lowargs);
+//				bounds[1] = thisgg.computeCombFunc(CombFunc.MEAN,uppargs);
+//				break;
+//			case CombFunc.INVSUM:		
+//				bounds[0] = thisgg.computeCombFunc(CombFunc.INVSUM,uppargs);
+//				bounds[1] = thisgg.computeCombFunc(CombFunc.INVSUM,lowargs);
+//				break;
+//			}
+//		}
+//	}
+
+	public double evaluateGrad(Integer sno, String param)
 			throws RBNNaNException{
 		
 //		if (gradient[param] != null)
@@ -257,196 +267,197 @@ public class GGCombFuncNode extends GGCPMNode{
 //		if (!dependsOnParam[param])
 //			return 0.0;
 		
-		if (gradient.get(param)== null){
-			return 0.0;
-		}
-		else {
-			double currval = gradient.get(param);
-			if (!Double.isNaN(currval)){
-				return currval;
-			}
-		}
-		double result = 0;
-		switch (typeOfComb){
-		case CombFunc.NOR:
-			result = computeDerivNOR(param);
-			break;
-
-		case CombFunc.MEAN:
-			result = computeDerivMEAN(param);
-			break;
-
-		case CombFunc.INVSUM:
-			result = computeDerivINVSUM(param);
-			break;
-
-		case CombFunc.ESUM:
-			result = computeDerivESUM(param);
-			break;
-
-		case CombFunc.LREG:
-			result = computeDerivLREG(param);
-			break;
-			
-		case CombFunc.LLREG:
-			result = computeDerivLLREG(param);
-			break;
-			
-		case CombFunc.SUM:
-			result = computeDerivSUM(param);
-			break;
-		case CombFunc.PROD:
-			result = computeDerivPROD(param);
-			break;
-		
-
-		}
-		
-		gradient.put(param,result);
-		//System.out.println("Gradient value (GGComb): " + result);
-		return result;
+//		if (gradient.get(param)== null){
+//			return 0.0;
+//		}
+//		else {
+//			double currval = gradient.get(param);
+//			if (!Double.isNaN(currval)){
+//				return currval;
+//			}
+//		}
+//		double result = 0;
+//		switch (typeOfComb){
+//		case CombFunc.NOR:
+//			result = computeDerivNOR(param);
+//			break;
+//
+//		case CombFunc.MEAN:
+//			result = computeDerivMEAN(param);
+//			break;
+//
+//		case CombFunc.INVSUM:
+//			result = computeDerivINVSUM(param);
+//			break;
+//
+//		case CombFunc.ESUM:
+//			result = computeDerivESUM(param);
+//			break;
+//
+//		case CombFunc.LREG:
+//			result = computeDerivLREG(param);
+//			break;
+//			
+//		case CombFunc.LLREG:
+//			result = computeDerivLLREG(param);
+//			break;
+//			
+//		case CombFunc.SUM:
+//			result = computeDerivSUM(param);
+//			break;
+//		case CombFunc.PROD:
+//			result = computeDerivPROD(param);
+//			break;
+//		
+//
+//		}
+//		
+//		gradient.put(param,result);
+//		//System.out.println("Gradient value (GGComb): " + result);
+//		return result;
+		return 0;
 	}
 
 
 
-	private double computeDerivNOR(String param)
-	throws RBNNaNException
-	{
-		double result = 0;
-        /* First compute \prod (1-Fi) over all subformulas */
-        double factor = aggregateOfSubPFs;
-        
-        for (int i=0;i<children.size();i++)
-                factor = factor*(1-children.elementAt(i).evaluate()[0]);
-        
-        if (factor == 0)
-        	return 0.0;
-        
-        /* Now compute the partial derivative as
-         *
-         * \sum_{F_i\in fthetalist} (factor/(1-F_i))*(F_i')
-         */
-        for (int i=0;i<children.size();i++){
-                if (children.elementAt(i).dependsOn(param))
-                        result = result + (factor/(1-children.elementAt(i).evaluate()[0]))*(children.elementAt(i).evaluateGrad(param));
-        }
-        
-		return result;
-	}
+//	private double computeDerivNOR(String param)
+//	throws RBNNaNException
+//	{
+//		double result = 0;
+//        /* First compute \prod (1-Fi) over all subformulas */
+//        double factor = aggregateOfSubPFs;
+//        
+//        for (int i=0;i<children.size();i++)
+//                factor = factor*(1-children.elementAt(i).evaluate()[0]);
+//        
+//        if (factor == 0)
+//        	return 0.0;
+//        
+//        /* Now compute the partial derivative as
+//         *
+//         * \sum_{F_i\in fthetalist} (factor/(1-F_i))*(F_i')
+//         */
+//        for (int i=0;i<children.size();i++){
+//                if (children.elementAt(i).dependsOn(param))
+//                        result = result + (factor/(1-children.elementAt(i).evaluate()[0]))*(children.elementAt(i).evaluateGrad(param));
+//        }
+//        
+//		return result;
+//	}
 
-	private double computeDerivPROD(String param)
-			throws RBNNaNException{
-		double result = 0;
-        /* First compute \prod Fi over all subformulas */
-        double factor = aggregateOfSubPFs;
-        
-        for (int i=0;i<children.size();i++)
-                factor = factor*children.elementAt(i).evaluate()[0];
-        
-        if (factor == 0)
-        	return 0.0;
-        
-        /* Now compute the partial derivative as
-         *
-         * \sum_{F_i\in fthetalist} (factor/F_i)*(F_i')
-         */
-        for (int i=0;i<children.size();i++){
-                if (children.elementAt(i).dependsOn(param))
-                        result = result + (factor/children.elementAt(i).evaluate()[0])*(children.elementAt(i).evaluateGrad(param));
-        }
-		return result;
-	}
+//	private double computeDerivPROD(String param)
+//			throws RBNNaNException{
+//		double result = 0;
+//        /* First compute \prod Fi over all subformulas */
+//        double factor = aggregateOfSubPFs;
+//        
+//        for (int i=0;i<children.size();i++)
+//                factor = factor*children.elementAt(i).evaluate()[0];
+//        
+//        if (factor == 0)
+//        	return 0.0;
+//        
+//        /* Now compute the partial derivative as
+//         *
+//         * \sum_{F_i\in fthetalist} (factor/F_i)*(F_i')
+//         */
+//        for (int i=0;i<children.size();i++){
+//                if (children.elementAt(i).dependsOn(param))
+//                        result = result + (factor/children.elementAt(i).evaluate()[0])*(children.elementAt(i).evaluateGrad(param));
+//        }
+//		return result;
+//	}
 
-	private double computeDerivMEAN(String param )
-			throws RBNNaNException{
-		double result = 0;
-		for (int i=0;i<children.size();i++)
-			result = result + children.elementAt(i).evaluateGrad(param);
-		result = result/(valuesOfSubPFs.length + children.size());
-		return result;
-	}
+//	private double computeDerivMEAN(String param )
+//			throws RBNNaNException{
+//		double result = 0;
+//		for (int i=0;i<children.size();i++)
+//			result = result + children.elementAt(i).evaluateGrad(param);
+//		result = result/(valuesOfSubPFs.length + children.size());
+//		return result;
+//	}
+//
+//	private double computeDerivLREG(String param )
+//			throws RBNNaNException{
+//		
+//		double sum = aggregateOfSubPFs;
+//		double sumpr = 0;
+//		for (int i=0;i<children.size();i++){
+//			sum = sum + children.elementAt(i).evaluate()[0];
+//			sumpr = sumpr + children.elementAt(i).evaluateGrad(param);
+//		}
+//		double esum = Math.exp(sum);
+//		//if (Double.isInfinite(esum))
+//		if (Double.isInfinite(Math.pow(1+esum,2)))
+//				return 0;
+//		double result = (esum*sumpr)/Math.pow(1+esum,2);
+//		if (Double.isNaN(result)){
+//			System.out.println("NaN in ggCombFuncNode.computeDerivLREG");
+//		}
+//		return result;
+//		
+//	}
 
-	private double computeDerivLREG(String param )
-			throws RBNNaNException{
-		
-		double sum = aggregateOfSubPFs;
-		double sumpr = 0;
-		for (int i=0;i<children.size();i++){
-			sum = sum + children.elementAt(i).evaluate()[0];
-			sumpr = sumpr + children.elementAt(i).evaluateGrad(param);
-		}
-		double esum = Math.exp(sum);
-		//if (Double.isInfinite(esum))
-		if (Double.isInfinite(Math.pow(1+esum,2)))
-				return 0;
-		double result = (esum*sumpr)/Math.pow(1+esum,2);
-		if (Double.isNaN(result)){
-			System.out.println("NaN in ggCombFuncNode.computeDerivLREG");
-		}
-		return result;
-		
-	}
-
-	private double computeDerivLLREG(String param )
-			throws RBNNaNException{
-		
-		double sum = aggregateOfSubPFs;
-		double sumpr = 0;
-		for (int i=0;i<children.size();i++){
-			sum = sum + children.elementAt(i).evaluate()[0];
-			sumpr = sumpr + children.elementAt(i).evaluateGrad(param);
-		}
-		
-		return sumpr/Math.pow(1+sum,2);
-		
-	}
+//	private double computeDerivLLREG(String param )
+//			throws RBNNaNException{
+//		
+//		double sum = aggregateOfSubPFs;
+//		double sumpr = 0;
+//		for (int i=0;i<children.size();i++){
+//			sum = sum + children.elementAt(i).evaluate()[0];
+//			sumpr = sumpr + children.elementAt(i).evaluateGrad(param);
+//		}
+//		
+//		return sumpr/Math.pow(1+sum,2);
+//		
+//	}
 
 	
-	private double computeValueINVSUM(){
-		double[] args = new double[valuesOfSubPFs.length+ children.size()];
-		for (int i=0;i<valuesOfSubPFs.length;i++)
-			args[i]=valuesOfSubPFs[i];
-		for (int i=0;i<children.size();i++)
-			args[i+valuesOfSubPFs.length]= children.elementAt(i).evaluate()[0];
-		return thisgg.computeCombFunc(CombFunc.INVSUM,args);
-	}
+//	private double computeValueINVSUM(Integer sno){
+//		double[] args = new double[valuesOfSubPFs.length+ children.size()];
+//		for (int i=0;i<valuesOfSubPFs.length;i++)
+//			args[i]=valuesOfSubPFs[i];
+//		for (int i=0;i<children.size();i++)
+//			args[i+valuesOfSubPFs.length]= children.elementAt(i).evaluate(sno)[0];
+//		return thisgg.computeCombFunc(CombFunc.INVSUM,args);
+//	}
 
-	private double computeDerivINVSUM(String param )
+	private double computeDerivINVSUM(Integer sno,String param )
 			throws RBNNaNException{
 		double result = 0;
-		double val = this.evaluate()[0];
+		double val = this.evaluate(sno)[0];
 		if (val == 1.0)
 			return 0;
 		else{
 			double derivsum = 0;
 			result = -Math.pow(val,-2);
 			for (int i=0;i<children.size();i++)
-				derivsum = derivsum + children.elementAt(i).evaluateGrad(param);
+				derivsum = derivsum + children.elementAt(i).evaluateGrad(sno,param);
 			result = result*derivsum;
 		}
 		return result;
 	}
 
-	private double computeDerivESUM(String param )
+	private double computeDerivESUM(Integer sno,String param )
 			throws RBNNaNException{
 		double result = 0;
-		double val = this.evaluate()[0];
+		double val = this.evaluate(sno)[0];
 
 		double derivsum = 0;
 		result = -val;
 		for (int i=0;i<children.size();i++)
-			derivsum = derivsum + children.elementAt(i).evaluateGrad(param);
+			derivsum = derivsum + children.elementAt(i).evaluateGrad(sno,param);
 		result = result*derivsum;
 
 		return result;
 	}
 
-	private double computeDerivSUM(String param )
+	private double computeDerivSUM(Integer sno,String param )
 			throws RBNNaNException{
 
 		double derivsum = 0;
 		for (int i=0;i<children.size();i++)
-			derivsum = derivsum + children.elementAt(i).evaluateGrad(param);
+			derivsum = derivsum + children.elementAt(i).evaluateGrad(sno,param);
 		return derivsum;
 	}
 

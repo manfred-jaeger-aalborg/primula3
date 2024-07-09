@@ -22,7 +22,7 @@ public interface GradientGraphOptions {
 
 	public abstract int getMaxFails();
 	
-	public abstract boolean learnverbose();
+	public abstract boolean ggverbose();
 	
 	public abstract boolean ggrandominit();
 	

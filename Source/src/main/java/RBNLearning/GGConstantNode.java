@@ -87,17 +87,17 @@ public class GGConstantNode extends GGCPMNode{
 		return value;
 	}
 
-	public void evaluateBounds(){
-		//	System.out.println("constantnode.evaluateBounds with currentParamVal " + currentParamVal);
-		if (!isUnknown){
-			bounds[0]=cval;
-			bounds[1]=cval;
-		}
-		else{
-			bounds[0]=currentParamVal;
-			bounds[1]=currentParamVal;
-		}
-	}
+//	public void evaluateBounds(){
+//		//	System.out.println("constantnode.evaluateBounds with currentParamVal " + currentParamVal);
+//		if (!isUnknown){
+//			bounds[0]=cval;
+//			bounds[1]=cval;
+//		}
+//		else{
+//			bounds[0]=currentParamVal;
+//			bounds[1]=currentParamVal;
+//		}
+//	}
 
 //	public double evaluateGrad(int param){
 //		if (isUnknown){
@@ -116,7 +116,7 @@ public class GGConstantNode extends GGCPMNode{
 //		}
 //	}
 
-	public double evaluateGrad(String param){
+	public double evaluateGrad(Integer sno,String param){
 		if (isUnknown){
 			if (paramname.equals(param)){
 				gradient.put(param,1.0);

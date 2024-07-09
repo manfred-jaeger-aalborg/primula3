@@ -121,31 +121,36 @@ public class GGSoftMaxNode extends GGCPMNode{
 	private void evaluatePFs(Integer sno) {
 		for (int i=0;i<current_evalofpfs.length;i++) {
 			if (children.elementAt(i)!=null)
-				current_evalofpfs[i] = children.elementAt(i).evaluate(sno)[0]; // return the first element, all the child must be boolean! (scalar values for the softmax function)
+				current_evalofpfs[i] = children.elementAt(i).evaluate(sno)[0]; // return the first element, all the children must be scalar! (scalar values for the softmax function)
 		}
 	}
 
 	public Double[] evaluate(Integer sno){
 
-		// Returns the probability value for the this.instval value
-		// Since GGSoftMaxNodes can only be upper ground atom nodes, this.instval
-		// always is defined
-		
-		if (is_evaluated) {
-			if (this.values_for_samples==null)
-				return (Double[]) value;
-			else
-				return this.values_for_samples[sno];
+		if (this.depends_on_sample && sno==null) {
+			for (int i=0;i<thisgg.numchains*thisgg.windowsize;i++)
+				this.evaluate(i);
+			return null;
 		}
+			
+		if (this.depends_on_sample && is_evaluated_for_samples[sno]) 
+				return this.values_for_samples[sno];
+		
+		if (!this.depends_on_sample && is_evaluated)
+			return this.value;
 		
 		this.evaluatePFs(sno);
 		Double[] result = rbnutilities.softmax(current_evalofpfs);
-//		double result =softm_pfs[this.instval()];
 
-		if (sno==null)
-			value = result;
-		else
+		if (this.depends_on_sample) {
 			values_for_samples[sno] = result;
+			is_evaluated_for_samples[sno]=true;
+		}
+		else {
+			value = result;
+			is_evaluated = true;
+		}
+			
 		return result;
 	}
 
@@ -155,44 +160,46 @@ public class GGSoftMaxNode extends GGCPMNode{
 	}
 
 
-	public void evaluateBounds(){
-		System.out.println("GGSoftMaxNode.evaluateBounds is called but not implemented!");
-	}
+//	public void evaluateBounds(){
+//		System.out.println("GGSoftMaxNode.evaluateBounds is called but not implemented!");
+//	}
 
-	public double evaluateGrad(String param)
+	public double evaluateGrad(Integer sno, String param)
 	throws RBNNaNException
 	{
-		if (gradient.get(param)== null){
-			return 0.0;
-		}
-		else {
-			double currval = gradient.get(param);
-			if (!Double.isNaN(currval)){
-				return currval;
-			}
-		}
-		
-		//TODO: for now prioritize transparency over efficiency; should check whether 
-		// better arrangements can be found for combining evaluate and evaluateGrad
-		// and simultaneous gradient evaluation for all parameters
-		this.evaluatePFs(0); //TODO: this must be fixed!
-		double pfsum = rbnutilities.arraySum(current_evalofpfs);
-		
-		double derivsum = 0;
-		for (int i=0;i<current_evalofpfs.length && children.elementAt(i)!=null;i++) {
-			derivsum+=Math.exp(current_evalofpfs[i])*children.elementAt(i).evaluateGrad(param);
-		}
-		
-		double result= 0;
-		if (children.elementAt(this.instval())!=null)
-			result += children.elementAt(this.instval()).evaluateGrad(param)*pfsum;
-		result -= current_evalofpfs[this.instval()]*derivsum;
-		result /= Math.pow(derivsum,2);
-
-		gradient.put(param,result);
-		
-		//System.out.println("Gradient value (GGConvC): " + result);
-		return result;
+		// TODO: complete check/revision
+//		if (gradient.get(param)== null){
+//			return 0.0;
+//		}
+//		else {
+//			double currval = gradient.get(param);
+//			if (!Double.isNaN(currval)){
+//				return currval;
+//			}
+//		}
+//		
+//		//TODO: for now prioritize transparency over efficiency; should check whether 
+//		// better arrangements can be found for combining evaluate and evaluateGrad
+//		// and simultaneous gradient evaluation for all parameters
+//		this.evaluatePFs(0); //TODO: this must be fixed!
+//		double pfsum = rbnutilities.arraySum(current_evalofpfs);
+//		
+//		double derivsum = 0;
+//		for (int i=0;i<current_evalofpfs.length && children.elementAt(i)!=null;i++) {
+//			derivsum+=Math.exp(current_evalofpfs[i])*children.elementAt(i).evaluateGrad(param);
+//		}
+//		
+//		double result= 0;
+//		if (children.elementAt(this.instval())!=null)
+//			result += children.elementAt(this.instval()).evaluateGrad(param)*pfsum;
+//		result -= current_evalofpfs[this.instval()]*derivsum;
+//		result /= Math.pow(derivsum,2);
+//
+//		gradient.put(param,result);
+//		
+//		//System.out.println("Gradient value (GGConvC): " + result);
+//		return result;
+		return 0;
 	}
 
 }

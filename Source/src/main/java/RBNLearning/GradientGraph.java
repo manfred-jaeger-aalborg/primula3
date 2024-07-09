@@ -266,7 +266,7 @@ public abstract class GradientGraph{
 	public abstract void evaluateLikelihoodAndPartDerivs(boolean likelihoodonly)
 			throws RBNNaNException;
 
-	public abstract void evaluateBounds();
+//	public abstract void evaluateBounds();
 
 
 
@@ -321,12 +321,12 @@ public abstract class GradientGraph{
 	
 
 	
-	/** Sets the truthval fields in the ProbFormNodes corresponding
-	 * to unobserved atoms to the truthvalues in the sno's sample
-	 *
-	 * If sno<0 do nothing!
-	 */
-	public abstract void setTruthVals(Integer sno);
+//	/** Sets the truthval fields in the ProbFormNodes corresponding
+//	 * to unobserved atoms to the truthvalues in the sno's sample
+//	 *
+//	 * If sno<0 do nothing!
+//	 */
+//	public abstract void setTruthVals(Integer sno);
 
 	public void setLearnModule(LearnModule lm){
 		myggoptions = lm;

@@ -41,6 +41,13 @@ public class SmallDouble implements Comparator{
 		sd[1]=0;
 		return sd;
 	}
+	
+	public static Double[] asSmallDDouble(double d){
+		Double[] sd = new Double[2];
+		sd[0]=d;
+		sd[1]=0.0;
+		return sd;
+	}
 
 	public static double[] add(double[] sd1, double[] sd2){
 		//System.out.print("add " + rbnutilities.arrayToString(sd1) + " " + rbnutilities.arrayToString(sd2));
@@ -60,6 +67,24 @@ public class SmallDouble implements Comparator{
 		return result;
 	}
 
+	public static Double[] add(Double[] sd1, Double[] sd2){
+		//System.out.print("add " + rbnutilities.arrayToString(sd1) + " " + rbnutilities.arrayToString(sd2));
+		if (sd1[0]==0)
+			return sd2.clone();
+		if (sd2[0]==0)
+			return sd1.clone();
+		Double[] result = new Double[2];
+		if (sd1[1]<=sd2[1]){
+			result[0]=sd1[0]+sd2[0]*Math.pow(10,-sd2[1]+sd1[1]);
+			result[1]=sd1[1];
+		}
+		else{
+			result[0]=sd2[0]+sd1[0]*Math.pow(10,-sd1[1]+sd2[1]);
+			result[1]=sd2[1];
+		}
+		return result;
+	}
+	
 	public static double[] sumArray(double[][] sdarr) {
 		/*
 		 * sdarr is an n x 2 array of small doubles; Returns the sum 
@@ -72,7 +97,6 @@ public class SmallDouble implements Comparator{
 	}
 
 	public static double[] multiply(double[] sd1, double[] sd2){
-		//System.out.print("mulitiply " + rbnutilities.arrayToString(sd1) + " " + rbnutilities.arrayToString(sd2));
 		double[] result = new double[2];
 		double mainprod = sd1[0]*sd2[0];
 		int addtofactor=0;
@@ -82,15 +106,32 @@ public class SmallDouble implements Comparator{
 		}
 		result[0]=mainprod;
 		result[1]=sd1[1]+sd2[1]+addtofactor;
-		//System.out.println("  return " + rbnutilities.arrayToString(result)); 
 		return result;
 	}
 
+	public static Double[] multiply(Double[] sd1, Double[] sd2){
+		Double[] result = new Double[2];
+		double mainprod = sd1[0]*sd2[0];
+		int addtofactor=0;
+		if (mainprod<1.0E-20 && mainprod>0){
+			mainprod=mainprod*1.0E20;
+			addtofactor=20;
+		}
+		result[0]=mainprod;
+		result[1]=sd1[1]+sd2[1]+addtofactor;
+		return result;
+	}
+	
 	public static double[] multiply(double[] sd1, double d2){
 		double sd2[]={d2,0};
 		return multiply(sd1,sd2);
 	}
 
+	public static Double[] multiply(Double[] sd1, double d2){
+		Double sd2[]={d2,0.0};
+		return multiply(sd1,sd2);
+	}
+	
 	/** computes sd1/sd2 */
 	public static double[] divide(double[] sd1, double[] sd2){
 		//System.out.print("divide " + rbnutilities.arrayToString(sd1) + " " + rbnutilities.arrayToString(sd2));
@@ -140,24 +181,55 @@ public class SmallDouble implements Comparator{
 		return SmallDouble.add(sd1,minussd2);
 	}
 
+	public static Double[] subtract(Double[] sd1, Double[] sd2){
+		Double minussd2[]={-sd2[0],sd2[1]};
+		//	if (SmallDouble.add(sd1,minussd2)[0] == 0)
+		//		System.out.println('\n' + "++++ In: " + StringOps.arrayToString(sd1,"(",")") + 
+		//				"  " + StringOps.arrayToString(sd2,"(",")") + 
+		//				" Out: " + StringOps.arrayToString(SmallDouble.add(sd1,minussd2),"(",")"));
+		return SmallDouble.add(sd1,minussd2);
+	}
+
+	
 	public static double toStandardDouble(double[] sd){
-		//System.out.print("to standard " + rbnutilities.arrayToString(sd));
 		double result;
 		if (sd[0]==0)
 			result = 0;
 		else 
 			result = sd[0]*Math.pow(10,-sd[1]);
-		//System.out.println("  .... return " + result);
 		return result;
 	}
 
+	public static double toStandardDouble(Double[] sd){
+		double result;
+		if (sd[0]==0)
+			result = 0;
+		else 
+			result = sd[0]*Math.pow(10,-sd[1]);
+		return result;
+	}
+	
 	/* returns 1 if sd1>sd2; -1 if sd1<sd2; 0 if sd1=sd2 */
 	public static int compareSD(Object sd1, Object sd2){
-		if (((double[])sd1)[0]==Double.NEGATIVE_INFINITY && ((double[])sd2)[0]==Double.NEGATIVE_INFINITY )
-			return 0;
-		if (((double[])sd1)[0]==Double.POSITIVE_INFINITY && ((double[])sd2)[0]==Double.POSITIVE_INFINITY )
-			return 0;
-		double[] diff = SmallDouble.subtract( (double[])sd1,(double[])sd2);
+		double[] diff = new double[2];
+
+		if (sd1 instanceof double[]) { //sd2 assumed to be the same type
+			if (((double[])sd1)[0]==Double.NEGATIVE_INFINITY && ((double[])sd2)[0]==Double.NEGATIVE_INFINITY )
+				return 0;
+			if (((double[])sd1)[0]==Double.POSITIVE_INFINITY && ((double[])sd2)[0]==Double.POSITIVE_INFINITY )
+				return 0;
+			diff = SmallDouble.subtract( (double[])sd1,(double[])sd2);
+		}
+		if (sd1 instanceof Double[]) {
+			if (((Double[])sd1)[0]==Double.NEGATIVE_INFINITY && ((Double[])sd2)[0]==Double.NEGATIVE_INFINITY )
+				return 0;
+			if (((Double[])sd1)[0]==Double.POSITIVE_INFINITY && ((Double[])sd2)[0]==Double.POSITIVE_INFINITY )
+				return 0;
+			Double[] Diff = SmallDouble.subtract( (Double[])sd1,(Double[])sd2);
+			diff[0]=Diff[0];
+			diff[1]=Diff[1];
+		}
+
 		if (diff[0]==0.0)
 			return 0;
 		if (diff[0]>0)
@@ -179,9 +251,14 @@ public class SmallDouble implements Comparator{
 	}
 
 	public static double log(double[] sd){
+		if (sd[0]==0)
+			return Double.NEGATIVE_INFINITY;
 		return Math.log(sd[0]) - sd[1]*Math.log(10);
 	}
 
+	public static double log(Double[] sd){
+		return Math.log(sd[0]) - sd[1]*Math.log(10);
+	}
 	/** Takes an array sdarr of SmallDoubles and returns an array of doubles
 	 * representing a scaled version of the vector represented by sdarr
 	 * 
@@ -245,5 +322,18 @@ public class SmallDouble implements Comparator{
 		double lead = sd[0]*Math.pow(10,d);
 		double exp = d+sd[1];
 		return String.format("%.4f",lead) + "E-" + (int)exp;
+	}
+	
+	public static double[] toProbabilityArray(double[][] sdarr) {
+		/*
+		 * Takes an array of small doubles, normalizes to a probability vector, and returns as standard double
+		 */
+		double[] result = new double[sdarr.length];
+		double[] sum = new double[2];
+		for (int i=0;i<sdarr.length;i++)
+			sum=add(sum,sdarr[i]);
+		for (int i=0;i<sdarr.length;i++)
+			result[i]=toStandardDouble(divide(sdarr[i],sum));
+		return result;
 	}
 }

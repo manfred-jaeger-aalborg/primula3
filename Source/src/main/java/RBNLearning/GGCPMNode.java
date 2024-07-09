@@ -32,15 +32,18 @@ import RBNutilities.*;
 
 public abstract class GGCPMNode extends GGNode{
 
+	TreeSet<GGCPMNode> parents;
+	TreeSet<GGCPMNode> ancestors; // Does not include the likelihood node
+
 
 	//String probformasstring;
 
-	/* Upper and lower bounds on the value of this node given
-	 * a current partial evaluation.
-	 * Set to [-1,-1] if these bounds have not been evaluated
-	 * for the current setting at the indicator nodes
-	 */
-	double[] bounds;
+//	/* Upper and lower bounds on the value of this node given
+//	 * a current partial evaluation.
+//	 * Set to [-1,-1] if these bounds have not been evaluated
+//	 * for the current setting at the indicator nodes
+//	 */
+//	double[] bounds;
 
 	/* Set to true if this ProbFormNode is an Upper Ground Atom node (i.e., direct child of the
 	 * likelihood node.
@@ -92,10 +95,12 @@ public abstract class GGCPMNode extends GGNode{
 		//probformasstring = pf.asString(Primula.CLASSICSYNTAX,0,null);
 		
 //		formula = pf;
-//		truthval = tv;
-		bounds = new double[2];
-		bounds[0]=-1;
-		bounds[1]=-1;
+////		truthval = tv;
+//		bounds = new double[2];
+//		bounds[0]=-1;
+//		bounds[1]=-1;
+		parents = new TreeSet<GGCPMNode>();
+		ancestors = null;
 		myindicator = null;
 		myatom ="";
 		instval = null;
@@ -258,18 +263,18 @@ public abstract class GGCPMNode extends GGNode{
 	}
 
 
-	public double lowerBound(){
-		return bounds[0];
-	}
-
-	public double upperBound(){
-		return bounds[1];
-	}
-
-	public void resetBounds(){
-		bounds[0]=-1;
-		bounds[1]=-1;
-	}
+//	public double lowerBound(){
+//		return bounds[0];
+//	}
+//
+//	public double upperBound(){
+//		return bounds[1];
+//	}
+//
+//	public void resetBounds(){
+//		bounds[0]=-1;
+//		bounds[1]=-1;
+//	}
 
 
 	/** The name of this node. The name identifies the function represented
@@ -282,6 +287,15 @@ public abstract class GGCPMNode extends GGNode{
 //			return "uga_" + myatom +":" + probformasstring;
 //	}
 
+	/* For nodes depending on a sum node: evaluation relative 
+	 * to the the values in the sample with index sno.
+	 * 
+	 * For nodes not depending on a sum node: call evaluate(null)
+	 * 
+	 * evaluate(null) at nodes with values_for_samples: evaluate for all samples!
+	 */
+	public abstract Double[] evaluate(Integer sno);
+	
 	public void setMyindicator(GGAtomNode mind){
 		myindicator = mind;
 	}
@@ -320,7 +334,7 @@ public abstract class GGCPMNode extends GGNode{
 		return instval;
 	}
 	
-	public int instval(){
+	public int instval(Integer sno){
 		if (instval == null){
 			if (!isuga)
 				System.out.println("Trying to call instval() for node that is not upper ground atom node");
@@ -329,7 +343,7 @@ public abstract class GGCPMNode extends GGNode{
 		}
 		int result;
 		if (instval instanceof GGAtomNode)
-			result = ((GGAtomNode)instval).getCurrentInst();
+			result = ((GGAtomNode)instval).evaluate(sno)[0].intValue();
 		else 
 			result = (Integer)instval;
 		return result;
@@ -386,11 +400,10 @@ public abstract class GGCPMNode extends GGNode{
 	}
 
 	
-	public void set_value_for_sample(int sno) {
-		values_for_samples[sno]=value;
-	}
-	
-	public abstract Double[] evaluate(Integer sno);
+//	public void set_value_for_sample(int sno) {
+//		values_for_samples[sno]=value;
+//	}
+//	
 
 	public int getNumvals() { return this.numvals; }
 	
@@ -402,4 +415,62 @@ public abstract class GGCPMNode extends GGNode{
 	}
 
 	public abstract boolean isBoolean();
+	public TreeSet<GGCPMNode> parents(){
+		return parents;
+	}
+	
+	public void addToParents(GGCPMNode ggn){
+		parents.add(ggn);
+	}
+	/** Returns the set of all ancestors of this node
+	 * in the Graph
+	 * @return
+	 */
+	public TreeSet<GGCPMNode> ancestors(){
+		TreeSet<GGCPMNode> result = new TreeSet<GGCPMNode>();
+		for (GGCPMNode nextggn:parents){
+			result.add((GGCPMNode)nextggn);
+			nextggn.collectAncestors(result);
+		}
+		return result;
+	}
+
+	public void setAncestors(){
+		ancestors = ancestors();
+	}
+	
+	public void deleteAncestors(){
+		ancestors = null;
+	}
+	
+	private void collectAncestors(TreeSet<GGCPMNode> ancests){
+		for (GGCPMNode nextggn: parents){
+			if (!ancests.contains(nextggn)){
+				ancests.add(nextggn);
+				nextggn.collectAncestors(ancests);
+			}
+		}
+	}
+	
+	/** Re-evaluates all ancestor nodes of this node. 
+	 * Used to propagate value changes when the value of this
+	 * node has been changed. Mostly applied when this is 
+	 * a GGAtomNode, and the value of this
+	 * indicator has been changed in Gibbs sampling or MAP inference
+	 */
+	public void reEvaluateUpstream(Integer sno){
+		
+		if (ancestors == null) 
+			ancestors = ancestors();
+		
+		for (GGCPMNode anc: ancestors)
+			anc.resetValue(sno);
+		for (GGCPMNode anc: ancestors)
+			anc.evaluate(sno);
+	}
+	
+	public void printParents(){
+		for (Iterator<GGCPMNode> e=parents.iterator() ; e.hasNext();)
+			System.out.print(e.next().identifier() + " ");
+	}
 }

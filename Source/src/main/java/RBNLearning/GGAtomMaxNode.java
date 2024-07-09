@@ -38,10 +38,40 @@ public static int USEMINSCORE = 0;
 public static int USEAVGSCORE = 1;
 public static int USELLSCORE = 2;
 
+/* 
+ * The value if this is instantiated by the evidence.
+ * If mapinstVal!=-1, then no MAP inference is performed on 
+ * this GGAtomMaxNode
+ */
+int mapInstVal=-1;
+
+
+public int getmapInstVal() {
+	return mapInstVal;
+}
+
+public void setmapInstVal(int v) {
+	this.mapInstVal = v;
+}
+
+/** The current instantiation 
+ * 
+ */
+int currentInst=-1;
+
+
+public int getCurrentInst() {
+	return currentInst;
+}
+
+public void setCurrentInst(int currentInst) {
+	this.currentInst = currentInst;
+}
+
 ///* A value that represents the contribution of this node with its
-// * current instantiation value to the likelihood. Used as a selection
-// * heuristic for flipping instantiation values during MAP inference  
-// */
+//* current instantiation value to the likelihood. Used as a selection
+//* heuristic for flipping instantiation values during MAP inference  
+//*/
 //private double score;
 
 /* The log-likelihood change induced by changing the current instantiation
@@ -80,6 +110,11 @@ private int highvalue;
 		super(gg,pf,A,I,inputcasenoarg,observcasenoarg);
 		isScalar = true;
 		gg.addToMaxIndicators(this);
+		int tv = I.truthValueOf(myatom);
+		if (tv !=-1) {
+			this.setmapInstVal(tv);
+			this.setCurrentInst(tv);
+		}
 	}
 
 	public double getScore(){
@@ -103,7 +138,8 @@ private int highvalue;
 		if (this.flipscores == null) { // First time we do MAP inference on this node
 			flipscores = new double[(int)this.myatom().rel().numvals()];
 		}
-		double oldll = GradientGraphO.computePartialLogLikelihood(allugas);
+		thisgg.llnode.evaluate(null,allugas);
+		double oldll = thisgg.llnode.loglikelihood();
 		double newll,fs;
 		highscore = Double.NEGATIVE_INFINITY;
 		highvalue = 0;
@@ -115,7 +151,8 @@ private int highvalue;
 			else {
 				this.setCurrentInst(v);
 				reEvaluateUpstream(null);
-				newll = GradientGraphO.computePartialLogLikelihood(allugas);
+				thisgg.llnode.evaluate(null,allugas);
+				newll = thisgg.llnode.loglikelihood();
 				fs=newll-oldll;
 				if (fs>highscore) {
 					highscore = fs;
@@ -163,6 +200,10 @@ private int highvalue;
 //		}
 //	}
 
+	public Double[] evaluate(Integer sno) {
+		return new Double[] {Double.valueOf(currentInst)};
+	}
+
 	public void addMeToIndicators(GGCPMNode ggpfn){
 		ggpfn.addToMaxIndicators(this);
 	}
@@ -178,5 +219,9 @@ private int highvalue;
 	@Override
 	public boolean isBoolean() {
 		return !(myatom.rel() instanceof CatRel);
+	}
+	
+	public void setRandomInst() {
+		currentInst = (int)(Math.random()*myatom.rel().numvals());
 	}
 }

@@ -155,13 +155,19 @@ public class GGConvCombNode extends GGCPMNode{
 
 	public Double[] evaluate(Integer sno){
 
-		if (is_evaluated) {
-			if (this.values_for_samples==null)
-				return value;
-			else
-				return this.values_for_samples[sno];
+		if (this.depends_on_sample && sno==null) {
+			for (int i=0;i<thisgg.numchains*thisgg.windowsize;i++)
+				this.evaluate(i);
+			return null;
 		}
-		double result = 0;
+			
+		if (this.depends_on_sample && is_evaluated_for_samples[sno]) 
+				return this.values_for_samples[sno];
+		
+		if (!this.depends_on_sample && is_evaluated)
+			return this.value;
+
+		double r = 0;
 		GGCPMNode F0 = children.elementAt(0);
 		GGCPMNode F1 = children.elementAt(1);
 		GGCPMNode F2 = children.elementAt(2);
@@ -170,8 +176,10 @@ public class GGConvCombNode extends GGCPMNode{
 		double f1val;
 		double f2val;
 
-		if (F0 != null)
+		if (F0 != null) {
+			Double[] res = F0.evaluate(sno);
 			f0val = F0.evaluate(sno)[0];
+		}
 		else
 			f0val = evalOfSubPFs[0];
 
@@ -186,78 +194,85 @@ public class GGConvCombNode extends GGCPMNode{
 			f2val = evalOfSubPFs[2];
 
 		if (f0val != 0)
-			result = f0val*f1val;
+			r = f0val*f1val;
 		if (f0val != 1)
-			result = result + (1-f0val)*f2val;
+			r = r + (1-f0val)*f2val;
 		
-		if (Double.isNaN(result))
+		if (Double.isNaN(r))
 			System.out.println("result = NaN in evaluate for convcomb.func " );
 
-		if (sno==null)
-			value = new Double[]{result};
-		else
-			values_for_samples[sno]=new Double[]{result};
-		return new Double[]{result};
-	}
-
-
-
-	public void evaluateBounds(){
-		if (bounds[0]==-1){ /* Not yet evaluated for current indicator setting */
-			//	    System.out.println("convcombnode.evaluateBounds");
-			GGCPMNode F0 = children.elementAt(0);
-			GGCPMNode F1 = children.elementAt(1);
-			GGCPMNode F2 = children.elementAt(2);
-			double lowF0;
-			double uppF0;
-			double lowF1;
-			double uppF1;
-			double lowF2;
-			double uppF2;
-			if (F0!=null){
-				F0.evaluateBounds();
-				lowF0=F0.lowerBound();
-				uppF0=F0.upperBound();
-			}
-			else{
-				lowF0=evalOfSubPFs[0];
-				uppF0=evalOfSubPFs[0];
-			}
-			if (F1!=null){
-				F1.evaluateBounds();
-				lowF1=F1.lowerBound();
-				uppF1=F1.upperBound();
-			}
-			else{
-				lowF1=evalOfSubPFs[1];
-				uppF1=evalOfSubPFs[1];
-			}
-			if (F2!=null){
-				F2.evaluateBounds();
-				lowF2=F2.lowerBound();
-				uppF2=F2.upperBound();
-			}
-			else{
-				lowF2=evalOfSubPFs[2];
-				uppF2=evalOfSubPFs[2];
-			}
-			/* Find lower bound. The bound is not necessarily achievable,
-			 * since the bounds on 3 sub-formulas may not be independently
-			 * achievable
-			 */
-			if (lowF1 > lowF2)
-				bounds[0]=lowF0*lowF1 + (1-lowF0)*lowF2;
-			else
-				bounds[0]=uppF0*lowF1 + (1-uppF0)*lowF2;
-			/* Similar for the upper bound */
-			if (uppF1 > uppF2)
-				bounds[1]=uppF0*uppF1 + (1-uppF0)*uppF2;
-			else
-				bounds[1]=lowF0*uppF1 + (1-lowF0)*uppF2;
+		Double[] result = new Double[]{r};
+		
+		if (this.depends_on_sample) {
+			values_for_samples[sno] = result;
+			is_evaluated_for_samples[sno]=true;
 		}
+		else {
+			value = result;
+			is_evaluated = true;
+		}
+		
+		return result;
 	}
 
-	public double evaluateGrad(String param)
+
+
+//	public void evaluateBounds(){
+//		if (bounds[0]==-1){ /* Not yet evaluated for current indicator setting */
+//			//	    System.out.println("convcombnode.evaluateBounds");
+//			GGCPMNode F0 = children.elementAt(0);
+//			GGCPMNode F1 = children.elementAt(1);
+//			GGCPMNode F2 = children.elementAt(2);
+//			double lowF0;
+//			double uppF0;
+//			double lowF1;
+//			double uppF1;
+//			double lowF2;
+//			double uppF2;
+//			if (F0!=null){
+//				F0.evaluateBounds();
+//				lowF0=F0.lowerBound();
+//				uppF0=F0.upperBound();
+//			}
+//			else{
+//				lowF0=evalOfSubPFs[0];
+//				uppF0=evalOfSubPFs[0];
+//			}
+//			if (F1!=null){
+//				F1.evaluateBounds();
+//				lowF1=F1.lowerBound();
+//				uppF1=F1.upperBound();
+//			}
+//			else{
+//				lowF1=evalOfSubPFs[1];
+//				uppF1=evalOfSubPFs[1];
+//			}
+//			if (F2!=null){
+//				F2.evaluateBounds();
+//				lowF2=F2.lowerBound();
+//				uppF2=F2.upperBound();
+//			}
+//			else{
+//				lowF2=evalOfSubPFs[2];
+//				uppF2=evalOfSubPFs[2];
+//			}
+//			/* Find lower bound. The bound is not necessarily achievable,
+//			 * since the bounds on 3 sub-formulas may not be independently
+//			 * achievable
+//			 */
+//			if (lowF1 > lowF2)
+//				bounds[0]=lowF0*lowF1 + (1-lowF0)*lowF2;
+//			else
+//				bounds[0]=uppF0*lowF1 + (1-uppF0)*lowF2;
+//			/* Similar for the upper bound */
+//			if (uppF1 > uppF2)
+//				bounds[1]=uppF0*uppF1 + (1-uppF0)*uppF2;
+//			else
+//				bounds[1]=lowF0*uppF1 + (1-lowF0)*uppF2;
+//		}
+//	}
+
+	public double evaluateGrad(Integer sno, String param)
 	throws RBNNaNException
 	{
 		if (gradient.get(param)== null){
@@ -281,41 +296,41 @@ public class GGConvCombNode extends GGCPMNode{
 		if (F0 != null){
 			if (F0.dependsOn(param)){
 				if (F1 != null)
-					result = result + F0.evaluateGrad(param)*F1.evaluate()[0];
+					result = result + F0.evaluateGrad(sno,param)*F1.evaluate(sno)[0];
 				else 
-					result = result + F0.evaluateGrad(param)*evalOfSubPFs[1];
+					result = result + F0.evaluateGrad(sno,param)*evalOfSubPFs[1];
 			}
 		}
 		/* +F0F1': */
 		if (F1 != null){
 			if (F1.dependsOn(param)){
 				if (F0 != null)
-					result = result + F1.evaluateGrad(param)*F0.evaluate()[0];
+					result = result + F1.evaluateGrad(sno,param)*F0.evaluate(sno)[0];
 				else 
-					result = result + F1.evaluateGrad(param)*evalOfSubPFs[0];
+					result = result + F1.evaluateGrad(sno,param)*evalOfSubPFs[0];
 			}
 		}
 		/* -F0'F2: */
 		if (F0 != null){
 			if (F0.dependsOn(param)){
 				if (F2 != null)
-					result = result - F0.evaluateGrad(param)*F2.evaluate()[0];
+					result = result - F0.evaluateGrad(sno,param)*F2.evaluate(sno)[0];
 				else
-					result = result - F0.evaluateGrad(param)*evalOfSubPFs[2];
+					result = result - F0.evaluateGrad(sno,param)*evalOfSubPFs[2];
 			}
 		}
 		/* -F0F2': */
 		if (F2 != null){
 			if (F2.dependsOn(param)){
 				if (F0 != null)
-					result = result - F2.evaluateGrad(param)*F0.evaluate()[0];
+					result = result - F2.evaluateGrad(sno,param)*F0.evaluate(sno)[0];
 				else
-					result = result - F2.evaluateGrad(param)*evalOfSubPFs[0];
+					result = result - F2.evaluateGrad(sno,param)*evalOfSubPFs[0];
 			}
 		}
 		/* +F2' */
 		if (F2 != null && F2.dependsOn(param))
-			result = result + F2.evaluateGrad(param);
+			result = result + F2.evaluateGrad(sno,param);
 
 		gradient.put(param,result);
 		

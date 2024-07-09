@@ -285,13 +285,13 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	 * @uml.property  name="trueButton"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
-	private JButton instButton     = new JButton("Instantiation");
+//	private JButton instButton     = new JButton("Instantiation");
 
 	/**
 	 * @uml.property  name="queryButton"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
-	private JButton queryButton    = new JButton("Query");
+//	private JButton queryButton    = new JButton("Query");
 	/**
 	 * @uml.property  name="infoMessage"
 	 * @uml.associationEnd  multiplicity="(1 1)"
@@ -309,7 +309,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	 */
 
 
-	ImageIcon toggleicon = new ImageIcon("src/main/java/Icons/toggle.png");
+	ImageIcon toggleicon = new ImageIcon("main/java/Icons/toggle.png");
 	private JButton  toggleTruthButton  		= new JButton(toggleicon);
 	
 	ImageIcon cwaicon = new ImageIcon("src/main/java/Icons/cwa.png");
@@ -346,11 +346,11 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	private JPanel sampleInfoPanel         = new JPanel(new GridLayout(1,4,3,1));
 	private JPanel mapInfoPanel         = new JPanel(new GridLayout(1,4,3,1));
 	
-	/**
-	 * @uml.property  name="deletesamplePanel"
-	 * @uml.associationEnd  multiplicity="(1 1)"
-	 */
-	private JPanel deletesamplePanel   = new JPanel(new BorderLayout());
+//	/**
+//	 * @uml.property  name="deletesamplePanel"
+//	 * @uml.associationEnd  multiplicity="(1 1)"
+//	 */
+//	private JPanel deletesamplePanel   = new JPanel(new BorderLayout());
 
 	/**
 	 * @uml.property  name="relationsPanel"
@@ -395,7 +395,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	 * @uml.property  name="buttonsPanel"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
-	private JPanel buttonsPanel        		= new JPanel(new FlowLayout());
+//	private JPanel buttonsPanel        		= new JPanel(new FlowLayout());
 	/**
 	 * @uml.property  name="buttonsAndInfoPanel"
 	 * @uml.associationEnd  multiplicity="(1 1)"
@@ -634,10 +634,17 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	 * @uml.property  name="queryModeOn"
 	 */
 	private boolean queryModeOn = false;
+	
 	/**
-	 * @uml.property  name="delAtom"
+	 * selQueryRel is the index of the query table that contains the currently selected atom
+	 * 
 	 */
-	private int delAtom;
+	private int selQueryRel;
+	/**
+	 * the selected atom in the selected query table
+	 * 
+	 */
+	private int selQueryAtom;
 	/**
 	 * @uml.property  name="sampthr"
 	 * @uml.associationEnd  multiplicity="(0 -1)" elementType="RBNpackage.Atom"
@@ -771,14 +778,15 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 //		maprestarts = false;
 		inst = myprimula.instasosd;
 
+		ggverbose=true;
 		sampleordmode = OPTION_SAMPLEORD_FORWARD;
 		adaptivemode = OPTION_NOT_SAMPLE_ADAPTIVE;
 		for (int i=0;i<samplelogmode.length;i++)
 			samplelogmode[i]=false;
 
-		numchains = 3;
+		numchains = 1;
 		windowsize = 2;
-		numrestarts = 10;
+		numrestarts = 1;
 		
 		readElementNames();
 		readRBNRelations();
@@ -852,7 +860,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 //		instButtonsPanel.add(loadInstButton);
 //		loadInstButton.setToolTipText("Load instantiations and input domain from file");
 
-		instantiationsPanel.add(instButtonsPanel, BorderLayout.SOUTH);
+//		instantiationsPanel.add(instButtonsPanel, BorderLayout.SOUTH);
 		
 
 
@@ -887,9 +895,13 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		delQueryAtomButton.setToolTipText("Delete query atom");
 		queryatomsButtonsPanel.add(delAllQueryAtomButton);
 		delAllQueryAtomButton.setToolTipText("Delete all query atoms");
-		deletesamplePanel.add(queryatomsButtonsPanel, BorderLayout.NORTH);
+//		deletesamplePanel.add(queryatomsButtonsPanel, BorderLayout.NORTH);
+		
+		inferencePane.add("Evidence",instButtonsPanel);
+		
 		/* ************************************ */
 		inferencePane.add("Query",queryatomsButtonsPanel);
+		
 		/* Panel for Importance Sampling */
 		JPanel panelSamplingOuter = new JPanel( new GridBagLayout() );
 		GridBagConstraints cSampling = new GridBagConstraints();
@@ -947,8 +959,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		instantiationsList.addMouseListener( this );
 		//querytable.addMouseListener( this); // TODO
 		//ActionListerners
-		instButton.addActionListener( this );
-		queryButton.addActionListener( this );
+
 		toggleTruthButton.addActionListener( this );
 		cwaButton.addActionListener( this );
 		delInstButton.addActionListener( this );
@@ -969,11 +980,6 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 
 		inferencePane.addChangeListener(this);
 
-		//setting background color
-		instButton.setBackground(Primula.COLOR_BLUE_SELECTED);
-		instButton.setToolTipText("Add atoms instantiated to true");
-		queryButton.setBackground(Primula.COLOR_BLUE);
-		queryButton.setToolTipText("Add atoms to query list");
 
 		toggleTruthButton.setBackground(Primula.COLOR_YELLOW);
 		cwaButton.setBackground(Primula.COLOR_YELLOW);
@@ -1082,9 +1088,6 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 
 		//resetACEEnabledState( getACEControl() );
 		/** ... keith cascio */
-
-		buttonsPanel.add(instButton);
-		buttonsPanel.add(queryButton);
 		
 		eiPanel.add(instantiationsPanel);
 
@@ -1105,9 +1108,9 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 
 		buttonsAndInfoPanel.setLayout(new BoxLayout(buttonsAndInfoPanel,BoxLayout.Y_AXIS));
 		qeiSplit.setAlignmentX(Component.CENTER_ALIGNMENT);
-		buttonsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+//		buttonsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 		buttonsAndInfoPanel.add(qeiSplit);
-		buttonsAndInfoPanel.add(buttonsPanel);
+//		buttonsAndInfoPanel.add(buttonsPanel);
 
 		//Creates the main layout
 		Container contentPane = this.getContentPane();
@@ -1169,28 +1172,16 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	{
 		Object source = e.getSource();
 
-		if( source == instButton ){
-			el_pos=0;
-			instButton.setBackground(Primula.COLOR_BLUE_SELECTED);
-			queryButton.setBackground(Primula.COLOR_BLUE);
-			elementNamesList.clearSelection();
-			queryModeOn = false;
-			infoMessage.setText(" ");
-		}
+//		if( source == instButton ){
+//			el_pos=0;
+//			instButton.setBackground(Primula.COLOR_BLUE_SELECTED);
+//			queryButton.setBackground(Primula.COLOR_BLUE);
+//			elementNamesList.clearSelection();
+//			queryModeOn = false;
+//			infoMessage.setText(" ");
+//		}
 
-		else if( source == queryButton ){
-			el_pos=0;
-			queryButton.setBackground(Primula.COLOR_BLUE_SELECTED);
-			instButton.setBackground(Primula.COLOR_BLUE);
-			toggleTruthButton.setEnabled(false);
-			cwaButton.setEnabled(false);
-			delInstButton.setEnabled(false);
-			delAllInstButton.setEnabled(false);
-			elementNamesList.clearSelection();
-			queryModeOn = true;
-			infoMessage.setText(" ");
-		}
-		else if( source == toggleTruthButton ){
+		if( source == toggleTruthButton ){
 			if(selectedInstAtom != null && selectedInstAtom.rel instanceof BoolRel){
 				if(selectedInstAtom.val == 1){
 					inst.add((BoolRel)selectedInstAtom.rel, selectedInstAtom.args, false,"?");
@@ -1234,35 +1225,21 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 			myprimula.updateBavaria();
 		}
 
-//		else if( source == delQueryAtomButton ){
-//			if(selectedQueryAtom != null){
-//				queryModel.removeQuery(delAtom);
-//				generateQueryatoms();
-//				updateQueryatomsList(queryModel);
-//				Vector queries = queryatoms.allAtoms();
-//				int listsize = queries.size()-1;
-//				if( delAtom >= listsize ){
-//					delAtom--;
-//				}
-//				if(delAtom != -1){
-//					delAtom--;
-//					if( delAtom == -1 ){
-//						delAtom++;
-//						querytable.setRowSelectionInterval(delAtom, delAtom);
-//						selectedQueryAtom = (GroundAtom)queries.elementAt(delAtom );
-//					}
-//					else{
-//						querytable.setRowSelectionInterval(delAtom, delAtom);
-//						selectedQueryAtom = (GroundAtom)queries.elementAt(delAtom );
-//					}
-//				}
-//			}
-//		}
-//		else if(source == delAllQueryAtomButton){
-//			queryModel.removeAllQueries();
-//			generateQueryatoms();
-//			updateQueryatomsList(queryModel);
-//		}
+		else if( source == delQueryAtomButton ){
+			if(selQueryRel>=0){
+				QueryTableModel qtm = queryModels.elementAt(selQueryRel);
+				if (selQueryAtom >= 0)
+					qtm.removeQuery(selQueryAtom);
+				selQueryAtom = -1;
+				this.buildQueryatomsTables(queryModels);
+			}
+		}
+		else if(source == delAllQueryAtomButton){
+			queryModels=new Vector<QueryTableModel>();
+			queryatoms = new Hashtable<Rel,GroundAtomList>();
+			relIndex = new Hashtable<String,Integer>();
+			this.buildQueryatomsTables(queryModels);			
+		}
 		else if( source == settingsSampling ){
 			if (!settingssamplingwindowopen){
 				swindow = new RBNgui.SettingsSampling( InferenceModule.this );
@@ -1306,13 +1283,6 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 			infoMessage.setText(" Stop Sampling ");
 			pausemcmc = false;
 			startSampling.setEnabled( true );
-			instButton.setEnabled( true );
-			queryButton.setEnabled( true );
-			toggleTruthButton.setEnabled( true );
-			delInstButton.setEnabled( true );
-			delAllInstButton.setEnabled( true );
-			delQueryAtomButton.setEnabled( true );
-			delAllQueryAtomButton.setEnabled( true );
 		}
 		else if (source == startEval){
 			//computeQueryBatch();
@@ -1344,14 +1314,6 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 //			maprestarts = false;
 			mapthr.setRunning(false);
 			infoMessage.setText(" Stop MAP ");
-			startSampling.setEnabled( true );
-			instButton.setEnabled( true );
-			queryButton.setEnabled( true );
-			toggleTruthButton.setEnabled( true );
-			delInstButton.setEnabled( true );
-			delAllInstButton.setEnabled( true );
-			delQueryAtomButton.setEnabled( true );
-			delAllQueryAtomButton.setEnabled( true );
 		}
 		else if( source == settingsMap ){
 			if (!settingsmapwindowopen){
@@ -1415,13 +1377,6 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		sampthr.start();
 		infoMessage.setText(" Starting Sampling ");
 		startSampling.setEnabled( false );
-		instButton.setEnabled( false );
-		queryButton.setEnabled( false );
-		toggleTruthButton.setEnabled( false );
-		delInstButton.setEnabled( false );
-		delAllInstButton.setEnabled( false );
-		delQueryAtomButton.setEnabled( false );
-		delAllQueryAtomButton.setEnabled( false );
 
 		return sampthr;
 	}
@@ -1449,12 +1404,6 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
         infoMessage.setText(" Stop Sampling ");
         pausemcmc = false;
         startSampling.setEnabled( true );
-        queryButton.setEnabled( true );
-        toggleTruthButton.setEnabled( true );
-        delInstButton.setEnabled( true );
-        delAllInstButton.setEnabled( true );
-        delQueryAtomButton.setEnabled( true );
-        delAllQueryAtomButton.setEnabled( true );
     }
 
     public SampleThread getSampthr() {
@@ -1509,13 +1458,6 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
                 mapthr.start();
                 threads.add(mapthr);
             }
-            instButton.setEnabled(false);
-			queryButton.setEnabled( false );
-			toggleTruthButton.setEnabled( false );
-			delInstButton.setEnabled( false );
-			delAllInstButton.setEnabled( false );
-			delQueryAtomButton.setEnabled( false );
-			delAllQueryAtomButton.setEnabled( false );
 		}
 		catch (RBNCompatibilityException ex){System.out.println(ex.toString());}
 		return gg;
@@ -1532,13 +1474,6 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	public void stopMapThread() {
 		mapthr.setRunning(false);
 		infoMessage.setText(" Stop MAP ");
-		startSampling.setEnabled( true );
-		queryButton.setEnabled( true );
-		toggleTruthButton.setEnabled( true );
-		delInstButton.setEnabled( true );
-		delAllInstButton.setEnabled( true );
-		delQueryAtomButton.setEnabled( true );
-		delAllQueryAtomButton.setEnabled( true );
 	}
 
 
@@ -1689,18 +1624,17 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 			else
 				selectedInstAtom = null;
 		}
-		else if( source == querytables.elementAt(0) ){ // TODO this now dummy solution only for the first table
-			int index = querytables.elementAt(0).rowAtPoint(e.getPoint());
-			System.out.println("select in on query table: effect not yet implemented");
-			//			if(index>=0){
-//				delAtom = index;
-//				Vector queries = queryatoms.allAtoms();
-//				selectedQueryAtom = (GroundAtom)queries.elementAt(index);
-//			}
-//			else{
-//				selectedQueryAtom = null;
-//			}
+		else {
+			for (int i=0;i<querytables.size();i++) {
+				if ( source == querytables.elementAt(i) ){
+					selQueryRel=i;
+					int index = querytables.elementAt(i).rowAtPoint(e.getPoint());
+					if(index>=0)
+						selQueryAtom = index;
+				}
+			}	
 		}
+			
 	}
 	//          Invoked when a mouse button has been pressed on a component.
 	public void mouseReleased(MouseEvent e) {
@@ -2619,6 +2553,10 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		ggverbose = v;
 	}
 	
+	public Boolean getVerbose(){
+		return ggverbose;
+	}
+	
 	public void setMaxFails(Integer mf){
 		maxfails = mf;
 	}
@@ -2914,24 +2852,35 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	public void stateChanged(ChangeEvent e) {
 		if (e.getSource() == inferencePane) {
 			switch (inferencePane.getSelectedIndex()) {
-			case 0: // Query tab
+			case 0: // Evidence tab
+				queryModeOn = false;
+				buildQueryatomsTables(queryModels);
+				el_pos=0;
+				elementNamesList.clearSelection();
+				infoMessage.setText("Select Relation - Value - Element name(s) ");
+				break;
+			case 1: // Query tab
+				queryModeOn = true;
+				el_pos=0;
+				elementNamesList.clearSelection();
+				infoMessage.setText("Select Relation - Element name(s) ");
 				buildQueryatomsTables(queryModels);
 				queryatomsPanel.updateUI();
 				outerQueryPane.updateUI();
 				break;
-			case 1: // MCMC tab
+			case 2: // MCMC tab
 				buildMCMCTables();
 				queryatomsPanel.updateUI();
 				outerQueryPane.updateUI();
 				break;
-			case 2: // Test tab
+			case 3: // Test tab
 				break;
-			case 3: // MAP tab
+			case 4: // MAP tab
 				buildMAPTables();
 				queryatomsPanel.updateUI();
 				outerQueryPane.updateUI();
 				break;
-			case 4: // ACE tab
+			case 5: // ACE tab
 				break;
 			}
 		}

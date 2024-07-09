@@ -38,7 +38,7 @@ public class SettingsMAP extends JFrame implements ActionListener, ItemListener,
 	 * @uml.property  name="gibbsroundslabel"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
-	private JLabel gibbsroundslabel = new JLabel("Gibbs Window Size");
+	private JLabel gibbsroundslabel = new JLabel("Gibbs Window Size (>=2)");
 	/**
 	 * @uml.property  name="maxiterationslabel"
 	 * @uml.associationEnd  multiplicity="(1 1)"
@@ -234,7 +234,7 @@ public class SettingsMAP extends JFrame implements ActionListener, ItemListener,
 		restartstext.setText(""+infmodule.getMAPRestarts());
 		restartstext.addKeyListener(this);
 		
-		verbosecheckbox.setSelected(false);
+		verbosecheckbox.setSelected(infmodule.getVerbose());
 		verbosecheckbox.addItemListener(this);
 
 		ImageIcon icon = new ImageIcon("small_logo.jpg");
