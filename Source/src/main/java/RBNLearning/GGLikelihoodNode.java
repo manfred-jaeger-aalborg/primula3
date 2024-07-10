@@ -211,7 +211,7 @@ public  class GGLikelihoodNode extends GGNode{
 		if (!this.depends_on_sample) { 
 			switch (thisgg.objective()){
 			case LearnModule.UseLik:  // This should usually not be used
-				small_likelihood=new double[2];
+				small_likelihood=new double[] {1.0,0.0};
 				small_likelihood[0]=1.0;
 				break;
 			case LearnModule.UseLogLik:
@@ -233,7 +233,6 @@ public  class GGLikelihoodNode extends GGNode{
 		Double[] childval;
 		int childinst;
 		double childlik;
-		double[] s_lik = new double[] {1.0,0.0};
 		
 		for (GGCPMNode nextchild: batchelements){
 			childval = nextchild.evaluate(sno);
@@ -281,7 +280,7 @@ public  class GGLikelihoodNode extends GGNode{
 				case LearnModule.UseLogLik:
 					log_likelihood+=Math.log(childlik);
 				case LearnModule.UseLik:
-					SmallDouble.multiply(s_lik, childlik);
+					small_likelihood=SmallDouble.multiply(small_likelihood, childlik);
 				}
 			}
 
@@ -298,7 +297,7 @@ public  class GGLikelihoodNode extends GGNode{
 				small_likelihood = SmallDouble.asSmallDouble(log_likelihood);
 				return new double[] {log_likelihood};
 			case LearnModule.UseLik:
-				return s_lik;
+				return small_likelihood;
 			}
 		}
 		System.out.println("Unhandled case in GGLikelihoodNode.evaluate");

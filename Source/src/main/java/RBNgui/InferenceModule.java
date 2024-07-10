@@ -1291,8 +1291,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		else if (source == startMap){
 			currentGG = startMapThread();
 		}
-//		else if (source == setMapVals){
-//			if (currentGG != null){
+		else if (source == setMapVals){
+			if (currentGG != null){
 //				LinkedList<String> mapvals = mapModel.getMapValues();
 //				LinkedList<String> queryats = mapModel.getQuery();
 //				OneStrucData result = new OneStrucData();
@@ -1309,7 +1309,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 //				myprimula.updateBavaria();
 //			}
 //			else System.out.println("Do not have GradientGraph defining Map values!");
-//		}
+			}	
+		}
 		else if( source == stopMap){
 //			maprestarts = false;
 			mapthr.setRunning(false);
@@ -2713,7 +2714,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 
 
 	public void update(Observable o, Object arg){
-		// TODO: make this work again!
+		// TODO: make this work again! -- 
 		if (o instanceof SampleProbs){
 			for (Rel r: queryatoms.keySet()) {
 				MCMCTableModel mcmct = mcmcModels.elementAt(relIndex.get(r.name()));

@@ -603,7 +603,7 @@ public class OneStrucData {
 	}
 
 	public Vector<int[]> allInstantiated(Rel r){
-		Vector<int[]> result = null;
+		Vector<int[]> result = new Vector<int[]>();
 
 		if (r instanceof BoolRel) {
 			result = allTrue(r);
@@ -611,7 +611,8 @@ public class OneStrucData {
 		}
 		if (r instanceof CatRel) {
 			OneCatRelData ocrd = this.findInCatRel(r);
-			result = rbnutilities.treeSetToVector(ocrd.allTrue());
+			if (ocrd!=null)
+				result = rbnutilities.treeSetToVector(ocrd.allTrue());
 		}
 		return result;
 	}

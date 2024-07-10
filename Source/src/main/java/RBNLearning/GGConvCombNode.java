@@ -57,38 +57,8 @@ public class GGConvCombNode extends GGCPMNode{
 					{
 		super(gg,pf,A,I);
 		isScalar=true;
-		
-//		System.out.println("construct ggConvC " + pf.asString(Primula.CLASSICSYNTAX, 0, A));
-		
+	
 		evalOfSubPFs = new double[3];
-
-//	    public abstract double evaluate(RelStruc A, 
-//		OneStrucData inst, 
-//		String[] vars, 
-//		int[] tuple, 
-//		boolean useCurrentCvals, 
-//		String[] numrelparameters,
-//		boolean useCurrentPvals,
-//		GroundAtomList mapatoms,
-//		boolean useCurrentMvals,
-//		Hashtable<String,Double> evaluated)
-//throws RBNCompatibilityException;  
-		
-//	    public abstract Object[] evaluate(RelStruc A, 
-//	    		OneStrucData inst, 
-//	    		String[] vars, 
-//	    		int[] tuple, 
-//	    		boolean useCurrentCvals, 
-//	    		//String[] numrelparameters,
-//	    		boolean useCurrentPvals,
-//	    		GroundAtomList mapatoms,
-//	    		boolean useCurrentMvals,
-//	    		Hashtable<String,Object[]> evaluated,
-//	    		Hashtable<String,Integer> params,
-//	    		int returntype,
-//	    		boolean valonly)
-//	    
-//	    
 		
 		for (int i = 0; i<3; i++){
 			evalOfSubPFs[i]= (double)((ProbFormConvComb)pf).subPF(i+1).evaluate(A, 
@@ -105,9 +75,6 @@ public class GGConvCombNode extends GGCPMNode{
 					true,
 					null)[0];
 		}
-
-		//System.out.println("evaluations " + StringOps.arrayToString(evalOfSubPFs, "(", ")"));
-
 
 
 		boolean constructthis;
@@ -177,7 +144,6 @@ public class GGConvCombNode extends GGCPMNode{
 		double f2val;
 
 		if (F0 != null) {
-			Double[] res = F0.evaluate(sno);
 			f0val = F0.evaluate(sno)[0];
 		}
 		else
