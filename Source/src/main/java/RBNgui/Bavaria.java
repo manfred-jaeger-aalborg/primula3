@@ -1539,7 +1539,6 @@ public class Bavaria extends JFrame implements ActionListener,ItemListener,KeyLi
 		return displaystruc.getAttributesColors(node);
 	}
 
-
 	public Vector<Integer> getAttributesIntensity(int node){
 		return displaystruc.getAttributesIntensity(node);
 	}
@@ -1556,6 +1555,11 @@ public class Bavaria extends JFrame implements ActionListener,ItemListener,KeyLi
 		return displaystruc.getAttrNumRelsAndTuples(node);
 	}
 
+	public Vector[] getAttrCatRelsAndTuples(int node){
+		return displaystruc.getAttrCatRelsAndTuples(node);
+	}
+
+	
 	public Vector[] getOtherBoolRelsAndTuples(int node){
 		return displaystruc.getOtherBoolRelsAndTuples(node);
 	}
@@ -1578,7 +1582,10 @@ public class Bavaria extends JFrame implements ActionListener,ItemListener,KeyLi
 	}
 	
 	
-
+	public Vector<String> catattributesValues(int node){
+		return displaystruc.catattributesValues(node);
+	}
+	
 	//current structure has been modified
 	/**
 	 * @param b
@@ -1633,7 +1640,10 @@ public class Bavaria extends JFrame implements ActionListener,ItemListener,KeyLi
 //		binaryPanel.repaint();
 //		arbitraryPanel.repaint();
 		
-		attributesPanel.setAttributesNames(displaystruc.getBoolAttributes(),displaystruc.getNumAttributes());
+		
+		attributesPanel.setAttributesNames(displaystruc.getBoolAttributes(),
+				displaystruc.getNumAttributes(),
+				displaystruc.getCatAttributes());
 		binaryPanel.setBinaryrelsNames(displaystruc.getBoolBinaryRelations(),displaystruc.getNumBinaryRelations());
 		arbitraryPanel.setArbitraryNames(displaystruc.getBoolArbitraryRelations(), displaystruc.getNumArbitraryRelations());
 		setCanvasSize();

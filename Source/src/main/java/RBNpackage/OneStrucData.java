@@ -1207,6 +1207,18 @@ public class OneStrucData {
 		return result;
 	}
 	
+	public  Vector<String> catattributesStringValues(int node){
+		Vector<String> result = new Vector<String>() ;
+        Vector<CatRel> numatts = this.getCatAttributes();
+        int[] arg = {node};
+        for (CatRel r: numatts) {
+        	OneCatRelData ond = this.findInCatRel(r);
+        	int val = ond.valueOf(arg);
+        	if (val!=Double.NaN)
+        		result.add(r.get_String_val(val));
+        }
+		return result;
+	}
 //	//TODO needs to be redone!
 //	public  Vector<Double> getNumBinValues(int node){
 //		Vector<Double> result = new Vector<Double>() ;

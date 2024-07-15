@@ -360,12 +360,14 @@ public abstract class RelStruc implements Cloneable{
 	public Vector<Color> getAttributesColors(int n){
 		BoolRel brel;
 		NumRel nrel;
+		CatRel crel;
 		int[] node = {n};
 		Vector<Color> colors = new Vector<Color>();
-		//Distinguish between boolean and numeric 
+		//Distinguish between types
 
 		Vector<BoolRel> boolattributes = getBoolAttributes();
 		Vector<NumRel> numattributes = getNumAttributes();
+		Vector<CatRel> catattributes = getCatAttributes();
 
 		for(int i=0; i<boolattributes.size(); ++i){
 			brel = boolattributes.elementAt(i);
@@ -377,6 +379,12 @@ public abstract class RelStruc implements Cloneable{
 			nrel = numattributes.elementAt(i);
 			if (mydata.truthValueOf(nrel,node) == 1){
 				colors.addElement(nrel.color);
+			}
+		}
+		for(int i=0; i<catattributes.size(); ++i){
+			crel = catattributes.elementAt(i);
+			if (mydata.valueOf(crel,node) != -1){
+				colors.addElement(crel.color);
 			}
 		}
 		if(colors.size() == 0)
@@ -393,12 +401,15 @@ public abstract class RelStruc implements Cloneable{
 	public Vector<Integer> getAttributesIntensity(int n){
 		BoolRel brel;
 		NumRel nrel;
+		CatRel crel;
+		
 		int[] node = {n};
 		Vector<Integer> intens = new Vector<Integer>();
 		//Distinguish between boolean and numeric 
 
 		Vector<BoolRel> boolattributes = getBoolAttributes();
 		Vector<NumRel> numattributes = getNumAttributes();
+		Vector<CatRel> catattributes = getCatAttributes();
 
 		for(int i=0; i<boolattributes.size(); ++i){
 			brel = boolattributes.elementAt(i);
@@ -412,6 +423,14 @@ public abstract class RelStruc implements Cloneable{
 			if (mydata.truthValueOf(nrel,node) == 1){
 				//intens.addElement(rbnutilities.minMaxNormalize(mydata.valueOf(nrel, node),lowerupper,255,1.5));
 				intens.addElement(rbnutilities.sigmoidNormalize(mydata.valueOf(nrel, node),lowerupper,255,1.5));
+			}
+		}
+		for(int i=0; i<catattributes.size(); ++i){
+			crel = catattributes.elementAt(i);
+			int v = mydata.valueOf(crel, node);
+			if (v != -1){
+				//intens.addElement(rbnutilities.minMaxNormalize(mydata.valueOf(nrel, node),lowerupper,255,1.5));
+				intens.addElement((int)(30+(v/(crel.numvals()-1))*225));
 			}
 		}
 		if(intens.size() == 0)

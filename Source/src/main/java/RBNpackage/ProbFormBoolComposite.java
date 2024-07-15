@@ -149,10 +149,10 @@ public class ProbFormBoolComposite extends ProbFormBool {
 
 	
 	
-	public Double evalSample(RelStruc A, 
+	public double[] evalSample(RelStruc A, 
 			Hashtable<String,PFNetworkNode>  atomhasht,
 			OneStrucData inst, 
-    		Hashtable<String,Double> evaluated,
+    		Hashtable<String,double[]> evaluated,
 			long[] timers) 
 		throws RBNCompatibilityException {
 		
@@ -161,25 +161,26 @@ public class ProbFormBoolComposite extends ProbFormBool {
 		
 		if (evaluated != null) {
 			key = this.makeKey(A);
-			Double d = evaluated.get(key);
+			double[] d = evaluated.get(key);
 			if (d!=null) {
 				return d; 
 			}
 		}
 		
-		double result =0;
+		double[] result = new double[] {0.0};
+		
 		switch (operator){
 		case ProbFormBool.OPERATORAND:
-			result=1;
+			result[0]=1;
 			for (int i=0;i<components.length;i++)
-				result = result*components[i].evalSample(A, atomhasht, inst, evaluated, timers);
+				result[0] = result[0]*components[i].evalSample(A, atomhasht, inst, evaluated, timers)[0];
 		case ProbFormBool.OPERATOROR:
-			result=0;
+			result[0]=0;
 			for (int i=0;i<components.length;i++)
-				result = Math.max(result,components[i].evalSample(A, atomhasht, inst, evaluated, timers));
+				result[0] = Math.max(result[0],components[i].evalSample(A, atomhasht, inst, evaluated, timers)[0]);
 		}
 		if (!sign)
-			result = 1- result;
+			result[0] = 1- result[0];
 		if (evaluated != null) {
 			evaluated.put(key, result);
 		}

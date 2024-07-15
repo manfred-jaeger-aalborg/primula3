@@ -76,7 +76,7 @@ MouseListener, ChangeListener,TableModelListener{
 	 * @uml.property  name="attributesList"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
-	private JList attributesList;
+	private JList boolattributesList;
 	/**
 	 * @uml.property  name="bavaria"
 	 * @uml.associationEnd  multiplicity="(1 1)"
@@ -109,11 +109,13 @@ MouseListener, ChangeListener,TableModelListener{
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
 	private tupvalmodel numattrmodel = new tupvalmodel();
+	private tupvalmodel catattrmodel = new tupvalmodel();
 	/**
 	 * @uml.property  name="numattrtable"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
 	private JTable numattrtable;
+	private JTable catattrtable;
 
 
 	/**
@@ -138,6 +140,7 @@ MouseListener, ChangeListener,TableModelListener{
 	 * @uml.property  name="numattributes" multiplicity="(0 -1)" dimension="1"
 	 */
 	private Vector[] numattributes; //arity 1 num
+	private Vector[] catattributes;
 	/**
 	 * @uml.property  name="numotherRels" multiplicity="(0 -1)" dimension="1"
 	 */
@@ -195,11 +198,14 @@ MouseListener, ChangeListener,TableModelListener{
 	 * @uml.associationEnd  multiplicity="(0 -1)" elementType="RBNpackage.NumRel"
 	 */
 	private Vector numattributesRels;
+	private Vector catattributesRels;
+	
 	/**
 	 * @uml.property  name="numattributeTuples"
 	 * @uml.associationEnd  multiplicity="(0 -1)" elementType="[I"
 	 */
 	private Vector numattributeTuples;
+	private Vector catattributeTuples;
 
 	/**
 	 * @uml.property  name="attrListItem"
@@ -239,12 +245,16 @@ MouseListener, ChangeListener,TableModelListener{
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
 	private DefaultListModel numattributesValueListModel;
+	private DefaultListModel catattributesValueListModel;
+
 
 	/**
 	 * @uml.property  name="numattributesListModel"
 	 * @uml.associationEnd  multiplicity="(0 -1)" elementType="RBNpackage.NumRel"
 	 */
 	private DefaultListModel numattributesListModel;
+	private DefaultListModel catattributesListModel;
+	
 	/**
 	 * @uml.property  name="numbinAndArityListModels"
 	 * @uml.associationEnd  multiplicity="(0 -1)" elementType="javax.swing.DefaultListModel"
@@ -257,14 +267,14 @@ MouseListener, ChangeListener,TableModelListener{
 	private Vector numbinAndArityValueListModels = new Vector();
 
 
-	/**
-	 * @uml.property  name="valueLists"
-	 */
-	private Vector valueLists      = new Vector();
-	/**
-	 * @uml.property  name="tupleLists"
-	 */
-	private Vector tupleLists      = new Vector();
+//	/**
+//	 * @uml.property  name="valueLists"
+//	 */
+//	private Vector valueLists      = new Vector();
+//	/**
+//	 * @uml.property  name="tupleLists"
+//	 */
+//	private Vector tupleLists      = new Vector();
 
 	/**
 	 * @uml.property  name="numbinAndArityValues"
@@ -275,6 +285,7 @@ MouseListener, ChangeListener,TableModelListener{
 	 */
 	private Vector<Double> numattributesValues = new Vector<Double>();
 
+	private Vector<String> catattributesValues = new Vector<String>();
 	/**
 	 * @uml.property  name="previousv"
 	 */
@@ -300,12 +311,14 @@ MouseListener, ChangeListener,TableModelListener{
 		
 		boolattributes = bavaria.getAttrBoolRelsAndTuples(index);
 		numattributes = bavaria.getAttrNumRelsAndTuples(index);
+		catattributes = bavaria.getAttrCatRelsAndTuples(index);
 
 		boolotherRels = bavaria.getOtherBoolRelsAndTuples(index);
 		numotherRels = bavaria.getOtherNumRelsAndTuples(index);
 
 //		numbinAndArityValues = bavaria.numbinAndArityValues(index);
 		numattributesValues = bavaria.numattributesValues(index);
+		catattributesValues = bavaria.catattributesValues(index);
 
 		boolattributeRels 	  = boolattributes[0];
 		boolattributeTuples   = boolattributes[1];
@@ -313,6 +326,9 @@ MouseListener, ChangeListener,TableModelListener{
 		numattributesRels = numattributes[0];
 		numattributeTuples   = numattributes[1];
 
+		catattributesRels = catattributes[0];
+		catattributeTuples   = catattributes[1];
+		
 		boolbinAndArityRels   = boolotherRels[0];
 		boolbinAndArityTuples	= boolotherRels[1];
 
@@ -328,14 +344,17 @@ MouseListener, ChangeListener,TableModelListener{
 
 		//create attributes list
 		boolattributesListModel              = new DefaultListModel();
-		attributesList			 = new JList();
+		boolattributesList			 = new JList();
 	
 
 		JScrollPane attributesScrollList = new JScrollPane();
 
 
 		numattributesListModel = new DefaultListModel();
+		catattributesListModel = new DefaultListModel();
 		numattributesValueListModel = new DefaultListModel();
+		catattributesValueListModel = new DefaultListModel();
+		
 
 		for(int i=0; i<boolattributeRels.size(); ++i){
 			boolattributesListModel.addElement((BoolRel)boolattributeRels.elementAt(i));
@@ -346,25 +365,37 @@ MouseListener, ChangeListener,TableModelListener{
 		for(int i=0; i<numattributesValues.size(); ++i){
 			numattributesValueListModel.addElement(numattributesValues.elementAt(i));
 		}
+		for(int i=0; i<catattributesRels.size(); ++i){
+			catattributesListModel.addElement((CatRel)catattributesRels.elementAt(i));
+		}
+		for(int i=0; i<catattributesValues.size(); ++i){
+			catattributesValueListModel.addElement(catattributesValues.elementAt(i));
+		}
 
-		attributesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		attributesList.setModel(boolattributesListModel);
-		attributesScrollList.getViewport().add(attributesList);
-		attributesList.addMouseListener( this );
+		boolattributesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		boolattributesList.setModel(boolattributesListModel);
+		attributesScrollList.getViewport().add(boolattributesList);
+		boolattributesList.addMouseListener( this );
 
 		//create tabs		
 		JPanel booltab = createTab(boolattributesListModel);
-		attrTabbedPane.addTab("Boolean", attributesList);
-		JPanel numtab = createTab(numattributesListModel,numattributesValueListModel);
+		attrTabbedPane.addTab("Boolean", boolattributesList);
+//		JPanel numtab = createTab(numattributesListModel,numattributesValueListModel);
+		
 
 		numattrmodel = new tupvalmodel(numattributesListModel,numattributesValueListModel);
 		numattrtable = new JTable(numattrmodel);
 		numattrtable.getModel().addTableModelListener(this);
+		numattrtable.addMouseListener(this);
+		
+		catattrmodel = new tupvalmodel(catattributesListModel,catattributesValueListModel);
+		catattrtable = new JTable(catattrmodel);
+		catattrtable.getModel().addTableModelListener(this);
+		catattrtable.addMouseListener(this);
 
 		
-
-		numattrtable.addMouseListener(this);
 		attrTabbedPane.addTab("Numeric", numattrtable);
+		attrTabbedPane.addTab("Categorical", catattrtable);
 		attrTabbedPane.addChangeListener( this );
 		deleteAttribute.addActionListener( this );
 
@@ -429,6 +460,7 @@ MouseListener, ChangeListener,TableModelListener{
 			}
 		});
 	}
+	
 	public void tableChanged(TableModelEvent e) {
 
 		Object source = e.getSource();
@@ -534,10 +566,10 @@ MouseListener, ChangeListener,TableModelListener{
 	public void mousePressed(MouseEvent e){
 		Object source = e.getSource();
 
-		if( source == attributesList ){
-			attrListItem = attributesList.locationToIndex(e.getPoint());
+		if( source == boolattributesList ){
+			attrListItem = boolattributesList.locationToIndex(e.getPoint());
 			if(attrListItem == -1){
-				attributesList.clearSelection();
+				boolattributesList.clearSelection();
 				attributesLabel.requestFocus();
 			}
 		}	 
@@ -547,6 +579,15 @@ MouseListener, ChangeListener,TableModelListener{
 			rowdeleted = false;
 			if(tableRowIndex == -1){
 				numattrtable.clearSelection();
+				attrTabbedPane.requestFocus();
+			}
+		}
+		else if(source == catattrtable){
+			tableRowIndex = catattrtable.rowAtPoint(e.getPoint());
+			previousv = (Double)catattrtable.getValueAt(tableRowIndex, 1);
+			rowdeleted = false;
+			if(tableRowIndex == -1){
+				catattrtable.clearSelection();
 				attrTabbedPane.requestFocus();
 			}
 		}
@@ -788,13 +829,13 @@ MouseListener, ChangeListener,TableModelListener{
 		return attributeTabPanel;
 	}
 	
-	public JPanel createTab(DefaultListModel numattributes, DefaultListModel numattributesvalues){	
-		numattrmodel = new tupvalmodel(numattributes,numattributesvalues);
-		numattrtable = new JTable(numattrmodel);
-		JPanel attributeTabPanel = new JPanel(new BorderLayout());
-		attributeTabPanel.add(numattrtable, BorderLayout.CENTER);
-		return attributeTabPanel;	
-	}
+//	public JPanel createTab(DefaultListModel numattributes, DefaultListModel numattributesvalues){	
+//		numattrmodel = new tupvalmodel(numattributes,numattributesvalues);
+//		numattrtable = new JTable(numattrmodel);
+//		JPanel attributeTabPanel = new JPanel(new BorderLayout());
+//		attributeTabPanel.add(numattrtable, BorderLayout.CENTER);
+//		return attributeTabPanel;	
+//	}
 	//Removes the tuple from the list
 
 	public void tupleDeletedFromNodeWindow(BoolRel r, int[] tuple){

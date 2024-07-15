@@ -137,10 +137,42 @@ public class CatModelSoftMax extends CPModel {
 	}
 
 	@Override
-	public Double evalSample(RelStruc A, Hashtable<String, PFNetworkNode> atomhasht, OneStrucData inst,
-			Hashtable<String, Double> evaluated, long[] timers) throws RBNCompatibilityException {
-		System.out.println("CatModelSoftMax.evalSample: not yet implemented");
-		return null;
+	public double[] evalSample(RelStruc A, Hashtable<String, PFNetworkNode> atomhasht, OneStrucData inst,
+			Hashtable<String, double[]> evaluated, long[] timers) throws RBNCompatibilityException {
+		
+		String key = null;
+		
+		if (evaluated != null) {
+			key = this.makeKey(A);
+			double[] d = evaluated.get(key);
+			if (d!=null) {
+				return d; 
+			}
+		}	
+		
+		double[] result=new double[probforms.size()];
+		double valsum = 0.0;
+		
+		for (int i = 0;i<probforms.size();i++) {
+
+			result[i] = probforms.elementAt(i).evalSample(A, 
+					atomhasht,
+					inst,
+					evaluated,
+					timers)[0];
+			valsum+=Math.exp(result[i]);
+		}
+		
+		
+		for (int i = 0;i<probforms.size();i++){
+			result[i]=Math.exp((Double)result[i])/valsum;
+		}
+		
+		if (evaluated != null) {
+			evaluated.put(key, result);
+		}
+		return result;
+		
 	}
 
 	@Override

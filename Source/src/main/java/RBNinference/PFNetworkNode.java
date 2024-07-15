@@ -362,7 +362,7 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
 			OneStrucData inst,
 			int sampleordmode,
 			int adaptivemode,
-			Hashtable<String,Double> evaluated,
+			Hashtable<String,double[]> evaluated,
 			long[] timers,
 			boolean verbose)
 					throws RBNCompatibilityException,RBNInconsistentEvidenceException,RBNBadSampleException
@@ -382,7 +382,7 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
 			Hashtable<String,PFNetworkNode> atomhasht,
 			OneStrucData inst,
 			int adaptivemode,
-			Hashtable<String,Double> evaluated,
+			Hashtable<String,double[]> evaluated,
 			long[] timers)
 					throws RBNCompatibilityException;
 
@@ -390,7 +390,7 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
 			Hashtable<String,PFNetworkNode> atomhasht,
 			OneStrucData inst,
 			int adaptivemode,
-			Hashtable<String,Double> evaluated,
+			Hashtable<String,double[]> evaluated,
 			long[] timers,
 			boolean verbose)
 					throws RBNCompatibilityException,RBNInconsistentEvidenceException,RBNBadSampleException
@@ -445,7 +445,7 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
 	public abstract void setDistrProb(RelStruc A, 
 			Hashtable<String,PFNetworkNode> atomhasht,
 			OneStrucData inst,
-			Hashtable<String,Double> evaluated,
+			Hashtable<String,double[]> evaluated,
 			long[] timers)
 					throws RBNCompatibilityException;
 

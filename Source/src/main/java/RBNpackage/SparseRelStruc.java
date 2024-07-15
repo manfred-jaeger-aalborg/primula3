@@ -479,6 +479,24 @@ public class SparseRelStruc extends RelStruc {
 		return result;
 	}
 
+	public Vector[] getAttrCatRelsAndTuples(int node){
+		Vector[] result = {new Vector<CatRel>(), new Vector<int[]>()};
+		Vector<CatRel> attributes = mydata.getCatAttributes();
+		Vector<int[]> tuples;
+		int[] temp;
+		for(int i=0; i<attributes.size(); ++i){
+			tuples = mydata.allTrue(attributes.elementAt(i));
+			for (int j=0;j<tuples.size();j++){
+				temp = tuples.elementAt(j);
+				if (temp[0]==node){
+					result[0].addElement(attributes.elementAt(i));
+					result[1].addElement(temp);
+				}
+			}
+		}
+		return result;
+	}
+	
 	/** returns binary and arbitrary relations and corresponding tuples 
 	 * which include this node */
 
@@ -556,6 +574,9 @@ public class SparseRelStruc extends RelStruc {
 		return result;
 	}
 
+	public Vector<String> catattributesValues(int node){
+		return  mydata.catattributesStringValues(node);
+	}
 
 	public void setData(NumRel r, int[] tuple, Double v) throws RBNIllegalArgumentException{
 		mydata.setData(r,tuple,v);

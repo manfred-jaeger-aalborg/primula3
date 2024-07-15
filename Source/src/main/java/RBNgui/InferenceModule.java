@@ -1292,27 +1292,24 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 			currentGG = startMapThread();
 		}
 		else if (source == setMapVals){
-			if (currentGG != null){
-//				LinkedList<String> mapvals = mapModel.getMapValues();
-//				LinkedList<String> queryats = mapModel.getQuery();
-//				OneStrucData result = new OneStrucData();
-//				result.setParentRelStruc(myprimula.getRels());
-//
-//				Iterator<String> itq = queryats.iterator();
-//
-//				for (Iterator<String> itmap = mapvals.iterator(); itmap.hasNext();) {
-//					//System.out.println(itq.next() + " " + itmap.next());
-//					result.add(new GroundAtom(itq.next(),myprimula.getRels(),Rel.BOOLEAN),Integer.parseInt(itmap.next()),"?");
-//				}
-//				inst.add(result);
-//				updateInstantiationList();
-//				myprimula.updateBavaria();
-//			}
-//			else System.out.println("Do not have GradientGraph defining Map values!");
-			}	
+			OneStrucData result = new OneStrucData();
+			result.setParentRelStruc(myprimula.getRels());
+			for (int i=0;i<querytables.size();i++) {
+				Rel r = relList.elementAt(i);
+				MAPTableModel mtm = mapModels.elementAt(i);
+				for (int j=0;j<mtm.rownum;j++) {
+					GroundAtom gat = queryatoms.get(r).atomAt(j);
+					String mv = (String)mtm.getValueAt(j,1);
+					int v = r.get_Int_val(mv);
+					result.add(gat, v, "?");
+				}
+			}
+			inst.add(result);
+			updateInstantiationList();
+			myprimula.updateBavaria();
 		}
 		else if( source == stopMap){
-//			maprestarts = false;
+			//			maprestarts = false;
 			mapthr.setRunning(false);
 			infoMessage.setText(" Stop MAP ");
 		}

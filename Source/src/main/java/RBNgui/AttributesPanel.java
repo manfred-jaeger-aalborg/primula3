@@ -192,6 +192,14 @@ public class AttributesPanel extends JPanel implements MouseListener, KeyListene
 						r.setColor( ny );
 					}
 				}
+				if(obj instanceof CatRel ){
+					CatRel r = (CatRel)listModel.get(index);
+					Color old = r.getColor();
+					Color ny = JColorChooser.showDialog( AttributesPanel.this, "Choose a color", old );
+					if(ny != null){
+						r.setColor( ny );
+					}
+				}
 				else{
 					NumRel r = (NumRel)listModel.get(index);
 					Color old = r.getColor();
@@ -281,15 +289,23 @@ public class AttributesPanel extends JPanel implements MouseListener, KeyListene
 
 
 
-	public void setAttributesNames(Vector<BoolRel> boolattributes, Vector<NumRel> numattributes){
+	public void setAttributesNames(Vector<BoolRel> boolattributes, Vector<NumRel> numattributes, Vector<CatRel> catattributes){
 		for(int i=0; i<boolattributes.size(); ++i){
 			listModel.addElement(boolattributes.elementAt(i));
+		}
+		for(int i=0; i<catattributes.size(); ++i){
+			listModel.addElement(catattributes.elementAt(i));
 		}
 		for(int i=0; i<numattributes.size(); ++i){
 			listModel.addElement(numattributes.elementAt(i));
 		}
 	}
 
+	public void addAttributesNames(Vector<Rel> attributes){
+		for(int i=0; i<attributes.size(); ++i){
+			listModel.addElement(attributes.elementAt(i));
+		}
+	}
 
 	/**
 	 * @param mode

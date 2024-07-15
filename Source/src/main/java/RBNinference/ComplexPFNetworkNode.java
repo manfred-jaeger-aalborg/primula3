@@ -27,6 +27,7 @@ package RBNinference;
 
 import java.util.*;
 import RBNpackage.*;
+import RBNutilities.rbnutilities;
 import RBNExceptions.*;
 
 
@@ -56,10 +57,10 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 	 * in the current sample, given the instantiations in this sample of 
 	 * the parent nodes
 	 */
-	private double condProb(RelStruc A,
+	private double[] condProb(RelStruc A,
 			Hashtable<String,PFNetworkNode> atomhasht,
 			OneStrucData inst,
-    		Hashtable<String,Double> evaluated,
+    		Hashtable<String,double[]> evaluated,
 			long[] timers)
 			throws RBNCompatibilityException
     {
@@ -67,7 +68,7 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 			if (((CPMGnn) cpmodel).getGnnPy() == null)
 				((CPMGnn) cpmodel).setGnnPy(gnnPy);
 		}
-        double result = cpmodel.evalSample(A,atomhasht,inst,evaluated,timers);
+        double[] result = cpmodel.evalSample(A,atomhasht,inst,evaluated,timers);
         //System.out.print(" cP: " + result);
         return result;
     }
@@ -119,52 +120,56 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 			Hashtable<String,PFNetworkNode> atomhasht,
 			OneStrucData inst,
 			int adaptivemode,
-    		Hashtable<String,Double> evaluated,
-    		long[] timers)
-			throws RBNCompatibilityException
-			/* adaptivemode argument not used (adaptive=non-adaptive in forward sampling for ComplexPFNNodes) */
-			{
+			Hashtable<String,double[]> evaluated,
+			long[] timers)
+					throws RBNCompatibilityException
+					/* adaptivemode argument not used (adaptive=non-adaptive in forward sampling for ComplexPFNNodes) */
+	{
 		//System.out.println("<" + myatom().asString(A));
-		double prob = condProb(A,atomhasht,inst,evaluated,timers);
-		if (prob > 1 || prob <0)
-			System.out.println("#####################found prob " + prob);
+
+
+
+		//	double[] prob = condProb(A,atomhasht,inst,evaluated,timers);
+		double[] probs = null;
+		if (cpmodel instanceof ProbForm) {
+			double p = condProb(A,atomhasht,inst,evaluated,timers)[0];
+			probs = new double[] {1-p,p};
+		}
+		else
+			probs = condProb(A,atomhasht,inst,evaluated,timers);
+
 		if (instantiated == -1){
 
-					double rand = Math.random();
-					if (rand < prob){
-						sampleinst = 1;
-						thissampleprob = prob;
-						thisdistrprob = prob;
-					}
-					else{
-						sampleinst = 0;
-						thissampleprob = 1-prob;
-						thisdistrprob = 1-prob;
-					}
-				}
-				else {
-					sampleinst = instantiated;
-					thissampleprob = 1;
-					switch (instantiated){
-					case 1: thisdistrprob = prob;
-					break;
-					case 0: thisdistrprob = (1-prob);
-					}
-				}
-			}
+			sampleinst = rbnutilities.sampledValue(probs);
+			thissampleprob = probs[sampleinst];
+			thisdistrprob = thissampleprob;
+		}
+		else {
+			sampleinst = instantiated;
+			thissampleprob = 1;
+			thisdistrprob = probs[instantiated];
+		}
+	}
 
 	public  void setDistrProb(RelStruc A,
 			Hashtable<String,PFNetworkNode> atomhasht,
 			OneStrucData inst,
-    		Hashtable<String,Double> evaluated,
+			Hashtable<String,double[]> evaluated,
 			long[] timers)
-			throws RBNCompatibilityException
-			{
-		if (thisdistrprob == -1)
-			if (sampleinst == 1)
-				thisdistrprob = condProb( A,atomhasht,inst, evaluated,timers);
-			else thisdistrprob = 1-condProb( A,atomhasht,inst, evaluated,timers);
-			}
+					throws RBNCompatibilityException
+	{
+		if (thisdistrprob == -1) {
+			double[] probs = null;
+		if (cpmodel instanceof ProbForm) {
+			double p = condProb(A,atomhasht,inst,evaluated,timers)[0];
+			probs = new double[] {1-p,p};
+		}
+		else
+			probs = condProb(A,atomhasht,inst,evaluated,timers);
+
+		thisdistrprob = probs[sampleinst];
+		}
+	}
 
 	public void sEval(RelStruc A)
 			throws RBNCompatibilityException
@@ -172,5 +177,10 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 		cpmodel = cpmodel.sEval(A);
 			}
 	
+	public int numvals() {
+		if (cpmodel instanceof ProbForm)
+			return 2;
+		else return ((CatModel)cpmodel).numvals();
+	}
 
 }

@@ -447,10 +447,10 @@ public  class ProbFormAtom extends ProbForm {
 	}
 
 
-	public  Double evalSample(RelStruc A, 
+	public  double[] evalSample(RelStruc A, 
 			Hashtable<String,PFNetworkNode> atomhasht, 
 			OneStrucData inst, 
-    		Hashtable<String,Double> evaluated,
+    		Hashtable<String,double[]> evaluated,
 			long[] timers)
 			throws RBNCompatibilityException{
 		
@@ -458,18 +458,18 @@ public  class ProbFormAtom extends ProbForm {
 		
 		if (evaluated != null) {
 			key = this.makeKey(A);
-			Double d = evaluated.get(key);
+			double[] d = evaluated.get(key);
 			if (d!=null) {
 				return d; 
 			}
 		}	
 		
-		Double result = null;
+		double[] result = null;
 		if (!isGround())
 			throw new IllegalArgumentException("Attempt to sample-evaluate non-ground atom");
 		else{
 			if (relation.ispredefined()){
-				result = this.evaluate(A,inst);
+				result = new double[] {this.evaluate(A,inst)};
 			}
 			if (relation.isprobabilistic()){
 				GroundAtom myatom = new GroundAtom(relation,rbnutilities.stringArrayToIntArray(arguments));
@@ -480,11 +480,11 @@ public  class ProbFormAtom extends ProbForm {
 				 * Its truth value is found in instasosd
 				 */
 				{
-					result=(double)inst.truthValueOf(myatom);  
+					result=new double[] {(double)inst.truthValueOf(myatom)};  
 				}
 				else {
 					PFNetworkNode gan = (PFNetworkNode)atomhasht.get(myatomname);
-					result = (double)gan.sampleinstVal();
+					result = new double[] {(double)gan.sampleinstVal()};
 				}
 			}
 		}

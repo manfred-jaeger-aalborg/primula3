@@ -29,7 +29,7 @@ public class GGAtomEqualityNode extends GGCPMNode{
         for (int i=0;i<2;i++) {
         	Object o = ((ProbFormBoolAtomEquality) pf).args()[i];
         	if (o instanceof Integer)
-        		evalOfPFs[i]=(double)o;
+        		evalOfPFs[i]=Double.valueOf((Integer)o);
         	else { // o is ProbFormAtom
         		evalOfPFs[i]=(double)((ProbFormAtom)o).evaluate(A, 
     					I , 

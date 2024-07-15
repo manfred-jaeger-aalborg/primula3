@@ -166,10 +166,10 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
 
 
     @Override
-    public Double evalSample(RelStruc A,
+    public double[] evalSample(RelStruc A,
                              Hashtable<String, PFNetworkNode> atomhasht,
                              OneStrucData inst,
-                             Hashtable<String,Double> evaluated,
+                             Hashtable<String,double[]> evaluated,
                              long[] timers)
             throws RBNCompatibilityException {
 
@@ -177,7 +177,7 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
 
         if (evaluated != null) {
             key = this.makeKey(A);
-            Double d = evaluated.get(key);
+            double[] d = evaluated.get(key);
             if (d!=null) {
                 return d;
             }
@@ -186,32 +186,40 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
         Integer a1 = null;
         Integer a2 = null;
         if (arg1 instanceof ProbFormAtom) {
-            a1 = (Integer) ((ProbFormAtom) arg1).evalSample(A, atomhasht, inst, evaluated, timers).intValue();
+            a1 = (int) ((ProbFormAtom) arg1).evalSample(A, atomhasht, inst, evaluated, timers)[0];
         } else if (arg1 instanceof Integer) {
             a1 = (Integer) arg1;
         }
 
         if (arg2 instanceof ProbFormAtom) {
-            a2 = (Integer) ((ProbFormAtom) arg2).evalSample(A, atomhasht, inst, evaluated, timers).intValue();
+            a2 = (int) ((ProbFormAtom) arg2).evalSample(A, atomhasht, inst, evaluated, timers)[0];
         } else if (arg2 instanceof Integer) {
             a2 = (Integer) arg2;
         }
 
+        double[] result = new double[] {0.0};
+        
         if (a1.equals(a2))
-            return 1.0;
-        else
-            return 0.0;
+            result[0]= 1.0;
+        
+    	if (evaluated != null) {
+			evaluated.put(key, result);
+		}
+    	
+    	return result;
     }
 
     @Override
     public String[] freevars() {
         String[] a1 = null;
         String[] a2 = null;
-        if (arg1 instanceof ProbFormAtom)
+        if (arg1 instanceof ProbFormAtom) 
             a1 = ((ProbFormAtom) arg1).freevars();
-        if (arg2 instanceof ProbFormAtom) {
+        else a1 = new String[0];
+        if (arg2 instanceof ProbFormAtom) 
             a2 = ((ProbFormAtom) arg2).freevars();
-        }
+        else
+        	a2= new String[0];
         return rbnutilities.arraymerge(a1, a2);
     }
 

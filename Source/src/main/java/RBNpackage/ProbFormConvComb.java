@@ -366,10 +366,10 @@ public class ProbFormConvComb extends ProbForm {
 	return result;
 	}
 
-	public  Double evalSample(RelStruc A, 
+	public  double[] evalSample(RelStruc A, 
 			Hashtable<String,PFNetworkNode> atomhasht, 
 			OneStrucData inst, 
-    		Hashtable<String,Double> evaluated,
+    		Hashtable<String,double[]> evaluated,
 			long[] timers)
 	throws RBNCompatibilityException
 	{
@@ -377,7 +377,7 @@ public class ProbFormConvComb extends ProbForm {
 		
 		if (evaluated != null) {
 			key = this.makeKey(A);
-			Double d = evaluated.get(key);
+			double[] d = evaluated.get(key);
 			if (d!=null) {
 				return d; 
 			}
@@ -386,12 +386,12 @@ public class ProbFormConvComb extends ProbForm {
 		double v1;
 		double v2 =0;
 		double v3 =0;
-		v1 =  F1.evalSample(A,atomhasht,inst,evaluated,timers);
+		v1 =  F1.evalSample(A,atomhasht,inst,evaluated,timers)[0];
 		if (v1 != 0.0)
-			v2 =  F2.evalSample(A,atomhasht,inst,evaluated,timers);
+			v2 =  F2.evalSample(A,atomhasht,inst,evaluated,timers)[0];
 		if (v1 != 1.0)
-			v3 =  F3.evalSample(A,atomhasht,inst,evaluated,timers);
-		Double result = v1*v2+(1-v1)*v3;
+			v3 =  F3.evalSample(A,atomhasht,inst,evaluated,timers)[0];
+		double[] result = new double[] {v1*v2+(1-v1)*v3};
 		if (evaluated != null) {
 			evaluated.put(key, result);
 		}

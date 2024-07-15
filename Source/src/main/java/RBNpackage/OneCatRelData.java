@@ -90,7 +90,10 @@ public class OneCatRelData extends OneRelData {
 	public OneCatRelData copy(){
 
 		OneCatRelData result = new OneCatRelData(this.rel(),this.dv());
-		result.knownValues = this.knownValues.clone();
+		result.values = new TreeMap<int[],Integer>(new IntArrayComparator());
+		for (int[] k : this.values.keySet()) {
+			result.values.put(k, this.values.get(k));
+		}
 		result.makeIndex();
 		return result;
 	}

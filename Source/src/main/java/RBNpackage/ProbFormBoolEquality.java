@@ -98,13 +98,13 @@ public class ProbFormBoolEquality extends ProbFormBool {
 	
 	
 	@Override
-	public Double evalSample(RelStruc A, 
+	public double[] evalSample(RelStruc A, 
 			Hashtable<String,PFNetworkNode> atomhasht, 
 			OneStrucData inst, 
-			Hashtable<String,Double> evaluated,
+			Hashtable<String,double[]> evaluated,
 			long[] timers)
 					throws RBNCompatibilityException {
-		return evaluate(A, null);
+		return new double[] {evaluate(A, null)};
 	}
 
 	@Override

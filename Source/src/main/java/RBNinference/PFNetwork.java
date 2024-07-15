@@ -568,7 +568,7 @@ public class PFNetwork{
 				((PFNetworkNode)allnodes.elementAt(i)).setGnnPy(this.gnnPy);
 		}
 		
-		Hashtable<String,Double> evaluated = new Hashtable<String,Double>();
+		Hashtable<String,double[]> evaluated = new Hashtable<String,double[]>();
 		//Hashtable<String,Double> evaluated = null;
 		
 		for (int i=0;i<sampleord.size() && !badsample;i++){

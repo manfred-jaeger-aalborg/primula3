@@ -144,30 +144,30 @@ public class ProbFormBoolAtom extends ProbFormBool {
 	}
 
 	@Override
-	public  Double evalSample(RelStruc A, 
+	public  double[] evalSample(RelStruc A, 
 			Hashtable<String,PFNetworkNode> atomhasht, 
 			OneStrucData inst, 
-    		Hashtable<String,Double> evaluated,
+    		Hashtable<String,double[]> evaluated,
 			long[] timers)
 			throws RBNCompatibilityException{
 		String key = null;
 		
 		if (evaluated != null) {
 			key = this.makeKey(A);
-			Double d = evaluated.get(key);
+			double[] d = evaluated.get(key);
 			if (d!=null) {
 				return d; 
 			}
 		}	
 		
-		Double result = pfatom.evalSample(A,atomhasht,inst,evaluated,timers);
+		double[] result = pfatom.evalSample(A,atomhasht,inst,evaluated,timers);
 		if (pfatom.getRelation().valtype()==Rel.NUMERIC){
-			if (result == Double.NaN)
-				result = 0.0;
-			else result = 1.0;
+			if (result[0] == Double.NaN)
+				result = new double[] {0.0};
+			else result = new double[] {1.0};
 		}
 		if (!sign)
-			result=1-result;
+			result[0]=1-result[0];
 		if (evaluated != null) {
 			evaluated.put(key, result);
 		}

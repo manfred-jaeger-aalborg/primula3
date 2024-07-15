@@ -87,16 +87,16 @@ public class ProbFormBoolConstant extends ProbFormBool {
 	}
 	
 	@Override
-	public Double evalSample(RelStruc A, 
+	public double[] evalSample(RelStruc A, 
 			Hashtable<String,PFNetworkNode> atomhasht, 
 			OneStrucData inst, 
-    		Hashtable<String,Double> evaluated,
+    		Hashtable<String,double[]> evaluated,
 			long[] timers)
 		throws RBNCompatibilityException {
 		if (sign)
-			return Double.valueOf(1);
+			return new double[] {Double.valueOf(1)};
 		else
-			return Double.valueOf(0);
+			return new double[] {Double.valueOf(0)};
 	}
 
 	@Override

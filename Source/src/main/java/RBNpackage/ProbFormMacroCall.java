@@ -95,10 +95,10 @@ public class ProbFormMacroCall extends ProbForm {
 	}
 
 	@Override
-	public Double evalSample(RelStruc A, 
+	public double[] evalSample(RelStruc A, 
 			Hashtable<String,PFNetworkNode> atomhasht, 
 			OneStrucData inst, 
-    		Hashtable<String,Double> evaluated,
+    		Hashtable<String,double[]> evaluated,
 			long[] timers)
 			throws RBNCompatibilityException {
 		setpf();

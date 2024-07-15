@@ -217,12 +217,12 @@ public class ProbFormConstant extends ProbForm
 		return result;
 	}
 	
-	public  Double evalSample(RelStruc A, 
+	public  double[] evalSample(RelStruc A, 
 			Hashtable<String,PFNetworkNode> atomhasht, 
 			OneStrucData inst, 
-    		Hashtable<String,Double> evaluated,
+    		Hashtable<String,double[]> evaluated,
 			long[] timers){
-		return cval;
+		return new double[] {cval};
 	}
 
 

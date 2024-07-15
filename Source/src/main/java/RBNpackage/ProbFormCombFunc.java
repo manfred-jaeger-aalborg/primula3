@@ -514,10 +514,10 @@ public class ProbFormCombFunc extends ProbForm{
 		return result;
 	}	
 	
-	public  Double evalSample(RelStruc A, 
+	public  double[] evalSample(RelStruc A, 
 			Hashtable<String,PFNetworkNode> atomhasht, 
 			OneStrucData inst, 
-    		Hashtable<String,Double> evaluated,
+    		Hashtable<String,double[]> evaluated,
 			long[] timers)
 			throws RBNCompatibilityException
 	{
@@ -528,7 +528,7 @@ public class ProbFormCombFunc extends ProbForm{
 		if (evaluated != null) {
 			key = this.makeKey(A);
 			//System.out.println("evalSample for "+key);
-			Double d = evaluated.get(key);
+			double[] d = evaluated.get(key);
 			if (d!=null) {
 				return d; 
 			}
@@ -553,12 +553,12 @@ public class ProbFormCombFunc extends ProbForm{
 			{
 				nextindex = i*subslist.length + j;
 				groundpf = this.pfargs[i].substitute(quantvars,subslist[j]);
-				nextvalue = groundpf.evalSample(A,atomhasht,inst,evaluated,timers);
+				nextvalue = groundpf.evalSample(A,atomhasht,inst,evaluated,timers)[0];
 				combargs[nextindex]=nextvalue;
 			}
 		}
 
-		Double result = mycomb.evaluate(combargs);
+		double[] result = new double[] {mycomb.evaluate(combargs)};
 		if (evaluated != null) {
 			evaluated.put(key, result);
 		}

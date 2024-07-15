@@ -145,12 +145,14 @@ public abstract class CPModel
      * atomhasht (using Atom.asString() as hashcode)
      * If this ComplexBNGroundAtomNode is not instantiated, then
      * the sample method of that node has to be called
+     * 
+     * For scalar cpm's returns scalar value as one-element array
      *
      */
-    public abstract Double evalSample(RelStruc A, 
+    public abstract double[] evalSample(RelStruc A, 
     		Hashtable<String,PFNetworkNode> atomhasht, 
     		OneStrucData inst, 
-    		Hashtable<String,Double> evaluated,
+    		Hashtable<String,double[]> evaluated,
     		long[] timers)
 	throws RBNCompatibilityException;
 
