@@ -14,6 +14,9 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
 public class GnnPy {
+
+    // We assume that the forward method for the gnn have always firm like this: forward(self, x, edge_index, ...)
+    // x and edge_index are necessary, others arguments like batch can be set as None
     private final String INFER_NODE = "infer_model_nodes"; // default function name to call in python
     private final String INFER_GRAPH = "infer_model_graph";
     private String scriptPath;
@@ -152,18 +155,7 @@ public class GnnPy {
         try {
             // check if there is already computed the results for the specific node in the result matrix, otherwise compute for all nodes with one forward propagation
             // needs also to have the same id as before
-            if (this.currentX != null && this.currentEdgeIndex != null && this.currentMethod != null && this.currentResult != null && Objects.equals(this.lastId, idGnn)) {
-                if (this.currentX.equals(x) && this.currentEdgeIndex.equals(edge_index) && this.currentMethod.equals(method)) {
-                    if (this.dimOut == 1)
-                        System.out.println("not implemented");
-//                        return (double) this.currentResult[node];
-                    else if (this.dimOut == 2) {
-                        return currentResult[node];
-                    }
-                } else {
-                    this.currentResult = null;
-                }
-            }
+            if (checkValuesCache(x, edge_index, idGnn, method)) return currentResult[node];
             this.currentX = x;
             this.currentEdgeIndex = edge_index;
             this.currentMethod = method;
@@ -212,22 +204,18 @@ public class GnnPy {
         }
     }
 
-    public Double[] inferModelGraphDouble(int classId, String x, String edge_index, String idGnn, String method) {
+    public Double[] inferModelGraphDouble(String x, String edge_index, String idGnn, String method) {
         assert this.sharedInterpreter != null;
         this.createModelIfNull(idGnn);
 
         try {
-            // check if there is already computed the results for the specific node in the result matrix, otherwise compute for all nodes with one forward propagation
-//            if (this.currentX != null && this.currentEdgeIndex != null && this.currentMethod != null && this.currentResult != null) {
-//                if (this.currentX.equals(x) && this.currentEdgeIndex.equals(edge_index) && this.currentMethod.equals(method)) {
-//                    return (double) this.currentResult[classId];
-//                } else {
-//                    this.currentResult = null;
-//                }
-//            }
-//            this.currentX = x;
-//            this.currentEdgeIndex = edge_index;
-//            this.currentMethod = method;
+            if (checkValuesCache(x, edge_index, idGnn, method)) return this.currentResult[0];
+            this.currentX = x;
+            this.currentEdgeIndex = edge_index;
+            this.currentMethod = method;
+            this.lastId = idGnn;
+            this.sharedInterpreter.eval(edge_index);
+            this.sharedInterpreter.eval(x);
             // if there are no edges we use this trick for pyg
             if (Objects.equals(edge_index, "")) {
                 this.sharedInterpreter.eval("edge_index = torch.cat((torch.tensor([[]], dtype=torch.long), torch.tensor([[]], dtype=torch.long)), 0)");
@@ -235,21 +223,35 @@ public class GnnPy {
                 this.sharedInterpreter.eval(edge_index);
             this.sharedInterpreter.eval(x);
             if (!Objects.equals(method, "")) {
-                this.sharedInterpreter.eval("out = intt." + method + "(" + idGnn + ", x, edge_index, None)");
+                this.sharedInterpreter.eval("out = intt." + method + "(" + idGnn + ", x, edge_index)");
             } else {
-                this.sharedInterpreter.eval("out = intt." + this.INFER_GRAPH + "(" + idGnn + ", x, edge_index, None)");
+                this.sharedInterpreter.eval("out = intt." + this.INFER_GRAPH + "(" + idGnn + ", x, edge_index)");
             }
 
             this.sharedInterpreter.eval("out = out.detach().numpy()");
             NDArray ndArray = (NDArray) this.sharedInterpreter.getValue("out");
             float[] tarr = (float[]) ndArray.getData();
             currentResult = convertTo2D(tarr, ndArray.getDimensions()[0], ndArray.getDimensions()[1]);
-            Double[] catres = currentResult[classId];
-            return catres;
+//            Double[] catres = currentResult[classId];
+//            return catres;
+            return currentResult[0];
         } catch (JepException e) {
             System.err.println("Failed to execute inference: " + e);
             return null;
         }
+    }
+
+    private boolean checkValuesCache(String x, String edge_index, String idGnn, String method) {
+        if (this.currentX != null && this.currentEdgeIndex != null && this.currentMethod != null && this.currentResult != null && Objects.equals(this.lastId, idGnn)) {
+            if (this.currentX.equals(x) && this.currentEdgeIndex.equals(edge_index) && this.currentMethod.equals(method)) {
+                if (this.dimOut == 1)
+                    System.out.println("not implemented");
+//                        return (double) this.currentResult[node];
+                else return this.dimOut == 2;
+            } else
+                this.currentResult = null;
+        }
+        return false;
     }
 
     public double[] getData(PyObject out){
@@ -290,53 +292,72 @@ public class GnnPy {
      * used in the features matrix for the input
      * @param num_nodes
      * @param finalre
-     * @param attributes
+     * @param cpmGnn
      * @return
      */
-    public double[][] nodeToEncoding(int num_nodes, SparseRelStruc finalre, Rel[] attributes, boolean oneHotEncoding) {
+    public double[][] nodeToEncoding(int num_nodes, SparseRelStruc finalre, CPMGnn cpmGnn) {
         // table for the encoding of the node features, each feature is represented in a boolean encoding
         // 1 0 true - 0 1 false
         // example: 2 possible features blue and red. the node is red: 0 1 1 0
 
         OneStrucData data = finalre.getmydata();
-        // create the feature matrix with the attributes that have arity = 1
         int num_columns = 0;
-        for (int i = 0; i < attributes.length; i++) {
-            if (attributes[i].arity == 1) {
-                num_columns++;
+        // create the feature matrix with the attributes that have arity = 1
+        if (cpmGnn instanceof CatGnn) {
+            num_columns = ((CatGnn) cpmGnn).numvals();
+        } else {
+            for (int i = 0; i < cpmGnn.getGnnattr().length; i++) {
+                if (cpmGnn.getGnnattr()[i].arity == 1) {
+                    num_columns++;
+                }
             }
         }
 
         double[][] node_bool;
-        if (oneHotEncoding)
+        if (cpmGnn.isOneHotEncoding())
             node_bool = createOneHotEncodingMatrix(num_nodes, num_columns);
         else
-            node_bool = createBoolEncodingMatrix(num_nodes, num_columns); // we should put different types of encoding, for now leave like that
+            node_bool = createBoolEncodingMatrix(num_nodes, num_columns*2); // we should put different types of encoding, for now leave like that
 
         int idxFeat = 0;
-        for (Rel parent : attributes) {
+        for (Rel parent : cpmGnn.getGnnattr()) {
             if (parent.arity == 1) { // only nodes
-                Vector<int[]> featureTrueData = data.allTrue(parent);
-                Vector<Vector<int[]>> allTrueData = new Vector<>();
-                allTrueData.add(featureTrueData);
-                // TODO find a method to handle node encoding for numeric feature !!
-                if (parent.valtype() == 2) { // if numeric
-                    OneNumRelData num_data = (OneNumRelData) data.find(parent);
-                    for (Vector<int[]> feature : allTrueData) {
-                        for (int[] node : feature) {
-                            node_bool[node[0]][idxFeat] = num_data.valueOf(node);
-                        }
-                        idxFeat++;
+                if (parent instanceof CatRel) {
+                    OneCatRelData relData = (OneCatRelData) data.find(parent);
+
+                    for (int[] key : relData.values.keySet()) {
+                        node_bool[key[0]][relData.values.get(key)] = 1;
                     }
+
+//                    for (int[] vals: relData.values)
+//                    for (double[] node: node_bool) {
+//                        node[]
+//                        node_bool[node[0]][idxFeat + 1] = 0;
+//                    }
+
                 } else {
-                    // change the true value
-                    for (Vector<int[]> feature : allTrueData) {
-                        for (int[] node : feature) {
-                            node_bool[node[0]][idxFeat] = 1;
-                            if (!oneHotEncoding) // same, as in the creation of node_bool
-                                node_bool[node[0]][idxFeat + 1] = 0;
+                    Vector<int[]> featureTrueData = data.allTrue(parent);
+                    Vector<Vector<int[]>> allTrueData = new Vector<>();
+                    allTrueData.add(featureTrueData);
+                    // TODO find a method to handle node encoding for numeric feature !!
+                    if (parent.valtype() == 2) { // if numeric
+                        OneNumRelData num_data = (OneNumRelData) data.find(parent);
+                        for (Vector<int[]> feature : allTrueData) {
+                            for (int[] node : feature) {
+                                node_bool[node[0]][idxFeat] = num_data.valueOf(node);
+                            }
+                            idxFeat++;
                         }
-                        idxFeat++;
+                    } else {
+                        // change the true value
+                        for (Vector<int[]> feature : allTrueData) {
+                            for (int[] node : feature) {
+                                node_bool[node[0]][idxFeat] = 1;
+                                if (!cpmGnn.isOneHotEncoding()) // same, as in the creation of node_bool
+                                    node_bool[node[0]][idxFeat + 1] = 0;
+                            }
+                            idxFeat++;
+                        }
                     }
                 }
             }
@@ -344,8 +365,8 @@ public class GnnPy {
         return node_bool;
     }
 
-    public String stringifyGnnFeatures(int num_nodes, SparseRelStruc finalre, Rel[] attributes, boolean oneHotEncoding) {
-        double[][] bool_nodes = this.nodeToEncoding(num_nodes, finalre, attributes, oneHotEncoding);
+    public String stringifyGnnFeatures(int num_nodes, SparseRelStruc finalre, CPMGnn cpmGnn) {
+        double[][] bool_nodes = this.nodeToEncoding(num_nodes, finalre, cpmGnn);
         StringBuilder node_features = new StringBuilder("x=torch.tensor([");
         for (int i = 0; i < bool_nodes.length; i++) {
             node_features.append("[");
@@ -481,23 +502,18 @@ public class GnnPy {
         String edge_index = "";
         for (BoolRel element : boolrel) {
             if (Objects.equals(element.name(), cpmGnn.getEdge_name())) {
-                if (Objects.equals(cpmGnn.getEdge_direction(), "ABBA"))
-                    edge_index = this.stringifyGnnEdgesABBA(sampledRel, element);
-                if (Objects.equals(cpmGnn.getEdge_direction(), "AB"))
-                    edge_index = this.stringifyGnnEdgesAB(sampledRel, element);
-                if (Objects.equals(cpmGnn.getEdge_direction(), "BA"))
-                    edge_index = this.stringifyGnnEdgesBA(sampledRel, element);
+                edge_index = edgeDirection(cpmGnn, element);
                 break;
             }
         }
 
-        String x = this.stringifyGnnFeatures(num_nodes, sampledRel, cpmGnn.getGnnattr(), cpmGnn.isOneHotEncoding());
+        String x = this.stringifyGnnFeatures(num_nodes, sampledRel, cpmGnn);
 
         if (Objects.equals(cpmGnn.getGnn_inference(), "node"))
             return this.inferModelNodeDouble(Integer.parseInt(cpmGnn.getArgument()), x, edge_index, cpmGnn.getIdGnn(), "", cpmGnn.isBoolean()); // if it is not categorical the softmax should prevent this already
-//        else if (Objects.equals(cpmGnn.getGnn_inference(), "graph")) {
-//            return this.inferModelGraphDouble(cpmGnn.getClassId(), x, edge_index, cpmGnn.getIdGnn(), "");
-//        }
+        else if (Objects.equals(cpmGnn.getGnn_inference(), "graph")) {
+            return this.inferModelGraphDouble(x, edge_index, cpmGnn.getIdGnn(), "");
+        }
         else
             throw new IllegalArgumentException("not valid keyword used: " + cpmGnn.getGnn_inference());
     }
@@ -508,60 +524,69 @@ public class GnnPy {
                                  CPMGnn cpmGnn,
                                  boolean valonly) {
 
-        if (!cpmGnn.isBoolean()) {
-            Object[] result = new Object[2];
-//            result[0]=new double[gnnattr.length];
+//        if (!cpmGnn.isBoolean()) {
+//            Object[] result = new Object[2];
+////            result[0]=new double[gnnattr.length];
+//
+//            return result;
+//
+//        } else {
+//            Double[][] result = new Double[2][];
 
-            return result;
 
+        Object[] result = new Object[2];
+
+        double value;
+        if (cpmGnn instanceof CatGnn) {
+            result[0] = new double[((CatGnn) cpmGnn).numvals()];
         } else {
-            Double[][] result = new Double[2][];
-            double value;
+            result[0] = new double[2]; // ??
+        }
+        // only val no gradient computed
+        if (valonly) {
+            OneStrucData onsd = new OneStrucData(A.getmydata().copy());
+            SparseRelStruc sampledRel = new SparseRelStruc(A.getNames(), onsd, A.getCoords(), A.signature());
+            sampledRel.getmydata().add(inst.copy());
+            TreeSet<Rel> attr_parents = cpmGnn.parentRels();
+            // if it has no parents we use the current attributes (should work for numeric rel)
+            if (attr_parents.isEmpty()) {
+                int num_nodes = A.domSize(); // the number of nodes should correspond to the domain size
+                attr_parents.addAll(Arrays.asList(cpmGnn.getGnnattr()));
+                // for now just return like this, checking if the attributes are NaN (below) maybe here can be avoided
+                result[0] = this.evaluateInputGraph(cpmGnn, sampledRel, num_nodes);
+                return result;
+            }
+            try {
+                int num_nodes = 0;
 
-            // only val no gradient computed
-            if (valonly) {
-                OneStrucData onsd = new OneStrucData(A.getmydata().copy());
-                SparseRelStruc sampledRel = new SparseRelStruc(A.getNames(), onsd, A.getCoords(), A.signature());
-                sampledRel.getmydata().add(inst.copy());
-                TreeSet<Rel> attr_parents = cpmGnn.parentRels();
-                // if it has no parents we use the current attributes (should work for numeric rel)
-                if (attr_parents.isEmpty()) {
-                    int num_nodes = A.domSize(); // the number of nodes should correspond to the domain size
-                    attr_parents.addAll(Arrays.asList(cpmGnn.getGnnattr()));
-                    // for now just return like this, checking if the attributes are NaN (below) maybe here can be avoided
-                    result[0] = this.evaluateInputGraph(cpmGnn, sampledRel, num_nodes);
-                    return result;
-                }
-                try {
-                    int num_nodes = 0;
-
-                    for (Rel parent : attr_parents) {
-                        int[][] mat = A.allTypedTuples(parent.getTypes());
-                        num_nodes = mat.length;
-                        // for now, we just check if the attributes values are NaN
-                        for (int i = 0; i < mat.length; i++) {
-                            if (parent.ispredefined()) {
-                                value = A.valueOf(parent, mat[i]);
-                                if (Double.isNaN(value)) {
-                                    result[0] = new Double[]{Double.NaN};
-                                    return result;
-                                }
-                            } else if (parent.isprobabilistic()) {
-                                value = inst.valueOf(parent, mat[i]);
-                                if (Double.isNaN(value)) {
-                                    result[0] = new Double[]{Double.NaN};
-                                    return result;
-                                }
+                for (Rel parent : attr_parents) {
+                    int[][] mat = A.allTypedTuples(parent.getTypes());
+                    num_nodes = mat.length;
+                    // for now, we just check if the attributes values are NaN
+                    for (int i = 0; i < mat.length; i++) {
+                        if (parent.ispredefined()) {
+                            value = A.valueOf(parent, mat[i]);
+                            if (Double.isNaN(value)) {
+                                result[0] = new Double[]{Double.NaN};
+                                return result;
+                            }
+                        } else if (parent.isprobabilistic()) {
+                            value = inst.valueOf(parent, mat[i]);
+                            if (Double.isNaN(value)) {
+//                                    result[0] = new Double[]{Double.NaN};
+                                Arrays.fill((double[])result[0],Double.NaN);
+                                return result;
                             }
                         }
                     }
-                    result[0] = this.evaluateInputGraph(cpmGnn, sampledRel, num_nodes);
-                } catch (RBNIllegalArgumentException e) {
-                    throw new RuntimeException(e);
                 }
+                result[0] = this.evaluateInputGraph(cpmGnn, sampledRel, num_nodes);
+            } catch (RBNIllegalArgumentException e) {
+                throw new RuntimeException(e);
             }
-            return result;
         }
+        return result;
+
     }
 
     // for Gradient Graph
@@ -575,7 +600,7 @@ public class GnnPy {
         } else {
             // this first part set the x and edge_index object once only if predefined
             if (cpmGnn.parentRels().isEmpty() && Objects.equals(GGx, "")) {
-                GGx = this.stringifyGnnFeatures(GGnumNodes, GGsampledRel, cpmGnn.getGnnattr(), cpmGnn.isOneHotEncoding());
+                GGx = this.stringifyGnnFeatures(GGnumNodes, GGsampledRel, cpmGnn);
             }
             if (GGedge_pred && Objects.equals(GGedge_index, "")) {
                 for (BoolRel element : GGboolRel) {
@@ -585,18 +610,13 @@ public class GnnPy {
                     } else {
                         if (Objects.equals(element.name(), cpmGnn.getEdge_name())) {
                             GGedge_pred = true;
-                            if (Objects.equals(cpmGnn.getEdge_direction(), "ABBA"))
-                                GGedge_index = this.stringifyGnnEdgesABBA(GGsampledRel, element);
-                            if (Objects.equals(cpmGnn.getEdge_direction(), "AB"))
-                                GGedge_index = this.stringifyGnnEdgesAB(GGsampledRel, element);
-                            if (Objects.equals(cpmGnn.getEdge_direction(), "BA"))
-                                GGedge_index = this.stringifyGnnEdgesBA(GGsampledRel, element);
+                            GGedge_index = edgeDirection(cpmGnn, element);
                             break;
                         }
                     }
                 }
             }
-            // else this
+            // else we need to use the sampled values in the gradient graph structure (maxindicator) and assign them to the rel
             try {
                 for (Rel parent : cpmGnn.parentRels()) {
                     int[][] mat = A.allTypedTuples(parent.getTypes());
@@ -605,16 +625,19 @@ public class GnnPy {
                         if (Objects.equals(GGsampledRel.getData().find(parent).dv(), "?")) {
 //                            if (sampledRel.truthValueOf(parent, mat[i]) == -1) {
                             GroundAtom myatom = new GroundAtom(parent, mat[i]);
-                            GGAtomMaxNode currentMaxNode = gg.findInMaxindicators(myatom); // I don't like this so much, I keep now for greediness
-                            boolean sampledVal = false;
-                            if (currentMaxNode.getCurrentInst() == 1)
-                                sampledVal = true;
-                            GGsampledRel.getmydata().findInBoolRel(parent).add(mat[i], sampledVal);
+                            GGAtomMaxNode currentMaxNode = gg.findInMaxindicators(myatom);
+
+                            if (parent instanceof CatRel)
+                                GGsampledRel.getmydata().findInCatRel(parent).add(mat[i], currentMaxNode.getCurrentInst());
+                            else {
+                                boolean sampledVal = currentMaxNode.getCurrentInst() == 1;
+                                GGsampledRel.getmydata().findInBoolRel(parent).add(mat[i], sampledVal);
+                            }
                         }
                     }
                 }
                 if (!cpmGnn.parentRels().isEmpty())
-                    GGx = this.stringifyGnnFeatures(GGnumNodes, GGsampledRel, cpmGnn.getGnnattr(), cpmGnn.isOneHotEncoding());
+                    GGx = this.stringifyGnnFeatures(GGnumNodes, GGsampledRel, cpmGnn);
             } catch (RBNIllegalArgumentException e) {
                 throw new RuntimeException(e);
             }
@@ -631,38 +654,31 @@ public class GnnPy {
                         break;
                     } else {
                         if (Objects.equals(element.name(), cpmGnn.getEdge_name())) {
-                            if (Objects.equals(cpmGnn.getEdge_direction(), "ABBA"))
-                                GGedge_index = this.stringifyGnnEdgesABBA(GGsampledRel, element);
-                            if (Objects.equals(cpmGnn.getEdge_direction(), "AB"))
-                                GGedge_index = this.stringifyGnnEdgesAB(GGsampledRel, element);
-                            if (Objects.equals(cpmGnn.getEdge_direction(), "BA"))
-                                GGedge_index = this.stringifyGnnEdgesBA(GGsampledRel, element);
-                            break;
+                            GGedge_index = edgeDirection(cpmGnn, element);
                         }
                     }
                 }
             }
 
-            Double[] value = new Double[0];
+            Double[] value;
             if (Objects.equals(cpmGnn.getGnn_inference(), "node"))
                 value = this.inferModelNodeDouble(Integer.parseInt(cpmGnn.getArgument()), GGx, GGedge_index, cpmGnn.getIdGnn(), "", true);
             else if (Objects.equals(cpmGnn.getGnn_inference(), "graph")) {
-//                value = this.inferModelGraphDouble(cpmGnn.getClassId(), GGx, GGedge_index, cpmGnn.getIdGnn(),"");
+                value = this.inferModelGraphDouble(GGx, GGedge_index, cpmGnn.getIdGnn(),"");
             } else
                 throw new IllegalArgumentException("not valid keyword used: " + cpmGnn.getGnn_inference());
-
-//            if (this.isuga()) {
-//                int iv = this.instval(); // Can only be 0,1, or -1, because if a relation is defined by ProbFormCombFunc
-//                // it can only be Boolean
-//                if (iv == -1)
-//                    System.out.println("Warning: undefined instantiation value in GGCombFuncNode.evaluate()");
-//                if (iv == 0)
-//                    this.value = 1 - this.value;
-//            }
-
-//            ggcpmGnn.setValue(value);
             return value;
         }
+    }
+
+    private String edgeDirection(CPMGnn cpmGnn, BoolRel element) {
+        if (Objects.equals(cpmGnn.getEdge_direction(), "ABBA"))
+            return this.stringifyGnnEdgesABBA(GGsampledRel, element);
+        if (Objects.equals(cpmGnn.getEdge_direction(), "AB"))
+            return this.stringifyGnnEdgesAB(GGsampledRel, element);
+        if (Objects.equals(cpmGnn.getEdge_direction(), "BA"))
+            return this.stringifyGnnEdgesBA(GGsampledRel, element);
+        return null;
     }
 
     public void saveGnnData(CPMGnn cpmGnn, RelStruc A, OneStrucData inst) {
@@ -698,7 +714,7 @@ public class GnnPy {
         }
     }
 
-    public Double evalSample_gnn(CPMGnn cpmGnn, RelStruc A, Hashtable<String, PFNetworkNode> atomhasht, OneStrucData inst) {
+    public double[] evalSample_gnn(CPMGnn cpmGnn, RelStruc A, Hashtable<String, PFNetworkNode> atomhasht, OneStrucData inst) {
         OneStrucData onsd = new OneStrucData(A.getmydata().copy());
         // we need to sample the entire structure before sending to python
         int num_features = 0;
@@ -743,18 +759,18 @@ public class GnnPy {
         String edge_index = "";
         for (BoolRel element : boolrel) {
             if (Objects.equals(element.name(), cpmGnn.getEdge_name())) {
-                if (Objects.equals(cpmGnn.getEdge_direction(), "ABBA"))
-                    edge_index =  this.stringifyGnnEdgesABBA(sampledRel, element);
-                if (Objects.equals(cpmGnn.getEdge_direction(), "AB"))
-                    edge_index =  this.stringifyGnnEdgesAB(sampledRel, element);
-                if (Objects.equals(cpmGnn.getEdge_direction(), "BA"))
-                    edge_index =  this.stringifyGnnEdgesBA(sampledRel, element);
+                edge_index = edgeDirection(cpmGnn, element);
                 break;
             }
         }
 
-        String x = this.stringifyGnnFeatures(num_features, sampledRel, cpmGnn.getGnnattr(), cpmGnn.isOneHotEncoding());
-        return this.inferModelNodeDouble(Integer.parseInt(cpmGnn.getArgument()), x, edge_index, cpmGnn.getIdGnn(), "", false);
+        String x = this.stringifyGnnFeatures(num_features, sampledRel, cpmGnn);
+        Double[] res_py =  this.inferModelNodeDouble(Integer.parseInt(cpmGnn.getArgument()), x, edge_index, cpmGnn.getIdGnn(), "", false);
+        double[] res = new double[res_py.length];
+        for (int i = 0; i < res_py.length; i++) {
+            res[i] = res_py[i];
+        }
+        return res;
     }
 
 }

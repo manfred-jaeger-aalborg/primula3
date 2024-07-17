@@ -106,7 +106,7 @@ public class MapThread extends GGThread {
 						oldll = newll;
 						newmapvals = gg.getMapVals();
 						bestMapVals = newmapvals;
-						bestLikelihood = newll;
+						bestLikelihood = new double[]{newll};
 						mapprobs.setMVs(newmapvals);
 						mapprobs.setLL(String.valueOf(oldll));
 						if (gg.parameters().size() > 0)

@@ -4,7 +4,7 @@ sys.path.append('/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/python')
 from gnn.ACR_graph import *
 from gnn.ACR_node import *
 # from ggcn_model_def import *
-from gcn_model_def import Net, Net2, Net3, NetG
+from gcn_model_def import Net, Net2, Net3, NetG, GraphNet
 
 # this function will be called by Primula with: model, x and edge_index, **kwargs
 # the model needs to output a probability for each node! (if not -> out = torch.sigmoid(out))
@@ -20,13 +20,15 @@ def infer_model_nodes(model, x, edge_index, **kwargs):
         return out
     return None
 
-def infer_model_graph(model, x, edge_index, batch=None):
-    if batch is None:
-        batch = torch.zeros(x.size()[0]).type(torch.LongTensor)
-    out = model(x, edge_index, batch)
-#     m = nn.Softmax(dim=1)
-#     return m(out)[0]
-    return out
+def infer_model_graph(model, x, edge_index, **kwargs):
+    if model is not None:
+        if type(model) is MYACRGnnNode:
+            batch = torch.zeros(x.size()[0]).type(torch.LongTensor)
+            out = model(x, edge_index, batch)
+        else:
+            out = model(x, edge_index)
+        return out
+    return None
 
 def set_model(model_class, weights_path, **kwargs):
     model = model_class(**kwargs)
@@ -115,13 +117,27 @@ models_info = {
                         "num_classes":2
                     }
     ),
-    "GCNcat": (NetG, "/Users/lz50rg/Dev/homophily/categorical_gnn/cat_gnn.pt",
+    "GCNcat": (NetG, "/Users/lz50rg/Dev/homophily/categorical_gnn/homophily_2.pt",
                         {
                             "num_features":2,
                             "dim":8,
                             "num_classes":4
                         }
-        )
+        ),
+    "GCNWisCat": (Net3, "/Users/lz50rg/Dev/homophily/experiments_wisconsin/gcn_cat.pt",
+                            {
+                                "num_features":1703,
+                                "dim":32,
+                                "num_classes":5
+                            }
+            ),
+    "GCNgraph": (GraphNet, "/Users/lz50rg/Dev/logic-gnn/models/cat-graph.pt",
+                            {
+                                "num_features":7,
+                                "dim":8,
+                                "num_classes":2
+                            }
+            )
 }
 
 def use_model(model_id):

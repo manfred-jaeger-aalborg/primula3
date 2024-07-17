@@ -38,16 +38,18 @@ public class CatGnn extends CPModel implements CPMGnn {
 
     // if is set to true, means that the GNN is for categorical output, if false is boolean
     private boolean categorical;
+    private int numvals;
 
     // this variable is used to set the inference for node or graph classification. Keyword: "node" or "graph"
     private String gnn_inference;
-    public CatGnn(String argument, String idGnn, Boolean categorical, Rel[] attr, String edge_name, String edge_direction, String gnn_inference, boolean oneHotEncoding) {
+    public CatGnn(String argument, String idGnn, Boolean categorical, int numvals, Rel[] attr, String edge_name, String edge_direction, String gnn_inference, boolean oneHotEncoding) {
         this.setEdge_name(edge_name);
         this.setEdge_direction(edge_direction);
 
         this.argument = argument;
         this.idGnn = idGnn;
         this.categorical = categorical;
+        this.numvals = numvals;
         this.gnnattr = attr;
         this.classId = -1;
         this.oneHotEncoding = oneHotEncoding;
@@ -66,13 +68,14 @@ public class CatGnn extends CPModel implements CPMGnn {
      * @param oneHotEncoding true if the representation of the features are in a one-hot encoding representation
      * @param classId index of the True value for which the CPMGnn will evaluate the probability
      */
-    public CatGnn(String argument, String idGnn, Boolean categorical, Rel[] attr, String edge_name, String edge_direction, String gnn_inference, boolean oneHotEncoding, int classId) {
+    public CatGnn(String argument, String idGnn, Boolean categorical, int numvals, Rel[] attr, String edge_name, String edge_direction, String gnn_inference, boolean oneHotEncoding, int classId) {
         this.setEdge_name(edge_name);
         this.setEdge_direction(edge_direction);
 
         this.argument = argument;
         this.idGnn = idGnn;
         this.categorical = categorical;
+        this.numvals = numvals;
         this.gnnattr = attr;
         this.classId = classId;
         this.gnn_inference = gnn_inference;
@@ -125,7 +128,7 @@ public class CatGnn extends CPModel implements CPMGnn {
     }
 
     @Override
-    public Double evalSample(RelStruc A, Hashtable<String, PFNetworkNode> atomhasht, OneStrucData inst, Hashtable<String,Double> evaluated, long[] timers) throws RBNCompatibilityException {
+    public double[] evalSample(RelStruc A, Hashtable<String, PFNetworkNode> atomhasht, OneStrucData inst, Hashtable<String,double[]> evaluated, long[] timers) throws RBNCompatibilityException {
         return gnnPy.evalSample_gnn(this, A, atomhasht, inst);
     }
 
@@ -182,12 +185,12 @@ public class CatGnn extends CPModel implements CPMGnn {
     // we cannot substitute this in smaller prob formula -> return the same object
     @Override
     public CPModel substitute(String[] vars, int[] args) {
-//        System.out.println("substitute code 1");
+        System.out.println("substitute code 1");
         CatGnn result;
         if (this.classId == -1)
-            result = new CatGnn(this.argument, this.idGnn, this.categorical, this.gnnattr, this.edge_name, this.edge_direction, this.gnn_inference, this.oneHotEncoding);
+            result = new CatGnn(this.argument, this.idGnn, this.categorical, this.numvals, this.gnnattr, this.edge_name, this.edge_direction, this.gnn_inference, this.oneHotEncoding);
         else
-            result = new CatGnn("-1", this.idGnn, this.categorical, this.gnnattr, this.edge_name, this.edge_direction, this.gnn_inference, this.oneHotEncoding, this.classId);
+            result = new CatGnn("-1", this.idGnn, this.categorical, this.numvals, this.gnnattr, this.edge_name, this.edge_direction, this.gnn_inference, this.oneHotEncoding, this.classId);
 
         if (vars.length == 0)
             result.argument = Arrays.toString(new String[0]);
@@ -236,7 +239,7 @@ public class CatGnn extends CPModel implements CPMGnn {
 
     @Override
     public int numvals() {
-        return 0; // TODO what numvals should return?
+        return numvals;
     }
 
     @Override
