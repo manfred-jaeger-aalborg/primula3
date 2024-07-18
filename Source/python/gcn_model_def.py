@@ -62,14 +62,16 @@ class GraphNet(torch.nn.Module):
     def __init__(self, num_features, dim=16, num_classes=1):
         super(GraphNet, self).__init__()
         self.num_classes = num_classes
-        self.conv1 = GCNConv(num_features, dim, improved=True)
-        self.conv2 = GCNConv(dim, dim, improved=True)
+        self.conv1 = GCNConv(num_features, dim)
+        self.conv2 = GCNConv(dim, dim)
+        self.conv3 = GCNConv(dim, dim)
         self.lin = torch.nn.Linear(dim, num_classes)
 
     def forward(self, x, edge_index, batch=None):
         h = F.relu(self.conv1(x, edge_index))
-        h = F.dropout(h, p=0.5, training=self.training)
+        # h = F.dropout(h, p=0.5, training=self.training)
         h = self.conv2(h, edge_index)
+        h = self.conv3(h, edge_index)
 
         h = global_mean_pool(h, batch)
 
@@ -78,4 +80,7 @@ class GraphNet(torch.nn.Module):
         if self.num_classes == 1:
             return F.sigmoid(h)
         else:
-            return F.softmax(h, dim=1)
+            if not self.training:
+                return F.softmax(h, dim=1)
+            else:
+                return h
