@@ -109,17 +109,6 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
     } // for now, we return true if is not CatGnn
 
     @Override
-    public double evaluateGrad(String param) throws RBNNaNException {
-        System.out.println("evaluateGrad code");
-        return -1;
-    }
-
-    @Override
-    public void evaluateBounds() {
-        System.out.println("evaluateBounds code");
-    }
-
-    @Override
     public GnnPy getGnnPy() {
         return null;
     }
@@ -132,7 +121,12 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
     public void setValue(Double[] value) {
         this.value = value;
     }
-    
+
+    @Override
+    public double evaluateGrad(Integer sno, String param) throws RBNNaNException {
+        return 0;
+    }
+
     public int outDim() {
     	System.out.println("outDim still needs to be implemented for GGGnnNode");
     	return 0;

@@ -22,6 +22,8 @@ public class MapThread extends GGThread {
 	boolean running;
     private GnnPy gnnPy;
     private final boolean gnnIntegration;
+	private Hashtable<Rel,int[]> bestMapVals;
+	private double[] bestLikelihood;
     private String modelPath;
     private String scriptPath;
     private String scriptName;
@@ -29,7 +31,7 @@ public class MapThread extends GGThread {
 
     public boolean isSampling;
 	public MapThread(
-            Observer infmoduleObs,
+            Observer valueObserver,
             InferenceModule infmodule,
 			Primula mypr,
 			GradientGraphO ggarg){
@@ -103,6 +105,8 @@ public class MapThread extends GGThread {
 					if (newll>oldll) {
 						oldll = newll;
 						newmapvals = gg.getMapVals();
+						bestMapVals = newmapvals;
+						bestLikelihood = new double[]{newll};
 						mapprobs.setMVs(newmapvals);
 						mapprobs.setLL(String.valueOf(oldll));
 						if (gg.parameters().size() > 0)
@@ -200,5 +204,13 @@ public class MapThread extends GGThread {
 
 	public boolean getRunning() {
 		return this.running;
+	}
+
+	public Hashtable<Rel, int[]> getBestMapVals() {
+		return bestMapVals;
+	}
+
+	public double[] getBestLikelihood() {
+		return bestLikelihood;
 	}
 }

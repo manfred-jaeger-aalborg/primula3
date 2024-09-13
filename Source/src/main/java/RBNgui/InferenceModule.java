@@ -309,7 +309,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	 */
 
 
-	ImageIcon toggleicon = new ImageIcon("main/java/Icons/toggle.png");
+	ImageIcon toggleicon = new ImageIcon("src/main/java/Icons/toggle.png");
 	private JButton  toggleTruthButton  		= new JButton(toggleicon);
 	
 	ImageIcon cwaicon = new ImageIcon("src/main/java/Icons/cwa.png");
@@ -2922,6 +2922,18 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 
 	public void setValueObserver(Observer o) {
 		this.valueObserver = o;
+	}
+
+	// function for toggle value to true
+	// val is the index in the categorical values we want to toggle
+	public void toggleAtom(Rel rel, int val) {
+
+		int[] el_tup = new int[1];
+		el_tup = new int[rel.getArity()];
+		int[][] instantiations = allMatchingTuples(el_tup);
+
+		inst.add(rel, instantiations, val,"?");
+		updateInstantiationList();
 	}
 
 //	public void setBoolInstArbitrary(BoolRel rel, Boolean truthValue) {

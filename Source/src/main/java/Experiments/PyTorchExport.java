@@ -16,7 +16,7 @@ public class PyTorchExport {
     private SparseRelStruc data;
     private GnnPy gnnPy;
     private RBN rbn;
-    private ProbFormGnn pfgnn;
+    private CPMGnn pfgnn;
     private int num_nodes;
 
     public PyTorchExport(SparseRelStruc sparseRelStruc, RBN rbn) {
@@ -24,8 +24,8 @@ public class PyTorchExport {
         this.gnnPy = new GnnPy();
         this.rbn = rbn;
         for (RBNPreldef prel: rbn.prelements()){
-            if (prel.pform() instanceof ProbFormGnn) {
-                this.pfgnn = (ProbFormGnn) prel.pform();
+            if (prel.cpmod() instanceof CPMGnn) {
+                this.pfgnn = (CatGnn) prel.cpmod();
                 break; // for now, we use the first we find
             }
         }
@@ -69,7 +69,7 @@ public class PyTorchExport {
         return edge_index;
     }
     public String getX(int num_nodes) {
-        return this.gnnPy.stringifyGnnFeatures(num_nodes, this.data, this.pfgnn.getGnnattr(), this.pfgnn.isOneHotEncoding());
+        return this.gnnPy.stringifyGnnFeatures(num_nodes, this.data, this.pfgnn);
     }
 
     public void writePythonDataOnFile(String path) {

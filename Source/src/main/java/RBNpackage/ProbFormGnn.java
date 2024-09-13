@@ -91,8 +91,8 @@ public class ProbFormGnn extends ProbForm implements CPMGnn {
     }
 
     @Override
-    public Double evalSample(RelStruc A, Hashtable<String, PFNetworkNode> atomhasht, OneStrucData inst, Hashtable<String,Double> evaluated, long[] timers) throws RBNCompatibilityException {
-       return gnnPy.evalSample_gnn(this, A, atomhasht, inst);
+    public double[] evalSample(RelStruc A, Hashtable<String, PFNetworkNode> atomhasht, OneStrucData inst, Hashtable<String,double[]> evaluated, long[] timers) throws RBNCompatibilityException {
+        return gnnPy.evalSample_gnn(this, A, atomhasht, inst);
     }
 
     @Override
