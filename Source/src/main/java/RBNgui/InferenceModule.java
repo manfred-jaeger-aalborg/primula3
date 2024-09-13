@@ -1237,6 +1237,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		else if(source == delAllQueryAtomButton){
 			queryModels=new Vector<QueryTableModel>();
 			queryatoms = new Hashtable<Rel,GroundAtomList>();
+			relList = new Vector<Rel>();
 			relIndex = new Hashtable<String,Integer>();
 			this.buildQueryatomsTables(queryModels);			
 		}
@@ -1563,7 +1564,12 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 					valuesListModel.addElement(selected_rel.get_String_val(i));
 				infoMessage.setText(selected_rel.name.name);
 			}
-		}
+			if(selected_rel.getArity()==0 && queryModeOn) {
+				addQueryAtoms(selected_rel, new int[0]);
+				infoMessage.setText(selected_rel.name.name+" ("+addedTuples+")");
+				}
+			}
+		
 		else if( source == valuesList ){
 			el_pos=0;
 			elementNamesList.clearSelection();
@@ -1571,6 +1577,10 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 			if(index >= 0){
 				String valstring = (String)valuesListModel.elementAt(index);
 				selected_val=selected_rel.get_Int_val(valstring);
+			}
+			if(selected_rel.getArity()==0 && !queryModeOn) {
+				inst.add( selected_rel, new int[1][0], selected_val,"?");
+				updateInstantiationList();
 			}
 		}
 
@@ -1934,6 +1944,12 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		rstnew = (SparseRelStruc)myprimula.rels;
 
 		GroundAtomList result = new GroundAtomList();
+		
+		if (rel.getArity()==0) {
+			result.add(new GroundAtom(rel,new int[0]));
+			return result;
+		}
+		
 		int[] temp = new int[tuple.length];
 		int pos = 0;
 		int length = tuple.length;
