@@ -292,6 +292,20 @@ public class OneStrucData {
 		return null;
 	}
 	
+	public void add(Rel r, int[] args, int v) {
+		if ((r instanceof BoolRel)) {
+			if (v==0) {
+				add((BoolRel)r,args,false,"?");
+			}
+			else {
+				add((BoolRel)r,args,true,"?");
+			}
+		}
+		if ((r instanceof CatRel)) {
+			add((CatRel)r,args,v,"?");
+		}
+	}
+	
 	public void add(GroundAtom at, int tv, String dv){
 		Rel r = at.rel;
 		if (r instanceof BoolRel) {

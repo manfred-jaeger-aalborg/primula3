@@ -587,30 +587,29 @@ public class GradientGraphO extends GradientGraph{
 		/* build maxindicators_for_r
 		 */
 
-		Vector<GGAtomMaxNode> newmaxind = new Vector<GGAtomMaxNode>();
-		for (Rel r: mapatoms.keySet()) {
-			Vector<GGAtomMaxNode> rnodes = new Vector<GGAtomMaxNode>();
+		//Vector<GGAtomMaxNode> newmaxind = new Vector<GGAtomMaxNode>();
+		if (mode == MAPMODE || mode == LEARNANDMAPMODE) {
+			for (Rel r: mapatoms.keySet()) {
+				Vector<GGAtomMaxNode> rnodes = new Vector<GGAtomMaxNode>();
 
-			for (GroundAtom gat: mapatoms.get(r).allAtoms())
-				rnodes.add(findInMaxindicators(gat)); // Inefficient, but only done once!
-			maxindicators.put(r, rnodes);
+				for (GroundAtom gat: mapatoms.get(r).allAtoms())
+					rnodes.add(findInMaxindicators(gat)); // Inefficient, but only done once!
+				maxindicators.put(r, rnodes);
+			}
+			//maxindicators=newmaxind;
+
+			for (Rel r: maxindicators.keySet()) {
+				for (GGAtomMaxNode maxn: maxindicators.get(r) ) {
+					maxn.setAllugas();
+				}
+			}
 		}
-		//maxindicators=newmaxind;
-
-
+		
 		/* Set the references between Upper Ground Atom nodes and Indicator nodes *
 		 * 
 		 */
 
 		GGAtomSumNode nextisumn;
-		GGAtomMaxNode nextimaxn;
-
-
-		for (Rel r: maxindicators.keySet()) {
-			for (GGAtomMaxNode maxn: maxindicators.get(r) ) {
-				maxn.setAllugas();
-			}
-		}
 		for (Iterator<GGAtomSumNode> it = sumindicators.iterator(); it.hasNext();){
 			nextisumn = it.next();
 			nextisumn.setAllugas();

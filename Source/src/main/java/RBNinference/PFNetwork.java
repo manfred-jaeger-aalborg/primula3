@@ -395,16 +395,18 @@ public class PFNetwork{
 		}
 
 		/* Create queryPFNnodes */
-		queryPFNnodes = new Hashtable<Rel,PFNetworkNode[]>();
-		String nextatomstring;
-		for (Rel r: queryatoms.keySet()) {
-			GroundAtomList gal = queryatoms.get(r);
-			PFNetworkNode[] pfnn = new PFNetworkNode[gal.size()];
-			queryPFNnodes.put(r,pfnn);
-			for (int i=0;i<gal.size();i++) {
-				nextatomstring  = ((GroundAtom)gal.atomAt(i)).asString();
-				pfnn[i]=(PFNetworkNode)atomhasht.get(nextatomstring);
-			}		
+		if (queryatoms != null) {
+			queryPFNnodes = new Hashtable<Rel,PFNetworkNode[]>();
+			String nextatomstring;
+			for (Rel r: queryatoms.keySet()) {
+				GroundAtomList gal = queryatoms.get(r);
+				PFNetworkNode[] pfnn = new PFNetworkNode[gal.size()];
+				queryPFNnodes.put(r,pfnn);
+				for (int i=0;i<gal.size();i++) {
+					nextatomstring  = ((GroundAtom)gal.atomAt(i)).asString();
+					pfnn[i]=(PFNetworkNode)atomhasht.get(nextatomstring);
+				}		
+			}
 		}
 	}
 

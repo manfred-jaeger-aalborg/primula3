@@ -88,11 +88,7 @@ public class Sampler{
 	            /* add 		(BoolRel)pfnetw.relAt(i) to result if not already there */
 				rand = Math.random();
 				if (100*rand >= pcmissing){
-					if (pfnetw.sampleValAt(i)==1){
-						result.add((BoolRel)pfnetw.relAt(i), pfnetw.atomAt(i).args(),true,"?");
-					}
-					else
-						result.add((BoolRel)pfnetw.relAt(i), pfnetw.atomAt(i).args(),false,"?");
+						result.add(pfnetw.relAt(i), pfnetw.atomAt(i).args(),pfnetw.sampleValAt(i));
 				}
 			}
 		}
