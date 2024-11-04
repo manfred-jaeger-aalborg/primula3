@@ -1,3 +1,5 @@
+import java.io.FileOutputStream
+import java.io.File
 plugins {
     id("java")
     id("application")
@@ -30,7 +32,18 @@ java {
 application {
 //    mainClass.set("RBNgui.Primula")
     applicationDefaultJvmArgs = listOf("-Djava.awt.headless=true")
-    mainClass.set("Experiments.Homophily.homophily_mcmc")
+    mainClass.set("Experiments.Homophily.WebKB")
+}
+
+tasks.named<JavaExec>("run") {
+    // Define the output file for logging using the new layout API
+    val outputFile = layout.buildDirectory.file("logs/output.log").get().asFile.apply {
+        parentFile.mkdirs() // Ensure the directory exists
+    }
+
+    // Redirect standard output and error output to the file
+    standardOutput = FileOutputStream(outputFile)
+    errorOutput = standardOutput // Optionally, also redirect System.err to the same file
 }
 
 tasks.test {
@@ -42,8 +55,8 @@ tasks.test {
 //     options.isFailOnError = false // Don't fail the build on compilation errors
 // }
 
-tasks.jar {
-    manifest {
-        attributes["Main-Class"] = "RBNgui.Primula"
-    }
-}
+// tasks.jar {
+//     manifest {
+//         attributes["Main-Class"] = "RBNgui.Primula"
+//     }
+// }
