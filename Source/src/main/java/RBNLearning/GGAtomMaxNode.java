@@ -150,6 +150,19 @@ private int highvalue;
 			}
 			else {
 				this.setCurrentInst(v);
+
+				// trick for faster computation, we create only once the input for all the parents.
+				// The parents will check only if the dictionaries are empty or not
+				// if empty, create the input. Otherwise, keep the same input.
+				// This assumes that maxatoms of CatRel have all the parents connected
+				if (this.myatom.rel instanceof CatRel) {
+					for (GGCPMNode ggcpmNode: this.parents()) {
+						if (ggcpmNode instanceof GGGnnNode) {
+							GGGnnNode gggnn = (GGGnnNode) ggcpmNode;
+							gggnn.getGnnPy().resetDict();
+						}
+					}
+				}
 				reEvaluateUpstream(null);
 				thisgg.llnode.evaluate(null,allugas);
 				newll = thisgg.llnode.loglikelihood();

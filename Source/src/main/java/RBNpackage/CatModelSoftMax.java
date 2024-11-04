@@ -114,9 +114,12 @@ public class CatModelSoftMax extends CPModel {
 			}
 			valsum+=Math.exp(nextval);
 		}
+		Double[] doubleObjectArray = new Double[((double[])result[0]).length];
 		for (int i = 0;i<probforms.size();i++){
-			((double[])result[0])[i]=(Math.exp((Double)evaluatedpfs[i][0]))/valsum;
+			doubleObjectArray[i] = (Math.exp((Double)evaluatedpfs[i][0]))/valsum;
+//			((double[])result[0])[i] = (Math.exp((Double)evaluatedpfs[i][0]))/valsum;
 		}
+		result[0] = doubleObjectArray;
 		if (valonly)
 			return result;
 		if (returntype == ProbForm.RETURN_ARRAY) {

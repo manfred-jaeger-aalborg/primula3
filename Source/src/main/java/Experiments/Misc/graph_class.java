@@ -1,5 +1,6 @@
-package Experiments;
+package Experiments.Misc;
 
+import Experiments.Misc.PyTorchExport;
 import RBNLearning.*;
 import RBNgui.Bavaria;
 import RBNgui.InferenceModule;
@@ -8,8 +9,6 @@ import RBNpackage.*;
 import RBNutilities.rbnutilities;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.*;
 
 public class graph_class {

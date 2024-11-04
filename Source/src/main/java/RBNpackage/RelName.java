@@ -24,6 +24,7 @@
 
 package RBNpackage;
 
+import java.util.Objects;
 
 public class RelName{
 
@@ -67,7 +68,20 @@ public class RelName{
         return result;
     }
 
-    public boolean equals( RelName rn ){
-        return this.name.equals( rn.name );
+//    public boolean equals(RelName rn) {
+//        if (rn == null) return false;
+//        return this.name.equals( rn.name );
+//    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof RelName)) return false;
+        RelName rn = (RelName) obj;
+        return Objects.equals(this.name, rn.name);
+    }
+    @Override
+    public int hashCode() {
+        return Objects.hash(name);
     }
 }

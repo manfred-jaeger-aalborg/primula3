@@ -1,9 +1,8 @@
-package Experiments;
+package Experiments.Homophily;
 
+import Experiments.Misc.ValueObserver;
 import RBNExceptions.RBNIllegalArgumentException;
-import RBNLearning.GGAtomMaxNode;
 import RBNLearning.GradientGraph;
-import RBNLearning.GradientGraphO;
 import RBNLearning.RelDataForOneInput;
 import RBNgui.Bavaria;
 import RBNgui.InferenceModule;
@@ -11,53 +10,55 @@ import RBNgui.Primula;
 import RBNpackage.*;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.TreeSet;
 
-public class homophily_wisconsin {
+public class homophily_cora {
     static String primulahome = System.getenv("PRIMULAHOME");
     static public RBN createRBN(Primula primula, boolean rbn) {
-        int num_attr = 1703;
+        int num_attr = 1433;
         Rel[] attrs_rels = new Rel[num_attr];
         for (int i = 0; i < num_attr; i++) {
             attrs_rels[i] = new BoolRel("attr_" + i, 1);
         }
 
-        int num_classes = 1;
+        int num_classes = 7;
         RBNPreldef[] gnn_rbn = new RBNPreldef[num_classes];
         for (int i = 0; i < num_classes; i++) {
             gnn_rbn[i] = new  RBNPreldef(
                     new BoolRel("class_"+i, 1),
                     new String[]{"v"},
-                    new CPMGnn("v",
-                            "GCNwis",
-                            false,
+                    new ProbFormGnn("v",
+                            "GCNcora",
                             attrs_rels,
                             "edge",
-                            "AB",
+                            "ABBA", // in this case the adjacency matrix in the dataset is symmetric !
                             "node",
                             true,
-                            1
+                            i
                     )
             );
         }
 
         if (rbn) {
-            File input_file = new File("/Users/lz50rg/Dev/homophily/experiments_wisconsin/const_wis.rbn");
-            RBN file_rbn = new RBN(input_file ,primula.getSignature());
+            File input_file = new File("/Users/lz50rg/Dev/homophily/const_cora.rbn");
+            RBN file_rbn = new RBN(input_file);
 
             RBNPreldef[] preledef = file_rbn.prelements();
-            RBN manual_rbn = new RBN(2, 0);
+            RBN manual_rbn = new RBN(8, 0);
 
             for (int i = 0; i < num_classes; i++) {
                 manual_rbn.insertPRel(gnn_rbn[i], i);
             }
-            manual_rbn.insertPRel(preledef[0], 1);
+            manual_rbn.insertPRel(preledef[0], 7);
 
             primula.setRbn(manual_rbn);
             primula.getInstantiation().init(manual_rbn);
             return manual_rbn;
         } else {
-            RBN manual_rbn = new RBN(1, 0);
+            RBN manual_rbn = new RBN(7, 0);
 
             for (int i = 0; i < num_classes; i++) {
                 manual_rbn.insertPRel(gnn_rbn[i], i);
@@ -123,25 +124,27 @@ public class homophily_wisconsin {
             total_FN += FN;
         }
 
-        return (double)(total_TP + total_TN) / (total_TP + total_TN + total_FP + total_FN);
+        // Calculate overall accuracy
+        double accuracy = (double)(total_TP + total_TN) / (total_TP + total_TN + total_FP + total_FN);
+        return accuracy;
     }
 
     public static void main(String[] args) {
         Primula primula = new Primula();
-        File srsfile = new File("/Users/lz50rg/Dev/homophily/experiments_wisconsin/wis_small.rdef");
-        primula.loadSparseRelFile(srsfile);
 
-        RBN rbn = createRBN(primula, false);
+        RBN rbn = createRBN(primula, true);
         primula.setRbn(rbn);
         primula.getInstantiation().init(rbn);
 //        primula.loadRBNFunction(new File("/Users/lz50rg/Dev/homophily/gnn_trained_model_log.rbn"));
 
+        File srsfile = new File("/Users/lz50rg/Dev/homophily/cora_rdef_2.rdef");
+        primula.loadSparseRelFile(srsfile);
 
 //        openBavaria(true, primula, srsfile);
 
         ArrayList<BoolRel> queryList = new ArrayList<>();
-        String[] queryName = new String[1];
-        int num_classes = 1;
+        String[] queryName = new String[7];
+        int num_classes = 7;
         for (int i = 0; i < num_classes; i++) {
             queryName[i] = "class_"+i;
         }
@@ -156,8 +159,6 @@ public class homophily_wisconsin {
         RelDataForOneInput prob_data = primula.getReldata().elementAt(0);
         int num_nodes = input_struct.domSize();
         try {
-            InferenceModule im = primula.openInferenceModule(false);
-
             GroundAtomList gal = new GroundAtomList();
 
             OneBoolRelData query_nodes = prob_data.inputDomain().getData().findInBoolRel("query_nodes");
@@ -167,25 +168,23 @@ public class homophily_wisconsin {
                 instantiated_nodes.add(node[0]);
             }
 
-            Hashtable<Rel,GroundAtomList> queryatoms = new Hashtable<>();
-
             for (BoolRel brel: queryList) {
                 int[][] mat = input_struct.allTypedTuples(brel.getTypes());
                 for (int[] ints : mat) {
                     if (instantiated_nodes.contains(ints[0]))
                         gal.add(brel, ints);
                 }
-                queryatoms.put(brel, gal);
-                im.addQueryAtoms(brel, gal);
             }
 
             // ****************************************************
 
-//            im.setQueryAtoms(queryatoms);
+            InferenceModule im = primula.openInferenceModule(false);
+
+            im.setQueryAtoms(gal);
 
             primula.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
-            primula.setScriptPath("/Users/lz50rg/Dev/primula-workspace/primula3/Source/python/");
-            primula.setScriptName("load_gnn");
+            primula.setScriptPath("/Users/lz50rg/Dev/primula-workspace/primula3/python/");
+            primula.setScriptName("inference_test");
 
             im.setNumRestarts(1);
 
@@ -195,25 +194,23 @@ public class homophily_wisconsin {
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();
 
-            // get the last instantiation for the atoms in the gradient graph through the maxindicators
-            Hashtable<Rel, Vector<GGAtomMaxNode>> lastMaxIndicators = ((GradientGraphO) GG).getMaxindicators();
+            int[] mapValues = valueObserver.getMapVals();
+            String mapLikelihood = valueObserver.getLikelihood();
+            System.out.println("\n---------------------------------------");
+            System.out.println("Query atoms results:");
+            for (int i=0; i<gal.size(); i++) {
+                System.out.println(gal.atomAt(i).rel + Arrays.toString(gal.atomAt(i).args) + ": " + mapValues[i]);
+            }
+            System.out.println("\nLikelihood: " + mapLikelihood);
+            System.out.println("---------------------------------------\n");
 
-//            for (Rel r: lastMaxIndicators.keySet()) {
-//                for (GGAtomMaxNode nextgimn: lastMaxIndicators.get(r))
-//                    System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst());
-//            }
-
+            // assign the map values to the current data
             OneStrucData result = new OneStrucData();
             if (GG != null){
                 result.setParentRelStruc(primula.getRels());
 
-//                for (int i=0; i<gal.size(); i++) {
-//                    result.add(new GroundAtom(gal.atomAt(i).rel(), gal.atomAt(i).args), mapValues[i],"?");
-//                }
-
-                for (Rel r: lastMaxIndicators.keySet()) {
-                    for (GGAtomMaxNode nextgimn: lastMaxIndicators.get(r))
-                        result.add(nextgimn.myatom(), nextgimn.getCurrentInst(), "?");
+                for (int i=0; i<gal.size(); i++) {
+                    result.add(new GroundAtom(gal.atomAt(i).rel(), gal.atomAt(i).args), mapValues[i],"?");
                 }
 
                 primula.getInstantiation().add(result);
@@ -231,30 +228,25 @@ public class homophily_wisconsin {
 //            pye.writePythonDataOnFile("/Users/lz50rg/Dev/primula-workspace/test_rbn_files/python_data.txt");
 
             // compute final accuracy for all the nodes
-            OneBoolRelData[] all_pred_class = new OneBoolRelData[num_classes];
-            OneBoolRelData[] gt_class = new OneBoolRelData[num_classes];
-            TreeSet<Integer>[] all_true_gt = new TreeSet[num_classes];
-            TreeSet<Integer>[] all_false_gt = new TreeSet[num_classes];
-            TreeSet<Integer>[] all_true_pred_class = new TreeSet[num_classes];
-            TreeSet<Integer>[] all_false_pred_class = new TreeSet[num_classes];
-            for (int i = 0; i < num_classes; i++) {
+            OneBoolRelData[] all_pred_class = new OneBoolRelData[7];
+            OneBoolRelData[] gt_class = new OneBoolRelData[7];
+            TreeSet<Integer>[] all_true_gt = new TreeSet[7];
+            TreeSet<Integer>[] all_false_gt = new TreeSet[7];
+            TreeSet<Integer>[] all_true_pred_class = new TreeSet[7];
+            TreeSet<Integer>[] all_false_pred_class = new TreeSet[7];
+            for (int i = 0; i < 7; i++) {
                 all_pred_class[i] = sampledRel.getData().findInBoolRel("class_"+i);
                 gt_class[i] = sampledRel.getData().findInBoolRel("ground_class_"+i);
                 all_true_pred_class[i] = convertToInArray(all_pred_class[i].allTrue());
                 all_false_pred_class[i] = convertToInArray(all_pred_class[i].allFalse());
                 all_true_gt[i] = convertToInArray(gt_class[i].allTrue());
-
-                all_false_gt[i] = new TreeSet<Integer>();
-                for (int j = 0; j < num_nodes; j++) {
-                    if (!all_true_gt[i].contains(j))
-                        all_false_gt[i].add(j);
-                }
+                all_false_gt[i] = convertToInArray(gt_class[i].allFalse());
             }
             OneBoolRelData test_nodes_r = sampledRel.getData().findInBoolRel("test_nodes");
             TreeSet<Integer> test_nodes =  convertToInArray(test_nodes_r.allTrue());
 
             double accuracy = computeAccuracy(all_true_pred_class, all_false_pred_class, all_true_gt, all_false_gt, test_nodes);
-            System.out.println("Test accuracy: " + accuracy);
+            System.out.println("Accuracy: " + accuracy);
 
 //            primula.exitProgram();
 

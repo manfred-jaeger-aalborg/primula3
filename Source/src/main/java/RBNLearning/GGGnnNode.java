@@ -65,7 +65,6 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
                                         "",
                                         mapatoms,
                                         evaluated);
-//                        ggmn = new GGAtomMaxNode(gg, atomAsPf, A, I, 0, 0);
                                 allnodes.put(gg.makeKey(atomAsPf, 0, 0, A), ggmn);
                                 //            fnode.setInstvalToIndicator();
                                 //            ggmn.setUGA(fnode);
@@ -83,6 +82,45 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
 //                    System.out.println(pfargs[i].toString() + " non prob - skipped");
                 }
             }
+        } else if (this.cpm instanceof CatGnnHetero) {
+            ArrayList<ArrayList <Rel>> pfargs = ((CatGnnHetero) this.cpm).getInput_attr();
+            for (int i = 0; i < pfargs.size(); i++) {
+                for (int j = 0; j < pfargs.get(i).size(); j++) {
+                    if (!pfargs.get(i).get(j).ispredefined()) { // do not add predefined values
+                        try {
+                            int[][] mat = A.allTypedTuples(pfargs.get(i).get(j).getTypes());
+                            for (int k = 0; k < mat.length; k++) {
+                                ProbFormAtom atomAsPf = new ProbFormAtom(pfargs.get(i).get(j), mat[k]);
+                                GGCPMNode ggmn = gg.findInAllnodes(atomAsPf, 0, 0, A);
+                                if (ggmn == null) {
+                                    ggmn = GGCPMNode.constructGGPFN(
+                                            gg,
+                                            atomAsPf,
+                                            allnodes,
+                                            A,
+                                            I,
+                                            inputcaseno,
+                                            observcaseno,
+                                            parameters,
+                                            false,
+                                            false,
+                                            "",
+                                            mapatoms,
+                                            evaluated);
+                                    allnodes.put(gg.makeKey(atomAsPf, 0, 0, A), ggmn);
+                                    this.children.add(ggmn);
+                                    ggmn.addToParents(this);
+                                }
+                                this.children.add(ggmn);
+                                ggmn.addToParents(this);
+                            }
+
+                        } catch (RBNIllegalArgumentException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }
+            }
         } else {
             System.out.println("GGGnnNode cannot accept " + this.cpm.toString() + " as valid pf");
         }
@@ -98,19 +136,23 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
         if (this.value != null) {
             return this.value;
         }
-        this.value = gnnPy.GGevaluate_gnn(A, thisgg, (CPMGnn) cpm, this);
+        // Temp fix
+        if (cpm instanceof CatGnnHetero)
+            this.value = gnnPy.GGevaluate_gnnHetero(A, thisgg, (CPMGnn) cpm, this);
+        else
+            this.value = gnnPy.GGevaluate_gnn(A, thisgg, (CPMGnn) cpm, this);
 
         return this.value;
     }
 
     @Override
     public boolean isBoolean() {
-        return !(cpm instanceof CatGnn);
+        return !(cpm instanceof CatGnn || cpm instanceof CatGnnHetero);
     } // for now, we return true if is not CatGnn
 
     @Override
     public GnnPy getGnnPy() {
-        return null;
+        return this.gnnPy;
     }
 
     public void setGnnPy(GnnPy gnnPy) {

@@ -1,5 +1,6 @@
-package Experiments;
+package Experiments.Homophily;
 
+import Experiments.Misc.ValueObserver;
 import RBNExceptions.RBNIllegalArgumentException;
 import RBNLearning.GradientGraph;
 import RBNLearning.RelDataForOneInput;

@@ -30,7 +30,7 @@ java {
 application {
 //    mainClass.set("RBNgui.Primula")
     applicationDefaultJvmArgs = listOf("-Djava.awt.headless=true")
-    mainClass.set("Experiments.homophily_mcmc")
+    mainClass.set("Experiments.Homophily.homophily_mcmc")
 }
 
 tasks.test {

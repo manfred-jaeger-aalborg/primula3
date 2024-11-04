@@ -1,5 +1,6 @@
-package Experiments;
+package Experiments.Homophily;
 
+import Experiments.Misc.ValueObserver;
 import RBNExceptions.RBNIllegalArgumentException;
 import RBNLearning.GradientGraph;
 import RBNLearning.RelDataForOneInput;
@@ -9,59 +10,46 @@ import RBNgui.Primula;
 import RBNpackage.*;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.TreeSet;
+import java.util.*;
 
-public class homophily_cora {
+public class homophily {
     static String primulahome = System.getenv("PRIMULAHOME");
     static public RBN createRBN(Primula primula, boolean rbn) {
-        int num_attr = 1433;
-        Rel[] attrs_rels = new Rel[num_attr];
-        for (int i = 0; i < num_attr; i++) {
-            attrs_rels[i] = new BoolRel("attr_" + i, 1);
-        }
+        NumRel attr1 = new NumRel("attr1", 1);
+        NumRel attr2 = new NumRel("attr2", 1);
 
-        int num_classes = 7;
-        RBNPreldef[] gnn_rbn = new RBNPreldef[num_classes];
-        for (int i = 0; i < num_classes; i++) {
-            gnn_rbn[i] = new  RBNPreldef(
-                    new BoolRel("class_"+i, 1),
-                    new String[]{"v"},
-                    new ProbFormGnn("v",
-                            "GCNcora",
-                            attrs_rels,
-                            "edge",
-                            "ABBA", // in this case the adjacency matrix in the dataset is symmetric !
-                            "node",
-                            true,
-                            i
-                    )
-            );
-        }
+        RBNPreldef gnn_pos = new RBNPreldef(
+                new BoolRel("pos", 1),
+                new String[]{"v"},
+                new ProbFormGnn("v",
+                        "gnnHomophily",
+                        new Rel[]{
+                                attr1,
+                                attr2
+                        },
+                        "edge",
+                        "ABBA", // in this case the adjacency matrix in the dataset is symmetric !
+                        true
+                )
+        );
 
         if (rbn) {
-            File input_file = new File("/Users/lz50rg/Dev/homophily/const_cora.rbn");
+            File input_file = new File("/Users/lz50rg/Dev/homophily/const_new.rbn");
             RBN file_rbn = new RBN(input_file);
 
             RBNPreldef[] preledef = file_rbn.prelements();
-            RBN manual_rbn = new RBN(8, 0);
+            RBN manual_rbn = new RBN(2, 0);
 
-            for (int i = 0; i < num_classes; i++) {
-                manual_rbn.insertPRel(gnn_rbn[i], i);
-            }
-            manual_rbn.insertPRel(preledef[0], 7);
+            manual_rbn.insertPRel(gnn_pos, 0);
+            manual_rbn.insertPRel(preledef[0], 1);
 
             primula.setRbn(manual_rbn);
             primula.getInstantiation().init(manual_rbn);
             return manual_rbn;
         } else {
-            RBN manual_rbn = new RBN(7, 0);
+            RBN manual_rbn = new RBN(1, 0);
 
-            for (int i = 0; i < num_classes; i++) {
-                manual_rbn.insertPRel(gnn_rbn[i], i);
-            }
+            manual_rbn.insertPRel(gnn_pos, 0);
 
             primula.setRbn(manual_rbn);
             primula.getInstantiation().init(manual_rbn);
@@ -86,46 +74,30 @@ public class homophily_cora {
         return int_set;
     }
 
-    // Helper method to count intersection of two sets
-    private static int countIntersection(TreeSet<Integer> set1, TreeSet<Integer> set2) {
-        TreeSet<Integer> intersection = new TreeSet<>(set1);
-        intersection.retainAll(set2);
-        return intersection.size();
-    }
+    public static double computeAccuracy(TreeSet<Integer> true_pred,
+                                         TreeSet<Integer> false_pred,
+                                         TreeSet<Integer> true_gt,
+                                         TreeSet<Integer> false_gt){
+        int truePositives = 0;
+        int trueNegatives = 0;
 
-    public static double computeAccuracy(TreeSet<Integer>[] all_true_pred, TreeSet<Integer>[] all_false_pred, TreeSet<Integer>[] all_true_gt, TreeSet<Integer>[] all_false_gt, TreeSet<Integer> test_nodes) {
-        int total_TP = 0;
-        int total_FP = 0;
-        int total_TN = 0;
-        int total_FN = 0;
-
-        // Calculate TP, FP, TN, FN for each class
-        for (int i = 0; i < all_true_pred.length; i++) {
-            TreeSet<Integer> truePred = all_true_pred[i];
-            TreeSet<Integer> falsePred = all_false_pred[i];
-            TreeSet<Integer> trueGT = all_true_gt[i];
-            TreeSet<Integer> falseGT = all_false_gt[i];
-
-            // Filter sets based on test_nodes
-            truePred.retainAll(test_nodes);
-            falsePred.retainAll(test_nodes);
-            trueGT.retainAll(test_nodes);
-            falseGT.retainAll(test_nodes);
-
-            int TP = countIntersection(truePred, trueGT);
-            int FP = countIntersection(truePred, falseGT);
-            int TN = countIntersection(falsePred, falseGT);
-            int FN = countIntersection(falsePred, trueGT);
-
-            total_TP += TP;
-            total_FP += FP;
-            total_TN += TN;
-            total_FN += FN;
+        for (int entry : true_gt) {
+            if (true_pred.contains(entry)) {
+                truePositives++;
+            }
         }
 
-        // Calculate overall accuracy
-        double accuracy = (double)(total_TP + total_TN) / (total_TP + total_TN + total_FP + total_FN);
-        return accuracy;
+        for (int entry : false_gt) {
+            if (false_pred.contains(entry)) {
+                trueNegatives++;
+            }
+        }
+        // total is still based on the predicted size
+        int totalExamples = true_pred.size() + false_pred.size();
+//        System.out.println(truePositives);
+//        System.out.println(trueNegatives);
+//        System.out.println(totalExamples);
+        return (double)(truePositives + trueNegatives) / totalExamples;
     }
 
     public static void main(String[] args) {
@@ -136,17 +108,13 @@ public class homophily_cora {
         primula.getInstantiation().init(rbn);
 //        primula.loadRBNFunction(new File("/Users/lz50rg/Dev/homophily/gnn_trained_model_log.rbn"));
 
-        File srsfile = new File("/Users/lz50rg/Dev/homophily/cora_rdef_2.rdef");
+        File srsfile = new File("/Users/lz50rg/Dev/homophily/graph.rdef");
         primula.loadSparseRelFile(srsfile);
 
 //        openBavaria(true, primula, srsfile);
 
         ArrayList<BoolRel> queryList = new ArrayList<>();
-        String[] queryName = new String[7];
-        int num_classes = 7;
-        for (int i = 0; i < num_classes; i++) {
-            queryName[i] = "class_"+i;
-        }
+        String[] queryName = new String[]{"pos"};
 
         for (String s : queryName) {
             BoolRel tmp_query = new BoolRel(s, 1);
@@ -160,21 +128,25 @@ public class homophily_cora {
         try {
             GroundAtomList gal = new GroundAtomList();
 
-            OneBoolRelData query_nodes = prob_data.inputDomain().getData().findInBoolRel("query_nodes");
-            TreeSet<int[]> true_data = query_nodes.allTrue();
+            // do not include the available data in the query atoms
+            OneBoolRelData train_nodes = prob_data.oneStrucDataAt(0).findInBoolRel("pos");
+            TreeSet<int[]> true_data = train_nodes.allTrue();
+            TreeSet<int[]> false_data = train_nodes.allFalse();
             List<Integer> instantiated_nodes = new ArrayList<>();
             for (int[] node: true_data) {
+                instantiated_nodes.add(node[0]);
+            }
+            for (int[] node: false_data) {
                 instantiated_nodes.add(node[0]);
             }
 
             for (BoolRel brel: queryList) {
                 int[][] mat = input_struct.allTypedTuples(brel.getTypes());
                 for (int[] ints : mat) {
-                    if (instantiated_nodes.contains(ints[0]))
+                    if (!instantiated_nodes.contains(ints[0]))
                         gal.add(brel, ints);
                 }
             }
-
             // ****************************************************
 
             InferenceModule im = primula.openInferenceModule(false);
@@ -185,7 +157,7 @@ public class homophily_cora {
             primula.setScriptPath("/Users/lz50rg/Dev/primula-workspace/primula3/python/");
             primula.setScriptName("inference_test");
 
-            im.setNumRestarts(1);
+            im.setNumRestarts(20);
 
             ValueObserver valueObserver = new ValueObserver();
             im.setValueObserver(valueObserver);
@@ -217,7 +189,7 @@ public class homophily_cora {
                 primula.updateBavaria();
             }
 
-//            openBavaria(true, primula, srsfile);
+            openBavaria(true, primula, srsfile);
 
             OneStrucData onsd = new OneStrucData(primula.getRels().getmydata().copy());
             SparseRelStruc sampledRel = new SparseRelStruc(primula.getRels().getNames(), onsd, primula.getRels().getCoords(), primula.getRels().signature());
@@ -227,25 +199,32 @@ public class homophily_cora {
 //            pye.writePythonDataOnFile("/Users/lz50rg/Dev/primula-workspace/test_rbn_files/python_data.txt");
 
             // compute final accuracy for all the nodes
-            OneBoolRelData[] all_pred_class = new OneBoolRelData[7];
-            OneBoolRelData[] gt_class = new OneBoolRelData[7];
-            TreeSet<Integer>[] all_true_gt = new TreeSet[7];
-            TreeSet<Integer>[] all_false_gt = new TreeSet[7];
-            TreeSet<Integer>[] all_true_pred_class = new TreeSet[7];
-            TreeSet<Integer>[] all_false_pred_class = new TreeSet[7];
-            for (int i = 0; i < 7; i++) {
-                all_pred_class[i] = sampledRel.getData().findInBoolRel("class_"+i);
-                gt_class[i] = sampledRel.getData().findInBoolRel("ground_class_"+i);
-                all_true_pred_class[i] = convertToInArray(all_pred_class[i].allTrue());
-                all_false_pred_class[i] = convertToInArray(all_pred_class[i].allFalse());
-                all_true_gt[i] = convertToInArray(gt_class[i].allTrue());
-                all_false_gt[i] = convertToInArray(gt_class[i].allFalse());
-            }
-            OneBoolRelData test_nodes_r = sampledRel.getData().findInBoolRel("test_nodes");
-            TreeSet<Integer> test_nodes =  convertToInArray(test_nodes_r.allTrue());
+            OneBoolRelData all_pred_pos = sampledRel.getData().findInBoolRel("pos");
+            OneBoolRelData gt_pos = sampledRel.getData().findInBoolRel("ground_pos");
 
-            double accuracy = computeAccuracy(all_true_pred_class, all_false_pred_class, all_true_gt, all_false_gt, test_nodes);
-            System.out.println("Accuracy: " + accuracy);
+            TreeSet<Integer> all_true_pred = convertToInArray(all_pred_pos.allTrue());
+            TreeSet<Integer> all_false_pred = convertToInArray(all_pred_pos.allFalse());
+            TreeSet<Integer> int_true_gt = convertToInArray(gt_pos.allTrue());
+            TreeSet<Integer> int_false_gt = new TreeSet<>();
+            for (int i = 0; i < num_nodes; i++) {
+                int_false_gt.add(i);
+            }
+            int_false_gt.removeAll(int_true_gt);
+
+            if ((all_pred_pos.numtrue() + all_pred_pos.numfalse()) != num_nodes) {
+                System.out.println("NOT ALL MAP NODES INSTANTIATED!");
+            }
+
+            double accuracy = computeAccuracy(all_true_pred, all_false_pred, int_true_gt, int_false_gt);
+            System.out.println("Total accuracy: " + accuracy);
+
+            // compute final accuracy for the map nodes
+            OneBoolRelData pred_pos = result.findInBoolRel("pos");
+            TreeSet<Integer> true_pred = convertToInArray(pred_pos.allTrue());
+            TreeSet<Integer> false_pred = convertToInArray(pred_pos.allFalse());
+
+            accuracy = computeAccuracy(true_pred, false_pred, int_true_gt, int_false_gt);
+            System.out.println("MAP node accuracy: " + accuracy);
 
 //            primula.exitProgram();
 

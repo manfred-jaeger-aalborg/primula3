@@ -171,8 +171,8 @@ public class GroundAtom extends java.lang.Object {
      * to RelStruc A:
      */
     public String asString(RelStruc A){
-	String result = rel.name.name + A.namesAt(args);
-	return result;
+        String result = rel.name.name + A.namesAt(args);
+        return result;
     }
     
     public static String relnameFromString(String atomstring){

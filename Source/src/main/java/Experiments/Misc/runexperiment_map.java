@@ -1,4 +1,4 @@
-package Experiments;
+package Experiments.Misc;
 
 import RBNExceptions.RBNIllegalArgumentException;
 import RBNLearning.*;

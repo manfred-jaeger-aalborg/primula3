@@ -1,5 +1,6 @@
 package RBNpackage;
 
+import java.util.ArrayList;
 import java.util.TreeSet;
 
 public interface CPMGnn {

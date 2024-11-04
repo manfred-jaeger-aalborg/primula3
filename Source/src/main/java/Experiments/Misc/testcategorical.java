@@ -1,17 +1,12 @@
-package Experiments;
+package Experiments.Misc;
 
 
-import java.io.BufferedWriter;
 import java.io.File;
 
-
-import java.util.*;
 
 import RBNgui.*;
 import RBNpackage.*;
 import RBNinference.*;
-import RBNutilities.rbnutilities;
-import RBNExceptions.*;
 
 public class testcategorical {
 	

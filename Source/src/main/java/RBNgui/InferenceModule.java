@@ -614,7 +614,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	 */
 	private int el_pos;
 
-	/* The gradient graph structure constructed in current inference 
+	/* The gradient graph structure constructed in current inference
 	 * process
 	 */
 	private GradientGraph currentGG;
@@ -784,8 +784,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		for (int i=0;i<samplelogmode.length;i++)
 			samplelogmode[i]=false;
 
-		numchains = 1;
-		windowsize = 2;
+		numchains = 3;
+		windowsize = 4;
 		numrestarts = 1;
 		
 		readElementNames();
@@ -2920,18 +2920,9 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		updateInstantiationList();
 	}
 
-//	public void setBoolInstArbitrary(BoolRel rel, Boolean truthValue) {
-//		first_bin = first_arb = true;
-//		if (rel.arity == 0){
-//			if(queryModeOn){
-//				queryatoms.add(rel,new int[0]);
-//				updateQueryatomsList();
-//			}
-//			else{
-//				inst.add(new GroundAtom(rel,new int[0]),truthValue,"?");
-//				updateInstantiationList();
-//			}
-//		}
-//	}
+	public void setBoolInstArbitrary(BoolRel rel, Boolean truthValue) {
+		inst.add(new GroundAtom(rel,new int[0]),truthValue,"?");
+		updateInstantiationList();
+	}
 
 }

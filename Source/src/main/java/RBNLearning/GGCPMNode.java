@@ -250,7 +250,7 @@ public abstract class GGCPMNode extends GGNode{
 
 			}
 
-			if (cpm instanceof ProbFormGnn || cpm instanceof CatGnn ) {
+			if (cpm instanceof ProbFormGnn || cpm instanceof CatGnn || cpm instanceof CatGnnHetero ) {
 				result = new GGGnnNode(gg,cpm,allnodes,A,I,inputcaseno,observcaseno,parameters,useCurrentPvals,mapatoms,evaluated);
 			}
 //			if (cpm instanceof CatGnn) {
@@ -464,10 +464,8 @@ public abstract class GGCPMNode extends GGNode{
 	 * indicator has been changed in Gibbs sampling or MAP inference
 	 */
 	public void reEvaluateUpstream(Integer sno){
-		
 		if (ancestors == null) 
 			ancestors = ancestors();
-		
 		for (GGCPMNode anc: ancestors)
 			anc.resetValue(sno);
 		for (GGCPMNode anc: ancestors)

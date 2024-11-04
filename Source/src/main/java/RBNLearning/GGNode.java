@@ -293,5 +293,8 @@ public abstract class GGNode implements Comparable<GGNode>{
 	}
 	
 	public abstract int outDim();
-	
+
+	public Vector<GGCPMNode> getChildren() {
+		return children;
+	}
 }

@@ -174,7 +174,7 @@ public  class GGLikelihoodNode extends GGNode{
 		return evaluate(sno,children);
 	}
 	
-	/** Computes the (log-)likelihood and confusion matrix 
+	/** Computes the (log-)likelihood and confusion matrix
 	 * (ignoring those terms that are not dependent
 	 * on unknown atoms or parameters)
 	 * 
@@ -233,7 +233,8 @@ public  class GGLikelihoodNode extends GGNode{
 		Double[] childval;
 		int childinst;
 		double childlik;
-		
+
+		System.out.println("------------------------");
 		for (GGCPMNode nextchild: batchelements){
 			childval = nextchild.evaluate(sno);
 			childinst = nextchild.instval(sno); 
@@ -246,6 +247,14 @@ public  class GGLikelihoodNode extends GGNode{
 					childlik = childval[0];
 				else
 					childlik = 1- childval[0];
+			}
+
+			if (nextchild.getMyatom().equals("constr(0)")) {
+				System.out.println("constr(): " + childlik);
+			}
+
+			if (nextchild.getMyatom().equals("target(0)")) {
+				System.out.println("target(): " + childlik);
 			}
 
 			//			ival = nextchild.instval();
@@ -285,6 +294,7 @@ public  class GGLikelihoodNode extends GGNode{
 			}
 
 		}
+		System.out.println("------------------------");
 
 		if (this.depends_on_sample && sno!=null) { 
 			this.is_evaluated_for_samples[sno] = true;

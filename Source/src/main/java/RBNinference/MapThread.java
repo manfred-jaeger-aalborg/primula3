@@ -4,7 +4,6 @@ import java.util.*;
 
 import RBNExceptions.RBNNaNException;
 import RBNLearning.*;
-import RBNutilities.*;
 import RBNpackage.*;
 import RBNgui.InferenceModule;
 import RBNgui.LearnModule;
@@ -54,10 +53,8 @@ public class MapThread extends GGThread {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        }
-        else {
+        } else
             this.gnnPy = null;
-        }
 
 		running = true;
 		
@@ -78,6 +75,9 @@ public class MapThread extends GGThread {
 		//for (int i=0;i<lastmapvals.length;i++)
 		//	lastmapvals[i]=-1;
 		Hashtable<Rel,int[]> newmapvals = new Hashtable<>();
+
+		Map<String, double[][]> xDict = new HashMap<>();
+		Map<String, int[][]> edgeDict = new HashMap<>();
 		
 		int maxrestarts = myinfmodule.getMAPRestarts();
 		int restarts =1;
@@ -101,6 +101,7 @@ public class MapThread extends GGThread {
 			try {
                 System.out.println("Current restart: " + restarts);
 				newll = gg.mapInference(this);
+				System.out.println(newll);
 				if (!Double.isNaN(newll)) {
 					if (newll>oldll) {
 						oldll = newll;
@@ -111,6 +112,12 @@ public class MapThread extends GGThread {
 						mapprobs.setLL(String.valueOf(oldll));
 						if (gg.parameters().size() > 0)
 							myLearnModule.setParameterValues(gg.getParameters());
+						if (gnnPy != null) {
+							xDict = gnnPy.getCurrentXdict();
+							edgeDict = gnnPy.getCurrentEdgeDict();
+						}
+
+
 					}
 				} else {
 					System.out.println("MAP search aborted");
@@ -132,20 +139,21 @@ public class MapThread extends GGThread {
 		}
 
 		System.out.println("Best likelihood found: " + String.valueOf(oldll));
-		System.out.println("Best combination found: ");
+//		System.out.println("Best combination found: ");
 //		for (Rel r: newmapvals.keySet()) {
-//			for (int nextgimn: newmapvals.get(r))
-//				System.out.println(r.toString() + ": " + nextgimn);
-////				System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst());
+//			int[] vals = newmapvals.get(r);
+//			for (int i =0; i<vals.length;i++)
+//				System.out.println(r.toString() + " " + i + " " + vals[i]);
 //		}
-		for (Rel r: newmapvals.keySet()) {
-			int[] vals = newmapvals.get(r);
-			for (int i =0; i<vals.length;i++)
-				System.out.println(r.toString() + " " + i + " " + vals[i]);
+
+
+		if (gnnPy != null) {
+			gnnPy.savePickleHetero(xDict, edgeDict);
 		}
 
         if (this.gnnIntegration)
-            this.gnnPy.closeInterpreter();
+			this.gnnPy.closeInterpreter();
+
         this.isSampling = false;
 
         /**

@@ -1,4 +1,4 @@
-package Experiments;
+package Experiments.Misc;
 
 import RBNinference.MapVals;
 import RBNinference.SampleProbs;
