@@ -81,7 +81,7 @@ public class MyRandom {
 	int nextdraw;
 	Integer drawnint;
 	for (int i=0;i<maxindex;i++)
-	    intUrn.add(new Integer(i));
+	    intUrn.add(Integer.valueOf(i));
 	for (int i=0;i<resultlength;i++){
 	    nextdraw = randomInteger(intUrn.size()-1);
 	    drawnint = (Integer)intUrn.remove(nextdraw);

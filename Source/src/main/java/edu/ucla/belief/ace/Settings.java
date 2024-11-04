@@ -66,7 +66,7 @@ public class Settings
 		},
 		aceCountPartitions{
 			public Object get( Settings settings ){
-				return new Integer( settings.getCountPartitions() );
+				return Integer.valueOf( settings.getCountPartitions() );
 			}
 
 			protected void setHook( Settings settings, CharSequence value ){
@@ -79,7 +79,7 @@ public class Settings
 		},
 		aceTimeoutCompileMinutes{
 			public Object get( Settings settings ){
-				return new Long( settings.getTimeoutCompileMinutes() );
+				return Long.valueOf( settings.getTimeoutCompileMinutes() );
 			}
 
 			protected void setHook( Settings settings, CharSequence value ){

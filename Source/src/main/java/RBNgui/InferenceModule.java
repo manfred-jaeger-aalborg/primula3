@@ -2731,7 +2731,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 					mcmct.setVar(varsasstring,i);
 				}
 				sampleSize.setText(""+((SampleProbs)o).getSize());
-				Double dweight = new Double(((SampleProbs)o).getWeight());
+				Double dweight = Double.valueOf(((SampleProbs)o).getWeight());
 				weight.setText(""+ myio.StringOps.doubleConverter(dweight.toString()));
 				}
 		}

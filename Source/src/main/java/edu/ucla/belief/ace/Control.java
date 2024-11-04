@@ -377,7 +377,7 @@ public class Control implements Settings.ACESettingsListener
 	}
 
 	public void stop(){
-		myThreadGroup.stop();
+		myThreadGroup.interrupt();
 	}
 
 	/** @since 20060728 */

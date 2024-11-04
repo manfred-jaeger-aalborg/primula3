@@ -391,7 +391,7 @@ public class SettingsSampling extends JFrame implements ActionListener, ItemList
 		Object source = e.getSource();	
 		if( source == textcptparents ){
 			try{
-				Integer tempint = new Integer(textcptparents.getText());
+				Integer tempint = Integer.parseInt(textcptparents.getText());
 				evidence.setCPTParents(tempint.intValue());  
 			}
 			catch(NumberFormatException exception){
@@ -399,7 +399,7 @@ public class SettingsSampling extends JFrame implements ActionListener, ItemList
 		}
 		else if( source == textnumsubsamples_minmax ){
 			try{
-				Integer tempint = new Integer(textnumsubsamples_minmax.getText());
+				Integer tempint = Integer.parseInt(textnumsubsamples_minmax.getText());
 				evidence.setNumSubsamples_minmax(tempint.intValue());  
 			}
 			catch(NumberFormatException exception){
@@ -407,7 +407,7 @@ public class SettingsSampling extends JFrame implements ActionListener, ItemList
 		}
 		else if( source == textnumsubsamples_adapt ){
 			try{
-				Integer tempint = new Integer(textnumsubsamples_adapt.getText());
+				Integer tempint = Integer.parseInt(textnumsubsamples_adapt.getText());
 				evidence.setNumSubsamples_adapt(tempint.intValue());  
 			}
 			catch(NumberFormatException exception){

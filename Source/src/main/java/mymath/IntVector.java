@@ -11,13 +11,13 @@ public class IntVector{
     }
 
     public void add(int i){
-	Integer ii = new Integer(i);
+	Integer ii = Integer.valueOf(i);
 	vec.add(ii);
     }
 
     public void add(int k,int i){
 	// add at position k
-	Integer ii = new Integer(i);
+	Integer ii = Integer.valueOf(i);
 	vec.add(k,ii);
     }   
     
@@ -26,7 +26,7 @@ public class IntVector{
     // if vec is sorted, then this insertion will 
     // maintain the order
     public void addSorted(int i){
-	Integer ii = new Integer(i);
+	Integer ii = Integer.valueOf(i);
 	int k;
 	if (vec.size()==0) vec.add(ii);
 	else{
@@ -68,7 +68,7 @@ public class IntVector{
 
 
     public int set(int ind, int i){
-	Integer ii = new Integer(i);
+	Integer ii = Integer.valueOf(i);
 	Integer old = (Integer)vec.set(ind, ii);
 	return old.intValue();
     } 

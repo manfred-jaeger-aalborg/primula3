@@ -35,14 +35,14 @@ public class DoubleVector{
 
 
     public void add(double i){
-	Double ii = new Double(i);
+	Double ii = Double.valueOf(i);
 	vec.add(ii);
     }
 
     // if vec is sorted, then this insertion will 
     // maintain the order
     public void addSorted(double i){
-	Double ii = new Double(i);
+	Double ii = Double.valueOf(i);
 	int k;
 	if (vec.size()==0) vec.add(ii);
 	else{
@@ -82,7 +82,7 @@ public class DoubleVector{
     }
 
     public double set(int ind, double d){
-	Double dd = new Double(d);
+	Double dd = Double.valueOf(d);
 	Double old = (Double)vec.set(ind, dd);
 	return old.doubleValue();
     } 
