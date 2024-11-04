@@ -1256,7 +1256,7 @@ public double mapInference(GGThread mythread)
 //		score = mapSearch(mythread, maxind_as_ts(), 3);
 //		score = mapSearchSimple(mythread, maxind_as_ts(), 10, 1000);
 //		score = flipAll(mythread, maxind_as_ts(), 2);
-		score = greedySearch(mythread, maxind_as_ts(), 100, 2, 1);
+		score = greedySearch(mythread, maxind_as_ts(), 3000, 2, 1);
 		if (score <= 1) {
 			terminate = true;
 			System.out.println("terminate");

@@ -26,52 +26,52 @@ def set_model(model_class, weights_path, **kwargs):
 
 # Define a dictionary to store model information with IDs
 models_info = {
-    "GCNtexas0": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_texas?0.pt",
+    "GCNtexas0": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_texas_0.pt",
         {
             "nfeat":1703, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
         }
     ),
-    "GCNtexas1": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_texas?1.pt",
+    "GCNtexas1": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_texas_1.pt",
         {
             "nfeat":1703, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
         }
     ),
-    "GCNtexas2": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_texas?2.pt",
+    "GCNtexas2": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_texas_2.pt",
         {
             "nfeat":1703, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
         }
     ),
-    "GCNtexas3": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_texas?3.pt",
+    "GCNtexas3": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_texas_3.pt",
         {
             "nfeat":1703, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
         }
     ),
-    "GCNtexas4": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_texas?4.pt",
+    "GCNtexas4": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_texas_4.pt",
         {
             "nfeat":1703, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
         }
     ),
-    "GCNtexas5": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_texas?5.pt",
+    "GCNtexas5": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_texas_5.pt",
         {
             "nfeat":1703, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
         }
     ),
-    "GCNtexas6": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_texas?6.pt",
+    "GCNtexas6": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_texas_6.pt",
         {
             "nfeat":1703, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
         }
     ),
-    "GCNtexas7": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_texas?7.pt",
+    "GCNtexas7": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_texas_7.pt",
         {
             "nfeat":1703, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
         }
     ),
-    "GCNtexas8": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_texas?8.pt",
+    "GCNtexas8": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_texas_8.pt",
         {
             "nfeat":1703, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
         }
     ),
-    "GCNtexas9": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_texas?9.pt",
+    "GCNtexas9": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_texas_9.pt",
         {
             "nfeat":1703, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
         }

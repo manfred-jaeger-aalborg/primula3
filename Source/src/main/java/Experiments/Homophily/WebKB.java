@@ -43,6 +43,8 @@ public class WebKB {
     }
 
     public static void main(String[] args) {
+        System.setProperty("java.awt.headless", "false");
+
         ArrayList<Double> accs = new ArrayList<>();
         Primula primula = new Primula();
         for (int ij = 0; ij < 10; ij++) {
@@ -69,7 +71,7 @@ public class WebKB {
             primula.loadSparseRelFile(srsfile);
 
             // create rbn
-            int num_attr = 932;
+            int num_attr = 1703;
             Rel[] attrs_rels = new Rel[num_attr];
             for (int i = 0; i < num_attr; i++) {
                 attrs_rels[i] = new BoolRel("attr" + i, 1);
@@ -253,5 +255,7 @@ public class WebKB {
             mean += accs.get(i);
         }
         System.out.println(mean/accs.size());
+
+        System.exit(0);
     }
 }
