@@ -720,140 +720,141 @@ public class LearnThread extends GGThread {
 		else 
 			result[2] = new double[0];
 
-
-		Object[] lg;
-		Object grad;
-		OneStrucData osd;
+		// COMMENTED ALL FOR COMPILATION ERRORS TODO: FIX
+		throw new UnsupportedOperationException("Commented for compilation purposes, Raf");
+		// Object[] lg;
+		// Object grad;
+		// OneStrucData osd;
 		
-		for (int inputcaseno=0; inputcaseno<data.size(); inputcaseno++){
-			RelDataForOneInput rdoi = data.caseAt(inputcaseno);
-			RelStruc A = rdoi.inputDomain();
-			for (int observcaseno=0; observcaseno<rdoi.numObservations(); observcaseno++){
-				osd = rdoi.oneStrucDataAt(observcaseno);
+		// for (int inputcaseno=0; inputcaseno<data.size(); inputcaseno++){
+		// 	RelDataForOneInput rdoi = data.caseAt(inputcaseno);
+		// 	RelStruc A = rdoi.inputDomain();
+		// 	for (int observcaseno=0; observcaseno<rdoi.numObservations(); observcaseno++){
+		// 		osd = rdoi.oneStrucDataAt(observcaseno);
 
-				Hashtable<String,Object[]>  evaluated = null;
-				if (myLearnModule.getUseMemoize())
-					evaluated = new Hashtable<String,Object[]>();
-				for (int i=0; i<rbn.NumPFs(); i++){
-					CPModel nextcpm = rbn.cpmod_prelements_At(i);
-					String[] vars = rbn.arguments_prels_At(i);
-					Rel nextrel = rbn.relAt(i);
-					for (int ti = 0; ti <= 1 ; ti++) {
-						Vector<int[]> inrel;
-						if (ti == 0)
-							inrel = osd.allFalse(nextrel);
-						else
-							inrel = osd.allTrue(nextrel);
-						for (int[] tuple: inrel) {
-							long beforeeval = System.currentTimeMillis();
-							 lg = nextcpm.evaluate(A, 
-									osd, 
-									vars, 
-									tuple, 
-									true, 
-									true, 
-									null, 
-									true, 
-									evaluated, 
-									parameters,
-									myLearnModule.getType_of_gradient(),
-									lossonly,
-									profiler);
-							//System.out.print(".");
-							if (profiler != null)
-								profiler.addTime(Profiler.TIME_PFEVALUATE, System.currentTimeMillis()-beforeeval); 
-							double pfval = (double)lg[0];
-							grad = lg[1];
+		// 		Hashtable<String,Object[]>  evaluated = null;
+		// 		if (myLearnModule.getUseMemoize())
+		// 			evaluated = new Hashtable<String,Object[]>();
+		// 		for (int i=0; i<rbn.NumPFs(); i++){
+		// 			CPModel nextcpm = rbn.cpmod_prelements_At(i);
+		// 			String[] vars = rbn.arguments_prels_At(i);
+		// 			Rel nextrel = rbn.relAt(i);
+		// 			for (int ti = 0; ti <= 1 ; ti++) {
+		// 				Vector<int[]> inrel;
+		// 				if (ti == 0)
+		// 					inrel = osd.allFalse(nextrel);
+		// 				else
+		// 					inrel = osd.allTrue(nextrel);
+		// 				for (int[] tuple: inrel) {
+		// 					long beforeeval = System.currentTimeMillis();
+		// 					 lg = nextcpm.evaluate(A, 
+		// 							osd, 
+		// 							vars, 
+		// 							tuple, 
+		// 							true, 
+		// 							true, 
+		// 							null, 
+		// 							true, 
+		// 							evaluated, 
+		// 							parameters,
+		// 							myLearnModule.getType_of_gradient(),
+		// 							lossonly,
+		// 							profiler);
+		// 					//System.out.print(".");
+		// 					if (profiler != null)
+		// 						profiler.addTime(Profiler.TIME_PFEVALUATE, System.currentTimeMillis()-beforeeval); 
+		// 					double pfval = (double)lg[0];
+		// 					grad = lg[1];
 
-							if (pfval == 1 & ti == 0)
-								System.out.println("Got prob 1 for false atom");
-							if (pfval == 0 & ti == 1)
-								System.out.println("Got prob 0 for true atom");
-							/* The confusion matrix: */
-							if (pfval >=0.5) {
-								if (ti ==0)
-									result[1][1]+=1;  //FP
-								else
-									result[1][0]+=1;  //TP
-							}
-							else {
-								if (ti ==0)
-									result[1][3]+=1;  //TN
-								else
-									result[1][2]+=1;  //FN
-							}
+		// 					if (pfval == 1 & ti == 0)
+		// 						System.out.println("Got prob 1 for false atom");
+		// 					if (pfval == 0 & ti == 1)
+		// 						System.out.println("Got prob 0 for true atom");
+		// 					/* The confusion matrix: */
+		// 					if (pfval >=0.5) {
+		// 						if (ti ==0)
+		// 							result[1][1]+=1;  //FP
+		// 						else
+		// 							result[1][0]+=1;  //TP
+		// 					}
+		// 					else {
+		// 						if (ti ==0)
+		// 							result[1][3]+=1;  //TN
+		// 						else
+		// 							result[1][2]+=1;  //FN
+		// 					}
 
-							/* Loss: */
-							switch (lossfunc) {
-							case LearnModule.UseLogLik:
-								if (ti==0) 
-									result[0][0]+=Math.log(1-pfval);
-								else 
-									result[0][0]+=Math.log(pfval);
-								break;
-							case LearnModule.UseSquaredError: // Note: objective is maximize negative sum of squared errors
-								if (ti==0) 
-									result[0][0]-=Math.pow(pfval,2);
-								else 
-									result[0][0]-=Math.pow(1-pfval,2);
-								break;
-							}
+		// 					/* Loss: */
+		// 					switch (lossfunc) {
+		// 					case LearnModule.UseLogLik:
+		// 						if (ti==0) 
+		// 							result[0][0]+=Math.log(1-pfval);
+		// 						else 
+		// 							result[0][0]+=Math.log(pfval);
+		// 						break;
+		// 					case LearnModule.UseSquaredError: // Note: objective is maximize negative sum of squared errors
+		// 						if (ti==0) 
+		// 							result[0][0]-=Math.pow(pfval,2);
+		// 						else 
+		// 							result[0][0]-=Math.pow(1-pfval,2);
+		// 						break;
+		// 					}
 
 
-							if (!lossonly) {
-								double gp;
-								if (myLearnModule.getType_of_gradient()== ProbForm.RETURN_ARRAY) {
-									for (int ii=0; ii<parameters.size(); ii++) {
-										gp = ((double[])grad)[ii];
-										switch (lossfunc) {
-										case LearnModule.UseLogLik:
-											if (ti==0) 
-												result[2][ii]-=gp/(1-pfval);
+		// 					if (!lossonly) {
+		// 						double gp;
+		// 						if (myLearnModule.getType_of_gradient()== ProbForm.RETURN_ARRAY) {
+		// 							for (int ii=0; ii<parameters.size(); ii++) {
+		// 								gp = ((double[])grad)[ii];
+		// 								switch (lossfunc) {
+		// 								case LearnModule.UseLogLik:
+		// 									if (ti==0) 
+		// 										result[2][ii]-=gp/(1-pfval);
 
-											else 
-												result[2][ii]+=gp/pfval;
-											break;
-										case LearnModule.UseSquaredError: 
-											if (ti==0) 
-												result[2][ii]-=pfval*gp;
-											else 
-												result[2][ii]+=gp*(1-pfval);
-											break;
-										case LearnModule.UseLik:
-											System.out.println("LearnThread.getLossAndGradient not implemented yet for LearnModule.UseLik");
-										}
-									}
-								}
-								else { //ProbForm.RETURN_SPARSE
-									for (String par: ((Hashtable<String,Double>)grad).keySet()){
-										gp = ((Hashtable<String,Double>)grad).get(par);
-										int ii = parameters.get(par);
-										switch (lossfunc) {
-										case LearnModule.UseLogLik:
-											if (ti==0) 
-												result[2][ii]-=gp/(1-pfval);
-											else 
-												result[2][ii]+=gp/pfval;
-											break;
-										case LearnModule.UseSquaredError: 
-											if (ti==0) 
-												result[2][ii]-=pfval*gp;
-											else 
-												result[2][ii]+=gp*(1-pfval);
-											break;
-										case LearnModule.UseLik:
-											System.out.println("LearnThread.getLossAndGradient not implemented yet for LearnModule.UseLik");
-										} //switch (lossfunc) {
-									} //for par: 
-								} //ProbForm.RETURN_SPARSE
-							} // if (!lossonly)
-						} // for (int[] tuple: inrel) {
-					} //for (int ti = 0; ti <= 1 ; ti++) {
-				} // for (int i=0; i<rbn.NumPFs(); i++){
-			} // for (int observcaseno=0; observcaseno<rdoi.numObservations(); observcaseno++){
-		} // for (int inputcaseno=0; inputcaseno<data.size(); inputcaseno++){
+		// 									else 
+		// 										result[2][ii]+=gp/pfval;
+		// 									break;
+		// 								case LearnModule.UseSquaredError: 
+		// 									if (ti==0) 
+		// 										result[2][ii]-=pfval*gp;
+		// 									else 
+		// 										result[2][ii]+=gp*(1-pfval);
+		// 									break;
+		// 								case LearnModule.UseLik:
+		// 									System.out.println("LearnThread.getLossAndGradient not implemented yet for LearnModule.UseLik");
+		// 								}
+		// 							}
+		// 						}
+		// 						else { //ProbForm.RETURN_SPARSE
+		// 							for (String par: ((Hashtable<String,Double>)grad).keySet()){
+		// 								gp = ((Hashtable<String,Double>)grad).get(par);
+		// 								int ii = parameters.get(par);
+		// 								switch (lossfunc) {
+		// 								case LearnModule.UseLogLik:
+		// 									if (ti==0) 
+		// 										result[2][ii]-=gp/(1-pfval);
+		// 									else 
+		// 										result[2][ii]+=gp/pfval;
+		// 									break;
+		// 								case LearnModule.UseSquaredError: 
+		// 									if (ti==0) 
+		// 										result[2][ii]-=pfval*gp;
+		// 									else 
+		// 										result[2][ii]+=gp*(1-pfval);
+		// 									break;
+		// 								case LearnModule.UseLik:
+		// 									System.out.println("LearnThread.getLossAndGradient not implemented yet for LearnModule.UseLik");
+		// 								} //switch (lossfunc) {
+		// 							} //for par: 
+		// 						} //ProbForm.RETURN_SPARSE
+		// 					} // if (!lossonly)
+		// 				} // for (int[] tuple: inrel) {
+		// 			} //for (int ti = 0; ti <= 1 ; ti++) {
+		// 		} // for (int i=0; i<rbn.NumPFs(); i++){
+		// 	} // for (int observcaseno=0; observcaseno<rdoi.numObservations(); observcaseno++){
+		// } // for (int inputcaseno=0; inputcaseno<data.size(); inputcaseno++){
 	
-		return result;
+		// return result;
 	}
  		
 	private double[] linesearch(

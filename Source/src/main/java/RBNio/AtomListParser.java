@@ -47,7 +47,8 @@ AtomListReader myreader = mr;
         boolean positive=true;
         AtomListReader myreader = mr;
         int arity = 0;
-        Rel newrel = new Rel();
+        // Rel newrel = new Rel(); 
+        Rel newrel; // REMOVED NEW TO COMPILER PURPOSES, RAF
         String relname ="";
         Vector<String> tupleargs = new Vector<String>();
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -133,8 +134,8 @@ AtomListReader myreader = mr;
                 switch (parseno){
                 case 1:
                         if (arity==1){
-                                newrel = new Rel(relname,arity);
-                                myreader.addCandidateType(newrel);
+                          newrel = new BoolRel(relname, arity); // CHANGED TO BOOLREL FOR COMPILER PURPOSES, RAF
+                          myreader.addCandidateType(newrel);
                         }
                         break;
                 case 2:

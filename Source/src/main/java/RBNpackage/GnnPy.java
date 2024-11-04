@@ -1114,49 +1114,49 @@ public class GnnPy {
         return bool_nodes;
     }
 
-    public void updateTensorMatrix(double[][] tensorMatrix, double value, ArrayList<Rel> attributes, Map<Rel, int[][]> nodes_dict) {
-        int current_col = 0;
-        int idxFeat = 0;
-        for (Rel r : attributes) {
-            if (r instanceof CatRel) {
+    // public void updateTensorMatrix(double[][] tensorMatrix, double value, ArrayList<Rel> attributes, Map<Rel, int[][]> nodes_dict) {
+    //     int current_col = 0;
+    //     int idxFeat = 0;
+    //     for (Rel r : attributes) {
+    //         if (r instanceof CatRel) {
 
-                int minValue = nodes_dict.get(r)[0][0]; // Big assumption! The first element should be also the smallest!
-                tensorMatrix[key[0] - minValue][relData.values.get(key) + current_col] = 1;
-                current_col += r.numvals();
-                idxFeat += current_col;
+    //             int minValue = nodes_dict.get(r)[0][0]; // Big assumption! The first element should be also the smallest!
+    //             tensorMatrix[key[0] - minValue][relData.values.get(key) + current_col] = 1;
+    //             current_col += r.numvals();
+    //             idxFeat += current_col;
 
 
-            } else {
-                Vector<int[]> featureTrueData = data.allTrue(r);
-                Vector<Vector<int[]>> allTrueData = new Vector<>();
-                allTrueData.add(featureTrueData);
-                if (r.valtype() == Rel.NUMERIC) {
-                    OneNumRelData num_data = (OneNumRelData) data.find(r);
-                    int minValue = -1;
-                    Type typ = num_data.rel.getTypes()[0];
-                    for (OneBoolRelData ob: data.allonebooldata) {
-                        if (ob.rel.name().equals(typ.getName()))
-                            minValue = ob.allTrue().first()[0];
-                    }
-                    for (Vector<int[]> feature : allTrueData) {
-                        for (int[] node : feature) {
-                            tensorMatrix[node[0] - minValue][idxFeat] = num_data.valueOf(node);
-                        }
-                        idxFeat++;
-                    }
-                } else {
-                    // change the true value
-                    // TODO need to do the same as NUMERIC -> subtract the min value
-                    for (Vector<int[]> feature : allTrueData) {
-                        for (int[] node : feature) {
-                            tensorMatrix[node[0]][idxFeat] = 1;
-                        }
-                        idxFeat++;
-                    }
-                }
-            }
-        }
-    }
+    //         } else {
+    //             Vector<int[]> featureTrueData = data.allTrue(r);
+    //             Vector<Vector<int[]>> allTrueData = new Vector<>();
+    //             allTrueData.add(featureTrueData);
+    //             if (r.valtype() == Rel.NUMERIC) {
+    //                 OneNumRelData num_data = (OneNumRelData) data.find(r);
+    //                 int minValue = -1;
+    //                 Type typ = num_data.rel.getTypes()[0];
+    //                 for (OneBoolRelData ob: data.allonebooldata) {
+    //                     if (ob.rel.name().equals(typ.getName()))
+    //                         minValue = ob.allTrue().first()[0];
+    //                 }
+    //                 for (Vector<int[]> feature : allTrueData) {
+    //                     for (int[] node : feature) {
+    //                         tensorMatrix[node[0] - minValue][idxFeat] = num_data.valueOf(node);
+    //                     }
+    //                     idxFeat++;
+    //                 }
+    //             } else {
+    //                 // change the true value
+    //                 // TODO need to do the same as NUMERIC -> subtract the min value
+    //                 for (Vector<int[]> feature : allTrueData) {
+    //                     for (int[] node : feature) {
+    //                         tensorMatrix[node[0]][idxFeat] = 1;
+    //                     }
+    //                     idxFeat++;
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 
     // initialize the input matrix with the values of the rels that are predefines otherwise set to 0
     // in sampledRel there are also the inst values!

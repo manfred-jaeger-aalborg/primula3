@@ -2097,8 +2097,13 @@ public class BayesConstructor extends java.lang.Object {
 				currentnode = (BNNode) it.next();
 
 				if (currentnode instanceof DummyBNNode){
-					parent = (BNNode)currentnode.parents.getFirst();
-					child = (BNNode)currentnode.children.getFirst();
+					// parent = (BNNode)currentnode.parents.getFirst();
+					// child = (BNNode)currentnode.children.getFirst();
+					// THIS WAS COMMENTED FOT COMPLILATION ERRRORS: TODO FIX
+					parent = currentnode.parents.get(0);
+					child = currentnode.children.get(0);
+					// ------------------------------------------------
+
 					parent.children.remove(currentnode);
 					pos = child.parents.indexOf(currentnode);
 					child.parents.remove(pos);

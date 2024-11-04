@@ -50,7 +50,6 @@ public class FileIO extends java.lang.Object {
 
 		}
 		catch (FileNotFoundException e){System.out.println(e);}
-		catch (IOException e){System.out.println(e);}
 
 		return stream;
 	}

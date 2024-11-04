@@ -100,59 +100,60 @@ public class BayesNetIntNeticaDnet implements BayesNetInt {
       * placement) 
       */ 
     public void addNode(SimpleBNNode node,int[] coords, int truthval){
-        ListIterator li;
-        String internalname = makeDnetName(node.name);
+        throw new UnsupportedOperationException("Commented for compilation purposes, Raf");
+        // ListIterator li;
+        // String internalname = makeDnetName(node.name);
         
-        try{
-            bufwr.write("node " + internalname + "{" + '\n');
-	    if (node instanceof SimpleBNGroundAtomNode)
-		bufwr.write('\t' + "title = \"" + node.name + "\";" + '\n');
-	    else
-		bufwr.write('\t' + "title = \"" + "aux" + "\";" + '\n');
-            bufwr.write('\t' + "kind = NATURE;"+ '\n');    
-            bufwr.write('\t' + "discrete = TRUE;"+ '\n');    
-            bufwr.write('\t' + "states = (false,true);"+ '\n');  
-            if (truthval == 0){
-                bufwr.write('\t' + "evidence = false;"+ '\n');
-            }
-            if (truthval == 1){
-                bufwr.write('\t' + "evidence = true;"+ '\n');
-            }
-            bufwr.write('\t' + "parents = ("); 
-            if (node.parents.size()>0){
-                li = node.parents.listIterator();
-                while (li.hasNext()){
-                    bufwr.write(findDnetName(((BNNode)li.next()).name));
-                    if (li.hasNext()) bufwr.write(", ");
-                }
-            }
-            bufwr.write(");" +'\n' );
-            // The order of the cptentries in the Dnet format is as follows
-            // 
-            //  pa1  pa2 pa3  |  true false
-            //  ----------------------------
-            //  t    t    t   |   16(7)   15
-            //  t    t    f   |   14(6)   13
-            //  t    f    t   |   12(5)    11 
-            //  .    .    .   |   .     .
-            //  f    f    t   |   4(1)    3
-            //  f    f    f   |   2(0)    1
-            //
-            // Numbers in parenthesis are the indices of the parameters
-            // in the cptentries field of SimpleBNNode!
-            bufwr.write('\t' + "probs = " + '\n');
-            bufwr.write('\t');
-            writesubcpt(node.cptentries);
-            bufwr.write(";" + '\n');
-            bufwr.write('\t' + "visual V1{"+ '\n');  
-            bufwr.write('\t');
-            bufwr.write('\t' + "center = ("+coords[0] +", " + coords[1] +");"+ '\n');
-            bufwr.write('\t' + "};"+ '\n');  
+        // try{
+        //     bufwr.write("node " + internalname + "{" + '\n');
+	    // if (node instanceof SimpleBNGroundAtomNode)
+		// bufwr.write('\t' + "title = \"" + node.name + "\";" + '\n');
+	    // else
+		// bufwr.write('\t' + "title = \"" + "aux" + "\";" + '\n');
+        //     bufwr.write('\t' + "kind = NATURE;"+ '\n');    
+        //     bufwr.write('\t' + "discrete = TRUE;"+ '\n');    
+        //     bufwr.write('\t' + "states = (false,true);"+ '\n');  
+        //     if (truthval == 0){
+        //         bufwr.write('\t' + "evidence = false;"+ '\n');
+        //     }
+        //     if (truthval == 1){
+        //         bufwr.write('\t' + "evidence = true;"+ '\n');
+        //     }
+        //     bufwr.write('\t' + "parents = ("); 
+        //     if (node.parents.size()>0){
+        //         li = node.parents.listIterator();
+        //         while (li.hasNext()){
+        //             bufwr.write(findDnetName(((BNNode)li.next()).name));
+        //             if (li.hasNext()) bufwr.write(", ");
+        //         }
+        //     }
+        //     bufwr.write(");" +'\n' );
+        //     // The order of the cptentries in the Dnet format is as follows
+        //     // 
+        //     //  pa1  pa2 pa3  |  true false
+        //     //  ----------------------------
+        //     //  t    t    t   |   16(7)   15
+        //     //  t    t    f   |   14(6)   13
+        //     //  t    f    t   |   12(5)    11 
+        //     //  .    .    .   |   .     .
+        //     //  f    f    t   |   4(1)    3
+        //     //  f    f    f   |   2(0)    1
+        //     //
+        //     // Numbers in parenthesis are the indices of the parameters
+        //     // in the cptentries field of SimpleBNNode!
+        //     bufwr.write('\t' + "probs = " + '\n');
+        //     bufwr.write('\t');
+        //     writesubcpt(node.cptentries);
+        //     bufwr.write(";" + '\n');
+        //     bufwr.write('\t' + "visual V1{"+ '\n');  
+        //     bufwr.write('\t');
+        //     bufwr.write('\t' + "center = ("+coords[0] +", " + coords[1] +");"+ '\n');
+        //     bufwr.write('\t' + "};"+ '\n');  
             
-            bufwr.write("};" +'\n' );
-            bufwr.write('\n');
-        }
-        catch (IOException e) {System.out.println(e);}
+        //     bufwr.write("};" +'\n' );
+        //     bufwr.write('\n');
+        // }
+        // catch (IOException e) {System.out.println(e);}
     }
     
     private void writesubcpt(double[] subcpt){

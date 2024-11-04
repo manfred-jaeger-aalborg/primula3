@@ -4,7 +4,7 @@ import RBNExceptions.RBNCompatibilityException;
 import RBNLearning.Profiler;
 import RBNinference.PFNetworkNode;
 import RBNutilities.rbnutilities;
-import jdk.incubator.vector.VectorOperators;
+// import jdk.incubator.vector.VectorOperators;
 
 import java.util.Hashtable;
 import java.util.TreeSet;
