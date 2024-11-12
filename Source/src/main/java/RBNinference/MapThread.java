@@ -68,12 +68,7 @@ public class MapThread extends GGThread {
 			myLearnModule.setParameters(gg.parameters());
 			gg.setLearnModule(myLearnModule);
 		}
-		
-		//int[] lastmapvals=new int[gg.getMapVals().length];
-		/* Make sure initial values are not equal to result of
-		 * first iteration: */
-		//for (int i=0;i<lastmapvals.length;i++)
-		//	lastmapvals[i]=-1;
+
 		Hashtable<Rel,int[]> newmapvals = new Hashtable<>();
 
 		Map<String, double[][]> xDict = new HashMap<>();
@@ -84,24 +79,10 @@ public class MapThread extends GGThread {
 		double oldll=Double.NEGATIVE_INFINITY;
 		double newll=0;
 
-        /**
-         * SAVE LIKELIHOOD ON FILE
-         *
-         * File filell = new File("/Users/lz50rg/Desktop/ll3.txt");
-         * 		FileWriter fileWriter = null;
-         * 		try {
-         * 			fileWriter = new FileWriter(filell, true);
-         *                } catch (IOException e) {
-         * 			throw new RuntimeException(e);
-         *        }
-         * 		BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
-         */
-
 		while (running && ((maxrestarts == -1) || (restarts <= maxrestarts))){
 			try {
                 System.out.println("Current restart: " + restarts);
 				newll = gg.mapInference(this);
-				System.out.println(newll);
 				if (!Double.isNaN(newll)) {
 					if (newll>oldll) {
 						oldll = newll;
@@ -116,8 +97,6 @@ public class MapThread extends GGThread {
 							xDict = gnnPy.getCurrentXdict();
 							edgeDict = gnnPy.getCurrentEdgeDict();
 						}
-
-
 					}
 				} else {
 					System.out.println("MAP search aborted");
@@ -128,24 +107,12 @@ public class MapThread extends GGThread {
 				System.out.println(e);
 				System.out.println("Restart aborted");
 			}
-            /**
-             * catch (IOException e) {
-             * 		throw new RuntimeException(e);
-             * }
-             */
 			mapprobs.setRestarts(restarts);
 			mapprobs.notifyObservers();
 			restarts++;
 		}
 
-		System.out.println("Best likelihood found: " + String.valueOf(oldll));
-//		System.out.println("Best combination found: ");
-//		for (Rel r: newmapvals.keySet()) {
-//			int[] vals = newmapvals.get(r);
-//			for (int i =0; i<vals.length;i++)
-//				System.out.println(r.toString() + " " + i + " " + vals[i]);
-//		}
-
+		System.out.println("Best log-likelihood found: " + oldll);
 
 		if (gnnPy != null) {
 			gnnPy.savePickleHetero(xDict, edgeDict);
@@ -155,15 +122,6 @@ public class MapThread extends GGThread {
 			this.gnnPy.closeInterpreter();
 
         this.isSampling = false;
-
-        /**
-         try {
-         bufferedWriter.close();
-         fileWriter.close();
-         } catch (IOException e) {
-         throw new RuntimeException(e);
-         }*/
-
     }
 
 	public void setRunning(boolean r){

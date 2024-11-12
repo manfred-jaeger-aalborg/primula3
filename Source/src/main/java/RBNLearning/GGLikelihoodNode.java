@@ -234,7 +234,6 @@ public  class GGLikelihoodNode extends GGNode{
 		int childinst;
 		double childlik;
 
-		System.out.println("------------------------");
 		for (GGCPMNode nextchild: batchelements){
 			childval = nextchild.evaluate(sno);
 			childinst = nextchild.instval(sno); 
@@ -249,13 +248,13 @@ public  class GGLikelihoodNode extends GGNode{
 					childlik = 1- childval[0];
 			}
 
-			if (nextchild.getMyatom().equals("constr(0)")) {
-				System.out.println("constr(): " + childlik);
-			}
-
-			if (nextchild.getMyatom().equals("target(0)")) {
-				System.out.println("target(): " + childlik);
-			}
+//			if (nextchild.getMyatom().equals("constr(0)")) {
+//				System.out.println("constr(): " + childlik);
+//			}
+//
+//			if (nextchild.getMyatom().equals("target(0)")) {
+//				System.out.println("target(): " + childlik);
+//			}
 
 			//			ival = nextchild.instval();
 			//			switch (ival) {
@@ -294,7 +293,6 @@ public  class GGLikelihoodNode extends GGNode{
 			}
 
 		}
-		System.out.println("------------------------");
 
 		if (this.depends_on_sample && sno!=null) { 
 			this.is_evaluated_for_samples[sno] = true;

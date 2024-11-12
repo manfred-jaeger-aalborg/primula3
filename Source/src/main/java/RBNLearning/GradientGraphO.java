@@ -777,11 +777,7 @@ public class GradientGraphO extends GradientGraph{
 				resetValues(k*windowsize,true);
 
 				for (int i=0;i<sumindicators.size();i++){
-					coin = Math.random();
-					if (coin>0.5)
-						sumindicators.elementAt(i).setSampleVal(k*windowsize,1);
-					else
-						sumindicators.elementAt(i).setSampleVal(k*windowsize,0);
+					sumindicators.elementAt(i).setRandomSampleVal(k*windowsize);
 				}
 
 				llnode.evaluate(k*windowsize);
@@ -930,7 +926,7 @@ public void gibbsSample(Thread mythread){
 	public double greedySearch(GGThread mythread, TreeSet<GGAtomMaxNode> flipcandidates, int maxIterations, int tabuListSize, int neighborhoodSize) {
 		List<GGAtomMaxNode> candidateList = new ArrayList<>(flipcandidates);
 		List<GGAtomMaxNode> tabuList = new ArrayList<>();
-
+		showGraphInfo(10, null);
 		Random random = new Random();
 		double current_temp = 0.0;
 		double cooling_rate = 0.999;
@@ -951,11 +947,12 @@ public void gibbsSample(Thread mythread){
 				else
 					System.out.println("already selected!");
 			}
+			System.out.println(neighborhood.get(0).getMyatom());
 
 			// evaluate the score for nodes in the selected neighborhood
 			bestLocalScore = Double.NEGATIVE_INFINITY;
 			for (GGAtomMaxNode node : neighborhood) {
-				node.setScore();
+				node.setScore(mythread);
 				double score = node.getScore();
 				if (score > bestLocalScore) {
 					bestLocalScore = score;
@@ -964,7 +961,7 @@ public void gibbsSample(Thread mythread){
 			}
 
 			if (bestNode != null && bestLocalScore > 0) {
-				System.out.println("Flipping node: " + bestNode.getMyatom() + " with score: " + bestLocalScore);
+				System.out.println("Flipping node: " + bestNode.getMyatom() + " from " + bestNode.getCurrentInst() + " to " + bestNode.getHighvalue() + " with score: " + bestLocalScore);
 				bestNode.setCurrentInst(bestNode.getHighvalue());
 				bestNode.reEvaluateUpstream(null);
 				tabuList.add(bestNode);
@@ -987,10 +984,14 @@ public void gibbsSample(Thread mythread){
 			for (int j = 1; j < windowsize; j++) {
 				gibbsSample(mythread);
 			}
+			if (myggoptions.ggverbose()) {
+				System.out.println("New sampled values:");
+				showSumAtomsVals();
+			}
 			current_temp *= cooling_rate;
 		}
 
-		System.out.println("Final likelihood: " + currentLikelihood()[0] + " " + currentLikelihood()[1]);
+//		System.out.println("Final likelihood: " + currentLikelihood()[0] + " " + currentLikelihood()[1]);
 		return 0;
 	}
 
@@ -1000,7 +1001,7 @@ public void gibbsSample(Thread mythread){
 			for (int iter = 0; iter < candidateList.size(); iter++) {
 				System.out.println("Iteration: " + iter);
 				GGAtomMaxNode node = candidateList.get(iter);
-				node.setScore();
+				node.setScore(mythread);
 				if (node.getScore() > 0) {
 					System.out.println("Flipping node: " + node.getMyatom() + " with score: " + node.getScore());
 					node.setCurrentInst(node.getHighvalue());
@@ -1031,7 +1032,7 @@ public void gibbsSample(Thread mythread){
 		// select n random and score them
 		for (int i = 0; i < scored_node; i++) {
 			GGAtomMaxNode mxnode = candidateList.get(random.nextInt(totalCandidates));
-			mxnode.setScore();
+			mxnode.setScore(mythread);
 			selectedNodes.add(mxnode);
 		}
 		GGAtomMaxNode bestNode = selectedNodes.poll();
@@ -1067,7 +1068,7 @@ public double mapSearch(GGThread mythread,TreeSet<GGAtomMaxNode> flipcandidates,
 
 	for (GGAtomMaxNode mxnode: flipcandidates) {
 		long startTime = System.currentTimeMillis();
-		mxnode.setScore();
+		mxnode.setScore(mythread);
 		long estimatedTime = System.currentTimeMillis() - startTime;
 		System.out.println(mxnode.getMyatom() + " " + mxnode.getScore() + " in " + estimatedTime);
 		scored_atoms.add(mxnode);
@@ -1122,7 +1123,7 @@ public double mapSearch(GGThread mythread,TreeSet<GGAtomMaxNode> flipcandidates,
 			}
 			for (GGAtomMaxNode mx : update_us) {
 				scored_atoms.remove(mx);
-				mx.setScore();
+				mx.setScore(mythread);
 				scored_atoms.add(mx);
 			}
 			if (myggoptions.ggverbose()) {
@@ -1235,7 +1236,6 @@ public double mapInference(GGThread mythread)
 		return Double.NaN;
 	}
 	//		this.showAllNodes(6, myPrimula.getRels());
-
 	if (myggoptions.ggverbose()) {
 		System.out.println("Initial max values:");
 		showMaxAtomsVals();
@@ -1253,10 +1253,10 @@ public double mapInference(GGThread mythread)
 		evaluateLikelihoodAndPartDerivs(true);
 		if (debugPrint)
 			System.out.println("likelihood= " + SmallDouble.toStandardDouble(llnode.likelihood()) + "   " + StringOps.arrayToString(llnode.likelihood(), "(", ")"));
-//		score = mapSearch(mythread, maxind_as_ts(), 3);
+		score = mapSearch(mythread, maxind_as_ts(), 3);
 //		score = mapSearchSimple(mythread, maxind_as_ts(), 10, 1000);
 //		score = flipAll(mythread, maxind_as_ts(), 2);
-		score = greedySearch(mythread, maxind_as_ts(), 3000, 2, 1);
+//		score = greedySearch(mythread, maxind_as_ts(), 2000, 1, 1);
 		if (score <= 1) {
 			terminate = true;
 			System.out.println("terminate");
@@ -1265,6 +1265,19 @@ public double mapInference(GGThread mythread)
 	}
 
 	evaluateLikelihoodAndPartDerivs(true);
+	if (debugPrint)
+		System.out.println("final likelihood= " + SmallDouble.toStandardDouble(llnode.likelihood()) + "   " + StringOps.arrayToString(llnode.likelihood(), "(", ")"));
+
+	for (GGCPMNode nextchild: this.llnode.children) {
+		if (nextchild.getMyatom().equals("constr(0)")) {
+			for (int i = 0; i < numchains; i++) {
+				for (int j = 0; j < windowsize; j++) {
+					System.out.print(nextchild.values_for_samples[i+j][0] + "\t");
+				}
+				System.out.println();
+			}
+		}
+	}
 
 	//showParameterValues("Final Parameters: ");
 

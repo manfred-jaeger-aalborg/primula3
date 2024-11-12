@@ -134,7 +134,7 @@ private int highvalue;
 //	}
 //	
 
-	public void setScore() {
+	public void setScore(Thread mythread) {
 		if (this.flipscores == null) { // First time we do MAP inference on this node
 			flipscores = new double[(int)this.myatom().rel().numvals()];
 		}
@@ -151,6 +151,16 @@ private int highvalue;
 			else {
 				this.setCurrentInst(v);
 
+				// sample again the nodes after flipping. TODO: a more clever sampling could be implemented (sample only the parents of the flipped nodes)
+				for (int j = 1; j < thisgg.windowsize; j++) {
+					thisgg.gibbsSample(mythread);
+				}
+				if (thisgg.sumindicators.size() > 0) {
+					System.out.println("New sampled values score:");
+					thisgg.showSumAtomsVals();
+				}
+
+
 				// trick for faster computation, we create only once the input for all the parents.
 				// The parents will check only if the dictionaries are empty or not
 				// if empty, create the input. Otherwise, keep the same input.
@@ -163,6 +173,7 @@ private int highvalue;
 						}
 					}
 				}
+
 				reEvaluateUpstream(null);
 				thisgg.llnode.evaluate(null,allugas);
 				newll = thisgg.llnode.loglikelihood();

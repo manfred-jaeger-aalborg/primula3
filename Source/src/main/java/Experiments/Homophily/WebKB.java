@@ -51,7 +51,7 @@ public class WebKB {
             primula.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
             primula.setScriptPath("/Users/lz50rg/Dev/primula-workspace/primula3/Source/python/");
             primula.setScriptName("load_gnn");
-            String datasetName = "texas";
+            String datasetName = "squirrel";
             String modelName = "GCN";
             String index = Integer.toString(ij);
             Boolean loc_h = false;
@@ -71,7 +71,7 @@ public class WebKB {
             primula.loadSparseRelFile(srsfile);
 
             // create rbn
-            int num_attr = 1703;
+            int num_attr = 2089;
             Rel[] attrs_rels = new Rel[num_attr];
             for (int i = 0; i < num_attr; i++) {
                 attrs_rels[i] = new BoolRel("attr" + i, 1);
@@ -113,9 +113,9 @@ public class WebKB {
 //            manual_rbn.insertPRel(preledef[0], 1);
                 manual_rbn.insertPRel(preledef[1], 2);
             } else {
-                manual_rbn = new RBN(2, 0);
+                manual_rbn = new RBN(1, 0);
                 manual_rbn.insertPRel(gnn_rbn, 0);
-                manual_rbn.insertPRel(preledef[0], 1);
+//                manual_rbn.insertPRel(preledef[0], 1);
             }
 
 

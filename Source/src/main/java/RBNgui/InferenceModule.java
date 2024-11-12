@@ -784,8 +784,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		for (int i=0;i<samplelogmode.length;i++)
 			samplelogmode[i]=false;
 
-		numchains = 3;
-		windowsize = 4;
+		numchains = 2;
+		windowsize = 7;
 		numrestarts = 1;
 		
 		readElementNames();
