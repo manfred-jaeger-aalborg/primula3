@@ -926,7 +926,7 @@ public void gibbsSample(Thread mythread){
 	public double greedySearch(GGThread mythread, TreeSet<GGAtomMaxNode> flipcandidates, int maxIterations, int tabuListSize, int neighborhoodSize) {
 		List<GGAtomMaxNode> candidateList = new ArrayList<>(flipcandidates);
 		List<GGAtomMaxNode> tabuList = new ArrayList<>();
-		showGraphInfo(10, null);
+//		showGraphInfo(10, null);
 		Random random = new Random();
 		double current_temp = 0.0;
 		double cooling_rate = 0.999;
@@ -981,7 +981,7 @@ public void gibbsSample(Thread mythread){
 			if (tabuList.size() > tabuListSize)
 				tabuList.remove(0);  // maintain the size of the tabu list
 
-			for (int j = 1; j < windowsize; j++) {
+			for (int j = 0; j < windowsize; j++) {
 				gibbsSample(mythread);
 			}
 			if (myggoptions.ggverbose()) {
@@ -994,73 +994,6 @@ public void gibbsSample(Thread mythread){
 //		System.out.println("Final likelihood: " + currentLikelihood()[0] + " " + currentLikelihood()[1]);
 		return 0;
 	}
-
-	public double flipAll(GGThread mythread, TreeSet<GGAtomMaxNode> flipcandidates, int numTimes) {
-		List<GGAtomMaxNode> candidateList = new ArrayList<>(flipcandidates);
-		for (int i = 0; i < numTimes; i++) {
-			for (int iter = 0; iter < candidateList.size(); iter++) {
-				System.out.println("Iteration: " + iter);
-				GGAtomMaxNode node = candidateList.get(iter);
-				node.setScore(mythread);
-				if (node.getScore() > 0) {
-					System.out.println("Flipping node: " + node.getMyatom() + " with score: " + node.getScore());
-					node.setCurrentInst(node.getHighvalue());
-					node.reEvaluateUpstream(null);
-				}
-
-				for (int j = 1; j < windowsize; j++) {
-					gibbsSample(mythread);
-				}
-			}
-		}
-
-
-		System.out.println("Final likelihood: " + currentLikelihood()[0] + " " + currentLikelihood()[1]);
-		return 0;
-	}
-
-	public double mapSearchSimple(GGThread mythread, TreeSet<GGAtomMaxNode> flipcandidates, int scored_node, int maxIterations) {
-	Random random = new Random();
-	int totalCandidates = flipcandidates.size();
-
-	List<GGAtomMaxNode> candidateList = new ArrayList<>(flipcandidates);
-
-	int iterations = 0;
-	while (iterations < maxIterations) {
-		PriorityQueue<GGAtomMaxNode> selectedNodes = new PriorityQueue<>(new GGAtomMaxNode_Comparator());
-
-		// select n random and score them
-		for (int i = 0; i < scored_node; i++) {
-			GGAtomMaxNode mxnode = candidateList.get(random.nextInt(totalCandidates));
-			mxnode.setScore(mythread);
-			selectedNodes.add(mxnode);
-		}
-		GGAtomMaxNode bestNode = selectedNodes.poll();
-
-		if (bestNode == null  ) { // || bestNode.getScore() <= 0
-			System.out.println("No effective candidate found. Ending search.");
-			break;
-		}
-
-		// flipt the best one
-		System.out.println("Iter " + iterations +", flipping " + bestNode.getMyatom() + " to " + bestNode.getHighvalue());
-		bestNode.setCurrentInst(bestNode.getHighvalue());
-		bestNode.reEvaluateUpstream(null);
-
-		for (int j = 1; j < windowsize; j++) {
-			gibbsSample(mythread);
-		}
-
-		iterations++;
-	}
-
-	System.out.println("Max iterations reached or no further improvement possible.");
-	System.out.println("Final Likelihood: " + currentLikelihood()[0] + " " + currentLikelihood()[1]);
-	System.out.println("-----------------");
-
-	return 0;
-}
-
 
 public double mapSearch(GGThread mythread,TreeSet<GGAtomMaxNode> flipcandidates, int depth) {
 //	System.out.println("mapSearch with depth " + depth); // Currently depth is not used!
@@ -1253,10 +1186,10 @@ public double mapInference(GGThread mythread)
 		evaluateLikelihoodAndPartDerivs(true);
 		if (debugPrint)
 			System.out.println("likelihood= " + SmallDouble.toStandardDouble(llnode.likelihood()) + "   " + StringOps.arrayToString(llnode.likelihood(), "(", ")"));
-		score = mapSearch(mythread, maxind_as_ts(), 3);
+//		score = mapSearch(mythread, maxind_as_ts(), 3);
 //		score = mapSearchSimple(mythread, maxind_as_ts(), 10, 1000);
 //		score = flipAll(mythread, maxind_as_ts(), 2);
-//		score = greedySearch(mythread, maxind_as_ts(), 2000, 1, 1);
+		score = greedySearch(mythread, maxind_as_ts(), 5000, 1, 1);
 		if (score <= 1) {
 			terminate = true;
 			System.out.println("terminate");

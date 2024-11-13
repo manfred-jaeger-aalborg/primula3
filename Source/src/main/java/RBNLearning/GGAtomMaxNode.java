@@ -152,14 +152,13 @@ private int highvalue;
 				this.setCurrentInst(v);
 
 				// sample again the nodes after flipping. TODO: a more clever sampling could be implemented (sample only the parents of the flipped nodes)
-				for (int j = 1; j < thisgg.windowsize; j++) {
-					thisgg.gibbsSample(mythread);
-				}
 				if (thisgg.sumindicators.size() > 0) {
-					System.out.println("New sampled values score:");
+					for (int j = 0; j < thisgg.windowsize; j++) {
+						thisgg.gibbsSample(mythread);
+					}
+					System.out.println("New sampled values for setScore():");
 					thisgg.showSumAtomsVals();
 				}
-
 
 				// trick for faster computation, we create only once the input for all the parents.
 				// The parents will check only if the dictionaries are empty or not
