@@ -43,16 +43,15 @@ public class WebKB {
     }
 
     public static void main(String[] args) {
-        System.setProperty("java.awt.headless", "false");
-
+        int ij = Integer.parseInt(args[0]);
         ArrayList<Double> accs = new ArrayList<>();
         Primula primula = new Primula();
-        for (int ij = 0; ij < 10; ij++) {
+//        for (int ij = 0; ij < 10; ij++) {
             primula.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
             primula.setScriptPath("/Users/lz50rg/Dev/primula-workspace/primula3/Source/python/");
             primula.setScriptName("load_gnn");
             String datasetName = "squirrel";
-            String modelName = "GCN";
+            String modelName = "GGCN";
             String index = Integer.toString(ij);
             Boolean loc_h = false;
             Boolean count_h = false;
@@ -113,9 +112,9 @@ public class WebKB {
 //            manual_rbn.insertPRel(preledef[0], 1);
                 manual_rbn.insertPRel(preledef[1], 2);
             } else {
-                manual_rbn = new RBN(1, 0);
+                manual_rbn = new RBN(2, 0);
                 manual_rbn.insertPRel(gnn_rbn, 0);
-//                manual_rbn.insertPRel(preledef[0], 1);
+                manual_rbn.insertPRel(preledef[0], 1);
             }
 
 
@@ -248,13 +247,13 @@ public class WebKB {
             } catch (Exception e) {
                 System.out.println(e);
             }
-        }
+//        }
 
-        double mean = 0;
-        for (int i = 0; i < accs.size(); i++) {
-            mean += accs.get(i);
-        }
-        System.out.println(mean/accs.size());
+//        double mean = 0;
+//        for (int i = 0; i < accs.size(); i++) {
+//            mean += accs.get(i);
+//        }
+//        System.out.println(mean/accs.size());
 
         System.exit(0);
     }
