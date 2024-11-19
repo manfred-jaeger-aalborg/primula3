@@ -20,7 +20,7 @@ def infer_model_graph(model, x, edge_index, **kwargs):
 
 def set_model(model_class, weights_path, **kwargs):
     model = model_class(**kwargs).to("cpu")
-    model.load_state_dict(torch.load(weights_path))
+    model.load_state_dict(torch.load(weights_path, map_location="cpu", weights_only=True))
     model.eval()
     return model
 

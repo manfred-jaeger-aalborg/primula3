@@ -315,7 +315,7 @@ public class GradientGraphO extends GradientGraph{
 					System.out.println();
 					for (int k=0;k<inrel.size();k++){
 						nexttup = (int[])inrel.elementAt(k);
-						int instvalue = (int)osd.valueOf(nextrel,nexttup); // A bit complicated; should directly get 
+						int instvalue = (int)osd.valueOf(nextrel,nexttup); // A bit complicated; should directly get
 						// from osd instantiated and their values.
 //						if (vars.length == 0)
 //							vars = new String[]{""};
@@ -627,10 +627,10 @@ public class GradientGraphO extends GradientGraph{
 		}
 		//showAllNodes(6,null);
 
-//		if (tempGNN != null)
-//			tempGNN.closeInterpreter();
-//			this.gnnPy = null;
-//		}
+		if (tempGNN != null) {
+			tempGNN.closeInterpreter();
+			this.gnnPy = null;
+		}
 		//		System.out.println("Calls to constructGGPFN:" + profiler.constructGGPFNcalls);
 		//		System.out.println("Found nodes:" + profiler.foundnodes);
 		//		System.out.println("Time 1:" + profiler.time1);
@@ -1186,10 +1186,10 @@ public double mapInference(GGThread mythread)
 		evaluateLikelihoodAndPartDerivs(true);
 		if (debugPrint)
 			System.out.println("likelihood= " + SmallDouble.toStandardDouble(llnode.likelihood()) + "   " + StringOps.arrayToString(llnode.likelihood(), "(", ")"));
-//		score = mapSearch(mythread, maxind_as_ts(), 3);
+		score = mapSearch(mythread, maxind_as_ts(), 3);
 //		score = mapSearchSimple(mythread, maxind_as_ts(), 10, 1000);
 //		score = flipAll(mythread, maxind_as_ts(), 2);
-		score = greedySearch(mythread, maxind_as_ts(), 5000, 1, 1);
+//		score = greedySearch(mythread, maxind_as_ts(), 4000, 1, 1);
 		if (score <= 1) {
 			terminate = true;
 			System.out.println("terminate");
