@@ -12,19 +12,26 @@ import java.util.*;
  * alpha(a) = COMPUTE WITH
  *      <gnn> {path/of/the/weights}
  * FOR INPUTS
+ *      # default could be:
  *      <list of attributes>
+ *      # where <list of attributes> is (<list of attributes> , <edge Default>)
+ *
+ *      (<list of attributes X> , <edge X>), (<list of attributes Y> , <edge Y>)
  * FORALL b
+ *      # default:
  *      WITH edge(a, b) <> WITH edge(b, a) <> WITH edge(a, b) || WITH edge(b, a)
+ *
+ *      WITH edge X(a, b), WITH edge Y(a, b)
  */
-public class CatGnn extends CPModel implements CPMGnn {
+
+
+
+public class CatGnnHetero extends CPModel implements CPMGnn {
     // the order of attributes need to be respected! this order will be used for the gnn encoding
-    private Rel gnnattr[];
+    private ArrayList<ArrayList<Rel>> input_attr;
+    private ArrayList edge_attr;
     private String argument;
 
-    // for graph classification: each probformgnn will represent a class for the classifier
-    // e.g. MUTAG class has 2 classes: mutagenic (0) and non-mutagenic (1)
-    // for binary output represent the index of the True vale in the final logits/probabilities of the GNNs
-    private int classId;
     // true if we use one-hot encoding for the features representation
     private boolean oneHotEncoding;
 
@@ -42,56 +49,43 @@ public class CatGnn extends CPModel implements CPMGnn {
 
     // this variable is used to set the inference for node or graph classification. Keyword: "node" or "graph"
     private String gnn_inference;
-    public CatGnn(String argument, String idGnn, Boolean categorical, int numvals, Rel[] attr, String edge_name, String edge_direction, String gnn_inference, boolean oneHotEncoding) {
+    public CatGnnHetero(String argument, String idGnn, int numvals, ArrayList input_attr, ArrayList edge_attr, String gnn_inference, boolean oneHotEncoding) {
         this.setEdge_name(edge_name);
         this.setEdge_direction(edge_direction);
 
         this.argument = argument;
         this.idGnn = idGnn;
-        this.categorical = categorical;
+        this.categorical = true;
         this.numvals = numvals;
-        this.gnnattr = attr;
-        this.classId = -1;
+        this.input_attr = input_attr;
+        this.edge_attr = edge_attr;
         this.oneHotEncoding = oneHotEncoding;
         this.gnn_inference = gnn_inference;
     }
 
-    /**
-     *
-     * @param argument argument
-     * @param idGnn id used in the load_gnn.py to load the GNN weights
-     * @param categorical boolean flag, True if the GNN is used for multiple classes
-     * @param attr array of Rel for the GNN attributes
-     * @param edge_name the name of the edge relation in the formula
-     * @param edge_direction how the adjacency matrix is composed (AB, BA, ABBA)
-     * @param gnn_inference "node" if the GNN is used for node classification, "graph" for graph classification
-     * @param oneHotEncoding true if the representation of the features are in a one-hot encoding representation
-     * @param classId index of the True value for which the CPMGnn will evaluate the probability
-     */
-    public CatGnn(String argument, String idGnn, Boolean categorical, int numvals, Rel[] attr, String edge_name, String edge_direction, String gnn_inference, boolean oneHotEncoding, int classId) {
-        this.setEdge_name(edge_name);
-        this.setEdge_direction(edge_direction);
-
-        this.argument = argument;
-        this.idGnn = idGnn;
-        this.categorical = categorical;
-        this.numvals = numvals;
-        this.gnnattr = attr;
-        this.classId = classId;
-        this.gnn_inference = gnn_inference;
-        this.oneHotEncoding = oneHotEncoding;
-    }
-
-    public CatGnn(String argument, GnnPy gnnpy) {
+    public CatGnnHetero(String argument, GnnPy gnnpy) {
         this.argument = argument;
         this.gnnPy = gnnpy;
     }
 
     @Override
     public String asString(int syntax, int depth, RelStruc A, boolean paramsAsValue, boolean usealias) {
-        if (this.classId != -1)
-            return "[ gnn("+this.argument+")-" + this.classId + " ]";
-        return "gnn("+this.argument+")";
+        String out = "GNN("+this.argument+"\n";
+        for (int i = 0; i < this.input_attr.size(); i++) {
+            out += "\t";
+            for (int j = 0; j < this.input_attr.get(i).size(); j++) {
+                out += this.input_attr.get(i).get(j).toString();
+                if (j != this.input_attr.get(i).size()-1)
+                    out += ",";
+            }
+            out += "|";
+            out += this.edge_attr.get(i);
+
+            if (i != this.input_attr.size()-1)
+                out += ",\n";
+        }
+        out += "\n)";
+        return out;
     }
 
     @Override
@@ -124,7 +118,7 @@ public class CatGnn extends CPModel implements CPMGnn {
                              Profiler profiler)
             throws RBNCompatibilityException {
 
-        return gnnPy.evaluate_gnn(A, inst, this, valonly);
+        return gnnPy.evaluate_gnnHetero(A, inst, this, valonly);
     }
 
     @Override
@@ -186,12 +180,7 @@ public class CatGnn extends CPModel implements CPMGnn {
     @Override
     public CPModel substitute(String[] vars, int[] args) {
 //        System.out.println("substitute code 1");
-        CatGnn result;
-        if (this.classId == -1)
-            result = new CatGnn(this.argument, this.idGnn, this.categorical, this.numvals, this.gnnattr, this.edge_name, this.edge_direction, this.gnn_inference, this.oneHotEncoding);
-        else
-            result = new CatGnn("-1", this.idGnn, this.categorical, this.numvals, this.gnnattr, this.edge_name, this.edge_direction, this.gnn_inference, this.oneHotEncoding, this.classId);
-
+        CatGnnHetero result = new CatGnnHetero(this.argument, this.idGnn, this.numvals, this.input_attr, this.edge_attr, this.gnn_inference, this.oneHotEncoding);
         if (vars.length == 0)
             result.argument = Arrays.toString(new String[0]);
         else
@@ -218,9 +207,12 @@ public class CatGnn extends CPModel implements CPMGnn {
     public TreeSet<Rel> parentRels() {
 //        System.out.println("parentRels code 1");
         TreeSet<Rel> parent = new TreeSet<>();
-        for (Rel rel: this.getGnnattr())
-            if (rel.isprobabilistic())
-                parent.add(rel);
+        for (ArrayList<Rel> rels: this.getInput_attr()) {
+            for (Rel rel : rels) {
+                if (rel.isprobabilistic())
+                    parent.add(rel);
+            }
+        }
         return parent;
     }
 
@@ -273,7 +265,15 @@ public class CatGnn extends CPModel implements CPMGnn {
 
     @Override
     public Rel[] getGnnattr() {
-        return gnnattr;
+        return null;
+    }
+
+    public ArrayList<ArrayList<Rel>> getInput_attr() {
+        return input_attr;
+    }
+
+    public ArrayList getEdge_attr() {
+        return edge_attr;
     }
 
     @Override

@@ -1,6 +1,5 @@
 # Ignore Gradle project-specific cache directory
 /Source/.gradle
-/Source/gradle/
 # /Source/gradlew
 # /Source/build.gradle.kts
 # /Source/settings.gradle.kts

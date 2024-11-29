@@ -82,52 +82,54 @@ public class BayesNetIntBIF implements BayesNetInt {
       * placement) 
       */ 
     public void addNode(SimpleBNNode node,int[] coords, int truthval){
-        ListIterator li;
-        double trueval,falseval;
-        try{
-            bufwr.write("variable \"" + node.name + "\" {" + '\n');
-            bufwr.write('\t' + "type discrete[2] { \"true\" \"false\" };" + '\n');
-            bufwr.write('\t' + "property \"position = ("+coords[0] +"," + coords[1] +")\";"+ '\n');
-            if (truthval == 0){
-                bufwr.write('\t' + "property \"observed false\";"+ '\n');
-            }
-            if (truthval == 1){
-                bufwr.write('\t' + "property \"observed true\";"+ '\n');
-            }
-            bufwr.write("}" + '\n' + '\n');
+        // COMMENT ALL FOR COMPILATION PURPOSES, RAF
+        throw new UnsupportedOperationException("Commented for compilation purposes, Raf");
+        // ListIterator li;
+        // double trueval,falseval;
+        // try{
+        //     bufwr.write("variable \"" + node.name + "\" {" + '\n');
+        //     bufwr.write('\t' + "type discrete[2] { \"true\" \"false\" };" + '\n');
+        //     bufwr.write('\t' + "property \"position = ("+coords[0] +"," + coords[1] +")\";"+ '\n');
+        //     if (truthval == 0){
+        //         bufwr.write('\t' + "property \"observed false\";"+ '\n');
+        //     }
+        //     if (truthval == 1){
+        //         bufwr.write('\t' + "property \"observed true\";"+ '\n');
+        //     }
+        //     bufwr.write("}" + '\n' + '\n');
             
-            bufwr.write("probability ( \"" + node.name + "\" " );
-            li = node.parents.listIterator();
-            while (li.hasNext()){
-                bufwr.write(" \"" + ((BNNode)li.next()).name + "\" " );
-            }
-                bufwr.write("  ) { " +'\n' );
-            // The order of the cptentries in the bif format is as follows
-            // 
-            //  pa1  pa2 pa3  |  true false
-            //  ----------------------------
-            //  t    t    t   |   1(7)     9
-            //  t    t    f   |   2(6)    10
-            //  t    f    t   |   3(5)    11 
-            //  .    .    .   |   .     .
-            //  f    f    t   |   7(1)    15
-            //  f    f    f   |   8(0)    16
-            //
-            // Numbers in parenthesis are the indices of the parameters
-            // in the cptentries field of SimpleBNNode!
-            bufwr.write('\t' +"table" + '\n' + '\t');
-            for (int i=node.cptentries.length-1;i>=0;i--){
-                trueval = node.cptentries[i] ;
-                bufwr.write(trueval + " ");
-            }
-            for (int i=node.cptentries.length-1;i>=0;i--){
-                falseval = 1-node.cptentries[i] ;
-                bufwr.write(falseval + " ");
-            }
-            bufwr.write(";" + '\n');
-            bufwr.write("}" + '\n' + '\n');
-        }
-        catch (IOException e) {System.out.println(e);}
+        //     bufwr.write("probability ( \"" + node.name + "\" " );
+        //     li = node.parents.listIterator();
+        //     while (li.hasNext()){
+        //         bufwr.write(" \"" + ((BNNode)li.next()).name + "\" " );
+        //     }
+        //         bufwr.write("  ) { " +'\n' );
+        //     // The order of the cptentries in the bif format is as follows
+        //     // 
+        //     //  pa1  pa2 pa3  |  true false
+        //     //  ----------------------------
+        //     //  t    t    t   |   1(7)     9
+        //     //  t    t    f   |   2(6)    10
+        //     //  t    f    t   |   3(5)    11 
+        //     //  .    .    .   |   .     .
+        //     //  f    f    t   |   7(1)    15
+        //     //  f    f    f   |   8(0)    16
+        //     //
+        //     // Numbers in parenthesis are the indices of the parameters
+        //     // in the cptentries field of SimpleBNNode!
+        //     bufwr.write('\t' +"table" + '\n' + '\t');
+        //     for (int i=node.cptentries.length-1;i>=0;i--){
+        //         trueval = node.cptentries[i] ;
+        //         bufwr.write(trueval + " ");
+        //     }
+        //     for (int i=node.cptentries.length-1;i>=0;i--){
+        //         falseval = 1-node.cptentries[i] ;
+        //         bufwr.write(falseval + " ");
+        //     }
+        //     bufwr.write(";" + '\n');
+        //     bufwr.write("}" + '\n' + '\n');
+        // }
+        // catch (IOException e) {System.out.println(e);}
     }
     
     public void open(){

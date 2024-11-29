@@ -26,6 +26,7 @@ package RBNpackage;
 
 import java.awt.Color;
 import java.io.*;
+import java.util.Objects;
 import java.util.Vector;
 import org.dom4j.Element;
 
@@ -124,18 +125,31 @@ public abstract class Rel implements Serializable, Comparable<Rel>{
     }
     
     
-    public boolean equals( Rel r ){
-    	//System.out.println(r.toStringWArity() + " equals " + this.toStringWArity() +" ?");
-    	if (this.getClass() != r.getClass())
-    		return false;
-    	if (!(this.name.equals( r.name )))
-    		return false;
-    	if (!(this.arity == r.arity))
-    		return false;
-    	if (this.inout != r.inout)
-    		return false;
-    	return true;
-    }
+//    public boolean equals( Rel r ){
+//    	//System.out.println(r.toStringWArity() + " equals " + this.toStringWArity() +" ?");
+//    	if (this.getClass() != r.getClass())
+//    		return false;
+//    	if (!(this.name.equals(r.name)))
+//    		return false;
+//    	if (!(this.arity == r.arity))
+//    		return false;
+//    	if (this.inout != r.inout)
+//    		return false;
+//    	return true;
+//    }
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		Rel rel = (Rel) o;
+		return Objects.equals(name, rel.name);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.getClass(), name);  // use same fields as in equals
+	}
 
     public int getArity(){
 	return arity;

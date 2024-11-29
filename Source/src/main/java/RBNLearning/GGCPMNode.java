@@ -187,8 +187,7 @@ public abstract class GGCPMNode extends GGNode{
 					(cpm instanceof ProbFormBoolAtom) && ((ProbFormBoolAtom)cpm).getRelation().isprobabilistic())
 			{
 				
-				if (gg.mapatoms(((ProbFormAtom)cpm).getRelation()) != null  
-						&& gg.mapatoms(((ProbFormAtom)cpm).getRelation()).contains(((ProbFormAtom)cpm).atom()))
+				if (gg.mapatoms(((ProbFormAtom)cpm).getRelation()) != null && gg.mapatoms(((ProbFormAtom)cpm).getRelation()).contains(((ProbFormAtom)cpm).atom()))
 					result =  new GGAtomMaxNode(gg,(ProbForm)cpm,A,I,inputcaseno,observcaseno);
 				else
 					result =  new GGAtomSumNode(gg,(ProbForm)cpm,A,I,inputcaseno,observcaseno);
@@ -251,7 +250,7 @@ public abstract class GGCPMNode extends GGNode{
 
 			}
 
-			if (cpm instanceof ProbFormGnn || cpm instanceof CatGnn ) {
+			if (cpm instanceof ProbFormGnn || cpm instanceof CatGnn || cpm instanceof CatGnnHetero ) {
 				result = new GGGnnNode(gg,cpm,allnodes,A,I,inputcaseno,observcaseno,parameters,useCurrentPvals,mapatoms,evaluated);
 			}
 //			if (cpm instanceof CatGnn) {

@@ -4,7 +4,6 @@ import java.util.*;
 
 import RBNExceptions.RBNNaNException;
 import RBNLearning.*;
-import RBNutilities.*;
 import RBNpackage.*;
 import RBNgui.InferenceModule;
 import RBNgui.LearnModule;
@@ -54,10 +53,8 @@ public class MapThread extends GGThread {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        }
-        else {
+        } else
             this.gnnPy = null;
-        }
 
 		running = true;
 		
@@ -71,31 +68,16 @@ public class MapThread extends GGThread {
 			myLearnModule.setParameters(gg.parameters());
 			gg.setLearnModule(myLearnModule);
 		}
-		
-		//int[] lastmapvals=new int[gg.getMapVals().length];
-		/* Make sure initial values are not equal to result of
-		 * first iteration: */
-		//for (int i=0;i<lastmapvals.length;i++)
-		//	lastmapvals[i]=-1;
+
 		Hashtable<Rel,int[]> newmapvals = new Hashtable<>();
+
+		Map<String, double[][]> xDict = new HashMap<>();
+		Map<String, int[][]> edgeDict = new HashMap<>();
 		
 		int maxrestarts = myinfmodule.getMAPRestarts();
 		int restarts =1;
 		double oldll=Double.NEGATIVE_INFINITY;
 		double newll=0;
-
-        /**
-         * SAVE LIKELIHOOD ON FILE
-         *
-         * File filell = new File("/Users/lz50rg/Desktop/ll3.txt");
-         * 		FileWriter fileWriter = null;
-         * 		try {
-         * 			fileWriter = new FileWriter(filell, true);
-         *                } catch (IOException e) {
-         * 			throw new RuntimeException(e);
-         *        }
-         * 		BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
-         */
 
 		while (running && ((maxrestarts == -1) || (restarts <= maxrestarts))){
 			try {
@@ -111,6 +93,10 @@ public class MapThread extends GGThread {
 						mapprobs.setLL(String.valueOf(oldll));
 						if (gg.parameters().size() > 0)
 							myLearnModule.setParameterValues(gg.getParameters());
+						if (gnnPy != null) {
+							xDict = gnnPy.getCurrentXdict();
+							edgeDict = gnnPy.getCurrentEdgeDict();
+						}
 					}
 				} else {
 					System.out.println("MAP search aborted");
@@ -121,41 +107,21 @@ public class MapThread extends GGThread {
 				System.out.println(e);
 				System.out.println("Restart aborted");
 			}
-            /**
-             * catch (IOException e) {
-             * 		throw new RuntimeException(e);
-             * }
-             */
 			mapprobs.setRestarts(restarts);
 			mapprobs.notifyObservers();
 			restarts++;
 		}
 
-		System.out.println("Best likelihood found: " + String.valueOf(oldll));
-		System.out.println("Best combination found: ");
-//		for (Rel r: newmapvals.keySet()) {
-//			for (int nextgimn: newmapvals.get(r))
-//				System.out.println(r.toString() + ": " + nextgimn);
-////				System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst());
-//		}
-		for (Rel r: newmapvals.keySet()) {
-			int[] vals = newmapvals.get(r);
-			for (int i =0; i<vals.length;i++)
-				System.out.println(r.toString() + " " + i + " " + vals[i]);
+		System.out.println("Best log-likelihood found: " + oldll);
+
+		if (gnnPy != null) {
+			gnnPy.savePickleHetero(xDict, edgeDict);
 		}
 
         if (this.gnnIntegration)
-            this.gnnPy.closeInterpreter();
+			this.gnnPy.closeInterpreter();
+
         this.isSampling = false;
-
-        /**
-         try {
-         bufferedWriter.close();
-         fileWriter.close();
-         } catch (IOException e) {
-         throw new RuntimeException(e);
-         }*/
-
     }
 
 	public void setRunning(boolean r){

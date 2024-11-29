@@ -19,15 +19,10 @@ public class GGCatGnnNode extends GGCPMNode implements GGCPMGnn {
         return new Double[0];
     }
 
-    @Override
-    public double evaluateGrad(String param) throws RBNNaNException {
-        return 0;
-    }
+    // @Override
+    // public void evaluateBounds() {
 
-    @Override
-    public void evaluateBounds() {
-
-    }
+    // }
 
     @Override
     public boolean isBoolean() {
@@ -47,5 +42,11 @@ public class GGCatGnnNode extends GGCPMNode implements GGCPMGnn {
     @Override
     public void setValue(Double[] value) {
         this.value = value;
+    }
+
+    @Override
+    public double evaluateGrad(Integer sno, String param) throws RBNNaNException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'evaluateGrad'");
     }
 }

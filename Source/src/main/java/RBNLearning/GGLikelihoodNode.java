@@ -230,7 +230,7 @@ public  class GGLikelihoodNode extends GGNode{
 		Double[] childval;
 		int childinst;
 		double childlik;
-		
+
 		for (GGCPMNode nextchild: batchelements){
 			childval = nextchild.evaluate(sno);
 			childinst = nextchild.instval(sno); 

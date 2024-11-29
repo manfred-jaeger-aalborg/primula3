@@ -755,10 +755,10 @@ public class LearnThread extends GGThread {
 		OneStrucData osd;
 		
 		for (int inputcaseno=0; inputcaseno<data.size(); inputcaseno++){
-			RelDataForOneInput rdoi = data.caseAt(inputcaseno);
-			RelStruc A = rdoi.inputDomain();
-			for (int observcaseno=0; observcaseno<rdoi.numObservations(); observcaseno++){
-				osd = rdoi.oneStrucDataAt(observcaseno);
+		 	RelDataForOneInput rdoi = data.caseAt(inputcaseno);
+		 	RelStruc A = rdoi.inputDomain();
+		 	for (int observcaseno=0; observcaseno<rdoi.numObservations(); observcaseno++){
+		 		osd = rdoi.oneStrucDataAt(observcaseno);
 
 				Hashtable<String,Object[]>  evaluated = null;
 				if (myLearnModule.getUseMemoize())

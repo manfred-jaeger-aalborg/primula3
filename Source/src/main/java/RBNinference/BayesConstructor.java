@@ -821,7 +821,7 @@ public class BayesConstructor extends java.lang.Object {
 			cpt[h]=new double[] {1-trueval,trueval};
 			}
 			if (iscatmodel) {
-				cpt[h] =(double[])cpmodel.evaluate(A,
+				Object[] res = cpmodel.evaluate(A,
 						copyinst,
 						new String[0],
 						new int[0],
@@ -834,8 +834,14 @@ public class BayesConstructor extends java.lang.Object {
 						null,
 						ProbForm.RETURN_ARRAY,
 						true,
-						null)[0];
+						null);
+				Double[] doubleObjectArray = (Double[]) res[0];
+				double[] doublePrimitiveArray = new double[doubleObjectArray.length];
+				for (int i = 0; i < doubleObjectArray.length; i++) {
+					doublePrimitiveArray[i] = doubleObjectArray[i];
 				}
+				cpt[h] = doublePrimitiveArray;
+			}
 			parconfigToCPT.put(rbnutilities.arrayToString(newinst), cpt[h]);
 			
 			/* the last two arguments here are just dummy arguments,
@@ -2091,8 +2097,13 @@ public class BayesConstructor extends java.lang.Object {
 				currentnode = (BNNode) it.next();
 
 				if (currentnode instanceof DummyBNNode){
-					parent = (BNNode)currentnode.parents.getFirst();
-					child = (BNNode)currentnode.children.getFirst();
+					// parent = (BNNode)currentnode.parents.getFirst();
+					// child = (BNNode)currentnode.children.getFirst();
+					// THIS WAS COMMENTED FOT COMPLILATION ERRRORS: TODO FIX
+					parent = currentnode.parents.get(0);
+					child = currentnode.children.get(0);
+					// ------------------------------------------------
+
 					parent.children.remove(currentnode);
 					pos = child.parents.indexOf(currentnode);
 					child.parents.remove(pos);

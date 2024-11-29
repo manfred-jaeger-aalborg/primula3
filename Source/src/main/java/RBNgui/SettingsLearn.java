@@ -661,8 +661,8 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 		Object source = e.getSource();	
 		if ( source == restartstext ){
 			try{
-				Integer tempint = new Integer(restartstext.getText());
-				learnmodule.setRestarts(tempint.intValue());  
+				int tempint = Integer.parseInt(restartstext.getText());
+				learnmodule.setRestarts(tempint);  
 			}
 			catch(NumberFormatException exception){
 				System.out.println(exception);
@@ -670,8 +670,8 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 		}
 		else if( source == samplesizetext ){
 			try{
-				Integer tempint = new Integer(samplesizetext.getText());
-				learnmodule.setLearnSampleSize(tempint.intValue());  
+				int tempint = Integer.parseInt(samplesizetext.getText());
+				learnmodule.setLearnSampleSize(tempint);  
 			}
 			catch(NumberFormatException exception){
 				System.out.println(exception);
@@ -679,8 +679,8 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 		}
 		else if ( source == subsampletext ){
 			try{
-				Integer tempint = new Integer(subsampletext.getText());
-				learnmodule.setSubsamples(tempint.intValue());  
+				int tempint = Integer.parseInt(subsampletext.getText());
+				learnmodule.setSubsamples(tempint);  
 			}
 			catch(NumberFormatException exception){
 				System.out.println(exception);
@@ -688,8 +688,8 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 		}
 		else if ( source == numblocktext ){
 			try{
-				Integer tempint = new Integer(numblocktext.getText());
-				learnmodule.setNumblocks(tempint.intValue());  
+				int tempint = Integer.parseInt(numblocktext.getText());
+				learnmodule.setNumblocks(tempint);  
 			}
 			catch(NumberFormatException exception){
 				System.out.println(exception);
@@ -697,8 +697,8 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 		}
 		else if ( source == numbatchtext ){
 			try{
-				Integer tempint = new Integer(numbatchtext.getText());
-				learnmodule.setNumbatches(tempint.intValue());  
+				int tempint = Integer.parseInt(numbatchtext.getText());
+				learnmodule.setNumbatches(tempint);  
 			}
 			catch(NumberFormatException exception){
 				System.out.println(exception);
@@ -706,8 +706,8 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 		}
 		else if ( source == dampingtext ){
 			try{
-				Double tempdoub = new Double(dampingtext.getText());
-				learnmodule.setDampingFac(tempdoub.doubleValue());  
+				double tempdoub = Double.parseDouble(dampingtext.getText());
+				learnmodule.setDampingFac(tempdoub);  
 			}
 			catch(NumberFormatException exception){
 				System.out.println(exception);
@@ -715,24 +715,24 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 		}
 		else if ( source == gibbsroundstext ){
 			try{
-				Integer tempint = new Integer(gibbsroundstext.getText());
-				learnmodule.setWindowSize(tempint.intValue());  
+				int tempint = Integer.parseInt(gibbsroundstext.getText());
+				learnmodule.setWindowSize(tempint);  
 			}
 			catch(NumberFormatException exception){
 			}
 		}		
 		else if ( source == maxiterationstext ){
 			try{
-				Integer tempint = new Integer(maxiterationstext.getText());
-				learnmodule.setMaxIterations(tempint.intValue());  
+				int tempint = Integer.parseInt(maxiterationstext.getText());
+				learnmodule.setMaxIterations(tempint);  
 			}
 			catch(NumberFormatException exception){
 			}
 		}
 		else if ( source == linedistancetext ){
 			try{
-				Double tempdoub = new Double(linedistancetext.getText());
-				learnmodule.setLineDistThresh(tempdoub.doubleValue());  
+				double tempdoub = Double.parseDouble(linedistancetext.getText());
+				learnmodule.setLineDistThresh(tempdoub);  
 			}
 			catch(NumberFormatException exception){
 				System.out.println(exception);
@@ -740,8 +740,8 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 		}
 		else if ( source == llikelihoodtext ){
 			try{
-				Double tempdoub = new Double(llikelihoodtext.getText());
-				learnmodule.setLLikThresh(tempdoub.doubleValue());  
+				double tempdoub = Double.parseDouble(llikelihoodtext.getText());
+				learnmodule.setLLikThresh(tempdoub);  
 			}
 			catch(NumberFormatException exception){
 				System.out.println(exception);
@@ -749,16 +749,16 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 		}
 		else if ( source == likelihoodwindowtext ){
 			try{
-				Integer tempint = new Integer(likelihoodwindowtext.getText());
-				learnmodule.setLikelihoodWindow(tempint.intValue());  
+				int tempint = Integer.parseInt(likelihoodwindowtext.getText());
+				learnmodule.setLikelihoodWindow(tempint);  
 			}
 			catch(NumberFormatException exception){
 				System.out.println(exception);
 			}		}
 		else if ( source == gradientdistancetext ){
 			try{
-				Double tempdoub = new Double(gradientdistancetext.getText());
-				learnmodule.setGradDistThresh(tempdoub.doubleValue());  
+				double tempdoub = Double.parseDouble(gradientdistancetext.getText());
+				learnmodule.setGradDistThresh(tempdoub);  
 			}
 			catch(NumberFormatException exception){
 				System.out.println(exception);
@@ -766,8 +766,8 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 		}
 		else if ( source == maxfailstext ){
 			try{
-				Integer tempint = new Integer(maxfailstext.getText());
-				learnmodule.setMaxFails(tempint.intValue());  
+				int tempint = Integer.parseInt(maxfailstext.getText());
+				learnmodule.setMaxFails(tempint);  
 			}
 			catch(NumberFormatException exception){
 				System.out.println(exception);
@@ -775,8 +775,8 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 		}
 		else if ( source == adambeta1text ){
 			try{
-				Double tempdoub = new Double(adambeta1text.getText());
-				learnmodule.setAdamBeta1(tempdoub.doubleValue());  
+				double tempdoub = Double.parseDouble(adambeta1text.getText());
+				learnmodule.setAdamBeta1(tempdoub);  
 			}
 			catch(NumberFormatException exception){
 				System.out.println(exception);
@@ -784,8 +784,8 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 		}
 		else if ( source == adambeta2text ){
 			try{
-				Double tempdoub = new Double(adambeta2text.getText());
-				learnmodule.setAdamBeta2(tempdoub.doubleValue());  
+				double tempdoub = Double.parseDouble(adambeta2text.getText());
+				learnmodule.setAdamBeta2(tempdoub);  
 			}
 			catch(NumberFormatException exception){
 				System.out.println(exception);
@@ -793,8 +793,8 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 		}
 		else if ( source == adamepsilontext ){
 			try{
-				Double tempdoub = new Double(adamepsilontext.getText());
-				learnmodule.setAdamEpsilon(tempdoub.doubleValue());  
+				double tempdoub = Double.parseDouble(adamepsilontext.getText());
+				learnmodule.setAdamEpsilon(tempdoub);  
 			}
 			catch(NumberFormatException exception){
 				System.out.println(exception);
@@ -802,8 +802,8 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 		}
 		else if ( source == adamalphatext ){
 			try{
-				Double tempdoub = new Double(adamalphatext.getText());
-				learnmodule.setAdamAlpha(tempdoub.doubleValue());  
+				double tempdoub = Double.parseDouble(adamalphatext.getText());
+				learnmodule.setAdamAlpha(tempdoub);  
 			}
 			catch(NumberFormatException exception){
 				System.out.println(exception);

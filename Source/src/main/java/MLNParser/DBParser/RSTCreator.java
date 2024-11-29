@@ -194,7 +194,9 @@ public class RSTCreator {
     	String nextrelname;
     	try{
     		for (int i=0;i<network.NumPFs();i++){
-    			nextrel = network.relAt(i);
+                // ADD (BoolRel) 
+    			nextrel = (BoolRel) network.relAt(i);
+            
     			nextrelname = nextrel.printname();
     			if (nextrelname.length()>=6 && nextrelname.substring(0,6).equals("MLNRel")){
     				alltuples = relStruc.allTypedTuples(nextrel.getTypes());

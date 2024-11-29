@@ -202,7 +202,7 @@ public class ArbitraryPanel extends JPanel implements MouseListener, KeyListener
 		}
 		else if( source == addArityField){
 			try {
-				arity = (new Integer(addArityField.getText())).intValue();
+				arity = Integer.parseInt(addArityField.getText());
 			} catch (Exception ex){
 				arity = 0;
 			}
@@ -279,7 +279,7 @@ public class ArbitraryPanel extends JPanel implements MouseListener, KeyListener
 			char c = e.getKeyChar();
 			if(c == KeyEvent.VK_ENTER){
 				try {
-					arity = (new Integer(addArityField.getText())).intValue();
+					arity = Integer.parseInt(addArityField.getText());
 				} catch (Exception ex){
 					arity = 0;
 				}
@@ -318,7 +318,7 @@ public class ArbitraryPanel extends JPanel implements MouseListener, KeyListener
 		if( source == addArityField ){
 			
 				try {
-					arity = (new Integer(addArityField.getText())).intValue();
+					arity = Integer.parseInt(addArityField.getText());
 				} catch (Exception ex){
 					arity = 0;
 				}

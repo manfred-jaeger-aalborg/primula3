@@ -273,7 +273,7 @@ public class SettingsMAP extends JFrame implements ActionListener, ItemListener,
 		Object source = e.getSource();	
 		if( source == samplesizetext ){
 			try{
-				Integer tempint = new Integer(samplesizetext.getText());
+				Integer tempint = Integer.valueOf(samplesizetext.getText());
 				infmodule.setLearnSampleSize(tempint.intValue());  
 			}
 			catch(NumberFormatException exception){
@@ -282,7 +282,7 @@ public class SettingsMAP extends JFrame implements ActionListener, ItemListener,
 
 		else if ( source == gibbsroundstext ){
 			try{
-				Integer tempint = new Integer(gibbsroundstext.getText());
+				Integer tempint = Integer.valueOf(gibbsroundstext.getText());
 				infmodule.setWindowSize(tempint.intValue());  
 			}
 			catch(NumberFormatException exception){
@@ -291,7 +291,7 @@ public class SettingsMAP extends JFrame implements ActionListener, ItemListener,
 
 		else if ( source == maxfailstext ){
 			try{
-				Integer tempint = new Integer(maxfailstext.getText());
+				Integer tempint = Integer.valueOf(maxfailstext.getText());
 				infmodule.setMaxFails(tempint.intValue());  
 			}
 			catch(NumberFormatException exception){
@@ -300,7 +300,7 @@ public class SettingsMAP extends JFrame implements ActionListener, ItemListener,
 		
 		else if ( source == restartstext ){
 			try{
-				Integer tempint = new Integer(restartstext.getText());
+				Integer tempint = Integer.valueOf(restartstext.getText());
 				System.out.println("Settings: " + tempint);
 				infmodule.setNumRestarts(tempint.intValue());  
 			}

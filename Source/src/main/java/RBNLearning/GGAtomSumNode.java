@@ -69,6 +69,11 @@ public class GGAtomSumNode extends GGAtomNode{
 		values_for_samples[sno] = new Double[] {(double) val};
 	}
 
+	public void setRandomSampleVal(int sno) {
+		int currentInst = (int)(Math.random()*myatom.rel().numvals());
+		values_for_samples[sno] = new Double[] {(double) currentInst};
+	}
+
 //	/** Sets value in sno's sample to current instantiation */
 //	public void setSampleVal(int sno){
 //		setSampleVal(sno,currentInst);

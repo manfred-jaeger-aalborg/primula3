@@ -81,47 +81,48 @@ public abstract class BayesNetIntXMLBIF implements BayesNetInt {
       * placement) 
       */ 
     public void addNode(SimpleBNNode node,int[] coords){
-        ListIterator li;
-        double trueval,falseval;
-        try{
-            bufwr.write("<VARIABLE TYPE=\"nature\">" + '\n');
-            bufwr.write('\t' + "<NAME>"+makeXMLName(node.name)+"</NAME>" + '\n');
-            bufwr.write('\t' + "<OUTCOME>true</OUTCOME>" + '\n');
-            bufwr.write('\t' + "<OUTCOME>false</OUTCOME>" + '\n');
-            bufwr.write('\t' + "<PROPERTY>position = ("+coords[0] +"," + coords[1] +")</PROPERTY>" + '\n');
-            bufwr.write("</VARIABLE>" + '\n' + '\n');
+        throw new UnsupportedOperationException("Commented for compilation purposes, Raf");
+        // ListIterator li;
+        // double trueval,falseval;
+        // try{
+        //     bufwr.write("<VARIABLE TYPE=\"nature\">" + '\n');
+        //     bufwr.write('\t' + "<NAME>"+makeXMLName(node.name)+"</NAME>" + '\n');
+        //     bufwr.write('\t' + "<OUTCOME>true</OUTCOME>" + '\n');
+        //     bufwr.write('\t' + "<OUTCOME>false</OUTCOME>" + '\n');
+        //     bufwr.write('\t' + "<PROPERTY>position = ("+coords[0] +"," + coords[1] +")</PROPERTY>" + '\n');
+        //     bufwr.write("</VARIABLE>" + '\n' + '\n');
             
-            bufwr.write("<DEFINITION>" + '\n');
-            bufwr.write('\t' + "<FOR>"+makeXMLName(node.name)+"</FOR>" + '\n');
-            li = node.parents.listIterator();
-            while (li.hasNext()){
-                bufwr.write('\t' + "<GIVEN>"+makeXMLName(((BNNode)li.next()).name)+"</GIVEN>" + '\n');
-            }
-            // The order of the cptentries in the xmlbif format is as follows
-            // 
-            //  pa1  pa2 pa3  |  true false
-            //  ----------------------------
-            //  t    t    t   |   1(7)     2
-            //  t    t    f   |   3(6)    4
-            //  t    f    t   |   5(5)     6
-            //  .    .    .   |   .     .
-            //  f    f    t   |   13(1)    14
-            //  f    f    f   |   15(0)    16
-            //
-            // Numbers in parenthesis are the indices of the parameters
-            // in the cptentries field of SimpleBNNode!
-            bufwr.write('\t' +"<TABLE>" + '\n');
-            for (int i=node.cptentries.length-1;i>=0;i--){
-                trueval = node.cptentries[i] ;
-                falseval = 1.0-trueval;
-                //System.out.println("True: " +  trueval + " False:  " + falseval);  
-                bufwr.write('\t');
-                bufwr.write(trueval +  " " + falseval + '\n');
-            }
-            bufwr.write('\t' +"</TABLE>" + '\n');
-            bufwr.write("</DEFINITION>" + '\n');
-        }
-        catch (IOException e) {System.out.println(e);}
+        //     bufwr.write("<DEFINITION>" + '\n');
+        //     bufwr.write('\t' + "<FOR>"+makeXMLName(node.name)+"</FOR>" + '\n');
+        //     li = node.parents.listIterator();
+        //     while (li.hasNext()){
+        //         bufwr.write('\t' + "<GIVEN>"+makeXMLName(((BNNode)li.next()).name)+"</GIVEN>" + '\n');
+        //     }
+        //     // The order of the cptentries in the xmlbif format is as follows
+        //     // 
+        //     //  pa1  pa2 pa3  |  true false
+        //     //  ----------------------------
+        //     //  t    t    t   |   1(7)     2
+        //     //  t    t    f   |   3(6)    4
+        //     //  t    f    t   |   5(5)     6
+        //     //  .    .    .   |   .     .
+        //     //  f    f    t   |   13(1)    14
+        //     //  f    f    f   |   15(0)    16
+        //     //
+        //     // Numbers in parenthesis are the indices of the parameters
+        //     // in the cptentries field of SimpleBNNode!
+        //     bufwr.write('\t' +"<TABLE>" + '\n');
+        //     for (int i=node.cptentries.length-1;i>=0;i--){
+        //         trueval = node.cptentries[i] ;
+        //         falseval = 1.0-trueval;
+        //         //System.out.println("True: " +  trueval + " False:  " + falseval);  
+        //         bufwr.write('\t');
+        //         bufwr.write(trueval +  " " + falseval + '\n');
+        //     }
+        //     bufwr.write('\t' +"</TABLE>" + '\n');
+        //     bufwr.write("</DEFINITION>" + '\n');
+        // }
+        // catch (IOException e) {System.out.println(e);}
     }
     
     /* Same as previous but now 

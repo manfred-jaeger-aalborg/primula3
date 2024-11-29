@@ -343,7 +343,7 @@ public class RDEFReader {
 									if (haverelstruc)
 										throw new RBNioException("Data contains object " + argarr[k] + " not existing in RelStruc");
 
-									Integer nextind = new Integer(namehasht.size());
+									Integer nextind = Integer.valueOf(namehasht.size());
 									Object[] elementinfo = new Object[2];
 									elementinfo[0]=nextind;
 									elementinfo[1]=null;
@@ -476,7 +476,7 @@ public class RDEFReader {
 						String[] namearray = StringOps.stringToStringArray(allnames);
 						for (int i=0;i<namearray.length;i++){
 							elementinfo = new Object[2];
-							elementinfo[0]=new Integer(i);
+							elementinfo[0]= Integer.valueOf(i);
 							elementinfo[1]=null;
 							if(namehasht.get(namearray[i])!=null)
 								System.out.println("Warning: duplicate name " + namearray[i] + " in allnames declaration");

@@ -691,7 +691,7 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 		
 		if( source == textsamplesize ){
 			try{
-				samplesize = new Integer(textsamplesize.getText());
+				samplesize = Integer.parseInt(textsamplesize.getText());
 			}
 			catch(NumberFormatException exception){
 			}
@@ -699,7 +699,7 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 	
 		else if( source == textpercmiss ){
 			try{
-				percmiss = new Double(textpercmiss.getText());
+				percmiss = Double.parseDouble(textpercmiss.getText());
 			}
 			catch(NumberFormatException exception){
 			}

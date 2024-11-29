@@ -1,3 +1,6 @@
+import java.io.FileOutputStream
+import java.io.File
+
 plugins {
     id("java")
     id("application")
@@ -29,21 +32,38 @@ java {
 
 application {
 //    mainClass.set("RBNgui.Primula")
-    applicationDefaultJvmArgs = listOf("-Djava.awt.headless=true")
-    mainClass.set("Experiments.homophily_mcmc")
+    // applicationDefaultJvmArgs = listOf("-Djava.awt.headless=true")
+    mainClass.set("Experiments.Homophily.WebKB")
+}
+
+tasks.named<JavaExec>("run") {
+    // Disable the default 'run' task to avoid conflict
+    enabled = false
+}
+
+tasks.register("runWithArgs") {
+    group = "application"
+
+    doLast {
+        for (i in 0..1) {
+            exec {
+                commandLine(
+//                        "java",
+//                        "-XX:+UseG1GC",
+                        // "-XX:+UseZGC", // Use Z Garbage Collector (aggressive GC)
+                        // "-XX:SoftRefLRUPolicyMSPerMB=50", // Aggressively clean soft references
+                        // "-Xms256m", // Set initial heap size
+                        // "-Xmx512m", // Set maximum heap size
+                        // "-XX:+ExplicitGCInvokesConcurrent", // Allow explicit GC calls to run concurrently
+                        // "-XX:+ParallelRefProcEnabled", // Parallelize reference processing
+                        "java", "-cp", sourceSets["main"].runtimeClasspath.asPath,
+                        "Experiments.Homophily.WebKB", i.toString()
+                )
+            }
+        }
+    }
 }
 
 tasks.test {
     useJUnitPlatform()
-}
-
-// tasks.withType<JavaCompile> {
-//     options.compilerArgs.add("-Xlint:none") // Disable Java compiler warnings
-//     options.isFailOnError = false // Don't fail the build on compilation errors
-// }
-
-tasks.jar {
-    manifest {
-        attributes["Main-Class"] = "RBNgui.Primula"
-    }
 }

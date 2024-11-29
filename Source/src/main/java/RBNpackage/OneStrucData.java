@@ -320,7 +320,7 @@ public class OneStrucData {
 				System.out.println("Cannot add truthvalue " + tv + " to instantiation");
 			}
 		}
-		else {  // CatRel
+		else if (r instanceof CatRel){  // CatRel
 			add((CatRel)r,at.args,tv,dv);
 		}
 	}
