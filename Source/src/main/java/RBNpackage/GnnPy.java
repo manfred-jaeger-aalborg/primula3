@@ -293,11 +293,11 @@ public class GnnPy {
                             "    data_h[key].x = torch.as_tensor(value, dtype=torch.float32)\n" +
 
                             "for key, value in java_map_edge.items():\n" +
-                            "    n_key = key.split('_')\n" +
+                            "    n_key = key.split('_to_')\n" + // here the key must have the form type_to_type
                             "    if len(value) > 0:\n" +
-                            "        data_h[n_key[0], n_key[1], n_key[2]].edge_index = torch.as_tensor(value, dtype=torch.long)\n" +
+                            "        data_h[n_key[0], 'to', n_key[1]].edge_index = torch.as_tensor(value, dtype=torch.long)\n" +
                             "    else:\n" +
-                            "        data_h[n_key[0], n_key[1], n_key[2]].edge_index = torch.empty((2, 0), dtype=torch.long)\n"
+                            "        data_h[n_key[0], 'to', n_key[1]].edge_index = torch.empty((2, 0), dtype=torch.long)\n"
             );
 
             this.sharedInterpreter.exec("out = intt." + this.INFER_NODE + "(" + idGnn + ", data_h.x_dict, data_h.edge_index_dict)");

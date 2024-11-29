@@ -785,7 +785,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 			samplelogmode[i]=false;
 
 		numchains = 2;
-		windowsize = 7;
+		windowsize = 3;
 		numrestarts = 1;
 		
 		readElementNames();

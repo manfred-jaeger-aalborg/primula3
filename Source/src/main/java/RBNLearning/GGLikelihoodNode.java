@@ -251,10 +251,10 @@ public  class GGLikelihoodNode extends GGNode{
 //			if (nextchild.getMyatom().equals("constr(0)")) {
 //				System.out.println("constr(): " + childlik);
 //			}
-//
-//			if (nextchild.getMyatom().equals("target(0)")) {
-//				System.out.println("target(): " + childlik);
-//			}
+////
+			if (nextchild.getMyatom().equals("target(0)")) {
+				System.out.println("target(): " + childlik);
+			}
 
 			//			ival = nextchild.instval();
 			//			switch (ival) {

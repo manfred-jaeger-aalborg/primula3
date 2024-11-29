@@ -279,42 +279,51 @@ class GGCN_raf(nn.Module):
             return F.softmax(layer_inner, dim=1)
 
 class HeteroGraph(torch.nn.Module):
-    def __init__(self, in_sub, in_hru, hidden_dims, out_dims, num_layers=3):
+    def __init__(self, in_sub, in_hru_agr, in_hru_urb, hidden_dims, out_dims, num_layers=3):
         super().__init__()
         self.layers = torch.nn.ModuleList()
         self.num_layers = num_layers
         self.sub_size = in_sub
-        self.hru_size = in_hru
+        self.hru_agr_size = in_hru_agr
+        self.hru_urb_size = in_hru_urb
         for i in range(self.num_layers):
             if i == 0:
                 self.layers.append(HeteroConv({
                     ('sub', 'to', 'sub'): SAGEConv(self.sub_size, hidden_dims, aggr='sum'),
-                    ('hru', 'to', 'sub'): SAGEConv((self.hru_size, self.sub_size), hidden_dims, aggr='sum'),
-                    ('sub', 'to', 'hru'): SAGEConv((self.sub_size, self.hru_size), hidden_dims),
+                    ('hru_agr', 'to', 'sub'): SAGEConv((self.hru_agr_size, self.sub_size), hidden_dims, aggr='sum'),
+                    ('sub', 'to', 'hru_agr'): SAGEConv((self.sub_size, self.hru_agr_size), hidden_dims),
+                    ('hru_urb', 'to', 'sub'): SAGEConv((self.hru_urb_size, self.sub_size), hidden_dims, aggr='sum'),
+                    ('sub', 'to', 'hru_urb'): SAGEConv((self.sub_size, self.hru_urb_size), hidden_dims),
                 }, aggr='cat'))
             elif i != self.num_layers - 1:
                 self.layers.append(HeteroConv({
-                    ('sub', 'to', 'sub'): SAGEConv(hidden_dims*2, hidden_dims),
-                    ('hru', 'to', 'sub'): SAGEConv((self.hru_size, hidden_dims*2), hidden_dims),
-                    ('sub', 'to', 'hru'): SAGEConv((hidden_dims*2, self.hru_size), hidden_dims),
+                    ('sub', 'to', 'sub'): SAGEConv(hidden_dims*3, hidden_dims),
+                    ('hru_agr', 'to', 'sub'): SAGEConv((self.hru_agr_size, hidden_dims*3), hidden_dims),
+                    ('sub', 'to', 'hru_agr'): SAGEConv((hidden_dims*3, self.hru_agr_size), hidden_dims),
+                    ('hru_urb', 'to', 'sub'): SAGEConv((self.hru_urb_size, hidden_dims*3), hidden_dims),
+                    ('sub', 'to', 'hru_urb'): SAGEConv((hidden_dims*3, self.hru_urb_size), hidden_dims),
                 }, aggr='cat'))
             elif i == self.num_layers - 1:
                 self.layers.append(HeteroConv({
-                    ('sub', 'to', 'sub'): SAGEConv(hidden_dims*2, hidden_dims),
-                    ('hru', 'to', 'sub'): SAGEConv((self.hru_size, hidden_dims*2), hidden_dims),
-                    ('sub', 'to', 'hru'): SAGEConv((hidden_dims*2, self.hru_size), hidden_dims),
+                    ('sub', 'to', 'sub'): SAGEConv(hidden_dims*3, hidden_dims),
+                    ('hru_agr', 'to', 'sub'): SAGEConv((self.hru_agr_size, hidden_dims*3), hidden_dims),
+                    ('sub', 'to', 'hru_agr'): SAGEConv((hidden_dims*3, self.hru_agr_size), hidden_dims),
+                    ('hru_urb', 'to', 'sub'): SAGEConv((self.hru_urb_size, hidden_dims*3), hidden_dims),
+                    ('sub', 'to', 'hru_urb'): SAGEConv((hidden_dims*3, self.hru_urb_size), hidden_dims),
                 }, aggr='cat'))
 
         self.conv = SAGEConv(-1, hidden_dims)
-        self.final_lin = torch.nn.Linear(hidden_dims*2, out_dims)
+        self.final_lin = torch.nn.Linear(hidden_dims*3, out_dims)
 
     def forward(self, x_dict, edge_index_dict):
-        skip_hru = x_dict['hru']
+        skip_hru_agr = x_dict['hru_agr']
+        skip_hru_urb = x_dict['hru_urb']
         for i, layer in enumerate(self.layers):
             x_dict = layer(x_dict, edge_index_dict)
             if i != self.num_layers - 1:
                 x_dict['sub'] = F.relu(x_dict['sub'])
-                x_dict['hru'] = skip_hru
+                x_dict['hru_agr'] = skip_hru_agr
+                x_dict['hru_urb'] = skip_hru_urb
 
         out = self.final_lin(x_dict['sub'])
         return F.softmax(out, dim=1)

@@ -52,7 +52,7 @@ public class RiverPollution {
         primula.setScriptPath("/Users/lz50rg/Dev/primula-workspace/primula3/Source/python");
         primula.setScriptName("load_gnn");
 
-        File srsfile = new File("/Users/lz50rg/Dev/water-hawqs/test.rdef");
+        File srsfile = new File("/Users/lz50rg/Dev/water-hawqs/river_test.rdef");
         primula.loadSparseRelFile(srsfile);
 
         ArrayList<ArrayList<Rel>> attrs_rels = new ArrayList<>();
@@ -60,8 +60,17 @@ public class RiverPollution {
                 new ArrayList<Rel>(
                         Arrays.asList(
 //                            new CatRel("LandUse", 1, typeStringToArray("hru", 1), valStringToArray("APPL,RIWN,WATR,COSY,PAST,BERM,RIWF,CORN,UPWN,FESC,FRST,UPWF,SOYB,FRSD"))
-                            new CatRel("LandUse", 1, typeStringToArray("hru", 1), valStringToArray("CORN,COSY,OTHER,PAST,SOYB")),
-                            new NumRel("Area", 1, typeStringToArray("hru", 1))
+                            new CatRel("LandUse", 1, typeStringToArray("hru_agr", 1), valStringToArray("CORN,COSY,PAST,SOYB")),
+                            new NumRel("AreaAgr", 1, typeStringToArray("hru_agr", 1))
+                        )
+                )
+        );
+        attrs_rels.add(
+                new ArrayList<Rel>(
+                        Arrays.asList(
+//                            new CatRel("LandUse", 1, typeStringToArray("hru", 1), valStringToArray("APPL,RIWN,WATR,COSY,PAST,BERM,RIWF,CORN,UPWN,FESC,FRST,UPWF,SOYB,FRSD"))
+                                new CatRel("LandUseUrb", 1, typeStringToArray("hru_urb", 1), valStringToArray("BERM,FESC,FRSD,FRST,RIWF,RIWN,UPWF,UPWN,WATR")),
+                                new NumRel("AreaUrb", 1, typeStringToArray("hru_urb", 1))
                         )
                 )
         );
@@ -77,7 +86,8 @@ public class RiverPollution {
         attrs_rels.get(0).get(0).setInout(Rel.PROBABILISTIC);
 
         ArrayList<String> edge_attr = new ArrayList<>();
-        edge_attr.add("hru_to_sub");
+        edge_attr.add("hru_agr_to_sub");
+        edge_attr.add("hru_urb_to_sub");
         edge_attr.add("sub_to_sub");
 
         RBNPreldef gnn_rbn = new  RBNPreldef(
@@ -94,35 +104,35 @@ public class RiverPollution {
         );
 
         Vector<ProbForm> softmax = new Vector<>();
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 4; i++) {
             softmax.add(new ProbFormConstant(0.5));
         }
 
         RBNPreldef gnn_attr = new  RBNPreldef(
-                new CatRel("LandUse", 1, typeStringToArray("hru", 1), valStringToArray("CORN,COSY,OTHER,PAST,SOYB")),
+                new CatRel("LandUse", 1, typeStringToArray("hru_agr", 1), valStringToArray("CORN,COSY,PAST,SOYB")),
                 new String[]{"v"},
                 new CatModelSoftMax(softmax)
         );
 
-        File input_file = new File("/Users/lz50rg/Dev/water-hawqs/water.rbn");
-//        File input_file = new File("/Users/lz50rg/Dev/water-hawqs/water_rbn.rbn");
+//        File input_file = new File("/Users/lz50rg/Dev/water-hawqs/water.rbn");
+        File input_file = new File("/Users/lz50rg/Dev/water-hawqs/water_rbn.rbn");
         RBN file_rbn = new RBN(input_file, primula.getSignature());
         RBNPreldef[] riverrbn = file_rbn.prelements();
 
         RBN manual_rbn = new RBN(4, 0);
-//        for (int i = 0; i < 4; i++) {
-//            manual_rbn.insertPRel(riverrbn[i], i);
-//        }
+        for (int i = 0; i < 4; i++) {
+            manual_rbn.insertPRel(riverrbn[i], i);
+        }
 
-        manual_rbn.insertPRel(gnn_rbn, 0);
-        manual_rbn.insertPRel(gnn_attr, 1);
-        manual_rbn.insertPRel(riverrbn[0], 2);
-        manual_rbn.insertPRel(riverrbn[1], 3);
+//        manual_rbn.insertPRel(gnn_rbn, 0);
+//        manual_rbn.insertPRel(gnn_attr, 1);
+//        manual_rbn.insertPRel(riverrbn[0], 2);
+//        manual_rbn.insertPRel(riverrbn[1], 3);
 
         primula.setRbn(manual_rbn);
         primula.getInstantiation().init(manual_rbn);
 
-        CatRel tmp_query = new CatRel("LandUse", 1, typeStringToArray("hru", 1), valStringToArray("CORN,COSY,OTHER,PAST,SOYB"));
+        CatRel tmp_query = new CatRel("LandUse", 1, typeStringToArray("hru_agr", 1), valStringToArray("CORN,COSY,PAST,SOYB"));
         tmp_query.setInout(Rel.PROBABILISTIC);
 
 //        BayesConstructor constructor = new BayesConstructor(
@@ -179,14 +189,14 @@ public class RiverPollution {
 
 //            String[] vals = new String[]{"LOW","MED","HIG"};
 //            String[] vals = new String[]{"APPL,RIWN,WATR,COSY,PAST,BERM,RIWF,CORN,UPWN,FESC,FRST,UPWF,SOYB,FRSD"};
-            String[] vals = new String[]{"CORN,COSY,OTHER,PAST,SOYB"};
+            String[] vals = new String[]{"CORN,COSY,PAST,SOYB"};
             int[] res = bestMapVals.get(tmp_query);
             ArrayList<ArrayList<Integer>> pred_res = new ArrayList<>(vals.length);
             for (int i = 0; i < vals.length; i++)
                 pred_res.add(new ArrayList<>());
 
             Map<Integer, Integer> values_count = new HashMap<>();
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < 4; i++) {
                 values_count.put(i, 0);
             }
 

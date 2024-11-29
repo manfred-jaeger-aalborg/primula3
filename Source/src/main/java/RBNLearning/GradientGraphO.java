@@ -1186,10 +1186,10 @@ public double mapInference(GGThread mythread)
 		evaluateLikelihoodAndPartDerivs(true);
 		if (debugPrint)
 			System.out.println("likelihood= " + SmallDouble.toStandardDouble(llnode.likelihood()) + "   " + StringOps.arrayToString(llnode.likelihood(), "(", ")"));
-		score = mapSearch(mythread, maxind_as_ts(), 3);
+//		score = mapSearch(mythread, maxind_as_ts(), 3);
 //		score = mapSearchSimple(mythread, maxind_as_ts(), 10, 1000);
 //		score = flipAll(mythread, maxind_as_ts(), 2);
-//		score = greedySearch(mythread, maxind_as_ts(), 4000, 1, 1);
+		score = greedySearch(mythread, maxind_as_ts(), 4000, 1, 1);
 		if (score <= 1) {
 			terminate = true;
 			System.out.println("terminate");

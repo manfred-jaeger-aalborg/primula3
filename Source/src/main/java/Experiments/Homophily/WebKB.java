@@ -43,15 +43,17 @@ public class WebKB {
     }
 
     public static void main(String[] args) {
-        int ij = Integer.parseInt(args[0]);
+
+        // Integer.parseInt(args[0]);
+        int ij =0;
         ArrayList<Double> accs = new ArrayList<>();
         Primula primula = new Primula();
 //        for (int ij = 0; ij < 10; ij++) {
             primula.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
             primula.setScriptPath("/Users/lz50rg/Dev/primula-workspace/primula3/Source/python/");
             primula.setScriptName("load_gnn");
-            String datasetName = "squirrel";
-            String modelName = "GGCN";
+            String datasetName = "texas";
+            String modelName = "GCN";
             String index = Integer.toString(ij);
             Boolean loc_h = false;
             Boolean count_h = false;
@@ -70,7 +72,7 @@ public class WebKB {
             primula.loadSparseRelFile(srsfile);
 
             // create rbn
-            int num_attr = 2089;
+            int num_attr = 1703;
             Rel[] attrs_rels = new Rel[num_attr];
             for (int i = 0; i < num_attr; i++) {
                 attrs_rels[i] = new BoolRel("attr" + i, 1);
@@ -91,7 +93,7 @@ public class WebKB {
                     )
             );
 
-            String const_path = null;
+        String const_path = null;
             if (loc_h)
                 const_path = "/Users/lz50rg/Dev/homophily/experiments/" + datasetName + "/const_" + datasetName + "_loc.rbn";
             else if (count_h)
@@ -152,7 +154,7 @@ public class WebKB {
                 im.addQueryAtoms(tmp_query, gal);
 
                 // perform map inference
-                im.setNumRestarts(5);
+                im.setNumRestarts(1);
                 GradientGraph GG = im.startMapThread();
                 im.getMapthr().join();
 

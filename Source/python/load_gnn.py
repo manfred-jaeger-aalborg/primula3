@@ -20,115 +20,115 @@ def infer_model_graph(model, x, edge_index, **kwargs):
 
 def set_model(model_class, weights_path, **kwargs):
     model = model_class(**kwargs).to("cpu")
-    model.load_state_dict(torch.load(weights_path, map_location="cpu", weights_only=True))
+    model.load_state_dict(torch.load(weights_path, map_location="cpu", weights_only=False))
     model.eval()
     return model
 
 # Define a dictionary to store model information with IDs
 models_info = {
-    "GCNsquirrel0": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_squirrel_0.pt",
+    "GCNtexas0": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_Texas_0.pt",
         {
-            "nfeat":2089, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
+            "nfeat":1703, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
         }
     ),
-    "GCNsquirrel1": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_squirrel_1.pt",
+    "GCNtexas1": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_squirrel_1.pt",
         {
-            "nfeat":2089, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
+            "nfeat":1703, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
         }
     ),
-    "GCNsquirrel2": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_squirrel_2.pt",
+    "GCNtexas2": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_squirrel_2.pt",
         {
-            "nfeat":2089, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
+            "nfeat":1703, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
         }
     ),
-    "GCNsquirrel3": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_squirrel_3.pt",
+    "GCNtexas3": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_squirrel_3.pt",
         {
-            "nfeat":2089, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
+            "nfeat":1703, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
         }
     ),
-    "GCNsquirrel4": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_squirrel_4.pt",
+    "GCNtexas4": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_squirrel_4.pt",
         {
-            "nfeat":2089, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
+            "nfeat":1703, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
         }
     ),
-    "GCNsquirrel5": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_squirrel_5.pt",
+    "GCNtexas5": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_squirrel_5.pt",
         {
-            "nfeat":2089, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
+            "nfeat":1703, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
         }
     ),
-    "GCNsquirrel6": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_squirrel_6.pt",
+    "GCNtexas6": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_squirrel_6.pt",
         {
-            "nfeat":2089, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
+            "nfeat":1703, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
         }
     ),
-    "GCNsquirrel7": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_squirrel_7.pt",
+    "GCNtexas7": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_squirrel_7.pt",
         {
-            "nfeat":2089, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
+            "nfeat":1703, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
         }
     ),
-    "GCNsquirrel8": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_squirrel_8.pt",
+    "GCNtexas8": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_squirrel_8.pt",
         {
-            "nfeat":2089, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
+            "nfeat":1703, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
         }
     ),
-    "GCNsquirrel9": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_squirrel_9.pt",
+    "GCNtexas9": (GCN_graph, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GCN_squirrel_9.pt",
         {
-            "nfeat":2089, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
+            "nfeat":1703, "nlayers":2, "nhid":16, "nclass":5, "dropout":0.5, "primula":True
         }
     ),
-    "GGCNcornell0": (GGCN_raf, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/ggcn_Cornell_0.pt",
+    "GGCNsquirrel0": (GGCN_raf, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GGCN_squirrel_0.pt",
         {
-            "nfeat": 1703, "nlayers": 6, "nhidden": 16, "nclass": 5, "dropout": 0.4, "decay_rate": 0.7, "exponent": 3.0, "use_degree": True, "use_sign": True, "use_decay": True, "use_sparse": False, "scale_init": 0.5, "deg_intercept_init": 0.5, "use_bn": False, "use_ln": False, "generated":False, "pre_feature":True, "primula":True
+            "nfeat": 2089, "nlayers": 2, "nhidden": 32, "nclass": 5, "dropout": 0.5, "decay_rate": 1.0, "exponent": 3.0, "use_degree": True, "use_sign": True, "use_decay": True, "use_sparse": False, "scale_init": 0.5, "deg_intercept_init": 0.5, "use_bn": False, "use_ln": False, "generated":False, "pre_feature":True, "primula":True
         }
     ),
-     "GGCNcornell1": (GGCN_raf, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/ggcn_Cornell_1.pt",
+     "GGCNsquirrel1": (GGCN_raf, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GGCN_squirrel_1.pt",
         {
-            "nfeat": 1703, "nlayers": 6, "nhidden": 16, "nclass": 5, "dropout": 0.4, "decay_rate": 0.7, "exponent": 3.0, "use_degree": True, "use_sign": True, "use_decay": True, "use_sparse": False, "scale_init": 0.5, "deg_intercept_init": 0.5, "use_bn": False, "use_ln": False, "generated":False, "pre_feature":True, "primula":True
+            "nfeat": 2089, "nlayers": 2, "nhidden": 32, "nclass": 5, "dropout": 0.5, "decay_rate": 1.0, "exponent": 3.0, "use_degree": True, "use_sign": True, "use_decay": True, "use_sparse": False, "scale_init": 0.5, "deg_intercept_init": 0.5, "use_bn": False, "use_ln": False, "generated":False, "pre_feature":True, "primula":True
         }
     ),
-     "GGCNcornell2": (GGCN_raf, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/ggcn_Cornell_2.pt",
+     "GGCNsquirrel2": (GGCN_raf, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GGCN_squirrel_2.pt",
         {
-            "nfeat": 1703, "nlayers": 6, "nhidden": 16, "nclass": 5, "dropout": 0.4, "decay_rate": 0.7, "exponent": 3.0, "use_degree": True, "use_sign": True, "use_decay": True, "use_sparse": False, "scale_init": 0.5, "deg_intercept_init": 0.5, "use_bn": False, "use_ln": False, "generated":False, "pre_feature":True, "primula":True
+            "nfeat": 2089, "nlayers": 2, "nhidden": 32, "nclass": 5, "dropout": 0.5, "decay_rate": 1.0, "exponent": 3.0, "use_degree": True, "use_sign": True, "use_decay": True, "use_sparse": False, "scale_init": 0.5, "deg_intercept_init": 0.5, "use_bn": False, "use_ln": False, "generated":False, "pre_feature":True, "primula":True
         }
     ),
-     "GGCNcornell3": (GGCN_raf, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/ggcn_Cornell_3.pt",
+     "GGCNsquirrel3": (GGCN_raf, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GGCN_squirrel_3.pt",
         {
-            "nfeat": 1703, "nlayers": 6, "nhidden": 16, "nclass": 5, "dropout": 0.4, "decay_rate": 0.7, "exponent": 3.0, "use_degree": True, "use_sign": True, "use_decay": True, "use_sparse": False, "scale_init": 0.5, "deg_intercept_init": 0.5, "use_bn": False, "use_ln": False, "generated":False, "pre_feature":True, "primula":True
+            "nfeat": 2089, "nlayers": 2, "nhidden": 32, "nclass": 5, "dropout": 0.5, "decay_rate": 1.0, "exponent": 3.0, "use_degree": True, "use_sign": True, "use_decay": True, "use_sparse": False, "scale_init": 0.5, "deg_intercept_init": 0.5, "use_bn": False, "use_ln": False, "generated":False, "pre_feature":True, "primula":True
         }
     ),
-     "GGCNcornell4": (GGCN_raf, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/ggcn_Cornell_4.pt",
+     "GGCNsquirrel4": (GGCN_raf, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GGCN_squirrel_4.pt",
         {
-            "nfeat": 1703, "nlayers": 6, "nhidden": 16, "nclass": 5, "dropout": 0.4, "decay_rate": 0.7, "exponent": 3.0, "use_degree": True, "use_sign": True, "use_decay": True, "use_sparse": False, "scale_init": 0.5, "deg_intercept_init": 0.5, "use_bn": False, "use_ln": False, "generated":False, "pre_feature":True, "primula":True
+            "nfeat": 2089, "nlayers": 2, "nhidden": 32, "nclass": 5, "dropout": 0.5, "decay_rate": 1.0, "exponent": 3.0, "use_degree": True, "use_sign": True, "use_decay": True, "use_sparse": False, "scale_init": 0.5, "deg_intercept_init": 0.5, "use_bn": False, "use_ln": False, "generated":False, "pre_feature":True, "primula":True
         }
     ),
-     "GGCNcornell5": (GGCN_raf, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/ggcn_Cornell_5.pt",
+     "GGCNsquirrel5": (GGCN_raf, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GGCN_squirrel_5.pt",
         {
-            "nfeat": 1703, "nlayers": 6, "nhidden": 16, "nclass": 5, "dropout": 0.4, "decay_rate": 0.7, "exponent": 3.0, "use_degree": True, "use_sign": True, "use_decay": True, "use_sparse": False, "scale_init": 0.5, "deg_intercept_init": 0.5, "use_bn": False, "use_ln": False, "generated":False, "pre_feature":True, "primula":True
+            "nfeat": 2089, "nlayers": 2, "nhidden": 32, "nclass": 5, "dropout": 0.5, "decay_rate": 1.0, "exponent": 3.0, "use_degree": True, "use_sign": True, "use_decay": True, "use_sparse": False, "scale_init": 0.5, "deg_intercept_init": 0.5, "use_bn": False, "use_ln": False, "generated":False, "pre_feature":True, "primula":True
         }
     ),
-     "GGCNcornell6": (GGCN_raf, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/ggcn_Cornell_6.pt",
+     "GGCNsquirrel6": (GGCN_raf, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GGCN_squirrel_6.pt",
         {
-            "nfeat": 1703, "nlayers": 6, "nhidden": 16, "nclass": 5, "dropout": 0.4, "decay_rate": 0.7, "exponent": 3.0, "use_degree": True, "use_sign": True, "use_decay": True, "use_sparse": False, "scale_init": 0.5, "deg_intercept_init": 0.5, "use_bn": False, "use_ln": False, "generated":False, "pre_feature":True, "primula":True
+            "nfeat": 2089, "nlayers": 2, "nhidden": 32, "nclass": 5, "dropout": 0.5, "decay_rate": 1.0, "exponent": 3.0, "use_degree": True, "use_sign": True, "use_decay": True, "use_sparse": False, "scale_init": 0.5, "deg_intercept_init": 0.5, "use_bn": False, "use_ln": False, "generated":False, "pre_feature":True, "primula":True
         }
     ),
-     "GGCNcornell7": (GGCN_raf, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/ggcn_Cornell_7.pt",
+     "GGCNsquirrel7": (GGCN_raf, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GGCN_squirrel_7.pt",
         {
-            "nfeat": 1703, "nlayers": 6, "nhidden": 16, "nclass": 5, "dropout": 0.4, "decay_rate": 0.7, "exponent": 3.0, "use_degree": True, "use_sign": True, "use_decay": True, "use_sparse": False, "scale_init": 0.5, "deg_intercept_init": 0.5, "use_bn": False, "use_ln": False, "generated":False, "pre_feature":True, "primula":True
+            "nfeat": 2089, "nlayers": 2, "nhidden": 32, "nclass": 5, "dropout": 0.5, "decay_rate": 1.0, "exponent": 3.0, "use_degree": True, "use_sign": True, "use_decay": True, "use_sparse": False, "scale_init": 0.5, "deg_intercept_init": 0.5, "use_bn": False, "use_ln": False, "generated":False, "pre_feature":True, "primula":True
         }
     ),
-     "GGCNcornell8": (GGCN_raf, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/ggcn_Cornell_8.pt",
+     "GGCNsquirrel8": (GGCN_raf, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GGCN_squirrel_8.pt",
         {
-            "nfeat": 1703, "nlayers": 6, "nhidden": 16, "nclass": 5, "dropout": 0.4, "decay_rate": 0.7, "exponent": 3.0, "use_degree": True, "use_sign": True, "use_decay": True, "use_sparse": False, "scale_init": 0.5, "deg_intercept_init": 0.5, "use_bn": False, "use_ln": False, "generated":False, "pre_feature":True, "primula":True
+            "nfeat": 2089, "nlayers": 2, "nhidden": 32, "nclass": 5, "dropout": 0.5, "decay_rate": 1.0, "exponent": 3.0, "use_degree": True, "use_sign": True, "use_decay": True, "use_sparse": False, "scale_init": 0.5, "deg_intercept_init": 0.5, "use_bn": False, "use_ln": False, "generated":False, "pre_feature":True, "primula":True
         }
     ),
-     "GGCNcornell9": (GGCN_raf, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/ggcn_Cornell_9.pt",
+     "GGCNsquirrel9": (GGCN_raf, "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/GGCN_squirrel_9.pt",
         {
-            "nfeat": 1703, "nlayers": 6, "nhidden": 16, "nclass": 5, "dropout": 0.4, "decay_rate": 0.7, "exponent": 3.0, "use_degree": True, "use_sign": True, "use_decay": True, "use_sparse": False, "scale_init": 0.5, "deg_intercept_init": 0.5, "use_bn": False, "use_ln": False, "generated":False, "pre_feature":True, "primula":True
+            "nfeat": 2089, "nlayers": 2, "nhidden": 32, "nclass": 5, "dropout": 0.5, "decay_rate": 1.0, "exponent": 3.0, "use_degree": True, "use_sign": True, "use_decay": True, "use_sparse": False, "scale_init": 0.5, "deg_intercept_init": 0.5, "use_bn": False, "use_ln": False, "generated":False, "pre_feature":True, "primula":True
         }
     ),
     "riverGNN": (HeteroGraph, "/Users/lz50rg/Dev/water-hawqs/models/model.pth",
         {
-            "in_sub":2, "in_hru":6, "hidden_dims":16, "out_dims":3, "num_layers":3
+            "in_sub":2, "in_hru_agr":5, "in_hru_urb":10, "hidden_dims":32, "out_dims":3, "num_layers":4
         }
     )
 }
