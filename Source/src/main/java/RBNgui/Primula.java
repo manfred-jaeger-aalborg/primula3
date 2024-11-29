@@ -1781,41 +1781,14 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 
 	private void loadDefaults(){
 
-//		// alpha example
-//		String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-github-examples/tex_file/GNN-RBN-alpha/rbn_acr.rbn";
 
-//		String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/models/only_blue_alpha1_10_5_20240123-151213/RBN_acr_graph_alpha1_10_5.rbn";
-//		String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/alpha1-blue.rdef";
-		//		String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/RBN_alpha_stupid.rbn";
 
-//		String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/RBN_acr_graph_alpha1_10_5.rbn";
-
-// 		String rstinputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-github-examples/tex_file/GNN-RBN-alpha/alpha1-blue.rdef";
-//		String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/purple.rbn";
-//		String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/test_rbn_files/purple_data.rdef";
-		// String rstinputfilestring = "/Users/lz50rg/Desktop/GNN-RBN-alpha-edge/alpha1-edge.rdef";
-
-		// explainer gnn
-//		String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-github-examples/tex_file/GNN-RBN-explainer/rbn_acr.rbn";
-//		String rstinputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-github-examples/tex_file/GNN-RBN-explainer/base_class_0_n6_0.rdef";
-
-//		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/GNN-RBN-alpha/rbn_acr_3layers.rbn";
-//		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/GNN-RBN-alpha/alpha1-blue.rdef";
-
-//		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Mutag/MAP/manual_no2.rbn";
-//		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Mutag/MAP/base_class_0_n3.rdef"; 
+		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/HAWQS/hawqs_1_param.rbn";	
+		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/HAWQS/river_with_data_train.rdef";
 		
-		
-//		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/SWF/swf_nodefeat.rbn";
-//		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/SWF/swf_coordinates_nodefeat_learned-ods-sheet2-l47.rdef";
-
-//		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Water/water.rbn";
-//		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Water/water_xs.rdef";
-
-		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Categorical/homophily.rbn";	
-		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Categorical/homophily.rdef";
-		
-
+//		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Categorical/onecat_param.rbn";	
+//		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Categorical/onecat_sample.rdef";
+//		
 		srsfile = new File(rstinputfilestring);
 		rbnfile = new File(rbninputfilestring);
 

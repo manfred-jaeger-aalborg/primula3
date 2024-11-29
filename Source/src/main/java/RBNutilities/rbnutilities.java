@@ -1655,4 +1655,19 @@ public class rbnutilities extends java.lang.Object
 			result[i]=result[i]/sum;
 		return result;
 	}
+	
+	public static double[] clip(double[] vec,double[][] bounds) {
+		/*
+		 * Clips the components of vec to the max/min values specified in bounds
+		 * Must have: length of vec equal to the length of bounds
+		 */
+		if (vec.length != bounds.length)
+			System.out.println("Warning: incompatible inputs in rbnutilities.clip");
+		double[] result = new double[vec.length];
+		for (int i=0 ;i < vec.length;i++) {
+			result[i]=Math.max(vec[i],bounds[i][0]);
+			result[i]=Math.min(result[i],bounds[i][1]);
+		}
+		return result;
+	}
 }

@@ -322,8 +322,8 @@ public class ProbFormConvComb extends ProbForm {
 			double[] r1g = (double[])r1[1];
 			double[] r2g = (double[])r2[1];
 			double[] r3g = (double[])r3[1];
-			for (int i=1;i<params.size()+1;i++) {
-				result[i]=r1g[i]*r2v+r1v*r2g[i]+(1-r1v)*r3g[i]-r1g[i]*r3v;
+			for (int i=0;i<params.size();i++) {
+				((double[])result[1])[i]=r1g[i]*r2v+r1v*r2g[i]+(1-r1v)*r3g[i]-r1g[i]*r3v;
 			}
 		}
 		else {

@@ -95,8 +95,10 @@ public abstract class GGAtomNode extends GGCPMNode{
 //		}
 //	}
 
-	public double evaluateGrad(Integer sno,String param){
-		return 0.0;
+
+	
+	public Double[] evaluatePartDeriv(Integer sno,String param){
+		return new Double[] {0.0};
 	}
 
 	public GroundAtom myatom(){
@@ -158,7 +160,7 @@ public abstract class GGAtomNode extends GGCPMNode{
 			}
 		}
 		addMeToIndicators(myuppergroundatom);
-		allugas.add(myuppergroundatom);
+		//allugas.add(myuppergroundatom);
 	}
 	
 	public Vector<GGCPMNode> getAllugas(){

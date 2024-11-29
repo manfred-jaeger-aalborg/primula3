@@ -83,7 +83,8 @@ public abstract class GGCPMNode extends GGNode{
 	 * this node depends. Otherwise null.
 	 */
 	private Vector<GGAtomSumNode> mysumindicators;
-	private int numvals;
+	
+
 	
 	public GGCPMNode(GradientGraphO gg,
 			CPModel cpm,
@@ -107,7 +108,7 @@ public abstract class GGCPMNode extends GGNode{
 		mymaxindicators = new Vector<GGAtomMaxNode>();
 		mysumindicators = new Vector<GGAtomSumNode>();	
 		isuga = false;
-		numvals = cpm.numvals();
+		outDim = cpm.numvals();
 //		dependsOnParam = new boolean[gg.numberOfParameters()];
 //		for (int i=0; i< dependsOnParam.length; i++)
 //			dependsOnParam[i]=false;
@@ -301,6 +302,13 @@ public abstract class GGCPMNode extends GGNode{
 	 */
 	public abstract Double[] evaluate(Integer sno);
 	
+	/*
+	 * Partial derivative with regard to sample sno and for the parameter param.
+	 * 
+	 * Dimension of return array equal to this.outDim()
+	 */
+	public abstract Double[] evaluatePartDeriv(Integer sno, String param) throws RBNNaNException;
+	
 	public void setMyindicator(GGAtomNode mind){
 		myindicator = mind;
 	}
@@ -314,14 +322,7 @@ public abstract class GGCPMNode extends GGNode{
 //	}
 //	
 	
-	public boolean dependsOn(String param){
-		return (gradient.get(param)!=null);
-	}
 
-	public void setDependsOn(String param){
-		gradient.put(param, Double.NaN);
-	}
-	
 	
 	public void setIsuga(boolean tv){
 		isuga = tv;
@@ -409,15 +410,7 @@ public abstract class GGCPMNode extends GGNode{
 //		values_for_samples[sno]=value;
 //	}
 //	
-
-	public int getNumvals() { return this.numvals; }
 	
-	public int outDim() {
-		if (this.isScalar)
-			return 1;
-		else
-			return this.numvals;
-	}
 
 	public abstract boolean isBoolean();
 	public TreeSet<GGCPMNode> parents(){
@@ -457,6 +450,14 @@ public abstract class GGCPMNode extends GGNode{
 		}
 	}
 	
+	public void resetUpstream(Integer sno) {
+		if (ancestors == null) 
+			ancestors = ancestors();
+		
+		for (GGCPMNode anc: ancestors)
+			anc.resetValue(sno);
+	}
+	
 	/** Re-evaluates all ancestor nodes of this node. 
 	 * Used to propagate value changes when the value of this
 	 * node has been changed. Mostly applied when this is 
@@ -465,11 +466,8 @@ public abstract class GGCPMNode extends GGNode{
 	 */
 	public void reEvaluateUpstream(Integer sno){
 		
-		if (ancestors == null) 
-			ancestors = ancestors();
+		resetUpstream(sno);
 		
-		for (GGCPMNode anc: ancestors)
-			anc.resetValue(sno);
 		for (GGCPMNode anc: ancestors)
 			anc.evaluate(sno);
 	}

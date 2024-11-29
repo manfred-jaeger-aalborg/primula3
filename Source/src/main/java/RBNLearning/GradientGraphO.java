@@ -113,6 +113,7 @@ public class GradientGraphO extends GradientGraph{
 	public GradientGraphO(Primula mypr, 
 			RelData data, 
 			Hashtable<String,Integer> params,
+			double[][] mmbds,
 			GradientGraphOptions go, 
 			Hashtable<Rel,GroundAtomList> mapats,
 			int m,
@@ -139,6 +140,8 @@ public class GradientGraphO extends GradientGraph{
 			}
 		}
 
+		this.minmaxbounds=mmbds;
+		
 		//parameters = myPrimula.getParamNumRels();
 		allNodes = new Hashtable<String,GGCPMNode>();
 
@@ -304,7 +307,7 @@ public class GradientGraphO extends GradientGraph{
 				osd = rdoi.oneStrucDataAt(observcaseno);
 
 				Hashtable<String,Object[]>  evaluated = new Hashtable<String,Object[]>();
-				System.out.println("\t\tnum rbn pfs: " + rbn.NumPFs());
+				//System.out.println("\t\tnum rbn pfs: " + rbn.NumPFs());
 				for (int i=0; i<rbn.NumPFs(); i++){
 					nextcpm = rbn.cpmod_prelements_At(i);
 					vars = rbn.arguments_prels_At(i);
@@ -393,8 +396,8 @@ public class GradientGraphO extends GradientGraph{
 										likfactor = (Double)pfeval;
 									}
 								}
-								if (pfeval instanceof Double[]) {
-									likfactor = ((Double[])pfeval)[instvalue];
+								if (pfeval instanceof double[]) {
+									likfactor = ((double[])pfeval)[instvalue];
 								}
 
 								switch (objective) {
@@ -412,7 +415,7 @@ public class GradientGraphO extends GradientGraph{
 							}
 						} /* if (!mapatoms.contains(nextrel,nexttup)) */
 					} /* for (int k=0;k<inrel.size();k++) */
-					System.out.println();
+					//System.out.println();
 				} /* for int i; i<rbn.NumPFs()*/
 			} /* int j=0; j<rdoi.numObservations(); */
 
@@ -462,29 +465,33 @@ public class GradientGraphO extends GradientGraph{
 			//					" as " + fnode.getMyatom());
 		}
 
-
+		
+		/**
+		 * Set the depends_on_sample fields
+		 */
 		if (sumindicators.size() > 0){
 			numchains = myggoptions.getNumChains();
 			windowsize = myggoptions.getWindowSize();
-
-			/*
-			 * Initialize values_for_samples arrays for all ancestors of sumindicators
-			 */
+			
 			for (GGAtomSumNode nextggin: sumindicators) {
-				nextggin.init_values_for_samples();
+				nextggin.setDepends_on_sample(true);
 				for (GGNode anc: nextggin.ancestors()) {
-					anc.init_values_for_samples();
 					anc.setDepends_on_sample(true);
 				}
 			}
-			llnode.init_values_for_samples();
 			llnode.setDepends_on_sample(true);
-
+			for (GGNode sumuga: sumindicators)
+				sumuga.setDepends_on_sample(true);
 		}
-		else numchains = 0;
-
-
-
+		
+		/**
+		 * Initialize the sample value arrays
+		 */	
+		for (GGNode ggn: this.allNodes.values()) {
+			ggn.init_values_and_grad(mode==MAPMODE);
+		}
+		llnode.init_values_and_grad(mode==MAPMODE);
+		
 		if (numchains >1 && objective != LearnModule.UseLik)
 			throw new RBNRuntimeException("Inconsistent combination of options: use log-likelihood and numchains = " +numchains);	
 
@@ -555,32 +562,7 @@ public class GradientGraphO extends GradientGraph{
 			}
 		}
 
-		/* Construct upper and lower bounds for parameters */
-		minmaxbounds = new double[parameters.size()][2];
-
-		//		for (int i=0;i<=maxrbnparam;i++){
-		//			minmaxbounds[i][0] = 0.001;
-		//			minmaxbounds[i][1] = 0.999;
-		//		}
-
-		for (String par: parameters.keySet()){
-			int pidx = parameters.get(par);
-			if (myPrimula.isRBNParameter(par)) {
-				if (par.charAt(0)=='#') {
-					minmaxbounds[pidx][0] = 0.001;
-					minmaxbounds[pidx][1] = 0.999;
-				}
-				else {
-					minmaxbounds[pidx][0] = Double.NEGATIVE_INFINITY;
-					minmaxbounds[pidx][1] = Double.POSITIVE_INFINITY;
-				}
-			}
-			else {
-				NumRel nextnr = myPrimula.getRels().getNumRel(GroundAtom.relnameFromString(par));
-				minmaxbounds[pidx][0] = nextnr.minval();
-				minmaxbounds[pidx][1] = nextnr.maxval();
-			}
-		}
+		
 
 		llnode.initllgrads(parameters.size());
 
@@ -688,7 +670,7 @@ public class GradientGraphO extends GradientGraph{
 		double[] result = new double[paramNodes.length];
 		for (int i=0;i<paramNodes.length;i++){
 			if (paramNodes[i]!= null)
-				result[i]=paramNodes[i].value()[0]; // since it is coming from a constant, take the first element
+				result[i]=paramNodes[i].getCurrentParamVal(); 
 			else result[i] = 0.5;
 		}
 		return result;
@@ -703,7 +685,7 @@ public class GradientGraphO extends GradientGraph{
 			throws RBNNaNException{
 		llnode.evaluate(null);
 		if (!likelihoodonly)
-			llnode.evaluateGradients();
+			llnode.evaluateGradients(null);
 	}
 
 
@@ -721,14 +703,14 @@ public class GradientGraphO extends GradientGraph{
 	public void resetValues(Integer sno, boolean valueonly){
 		llnode.resetValue(sno);
 		if (!valueonly)
-			llnode.resetGradient();
+			llnode.resetGradient(sno);
 		Enumeration<GGCPMNode> e = allNodes.elements();
 		GGNode ggn;
 		while (e.hasMoreElements()){
 			ggn = (GGNode)e.nextElement();
 			ggn.resetValue(sno);
 			if (!valueonly)
-				ggn.resetGradient();
+				ggn.resetGradient(sno);
 		}	
 	}
 
@@ -769,48 +751,48 @@ public class GradientGraphO extends GradientGraph{
 			for (GGAtomMaxNode mxnode: maxind_as_ts()) {
 				mxnode.setRandomInst();
 			}
-		/* Now find initial values for the k Markov chains */
-		for (int k=0;k<numchains && !abortforsum;k++){
-			successforsum = false;
-			while (!successforsum && !abortforsum){
-				resetValues(k*windowsize,true);
+			/* Now find initial values for the k Markov chains */
+			for (int k=0;k<numchains && !abortforsum;k++){
+				successforsum = false;
+				while (!successforsum && !abortforsum){
+					resetValues(k*windowsize,true);
 
-				for (int i=0;i<sumindicators.size();i++){
-					coin = Math.random();
-					if (coin>0.5)
-						sumindicators.elementAt(i).setSampleVal(k*windowsize,1);
-					else
-						sumindicators.elementAt(i).setSampleVal(k*windowsize,0);
-				}
+					for (int i=0;i<sumindicators.size();i++){
+						coin = Math.random();
+						if (coin>0.5)
+							sumindicators.elementAt(i).setSampleVal(k*windowsize,1);
+						else
+							sumindicators.elementAt(i).setSampleVal(k*windowsize,0);
+					}
 
-				llnode.evaluate(k*windowsize);
-				double lik = llnode.loglikelihood(k*windowsize);
-				if (lik!=Double.NEGATIVE_INFINITY)
-					successforsum=true;   
-				else{
-					failcountforsum++;
-					if (failcountforsum > maxfailcountforsum)
-						abortforsum = true;
+					llnode.evaluate(k*windowsize);
+					double lik = llnode.loglikelihood(k*windowsize);
+					if (lik!=Double.NEGATIVE_INFINITY)
+						successforsum=true;   
+					else{
+						failcountforsum++;
+						if (failcountforsum > maxfailcountforsum)
+							abortforsum = true;
+					}
 				}
 			}
-		}
-		if (abortforsum){
-			failcount++;
-			if (failcount > maxfailcount)
-				abort = true;
-		} else if (numchains != 0) success = true;
-
-		if (numchains == 0) {
-			llnode.evaluate(null);
-			if (llnode.likelihood()[0] != 0)
-				success = true;
-			else{
+			if (abortforsum){
 				failcount++;
 				if (failcount > maxfailcount)
 					abort = true;
+			} else if (numchains != 0) success = true;
+
+			if (numchains == 0 && mode==MAPMODE) { 
+				llnode.evaluate(null);
+				if (llnode.likelihood()[0] != 0)
+					success = true;
+				else{
+					failcount++;
+					if (failcount > maxfailcount)
+						abort = true;
+				}
 			}
 		}
-	}
 
 	// Only relevant when numchains>0. At this point, the sampledVals at GGAtomSumNodes look like this:
 	// [0,null,null,1,null,null] (here:  numchains=2, windowsize=3) Setting windowindex=1 means that 
@@ -1151,9 +1133,9 @@ public double mapInference(GGThread mythread)
 //	}
 
 
-public void showLikelihoodNode(RelStruc A){
-	System.out.println("Likelihood" + llnode.value());
-}
+//public void showLikelihoodNode(RelStruc A){
+//	System.out.println("Likelihood" + llnode.value());
+//}
 
 
 public void showMaxAtomsVals() {
@@ -1181,11 +1163,7 @@ public void showSumAtomsVals() {
 public void showAllNodes(int verbose,RelStruc A){
 	if (verbose >0){
 		System.out.println("**** Node " + llnode.name());
-		if (llnode.value == null)
-			System.out.println("**** Value null");
-		else
-			System.out.println("**** Value " + llnode.value());
-		// System.out.println("**** Bounds " + llnode.lowerBound() + "," + llnode.upperBound());
+			System.out.println("**** Log likelihood: " + llnode.loglikelihood());
 		System.out.println();
 	}
 	if (verbose >5){
@@ -1262,7 +1240,7 @@ protected double[] thetasearch(double[] currenttheta,
 	boolean terminate = false;
 
 
-	double[] result = new double[currenttheta.length+4];
+	double[] result = new double[currenttheta.length+3];
 
 
 	/* Initialize ascent strategy specific variables:*/
@@ -1492,7 +1470,7 @@ public double[] learnParameters(GGThread mythread, int fullorincremental, boolea
 	 * 
 	 * resultArray[paramNodes.length+3]: the log-likelihood of the full data (cf. thetasearch)                                            
 	 */
-	double[] resultArray = new double[paramNodes.length+4];
+	double[] resultArray = new double[paramNodes.length+3];
 	double[] lastthetas = null;
 
 	/* First find an 
@@ -1504,7 +1482,7 @@ public double[] learnParameters(GGThread mythread, int fullorincremental, boolea
 	if (myggoptions.ggverbose())
 		System.out.print("< Initialize Markov Chains ... ");
 
-	if (mode==LEARNMODE){
+	if (mode==LEARNMODE && numchains>0){
 		while (!success && !mythread.isstopped()){
 			if (initIndicators(mythread))
 				success = true;
@@ -1610,7 +1588,7 @@ protected double[] linesearch(double[] oldthetas,
 		lambda = 1;
 		boolean terminate =false;
 		lastrightvalue = new double[2];
-
+		double[] lastrightbound = leftbound;
 
 		//System.out.print("left: " + StringOps.arrayToString(leftbound,"[","]") + "   " + StringOps.arrayToString(leftvalue,"(",")"));
 		while (!terminate && lambda != Double.POSITIVE_INFINITY){
@@ -1635,14 +1613,32 @@ protected double[] linesearch(double[] oldthetas,
 			else{
 				lambda = 2*lambda;
 				lastrightvalue = rightvalue;
+				lastrightbound = rightbound.clone();
 			}
-			if (myggoptions.ggverbose())
-				System.out.print(".");
 		}
-		if (myggoptions.ggverbose())
-			System.out.println();
+		if (Double.isInfinite(rightvalue[0]) || Double.isNaN(rightvalue[0]) ) { // went too far in the last step; have to find a point 
+																				// between lastrightbound and rightbound
+			terminate = false;
+			double[] middle;
+			double[] middlevalue;
+			while (!terminate) {
+				middle = midpoint(lastrightbound,rightbound,0.5);
+				setParameters(middle);
+				evaluateLikelihoodAndPartDerivs(true);
+				middlevalue = llnode.objectiveAsSmallDouble();
+				if (Double.isInfinite(rightvalue[0]) || Double.isNaN(rightvalue[0]) )
+					rightbound=middle;
+				if (likelihoodGreater(leftvalue,middlevalue)) {
+					rightbound = middle;
+					terminate = true;
+				}
+				if (likelihoodGreater(middlevalue,leftvalue)) {
+					lastrightbound = middle;
+				}	
+			}	
+		}
 	}
-	else{
+	else{ // not lambda == Double.POSITIVE_INFINITY, i.e., defines boundary of feasible region
 		rightbound = rbnutilities.arrayAdd(leftbound, rbnutilities.arrayScalMult(gradient,lambda));
 	}
 
@@ -1854,8 +1850,10 @@ protected void setParameters(double[] thetas){
 	if (thetas.length != paramNodes.length)
 		System.out.println("Size mismatch in GradientGraphO.setParameters!");
 	for (int i=0;i<thetas.length;i++)
-		if (paramNodes[i]!=null)
+		if (paramNodes[i]!=null) {
 			paramNodes[i].setCurrentParamVal(thetas[i]);
+			paramNodes[i].resetUpstream(null);
+		}
 }
 
 public double[] getParameters(){
@@ -1867,7 +1865,7 @@ public double[] getParameters(){
 
 public double[] getGradient()
 		throws RBNNaNException{
-	llnode.evaluateGradients();
+	llnode.evaluateGradients(null);
 	return llnode.gradientAsDouble();
 }
 

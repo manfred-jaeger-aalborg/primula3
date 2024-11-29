@@ -50,11 +50,13 @@ public class GGSoftMaxNode extends GGCPMNode{
 	 *  - NaN otherwise
 	 */
 	Double[] evalOfPFs; 
-	/*
-	 * The current values of all probability formulas. Equal to evalOfPFs in components where
-	 * evalOfPFs != NaN
-	 */
-	double[] current_evalofpfs;
+	
+	
+//	/*
+//	 * The current values of all probability formulas. Equal to evalOfPFs in components where
+//	 * evalOfPFs != NaN
+//	 */
+//	double[] current_evalofpfs;
 	
 
 	/** cpmsm must be ground ! */
@@ -72,12 +74,12 @@ public class GGSoftMaxNode extends GGCPMNode{
 					throws RBNCompatibilityException
 	{
 		super(gg,cpmsm,A,I);
-		isScalar = false;
+		outDim = cpmsm.numvals();
 
-		evalOfPFs = new Double[cpmsm.numvals()];
-		current_evalofpfs = new double[cpmsm.numvals()];
+		evalOfPFs = new Double[outDim];
+//		current_evalofpfs = new double[cpmsm.numvals()];
 
-		for (int i = 0; i<cpmsm.numvals(); i++){
+		for (int i = 0; i<outDim; i++){
 			ProbForm pf = cpmsm.pfAt(i);
 			evalOfPFs[i]= (double)(pf.evaluate(A, 
 					I , 
@@ -111,46 +113,54 @@ public class GGSoftMaxNode extends GGCPMNode{
 			}
 			else {
 				children.add(null);
-				current_evalofpfs[i]=evalOfPFs[i];
+//				current_evalofpfs[i]=evalOfPFs[i];
 			}
 		}
 	}
 
 
 
-	private void evaluatePFs(Integer sno) {
-		for (int i=0;i<current_evalofpfs.length;i++) {
-			if (children.elementAt(i)!=null)
-				current_evalofpfs[i] = children.elementAt(i).evaluate(sno)[0]; // return the first element, all the children must be scalar! (scalar values for the softmax function)
-		}
-	}
+//	private void evaluatePFs(Integer sno) {
+//		for (int i=0;i<current_evalofpfs.length;i++) {
+//			if (children.elementAt(i)!=null)
+//				current_evalofpfs[i] = children.elementAt(i).evaluate(sno)[0]; // return the first element, all the children must be scalar! (scalar values for the softmax function)
+//		}
+//	}
 
 	public Double[] evaluate(Integer sno){
-
+		
 		if (this.depends_on_sample && sno==null) {
 			for (int i=0;i<thisgg.numchains*thisgg.windowsize;i++)
 				this.evaluate(i);
 			return null;
-		}
-			
+		}			
 		if (this.depends_on_sample && is_evaluated_for_samples[sno]) 
 				return this.values_for_samples[sno];
-		
-		if (!this.depends_on_sample && is_evaluated)
-			return this.value;
-		
-		this.evaluatePFs(sno);
-		Double[] result = rbnutilities.softmax(current_evalofpfs);
+		if (!this.depends_on_sample && is_evaluated_for_samples[0])
+			return this.values_for_samples[0];
 
+		
+		double[] valsofpfs = new double[this.outDim];
+		
+		for (int i=0;i<this.outDim;i++) {
+			if (children.elementAt(i)!=null)
+				valsofpfs[i] = children.elementAt(i).evaluate(sno)[0]; // return the first element, all the children 
+			                                                           // must be scalar! (scalar values for the softmax function)
+			else
+				valsofpfs[i] = evalOfPFs[i];
+		}
+
+		Double[] result = rbnutilities.softmax(valsofpfs);
+
+		
 		if (this.depends_on_sample) {
 			values_for_samples[sno] = result;
 			is_evaluated_for_samples[sno]=true;
 		}
 		else {
-			value = result;
-			is_evaluated = true;
+			values_for_samples[0] = result;
+			is_evaluated_for_samples[0]=true;
 		}
-			
 		return result;
 	}
 
@@ -164,42 +174,51 @@ public class GGSoftMaxNode extends GGCPMNode{
 //		System.out.println("GGSoftMaxNode.evaluateBounds is called but not implemented!");
 //	}
 
-	public double evaluateGrad(Integer sno, String param)
+	public Double[] evaluatePartDeriv(Integer sno, String param)
 	throws RBNNaNException
 	{
-		// TODO: complete check/revision
-//		if (gradient.get(param)== null){
-//			return 0.0;
-//		}
-//		else {
-//			double currval = gradient.get(param);
-//			if (!Double.isNaN(currval)){
-//				return currval;
-//			}
-//		}
-//		
-//		//TODO: for now prioritize transparency over efficiency; should check whether 
-//		// better arrangements can be found for combining evaluate and evaluateGrad
-//		// and simultaneous gradient evaluation for all parameters
-//		this.evaluatePFs(0); //TODO: this must be fixed!
-//		double pfsum = rbnutilities.arraySum(current_evalofpfs);
-//		
-//		double derivsum = 0;
-//		for (int i=0;i<current_evalofpfs.length && children.elementAt(i)!=null;i++) {
-//			derivsum+=Math.exp(current_evalofpfs[i])*children.elementAt(i).evaluateGrad(param);
-//		}
-//		
-//		double result= 0;
-//		if (children.elementAt(this.instval())!=null)
-//			result += children.elementAt(this.instval()).evaluateGrad(param)*pfsum;
-//		result -= current_evalofpfs[this.instval()]*derivsum;
-//		result /= Math.pow(derivsum,2);
-//
-//		gradient.put(param,result);
-//		
-//		//System.out.println("Gradient value (GGConvC): " + result);
-//		return result;
-		return 0;
+		if (!dependsOn(param))
+			return new Double[] {0.0}; // In this case need not fill the gradient_for_samples array
+		
+		if (this.depends_on_sample && sno==null) {
+			for (int i=0;i<thisgg.numchains*thisgg.windowsize;i++)
+				this.evaluatePartDeriv(i,param);
+			return null;
+		}
+		
+		Double[] g;
+		if (this.depends_on_sample) 
+			g = gradient_for_samples.get(sno).get(param);
+		else
+			g = gradient_for_samples.get(0).get(param);
+		if (g!=null && g[0] != Double.NaN)
+			return g;
+		
+		
+		Double[] values = null;
+		if (this.depends_on_sample)
+			values = values_for_samples[sno];
+		else
+			values = values_for_samples[0];
+		
+		double derivsum = 0;
+		for (int i=0;i<this.outDim && children.elementAt(i)!=null;i++) {
+			derivsum+=values[i]*children.elementAt(i).evaluatePartDeriv(sno,param)[0];
+		}
+		
+		Double[] result= new Double[this.outDim];
+		
+		for (int i=0;i<this.outDim && children.elementAt(i)!=null;i++) {
+			result[i]=values[i]*(children.elementAt(i).evaluatePartDeriv(sno,param)[0]-derivsum);
+		}
+
+		if (sno != null)
+			gradient_for_samples.get(sno).put(param,result);
+		else
+			gradient_for_samples.get(0).put(param,result);
+		
+		//System.out.println("Gradient value (GGConvC): " + result);
+		return result;
 	}
 
 }

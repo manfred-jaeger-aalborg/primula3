@@ -69,39 +69,46 @@ public class GGAtomEqualityNode extends GGCPMNode{
 
     @Override
     public Double[] evaluate(Integer sno) {
-        if (is_evaluated) {
-            if (this.values_for_samples==null)
-                return value;
-            else
-                return this.values_for_samples[sno];
-        }
-
-        double[] final_res = new double[2];
+        
+		if (this.depends_on_sample && sno==null) {
+			for (int i=0;i<thisgg.numchains*thisgg.windowsize;i++)
+				this.evaluate(i);
+			return null;
+		}			
+		if (this.depends_on_sample && is_evaluated_for_samples[sno]) 
+				return this.values_for_samples[sno];
+		if (!this.depends_on_sample && is_evaluated_for_samples[0])
+			return this.values_for_samples[0];
+		
+        double[] both_sides = new double[2];
+        Double[] value = new Double[1];
 
         for (int i = 0; i < 2; i++) {
         	if (!Double.isNaN(evalOfPFs[i]))
-        		final_res[i]=evalOfPFs[i];
+        		both_sides[i]=evalOfPFs[i];
         	else
-        		final_res[i]=children.elementAt(i).evaluate(sno)[0]; // child is scalar
+        		both_sides[i]=children.elementAt(i).evaluate(sno)[0]; // child is scalar
         }
-        if (final_res[0] == final_res[1])
-            value = new Double[]{1.0};
+        if (both_sides[0] == both_sides[1])
+        	value[0] = 1.0;
         else
-            value = new Double[]{0.0};
+        	value[0] = 0.0;
 
-		if (this.depends_on_sample) {
+        if (this.depends_on_sample) {
 			values_for_samples[sno] = value;
 			is_evaluated_for_samples[sno]=true;
 		}
 		else {
-			is_evaluated = true;
+			values_for_samples[0] = value;
+			is_evaluated_for_samples[0]=true;
 		}
+
         return value;
     }
 
     @Override
-    public double evaluateGrad(Integer sno, String param) throws RBNNaNException {
-        return 0;
+    public Double[] evaluatePartDeriv(Integer sno, String param) throws RBNNaNException {
+        return new Double[] {0.0};
     }
 
 

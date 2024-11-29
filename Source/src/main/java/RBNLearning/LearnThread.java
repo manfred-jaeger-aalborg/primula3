@@ -134,6 +134,37 @@ public class LearnThread extends GGThread {
 				pidx++;
 			}
 //			
+			
+			/*
+			 *  Create a 2d array that contains for all parameters the relevant maximum and minimum bounds
+			 *  First index is the index of a parameter according to the parameters hashtable
+			 */
+			double[][] minmaxbounds = new double[parameters.size()][2];
+
+			//		for (int i=0;i<=maxrbnparam;i++){
+			//			minmaxbounds[i][0] = 0.001;
+			//			minmaxbounds[i][1] = 0.999;
+			//		}
+
+			for (String par: parameters.keySet()){
+				pidx = parameters.get(par);
+				if (myprimula.isRBNParameter(par)) {
+					if (par.charAt(0)=='#') {
+						minmaxbounds[pidx][0] = 0.001;
+						minmaxbounds[pidx][1] = 0.999;
+					}
+					else {
+						minmaxbounds[pidx][0] = Double.NEGATIVE_INFINITY;
+						minmaxbounds[pidx][1] = Double.POSITIVE_INFINITY;
+					}
+				}
+				else {
+					NumRel nextnr = myprimula.getRels().getNumRel(GroundAtom.relnameFromString(par));
+					minmaxbounds[pidx][0] = nextnr.minval();
+					minmaxbounds[pidx][1] = nextnr.maxval();
+				}
+			}
+			
 //			/* The ground numerical relation atoms divided into blocks corresponding to the blocks in paramnumrels */
 //			String[][] nrelparamblocks =new String[parameternumrels.length][];
 
@@ -262,7 +293,7 @@ public class LearnThread extends GGThread {
 					//||(threadascentstrategy == LearnModule.AscentAdam && myLearnModule.getKeepGGs())
 					) {
 				/* In this case can build one gg once and for all outside the restart-loop */
-				gg = buildGGO(parameters,true,databatches[0],myLearnModule.getObjective());
+				gg = buildGGO(parameters,minmaxbounds,true,databatches[0],myLearnModule.getObjective());
 				//gg.showAllNodes(6, A);
 			}
 
@@ -277,9 +308,11 @@ public class LearnThread extends GGThread {
 					switch (threadascentstrategy){
 					case LearnModule.AscentBatch:
 						results = doOneRestartBatch(gg,A,parameternumrels,parameters,rest==0);
+						System.out.println("Final: " +rbnutilities.arrayToString(results));
 						break;
 					case LearnModule.AscentAdam:
-						results = doOneRestartStochGrad(A,parameternumrels,parameters,rest==0,myLearnModule.getUseGGs(),profiler);
+						results = doOneRestartStochGrad(A,parameternumrels,parameters,minmaxbounds,
+								rest==0,myLearnModule.getUseGGs(),profiler);
 						break;
 //					case LearnModule.AscentBlock:
 //						results = doOneRestartBlock(A,parameternumrels,parameters,paramblocks,rest==0);
@@ -322,6 +355,7 @@ public class LearnThread extends GGThread {
 	private double[] doOneRestartStochGrad(RelStruc A,
 			String[][] parameternumrels,
 			Hashtable<String,Integer> parameters,
+			double[][] minmaxbounds,
 			Boolean isfirstrestart,
 			Boolean usegradientgraphs,
 			Profiler profiler)
@@ -383,7 +417,7 @@ public class LearnThread extends GGThread {
 			break;
 		case LearnModule.AscentAdam:
 			
-			System.out.println("# Iteration" + '\t' + "Time"+ '\t' +  "stepsize"  + '\t' +  "objective" + '\t' + "accuracy");
+			System.out.println("# Iteration" + '\t' + "Time"+ '\t' +  "stepsize"  + '\t' +  "objective");
 			break;
 
 		}
@@ -409,7 +443,8 @@ public class LearnThread extends GGThread {
 				if (usegradientgraphs) {
 					// if (myLearnModule.getUseGGs()) {
 						if (isfirstloop) {
-							gg = buildGGO(parameters,isfirstrestart && isfirstloop,databatches[i], myLearnModule.getObjective());
+							gg = buildGGO(parameters,minmaxbounds,
+									isfirstrestart && isfirstloop,databatches[i], myLearnModule.getObjective());
 							allggs[i]=gg;
 						}
 						else {
@@ -449,15 +484,11 @@ public class LearnThread extends GGThread {
 								profiler);
 
 						
-						gradient = lossgrad[2];
+						gradient = lossgrad[1];
 						batchobj= lossgrad[0][0];
-						batchconfusion=lossgrad[1];
-						batchaccuracy=(batchconfusion[0]+batchconfusion[3])/(batchconfusion[0]+batchconfusion[1]+batchconfusion[2]+batchconfusion[3]);
 					}
 					epochobj+=batchobj;
 					
-					
-					epochconfusion = rbnutilities.arrayAdd(epochconfusion, batchconfusion);
 					
 					
 					firstmomentest = rbnutilities.arrayAdd(
@@ -485,13 +516,8 @@ public class LearnThread extends GGThread {
 					/* Proper ADAM: */
 					newparamvals = rbnutilities.arrayAdd(oldparamvals,
 							rbnutilities.arrayScalMult(incrementvec,alpha));
-					if (usegradientgraphs)
-						newparamvals=gg.clipToFeasible(newparamvals);
+					newparamvals=rbnutilities.clip(newparamvals,minmaxbounds);
 					
-					/* TODO: move clipping method somewhere else ...*/
-
-				
-
 					//System.out.println(itcount + "\t" + rbnutilities.euclidDist(oldparamvals, newparamvals) + "\t" +   batchobj + "\t" + batchaccuracy );
 					myprimula.setParameters(parameters,newparamvals);
 					
@@ -507,8 +533,6 @@ public class LearnThread extends GGThread {
 				System.out.println("Warning: NaN values in current parameter values; terminate stochastic gradient");
 			}
 
-			
-			double curracc = (epochconfusion[0]+epochconfusion[3])/(epochconfusion[0]+epochconfusion[1]+epochconfusion[2]+epochconfusion[3]);
 					
 			if (epochobj > bestobj){
 				bestobj = epochobj;
@@ -529,7 +553,7 @@ public class LearnThread extends GGThread {
 			case LearnModule.AscentAdam:
 				long tick = System.currentTimeMillis()-startiterations;
 				System.out.println(itcount + "\t" +  tick + "\t" + rbnutilities.euclidDist(beforeepochparamvals, newparamvals) 
-				+ "\t" +   epochobj + "\t" + curracc );
+				+ "\t" +   epochobj );
 				break;
 
 			}
@@ -565,8 +589,6 @@ public class LearnThread extends GGThread {
 
 		if (initParams(A,alldata,parameternumrels,null)){
 			gg.setParametersFromAandRBN();
-			
-			
 			return gg.learnParameters(this,GradientGraph.FullLearn,true);
 		}
 		else{
@@ -648,7 +670,8 @@ public class LearnThread extends GGThread {
 //	}
 
 
-	private GradientGraphO buildGGO(Hashtable<String,Integer> parameters,Boolean showInfoInPrimula,RelData datafold,int obj){
+	private GradientGraphO buildGGO(Hashtable<String,Integer> parameters,double[][] minmaxbounds,
+			Boolean showInfoInPrimula,RelData datafold,int obj){
 		GradientGraphO gg = null;
 		if (showInfoInPrimula)
 			myprimula.showMessageThis("Building Gradient Graph ...");
@@ -657,6 +680,7 @@ public class LearnThread extends GGThread {
 			gg = new GradientGraphO(myprimula,
 					datafold,
 					parameters,
+					minmaxbounds,
 					myLearnModule, 
 					null,
 					GradientGraphO.LEARNMODE,
@@ -708,21 +732,26 @@ public class LearnThread extends GGThread {
 		return success;
 	}
 
-	private double[][] getLossAndGradient(RelData data, RBN rbn, Hashtable<String,Integer> parameters, int lossfunc, boolean lossonly, Profiler profiler) 
+	private double[][] getLossAndGradient(RelData data, 
+			RBN rbn, 
+			Hashtable<String,Integer> parameters, 
+			int lossfunc, 
+			boolean lossonly, 
+			Profiler profiler) 
 			throws RBNCompatibilityException
 	{
 		//System.out.println("debug: getLossAndGradient for data with cases: " + data.size());
-		double[][] result = new double[3][];
+		double[][] result = new double[2][];
 		result[0] = new double[1]; // for the likelihood value -- may need to be changed to double[2] if SmallDoubles are needed for plain likelihood objective
-		result[1] = new double[4]; // for the confusion matrix in order tp,fp,fn,tn
 		if (!lossonly)
-			result[2] = new double[parameters.size()]; // for the gradient
+			result[1] = new double[parameters.size()]; // for the gradient
 		else 
-			result[2] = new double[0];
+			result[1] = new double[0];
 
 
 		Object[] lg;
-		Object grad;
+		double pval =0;
+		Object grad = null;
 		OneStrucData osd;
 		
 		for (int inputcaseno=0; inputcaseno<data.size(); inputcaseno++){
@@ -738,64 +767,51 @@ public class LearnThread extends GGThread {
 					CPModel nextcpm = rbn.cpmod_prelements_At(i);
 					String[] vars = rbn.arguments_prels_At(i);
 					Rel nextrel = rbn.relAt(i);
-					for (int ti = 0; ti <= 1 ; ti++) {
-						Vector<int[]> inrel;
-						if (ti == 0)
-							inrel = osd.allFalse(nextrel);
-						else
-							inrel = osd.allTrue(nextrel);
-						for (int[] tuple: inrel) {
-							long beforeeval = System.currentTimeMillis();
-							 lg = nextcpm.evaluate(A, 
-									osd, 
-									vars, 
-									tuple, 
-									true, 
-									true, 
-									null, 
-									true, 
-									evaluated, 
-									parameters,
-									myLearnModule.getType_of_gradient(),
-									lossonly,
-									profiler);
-							//System.out.print(".");
-							if (profiler != null)
-								profiler.addTime(Profiler.TIME_PFEVALUATE, System.currentTimeMillis()-beforeeval); 
-							double pfval = (double)lg[0];
-							grad = lg[1];
-
-							if (pfval == 1 & ti == 0)
-								System.out.println("Got prob 1 for false atom");
-							if (pfval == 0 & ti == 1)
-								System.out.println("Got prob 0 for true atom");
-							/* The confusion matrix: */
-							if (pfval >=0.5) {
-								if (ti ==0)
-									result[1][1]+=1;  //FP
-								else
-									result[1][0]+=1;  //TP
+					Vector<int[]> inrel = osd.allInstantiated(nextrel);
+					for (int[] tuple: inrel) {
+						int val = (int)osd.valueOf(nextrel,tuple);
+						lg = nextcpm.evaluate(A, 
+								osd, 
+								vars, 
+								tuple, 
+								val, 
+								true,  
+								true, 
+								null,
+								false,
+								evaluated,
+								parameters,
+								myLearnModule.getType_of_gradient(),
+								lossonly,
+								profiler);
+					
+					
+					
+			                // Getting the actual probability of the ground atom nextrel(tuple):
+							
+							if (nextrel instanceof BoolRel) {
+								if (val == 1) {
+									pval = (double)lg[0];
+									if (!lossonly)
+										grad = lg[1];
+								}
+								else {
+									pval = 1- (double)lg[0];
+									if (!lossonly)
+										grad = rbnutilities.arrayScalMult((double[])lg[1], -1);
+								}
 							}
-							else {
-								if (ti ==0)
-									result[1][3]+=1;  //TN
-								else
-									result[1][2]+=1;  //FN
+							if (nextrel instanceof CatRel) {
+								pval = ((double[])lg[0])[val];
+								grad = lg[1];
 							}
+							
+							
 
-							/* Loss: */
+							/* Loss: (currently only one loss)!*/
 							switch (lossfunc) {
 							case LearnModule.UseLogLik:
-								if (ti==0) 
-									result[0][0]+=Math.log(1-pfval);
-								else 
-									result[0][0]+=Math.log(pfval);
-								break;
-							case LearnModule.UseSquaredError: // Note: objective is maximize negative sum of squared errors
-								if (ti==0) 
-									result[0][0]-=Math.pow(pfval,2);
-								else 
-									result[0][0]-=Math.pow(1-pfval,2);
+								result[0][0]+=Math.log(pval);
 								break;
 							}
 
@@ -807,17 +823,7 @@ public class LearnThread extends GGThread {
 										gp = ((double[])grad)[ii];
 										switch (lossfunc) {
 										case LearnModule.UseLogLik:
-											if (ti==0) 
-												result[2][ii]-=gp/(1-pfval);
-
-											else 
-												result[2][ii]+=gp/pfval;
-											break;
-										case LearnModule.UseSquaredError: 
-											if (ti==0) 
-												result[2][ii]-=pfval*gp;
-											else 
-												result[2][ii]+=gp*(1-pfval);
+												result[1][ii]+=gp/pval;
 											break;
 										case LearnModule.UseLik:
 											System.out.println("LearnThread.getLossAndGradient not implemented yet for LearnModule.UseLik");
@@ -830,16 +836,7 @@ public class LearnThread extends GGThread {
 										int ii = parameters.get(par);
 										switch (lossfunc) {
 										case LearnModule.UseLogLik:
-											if (ti==0) 
-												result[2][ii]-=gp/(1-pfval);
-											else 
-												result[2][ii]+=gp/pfval;
-											break;
-										case LearnModule.UseSquaredError: 
-											if (ti==0) 
-												result[2][ii]-=pfval*gp;
-											else 
-												result[2][ii]+=gp*(1-pfval);
+												result[1][ii]+=gp/pval;
 											break;
 										case LearnModule.UseLik:
 											System.out.println("LearnThread.getLossAndGradient not implemented yet for LearnModule.UseLik");
@@ -848,7 +845,6 @@ public class LearnThread extends GGThread {
 								} //ProbForm.RETURN_SPARSE
 							} // if (!lossonly)
 						} // for (int[] tuple: inrel) {
-					} //for (int ti = 0; ti <= 1 ; ti++) {
 				} // for (int i=0; i<rbn.NumPFs(); i++){
 			} // for (int observcaseno=0; observcaseno<rdoi.numObservations(); observcaseno++){
 		} // for (int inputcaseno=0; inputcaseno<data.size(); inputcaseno++){

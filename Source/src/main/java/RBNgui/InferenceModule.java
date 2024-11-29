@@ -1441,6 +1441,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
                 gg = new GradientGraphO(myprimula,
                         evidence,
                         rbnparamidx,
+                        null, // No minmaxbounds for the parameters passed here
                         this,
                         queryatoms,
                         mode,

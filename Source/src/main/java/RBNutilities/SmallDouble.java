@@ -109,6 +109,19 @@ public class SmallDouble implements Comparator{
 		return result;
 	}
 
+	public static double[] multiply(double[] sd1, Double[] sd2){
+		double[] result = new double[2];
+		double mainprod = sd1[0]*sd2[0];
+		int addtofactor=0;
+		if (mainprod<1.0E-20 && mainprod>0){
+			mainprod=mainprod*1.0E20;
+			addtofactor=20;
+		}
+		result[0]=mainprod;
+		result[1]=sd1[1]+sd2[1]+addtofactor;
+		return result;
+	}
+	
 	public static Double[] multiply(Double[] sd1, Double[] sd2){
 		Double[] result = new Double[2];
 		double mainprod = sd1[0]*sd2[0];

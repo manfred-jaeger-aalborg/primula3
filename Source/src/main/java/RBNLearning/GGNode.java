@@ -37,17 +37,19 @@ public abstract class GGNode implements Comparable<GGNode>{
 	
 	Integer identifier;
 	
-	/** The value returned by the last call of evaluate(); null if node not 
-	 * yet evaluated or method resetValue() has been called */
-//	Double value;
 
-	// Array of length this.outDim(). Most GGNodes compute just a scalar value. 
-	// Cases where this.outDim()>1: GGSoftMaxNodes and some GGGnnNodes
-	Double[] value;
-
-	// A flag that indicates whether in the current computation this node has already been
-	// evaluated (in order to avoid redundant calls to evaluate the same node several times)
-	Boolean is_evaluated = false;
+//	// Array of length this.outDim(). Most GGNodes compute just a scalar value. 
+//	// Cases where this.outDim()>1: GGSoftMaxNodes and some GGGnnNodes
+//	Double[] value;
+//
+//	// A flag that indicates whether in the current computation this node has already been
+//	// evaluated (in order to avoid redundant calls to evaluate the same node several times)
+//	Boolean is_evaluated = false;
+	/*
+	 * All the RBN parameters (or numerical max. atoms) that this
+	 * Node depends on
+	 */
+	private TreeSet<String> myparameters;
 	
 	/**
 	 * Flag for whether this node depends on an unknown atom, i.e., has a AtomSumNode as a descendant
@@ -58,22 +60,32 @@ public abstract class GGNode implements Comparable<GGNode>{
 		return depends_on_sample;
 	}
 
-
 	public void setDepends_on_sample(Boolean depends_on_sample) {
 		this.depends_on_sample = depends_on_sample;
 	}
 
 	/**
-	 * If  depends_on_sample =true: the values obtained for the numchains*windowsize different
-	 * settings of sample values at GGAtomSumNodes. 
+	 * The values for this node under different sampled instantiations of GGAtomSumNodes that this 
+	 * node depends on.
 	 * 
-	 * Only one of value or values_for_samples is !=null (value not used when depends_on_sample =true)
+	 * if this.depends_on_sample == true, then the dimensions are 
+	 * (numchains*windowsize)x this.outDim
 	 * 
-	 * Dimensions: (numchains*windowsize)x numvalues (numvalues =1 when isBoolean==true).
+	 * if this.depends_on_sample == false, then the dimensions are
+	 * 1 x this.outDim
 	 */
 	Double[][] values_for_samples;
 
-	// Used instead of is_evaluated when depends_on_sample =true
+	/**
+	 * Flags that indicates whether in the current computation this node has already been
+	 * evaluated for a given sample number. Dimension: 
+	 * 
+	 * if this.depends_on_sample == true, then the dimension is
+	 * (numchains*windowsize)
+	 * 
+	 * if this.depends_on_sample == false, then the dimension is
+	 * 1 
+	 */	
 	Boolean[] is_evaluated_for_samples;
 	
 //	/** The result of the most recent call to evaluatesTo()
@@ -89,22 +101,18 @@ public abstract class GGNode implements Comparable<GGNode>{
 
 
 
-	/** The partial derivatives of this node as returned by the most recent 
-	 * calls of evaluateGrad(param,sno); null if not yet evaluated or method 
-	 * resetGrad(param) has been called */
 
 	/* Treemap contains an entry for a key "pname" if 
 	 * node depends on parameter "pname".
 	 * 
-	 * Value is NaN if currently not evaluated
+	 * Values are Arrays of length this.outDim() containing the partial 
+	 * derivatives for all output values
+	 * 
 	 */
-	TreeMap<String,Double> gradient;
 
-	// indicates whether this node computes a scalar value, or a vector
-	// When the node computes the probability of an atom (as upper ground atom nodes)
-	// then isScalar=true indicates that the atom is a Boolean relation, and the
-	// returned value is the probability of 'true'
-	boolean isScalar;
+	//TreeMap<String,Double[]>[] gradient_for_samples;
+	ArrayList<TreeMap<String,Double[]>> gradient_for_samples;
+
 
 	// The dimension of the output computed by this GGNode. isScalar = true iff outDim=1.
 	// If this is an upper ground atom node representing a categorical atom, then
@@ -115,8 +123,10 @@ public abstract class GGNode implements Comparable<GGNode>{
 		thisgg = gg;
 		children = new Vector<GGCPMNode>();
 		identifier = Integer.valueOf(gg.getNextId());
-		value = null;
-		gradient = new TreeMap<String,Double>();
+		values_for_samples = null;
+		myparameters=new TreeSet<String>();
+		depends_on_sample=false;
+		outDim = 1; // The default value for ProbForm nodes. Needs to be overridden for categorical
 	}
 
 	
@@ -151,7 +161,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 	
 
 
-	public abstract double evaluateGrad(Integer sno, String param) throws RBNNaNException;
+//	public abstract double evaluateGrad(Integer sno, String param) throws RBNNaNException;
 
 //	/** Returns 0 (1) if this node evaluates to 0 (1) given a current partial
 //	* instantiation of the indicator nodes. Returns -1 if the current 
@@ -165,41 +175,44 @@ public abstract class GGNode implements Comparable<GGNode>{
 
 
 
-	public Double[] value(){
-		return value;
-	}
-
-
-	public TreeMap<String,Double> gradient(){
-		return gradient;
-	}
-	
-	public void resetValue(Integer sno){
-		is_evaluated=false;
-		value = null;
-		if (depends_on_sample && sno != null) { 
-			values_for_samples[sno]=null;
-			is_evaluated_for_samples[sno]=false;
-		}
-	}
-
-
-
-	public void resetGradient(){
-		for (String pname: gradient.keySet()){
-			gradient.put(pname, Double.NaN);
-		}
-	}
-	
-//	public void resetGradient(){
-//		for (int i = 0; i<gradient.length; i++)
-//			gradient[i]=null;
+//	public Double[] value(Integer sno){
+//		return values_for_samples[sno];
 //	}
-//	
+
+	public TreeMap<String,Double[]> gradient(Integer sno){
+		return gradient_for_samples.get(sno);
+	}
+
+	public void resetValue(Integer sno){
+		if (depends_on_sample) { 
+			if (sno==null) {
+				for (int i=0;i<values_for_samples.length;i++)
+					resetValue(i);
+			}
+			else {
+				is_evaluated_for_samples[sno]=false;
+				values_for_samples[sno] = null;
+			}
+		}
+		else {
+			is_evaluated_for_samples[0]=false;
+			values_for_samples[0] = null;
+		}
+	}
+
+
+	public void resetGradient(Integer sno){
+		for (String pname: gradient_for_samples.get(sno).keySet()){
+			resetGradient(sno,pname);
+		}
+	}
 	
-	public void resetGradient(String p){
-		if (gradient.containsKey(p))
-			gradient.put(p, Double.NaN);
+	public void resetGradient(Integer sno,String p){
+		if (gradient_for_samples.get(sno).containsKey(p)) {
+			Double[] initgrad = new Double[this.outDim];
+			initgrad[0]=Double.NaN;
+			gradient_for_samples.get(sno).put(p, initgrad);
+		}
 	}
 	
 
@@ -258,15 +271,17 @@ public abstract class GGNode implements Comparable<GGNode>{
 //	}
 	
 //	public void setDependsOn(int param){
-//		if (this instanceof GGProbFormNode)
-//		 ((GGProbFormNode)this).dependsOnParam[param] = true;
-//	}
+	//		if (this instanceof GGProbFormNode)
+	//		 ((GGProbFormNode)this).dependsOnParam[param] = true;
+	//	}
 
 	public void setDependsOn(String param){
-		if (this instanceof GGCPMNode)
-			gradient.put(param, Double.NaN);
+		myparameters.add(param);
 	}
 
+	public boolean dependsOn(String param){
+		return (myparameters.contains(param));
+	}
 	public int identifier(){
 		return identifier;
 	}
@@ -279,12 +294,25 @@ public abstract class GGNode implements Comparable<GGNode>{
 				System.out.print(((GGNode)o).identifier() + " ");
 		}
 	}
-	public void init_values_for_samples() {
-		values_for_samples = new Double[thisgg.numchains*thisgg.windowsize][];
-		is_evaluated_for_samples = new Boolean[thisgg.numchains*thisgg.windowsize];
-		for (int i=0;i<values_for_samples.length;i++) {
+	
+	public void init_values_and_grad(Boolean valuesonly) {
+		int dim;
+		if (this.depends_on_sample)
+			dim = thisgg.numchains*thisgg.windowsize;
+		else
+			dim =1;
+		values_for_samples = new Double[dim][];
+		is_evaluated_for_samples = new Boolean[dim];
+		for (int i=0;i<dim;i++) {
 			values_for_samples[i]=null;
 			is_evaluated_for_samples[i]=false; 
+		}
+		if (!valuesonly) { // Also need gradients
+			gradient_for_samples =  new ArrayList<TreeMap< String,Double[]>>();
+			for (int i=0;i<dim;i++) {
+				gradient_for_samples.add(new TreeMap<String,Double[]>());
+			}
+			
 		}
 //		if (this.isScalar)
 //			values_for_samples = new Double[thisgg.numchains*thisgg.windowsize][1];
@@ -292,6 +320,12 @@ public abstract class GGNode implements Comparable<GGNode>{
 //			values_for_samples = new Double[thisgg.numchains*thisgg.windowsize][this.outDim()];
 	}
 	
-	public abstract int outDim();
+	public int outDim() {
+		return outDim;
+	};
+	
+	public boolean isScalar() {
+		return (outDim==1);
+	}
 	
 }

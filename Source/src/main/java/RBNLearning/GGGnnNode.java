@@ -123,7 +123,7 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
     }
 
     @Override
-    public double evaluateGrad(Integer sno, String param) throws RBNNaNException {
+    public double evaluatePartDeriv(Integer sno, String param) throws RBNNaNException {
         return 0;
     }
 

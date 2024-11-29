@@ -83,7 +83,22 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
     public String asString(int syntax, int depth, RelStruc A, boolean paramsAsValue,boolean usealias) {
         if (usealias && this.getAlias() != null)
             return this.getAlias();
-        return "[" + arg1 + "=" + arg2 + "]";
+        String arg1str ="";
+        String arg2str ="";
+        
+        if (arg1 instanceof ProbFormAtom)
+        	arg1str = ((ProbFormAtom)arg1).asString(syntax,depth,A,paramsAsValue,usealias);
+        else {
+        	// This is an integer, the other argument must be an atom with a categorical relation
+        	arg1str = ((CatRel)((ProbFormAtom)arg2).getRelation()).get_String_val((Integer)arg1);
+        }
+        if (arg2 instanceof ProbFormAtom)
+        	arg2str = ((ProbFormAtom)arg2).asString(syntax,depth,A,paramsAsValue,usealias);
+        else {
+        	// This is an integer, the other argument must be an atom with a categorical relation
+        	arg2str = ((CatRel)((ProbFormAtom)arg1).getRelation()).get_String_val((Integer)arg2);
+        }
+        return arg1str + " = " + arg2str;
     }
 
     @Override
@@ -125,9 +140,11 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
 //			System.out.println("Warning: trying to evaluate gradient for Boolean ProbForm" + this.makeKey(A));
         Object[] result = new Object[2];
 
-        if (returntype == ProbForm.RETURN_SPARSE)
-            result[1] = new Hashtable<String,Double>();
-        else result[1] = new double[0];
+        if (!valonly) {
+        	if (returntype == ProbForm.RETURN_SPARSE)
+        		result[1] = new Hashtable<String,Double>();
+        	else result[1] = new double[params.size()];
+        }
 
         RBNpackage.ProbFormBoolAtomEquality thissubstituted = (RBNpackage.ProbFormBoolAtomEquality)this.substitute(vars,tuple);
         if (!thissubstituted.isGround())

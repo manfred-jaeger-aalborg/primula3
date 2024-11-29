@@ -52,7 +52,6 @@ public class GGAtomSumNode extends GGAtomNode{
 	throws RuntimeException, RBNCompatibilityException
 	{
 		super(gg,pf,A,I,inputcasenoarg,observcasenoarg);
-		isScalar = true;
 		depends_on_sample = true;
 		gg.addToSumIndicators(this);
 	}
@@ -104,5 +103,9 @@ public class GGAtomSumNode extends GGAtomNode{
 		for (int i=0;i<result.length;i++)
 			result[i]=values_for_samples[i][0].intValue();
 		return result;
+	}
+	
+	public int getSampledVals(int sno) {
+		return values_for_samples[sno][0].intValue();
 	}
 }

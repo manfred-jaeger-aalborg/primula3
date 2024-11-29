@@ -46,7 +46,6 @@ public class GGConstantNode extends GGCPMNode{
 	throws RBNCompatibilityException
 	{
 		super(gg,pf,A,data);
-		isScalar = true;
 		
 		if (!(pf instanceof ProbFormConstant)){
 			System.out.println("Cannot create GGConstantNode from ProbForm " + pf.asString(Primula.CLASSICSYNTAX,0,null,false,false));
@@ -58,7 +57,8 @@ public class GGConstantNode extends GGCPMNode{
 			isUnknown = true;
 			cval = 0;
 			currentParamVal = 0.5;
-			value = new Double[]{currentParamVal};
+			values_for_samples = new Double[1][];
+			values_for_samples[0]=new Double[] {currentParamVal};
 		}
 		else{ // This represents a known constant 
 			isUnknown = false;
@@ -69,8 +69,6 @@ public class GGConstantNode extends GGCPMNode{
 
 		
 	}
-
-
 
 	public Double[] evaluate(Integer sno){
 		double result = 0;
@@ -83,8 +81,8 @@ public class GGConstantNode extends GGCPMNode{
 				System.out.println("evaluate constant for  " + this.paramname()+  " gives " + currentParamVal);
 		}
 
-		value = new Double[]{result};
-		return value;
+		values_for_samples[0] = new Double[]{result};
+		return values_for_samples[0];
 	}
 
 //	public void evaluateBounds(){
@@ -116,18 +114,22 @@ public class GGConstantNode extends GGCPMNode{
 //		}
 //	}
 
-	public double evaluateGrad(Integer sno,String param){
+	public Double[] evaluatePartDeriv(Integer sno,String param){
+		Double[] result = new Double[1];
 		if (isUnknown){
+			
 			if (paramname.equals(param)){
-				gradient.put(param,1.0);
-				return 1.0;
+				result[0]=1.0;
+				gradient_for_samples.get(0).put(param, result);
+				return result;
 			}
 			else {
-				gradient.put(param,0.0);
-				return 0.0;
+				result[0]=0.0;
+				gradient_for_samples.get(0).put(param,result);
+				return result;
 			}
 		}
-		return 0.0;
+		return result;
 	}
 
 	public String paramname(){
@@ -143,7 +145,7 @@ public class GGConstantNode extends GGCPMNode{
 		/* The following assumes that setCurrentParamVal is only called when 
 		 * isUnknown=true 
 		 */
-		value = new Double[]{currentParamVal};
+		values_for_samples[0] = new Double[]{currentParamVal};
 	}
 
 	public double getCurrentParamVal(){

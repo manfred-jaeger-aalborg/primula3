@@ -93,7 +93,9 @@ public  class GGLikelihoodNode extends GGNode{
 
 	/** Used instead of the standard gradient vector in GGNode class --
 	 * for the likelihood node need gradient as small doubles!*/
-	private double[][] smallgradient;
+	private double[][] small_gradient;
+	
+	private double[][][] small_gradients_for_samples;
 
 	/** The sum of gradients for a current set of samples. Array of small doubles */
 	private double[][] gradientsum;
@@ -125,7 +127,7 @@ public  class GGLikelihoodNode extends GGNode{
 	}
 
 	public void initllgrads(int k){
-		smallgradient = new double[k][2];
+		small_gradient = new double[k][2];
 		gradientsum = new double[k][2];
 	}
 	
@@ -174,7 +176,7 @@ public  class GGLikelihoodNode extends GGNode{
 		return evaluate(sno,children);
 	}
 	
-	/** Computes the (log-)likelihood and confusion matrix 
+	/** Computes the (log-)likelihood 
 	 * (ignoring those terms that are not dependent
 	 * on unknown atoms or parameters)
 	 * 
@@ -184,6 +186,10 @@ public  class GGLikelihoodNode extends GGNode{
 	 * In case of LearnModule.UseLogLik: returns log-likelihood value as [Double]
 	 * 
 	 * See this.evaluateSmallGrad for batchelements parameter
+	 * 
+	 * Depending on thisgg.objective: if LearnModule.UseLogLik then return a one-dim array containing
+	 * the log-likelihood. if LearnModule.UseLik then return a two-dim. array with a small double  
+	 * representation of the likelihood.
 	 */
 	public double[] evaluate(Integer sno, Vector<GGCPMNode> batchelements){
 
@@ -203,30 +209,21 @@ public  class GGLikelihoodNode extends GGNode{
 				small_likelihood=new double[] {0.0,0.0};
 				for (int i=0;i<thisgg.windowsize*thisgg.numchains;i++)
 					small_likelihood=SmallDouble.add(small_likelihood, evaluate(i,batchelements));
-				return small_likelihood;
+				log_likelihood = SmallDouble.log(small_likelihood);
+				return SmallDouble.multiply(small_likelihood, thisgg.windowsize*thisgg.numchains );
 			}
 		}
 
 		// Initialize relevant fields
 		if (!this.depends_on_sample) { 
-			switch (thisgg.objective()){
-			case LearnModule.UseLik:  // This should usually not be used
-				small_likelihood=new double[] {1.0,0.0};
-				small_likelihood[0]=1.0;
-				break;
-			case LearnModule.UseLogLik:
-				log_likelihood=0;
-			}
+			small_likelihood=new double[] {1.0,0.0};
+			small_likelihood[0]=1.0;
+			log_likelihood=0;
 		}
 
 		if (this.depends_on_sample) { // when we get here, then sno != null
-			switch (thisgg.objective()){
-			case LearnModule.UseLik: 
-				small_likelihoods_for_samples[sno]=new double[] {1.0,0.0};
-				break;
-			case LearnModule.UseLogLik: // this should usually not be used
-				log_likelihood=0;
-			}
+			small_likelihoods_for_samples[sno]=new double[] {1.0,0.0};
+			log_likelihood=0;
 		}
 
 		// Main iteration over the children 	
@@ -248,23 +245,6 @@ public  class GGLikelihoodNode extends GGNode{
 					childlik = 1- childval[0];
 			}
 
-			//			ival = nextchild.instval();
-			//			switch (ival) {
-			//				case 0:
-			//					if (childlik<0.5)
-			//						confusion[this.TN]++;
-			//					else
-			//						confusion[this.FP]++;
-			//					ssqe=ssqe-Math.pow(childlik, 2);
-			//					break;
-			//				case 1:
-			//					if (childlik<0.5)
-			//						confusion[this.FN]++;
-			//					else
-			//						confusion[this.TP]++;
-			//					ssqe=ssqe-Math.pow(1-childlik, 2);
-			//					break;
-			//			}
 
 			if (this.depends_on_sample && sno!=null) {
 				switch (thisgg.objective()){
@@ -276,12 +256,8 @@ public  class GGLikelihoodNode extends GGNode{
 			}
 
 			if (!this.depends_on_sample) {
-				switch (thisgg.objective()){
-				case LearnModule.UseLogLik:
-					log_likelihood+=Math.log(childlik);
-				case LearnModule.UseLik:
-					small_likelihood=SmallDouble.multiply(small_likelihood, childlik);
-				}
+				log_likelihood+=Math.log(childlik);
+				small_likelihood=SmallDouble.multiply(small_likelihood, childlik);
 			}
 
 		}
@@ -291,10 +267,9 @@ public  class GGLikelihoodNode extends GGNode{
 			return small_likelihoods_for_samples[sno];
 		}
 		else {
-			is_evaluated = true;
+			is_evaluated_for_samples[0] = true;
 			switch (thisgg.objective()){
 			case LearnModule.UseLogLik:
-				small_likelihood = SmallDouble.asSmallDouble(log_likelihood);
 				return new double[] {log_likelihood};
 			case LearnModule.UseLik:
 				return small_likelihood;
@@ -308,7 +283,7 @@ public  class GGLikelihoodNode extends GGNode{
 	public double evaluateGrad(Integer sno, String param) 
 	throws RBNNaNException
 	{
-		return evaluateSmallGrad(param)[0];
+		return evaluateSmallGrad(sno,param)[0];
 	}
 	
 //	/** for compatibility with GGNode ....use with care */
@@ -366,11 +341,11 @@ public  class GGLikelihoodNode extends GGNode{
 //		}
 //	}
 
-	public void evaluateGradients()
+	public void evaluateGradients(Integer sno)
 	throws RBNNaNException
 	{
 		for (String par: thisgg.parameters.keySet()){
-			smallgradient[thisgg.parameters.get(par)]=evaluateSmallGrad(par);
+			small_gradient[thisgg.parameters.get(par)]=evaluateSmallGrad(sno,par);
 		}
 	}
 
@@ -385,111 +360,108 @@ public  class GGLikelihoodNode extends GGNode{
 	
 	
 	
-	private double[] evaluateSmallGrad(String param)
+	private double[] evaluateSmallGrad(Integer sno,String param)
 			throws RBNNaNException
 	{
-		return evaluateSmallGrad(param,children);    
+		return evaluateSmallGrad(sno,param,children);    
 	}
 
 	
 	/**
 	 * Evaluates the partial derivative for parameter param as a small double.
-	 * The array batchelements contains the indices of the children that are 
+	 * batchelements contains the children that are 
 	 * used (as a current data batch).
-	 * If the gradient with regard to the whole data is computed, then
-	 * batchelements = [0,1,...,children.size()-1]
 	 */
-	private double[] evaluateSmallGrad(String param, Vector<GGCPMNode> batchelements)
+	private double[] evaluateSmallGrad(Integer sno, String param, Vector<GGCPMNode> batchelements)
 	throws RBNNaNException
 	{
 		// TODO: complete check/revision
-	
-////		if (!isEvaluated){
-//			this.evaluate(batchelements);
-////		}
-//		double smallgrad[] = {0,0};
-//
-//		System.out.println("debug: evaluateSmallGrad for parameter " + param);
-//		
-//		double[] relevantlikelihood = likelihood.clone();
-//		GGProbFormNode child;
-//		double ival;
-//		
-//		if (relevantlikelihood[0]!=0 || thisgg.objective()==LearnModule.UseSquaredError){
-//			for (int i=0;i<batchelements.length;i++){
-//				child = children.elementAt(batchelements[i]);
-//				System.out.println("debug: evaluateSmallGrad for child " + batchelements[i]);
-//				
-//				if (child.dependsOn(param)){
-//					System.out.println("debug: child depends on param ");
-//					ival = getInstVal(batchelements[i]);
-//					switch(thisgg.objective()){
-//					case LearnModule.UseLik:
-//						if (ival==1)
-//							smallgrad = SmallDouble.add(smallgrad,
-//									SmallDouble.multiply(SmallDouble.divide(relevantlikelihood,
-//											child.value()),
-//											child.evaluateGrad(param)
-//											));
-//						else smallgrad = SmallDouble.subtract(smallgrad,
-//								SmallDouble.multiply(SmallDouble.divide(relevantlikelihood,
-//										1-child.value()),
-//										child.evaluateGrad(param)
-//										));
-//						break;
-//					case LearnModule.UseLogLik:
-//						if (ival ==1)
-//							smallgrad = SmallDouble.add(smallgrad, 
-//									SmallDouble.asSmallDouble(child.evaluateGrad(param)/child.value()));
-//						else
-//							smallgrad = SmallDouble.add(smallgrad, 
-//									SmallDouble.asSmallDouble(-child.evaluateGrad(param)/(1-child.value())));
-//						break;
-//					case LearnModule.UseSquaredError:
-//						/* We are computing the negative gradient of the squared error,
-//						 * so that also in the squared error case we can always maximize
-//						 * the objective function
-//						 */
-//						if (ival ==1)
-//							smallgrad = SmallDouble.add(smallgrad, 
-//									SmallDouble.asSmallDouble(child.evaluateGrad(param)*(1-child.value())));
-//						else
-//							smallgrad = SmallDouble.add(smallgrad, 
-//									SmallDouble.asSmallDouble(-child.evaluateGrad(param)*child.value()));
-//						break;
-//					}
-//				}
-//			}
-//		}
-//		else {
-//			System.out.println("likelihood[0]=0 in evaluateSmallGrad");
-//		}
-//		if (Double.isNaN(smallgrad[0]) || Double.isInfinite(smallgrad[0])){
-//			System.out.println("Warning: gradient for " + thisgg.parameterAt(param) + "has value " + smallgrad[0] + "in GGLikelihoodNode.evaluateSmallGrad; Returning value 1000");
-//			smallgrad[0]=1000;
-//			smallgrad[1]=0;
-//		}
-//
-		return null;	    
+
+		
+		if (this.depends_on_sample && !is_evaluated_for_samples[sno]){
+			this.evaluate(sno,batchelements);
+		}
+		if (!this.depends_on_sample && !is_evaluated_for_samples[0]){
+			this.evaluate(sno,batchelements);
+		}
+		
+		double smallgrad[] = {0,0};
+
+		double[] relevantlikelihood = small_likelihood.clone();
+
+		Double[] childval;
+		int childinst;
+		double childlik;
+		Double[] childgrad;
+		double childgrad_at_value;
+		
+		if (relevantlikelihood[0]!=0 ){
+			for (GGCPMNode child: batchelements){
+				if (child.dependsOn(param)){
+					childval = child.evaluate(sno);
+					childinst = child.instval(sno); 
+					childgrad=child.evaluatePartDeriv(sno,param);
+					
+					if (!child.isBoolean()) {
+						childlik = childval[childinst];
+						childgrad_at_value=childgrad[childinst];
+					} else {
+						if (childinst==1) {
+							childlik = childval[0];
+							childgrad_at_value=childgrad[0];
+						}
+						else {
+							childlik = 1- childval[0];
+							childgrad_at_value=-childgrad[0];
+						}
+					}
+					switch(thisgg.objective()){
+					case LearnModule.UseLik:
+						smallgrad = SmallDouble.add(smallgrad,
+								SmallDouble.multiply(SmallDouble.divide(relevantlikelihood,
+										childlik),
+										child.evaluatePartDeriv(sno,param)
+										));
+						break;
+					case LearnModule.UseLogLik:
+						smallgrad = SmallDouble.add(smallgrad, 
+								SmallDouble.asSmallDouble(childgrad_at_value/childlik));
+						break;
+					}
+				}
+			}
+		}
+		else {
+			System.out.println("likelihood[0]=0 in evaluateSmallGrad");
+		}
+		if (Double.isNaN(smallgrad[0]) || Double.isInfinite(smallgrad[0])){
+			System.out.println("Warning: gradient for " + param + "has value " + 
+					smallgrad[0] + "in GGLikelihoodNode.evaluateSmallGrad; Returning value 1000");
+			smallgrad[0]=1000;
+			smallgrad[1]=0;
+		}
+
+		return smallgrad;	    
 	}
 
 
 
-	
+
 //	private int getInstVal(int i){
 //		return getInstVal(children.elementAt(i));
 //	}
 //
-//	private int getInstVal(GGCPMNode uga){
-//		Object ival = uga.getInstval();
-//		if (ival instanceof Integer)
-//			return (Integer)ival;
-//		else{
-//			if (((GGAtomNode)ival).getCurrentInst()==-1)
-//				System.out.println("Illegal instantiation value!");
-//			return ((GGAtomNode)ival).getCurrentInst();
-//		}
-//	}
+	private int getInstVal(int sno, GGCPMNode uga){
+		Object ival = uga.getInstval();
+		if (ival instanceof Integer)
+			return (Integer)ival;
+		if (ival instanceof GGAtomMaxNode)
+			return ((GGAtomMaxNode)ival).getCurrentInst();
+		if (ival instanceof GGAtomSumNode)
+			return ((GGAtomSumNode)ival).getSampledVals(sno);
+		System.out.println("Error: No applicable case in GGLikelihoodNode.getInstVal");
+		return 0;
+	}
 	
 	public double[] gradientsumAsDouble(){
 		return SmallDouble.toStandardDoubleArray(gradientsum);
@@ -505,7 +477,7 @@ public  class GGLikelihoodNode extends GGNode{
 
 
 	public double[] gradientAsDouble(){
-			return SmallDouble.toStandardDoubleArray(smallgradient);
+			return SmallDouble.toStandardDoubleArray(small_gradient);
 	}
 
 
@@ -521,7 +493,7 @@ public  class GGLikelihoodNode extends GGNode{
 	 */ 
 	public double[] gradientAsDouble(int partial){
 		double result[];
-			result = SmallDouble.toStandardDoubleArray(smallgradient);
+			result = SmallDouble.toStandardDoubleArray(small_gradient);
 		for (int i=0;i<result.length;i++)
 			if (i!=partial)
 				result[i]=0;
@@ -534,15 +506,7 @@ public  class GGLikelihoodNode extends GGNode{
 //	}
 
 	public double loglikelihood(){
-		switch (thisgg.objective()){
-		case LearnModule.UseLik:
-			return SmallDouble.log(small_likelihood);
-		case LearnModule.UseLogLik:
-			if (small_likelihood[1]!=0)
-				System.out.println("Warning: overflow in log-likelihood value");
-			return small_likelihood[0];
-		default: return Double.NaN;
-		}
+		return log_likelihood;
 	}
 	
 	public double loglikelihood(Integer sno){
@@ -582,18 +546,18 @@ public  class GGLikelihoodNode extends GGNode{
 	}
 
 	public void resetValue(Integer sno){
-		is_evaluated = false;
-		if (this.small_likelihoods_for_samples==null) {
-			value = null;
+		if (!this.depends_on_sample) {
+			is_evaluated_for_samples[0] = false;
 			log_likelihood = 0;
 			small_likelihood[0]=0.0;
 			small_likelihood[1]=0.0;
 		}
 		else if (sno==null)
-			this.init_values_for_samples();
-		else
+			this.init_values_and_grad(true);
+		else {
+			is_evaluated_for_samples[sno] = false;
 			small_likelihoods_for_samples[sno]=null;
-
+		}
 	}
 
 //	public void resetLikelihoodSum(){
@@ -640,12 +604,12 @@ public  class GGLikelihoodNode extends GGNode{
 
 	public void updateGradSum(){
 		for (int i=0; i<gradientsum.length; i++){
-			gradientsum[i]=SmallDouble.add(gradientsum[i],smallgradient[i]);
+			gradientsum[i]=SmallDouble.add(gradientsum[i],small_gradient[i]);
 		}
 	}
 	
 	public double[][] getSmallgradient(){
-		return smallgradient;
+		return small_gradient;
 	}
 	
 	public int[] getConfusion() {
@@ -677,15 +641,10 @@ public  class GGLikelihoodNode extends GGNode{
 	
 	public double[] objectiveAsSmallDouble(){
 		switch (thisgg.objective()){
-		// Make no distinction between UseLik and UseLogLik here. UseLik should not be a separate objective
-		// Only in the internal computation do we need to distinguish the need to compute at the likelihood 
-		// level when dealing with incomplete data
 			case LearnModule.UseLik:
-				return SmallDouble.asSmallDouble(this.loglikelihood());
+				return this.small_likelihood;
 			case LearnModule.UseLogLik:
 				return SmallDouble.asSmallDouble(this.loglikelihood());
-			case LearnModule.UseSquaredError:
-				return SmallDouble.asSmallDouble(this.getSSQE());
 		}
 		System.out.println("Reached unforseen case in GGLikelihoodNode.objective()!");
 		return null;
@@ -708,22 +667,24 @@ public  class GGLikelihoodNode extends GGNode{
 //			uga.set_value_for_sample(sno);
 //	}
 	
-	/*
-	 * Default implementation of method required for GGNode. Should not be used. 
-	 * The outputs of the GGLikelihoodNode differ in dimensions and are retrieved 
-	 * by the functions likelihood(), getSmallGradient() etc.
-	 */
-	public int outDim() {
-		return 1;
-	}
+
 	
 	/* Overrides default */
-	public void init_values_for_samples() {
-		small_likelihoods_for_samples = new double[thisgg.numchains*thisgg.windowsize][];
-		is_evaluated_for_samples = new Boolean[thisgg.numchains*thisgg.windowsize];
+	public void init_values_and_grad(Boolean valuesonly) {
+		super.init_values_and_grad(valuesonly);
+		
+		int dim;
+		if (this.depends_on_sample)
+			dim = thisgg.numchains*thisgg.windowsize;
+		else
+			dim =1;
+		
+		small_likelihoods_for_samples = new double[dim][];
 		for (int i=0;i<small_likelihoods_for_samples.length;i++) {
 			small_likelihoods_for_samples[i]=null;
-			is_evaluated_for_samples[i]=false;
+		}
+		if (!valuesonly) { // Also need gradients
+			small_gradients_for_samples =  new double[dim][thisgg.numberOfParameters()][2];
 		}
 	}
 }

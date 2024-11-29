@@ -255,12 +255,7 @@ public abstract class GradientGraph{
 //	}
 
 
-	/** Computes the empirical likelihood and empirical partial derivatives 
-	 * of the current sample.
-	 * The value and gradient fields contain the values for the last sample.
-	 *
-	 * When numchains=0, then value = likelihoodsum and gradient = gradientsum 
-	 * are the correct values.
+	/** Computes the likelihood and partial derivatives (optional)
 	 *
 	 */ 
 	public abstract void evaluateLikelihoodAndPartDerivs(boolean likelihoodonly)
@@ -332,8 +327,8 @@ public abstract class GradientGraph{
 		myggoptions = lm;
 	}
 
-	public abstract void showLikelihoodNode(RelStruc A);
-	
+//	public abstract void showLikelihoodNode(RelStruc A);
+//	
 
 //	public void showParameterValues(String prefix){
 //		double[] paramvals = currentParameters();
@@ -383,18 +378,7 @@ public abstract class GradientGraph{
 		return result;
 	}
 	
-	/** Maps theta into the feasible region
-	 */
-	protected double[] clipToFeasible(double[] theta){
-		double[] result = new double[theta.length];
-	
-		
-		for (int i=0 ;i < parameters.size();i++) {
-			result[i]=Math.max(theta[i],minmaxbounds[i][0]);
-			result[i]=Math.min(result[i],minmaxbounds[i][1]);
-		}
-		return result;
-	}
+
 
 	/** Searches for likelihood-optimizing parameters, starting at
 	 * currenttheta

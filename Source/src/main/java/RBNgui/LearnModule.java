@@ -384,7 +384,7 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 		data = mypr.getReldata();
 		
 		
-		threadascentstrategy = AscentAdam;
+		threadascentstrategy = AscentBatch;
 		ggascentstrategy = AscentLBFGS;
 
 		
@@ -397,7 +397,7 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 		restarts = 1; /*-1 is for open-ended restarts */
 		subsamples = 100;
 		numblocks = 1;
-		numbatches =50;
+		numbatches =1;
 		splitmode = RelData.SPLIT_BY_DOMAIN;
 		dampingfac =0.99;
 		numchains = 2;
@@ -1124,5 +1124,9 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 				textnumrestarts,
 				this);
 		lthread.start(); 
+	}
+	
+	public boolean ggverbose() {
+		return false;
 	}
 }

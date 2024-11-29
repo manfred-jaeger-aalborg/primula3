@@ -86,7 +86,7 @@ public class ProbFormBoolEquality extends ProbFormBool {
 		
 		if (returntype == ProbForm.RETURN_SPARSE)
 			result[1] = new Hashtable<String,Double>();
-		else result[1] = new double[0];
+		else result[1] = new double[params.size()];
 		
 		ProbFormBoolEquality thissubstituted = (ProbFormBoolEquality)this.substitute(vars,tuple);
 		if (!thissubstituted.isGround())

@@ -108,7 +108,6 @@ private int highvalue;
 	throws RuntimeException, RBNCompatibilityException
 	{
 		super(gg,pf,A,I,inputcasenoarg,observcasenoarg);
-		isScalar = true;
 		gg.addToMaxIndicators(this);
 		int tv = I.truthValueOf(myatom);
 		if (tv !=-1) {
