@@ -99,7 +99,7 @@ public class GnnPy {
             try {
                 MainInterpreter.setJepLibraryPath(loadjep(this.pythonHome));
             } catch (IllegalStateException e) {
-                System.out.println(e);
+                System.out.println("Error in loading the JepLibraryPath: " + e);
             }
             initializePythonScript();
         }
@@ -1344,17 +1344,17 @@ public class GnnPy {
                     "for key, value in java_map_x.items():\n" +
                     "    data_h[key].x = torch.as_tensor(value, dtype=torch.float32)\n" +
 
-                    "for key, value in java_map_edge.items():\n" +
-                    "    n_key = key.split('_')\n" +
-                    "    if len(value) > 0:\n" +
-                    "        data_h[n_key[0], n_key[1], n_key[2]].edge_index = torch.as_tensor(value, dtype=torch.long)\n" +
-                    "    else:\n" +
-                    "        data_h[n_key[0], n_key[1], n_key[2]].edge_index = torch.empty((2, 0), dtype=torch.long)\n" +
+                     "for key, value in java_map_edge.items():\n" +
+                     "    n_key = key.split('_to_')\n" + // here the key must have the form type_to_type
+                     "    if len(value) > 0:\n" +
+                     "        data_h[n_key[0], 'to', n_key[1]].edge_index = torch.as_tensor(value, dtype=torch.long)\n" +
+                     "    else:\n" +
+                     "        data_h[n_key[0], 'to', n_key[1]].edge_index = torch.empty((2, 0), dtype=torch.long)\n" +
 
                     "with open('/Users/lz50rg/Dev/water-hawqs/map-inf-low.pkl', 'wb') as f:\n" +
                     "    pickle.dump(data_h, f)\n"
         );
-
+        System.out.println("Pickle written in /Users/lz50rg/Dev/water-hawqs/map-inf-low.pkl!");
     }
 
     private String edgeDirection(SparseRelStruc sampledRel, CPMGnn cpmGnn, BoolRel element) {

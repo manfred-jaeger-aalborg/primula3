@@ -52,6 +52,7 @@ public class RiverPollution {
         primula.setScriptPath("/Users/lz50rg/Dev/primula-workspace/primula3/Source/python");
         primula.setScriptName("load_gnn");
 
+//        File srsfile = new File("/Users/lz50rg/Dev/water-hawqs/test_small_new.rdef");
         File srsfile = new File("/Users/lz50rg/Dev/water-hawqs/river_test.rdef");
         primula.loadSparseRelFile(srsfile);
 
@@ -114,20 +115,20 @@ public class RiverPollution {
                 new CatModelSoftMax(softmax)
         );
 
-//        File input_file = new File("/Users/lz50rg/Dev/water-hawqs/water.rbn");
-        File input_file = new File("/Users/lz50rg/Dev/water-hawqs/water_rbn.rbn");
+        File input_file = new File("/Users/lz50rg/Dev/water-hawqs/water.rbn");
+//        File input_file = new File("/Users/lz50rg/Dev/water-hawqs/water_rbn.rbn");
         RBN file_rbn = new RBN(input_file, primula.getSignature());
         RBNPreldef[] riverrbn = file_rbn.prelements();
 
         RBN manual_rbn = new RBN(4, 0);
-        for (int i = 0; i < 4; i++) {
-            manual_rbn.insertPRel(riverrbn[i], i);
-        }
+//        for (int i = 0; i < 4; i++) {
+//            manual_rbn.insertPRel(riverrbn[i], i);
+//        }
 
-//        manual_rbn.insertPRel(gnn_rbn, 0);
-//        manual_rbn.insertPRel(gnn_attr, 1);
-//        manual_rbn.insertPRel(riverrbn[0], 2);
-//        manual_rbn.insertPRel(riverrbn[1], 3);
+        manual_rbn.insertPRel(gnn_rbn, 0);
+        manual_rbn.insertPRel(gnn_attr, 1);
+        manual_rbn.insertPRel(riverrbn[0], 2);
+        manual_rbn.insertPRel(riverrbn[1], 3);
 
         primula.setRbn(manual_rbn);
         primula.getInstantiation().init(manual_rbn);
@@ -202,7 +203,7 @@ public class RiverPollution {
 
             System.out.println("\nMAP INFERENCE RESULTS:\n");
             for (int i = 0; i < gal.size(); i++) {
-                System.out.println(gal.atomAt(i).rel().toString() + "(" + gal.atomAt(i).args()[0] + "): " + res[i]);
+//                System.out.println(gal.atomAt(i).rel().toString() + "(" + gal.atomAt(i).args()[0] + "): " + res[i]);
                 values_count.put(res[i], values_count.get(res[i])+1);
 //                pred_res.get(res[i]).add(Integer.valueOf(gal.atomAt(i).args()[0]));
             }

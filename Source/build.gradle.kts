@@ -64,6 +64,13 @@ tasks.register("runWithArgs") {
     }
 }
 
+tasks.register<JavaExec>("runPollution") {
+    group = "application"
+
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("Experiments.Water.RiverPollution")
+}
+
 tasks.test {
     useJUnitPlatform()
 }

@@ -245,6 +245,9 @@ public  class GGLikelihoodNode extends GGNode{
 					childlik = 1- childval[0];
 			}
 
+			if (nextchild.getMyatom().equals("target(0)")) {
+				System.out.println("target(): " + childlik);
+			}
 
 			if (this.depends_on_sample && sno!=null) {
 				switch (thisgg.objective()){
