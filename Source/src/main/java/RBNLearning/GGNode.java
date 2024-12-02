@@ -327,5 +327,6 @@ public abstract class GGNode implements Comparable<GGNode>{
 	public boolean isScalar() {
 		return (outDim==1);
 	}
-	
+
+	public Vector<GGCPMNode> getChildren() { return children; }
 }

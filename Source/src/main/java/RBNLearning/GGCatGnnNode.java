@@ -19,6 +19,11 @@ public class GGCatGnnNode extends GGCPMNode implements GGCPMGnn {
         return new Double[0];
     }
 
+    @Override
+    public Double[] evaluatePartDeriv(Integer sno, String param) throws RBNNaNException {
+        throw new UnsupportedOperationException("Unimplemented method 'evaluatePartDeriv'");
+    }
+
     // @Override
     // public void evaluateBounds() {
 
@@ -39,12 +44,12 @@ public class GGCatGnnNode extends GGCPMNode implements GGCPMGnn {
 
     }
 
-    @Override
-    public void setValue(Double[] value) {
-        this.value = value;
-    }
+//    @Override
+//    public void setValue(Double[] value) {
+//        this.value = value;
+//    }
 
-    @Override
+//    @Override
     public double evaluateGrad(Integer sno, String param) throws RBNNaNException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'evaluateGrad'");

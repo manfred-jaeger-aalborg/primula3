@@ -133,16 +133,32 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
             savedData = true;
         }
 
-        if (this.value != null) {
-            return this.value;
+        if (this.depends_on_sample && sno==null) {
+            for (int i=0;i<thisgg.numchains*thisgg.windowsize;i++)
+                this.evaluate(i);
+            return null;
         }
-        // Temp fix
-        if (cpm instanceof CatGnnHetero)
-            this.value = gnnPy.GGevaluate_gnnHetero(A, thisgg, (CPMGnn) cpm, this);
-        else
-            this.value = gnnPy.GGevaluate_gnn(A, thisgg, (CPMGnn) cpm, this);
+        if (this.depends_on_sample && is_evaluated_for_samples[sno])
+            return this.values_for_samples[sno];
+        if (!this.depends_on_sample && is_evaluated_for_samples[0])
+            return this.values_for_samples[0];
 
-        return this.value;
+        Double[] result = null;
+        if (cpm instanceof CatGnnHetero)
+            result = gnnPy.GGevaluate_gnnHetero(A, thisgg, (CPMGnn) cpm, this);
+        else
+            result = gnnPy.GGevaluate_gnn(A, thisgg, (CPMGnn) cpm, this);
+
+        if (this.depends_on_sample) {
+            if (cpm instanceof CatGnnHetero)
+                values_for_samples[sno] = result;
+            is_evaluated_for_samples[sno] = true;
+        } else {
+            values_for_samples[0] = result;
+            is_evaluated_for_samples[0] = true;
+        }
+
+        return result;
     }
 
     @Override
@@ -159,14 +175,14 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
         this.gnnPy = gnnPy;
     }
 
-    @Override
-    public void setValue(Double[] value) {
-        this.value = value;
-    }
+//    @Override
+//    public void setValue(Double[] value) {
+//        this.value = value;
+//    }
 
     @Override
-    public double evaluatePartDeriv(Integer sno, String param) throws RBNNaNException {
-        return 0;
+    public Double[] evaluatePartDeriv(Integer sno, String param) throws RBNNaNException {
+        throw new RuntimeException("evaluatePartDeriv(Integer sno, String param) NOT IMPLEMENTED in GGGnnNode");
     }
 
     public int outDim() {

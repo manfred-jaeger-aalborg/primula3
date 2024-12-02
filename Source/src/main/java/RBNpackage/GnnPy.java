@@ -1013,8 +1013,6 @@ public class GnnPy {
 //    }
 
     public Double[] GGevaluate_gnn(RelStruc A, GradientGraphO gg, CPMGnn cpmGnn, GGCPMGnn ggcpmGnn) {
-        if (ggcpmGnn.value() != null)
-            return ggcpmGnn.value();
         if (sharedInterpreter == null)
             throw new NullPointerException("GnnPy object null in GGevaluate_gnn ...");
         if (!(cpmGnn instanceof CatGnn))
@@ -1316,8 +1314,6 @@ public class GnnPy {
     }
 
     public Double[] GGevaluate_gnnHetero(RelStruc A, GradientGraphO gg, CPMGnn cpmGnn, GGCPMNode ggcpmGnn) {
-        if (ggcpmGnn.value() != null)
-            return ggcpmGnn.value();
         if (this.sharedInterpreter == null)
             throw new NullPointerException("GnnPy object null!");
         if (!(cpmGnn instanceof CatGnnHetero))

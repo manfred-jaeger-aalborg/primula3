@@ -6,7 +6,7 @@ public interface GGCPMGnn {
 
     GnnPy getGnnPy();
     void setGnnPy(GnnPy gnnPy);
-    Double[] value();
+//    Double[] value();
 
-    void setValue(Double[] value);
+//    void setValue(Double[] value);
 }
