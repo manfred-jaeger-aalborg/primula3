@@ -146,7 +146,7 @@ public abstract class GGAtomNode extends GGCPMNode{
 	
 	public void setUGA(GGCPMNode uga){
 		myuppergroundatom = uga;
-		//System.out.println("setUGA: setting  " + uga.getMyatom() + " as uga for " + this.getMyatom() );
+//		System.out.println("setUGA: setting  " + uga.getMyatom() + " as uga for " + this.getMyatom() );
 	}
 	
 	public abstract void addMeToIndicators(GGCPMNode ggpfn);
@@ -160,7 +160,7 @@ public abstract class GGAtomNode extends GGCPMNode{
 			}
 		}
 		addMeToIndicators(myuppergroundatom);
-		//allugas.add(myuppergroundatom);
+		allugas.add(myuppergroundatom); // TODO check if this works
 	}
 	
 	public Vector<GGCPMNode> getAllugas(){

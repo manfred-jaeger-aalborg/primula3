@@ -771,6 +771,11 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	private String pythonHome;
 	List<MapThread> threads;
 	int num_threads;
+	// set the Map Seach Algorithm used during map inference
+	private int mapSeachAlg; // 0 standard, 1 greedy
+	// the number of iteration for the greedy search algorithm
+	private int numIterGreedyMap;
+
 	public InferenceModule( Primula myprimula_param ){
 
 		myprimula = myprimula_param;
@@ -1162,6 +1167,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		/** ... keith cascio */
 		this.setVisible(false);
 		this.num_threads = 1;
+		this.numIterGreedyMap = 1;
 	}
 
 	public void setVisibility(boolean visibility) {
@@ -1323,6 +1329,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		/** keith cascio 20060511 ... */
 		else if( source == aceButtonSettings ) doAceSettings();
 		/** ... keith cascio */
+
+		mapSeachAlg = 0;
 	}
 
 	public SampleThread startSampleThread(){
@@ -1447,6 +1455,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
                         mode,
                         0,
                         true);
+				((GradientGraphO) gg).setMapSearchAlg(mapSeachAlg);
                 mapthr = new MapThread(this.valueObserver, this, myprimula, (GradientGraphO) gg);
                 // mapthr = new MapThread(this,myprimula,(GradientGraphO)gg); or this?
                 if (mapthr.isGnnIntegration()) {
@@ -2942,4 +2951,15 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		updateInstantiationList();
 	}
 
+	public void setMapSeachAlg(int mapSeachAlg) {
+		this.mapSeachAlg = mapSeachAlg;
+	}
+
+	public int getNumIterGreedyMap() {
+		return numIterGreedyMap;
+	}
+
+	public void setNumIterGreedyMap(int numIterGreedyMap) {
+		this.numIterGreedyMap = numIterGreedyMap;
+	}
 }

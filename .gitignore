@@ -24,3 +24,5 @@ samiamrc.xml
 
 .DS_Store
 bin
+
+Source/python/__pycache__/

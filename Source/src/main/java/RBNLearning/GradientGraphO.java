@@ -82,6 +82,8 @@ public class GradientGraphO extends GradientGraph{
 	public boolean debugPrint;
 	private GnnPy gnnPy;
 	private boolean gnnIntegration;
+	private int mapSearchAlg;
+	private int nIterGreedy;
 
 	// https://stackoverflow.com/questions/4573123/java-updating-text-in-the-command-line-without-a-new-line
 	// for now the function will not be integrated (merging conflicts)
@@ -613,6 +615,7 @@ public class GradientGraphO extends GradientGraph{
 			tempGNN.closeInterpreter();
 			this.gnnPy = null;
 		}
+		this.mapSearchAlg = 0;
 		//		System.out.println("Calls to constructGGPFN:" + profiler.constructGGPFNcalls);
 		//		System.out.println("Found nodes:" + profiler.foundnodes);
 		//		System.out.println("Time 1:" + profiler.time1);
@@ -1143,7 +1146,7 @@ public double mapSearch(GGThread mythread,TreeSet<GGAtomMaxNode> flipcandidates,
 public double mapInference(GGThread mythread)
 		throws RBNNaNException{
 	boolean terminate = false;
-	double score;
+	double score = 0;
 	int itcount = 0;
 	Boolean gotinit = initIndicators(mythread);
 	if (!gotinit) {
@@ -1168,10 +1171,12 @@ public double mapInference(GGThread mythread)
 		evaluateLikelihoodAndPartDerivs(true);
 		if (debugPrint)
 			System.out.println("likelihood= " + SmallDouble.toStandardDouble(llnode.likelihood()) + "   " + StringOps.arrayToString(llnode.likelihood(), "(", ")"));
-		score = mapSearch(mythread, maxind_as_ts(), 3);
-//		score = mapSearchSimple(mythread, maxind_as_ts(), 10, 1000);
-//		score = flipAll(mythread, maxind_as_ts(), 2);
-//		score = greedySearch(mythread, maxind_as_ts(), 4000, 1, 1);
+
+		if (mapSearchAlg == 0)
+			score = mapSearch(mythread, maxind_as_ts(), 3);
+		else if (mapSearchAlg == 1)
+			score = greedySearch(mythread, maxind_as_ts(), nIterGreedy, 1, 1);
+
 		if (score <= 1) {
 			terminate = true;
 			System.out.println("terminate");
@@ -2292,4 +2297,12 @@ public void setGnnPy(GnnPy gnnPy) {
 	this.gnnPy = gnnPy;
 	setGnnPyToNodes();
 }
+
+	public void setMapSearchAlg(int mapSearchAlg) {
+		this.mapSearchAlg = mapSearchAlg;
+	}
+
+	public void setNumIterGreedyMap(int setNumIterGreedyMap) {
+		this.nIterGreedy = setNumIterGreedyMap;
+	}
 }

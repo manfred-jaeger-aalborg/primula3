@@ -69,6 +69,8 @@ public class MapThread extends GGThread {
 			gg.setLearnModule(myLearnModule);
 		}
 
+		gg.setNumIterGreedyMap(myinfmodule.getNumIterGreedyMap());
+
 		Hashtable<Rel,int[]> newmapvals = new Hashtable<>();
 
 		Map<String, double[][]> xDict = new HashMap<>();
