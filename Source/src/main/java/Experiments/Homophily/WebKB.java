@@ -107,21 +107,21 @@ public class WebKB {
             RBN file_rbn = new RBN(input_file, primula.getSignature());
             RBNPreldef[] preledef = file_rbn.prelements();
 
-            RBN manual_rbn = null;
-            if (count_h) {
-                manual_rbn = new RBN(2, 0);
-                manual_rbn.insertPRel(gnn_rbn, 0);
-//            manual_rbn.insertPRel(preledef[0], 1);
-                manual_rbn.insertPRel(preledef[1], 2);
-            } else {
-                manual_rbn = new RBN(2, 0);
-                manual_rbn.insertPRel(gnn_rbn, 0);
-                manual_rbn.insertPRel(preledef[0], 1);
-            }
+//            RBN manual_rbn = null;
+//            if (count_h) {
+//                manual_rbn = new RBN(2, 0);
+//                manual_rbn.insertPRel(gnn_rbn, 0);
+////            manual_rbn.insertPRel(preledef[0], 1);
+//                manual_rbn.insertPRel(preledef[1], 2);
+//            } else {
+//                manual_rbn = new RBN(2, 0);
+//                manual_rbn.insertPRel(gnn_rbn, 0);
+//                manual_rbn.insertPRel(preledef[0], 1);
+//            }
 
 
-//        RBN manual_rbn = new RBN(1, 0);
-//        manual_rbn.insertPRel(gnn_rbn, 0);
+        RBN manual_rbn = new RBN(1, 0);
+        manual_rbn.insertPRel(gnn_rbn, 0);
 
             // add the rbn to primula
             primula.setRbn(manual_rbn);

@@ -982,10 +982,10 @@ public double mapSearch(GGThread mythread,TreeSet<GGAtomMaxNode> flipcandidates,
 	PriorityQueue<GGAtomMaxNode> scored_atoms = new PriorityQueue<GGAtomMaxNode>(new GGAtomMaxNode_Comparator());
 
 	for (GGAtomMaxNode mxnode: flipcandidates) {
-		long startTime = System.currentTimeMillis();
+//		long startTime = System.currentTimeMillis();
 		mxnode.setScore(mythread);
-		long estimatedTime = System.currentTimeMillis() - startTime;
-		System.out.println(mxnode.getMyatom() + " " + mxnode.getScore() + " in " + estimatedTime);
+//		long estimatedTime = System.currentTimeMillis() - startTime;
+//		System.out.println(mxnode.getMyatom() + " " + mxnode.getScore() + " in " + estimatedTime);
 		scored_atoms.add(mxnode);
 
 	}
@@ -1168,10 +1168,10 @@ public double mapInference(GGThread mythread)
 		evaluateLikelihoodAndPartDerivs(true);
 		if (debugPrint)
 			System.out.println("likelihood= " + SmallDouble.toStandardDouble(llnode.likelihood()) + "   " + StringOps.arrayToString(llnode.likelihood(), "(", ")"));
-//		score = mapSearch(mythread, maxind_as_ts(), 3);
+		score = mapSearch(mythread, maxind_as_ts(), 3);
 //		score = mapSearchSimple(mythread, maxind_as_ts(), 10, 1000);
 //		score = flipAll(mythread, maxind_as_ts(), 2);
-		score = greedySearch(mythread, maxind_as_ts(), 4000, 1, 1);
+//		score = greedySearch(mythread, maxind_as_ts(), 4000, 1, 1);
 		if (score <= 1) {
 			terminate = true;
 			System.out.println("terminate");
