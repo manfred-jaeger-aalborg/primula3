@@ -116,9 +116,9 @@ public class MapThread extends GGThread {
 
 		System.out.println("Best log-likelihood found: " + oldll);
 
-		if (gnnPy != null) {
-			gnnPy.savePickleHetero(xDict, edgeDict);
-		}
+//		if (gnnPy != null) {
+//			gnnPy.savePickleHetero(xDict, edgeDict);
+//		}
 
         if (this.gnnIntegration)
 			this.gnnPy.closeInterpreter();

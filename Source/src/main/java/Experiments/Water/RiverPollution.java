@@ -181,7 +181,8 @@ public class RiverPollution {
                     gal.add(tmp_query, new int[]{mat[i][0]});
             }
             im.addQueryAtoms(tmp_query, gal);
-
+            im.setMapSeachAlg(1);
+            im.setNumIterGreedyMap(20000);
             im.setNumRestarts(1);
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();

@@ -44,8 +44,8 @@ public class WebKB {
 
     public static void main(String[] args) {
 
-        // Integer.parseInt(args[0]);
-        int ij = 0;
+        int ij = Integer.parseInt(args[0]);
+//        int ij = 0;
         ArrayList<Double> accs = new ArrayList<>();
         Primula primula = new Primula();
 //        for (int ij = 0; ij < 10; ij++) {
@@ -99,7 +99,7 @@ public class WebKB {
         else if (count_h)
             const_path = "/Users/lz50rg/Dev/homophily/experiments/" + datasetName + "/const_" + datasetName + "_count.rbn";
         else if (node_const)
-            const_path = "/Users/lz50rg/Dev/homophily/experiments/" + datasetName + "/const_" + datasetName + "_nodeconst.rbn";
+            const_path = "/Users/lz50rg/Dev/homophily/experiments/rbn_constraints/const_nodeconst.rbn";
         else
             const_path = "/Users/lz50rg/Dev/homophily/experiments/" + datasetName + "/const_" + datasetName + "_.rbn";
 
@@ -152,8 +152,8 @@ public class WebKB {
             im.addQueryAtoms(tmp_query, gal);
 
             // perform map inference
-            im.setNumRestarts(1);
-            im.setMapSeachAlg(1); // set greedy search
+            im.setNumRestarts(5);
+            im.setMapSeachAlg(0); // set greedy search
             im.setNumIterGreedyMap(4000);
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();

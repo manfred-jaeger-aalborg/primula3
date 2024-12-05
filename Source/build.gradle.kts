@@ -45,7 +45,7 @@ tasks.register("runWithArgs") {
     group = "application"
 
     doLast {
-        for (i in 0..1) {
+        for (i in 0..9) {
             exec {
                 commandLine(
 //                        "java",
