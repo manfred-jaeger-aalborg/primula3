@@ -17,7 +17,7 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     implementation("org.dom4j:dom4j:2.1.3")
-    implementation("black.ninia:jep:4.2.0")
+    implementation("black.ninia:jep:4.2.1")
     //implementation(kotlin("script-runtime"))
 
 }
@@ -33,7 +33,7 @@ java {
 application {
 //    mainClass.set("RBNgui.Primula")
     // applicationDefaultJvmArgs = listOf("-Djava.awt.headless=true")
-    mainClass.set("Experiments.Homophily.WebKB")
+    mainClass.set("Experiments.Homophily.NodeClass")
 }
 
 tasks.named<JavaExec>("run") {
@@ -41,23 +41,16 @@ tasks.named<JavaExec>("run") {
     enabled = false
 }
 
-tasks.register("runWithArgs") {
+tasks.register("runNodeClass") {
     group = "application"
 
     doLast {
         for (i in 0..9) {
             exec {
                 commandLine(
-//                        "java",
-//                        "-XX:+UseG1GC",
-                        // "-XX:+UseZGC", // Use Z Garbage Collector (aggressive GC)
-                        // "-XX:SoftRefLRUPolicyMSPerMB=50", // Aggressively clean soft references
-                        // "-Xms256m", // Set initial heap size
-                        // "-Xmx512m", // Set maximum heap size
-                        // "-XX:+ExplicitGCInvokesConcurrent", // Allow explicit GC calls to run concurrently
-                        // "-XX:+ParallelRefProcEnabled", // Parallelize reference processing
+                        "xvfb-run", "-a",
                         "java", "-cp", sourceSets["main"].runtimeClasspath.asPath,
-                        "Experiments.Homophily.WebKB", i.toString()
+                        "Experiments.Homophily.NodeClass", i.toString()
                 )
             }
         }
