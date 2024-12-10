@@ -52,16 +52,27 @@ public class NodeClass {
 
     public static void main(String[] args) {
 
-        int NUM_CLASS = 6;
-        int NUM_ATTR = 3703;
-        String datasetName = "citeseer";
+        String datasetName = args[1];
+        int NUM_ATTR = Integer.parseInt(args[2]);
+        int nhidd = Integer.parseInt(args[3]);
+        int nlayers = Integer.parseInt(args[4]);
+        int NUM_CLASS = Integer.parseInt(args[5]);
+        
         String modelName = "GCN";
         String base_path = "/home/rafpoj/Dev/";
+
+        Map<String, Object> load_gnn_set = new HashMap<>();
+        load_gnn_set.put("sdataset", datasetName);
+        load_gnn_set.put("nfeat", NUM_ATTR);
+        load_gnn_set.put("nlayers", nlayers);
+        load_gnn_set.put("nclass", NUM_CLASS);
+        load_gnn_set.put("nhid", nhidd);
 
         Primula primula = new Primula();
         primula.setPythonHome("/home/rafpoj/miniconda3/envs/torch/bin/python");
         primula.setScriptPath("/home/rafpoj/Dev/primula3/Source/python");
         primula.setScriptName("load_gnn");
+        primula.setLoadGnnSet(load_gnn_set);
 
         int ij = Integer.parseInt(args[0]);
         String index = Integer.toString(ij);
@@ -158,7 +169,7 @@ public class NodeClass {
             im.addQueryAtoms(tmp_query, gal);
 
             // perform map inference
-            im.setNumRestarts(5);
+            im.setNumRestarts(2);
             im.setMapSeachAlg(0); 
             im.setNumIterGreedyMap(4000);
             GradientGraph GG = im.startMapThread();

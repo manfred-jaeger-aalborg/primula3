@@ -50,6 +50,7 @@ public class MapThread extends GGThread {
             try {
                 this.gnnPy = new GnnPy(this.scriptPath, this.scriptName, this.pythonHome);
                 gg.setGnnPy(this.gnnPy);
+				gg.load_gnn_settings(myprimula.getLoadGnnSet());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

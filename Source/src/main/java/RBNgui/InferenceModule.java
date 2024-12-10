@@ -48,14 +48,10 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.Hashtable;
-import java.util.Observable;
-import java.util.Observer;
-import java.util.Vector;
+
 import RBNpackage.*;
 
 import java.util.*;
-import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -92,18 +88,6 @@ import RBNinference.MapVals;
 import RBNinference.PFNetwork;
 import RBNinference.SampleProbs;
 import RBNinference.SampleThread;
-import RBNpackage.BoolRel;
-import RBNpackage.CPModel;
-import RBNpackage.GroundAtom;
-import RBNpackage.GroundAtomList;
-import RBNpackage.InstAtom;
-import RBNpackage.OneStrucData;
-import RBNpackage.ProbForm;
-import RBNpackage.RBN;
-import RBNpackage.Rel;
-import RBNpackage.RelStruc;
-import RBNpackage.Signature;
-import RBNpackage.SparseRelStruc;
 import RBNutilities.rbnutilities;
 import edu.ucla.belief.ace.Control;
 import edu.ucla.belief.ace.SettingsPanel;
@@ -1456,6 +1440,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
                         0,
                         true);
 				((GradientGraphO) gg).setMapSearchAlg(mapSeachAlg);
+				((GradientGraphO) gg).load_gnn_settings(myprimula.getLoadGnnSet());
                 mapthr = new MapThread(this.valueObserver, this, myprimula, (GradientGraphO) gg);
                 // mapthr = new MapThread(this,myprimula,(GradientGraphO)gg); or this?
                 if (mapthr.isGnnIntegration()) {

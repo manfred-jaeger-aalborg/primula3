@@ -33,7 +33,9 @@ import myio.StringOps;
 import java.awt.event.*;
 import java.awt.*;
 import java.io.*;
+import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Map;
 import java.util.Vector;
 
 import MLNParser.MLNParserFacade;
@@ -47,6 +49,7 @@ import edu.ucla.belief.ace.PrimulaSystemSnapshot;
 
 public class Primula extends JFrame implements PrimulaUIInt, ActionListener, ItemListener, KeyListener {
 
+	private Map<String,Object> load_gnn_set;
 	/**
 	 *
 	 */
@@ -981,6 +984,8 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 					}
 				}
 		);
+		
+		load_gnn_set = new HashMap<>();
 
 		this.init();
 	}
@@ -1779,6 +1784,12 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 	public void setRbn(RBN rbn) {
 		this.rbn = rbn;
 	}
+
+	public void setLoadGnnSet(Map<String,Object> sett) {
+		this.load_gnn_set = sett;
+	}
+
+	public Map<String,Object> getLoadGnnSet() { return this.load_gnn_set; }
 
 	private void loadDefaults(){
 

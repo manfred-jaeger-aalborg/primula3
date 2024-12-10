@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.*;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.StringWriter;
 
 public class GnnPy {
 
@@ -129,6 +130,14 @@ public class GnnPy {
     private void handleShutdown() {
         System.out.println("Shutdown hook triggered! Closing interpreter...");
         closeInterpreter();
+    }
+
+    public void load_gnn_set(Map<String, Object> sett) {
+        SharedInterpreter interpreter = threadSharedInterp.get();
+        if (interpreter != null) {
+            interpreter.set("gnn_set_dict", sett);
+            interpreter.exec("intt.set_vars(gnn_set_dict)");
+        }
     }
 
     /**

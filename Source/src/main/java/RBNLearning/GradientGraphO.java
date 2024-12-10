@@ -135,6 +135,7 @@ public class GradientGraphO extends GradientGraph{
 		if (this.checkGnnRel(rbn)) {
 			try {
 				tempGNN = new GnnPy(myPrimula.getScriptPath(), myPrimula.getScriptName(), myPrimula.getPythonHome());
+				tempGNN.load_gnn_set(myPrimula.getLoadGnnSet());
 			} catch (IOException e) {
 				throw new RuntimeException("It was not possible to initialize GnnPy in GG: " + e);
 			}
@@ -2304,5 +2305,11 @@ public void setGnnPy(GnnPy gnnPy) {
 
 	public void setNumIterGreedyMap(int setNumIterGreedyMap) {
 		this.nIterGreedy = setNumIterGreedyMap;
+	}
+
+	public void load_gnn_settings(Map<String, Object> sett){
+		if (this.gnnPy != null) {
+			gnnPy.load_gnn_set(sett);
+		}
 	}
 }

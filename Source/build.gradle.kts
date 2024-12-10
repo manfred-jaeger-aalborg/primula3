@@ -57,6 +57,30 @@ tasks.register("runNodeClass") {
     }
 }
 
+
+tasks.register("runExperiment") {
+    group = "application"
+
+    doLast {
+        val dataset = project.findProperty("dataset")?.toString() ?: "wisconsin"
+        val nfeat = project.findProperty("nfeat")?.toString() ?: "1703"
+        val nhid = project.findProperty("nhid")?.toString() ?: "16"
+        val nlayer = project.findProperty("nlayer")?.toString() ?: "2"
+        val nclass = project.findProperty("nclass")?.toString() ?: "5"
+
+        for (i in 0..9) {
+            exec {
+                commandLine(
+                    "xvfb-run", "-a",
+                    "java", "-cp", sourceSets["main"].runtimeClasspath.asPath,
+                    "Experiments.Homophily.NodeClass", i.toString(), dataset, nfeat, nhid, nlayer, nclass
+                )
+            }
+        }
+    }
+}
+
+
 tasks.register<JavaExec>("runPollution") {
     group = "application"
 
