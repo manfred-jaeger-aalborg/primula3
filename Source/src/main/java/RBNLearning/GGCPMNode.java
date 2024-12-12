@@ -250,9 +250,9 @@ public abstract class GGCPMNode extends GGNode{
 
 			}
 
-			if (cpm instanceof ProbFormGnn || cpm instanceof CatGnn || cpm instanceof CatGnnHetero ) {
-				result = new GGGnnNode(gg,cpm,allnodes,A,I,inputcaseno,observcaseno,parameters,useCurrentPvals,mapatoms,evaluated);
-			}
+//			if (cpm instanceof ProbFormGnn || cpm instanceof CatGnn || cpm instanceof CatGnnHetero ) {
+//				result = new GGGnnNode(gg,cpm,allnodes,A,I,inputcaseno,observcaseno,parameters,useCurrentPvals,mapatoms,evaluated);
+//			}
 //			if (cpm instanceof CatGnn) {
 //				result = new GGCatGnnNode(gg,cpm,A,I);
 //			}
