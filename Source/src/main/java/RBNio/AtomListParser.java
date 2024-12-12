@@ -4,9 +4,6 @@ import RBNpackage.*;
 import java.util.*;
 
 public class AtomListParser implements AtomListParserConstants {
-        /**
-		 * @uml.property  name="parseno"
-		 */
         private int parseno = 1;
 
 // parse 1: find unary relations as candidate for types
@@ -47,7 +44,7 @@ AtomListReader myreader = mr;
         boolean positive=true;
         AtomListReader myreader = mr;
         int arity = 0;
-        Rel newrel = new Rel();
+        BoolRel newrel = new BoolRel();
         String relname ="";
         Vector<String> tupleargs = new Vector<String>();
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -133,7 +130,7 @@ AtomListReader myreader = mr;
                 switch (parseno){
                 case 1:
                         if (arity==1){
-                                newrel = new Rel(relname,arity);
+                                newrel = new BoolRel(relname,arity);
                                 myreader.addCandidateType(newrel);
                         }
                         break;
@@ -159,41 +156,16 @@ AtomListReader myreader = mr;
          parseno = i;
   }
 
-  /**
- * Generated Token Manager.
- * @uml.property  name="token_source"
- * @uml.associationEnd  multiplicity="(1 1)"
- */
+  /** Generated Token Manager. */
   public AtomListParserTokenManager token_source;
-  /**
- * @uml.property  name="jj_input_stream"
- * @uml.associationEnd  
- */
-SimpleCharStream jj_input_stream;
-  /**
- * Current token.
- * @uml.property  name="token"
- * @uml.associationEnd  multiplicity="(1 1)"
- */
+  SimpleCharStream jj_input_stream;
+  /** Current token. */
   public Token token;
-  /**
- * Next token.
- * @uml.property  name="jj_nt"
- * @uml.associationEnd  
- */
+  /** Next token. */
   public Token jj_nt;
-  /**
- * @uml.property  name="jj_ntk"
- */
-private int jj_ntk;
-  /**
- * @uml.property  name="jj_gen"
- */
-private int jj_gen;
-  /**
- * @uml.property  name="jj_la1" multiplicity="(0 -1)" dimension="1"
- */
-final private int[] jj_la1 = new int[5];
+  private int jj_ntk;
+  private int jj_gen;
+  final private int[] jj_la1 = new int[5];
   static private int[] jj_la1_0;
   static {
       jj_la1_init_0();
@@ -309,19 +281,9 @@ final private int[] jj_la1 = new int[5];
       return (jj_ntk = jj_nt.kind);
   }
 
-  /**
- * @uml.property  name="jj_expentries"
- * @uml.associationEnd  multiplicity="(0 -1)" elementType="[I"
- */
-private java.util.List jj_expentries = new java.util.ArrayList();
-  /**
- * @uml.property  name="jj_expentry" multiplicity="(0 -1)" dimension="1"
- */
-private int[] jj_expentry;
-  /**
- * @uml.property  name="jj_kind"
- */
-private int jj_kind = -1;
+  private java.util.List<int[]> jj_expentries = new java.util.ArrayList<int[]>();
+  private int[] jj_expentry;
+  private int jj_kind = -1;
 
   /** Generate ParseException. */
   public ParseException generateParseException() {
@@ -349,7 +311,7 @@ private int jj_kind = -1;
     }
     int[][] exptokseq = new int[jj_expentries.size()][];
     for (int i = 0; i < jj_expentries.size(); i++) {
-      exptokseq[i] = (int[])jj_expentries.get(i);
+      exptokseq[i] = jj_expentries.get(i);
     }
     return new ParseException(token, exptokseq, tokenImage);
   }
