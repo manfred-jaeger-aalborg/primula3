@@ -52,29 +52,38 @@ public class NodeClass {
 
     public static void main(String[] args) {
 
-        String datasetName = args[1];
-        int NUM_ATTR = Integer.parseInt(args[2]);
-        int nhidd = Integer.parseInt(args[3]);
-        int nlayers = Integer.parseInt(args[4]);
-        int NUM_CLASS = Integer.parseInt(args[5]);
-        
+//        String datasetName = args[1];
+//        int NUM_ATTR = Integer.parseInt(args[2]);
+//        int nhidd = Integer.parseInt(args[3]);
+//        int nlayers = Integer.parseInt(args[4]);
+//        int NUM_CLASS = Integer.parseInt(args[5]);
+
+        String datasetName = "texas";
+        int NUM_ATTR = 1703;
+        int nhidd = 16;
+        int nlayers = 2;
+        int NUM_CLASS = 5;
+
         String modelName = "GCN";
-        String base_path = "/home/rafpoj/Dev/";
+        String base_path = "/Users/lz50rg/Dev/homophily/experiments/";
 
         Map<String, Object> load_gnn_set = new HashMap<>();
         load_gnn_set.put("sdataset", datasetName);
+        load_gnn_set.put("base_path", "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/");
+        load_gnn_set.put("model", modelName);
         load_gnn_set.put("nfeat", NUM_ATTR);
         load_gnn_set.put("nlayers", nlayers);
         load_gnn_set.put("nclass", NUM_CLASS);
         load_gnn_set.put("nhid", nhidd);
 
         Primula primula = new Primula();
-        primula.setPythonHome("/home/rafpoj/miniconda3/envs/torch/bin/python");
-        primula.setScriptPath("/home/rafpoj/Dev/primula3/Source/python");
+        primula.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
+        primula.setScriptPath("/Users/lz50rg/Dev/primula-workspace/primula3/Source/python/");
         primula.setScriptName("load_gnn");
         primula.setLoadGnnSet(load_gnn_set);
 
-        int ij = Integer.parseInt(args[0]);
+//        int ij = Integer.parseInt(args[0]);
+        int ij = 0;
         String index = Integer.toString(ij);
         Boolean loc_h = false;
         Boolean count_h = false;
@@ -88,11 +97,23 @@ public class NodeClass {
         primula.loadSparseRelFile(srsfile);
 
         // create rbn
-        Rel[] attrs_rels = new Rel[NUM_ATTR];
+        ArrayList<ArrayList<Rel>> attrs_rels = new ArrayList<>();
+        Rel[] inp_rel = new Rel[NUM_ATTR];
         for (int i = 0; i < NUM_ATTR; i++) {
-            attrs_rels[i] = new BoolRel("attr" + i, 1);
+            inp_rel[i] = new BoolRel("attr" + i, 1);
         }
-    
+
+        attrs_rels.add(
+                new ArrayList<Rel>(
+                        Arrays.asList(
+                                inp_rel
+                        )
+                )
+        );
+
+        ArrayList<String> edge_attr = new ArrayList<>();
+        edge_attr.add("edge");
+
         String sclass = generateCommaSeparatedString(NUM_CLASS);
 
         RBNPreldef gnn_rbn = new RBNPreldef(
@@ -103,8 +124,7 @@ public class NodeClass {
                         true,
                         NUM_CLASS,
                         attrs_rels,
-                        "edge",
-                        "AB",
+                        edge_attr,
                         "node",
                         true
                 )
@@ -170,7 +190,7 @@ public class NodeClass {
 
             // perform map inference
             im.setNumRestarts(2);
-            im.setMapSeachAlg(0); 
+            im.setMapSeachAlg(0);
             im.setNumIterGreedyMap(4000);
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();

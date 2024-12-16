@@ -55,7 +55,7 @@ public class CatGnnHetero extends CPModel implements CPMGnn {
 
         this.argument = argument;
         this.idGnn = idGnn;
-        this.categorical = true;
+        this.categorical = true; // TODO: handle this with counting vals
         this.numvals = numvals;
         this.input_attr = input_attr;
         this.edge_attr = edge_attr;

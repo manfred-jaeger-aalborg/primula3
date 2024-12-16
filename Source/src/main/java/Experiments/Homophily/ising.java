@@ -10,10 +10,7 @@ import RBNutilities.rbnutilities;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.TreeSet;
+import java.util.*;
 
 public class ising {
 
@@ -48,9 +45,8 @@ public class ising {
     public static void main(String[] args) {
         String N = "32";
         String J = "-0.5";
-        String Jb = "-0.4";
+        String Jb = "-0.1";
         String temp = "0.4";
-        String model = "GCN";
         Boolean loc_h = false;
         Boolean loc_h2 = true;
 
@@ -59,6 +55,23 @@ public class ising {
         primula.setScriptPath("/Users/lz50rg/Dev/primula-workspace/primula3/Source/python/");
         primula.setScriptName("load_gnn");
 
+        Map<String, Object> load_gnn_set = new HashMap<>();
+        load_gnn_set.put("sdataset", "ising");
+        load_gnn_set.put("base_path", "/Users/lz50rg/Dev/homophily/experiments/ising/trained/");
+//        load_gnn_set.put("model", "GGCN_raf");
+        load_gnn_set.put("model", "GraphNet");
+        load_gnn_set.put("nfeat", 1);
+        load_gnn_set.put("nlayers", 2);
+        load_gnn_set.put("nclass", 2);
+        load_gnn_set.put("nhid", 16);
+        load_gnn_set.put("N", Integer.valueOf(N));
+        load_gnn_set.put("J", Double.valueOf(J));
+        load_gnn_set.put("Jb", Double.valueOf(Jb));
+        load_gnn_set.put("temp", Double.valueOf(temp));
+        load_gnn_set.put("iter", 4);
+
+        primula.setLoadGnnSet(load_gnn_set);
+
         File srsfile = null;
         if (loc_h)
             srsfile = new File("/Users/lz50rg/Dev/homophily/experiments/ising/rdef/ising_" + N + "_" + J + "_" + Jb + "_" + temp + "_" + "4_loc.rdef");
@@ -66,25 +79,35 @@ public class ising {
             srsfile = new File("/Users/lz50rg/Dev/homophily/experiments/ising/rdef/ising_" + N + "_" + J + "_" + Jb + "_" + temp + "_" + "4_nodeconst.rdef");
         else
             srsfile = new File("/Users/lz50rg/Dev/homophily/experiments/ising/rdef/ising_" + N + "_" + J + "_" + Jb + "_" + temp + "_" + "4.rdef");
+        System.out.println(srsfile);
         primula.loadSparseRelFile(srsfile);
 
         // create rbn
-        int num_attr = 1;
-        Rel[] attrs_rels = new Rel[num_attr];
-        for (int i = 0; i < num_attr; i++) {
-            attrs_rels[i] = new NumRel("attr" + i, 1);
+        ArrayList<ArrayList<Rel>> attrs_rels = new ArrayList<>();
+        Rel[] inp_rel = new Rel[1];
+        for (int i = 0; i < 1; i++) {
+            inp_rel[i] = new BoolRel("attr" + i, 1);
         }
+        attrs_rels.add(
+                new ArrayList<Rel>(
+                        Arrays.asList(
+                                inp_rel
+                        )
+                )
+        );
+
+        ArrayList<String> edge_attr = new ArrayList<>();
+        edge_attr.add("edge");
 
         RBNPreldef gnn_rbn = new  RBNPreldef(
                 new CatRel("CAT", 1, typeStringToArray("node",1), valStringToArray("POS,NEG")),
                 new String[]{"v"},
                 new CatGnn("v",
-                        model+"ising",
+                        load_gnn_set.get("model")+"ising",
                         true,
                         2,
                         attrs_rels,
-                        "edge",
-                        "AB", // both directions are in the adj matrix
+                        edge_attr,
                         "node",
                         true
                 )
@@ -94,11 +117,12 @@ public class ising {
         if (loc_h)
             input_file = new File("/Users/lz50rg/Dev/homophily/experiments/ising/const_ising_loc.rbn");
         else if (loc_h2)
-            input_file = new File("/Users/lz50rg/Dev/homophily/experiments/ising/const_ising_glob.rbn");
+//            input_file = new File("/Users/lz50rg/Dev/homophily/experiments/ising/const_ising_glob.rbn");
+            input_file = new File("/Users/lz50rg/Dev/homophily/experiments/rbn_constraints/const_nodeconst.rbn");
         else
             input_file = new File("/Users/lz50rg/Dev/homophily/experiments/ising/const_ising.rbn");
 
-
+        System.out.println(input_file);
         RBN file_rbn = new RBN(input_file, primula.getSignature());
         RBNPreldef[] preledef = file_rbn.prelements();
 
@@ -140,7 +164,9 @@ public class ising {
             im.addQueryAtoms(tmp_query, gal);
 
             // perform map inference
-            im.setNumRestarts(10);
+            im.setNumRestarts(1);
+            im.setMapSeachAlg(1);
+            im.setNumIterGreedyMap(50000);
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();
 
@@ -201,11 +227,11 @@ public class ising {
 
             String pred_node_path = null;
             if (loc_h)
-                pred_node_path = "/Users/lz50rg/Dev/homophily/experiments/ising/pred_labels/pred_labels_" + model + "_" + N + "_" + J + "_" + Jb + "_" + temp + "_loc.txt";
+                pred_node_path = "/Users/lz50rg/Dev/homophily/experiments/ising/pred_labels/pred_labels_" + load_gnn_set.get("model") + "_" + N + "_" + J + "_" + Jb + "_" + temp + "_loc.txt";
             else if (loc_h2)
-                pred_node_path = "/Users/lz50rg/Dev/homophily/experiments/ising/pred_labels/pred_labels_" + model + "_" + N + "_" + J + "_" + Jb + "_" + temp + "_nodeconst.txt";
+                pred_node_path = "/Users/lz50rg/Dev/homophily/experiments/ising/pred_labels/pred_labels_" + load_gnn_set.get("model") + "_" + N + "_" + J + "_" + Jb + "_" + temp + "_nodeconst.txt";
             else
-                pred_node_path = "/Users/lz50rg/Dev/homophily/experiments/ising/pred_labels/pred_labels_" + model + "_" + N + "_" + J + "_" + Jb + "_" + temp + ".txt";
+                pred_node_path = "/Users/lz50rg/Dev/homophily/experiments/ising/pred_labels/pred_labels_" + load_gnn_set.get("model") + "_" + N + "_" + J + "_" + Jb + "_" + temp + ".txt";
 
             try (FileWriter writer = new FileWriter(pred_node_path)) {
                 for (int i = 0; i < gt_class.length; i++) {
@@ -229,6 +255,6 @@ public class ising {
         } catch (Exception e) {
             System.out.println(e);
         }
-
+        System.exit(0);
     }
 }
