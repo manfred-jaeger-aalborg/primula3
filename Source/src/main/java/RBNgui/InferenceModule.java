@@ -1414,12 +1414,13 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 //			maprestarts = true;
 			RelData evidence = new RelData(myprimula.getRels(),myprimula.getInstantiation());
 			int mode;
-			String[] rbnparams = myprimula.getRBN().parameters();
-			Hashtable<String,Integer> rbnparamidx = new Hashtable<String,Integer>();
-			for (int i=0;i<rbnparams.length;i++)
-				rbnparamidx.put(rbnparams[i], i);
+			Hashtable<String,Integer> parameters = myprimula.makeParameterIndex();
+//			String[] rbnparams = myprimula.getRBN().parameters();
+//			Hashtable<String,Integer> rbnparamidx = new Hashtable<String,Integer>();
+//			for (int i=0;i<rbnparams.length;i++)
+//				rbnparamidx.put(rbnparams[i], i);
 			
-			if (rbnparams.length >0)
+			if (parameters.size() >0)
 				mode = GradientGraphO.LEARNANDMAPMODE;
 			else 
 				mode = GradientGraphO.MAPMODE;
@@ -1432,8 +1433,8 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
             for (int i = 0; i < num_threads; i++) {
                 gg = new GradientGraphO(myprimula,
                         evidence,
-                        rbnparamidx,
-                        null, // No minmaxbounds for the parameters passed here
+                        parameters,
+                        myprimula.makeMinMaxBounds(), 
                         this,
                         queryatoms,
                         mode,
@@ -2679,7 +2680,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	}
 
 	public  double getLLikThresh(){
-		return 0;
+		return 0.05; //TODO: integrate this into the MAP options window
 	}
 
 	public double getLineDistThresh(){

@@ -114,9 +114,7 @@ public class LearnThread extends GGThread {
 		{
 
 			
-			/* Determines the parameters contained in the rbn model. */
-			String[] rbnparameters = myprimula.getRBN().parameters();
-
+			
 			
 			
 			/* Numerical relations to be learned, divided into blocks
@@ -126,81 +124,9 @@ public class LearnThread extends GGThread {
 			 */
 			String[][] parameternumrels = myprimula.getParamNumRels();
 
-			/* All parameters to be optimized (RBN params and ground numerical relation atoms)*/
-			Hashtable<String,Integer> parameters = new Hashtable<String,Integer>();
-			int pidx = 0; // the index of the next parameter added to parameters
-			for (int i=0;i<rbnparameters.length;i++) {
-				parameters.put(rbnparameters[i], pidx);
-				pidx++;
-			}
-//			
+			Hashtable<String,Integer> parameters = myprimula.makeParameterIndex();
 			
-			/*
-			 *  Create a 2d array that contains for all parameters the relevant maximum and minimum bounds
-			 *  First index is the index of a parameter according to the parameters hashtable
-			 */
-			double[][] minmaxbounds = new double[parameters.size()][2];
-
-			//		for (int i=0;i<=maxrbnparam;i++){
-			//			minmaxbounds[i][0] = 0.001;
-			//			minmaxbounds[i][1] = 0.999;
-			//		}
-
-			for (String par: parameters.keySet()){
-				pidx = parameters.get(par);
-				if (myprimula.isRBNParameter(par)) {
-					if (par.charAt(0)=='#') {
-						minmaxbounds[pidx][0] = 0.001;
-						minmaxbounds[pidx][1] = 0.999;
-					}
-					else {
-						minmaxbounds[pidx][0] = Double.NEGATIVE_INFINITY;
-						minmaxbounds[pidx][1] = Double.POSITIVE_INFINITY;
-					}
-				}
-				else {
-					NumRel nextnr = myprimula.getRels().getNumRel(GroundAtom.relnameFromString(par));
-					minmaxbounds[pidx][0] = nextnr.minval();
-					minmaxbounds[pidx][1] = nextnr.maxval();
-				}
-			}
-			
-//			/* The ground numerical relation atoms divided into blocks corresponding to the blocks in paramnumrels */
-//			String[][] nrelparamblocks =new String[parameternumrels.length][];
-
-			/* Cannot handle learning numerical input relations for
-			 * data with multiple input domains: check this and throw
-			 * exception
-			 */
-			if (parameternumrels[0].length > 0 && alldata.size()>1)
-				throw new RBNRuntimeException("Cannot handle learning numerical relations with multiple input domains");
-
-			/* Construct the parameters corresponding to ground numrel atoms */
-
-			RelDataForOneInput rdoi = databatches[0].caseAt(0);
-			RelStruc A = rdoi.inputDomain();
-			String nextp;
-//			String[] nextparams;
-			for (int i=0;i<parameternumrels.length;i++){
-//				nrelparamblocks[i] = new String[0];
-				for (int j=0;j<parameternumrels[i].length;j++){
-					nextp = parameternumrels[i][j];
-					// The following a bit crude: distinguish relation names from ground atoms
-					// just by occurrence of "("
-					if (!nextp.contains("(")){
-						Vector<String[]> alltuples = A.allTrue(nextp,A);
-						for (String[] nexttup: alltuples) {
-							parameters.put(parameternumrels[i][j]+StringOps.arrayToString(nexttup,"(",")"),pidx);
-							pidx++;
-						}
-					}
-					else{
-						parameters.put(nextp,pidx);
-						pidx++;
-					}
-
-				}
-			}
+			double[][] minmaxbounds = myprimula.makeMinMaxBounds();
 
 			parammodel.setParameters(parameters);
 			parammodel.fireTableDataChanged();
@@ -304,6 +230,13 @@ public class LearnThread extends GGThread {
 					|| myLearnModule.getRestarts() == -1)){
 
 				System.out.println("# ***** RESTART **********");
+				
+				/* 
+				 * The RelStruc A only is needed for the case of learning NumRels
+				 * In this case, only a single input domain is allowed, and alldata.caseAt(0) returns
+				 * what we need.
+				 */
+				RelStruc A = alldata.caseAt(0).inputDomain();
 				try {
 					switch (threadascentstrategy){
 					case LearnModule.AscentBatch:

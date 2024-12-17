@@ -29,6 +29,7 @@ import java.util.Vector;
 import myio.StringOps;
 
 import RBNpackage.*;
+import RBNutilities.SmallDouble;
 import RBNExceptions.*;
 
 
@@ -137,8 +138,8 @@ private int highvalue;
 		if (this.flipscores == null) { // First time we do MAP inference on this node
 			flipscores = new double[(int)this.myatom().rel().numvals()];
 		}
-		thisgg.llnode.evaluate(null,allugas);
-		double oldll = thisgg.llnode.loglikelihood();
+		
+		double oldll = SmallDouble.log(thisgg.llnode.evaluate(null,allugas,true,false,null));
 		double newll,fs;
 		highscore = Double.NEGATIVE_INFINITY;
 		highvalue = 0;
@@ -173,8 +174,8 @@ private int highvalue;
 				}
 
 				reEvaluateUpstream(null);
-				thisgg.llnode.evaluate(null,allugas);
-				newll = thisgg.llnode.loglikelihood();
+				
+				newll = SmallDouble.log(thisgg.llnode.evaluate(null,allugas,true,false,null));
 				fs=newll-oldll;
 				if (fs>highscore) {
 					highscore = fs;

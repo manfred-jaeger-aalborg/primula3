@@ -66,7 +66,7 @@ public  class GGLikelihoodNode extends GGNode{
 	 * log -likelihood as a standard double for use with LearnModule.UseLogLik
 	 */
 	
-	double log_likelihood;
+//	double log_likelihood;
 	
 	/**
 	 * The current sum of negative squared errors
@@ -173,7 +173,7 @@ public  class GGLikelihoodNode extends GGNode{
 //	}
 //	
 	public double[] evaluate(Integer sno) {
-		return evaluate(sno,children);
+		return evaluate(sno,children,false,true,null);
 	}
 	
 	/** Computes the (log-)likelihood 
@@ -190,41 +190,54 @@ public  class GGLikelihoodNode extends GGNode{
 	 * Depending on thisgg.objective: if LearnModule.UseLogLik then return a one-dim array containing
 	 * the log-likelihood. if LearnModule.UseLik then return a two-dim. array with a small double  
 	 * representation of the likelihood.
+	 * 
+	 * If incremental = true, then batchelements should only be a subset of the children. 
+	 * If also update = true, then the 
+	 * small_likelihood and loglikelihood values are updated by multiplying/adding to the current values with
+	 * the ratios/differences of the previous contribution of the batchelements to the (log)likelihood and the
+	 * new values. These previous contributions are passed as a double[][] array of dimension 
+	 * thisgg.windowsize*thisgg.numchains x 2 of small double values
+	 * 
+	 * In the case incremental = true and update = false the local likelihood of batchelements is returned, and 
+	 * no change to small_likelihoods_for_samples takes place
 	 */
-	public double[] evaluate(Integer sno, Vector<GGCPMNode> batchelements){
-
+	public double[] evaluate(Integer sno, 
+			Vector<GGCPMNode> batchelements,
+			boolean incremental,
+			boolean updatelik,
+			double[][] oldsmallls)
+	{
 		if (this.small_likelihoods_for_samples==null && sno!=null)
 			System.out.println("Calling GGLikelihoodNode.evaluate with sample number when no small_likelihoods_for_samples present");
 
-		/* calling evaluate(null,batchelements) in the case where there 
-		 * are samples means that we need to evaluate for all samples and 
-		 * sum the individual sample likelihoods. log-likelihoods not allowed
-		 * in this case.
-		 */
-		if (this.depends_on_sample && sno==null) {
-			switch (thisgg.objective()){
-			case LearnModule.UseLogLik:
-				System.out.println("Invalid option: log likelihood in the presence of incomplete data");
-			case LearnModule.UseLik:
-				small_likelihood=new double[] {0.0,0.0};
-				for (int i=0;i<thisgg.windowsize*thisgg.numchains;i++)
-					small_likelihood=SmallDouble.add(small_likelihood, evaluate(i,batchelements));
-				log_likelihood = SmallDouble.log(small_likelihood);
-				return SmallDouble.multiply(small_likelihood, thisgg.windowsize*thisgg.numchains );
-			}
-		}
+		int idx =0; // index in small_likelihoods_for_samples that needs to be updated
+		if (this.depends_on_sample)
+			idx = sno;
 
 		// Initialize relevant fields
-		if (!this.depends_on_sample) { 
-			small_likelihood=new double[] {1.0,0.0};
-			small_likelihood[0]=1.0;
-			log_likelihood=0;
+		
+		double[] local_small_likelihood = new double[] {1.0,0.0}; 
+		
+		if (this.depends_on_sample && sno==null) {
+
+			for (int i=0;i<thisgg.windowsize*thisgg.numchains;i++) 
+				local_small_likelihood=SmallDouble.add(local_small_likelihood, 
+						evaluate(i,batchelements,incremental,updatelik,oldsmallls));
+
+			local_small_likelihood = SmallDouble.divide(local_small_likelihood, thisgg.windowsize*thisgg.numchains );
+
+			if (updatelik) {
+				double[] oldlsum = new double[2];
+				for (int i=0;i<thisgg.windowsize*thisgg.numchains;i++) 
+					oldlsum = SmallDouble.add(oldlsum,oldsmallls[i]);
+				double[] ratio = SmallDouble.divide(local_small_likelihood, oldlsum);
+				local_small_likelihood = SmallDouble.multiply(local_small_likelihood, ratio);
+				small_likelihood=local_small_likelihood.clone();
+			}
+			return local_small_likelihood;
 		}
 
-		if (this.depends_on_sample) { // when we get here, then sno != null
-			small_likelihoods_for_samples[sno]=new double[] {1.0,0.0};
-			log_likelihood=0;
-		}
+
 
 		// Main iteration over the children 	
 		Double[] childval;
@@ -249,75 +262,61 @@ public  class GGLikelihoodNode extends GGNode{
 				System.out.println("target(): " + childlik);
 			}
 
-			if (this.depends_on_sample && sno!=null) {
-				switch (thisgg.objective()){
-				case LearnModule.UseLogLik:
-					System.out.println("Invalid option: log likelihood in the presence of incomplete data");
-				case LearnModule.UseLik:
-					small_likelihoods_for_samples[sno]=SmallDouble.multiply(small_likelihoods_for_samples[sno], childlik);
-				}
-			}
-
-			if (!this.depends_on_sample) {
-				log_likelihood+=Math.log(childlik);
-				small_likelihood=SmallDouble.multiply(small_likelihood, childlik);
-			}
-
+			if (!this.depends_on_sample || (this.depends_on_sample && sno!=null)) 
+				local_small_likelihood=SmallDouble.multiply(local_small_likelihood, childlik);
 		}
 
-		if (this.depends_on_sample && sno!=null) { 
-			this.is_evaluated_for_samples[sno] = true;
-			return small_likelihoods_for_samples[sno];
+
+		if (updatelik && incremental) {
+			double[] ratio = SmallDouble.divide(local_small_likelihood, oldsmallls[idx]);
+			small_likelihoods_for_samples[idx] = SmallDouble.multiply(local_small_likelihood, ratio);
 		}
-		else {
-			is_evaluated_for_samples[0] = true;
-			switch (thisgg.objective()){
-			case LearnModule.UseLogLik:
-				return new double[] {log_likelihood};
-			case LearnModule.UseLik:
-				return small_likelihood;
-			}
+		if (updatelik && !incremental && !this.depends_on_sample) {
+			small_likelihoods_for_samples[0] = local_small_likelihood.clone();
+			small_likelihood = local_small_likelihood.clone();
 		}
-		System.out.println("Unhandled case in GGLikelihoodNode.evaluate");
-		return new double[] {Double.NaN};
+
+		is_evaluated_for_samples[idx] = true;
+
+		return local_small_likelihood;
 	}
 
 	/** for compatibility with GGNode ....use with care */
 	public double evaluateGrad(Integer sno, String param) 
-	throws RBNNaNException
+			throws RBNNaNException
 	{
 		return evaluateSmallGrad(sno,param)[0];
 	}
-	
-//	/** for compatibility with GGNode ....use with care */
-//	public double evaluateGrad(int param, int[] batchelements)
-//	throws RBNNaNException
-//	{
-//		evaluateSmallGrad(param,batchelements);
-//		return SmallDouble.toStandardDouble(smallgradient[param]);
-//	}
 
-//	public void evaluateBounds(){
-//		if (bounds[0][0]==-1){
-//			//	    System.out.println("likelihoodnode.evaluateBounds");
-//			/* Evaluate bounds at children: */
-//			for (int i=0;i<children.size();i++)
-//				children.elementAt(i).evaluateBounds();
-//			double lowbound[] = {1,0};
-//			double uppbound[] = {1,0};
-//			for (int i=0;i<children.size();i++){
-//				if (getInstVal(i)==1){
-//					lowbound= SmallDouble.multiply(lowbound,children.elementAt(i).lowerBound());
-//					uppbound= SmallDouble.multiply(uppbound,children.elementAt(i).upperBound());
-//				}
-//				else{
-//					lowbound= SmallDouble.multiply(lowbound,(1-children.elementAt(i).upperBound()));
-//					uppbound= SmallDouble.multiply(uppbound,(1-children.elementAt(i).lowerBound()));					}
-//			}
-//			bounds[0]=lowbound;
-//			bounds[1]=uppbound;
-//		}
-//	}
+	//	/** for compatibility with GGNode ....use with care */
+	//	public double evaluateGrad(int param, int[] batchelements)
+	//	throws RBNNaNException
+	//	{
+	//		evaluateSmallGrad(param,batchelements);
+	//		return SmallDouble.toStandardDouble(smallgradient[param]);
+	//	}
+
+	//	public void evaluateBounds(){
+	//		if (bounds[0][0]==-1){
+	//			//	    System.out.println("likelihoodnode.evaluateBounds");
+	//			/* Evaluate bounds at children: */
+	//			for (int i=0;i<children.size();i++)
+	//				children.elementAt(i).evaluateBounds();
+	//			double lowbound[] = {1,0};
+	//			double uppbound[] = {1,0};
+	//			for (int i=0;i<children.size();i++){
+	//				if (getInstVal(i)==1){
+	//					lowbound= SmallDouble.multiply(lowbound,children.elementAt(i).lowerBound());
+	//					uppbound= SmallDouble.multiply(uppbound,children.elementAt(i).upperBound());
+	//				}
+	//				else{
+	//					lowbound= SmallDouble.multiply(lowbound,(1-children.elementAt(i).upperBound()));
+	//					uppbound= SmallDouble.multiply(uppbound,(1-children.elementAt(i).lowerBound()));					}
+	//			}
+	//			bounds[0]=lowbound;
+	//			bounds[1]=uppbound;
+	//		}
+	//	}
 
 
 
@@ -378,14 +377,14 @@ public  class GGLikelihoodNode extends GGNode{
 	private double[] evaluateSmallGrad(Integer sno, String param, Vector<GGCPMNode> batchelements)
 	throws RBNNaNException
 	{
-		// TODO: complete check/revision
+		// TODO: complete check/revision 
 
 		
 		if (this.depends_on_sample && !is_evaluated_for_samples[sno]){
-			this.evaluate(sno,batchelements);
+			this.evaluate(sno,batchelements,false,false,null); // TODO: incremental version of evaluateSmallGrad ?
 		}
 		if (!this.depends_on_sample && !is_evaluated_for_samples[0]){
-			this.evaluate(sno,batchelements);
+			this.evaluate(sno,batchelements,false,false,null);
 		}
 		
 		double smallgrad[] = {0,0};
@@ -423,7 +422,7 @@ public  class GGLikelihoodNode extends GGNode{
 						smallgrad = SmallDouble.add(smallgrad,
 								SmallDouble.multiply(SmallDouble.divide(relevantlikelihood,
 										childlik),
-										child.evaluatePartDeriv(sno,param)
+										SmallDouble.asSmallDouble(childgrad_at_value)
 										));
 						break;
 					case LearnModule.UseLogLik:
@@ -509,7 +508,7 @@ public  class GGLikelihoodNode extends GGNode{
 //	}
 
 	public double loglikelihood(){
-		return log_likelihood;
+		return SmallDouble.log(small_likelihood);
 	}
 	
 	public double loglikelihood(Integer sno){
@@ -551,7 +550,7 @@ public  class GGLikelihoodNode extends GGNode{
 	public void resetValue(Integer sno){
 		if (!this.depends_on_sample) {
 			is_evaluated_for_samples[0] = false;
-			log_likelihood = 0;
+//			log_likelihood = 0;
 			small_likelihood[0]=0.0;
 			small_likelihood[1]=0.0;
 		}
@@ -634,7 +633,7 @@ public  class GGLikelihoodNode extends GGNode{
 			case LearnModule.UseLik:
 				return this.small_likelihood[0]; /* Careful: this is not good! */
 			case LearnModule.UseLogLik:
-				return this.loglikelihood();
+				return SmallDouble.log(this.likelihood());
 			case LearnModule.UseSquaredError:
 				return this.getSSQE();
 		}

@@ -651,7 +651,7 @@ public class GradientGraphO extends GradientGraph{
 	}
 
 	public double currentLogLikelihood(){
-		return llnode.loglikelihood();
+		return SmallDouble.log(llnode.likelihood());
 	}
 
 	public double[] currentGradient(){
@@ -783,7 +783,7 @@ public class GradientGraphO extends GradientGraph{
 					abort = true;
 			} else if (numchains != 0) success = true;
 
-			if (numchains == 0 && mode==MAPMODE) { 
+			if (numchains == 0 && (mode==MAPMODE || mode==LEARNANDMAPMODE)) { 
 				llnode.evaluate(null);
 				if (llnode.likelihood()[0] != 0)
 					success = true;
@@ -865,7 +865,7 @@ public void gibbsSample(Thread mythread){
 			for (int v=0;v<nvals;v++) {
 				gast.setSampleVal(sno, v);
 				gast.reEvaluateUpstream(sno);
-				sd_scores[v]=llnode.evaluate(sno, gast.allugas);
+				sd_scores[v]=llnode.evaluate(sno, gast.allugas, false, false, null);
 			}
 			sampleprobs=SmallDouble.toProbabilityArray(sd_scores);
 
@@ -978,7 +978,7 @@ public void gibbsSample(Thread mythread){
 		}
 
 //		System.out.println("Final likelihood: " + currentLikelihood()[0] + " " + currentLikelihood()[1]);
-		return 0;
+		return currentLogLikelihood();
 	}
 
 public double mapSearch(GGThread mythread,TreeSet<GGAtomMaxNode> flipcandidates, int depth) {
@@ -994,8 +994,8 @@ public double mapSearch(GGThread mythread,TreeSet<GGAtomMaxNode> flipcandidates,
 
 	}
 
-	System.out.println("Flip scores");
-	showMaxAtomFlipScores(scored_atoms);
+//	System.out.println("Flip scores");
+//	showMaxAtomFlipScores(scored_atoms);
 
 	int num_flipped = 0;
 	Boolean terminate = false;
@@ -1058,10 +1058,11 @@ public double mapSearch(GGThread mythread,TreeSet<GGAtomMaxNode> flipcandidates,
 		for (GGAtomMaxNode nextgimn: maxindicators.get(r))
 			System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst());
 	}
-	System.out.println("Likelihood: " + currentLikelihood()[0]);
+	llnode.evaluate(null);
+	System.out.println("Log-Likelihood: " + currentLogLikelihood());
 	System.out.println("-----------------");
 
-	return 0;
+	return currentLogLikelihood();
 }
 
 //	public double mapSearch_old(Vector<GGAtomMaxNode> allreadyflipped,
@@ -1148,6 +1149,7 @@ public double mapInference(GGThread mythread)
 		throws RBNNaNException{
 	boolean terminate = false;
 	double score = 0;
+	double oldll =0;
 	int itcount = 0;
 	Boolean gotinit = initIndicators(mythread);
 	if (!gotinit) {
@@ -1170,17 +1172,30 @@ public double mapInference(GGThread mythread)
 		//		showParameterValues("Current parameters: ");
 		itcount++;
 		evaluateLikelihoodAndPartDerivs(true);
+		oldll=currentLogLikelihood(); 
+		
 		if (debugPrint)
-			System.out.println("likelihood= " + SmallDouble.toStandardDouble(llnode.likelihood()) + "   " + StringOps.arrayToString(llnode.likelihood(), "(", ")"));
+			System.out.println("log-likelihood= " + oldll);
 
 		if (mapSearchAlg == 0)
 			score = mapSearch(mythread, maxind_as_ts(), 3);
 		else if (mapSearchAlg == 1)
 			score = greedySearch(mythread, maxind_as_ts(), nIterGreedy, 1, 1);
 
-		if (score <= 1) {
+		if (debugPrint)
+			System.out.println("log-likelihood improvement " + oldll/score);
+		
+		if (oldll/score <= 1+myggoptions.getLLikThresh()) {
 			terminate = true;
 			System.out.println("terminate");
+		}
+		if (!terminate) {
+			oldll = score;
+			if (debugPrint)
+				System.out.print("Learning parameters ...");
+			learnParameters(mythread,GradientGraph.FullLearn,false);
+			if (debugPrint)
+				System.out.println("... done");
 		}
 
 	}
@@ -1673,7 +1688,7 @@ protected double[] linesearch(double[] oldthetas,
 	/* First get the value at oldthetas (leftbound) */
 	setParameters(oldthetas);
 	evaluateLikelihoodAndPartDerivs(true);
-	leftvalue = llnode.objectiveAsSmallDouble();
+	leftvalue = llnode.likelihood();
 
 	if (lambda == Double.POSITIVE_INFINITY){
 		if (myggoptions.ggverbose())
@@ -1696,7 +1711,7 @@ protected double[] linesearch(double[] oldthetas,
 			//					currentparamnode.setCurrentParamVal(rightbound[partderiv]);
 			//					currentparamnode.reEvaluateUpstream(partderiv);
 			//				}
-			rightvalue = llnode.objectiveAsSmallDouble();				
+			rightvalue = llnode.likelihood();				
 			//System.out.println("right: " + StringOps.arrayToString(rightbound,"[","]") + "   " + StringOps.arrayToString(rightvalue,"(",")"));
 			if (Double.isInfinite(rightvalue[0]) || 
 					Double.isNaN(rightvalue[0]) || 
@@ -1718,7 +1733,7 @@ protected double[] linesearch(double[] oldthetas,
 				middle = midpoint(lastrightbound,rightbound,0.5);
 				setParameters(middle);
 				evaluateLikelihoodAndPartDerivs(true);
-				middlevalue = llnode.objectiveAsSmallDouble();
+				middlevalue = llnode.likelihood();
 				if (Double.isInfinite(rightvalue[0]) || Double.isNaN(rightvalue[0]) )
 					rightbound=middle;
 				if (likelihoodGreater(leftvalue,middlevalue)) {
@@ -1751,7 +1766,7 @@ protected double[] linesearch(double[] oldthetas,
 	 */
 
 	/** Pro forma initialization of rightvalue */
-	rightvalue = llnode.objectiveAsSmallDouble();
+	rightvalue = llnode.likelihood();
 	boolean terminate = false;
 	boolean moveleftprobe = true;
 	boolean moverightprobe = true;
@@ -1772,7 +1787,7 @@ protected double[] linesearch(double[] oldthetas,
 			//					currentparamnode.setCurrentParamVal(middle1[partderiv]);
 			//					currentparamnode.reEvaluateUpstream(partderiv);
 			//				}
-			middlevalue1=llnode.objectiveAsSmallDouble();
+			middlevalue1=llnode.likelihood();
 			//				System.out.print(" m1: " + middlevalue1[0]);
 			//				if (Double.isNaN(middlevalue1[0]) || Double.isInfinite(middlevalue1[0])){
 			//					System.out.println();
@@ -1791,7 +1806,7 @@ protected double[] linesearch(double[] oldthetas,
 			//					currentparamnode.setCurrentParamVal(middle2[partderiv]);
 			//					currentparamnode.reEvaluateUpstream(partderiv);
 			//				}
-			middlevalue2=llnode.objectiveAsSmallDouble();
+			middlevalue2=llnode.likelihood();
 			//				if (Double.isNaN(middlevalue2[0]) || Double.isInfinite(middlevalue2[0])){
 			//					System.out.println();
 			//					System.out.println("# Warning: middlevalue2 undefined");

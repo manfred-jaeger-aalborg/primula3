@@ -511,7 +511,26 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 	 * instasosd
 	 */
 	RelData rdata;
-
+	
+	String[] rbnparameters;
+	
+	/* Numerical relations to be learned, divided into blocks
+	 * Some relations may also be given by enumeration of their ground
+	 * atoms
+	 * 
+	 */
+	String[][] parameternumrels;
+	
+	/* All parameters to be optimized (RBN params and ground numerical relation atoms)
+	 * mapped to an integer index by this hashtable */
+	Hashtable<String,Integer> parameters;
+	
+	/*
+	 *  2d array that contains for all parameters the relevant maximum and minimum bounds
+	 *  First index is the index of a parameter according to the parameters hashtable
+	 */
+	double[][] minmaxbounds;
+	
 	/**
 	 * @uml.property  name="queryatoms"
 	 * @uml.associationEnd  multiplicity="(1 1)"
@@ -1412,6 +1431,9 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 
 //		System.out.println("Init Inst.");
 		instasosd.init(rbn);
+		
+		/* extract rbn parameters */
+		this.rbnparameters = rbn.parameters();
 
 	}
 
@@ -1725,12 +1747,77 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		else
 			return false;
 	}
-//	/*
-//	 * Looks whether Rel r is
-//	 */
-//	public void updateRelProperties(Rel r){
-//
-//	}
+	
+	public Hashtable<String,Integer> makeParameterIndex(){
+		this.parameters = new Hashtable<String,Integer>();
+		int pidx = 0; // the index of the next parameter added to parameters
+		for (int i=0;i<rbnparameters.length;i++) {
+			parameters.put(rbnparameters[i], pidx);
+			pidx++;
+		}
+		String[][] parameternumrels = this.getParamNumRels();
+		
+		/* Cannot handle learning numerical input relations for
+		 * data with multiple input domains: check this and throw
+		 * exception
+		 */
+		if (parameternumrels.length > 0 && (parameternumrels[0].length > 0 && rdata.size()>1))
+			throw new RBNRuntimeException("Cannot handle learning numerical relations with multiple input domains");
+		
+		/* Construct the parameters corresponding to ground numrel atoms */
+		RelDataForOneInput rdoi = rdata.caseAt(0);
+		RelStruc A = rdoi.inputDomain();
+		String nextp;
+		for (int i=0;i<parameternumrels.length;i++){
+			for (int j=0;j<parameternumrels[i].length;j++){
+				nextp = parameternumrels[i][j];
+				// The following a bit crude: distinguish relation names from ground atoms
+				// just by occurrence of "("
+				if (!nextp.contains("(")){
+					Vector<String[]> alltuples = A.allTrue(nextp,A);
+					for (String[] nexttup: alltuples) {
+						parameters.put(parameternumrels[i][j]+StringOps.arrayToString(nexttup,"(",")"),pidx);
+						pidx++;
+					}
+				}
+				else{
+					parameters.put(nextp,pidx);
+					pidx++;
+				}
+
+			}
+		}
+		return this.parameters;
+	}
+	
+	public double[][] makeMinMaxBounds(){
+		/*
+		 *  Create a 2d array that contains for all parameters the relevant maximum and minimum bounds
+		 *  First index is the index of a parameter according to the parameters hashtable
+		 */
+		this.minmaxbounds = new double[parameters.size()][2];
+		int pidx;
+
+		for (String par: parameters.keySet()){
+			pidx = parameters.get(par);
+			if (this.isRBNParameter(par)) {
+				if (par.charAt(0)=='#') {
+					minmaxbounds[pidx][0] = 0.001;
+					minmaxbounds[pidx][1] = 0.999;
+				}
+				else {
+					minmaxbounds[pidx][0] = Double.NEGATIVE_INFINITY;
+					minmaxbounds[pidx][1] = Double.POSITIVE_INFINITY;
+				}
+			}
+			else {
+				NumRel nextnr = this.getRels().getNumRel(GroundAtom.relnameFromString(par));
+				minmaxbounds[pidx][0] = nextnr.minval();
+				minmaxbounds[pidx][1] = nextnr.maxval();
+			}
+		}
+		return this.minmaxbounds;
+	}
 
 	public LearnModule openLearnModule(boolean visible){
 		if(!isLrnModuleOpen){
@@ -1795,8 +1882,8 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 
 
 
-		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Ising/const_nodeconst.rbn";	
-		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Ising/ising_32_0.5_0.0_0.4_4_nodeconst.rdef";
+		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Ising/ising-v2.rbn";	
+		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Ising/ising-v2.rdef";
 		
 //		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Categorical/onecat_param.rbn";	
 //		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Categorical/onecat_sample.rdef";
