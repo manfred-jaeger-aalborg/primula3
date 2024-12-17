@@ -1670,4 +1670,13 @@ public class rbnutilities extends java.lang.Object
 		}
 		return result;
 	}
+
+	public static int argmax(double[] arr) {
+		int result =0;
+		for (int i=1; i<arr.length; i++) {
+			if (arr[i]>arr[result])
+				result = i;
+		}
+		return result;
+	}
 }

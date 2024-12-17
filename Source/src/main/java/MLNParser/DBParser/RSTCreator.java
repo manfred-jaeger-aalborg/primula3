@@ -186,30 +186,28 @@ public class RSTCreator {
 //                e.printStackTrace();
 //          }
 //        }
-        
+
     public void addInstantiationOfArtificial(RBN network) {
 
-    	BoolRel nextrel;
-    	int[][] alltuples;
-    	String nextrelname;
-    	try{
-    		for (int i=0;i<network.NumPFs();i++){
-                // ADD (BoolRel) 
-    			nextrel = (BoolRel) network.relAt(i);
-            
-    			nextrelname = nextrel.printname();
-    			if (nextrelname.length()>=6 && nextrelname.substring(0,6).equals("MLNRel")){
-    				alltuples = relStruc.allTypedTuples(nextrel.getTypes());
-    				for (int k=0;k<alltuples.length;k++){
-    					instance.add(nextrel, alltuples[k], true, "?");   
-    				}
-    			}
-    		}
-    	}
-    	catch (RBNIllegalArgumentException e) {
-    		System.out.println("Illegal types are trying to be added to the rel Struc");
-    		e.printStackTrace();
-    	}
+        BoolRel nextrel;
+        int[][] alltuples;
+        String nextrelname;
+        try{
+            for (int i=0;i<network.NumPFs();i++){
+                nextrel = (BoolRel)network.relAt(i);
+                nextrelname = nextrel.printname();
+                if (nextrelname.length()>=6 && nextrelname.substring(0,6).equals("MLNRel")){
+                    alltuples = relStruc.allTypedTuples(nextrel.getTypes());
+                    for (int k=0;k<alltuples.length;k++){
+                        instance.add(nextrel, alltuples[k], true, "?");
+                    }
+                }
+            }
+        }
+        catch (RBNIllegalArgumentException e) {
+            System.out.println("Illegal types are trying to be added to the rel Struc");
+            e.printStackTrace();
+        }
     }
 
 

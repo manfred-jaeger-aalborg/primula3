@@ -2409,121 +2409,129 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 //	
 
 	private void evaluateAccuracy(){
-		/* Computes the accuracy of the current rbn 
-		 * for all probabilistic relations w.r.t. the 
+		/* Computes the accuracy of the current rbn
+		 * for all probabilistic relations w.r.t. the
 		 * probabilistic relations contained in myprimula.getRelData()
-		 * 
+		 *
 		 * Assumes that all probabilities can be computed by just
-		 * evaluating the probability formula, i.e., no dependence on 
-		 * unobserved atoms. 
-		 * 
-		 * Returns for each relation a double matrix of length 5, containing:
-		 * 
-		 * count of true positives
-		 * count of false positives
-		 * count of false negatives
-		 * count of true negatives
-		 * count of atoms for which probability was not computed, because of dependence on unobserved atom
+		 * evaluating the probability formula, i.e., no dependence on
+		 * unobserved atoms.
+		 *
+		 * Prints for each relation:
+		 *
+		 * count of correct predictions
+		 * count of incorrect predictions
 		 */
-		
-		
+
+
 		Signature sig = myprimula.getSignature();
 		RelData rdata = myprimula.getReldata();
 		RBN rbn = myprimula.rbn;
-		
+
 		for (Rel r : sig.getProbRels()) {
 			System.out.println("Evaluate relation " + r.name() + " for " + rdata.cases().size() + " input domains");
-			CPModel pf = rbn.cpmodel(r);
+			CPModel cpm = rbn.cpmodel(r);
 			String[] varargs = rbn.args(r);
-			
-			double[] result = new double[5];
+
+			double[] result = new double[2];
 
 			for (RelDataForOneInput rdoi: rdata.cases()) {
-				System.out.print(".");
 				RelStruc A = rdoi.inputDomain();
 				for (OneStrucData osd: rdoi.allOneStrucData()) {
-					double prob=Double.NaN;
-					Hashtable<String,Object[]> evaluated = new Hashtable<String,Object[]>();
-					//Hashtable<String,Double> evaluated =null;
-					/* First the true cases: */
-					Vector<int[]> at = osd.allTrue(r);
 
-					for (int[] intargs : at){
-						
+					Hashtable<String,Object[]> evaluated = new Hashtable<String,Object[]>();
+
+					if (r instanceof BoolRel) {
+						double prob =0;
+						Vector<int[]> at = osd.allTrue(r);
+						for (int[] intargs : at){
 							try{
-								
-								prob = (double)pf.evaluate(A, 
-										osd, 
-										varargs, 
-										intargs, 
+								prob = ((Double[])cpm.evaluate(A,
+										osd,
+										varargs,
+										intargs,
 										0,
 										true,
-										true, 
-										null, 
+										true,
+										null,
 										false,
 										evaluated,
 										null,
 										ProbForm.RETURN_ARRAY,
 										true,
-										null)[0];
+										null)[0])[0];
 							}
 							catch (RBNCompatibilityException ex){System.out.println(ex);}
-							if (prob!=Double.NaN)
-								if (prob > 0.5) // true positive
-									result[0]++;
-								else //false negative
-									result[2]++;
-							else {
-								result[4]++; // no prediction
-								break;
-							}
-					}
-					
-					/* Now the false cases (near duplicate code): */
-					at = osd.allFalse((BoolRel)r);
+							if (prob < 0.5) // false prediction
+								result[1]++;
+							else //true prediction
+								result[1]++;
+						}
 
-					for (int[] intargs : at){
+						/* Now the false cases (near duplicate code): */
+						at = osd.allFalse((BoolRel)r);
+						for (int[] intargs : at){
 							boolean predpos;
 
 							try{
-								prob = (double)pf.evaluate(A, 
-										osd, 
-										varargs, 
-										intargs, 
+								prob = ((Double[])cpm.evaluate(A,
+										osd,
+										varargs,
+										intargs,
 										0,
 										true,
-										true, 
-										null, 
+										true,
+										null,
 										false,
 										evaluated,
 										null,
 										ProbForm.RETURN_ARRAY,
 										true,
-										null)[0];
+										null)[0])[0];
 							}
 							catch (RBNCompatibilityException ex){System.out.println(ex);}
-							if (prob!=Double.NaN)
-								if (prob < 0.5) // true negative
-									result[3]++;
-								else //false positive
-									result[1]++;
-							else {
-								result[4]++; // no prediction
-								break;
-							}
-					}		
-	
-	
+							if (prob < 0.5) // true negative
+								result[0]++;
+							else //false positive
+								result[1]++;
+						}
 
-				
-	
+					} //if (r instanceof BoolRel)
+					if (r instanceof CatRel) {
+						double[] values = null;
+						Vector<int[]> at = osd.allInstantiated(r);
+						for (int[] intargs : at){
+							try{
+								values = ((double[])cpm.evaluate(A,
+										osd,
+										varargs,
+										intargs,
+										0,
+										true,
+										true,
+										null,
+										false,
+										evaluated,
+										null,
+										ProbForm.RETURN_ARRAY,
+										true,
+										null)[0]);
+							}
+							catch (RBNCompatibilityException ex){System.out.println(ex);}
+							int trueval = (int)osd.valueOf(r, intargs);
+							if (rbnutilities.argmax(values)==trueval)
+								result[0]++;
+							else
+								result[1]++;
+						}
+					}//if (r instanceof CatRel)
 				} // for (OneStrucData osd: rdoi.allOneStrucData())
 			} // for (RelDataForOneInput rdoi: rdata.cases())
-			double acc= (result[0]+result[3])/(result[0]+result[1]+result[2]+result[3]);
 			System.out.println();
-			System.out.println("TP: " + result[0]+" FP: " + result[1] + " FN: " + result[2] + " TN: "+ result[3]);
-			System.out.println("Accuracy: " + acc );
-		} // for (Rel r : : sig.getProbRels()) 
+			double acc = result[0]/(result[0]+result[1]);
+			System.out.println("True: " + result[0]+" False: " + result[1] + " Accuracy: " + acc);
+			System.out.println( );
+		} // for (Rel r : : sig.getProbRels())
 
 
 	}

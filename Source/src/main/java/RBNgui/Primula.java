@@ -1992,7 +1992,7 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		Primula win = new Primula();
 		SamiamManager.centerWindow( win );
 		win.show();
-		win.loadDefaults();
+//		win.loadDefaults();
 		System.out.println();
 //
 //		win.setGNNPath();

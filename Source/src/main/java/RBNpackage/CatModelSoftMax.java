@@ -30,14 +30,13 @@ public class CatModelSoftMax extends CPModel {
 	public String asString(int syntax, int depth, RelStruc A, boolean paramsAsValue, boolean usealias) {
 		if (usealias && this.getAlias() != null)
 			return this.getAlias();
-		
-		String result = "SOFTMAX [ \n";
+
+		String result = "SOFTMAX  \n";
 		for (ProbForm pf: probforms) {
 			result = result + pf.asString(syntax, 1, A, paramsAsValue, usealias);
 			result = result + ",\n";
 		}
 		result = result.substring(0, result.length() - 2); // removing last ","
-		result = result + "]";
 		return result;
 	}
 	

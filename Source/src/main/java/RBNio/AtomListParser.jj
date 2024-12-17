@@ -83,7 +83,7 @@ void Literal(AtomListReader mr):
 	boolean positive=true;
 	AtomListReader myreader = mr;
 	int arity = 0;
-	Rel newrel = new Rel();
+    BoolRel newrel = new BoolRel();
 	String relname ="";
 	Vector<String> tupleargs = new Vector<String>();
 }
@@ -158,7 +158,7 @@ void Literal(AtomListReader mr):
 		switch (parseno){ 
 		case 1: 
 			if (arity==1){
-				newrel = new Rel(relname,arity);
+				newrel = new BoolRel(relname,arity);
 				myreader.addCandidateType(newrel);
 			}
 			break;
