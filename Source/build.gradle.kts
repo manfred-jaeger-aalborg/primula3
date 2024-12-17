@@ -33,7 +33,7 @@ java {
 application {
 //    mainClass.set("RBNgui.Primula")
     // applicationDefaultJvmArgs = listOf("-Djava.awt.headless=true")
-    mainClass.set("Experiments.Homophily.NodeClass")
+    mainClass.set("Experiments.Homophily.ising")
 }
 
 tasks.named<JavaExec>("run") {
@@ -80,6 +80,20 @@ tasks.register("runExperiment") {
     }
 }
 
+
+tasks.register("runIsing") {
+    group = "application"
+
+    doLast {
+        exec {
+            commandLine(
+//                    "xvfb-run", "-a",
+                    "java", "-cp", sourceSets["main"].runtimeClasspath.asPath,
+                    "Experiments.Homophily.ising"
+            )
+        }
+    }
+}
 
 tasks.register<JavaExec>("runPollution") {
     group = "application"

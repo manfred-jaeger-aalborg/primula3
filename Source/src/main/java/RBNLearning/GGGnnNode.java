@@ -41,7 +41,7 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
         this.A = A;
         this.inst = I;
         savedData = false;
-        if (this.cpm instanceof ProbFormGnn || this.cpm instanceof CatGnn) {
+        if (this.cpm instanceof ProbFormGnn) {
             Rel[] pfargs = ((CPMGnn) this.cpm).getGnnattr();
             for (int i = 0; i < pfargs.length; i++) {
                 if (!pfargs[i].ispredefined()) { // do not add predefined values
@@ -82,8 +82,8 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
 //                    System.out.println(pfargs[i].toString() + " non prob - skipped");
                 }
             }
-        } else if (this.cpm instanceof CatGnnHetero) {
-            ArrayList<ArrayList <Rel>> pfargs = ((CatGnnHetero) this.cpm).getInput_attr();
+        } else if (this.cpm instanceof CatGnnHetero || this.cpm instanceof CatGnn) {
+            ArrayList<ArrayList <Rel>> pfargs = ((CPMGnn) this.cpm).getInput_attr();
             for (int i = 0; i < pfargs.size(); i++) {
                 for (int j = 0; j < pfargs.get(i).size(); j++) {
                     if (!pfargs.get(i).get(j).ispredefined()) { // do not add predefined values

@@ -52,8 +52,13 @@ public class RiverPollution {
         primula.setScriptPath("/Users/lz50rg/Dev/primula-workspace/primula3/Source/python");
         primula.setScriptName("load_gnn");
 
-//        File srsfile = new File("/Users/lz50rg/Dev/water-hawqs/test_small_new.rdef");
-        File srsfile = new File("/Users/lz50rg/Dev/water-hawqs/river_test.rdef");
+        Map<String, Object> load_gnn_set = new HashMap<>();
+        load_gnn_set.put("model", "riverGNN");
+        load_gnn_set.put("base_path", "/Users/lz50rg/Dev/water-hawqs/models/");
+        primula.setLoadGnnSet(load_gnn_set);
+
+        File srsfile = new File("/Users/lz50rg/Dev/water-hawqs/test_small_new.rdef");
+//        File srsfile = new File("/Users/lz50rg/Dev/water-hawqs/river_test.rdef");
         primula.loadSparseRelFile(srsfile);
 
         ArrayList<ArrayList<Rel>> attrs_rels = new ArrayList<>();

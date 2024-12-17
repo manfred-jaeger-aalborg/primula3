@@ -44,8 +44,8 @@ public class WebKB {
 
     public static void main(String[] args) {
 
-        int ij = Integer.parseInt(args[0]);
-//        int ij = 0;
+//        int ij = Integer.parseInt(args[0]);
+        int ij = 0;
         ArrayList<Double> accs = new ArrayList<>();
         Primula primula = new Primula();
 //        for (int ij = 0; ij < 10; ij++) {
@@ -73,10 +73,21 @@ public class WebKB {
 
         // create rbn
         int num_attr = 1703;
-        Rel[] attrs_rels = new Rel[num_attr];
+        Rel[] attrs_rels1 = new Rel[num_attr];
         for (int i = 0; i < num_attr; i++) {
-            attrs_rels[i] = new BoolRel("attr" + i, 1);
+            attrs_rels1[i] = new BoolRel("attr" + i, 1);
         }
+        ArrayList<ArrayList<Rel>> attrs_rels = new ArrayList<>();
+        attrs_rels.add(
+                new ArrayList<Rel>(
+                        Arrays.asList(
+                                attrs_rels1
+                        )
+                )
+        );
+
+        ArrayList<String> edge_attr = new ArrayList<>();
+        edge_attr.add("edge");
 
         RBNPreldef gnn_rbn = new RBNPreldef(
                 new CatRel("CAT", 1, typeStringToArray("node", 1), valStringToArray("A,B,C,D,E")),
@@ -86,8 +97,7 @@ public class WebKB {
                         true,
                         5,
                         attrs_rels,
-                        "edge",
-                        "AB",
+                        edge_attr,
                         "node",
                         true
                 )

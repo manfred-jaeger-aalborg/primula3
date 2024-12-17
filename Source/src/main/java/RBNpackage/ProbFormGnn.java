@@ -210,6 +210,11 @@ public class ProbFormGnn extends ProbForm implements CPMGnn {
     }
 
     @Override
+    public ArrayList<ArrayList<Rel>> getInput_attr() {
+        return null;
+    }
+
+    @Override
     public TreeSet<Rel> parentRels(TreeSet<String> processed) {
         System.out.println("parentRels code 2");
         TreeSet<Rel> result = new TreeSet<Rel>();

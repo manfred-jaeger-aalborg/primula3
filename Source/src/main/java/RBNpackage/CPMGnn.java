@@ -30,4 +30,6 @@ public interface CPMGnn {
     boolean isBoolean();
 
     TreeSet<Rel> parentRels();
+
+    ArrayList<ArrayList<Rel>> getInput_attr();
 }

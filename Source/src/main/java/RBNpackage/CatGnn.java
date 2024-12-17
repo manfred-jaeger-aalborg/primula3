@@ -20,6 +20,8 @@ public class CatGnn extends CPModel implements CPMGnn {
     // the order of attributes need to be respected! this order will be used for the gnn encoding
     private Rel gnnattr[];
     private String argument;
+    private ArrayList<ArrayList<Rel>> input_attr;
+    private ArrayList edge_attr;
 
     // for graph classification: each probformgnn will represent a class for the classifier
     // e.g. MUTAG class has 2 classes: mutagenic (0) and non-mutagenic (1)
@@ -42,15 +44,16 @@ public class CatGnn extends CPModel implements CPMGnn {
 
     // this variable is used to set the inference for node or graph classification. Keyword: "node" or "graph"
     private String gnn_inference;
-    public CatGnn(String argument, String idGnn, Boolean categorical, int numvals, Rel[] attr, String edge_name, String edge_direction, String gnn_inference, boolean oneHotEncoding) {
+    public CatGnn(String argument, String idGnn, Boolean categorical, int numvals, ArrayList input_attr, ArrayList edge_attr, String gnn_inference, boolean oneHotEncoding) {
         this.setEdge_name(edge_name);
         this.setEdge_direction(edge_direction);
 
         this.argument = argument;
         this.idGnn = idGnn;
         this.categorical = categorical;
+        this.input_attr = input_attr;
+        this.edge_attr = edge_attr;
         this.numvals = numvals;
-        this.gnnattr = attr;
         this.classId = -1;
         this.oneHotEncoding = oneHotEncoding;
         this.gnn_inference = gnn_inference;
@@ -188,7 +191,8 @@ public class CatGnn extends CPModel implements CPMGnn {
 //        System.out.println("substitute code 1");
         CatGnn result;
         if (this.classId == -1)
-            result = new CatGnn(this.argument, this.idGnn, this.categorical, this.numvals, this.gnnattr, this.edge_name, this.edge_direction, this.gnn_inference, this.oneHotEncoding);
+            result = new CatGnn(this.argument, this.idGnn, this.categorical, this.numvals, this.input_attr, this.edge_attr, this.gnn_inference, this.oneHotEncoding);
+//            result = new CatGnn(this.argument, this.idGnn, this.categorical, this.numvals, this.gnnattr, this.edge_name, this.edge_direction, this.gnn_inference, this.oneHotEncoding);
         else
             result = new CatGnn("-1", this.idGnn, this.categorical, this.numvals, this.gnnattr, this.edge_name, this.edge_direction, this.gnn_inference, this.oneHotEncoding, this.classId);
 
@@ -218,10 +222,18 @@ public class CatGnn extends CPModel implements CPMGnn {
     public TreeSet<Rel> parentRels() {
 //        System.out.println("parentRels code 1");
         TreeSet<Rel> parent = new TreeSet<>();
-        for (Rel rel: this.getGnnattr())
-            if (rel.isprobabilistic())
-                parent.add(rel);
+        for (ArrayList<Rel> rels: this.getInput_attr()) {
+            for (Rel rel : rels) {
+                if (rel.isprobabilistic())
+                    parent.add(rel);
+            }
+        }
         return parent;
+    }
+
+    @Override
+    public ArrayList<ArrayList<Rel>> getInput_attr() {
+        return input_attr;
     }
 
     @Override
