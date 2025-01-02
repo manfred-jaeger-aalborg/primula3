@@ -97,8 +97,8 @@ public  class GGLikelihoodNode extends GGNode{
 	
 	private double[][][] small_gradients_for_samples;
 
-	/** The sum of gradients for a current set of samples. Array of small doubles */
-	private double[][] gradientsum;
+//	/** The sum of gradients for a current set of samples. Array of small doubles */
+//	private double[][] gradientsum;
 	
 
 
@@ -128,7 +128,7 @@ public  class GGLikelihoodNode extends GGNode{
 
 	public void initllgrads(int k){
 		small_gradient = new double[k][2];
-		gradientsum = new double[k][2];
+//		gradientsum = new double[k][2];
 	}
 	
 //	public void addToChildren(GGProbFormNode ggpfn, boolean tv){
@@ -191,12 +191,15 @@ public  class GGLikelihoodNode extends GGNode{
 	 * the log-likelihood. if LearnModule.UseLik then return a two-dim. array with a small double  
 	 * representation of the likelihood.
 	 * 
-	 * If incremental = true, then batchelements should only be a subset of the children. 
-	 * If also update = true, then the 
-	 * small_likelihood and loglikelihood values are updated by multiplying/adding to the current values with
-	 * the ratios/differences of the previous contribution of the batchelements to the (log)likelihood and the
-	 * new values. These previous contributions are passed as a double[][] array of dimension 
-	 * thisgg.windowsize*thisgg.numchains x 2 of small double values
+	 * oldsmallls: array of dimension thisgg.windowsize*thisgg.numchains x 2 of small double values.
+	 * oldsmallls[sno][] contains the small double representation of the likelihood factor contributed
+	 * by the batchelements in the likelihood value for sample sno. Only needed when incremental=true
+	 * and update=true.
+	 * 
+	 * In that case the 
+	 * small_likelihood values are updated by multiplying the current values with
+	 * the ratios of the previous factors given by oldsmallls and the
+	 * new values. 
 	 * 
 	 * In the case incremental = true and update = false the local likelihood of batchelements is returned, and 
 	 * no change to small_likelihoods_for_samples takes place
@@ -211,34 +214,41 @@ public  class GGLikelihoodNode extends GGNode{
 			System.out.println("Calling GGLikelihoodNode.evaluate with sample number when no small_likelihoods_for_samples present");
 
 		int idx =0; // index in small_likelihoods_for_samples that needs to be updated
-		if (this.depends_on_sample)
+		if (this.depends_on_sample && sno!=null)
 			idx = sno;
 
-		// Initialize relevant fields
 		
-		double[] local_small_likelihood = new double[] {1.0,0.0}; 
-		
+		/*
+		 * First the case where all samples have to be evaluated
+		 */
 		if (this.depends_on_sample && sno==null) {
 
+			double[] small_likelihood_sum = new double[2]; 
+			
 			for (int i=0;i<thisgg.windowsize*thisgg.numchains;i++) 
-				local_small_likelihood=SmallDouble.add(local_small_likelihood, 
+				small_likelihood_sum=SmallDouble.add(small_likelihood_sum, 
 						evaluate(i,batchelements,incremental,updatelik,oldsmallls));
 
-			local_small_likelihood = SmallDouble.divide(local_small_likelihood, thisgg.windowsize*thisgg.numchains );
+			small_likelihood_sum = SmallDouble.divide(small_likelihood_sum, thisgg.windowsize*thisgg.numchains );
 
 			if (updatelik) {
-				double[] oldlsum = new double[2];
-				for (int i=0;i<thisgg.windowsize*thisgg.numchains;i++) 
-					oldlsum = SmallDouble.add(oldlsum,oldsmallls[i]);
-				double[] ratio = SmallDouble.divide(local_small_likelihood, oldlsum);
-				local_small_likelihood = SmallDouble.multiply(local_small_likelihood, ratio);
-				small_likelihood=local_small_likelihood.clone();
+				if (incremental) {
+					double[] oldlsum = new double[2];
+					for (int i=0;i<thisgg.windowsize*thisgg.numchains;i++) 
+						oldlsum = SmallDouble.add(oldlsum,oldsmallls[i]);
+					oldlsum = SmallDouble.divide(oldlsum, thisgg.windowsize*thisgg.numchains );
+					double[] ratio = SmallDouble.divide(small_likelihood_sum, oldlsum);
+					small_likelihood = SmallDouble.multiply(small_likelihood, ratio);}
+				else
+					small_likelihood=small_likelihood_sum.clone();
 			}
-			return local_small_likelihood;
+
+			return small_likelihood;
 		}
 
 
-
+		double[] local_small_likelihood = new double[] {1.0,0.0}; 
+		
 		// Main iteration over the children 	
 		Double[] childval;
 		int childinst;
@@ -258,9 +268,9 @@ public  class GGLikelihoodNode extends GGNode{
 					childlik = 1- childval[0];
 			}
 
-			if (nextchild.getMyatom().equals("target(0)")) {
-				System.out.println("target(): " + childlik);
-			}
+//			if (nextchild.getMyatom().equals("target(0)")) {
+//				System.out.println("target(): " + childlik);
+//			}
 
 			if (!this.depends_on_sample || (this.depends_on_sample && sno!=null)) 
 				local_small_likelihood=SmallDouble.multiply(local_small_likelihood, childlik);
@@ -275,7 +285,9 @@ public  class GGLikelihoodNode extends GGNode{
 			small_likelihoods_for_samples[0] = local_small_likelihood.clone();
 			small_likelihood = local_small_likelihood.clone();
 		}
-
+		if (updatelik && !incremental && this.depends_on_sample) {
+			small_likelihoods_for_samples[idx] = local_small_likelihood.clone();
+		}
 		is_evaluated_for_samples[idx] = true;
 
 		return local_small_likelihood;
@@ -379,6 +391,27 @@ public  class GGLikelihoodNode extends GGNode{
 	{
 		// TODO: complete check/revision 
 
+		int idx =0; // index in small_gradients_for_samples that needs to be updated
+		if (this.depends_on_sample && sno!=null)
+			idx = sno;
+
+		// Initialize relevant fields
+		
+		double[] local_small_gradient = new double[2]; 
+		
+		if (this.depends_on_sample && sno==null) {
+
+			for (int i=0;i<thisgg.windowsize*thisgg.numchains;i++) 
+				local_small_gradient=SmallDouble.add(local_small_gradient, 
+						evaluateSmallGrad(i,param,batchelements));
+
+			local_small_gradient = SmallDouble.divide(local_small_gradient, thisgg.windowsize*thisgg.numchains );
+
+			small_gradient[thisgg.parameters.get(param)]=local_small_gradient.clone();			
+
+			return local_small_gradient;
+		}
+
 		
 		if (this.depends_on_sample && !is_evaluated_for_samples[sno]){
 			this.evaluate(sno,batchelements,false,false,null); // TODO: incremental version of evaluateSmallGrad ?
@@ -387,7 +420,7 @@ public  class GGLikelihoodNode extends GGNode{
 			this.evaluate(sno,batchelements,false,false,null);
 		}
 		
-		double smallgrad[] = {0,0};
+//		double smallgrad[] = {0,0};
 
 		double[] relevantlikelihood = small_likelihood.clone();
 
@@ -417,33 +450,26 @@ public  class GGLikelihoodNode extends GGNode{
 							childgrad_at_value=-childgrad[0];
 						}
 					}
-					switch(thisgg.objective()){
-					case LearnModule.UseLik:
-						smallgrad = SmallDouble.add(smallgrad,
-								SmallDouble.multiply(SmallDouble.divide(relevantlikelihood,
-										childlik),
-										SmallDouble.asSmallDouble(childgrad_at_value)
-										));
-						break;
-					case LearnModule.UseLogLik:
-						smallgrad = SmallDouble.add(smallgrad, 
-								SmallDouble.asSmallDouble(childgrad_at_value/childlik));
-						break;
-					}
+
+					local_small_gradient = SmallDouble.add(local_small_gradient,
+							SmallDouble.multiply(SmallDouble.divide(relevantlikelihood,
+									childlik),
+									SmallDouble.asSmallDouble(childgrad_at_value)
+									));
 				}
 			}
 		}
 		else {
 			System.out.println("likelihood[0]=0 in evaluateSmallGrad");
 		}
-		if (Double.isNaN(smallgrad[0]) || Double.isInfinite(smallgrad[0])){
+		if (Double.isNaN(local_small_gradient[0]) || Double.isInfinite(local_small_gradient[0])){
 			System.out.println("Warning: gradient for " + param + "has value " + 
-					smallgrad[0] + "in GGLikelihoodNode.evaluateSmallGrad; Returning value 1000");
-			smallgrad[0]=1000;
-			smallgrad[1]=0;
+					local_small_gradient[0] + "in GGLikelihoodNode.evaluatelocal_small_gradient; Returning value 1000");
+			local_small_gradient[0]=1000;
+			local_small_gradient[1]=0;
 		}
-
-		return smallgrad;	    
+		small_gradients_for_samples[idx][thisgg.parameters.get(param)]=local_small_gradient.clone();
+		return local_small_gradient;	    
 	}
 
 
@@ -465,17 +491,17 @@ public  class GGLikelihoodNode extends GGNode{
 		return 0;
 	}
 	
-	public double[] gradientsumAsDouble(){
-		return SmallDouble.toStandardDoubleArray(gradientsum);
-	}
-	
-	public double[] gradientsumAsDouble(int partial){
-		double[] result = SmallDouble.toStandardDoubleArray(gradientsum);
-		for (int i=0;i<result.length;i++)
-			if (i!=partial)
-				result[i]=0;
-		return result;
-	}
+//	public double[] gradientsumAsDouble(){
+//		return SmallDouble.toStandardDoubleArray(gradientsum);
+//	}
+//	
+//	public double[] gradientsumAsDouble(int partial){
+//		double[] result = SmallDouble.toStandardDoubleArray(gradientsum);
+//		for (int i=0;i<result.length;i++)
+//			if (i!=partial)
+//				result[i]=0;
+//		return result;
+//	}
 
 
 	public double[] gradientAsDouble(){
@@ -567,12 +593,12 @@ public  class GGLikelihoodNode extends GGNode{
 //		likelihoodsum[1] = 0;
 //	}
 
-	public void resetGradientSum(){
-		for (int i=0;i<gradientsum.length;i++){
-			gradientsum[i][0]=0.0;
-			gradientsum[i][1]=0.0;
-		}
-	}
+//	public void resetGradientSum(){
+//		for (int i=0;i<gradientsum.length;i++){
+//			gradientsum[i][0]=0.0;
+//			gradientsum[i][1]=0.0;
+//		}
+//	}
 
 //	public void resetBounds(){
 //		bounds[0][0]=-1;
@@ -604,11 +630,11 @@ public  class GGLikelihoodNode extends GGNode{
 //	}
 
 
-	public void updateGradSum(){
-		for (int i=0; i<gradientsum.length; i++){
-			gradientsum[i]=SmallDouble.add(gradientsum[i],small_gradient[i]);
-		}
-	}
+//	public void updateGradSum(){
+//		for (int i=0; i<gradientsum.length; i++){
+//			gradientsum[i]=SmallDouble.add(gradientsum[i],small_gradient[i]);
+//		}
+//	}
 	
 	public double[][] getSmallgradient(){
 		return small_gradient;

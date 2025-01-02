@@ -735,7 +735,7 @@ public class LearnThread extends GGThread {
 								}
 							}
 							if (nextrel instanceof CatRel) {
-								pval = ((double[])lg[0])[val];
+								pval = ((Double[])lg[0])[val];
 								grad = lg[1];
 							}
 							

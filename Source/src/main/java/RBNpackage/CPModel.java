@@ -91,6 +91,9 @@ public abstract class CPModel
      * c) useCurrentPvals=false, and probform depends on a numeric input relation atom that is contained in numrelparameters
      * d) useCurrentMvals=false, and probform depends on a boolean probabilistic relation atom that is contained in mapatoms
      * 
+     * ***** !!! The case useCurrentMvals = true does not seem to play any role in the current implementation !!! *************
+     * 
+     * 
      * Throws exception if formula under the given substitution is not ground
      * 
      * If useCurrentCvals=true, then evaluation at ProbFormConstant's is done with regard to

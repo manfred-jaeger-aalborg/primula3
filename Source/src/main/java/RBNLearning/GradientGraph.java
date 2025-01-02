@@ -563,16 +563,16 @@ public abstract class GradientGraph{
 		else return -1;
 	}
 
-	/** Computes the objective function value given the current parameter setting
-	 * 
-	 * Returns double array with result[0]=per node likelihood, 
-	 * result[1]= objective function value
-	 * result[2:5] = confusion matrix 
-	 * 
-	 * @return
-	 */	
-	public abstract double[] computeObjectiveandConfusion(GGThread mythread)
-			throws RBNNaNException;
+//	/** Computes the objective function value given the current parameter setting
+//	 * 
+//	 * Returns double array with result[0]=per node likelihood, 
+//	 * result[1]= objective function value
+//	 * result[2:5] = confusion matrix 
+//	 * 
+//	 * @return
+//	 */	
+//	public abstract double[] computeObjectiveandConfusion(GGThread mythread)
+//			throws RBNNaNException;
 
 
 
