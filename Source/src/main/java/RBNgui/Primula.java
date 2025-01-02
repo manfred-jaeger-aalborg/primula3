@@ -1437,6 +1437,9 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 
 	}
 
+	public void setRbnparameters(String[] rbnparameters) {
+		this.rbnparameters = rbnparameters;
+	}
 
 	/** @author Keith Cascio */
 	public void showMessageThis(String message){

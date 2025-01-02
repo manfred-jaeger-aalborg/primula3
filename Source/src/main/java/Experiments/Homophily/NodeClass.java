@@ -57,7 +57,8 @@ public class NodeClass {
 //        int nhidd = Integer.parseInt(args[3]);
 //        int nlayers = Integer.parseInt(args[4]);
 //        int NUM_CLASS = Integer.parseInt(args[5]);
-
+//        int ij = Integer.parseInt(args[0]);
+        int ij = 0;
         String datasetName = "texas";
         int NUM_ATTR = 1703;
         int nhidd = 16;
@@ -82,8 +83,6 @@ public class NodeClass {
         primula.setScriptName("load_gnn");
         primula.setLoadGnnSet(load_gnn_set);
 
-//        int ij = Integer.parseInt(args[0]);
-        int ij = 0;
         String index = Integer.toString(ij);
         Boolean loc_h = false;
         Boolean count_h = false;
@@ -144,24 +143,25 @@ public class NodeClass {
         RBN file_rbn = new RBN(input_file, primula.getSignature());
         RBNPreldef[] preledef = file_rbn.prelements();
 
-        RBN manual_rbn = null;
-        if (count_h) {
-            manual_rbn = new RBN(2, 0);
-            manual_rbn.insertPRel(gnn_rbn, 0);
+//        RBN manual_rbn = null;
+//        if (count_h) {
+//            manual_rbn = new RBN(2, 0);
+//            manual_rbn.insertPRel(gnn_rbn, 0);
+////            manual_rbn.insertPRel(preledef[0], 1);
+//            manual_rbn.insertPRel(preledef[1], 2);
+//        } else {
+//            manual_rbn = new RBN(2, 0);
+//            manual_rbn.insertPRel(gnn_rbn, 0);
 //            manual_rbn.insertPRel(preledef[0], 1);
-            manual_rbn.insertPRel(preledef[1], 2);
-        } else {
-            manual_rbn = new RBN(2, 0);
-            manual_rbn.insertPRel(gnn_rbn, 0);
-            manual_rbn.insertPRel(preledef[0], 1);
-        }
+//        }
 
-//        RBN manual_rbn = new RBN(1, 0);
-//        manual_rbn.insertPRel(gnn_rbn, 0);
+        RBN manual_rbn = new RBN(1, 0);
+        manual_rbn.insertPRel(gnn_rbn, 0);
 
         // add the rbn to primula
         primula.setRbn(manual_rbn);
         primula.getInstantiation().init(manual_rbn);
+        primula.setRbnparameters(manual_rbn.parameters());
 
         // the relation to query
         CatRel tmp_query = new CatRel("CAT", 1, typeStringToArray("node", 1), valStringToArray(sclass));
