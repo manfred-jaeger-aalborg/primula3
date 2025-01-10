@@ -219,7 +219,7 @@ public class LearnThread extends GGThread {
 					//||(threadascentstrategy == LearnModule.AscentAdam && myLearnModule.getKeepGGs())
 					) {
 				/* In this case can build one gg once and for all outside the restart-loop */
-				gg = buildGGO(parameters,minmaxbounds,true,databatches[0],myLearnModule.getObjective());
+				gg = buildGGO(parameters,minmaxbounds,true,databatches[0]);
 				//gg.showAllNodes(6, A);
 			}
 
@@ -350,7 +350,7 @@ public class LearnThread extends GGThread {
 			break;
 		case LearnModule.AscentAdam:
 			
-			System.out.println("# Iteration" + '\t' + "Time"+ '\t' +  "stepsize"  + '\t' +  "objective");
+			System.out.println("# Iteration" + '\t' + "Time"+ '\t' +  "stepsize"   + '\t' +  "objective"+ '\t' +  "no progress (out of " + myLearnModule.getLikelihoodWindow() +")");
 			break;
 
 		}
@@ -377,7 +377,7 @@ public class LearnThread extends GGThread {
 					// if (myLearnModule.getUseGGs()) {
 						if (isfirstloop) {
 							gg = buildGGO(parameters,minmaxbounds,
-									isfirstrestart && isfirstloop,databatches[i], myLearnModule.getObjective());
+									isfirstrestart && isfirstloop,databatches[i]);
 							allggs[i]=gg;
 						}
 						else {
@@ -392,6 +392,12 @@ public class LearnThread extends GGThread {
 
 				oldparamvals=myprimula.getParameterVals(parameters);
 				
+//				System.out.println("current parameters");
+//				for (String p: parameters.keySet()) {
+//					int pidx=parameters.get(p);
+//					System.out.println(p + oldparamvals[pidx]);
+//				}
+//				
 				if (isfirstloop)
 					beforeepochparamvals=oldparamvals.clone();
 				
@@ -412,7 +418,6 @@ public class LearnThread extends GGThread {
 						double[][] lossgrad = getLossAndGradient(databatches[i],
 								myprimula.getRBN(),
 								parameters,
-								myLearnModule.getObjective(),
 								false,
 								profiler);
 
@@ -443,14 +448,21 @@ public class LearnThread extends GGThread {
 					//System.out.println("vhat: " + rbnutilities.arrayToString(vhat, 0, 10));
 					incrementvec = rbnutilities.arrayCompDivide(mhat, 
 							rbnutilities.arrayAddConst(rbnutilities.arraySQRT(vhat), epsilon));
-					//System.out.println("increment: " + rbnutilities.arrayToString(incrementvec, 0, 20));
-					//System.out.print("last/current increment: " + rbnutilities.arrayDotProduct(rbnutilities.normalizeDoubleArray(incrementvec), 
+					
+					
+					
+//					System.out.print("cosine(increment,gradient) " 
+//					+ rbnutilities.arrayDotProduct(rbnutilities.normalizeDoubleArray(incrementvec),rbnutilities.normalizeDoubleArray(gradient))); 
 					
 					/* Proper ADAM: */
 					newparamvals = rbnutilities.arrayAdd(oldparamvals,
 							rbnutilities.arrayScalMult(incrementvec,alpha));
 					newparamvals=rbnutilities.clip(newparamvals,minmaxbounds);
 					
+//					System.out.println("old" +'\t' + "grad" + '\t' + "incr" + '\t' + "new");
+//					for (int ii=0;ii<gradient.length;ii++)
+//						System.out.println(oldparamvals[ii]+ "\t" + gradient[ii]+ "\t" + incrementvec[ii] + "\t" + newparamvals[ii]);
+
 					//System.out.println(itcount + "\t" + rbnutilities.euclidDist(oldparamvals, newparamvals) + "\t" +   batchobj + "\t" + batchaccuracy );
 					myprimula.setParameters(parameters,newparamvals);
 					
@@ -486,7 +498,7 @@ public class LearnThread extends GGThread {
 			case LearnModule.AscentAdam:
 				long tick = System.currentTimeMillis()-startiterations;
 				System.out.println(itcount + "\t" +  tick + "\t" + rbnutilities.euclidDist(beforeepochparamvals, newparamvals) 
-				+ "\t" +   epochobj );
+				+ "\t" +   epochobj + "\t" + tries);
 				break;
 
 			}
@@ -604,7 +616,7 @@ public class LearnThread extends GGThread {
 
 
 	private GradientGraphO buildGGO(Hashtable<String,Integer> parameters,double[][] minmaxbounds,
-			Boolean showInfoInPrimula,RelData datafold,int obj){
+			Boolean showInfoInPrimula,RelData datafold){
 		GradientGraphO gg = null;
 		if (showInfoInPrimula)
 			myprimula.showMessageThis("Building Gradient Graph ...");
@@ -617,7 +629,6 @@ public class LearnThread extends GGThread {
 					myLearnModule, 
 					null,
 					GradientGraphO.LEARNMODE,
-					obj,
 					showInfoInPrimula);
 		}
 		catch (RBNCompatibilityException ex){System.out.println(ex);}
@@ -652,7 +663,7 @@ public class LearnThread extends GGThread {
 			myprimula.getRBN().setRandomParameterVals();
 			if (myLearnModule.ggrandominit())
 				A.setRandom(parameternumrels,scale);
-			lik = getLossAndGradient(data, myprimula.getRBN(), new Hashtable<String,Integer>(), LearnModule.UseLogLik, true ,profiler)[0][0];
+			lik = getLossAndGradient(data, myprimula.getRBN(), new Hashtable<String,Integer>(),true ,profiler)[0][0];
 			System.out.println("# log-likelihood " + lik);	
 			if (lik == Double.NEGATIVE_INFINITY){
 				tries++;
@@ -665,10 +676,12 @@ public class LearnThread extends GGThread {
 		return success;
 	}
 
+	/*
+	 * Only applicable when data is complete! No dependence of observed data atoms on unobserved atoms.
+	 */
 	private double[][] getLossAndGradient(RelData data, 
 			RBN rbn, 
 			Hashtable<String,Integer> parameters, 
-			int lossfunc, 
 			boolean lossonly, 
 			Profiler profiler) 
 			throws RBNCompatibilityException
@@ -720,66 +733,50 @@ public class LearnThread extends GGThread {
 					
 					
 					
+//							System.out.println("tuple: " +rbnutilities.arrayToString(tuple) + "value: " + val);
+//							for (String p: parameters.keySet()) {
+//								int pidx=parameters.get(p);
+//								System.out.println(p + ((double[])lg[1])[pidx]);
+//							}
 			                // Getting the actual probability of the ground atom nextrel(tuple):
 							
 							if (nextrel instanceof BoolRel) {
-								if (val == 1) {
+								if (val == 1) 
 									pval = (double)lg[0];
-									if (!lossonly)
-										grad = lg[1];
-								}
-								else {
+								else 
 									pval = 1- (double)lg[0];
-									if (!lossonly)
-										grad = rbnutilities.arrayScalMult((double[])lg[1], -1);
-								}
 							}
 							if (nextrel instanceof CatRel) {
 								pval = ((Double[])lg[0])[val];
-								grad = lg[1];
 							}
-							
-							
 
-							/* Loss: (currently only one loss)!*/
-							switch (lossfunc) {
-							case LearnModule.UseLogLik:
-								result[0][0]+=Math.log(pval);
-								break;
-							}
+							result[0][0]+=Math.log(pval);
 
 
 							if (!lossonly) {
-								double gp;
+								grad = lg[1];
+								double pdp; // partial derivative for parameter p
 								if (myLearnModule.getType_of_gradient()== ProbForm.RETURN_ARRAY) {
 									for (int ii=0; ii<parameters.size(); ii++) {
-										gp = ((double[])grad)[ii];
-										switch (lossfunc) {
-										case LearnModule.UseLogLik:
-												result[1][ii]+=gp/pval;
-											break;
-										case LearnModule.UseLik:
-											System.out.println("LearnThread.getLossAndGradient not implemented yet for LearnModule.UseLik");
-										}
+										pdp = ((double[])grad)[ii];
+										if (nextrel instanceof BoolRel && val==0)
+											pdp*=-1;
+										result[1][ii]+=pdp/pval;
 									}
 								}
 								else { //ProbForm.RETURN_SPARSE
 									for (String par: ((Hashtable<String,Double>)grad).keySet()){
-										gp = ((Hashtable<String,Double>)grad).get(par);
+										pdp = ((Hashtable<String,Double>)grad).get(par);
+										if (nextrel instanceof BoolRel && val==0)
+											pdp*=-1;
 										int ii = parameters.get(par);
-										switch (lossfunc) {
-										case LearnModule.UseLogLik:
-												result[1][ii]+=gp/pval;
-											break;
-										case LearnModule.UseLik:
-											System.out.println("LearnThread.getLossAndGradient not implemented yet for LearnModule.UseLik");
-										} //switch (lossfunc) {
+										result[1][ii]+=pdp/pval;
 									} //for par: 
 								} //ProbForm.RETURN_SPARSE
 							} // if (!lossonly)
-						} // for (int[] tuple: inrel) {
+					} // for (int[] tuple: inrel) {
 				} // for (int i=0; i<rbn.NumPFs(); i++){
-			} // for (int observcaseno=0; observcaseno<rdoi.numObservations(); observcaseno++){
+		 	} // for (int observcaseno=0; observcaseno<rdoi.numObservations(); observcaseno++){
 		} // for (int inputcaseno=0; inputcaseno<data.size(); inputcaseno++){
 	
 		return result;

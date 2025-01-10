@@ -1438,7 +1438,6 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
                         this,
                         queryatoms,
                         mode,
-                        0,
                         true);
 				((GradientGraphO) gg).setMapSearchAlg(mapSeachAlg);
 				((GradientGraphO) gg).load_gnn_settings(myprimula.getLoadGnnSet());

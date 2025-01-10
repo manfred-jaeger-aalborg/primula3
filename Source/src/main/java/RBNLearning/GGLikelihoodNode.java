@@ -654,29 +654,29 @@ public  class GGLikelihoodNode extends GGNode{
 		return ssqe;
 	}
 	
-	public double objective(){
-		switch (thisgg.objective()){
-			case LearnModule.UseLik:
-				return this.small_likelihood[0]; /* Careful: this is not good! */
-			case LearnModule.UseLogLik:
-				return SmallDouble.log(this.likelihood());
-			case LearnModule.UseSquaredError:
-				return this.getSSQE();
-		}
-		System.out.println("Reached unforseen case in GGLikelihoodNode.objective()!");
-		return 0;
-	}
-	
-	public double[] objectiveAsSmallDouble(){
-		switch (thisgg.objective()){
-			case LearnModule.UseLik:
-				return this.small_likelihood;
-			case LearnModule.UseLogLik:
-				return SmallDouble.asSmallDouble(this.loglikelihood());
-		}
-		System.out.println("Reached unforseen case in GGLikelihoodNode.objective()!");
-		return null;
-	}
+//	public double objective(){
+//		switch (thisgg.objective()){
+//			case LearnModule.UseLik:
+//				return this.small_likelihood[0]; /* Careful: this is not good! */
+//			case LearnModule.UseLogLik:
+//				return SmallDouble.log(this.likelihood());
+//			case LearnModule.UseSquaredError:
+//				return this.getSSQE();
+//		}
+//		System.out.println("Reached unforseen case in GGLikelihoodNode.objective()!");
+//		return 0;
+//	}
+//	
+//	public double[] objectiveAsSmallDouble(){
+//		switch (thisgg.objective()){
+//			case LearnModule.UseLik:
+//				return this.small_likelihood;
+//			case LearnModule.UseLogLik:
+//				return SmallDouble.asSmallDouble(this.loglikelihood());
+//		}
+//		System.out.println("Reached unforseen case in GGLikelihoodNode.objective()!");
+//		return null;
+//	}
 	
 	public void addUgaForParam(String par, GGCPMNode uga) {
 		Vector<GGCPMNode> u = ugasForParam.get(par); 

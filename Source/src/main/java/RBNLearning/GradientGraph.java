@@ -159,7 +159,7 @@ public abstract class GradientGraph{
 	 * does not generate an upper ground atom node in the gradient
 	 * graph. Used to display the overall objective function value of the model.
 	 */
-	double objectiveconstant;
+	double loglikconstant;
 	
 	/* Array of size 4 containing the confusion matrix values [TP,FP,FN,TN]
 	 * for those atoms of the data that do not generate an upper ground atom node in the gradient
@@ -186,7 +186,6 @@ public abstract class GradientGraph{
 			GradientGraphOptions go, 
 			Hashtable<Rel,GroundAtomList> mapats, 
 			int m,
-			int obj,
 			Boolean showInfoInPrimula)
 	throws RBNCompatibilityException
 	{
@@ -195,7 +194,6 @@ public abstract class GradientGraph{
 		myggoptions = go;
 		mapatoms = mapats;
 		mode = m;
-		objective = obj;
 		combFuncNOr = new CombFuncNOr();
 		combFuncMean = new CombFuncMean();
 		combFuncInvsum = new CombFuncInvsum();
@@ -206,7 +204,7 @@ public abstract class GradientGraph{
 		combFuncProd = new CombFuncProd();
 		singlecasedata = data.singleObservation();
 		
-		objectiveconstant = 0;
+		loglikconstant = 0;
 		confusionconst=new double[4];
 	}
 	
@@ -613,6 +611,6 @@ public abstract class GradientGraph{
 	}
 	
 	public double likelihoodconst(){
-		return objectiveconstant;
+		return loglikconstant;
 	}
 }

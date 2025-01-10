@@ -119,11 +119,10 @@ public class GradientGraphO extends GradientGraph{
 			GradientGraphOptions go, 
 			Hashtable<Rel,GroundAtomList> mapats,
 			int m,
-			int obj,
 			Boolean showInfoInPrimula)
 					throws RBNCompatibilityException
 	{	
-		super(mypr,data,params,go,mapats,m,obj,showInfoInPrimula);
+		super(mypr,data,params,go,mapats,m,showInfoInPrimula);
 
 		this.debugPrint = true;
 
@@ -405,13 +404,7 @@ public class GradientGraphO extends GradientGraph{
 									likfactor = ((double[])pfeval)[instvalue];
 								}
 
-								switch (objective) {
-								case LearnModule.UseLogLik:
-									objectiveconstant = objectiveconstant + Math.log(likfactor);
-									break;
-								case LearnModule.UseSquaredError:
-									objectiveconstant = objectiveconstant - Math.pow(likfactor,2);
-								}
+								loglikconstant = loglikconstant + Math.log(likfactor);
 							}
 							processedcounter++;
 							if (showInfoInPrimula && (10*processedcounter)/ugacounter > currentpercentage){
@@ -497,9 +490,6 @@ public class GradientGraphO extends GradientGraph{
 		}
 		llnode.init_values_and_grad(mode==MAPMODE);
 		
-		if (numchains >1 && objective != LearnModule.UseLik)
-			throw new RBNRuntimeException("Inconsistent combination of options: use log-likelihood and numchains = " +numchains);	
-
 		/* Construct vector ParamNodes, and array parameters containing the names of 
 		 * the parameters in the same order
 		 */
@@ -1618,7 +1608,7 @@ public double[] learnParameters(GGThread mythread, int fullorincremental, boolea
 		llnode.evaluate(null);
 		resultArray[0]=llnode.loglikelihood();
 		resultArray[1]=resultArray[0]/llnode.numChildren();
-		resultArray[2]=resultArray[1]+this.objectiveconstant;
+		resultArray[2]=resultArray[1]+this.loglikconstant;
 	}
 	
 	return resultArray;
