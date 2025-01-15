@@ -136,6 +136,7 @@ public class ising {
         // add the rbn to primula
         primula.setRbn(manual_rbn);
         primula.getInstantiation().init(manual_rbn);
+        primula.setRbnparameters(manual_rbn.parameters());
 
         // the relation to query
         CatRel tmp_query = new CatRel("CAT", 1, typeStringToArray("node",1), valStringToArray("POS,NEG"));
@@ -164,8 +165,8 @@ public class ising {
             im.addQueryAtoms(tmp_query, gal);
 
             // perform map inference
-            im.setNumRestarts(1);
-            im.setMapSeachAlg(1);
+            im.setNumRestarts(3);
+            im.setMapSeachAlg(0);
             im.setNumIterGreedyMap(50000);
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();

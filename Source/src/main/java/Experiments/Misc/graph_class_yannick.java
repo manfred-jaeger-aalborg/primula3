@@ -143,6 +143,7 @@ public class graph_class_yannick {
         // add the rbn to primula
         primula.setRbn(manual_rbn);
         primula.getInstantiation().init(manual_rbn);
+        primula.setRbnparameters(manual_rbn.parameters());
 
         // the relation to query
         CatRel tmp_query = new CatRel("output", 0, typeStringToArray("",0), valStringToArray("T,F"));

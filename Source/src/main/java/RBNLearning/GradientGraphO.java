@@ -1191,11 +1191,13 @@ public double mapInference(GGThread mythread)
 		}
 		if (!terminate) {
 			oldll = score;
-			if (debugPrint)
-				System.out.print("Learning parameters ...");
-			learnParameters(mythread,GradientGraph.FullLearn,false);
-			if (debugPrint)
-				System.out.println("... done");
+			if (mode == LEARNMODE) {
+				if (debugPrint)
+					System.out.print("Learning parameters ...");
+				learnParameters(mythread, GradientGraph.FullLearn, false);
+				if (debugPrint)
+					System.out.println("... done");
+			}
 		}
 
 	}

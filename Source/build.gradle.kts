@@ -33,7 +33,7 @@ java {
 application {
 //    mainClass.set("RBNgui.Primula")
     // applicationDefaultJvmArgs = listOf("-Djava.awt.headless=true")
-    mainClass.set("Experiments.Homophily.ising")
+    mainClass.set("Experiments.Homophily.NodeClass")
 }
 
 tasks.named<JavaExec>("run") {
@@ -67,13 +67,14 @@ tasks.register("runExperiment") {
         val nhid = project.findProperty("nhid")?.toString() ?: "16"
         val nlayer = project.findProperty("nlayer")?.toString() ?: "2"
         val nclass = project.findProperty("nclass")?.toString() ?: "5"
+        val expName = project.findProperty("expName")?.toString() ?: "exp"
 
         for (i in 0..9) {
             exec {
                 commandLine(
-                    "xvfb-run", "-a",
+//                    "xvfb-run", "-a",
                     "java", "-cp", sourceSets["main"].runtimeClasspath.asPath,
-                    "Experiments.Homophily.NodeClass", i.toString(), dataset, nfeat, nhid, nlayer, nclass
+                    "Experiments.Homophily.NodeClass", i.toString(), dataset, nfeat, nhid, nlayer, nclass, expName
                 )
             }
         }

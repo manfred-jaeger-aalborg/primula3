@@ -52,18 +52,20 @@ public class NodeClass {
 
     public static void main(String[] args) {
 
-//        String datasetName = args[1];
-//        int NUM_ATTR = Integer.parseInt(args[2]);
-//        int nhidd = Integer.parseInt(args[3]);
-//        int nlayers = Integer.parseInt(args[4]);
-//        int NUM_CLASS = Integer.parseInt(args[5]);
-//        int ij = Integer.parseInt(args[0]);
-        int ij = 0;
-        String datasetName = "texas";
-        int NUM_ATTR = 1703;
-        int nhidd = 16;
-        int nlayers = 2;
-        int NUM_CLASS = 5;
+        int ij = Integer.parseInt(args[0]);
+        String datasetName = args[1];
+        int NUM_ATTR = Integer.parseInt(args[2]);
+        int nhidd = Integer.parseInt(args[3]);
+        int nlayers = Integer.parseInt(args[4]);
+        int NUM_CLASS = Integer.parseInt(args[5]);
+        String expName = args[6];
+
+//        int ij = 0;
+//        String datasetName = "texas";
+//        int NUM_ATTR = 1703;
+//        int nhidd = 16;
+//        int nlayers = 2;
+//        int NUM_CLASS = 5;
 
         String modelName = "GCN";
         String base_path = "/Users/lz50rg/Dev/homophily/experiments/";
@@ -143,20 +145,20 @@ public class NodeClass {
         RBN file_rbn = new RBN(input_file, primula.getSignature());
         RBNPreldef[] preledef = file_rbn.prelements();
 
-//        RBN manual_rbn = null;
-//        if (count_h) {
-//            manual_rbn = new RBN(2, 0);
-//            manual_rbn.insertPRel(gnn_rbn, 0);
-////            manual_rbn.insertPRel(preledef[0], 1);
-//            manual_rbn.insertPRel(preledef[1], 2);
-//        } else {
-//            manual_rbn = new RBN(2, 0);
-//            manual_rbn.insertPRel(gnn_rbn, 0);
+        RBN manual_rbn = null;
+        if (count_h) {
+            manual_rbn = new RBN(2, 0);
+            manual_rbn.insertPRel(gnn_rbn, 0);
 //            manual_rbn.insertPRel(preledef[0], 1);
-//        }
+            manual_rbn.insertPRel(preledef[1], 2);
+        } else {
+            manual_rbn = new RBN(2, 0);
+            manual_rbn.insertPRel(gnn_rbn, 0);
+            manual_rbn.insertPRel(preledef[0], 1);
+        }
 
-        RBN manual_rbn = new RBN(1, 0);
-        manual_rbn.insertPRel(gnn_rbn, 0);
+//        RBN manual_rbn = new RBN(1, 0);
+//        manual_rbn.insertPRel(gnn_rbn, 0);
 
         // add the rbn to primula
         primula.setRbn(manual_rbn);
@@ -189,9 +191,9 @@ public class NodeClass {
             im.addQueryAtoms(tmp_query, gal);
 
             // perform map inference
-            im.setNumRestarts(2);
+            im.setNumRestarts(3);
             im.setMapSeachAlg(0);
-            im.setNumIterGreedyMap(4000);
+            im.setNumIterGreedyMap(10000);
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();
 
@@ -257,7 +259,7 @@ public class NodeClass {
             else if (count_h)
                 path_lab = base_path + datasetName + "/pred_labels/pred_labels_" + modelName + "_" + datasetName + "_count_" + index + ".txt";
             else if (node_const)
-                path_lab = base_path + datasetName + "/pred_labels/pred_labels_" + modelName + "_" + datasetName + "_nodeconst_" + index + ".txt";
+                path_lab = base_path + datasetName + "/pred_labels/pred_labels_" + modelName + "_" + datasetName + "_nodeconst_" + expName + "_" + index + ".txt";
             else
                 path_lab = base_path + datasetName + "/pred_labels/pred_labels_" + modelName + "_" + datasetName + "_" + index + ".txt";
 
