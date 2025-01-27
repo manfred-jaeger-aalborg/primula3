@@ -94,7 +94,7 @@ public class NodeClass {
         if (loc_h)
             srsfile = new File(base_path + datasetName + "/rdef/" + datasetName + "_loc_" + index + ".rdef");
         else if (node_const)
-            srsfile = new File(base_path + datasetName + "/rdef/" + datasetName + "_nodeconst_" + index + ".rdef");
+            srsfile = new File(base_path + datasetName + "/rdef/" + datasetName + "_nodeconst_homProp_" + index + ".rdef");
         primula.loadSparseRelFile(srsfile);
 
         // create rbn
@@ -145,20 +145,20 @@ public class NodeClass {
         RBN file_rbn = new RBN(input_file, primula.getSignature());
         RBNPreldef[] preledef = file_rbn.prelements();
 
-        RBN manual_rbn = null;
-        if (count_h) {
-            manual_rbn = new RBN(2, 0);
-            manual_rbn.insertPRel(gnn_rbn, 0);
+//        RBN manual_rbn = null;
+//        if (count_h) {
+//            manual_rbn = new RBN(2, 0);
+//            manual_rbn.insertPRel(gnn_rbn, 0);
+////            manual_rbn.insertPRel(preledef[0], 1);
+//            manual_rbn.insertPRel(preledef[1], 2);
+//        } else {
+//            manual_rbn = new RBN(2, 0);
+//            manual_rbn.insertPRel(gnn_rbn, 0);
 //            manual_rbn.insertPRel(preledef[0], 1);
-            manual_rbn.insertPRel(preledef[1], 2);
-        } else {
-            manual_rbn = new RBN(2, 0);
-            manual_rbn.insertPRel(gnn_rbn, 0);
-            manual_rbn.insertPRel(preledef[0], 1);
-        }
+//        }
 
-//        RBN manual_rbn = new RBN(1, 0);
-//        manual_rbn.insertPRel(gnn_rbn, 0);
+        RBN manual_rbn = new RBN(1, 0);
+        manual_rbn.insertPRel(gnn_rbn, 0);
 
         // add the rbn to primula
         primula.setRbn(manual_rbn);
@@ -191,7 +191,7 @@ public class NodeClass {
             im.addQueryAtoms(tmp_query, gal);
 
             // perform map inference
-            im.setNumRestarts(3);
+            im.setNumRestarts(1);
             im.setMapSeachAlg(0);
             im.setNumIterGreedyMap(10000);
             GradientGraph GG = im.startMapThread();

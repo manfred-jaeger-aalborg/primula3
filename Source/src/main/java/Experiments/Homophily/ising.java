@@ -44,11 +44,12 @@ public class ising {
 
     public static void main(String[] args) {
         String N = "32";
-        String J = "-0.5";
-        String Jb = "-0.1";
+        String J = "-1.0";
+        String Jb = "0.3";
         String temp = "0.4";
         Boolean loc_h = false;
-        Boolean loc_h2 = true;
+        Boolean node_const= true;
+        String expName = "HP";
 
         Primula primula = new Primula();
         primula.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
@@ -75,8 +76,8 @@ public class ising {
         File srsfile = null;
         if (loc_h)
             srsfile = new File("/Users/lz50rg/Dev/homophily/experiments/ising/rdef/ising_" + N + "_" + J + "_" + Jb + "_" + temp + "_" + "4_loc.rdef");
-        else if (loc_h2)
-            srsfile = new File("/Users/lz50rg/Dev/homophily/experiments/ising/rdef/ising_" + N + "_" + J + "_" + Jb + "_" + temp + "_" + "4_nodeconst.rdef");
+        else if (node_const)
+            srsfile = new File("/Users/lz50rg/Dev/homophily/experiments/ising/rdef/ising_" + N + "_" + J + "_" + Jb + "_" + temp + "_" + "4_nodeconst_" + expName + ".rdef");
         else
             srsfile = new File("/Users/lz50rg/Dev/homophily/experiments/ising/rdef/ising_" + N + "_" + J + "_" + Jb + "_" + temp + "_" + "4.rdef");
         System.out.println(srsfile);
@@ -116,7 +117,7 @@ public class ising {
         File input_file = null;
         if (loc_h)
             input_file = new File("/Users/lz50rg/Dev/homophily/experiments/ising/const_ising_loc.rbn");
-        else if (loc_h2)
+        else if (node_const)
 //            input_file = new File("/Users/lz50rg/Dev/homophily/experiments/ising/const_ising_glob.rbn");
             input_file = new File("/Users/lz50rg/Dev/homophily/experiments/rbn_constraints/const_nodeconst.rbn");
         else
@@ -229,8 +230,8 @@ public class ising {
             String pred_node_path = null;
             if (loc_h)
                 pred_node_path = "/Users/lz50rg/Dev/homophily/experiments/ising/pred_labels/pred_labels_" + load_gnn_set.get("model") + "_" + N + "_" + J + "_" + Jb + "_" + temp + "_loc.txt";
-            else if (loc_h2)
-                pred_node_path = "/Users/lz50rg/Dev/homophily/experiments/ising/pred_labels/pred_labels_" + load_gnn_set.get("model") + "_" + N + "_" + J + "_" + Jb + "_" + temp + "_nodeconst.txt";
+            else if (node_const)
+                pred_node_path = "/Users/lz50rg/Dev/homophily/experiments/ising/pred_labels/pred_labels_" + load_gnn_set.get("model") + "_" + N + "_" + J + "_" + Jb + "_" + temp + "_nodeconst_" + expName + ".txt";
             else
                 pred_node_path = "/Users/lz50rg/Dev/homophily/experiments/ising/pred_labels/pred_labels_" + load_gnn_set.get("model") + "_" + N + "_" + J + "_" + Jb + "_" + temp + ".txt";
 

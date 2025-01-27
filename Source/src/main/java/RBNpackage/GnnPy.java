@@ -317,6 +317,13 @@ public class GnnPy {
             else
                 this.sharedInterpreter.exec("ei = torch.empty((2, 0), dtype=torch.long)");
 
+//            StringWriter output = new StringWriter();
+//            sharedInterpreter.set("output", output);
+//            sharedInterpreter.eval("import sys");
+//            sharedInterpreter.eval("sys.stdout = output");
+//            sharedInterpreter.eval("print(ei)");
+//            System.out.println("Captured output: " + output.toString());
+
             if (node == -1)
                 this.sharedInterpreter.eval("out = intt." + this.INFER_GRAPH + "(" + idGnn + ", xi, ei)");
             else
@@ -331,7 +338,13 @@ public class GnnPy {
 
             this.dimOut = (Long) this.sharedInterpreter.getValue("out_size");
             if (dimOut == 1) {
-                System.out.println("not implemented");
+                this.sharedInterpreter.exec("out = out.detach().numpy()");
+                NDArray ndArray = (NDArray) this.sharedInterpreter.getValue("out");
+                float[] tarr = (float[]) ndArray.getData();
+                Double[] res = new Double[2];
+                res[0] = Double.valueOf(tarr[0]);
+                res[1] = Double.valueOf(tarr[1]);
+                return res;
             } else if (dimOut == 2) {
                 this.sharedInterpreter.exec("out = out.detach().numpy()");
                 NDArray ndArray = (NDArray) this.sharedInterpreter.getValue("out");
@@ -1092,7 +1105,7 @@ public class GnnPy {
             for (int j = 0; j < subList.size() - 1; j++) {
                 // check if all the types in the subList are the same
                 if (!subList.get(j).getTypes()[0].getName().equals(subList.get(j + 1).getTypes()[0].getName())) {
-                    throw new RuntimeException("Types of the relations do not match!");
+                    throw new RuntimeException("Types of the relations do not match! " + subList.get(j).getTypes()[0].getName() + " / " + subList.get(j + 1).getTypes()[0].getName());
                 }
             }
             String key = subList.get(0).getTypes()[0].getName();

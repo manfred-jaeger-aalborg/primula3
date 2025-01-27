@@ -983,7 +983,7 @@ public void gibbsSample(Thread mythread){
 
 public double mapSearch(GGThread mythread,TreeSet<GGAtomMaxNode> flipcandidates, int depth) {
 //	System.out.println("mapSearch with depth " + depth); // Currently depth is not used!
-	PriorityQueue<GGAtomMaxNode> scored_atoms = new PriorityQueue<GGAtomMaxNode>(new GGAtomMaxNode_Comparator());
+	PriorityQueue<GGAtomMaxNode> scored_atoms = new PriorityQueue<GGAtomMaxNode>(new GGAtomMaxNode_Comparator()); // NB. with priority queue only the best is guarantee to be on the top
 
 	for (GGAtomMaxNode mxnode: flipcandidates) {
 //		long startTime = System.currentTimeMillis();
@@ -1019,13 +1019,20 @@ public double mapSearch(GGThread mythread,TreeSet<GGAtomMaxNode> flipcandidates,
 			flipnext.reEvaluateUpstream(null);
 			num_flipped++;
 
+//			Vector<GGCPMNode> ugas = flipnext.getAllugas();
+//			double[] oldll = llnode.evaluate(null, ugas, true, false, null);
+//			System.out.println(oldll);
+
+
+
+
 			/** sample
 			 * 
 			 */
 			for (int j=1;j<windowsize;j++){
 				gibbsSample(mythread);
 			}
-			if (myggoptions.ggverbose()) {
+			if (windowsize > 0 && myggoptions.ggverbose()) {
 				System.out.println("New sampled values:");
 				showSumAtomsVals();
 			}
@@ -1047,7 +1054,8 @@ public double mapSearch(GGThread mythread,TreeSet<GGAtomMaxNode> flipcandidates,
 			}
 			if (myggoptions.ggverbose()) {
 				System.out.println("New flip scores");
-				showMaxAtomFlipScores(scored_atoms);
+//				showMaxAtomFlipScores(scored_atoms);
+				showMaxAtomFlipScoresBestK(scored_atoms, 10);
 			}
 			//				System.out.println("Current likelihood: " + SmallDouble.toStandardDouble(llnode.likelihood()));
 		}
@@ -1263,6 +1271,17 @@ public void showMaxAtomFlipScores(PriorityQueue<GGAtomMaxNode> scored_atoms) {
 	}
 }
 
+public void showMaxAtomFlipScoresBestK(PriorityQueue<GGAtomMaxNode> scored_atoms, int k) {
+	Iterator<GGAtomMaxNode> it = scored_atoms.iterator();
+	System.out.println("Best " + k + " atoms:");
+	while (it.hasNext()) {
+		GGAtomMaxNode el = it.next();
+		System.out.println(el.getMyatom() + ": " + el.getScore());
+		k--;
+		if (k == 0)
+			break;
+	}
+}
 
 public void showSumAtomsVals() {
 	for (GGAtomSumNode sn: sumindicators) {

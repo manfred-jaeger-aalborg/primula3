@@ -120,23 +120,24 @@ public class RiverPollution {
                 new CatModelSoftMax(softmax)
         );
 
-        File input_file = new File("/Users/lz50rg/Dev/water-hawqs/water.rbn");
-//        File input_file = new File("/Users/lz50rg/Dev/water-hawqs/water_rbn.rbn");
+//        File input_file = new File("/Users/lz50rg/Dev/water-hawqs/water.rbn");
+        File input_file = new File("/Users/lz50rg/Dev/water-hawqs/water_rbn.rbn");
         RBN file_rbn = new RBN(input_file, primula.getSignature());
         RBNPreldef[] riverrbn = file_rbn.prelements();
 
         RBN manual_rbn = new RBN(4, 0);
-//        for (int i = 0; i < 4; i++) {
-//            manual_rbn.insertPRel(riverrbn[i], i);
-//        }
+        for (int i = 0; i < 4; i++) {
+            manual_rbn.insertPRel(riverrbn[i], i);
+        }
 
-        manual_rbn.insertPRel(gnn_rbn, 0);
-        manual_rbn.insertPRel(gnn_attr, 1);
-        manual_rbn.insertPRel(riverrbn[0], 2);
-        manual_rbn.insertPRel(riverrbn[1], 3);
+//        manual_rbn.insertPRel(gnn_rbn, 0);
+//        manual_rbn.insertPRel(gnn_attr, 1);
+//        manual_rbn.insertPRel(riverrbn[0], 2);
+//        manual_rbn.insertPRel(riverrbn[1], 3);
 
         primula.setRbn(manual_rbn);
         primula.getInstantiation().init(manual_rbn);
+        primula.setRbnparameters(manual_rbn.parameters());
 
         CatRel tmp_query = new CatRel("LandUse", 1, typeStringToArray("hru_agr", 1), valStringToArray("CORN,COSY,PAST,SOYB"));
         tmp_query.setInout(Rel.PROBABILISTIC);
@@ -186,7 +187,7 @@ public class RiverPollution {
                     gal.add(tmp_query, new int[]{mat[i][0]});
             }
             im.addQueryAtoms(tmp_query, gal);
-            im.setMapSeachAlg(1);
+            im.setMapSeachAlg(0);
             im.setNumIterGreedyMap(20000);
             im.setNumRestarts(1);
             GradientGraph GG = im.startMapThread();

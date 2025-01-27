@@ -1884,8 +1884,9 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 	private void loadDefaults(){
 
 
-		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Ising/ising-v2.rbn";	
-		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Ising/ising-v2.rdef";
+		String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/examples-primula/GNN-RBN-explainer/rbn_acr.rbn";
+		String rstinputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/examples-primula/GNN-RBN-explainer/base_class_0_n6_0.rdef";
+
 		
 //		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Categorical/onecat_param.rbn";	
 //		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Categorical/onecat_sample.rdef";
@@ -1995,9 +1996,8 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 		Primula win = new Primula();
 		SamiamManager.centerWindow( win );
 		win.show();
-//		win.loadDefaults();
-		System.out.println();
-//
+		win.loadDefaults();
+
 //		win.setGNNPath();
 //		win.loadCatRBN();
 //		win.loadGNNRBN_blue();
