@@ -258,8 +258,8 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 	private JRadioButton asc_fletcherreeves = new JRadioButton("Fletcher Reeves");
 	private JRadioButton asc_direct = new JRadioButton("Greedy");
 	
-	private ButtonGroup lossfunc_bg = new ButtonGroup();
-	private JPanel lossfunc_menu = new JPanel(new GridLayout(3,1));
+//	private ButtonGroup lossfunc_bg = new ButtonGroup();
+//	private JPanel lossfunc_menu = new JPanel(new GridLayout(3,1));
 	
 	private ButtonGroup divideoptions_bg = new ButtonGroup();
 	private JRadioButton div_across = new JRadioButton("Split across domains");
@@ -338,17 +338,17 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 //		generalbuttonspanel.add(loglikcheckbox);
 		generalbuttonspanel.add(randominitcheckbox);
 		
-		lossfunc_menu.add(loss_lik);
-		lossfunc_menu.add(loss_loglik);
-		lossfunc_menu.add(loss_se);
-		
-		lossfunc_bg.add(loss_lik);
-		lossfunc_bg.add(loss_loglik);
-		lossfunc_bg.add(loss_se);
+//		lossfunc_menu.add(loss_lik);
+//		lossfunc_menu.add(loss_loglik);
+//		lossfunc_menu.add(loss_se);
+//		
+//		lossfunc_bg.add(loss_lik);
+//		lossfunc_bg.add(loss_loglik);
+//		lossfunc_bg.add(loss_se);
 		
 		generaloptions.setLayout(new BoxLayout(generaloptions,BoxLayout.Y_AXIS));
-		lossfunc_menu.setBorder(new TitledBorder("Objective Function"));
-		generalbuttonspanel.add(lossfunc_menu);
+//		lossfunc_menu.setBorder(new TitledBorder("Objective Function"));
+//		generalbuttonspanel.add(lossfunc_menu);
 		
 		
 		
@@ -424,17 +424,7 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 		
 		
 		
-		switch (learnmodule.getObjective()){
-		case LearnModule.UseLik:
-			loss_lik.setSelected(true);
-			break;
-		case LearnModule.UseLogLik:
-			loss_loglik.setSelected(true);
-			break;
-		case LearnModule.UseSquaredError:
-			loss_se.setSelected(true);
-			break;
-		}
+
 
 		switch (learnmodule.getThreadStrategy()){
 		case LearnModule.AscentBatch:
@@ -822,21 +812,7 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 			else
 				learnmodule.setVerbose(false);
 		}
-		if ( source == loss_lik) {
-			if (e.getStateChange() == ItemEvent.SELECTED){
-			learnmodule.setObjectivek(LearnModule.UseLik);
-			}
-		}
-		if ( source == loss_loglik) {
-			if (e.getStateChange() == ItemEvent.SELECTED){
-			learnmodule.setObjectivek(LearnModule.UseLogLik);
-			}
-		}
-		if ( source == loss_se) {
-			if (e.getStateChange() == ItemEvent.SELECTED){
-			learnmodule.setObjectivek(LearnModule.UseSquaredError);
-			}
-		}
+
 		if ( source == randominitcheckbox ){
 			if (e.getStateChange() == ItemEvent.SELECTED){
 				learnmodule.setRandomInit(true);

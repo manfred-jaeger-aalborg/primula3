@@ -116,25 +116,34 @@ public class CatModelSoftMax extends CPModel {
 		Double[] doubleObjectArray = new Double[((double[])result[0]).length];
 		for (int i = 0;i<probforms.size();i++){
 			doubleObjectArray[i] = (Math.exp((Double)evaluatedpfs[i][0]))/valsum;
-//			((double[])result[0])[i] = (Math.exp((Double)evaluatedpfs[i][0]))/valsum;
 		}
 		result[0] = doubleObjectArray;
 		if (valonly)
 			return result;
+		
+		// Computing the gradient
+		double derivsum =0;
+		for (int k =0;k<params.size();k++) {
+			for (int i=0;i<probforms.size();i++) {
+				derivsum+=Math.exp((double)(evaluatedpfs[i][0]))*((double[])evaluatedpfs[i][1])[k];
+			}
+		}
+		
 		if (returntype == ProbForm.RETURN_ARRAY) {
 			result[1]=new double[params.size()];
-
 			for (int k =0;k<params.size();k++) {
-				double derivsum =0;
-				for (int i=0;i<probforms.size();i++) {
-					derivsum+=Math.exp((double)(evaluatedpfs[i][0]))*((double[])evaluatedpfs[i][1])[k];
-				}
 				((double[])result[1])[k]=Math.exp(((double)evaluatedpfs[gradindx][0]))
 						*(((double[])evaluatedpfs[gradindx][1])[k]*valsum-derivsum)/Math.pow(valsum,2);
 			}
 		}
-		else 
-			System.out.println("CatModelSoftMax.evaluate: gradients as hashtables not implemented yet");
+		else { // returntype ProbForm.RETURN_SPARSE
+			result[1]=new Hashtable<String,Double>();
+			for (String nextpar: ((Hashtable<String,Double>)evaluatedpfs[gradindx][1]).keySet()) {
+				((Hashtable<String,Double>)result[1]).put(nextpar,
+						Math.exp(((double)evaluatedpfs[gradindx][0]))
+						*(((double[])evaluatedpfs[gradindx][1])[params.get(nextpar)]*valsum-derivsum)/Math.pow(valsum,2));
+			}
+		}
 		return result;
 	}
 

@@ -40,9 +40,9 @@ import java.util.*;
 
 public class LearnModule extends JFrame implements ActionListener,MouseListener,GradientGraphOptions, KeyListener
 {
-	public static final int UseLik = 0;
-	public static final int UseLogLik = 1;
-	public static final int UseSquaredError = 2;
+//	public static final int UseLik = 0;
+//	public static final int UseLogLik = 1;
+//	public static final int UseSquaredError = 2;
 	
 	/* Options for the top-level learning strategy in LearnThread:*/
 	public static final int AscentBatch =0;
@@ -343,7 +343,6 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 	private boolean usememoize;
 	
 	private boolean learnverbose;
-	private int objective;
 	private boolean ggrandominit;
 	private boolean gg2phase;
 	
@@ -384,7 +383,7 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 		data = mypr.getReldata();
 		
 		
-		threadascentstrategy = AscentBatch;
+		threadascentstrategy = AscentAdam;
 		ggascentstrategy = AscentLBFGS;
 
 		
@@ -398,7 +397,7 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 		subsamples = 100;
 		numblocks = 1;
 		numbatches =1;
-		splitmode = RelData.SPLIT_BY_DOMAIN;
+		splitmode = RelData.SPLIT_ACROSS_DOMAINS;
 		dampingfac =0.99;
 		numchains = 2;
 		windowsize = 2;
@@ -413,7 +412,6 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 		omitrounds = 3;
 		percmiss = 0.0;
 		learnverbose = false;
-		objective = UseLogLik;
 		gg2phase = false;
 		ggrandominit = true;
 		numrelsfromfile = false;
@@ -868,9 +866,6 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 		learnverbose = v;
 	}
 	
-	public void setObjectivek(int v){
-		objective = v;
-	}
 	
 	public void set2phase(boolean v){
 		gg2phase = v;
@@ -882,11 +877,6 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 	
 	public boolean learnverbose(){
 		return learnverbose;
-	}
-	
-
-	public int getObjective(){
-		return objective;
 	}
 	
 	public boolean ggrandominit(){

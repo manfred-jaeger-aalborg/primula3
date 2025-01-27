@@ -119,11 +119,10 @@ public class GradientGraphO extends GradientGraph{
 			GradientGraphOptions go, 
 			Hashtable<Rel,GroundAtomList> mapats,
 			int m,
-			int obj,
 			Boolean showInfoInPrimula)
 					throws RBNCompatibilityException
 	{	
-		super(mypr,data,params,go,mapats,m,obj,showInfoInPrimula);
+		super(mypr,data,params,go,mapats,m,showInfoInPrimula);
 
 		this.debugPrint = true;
 
@@ -405,13 +404,7 @@ public class GradientGraphO extends GradientGraph{
 									likfactor = ((double[])pfeval)[instvalue];
 								}
 
-								switch (objective) {
-								case LearnModule.UseLogLik:
-									objectiveconstant = objectiveconstant + Math.log(likfactor);
-									break;
-								case LearnModule.UseSquaredError:
-									objectiveconstant = objectiveconstant - Math.pow(likfactor,2);
-								}
+								loglikconstant = loglikconstant + Math.log(likfactor);
 							}
 							processedcounter++;
 							if (showInfoInPrimula && (10*processedcounter)/ugacounter > currentpercentage){
@@ -497,9 +490,6 @@ public class GradientGraphO extends GradientGraph{
 		}
 		llnode.init_values_and_grad(mode==MAPMODE);
 		
-		if (numchains >1 && objective != LearnModule.UseLik)
-			throw new RBNRuntimeException("Inconsistent combination of options: use log-likelihood and numchains = " +numchains);	
-
 		/* Construct vector ParamNodes, and array parameters containing the names of 
 		 * the parameters in the same order
 		 */
@@ -811,6 +801,7 @@ public class GradientGraphO extends GradientGraph{
 				System.out.print(",");
 		}
 	}
+	llnode.evaluate(null);
 	return !abort;
 }
 
@@ -1346,7 +1337,7 @@ public void showAllNodes2(RelStruc A) {
  * 
  * [n]: the log-likelihood value of the current parameters 
  * 
- * [n+1]: the kth root of the likelihood value, for k the number of 
+ * [n+1]: the log-likelihood value divided by the number of 
  * children of the likelihood node. This gives a 'per observed atom'
  * likelihood value that is more useful than the overall likelihood.
  * 
@@ -1406,7 +1397,7 @@ protected double[] thetasearch(double[] currenttheta,
 	int lbfgs_iterationcount =0;
 
 	evaluateLikelihoodAndPartDerivs(true);
-	double llikhood =  llnode.objective() + this.objectiveconstant;
+	double llikhood =  llnode.loglikelihood();
 	double newllikhood;
 
 
@@ -1423,7 +1414,7 @@ protected double[] thetasearch(double[] currenttheta,
 	long timestart = System.currentTimeMillis();
 
 	if (verbose)
-		System.out.println("Iterationcounter" + '\t' +  "Time" + '\t' + "gradient*direction" + '\t' +    "stepsize"  + '\t' +    "objective" + '\t' +    "accuracy" );
+		System.out.println("Iterationcounter" + '\t' +  "Time" + '\t' + "gradient*direction" + '\t' +    "stepsize"  + '\t' +    "log-likelihood"  );
 
 	while (!terminate && !mythread.isstopped()){
 
@@ -1436,10 +1427,8 @@ protected double[] thetasearch(double[] currenttheta,
 		evaluateLikelihoodAndPartDerivs(false);
 
 
-		if (numchains==0)
-			gradient = llnode.gradientAsDouble();
-		else
-			gradient = llnode.gradientsumAsDouble();
+
+		gradient = llnode.gradientAsDouble();
 
 
 		/* If the gradient at llnode is not representable as a standard double vector
@@ -1518,7 +1507,7 @@ protected double[] thetasearch(double[] currenttheta,
 			long tick = System.currentTimeMillis()-timestart;
 			System.out.print(""+ itcounter + '\t' + " " + tick +  '\t'+ gtimesd + '\t' 
 					+ rbnutilities.euclidDist(oldthetas, currenttheta) +'\t' 
-					+ llnode.objective() + '\t'  + llnode.getAccuracy()); 
+					+ llnode.loglikelihood()); 
 		}
 
 
@@ -1542,7 +1531,7 @@ protected double[] thetasearch(double[] currenttheta,
 
 		itcounter++;
 		itindx = (itindx+1) % llwindow;				
-		newllikhood = llnode.objective() + this.objectiveconstant;
+		newllikhood = llnode.loglikelihood();
 		gain = (newllikhood-llikhood)/llnode.numChildren();
 		llgains[itindx] = gain;
 		terminate = ( rbnutilities.arrayAverage(llgains)<myggoptions.getLLikThresh());
@@ -1566,7 +1555,7 @@ protected double[] thetasearch(double[] currenttheta,
 	}
 	result[currenttheta.length]=newlikelihood;
 	result[currenttheta.length+1]=newlikelihood/llnode.numChildren();
-	result[currenttheta.length+2] = llnode.loglikelihood() +this.objectiveconstant; 
+	result[currenttheta.length+2] = llnode.loglikelihood(); 
 
 	long timespent = System.currentTimeMillis()-timestart;
 
@@ -1589,15 +1578,11 @@ public double[] learnParameters(GGThread mythread, int fullorincremental, boolea
 	/* Returns:
 	 * resultArray[0:paramNodes.length-1] : the parameter values learned in the
 	 *                                      order given by paramNodes
-	 * resultArray[paramNodes.length:paramNodes.length+1]: the likelihood value for
-	 *                                                     the parameters represented as a small double.
-	 *                                                     When data is incomplete, then this likelihood is with
-	 *                                                     respect to the last sample.
+	 * resultArray[paramNodes.length]: the log-likelihood value for the parameters 
 	 *                                                     
-	 * resultArray[paramNodes.length+2]: the kth root of the likelihood value, where k is  
-	 * the number of  children of the likelihood node (cf. thetasearch).     
+	 * resultArray[paramNodes.length+1]: log-likelihood/number of childrent of likelihood node    
 	 * 
-	 * resultArray[paramNodes.length+3]: the log-likelihood of the full data (cf. thetasearch)                                            
+	 * resultArray[paramNodes.length+2]: the log-likelihood of the full data (cf. thetasearch)                                            
 	 */
 	double[] resultArray = new double[paramNodes.length+3];
 	double[] lastthetas = null;
@@ -1641,12 +1626,12 @@ public double[] learnParameters(GGThread mythread, int fullorincremental, boolea
 	}
 	else{ /* Only compute likelihood for the given parameters;
 	 * the first two components of the resultArray are not used */
-		double[] likelihoods = computeObjectiveandConfusion(mythread);
-		resultArray[2]=likelihoods[0];
-		resultArray[3]=likelihoods[1];
+		llnode.evaluate(null);
+		resultArray[0]=llnode.loglikelihood();
+		resultArray[1]=resultArray[0]/llnode.numChildren();
+		resultArray[2]=resultArray[1]+this.loglikconstant;
 	}
-
-
+	
 	return resultArray;
 }
 
@@ -2096,47 +2081,47 @@ public int numberOfEdges(){
 
 
 
-/** Computes the objective function value given the current parameter setting
- * by Gibbs sampling. It is assumed that initIndicators() has been 
- * successfully executed.
- * 
- * Also returns the confusion matrix values TP,FP,FN,TN
- * (only useful when data is complete, and no Gibbs sampling
- * involved)
- * 
- * Returns double array with result[0]=per node likelihood, 
- * result[1]=objective function value, result[2]=TP, 
- * result[3]=FP, result[4]=FN, result[5]=TN
- * 
- * @return
- */	
-public double[] computeObjectiveandConfusion(GGThread mythread)
-		throws RBNNaNException{
-	double[] result = new double[6];
-	double nodelik;
-
-	for (int i = 0; i<windowsize; i++)
-		gibbsSample(mythread);
-
-	evaluateLikelihoodAndPartDerivs(true);
-
-	if (llnode.numChildren()>0)
-		nodelik=currentLogLikelihood()/llnode.numChildren();
-	else
-		nodelik = 0.0;
-
-	result[0] = nodelik;
-	result [1] =  llnode.objective()+this.objectiveconstant;
-
-	int[] conf = llnode.getConfusion();
-	for (int i=0;i<4;i++)
-		conf[i] += confusionconst[i];
-	for (int i=0;i<4;i++)
-		result[2+i]=conf[i];
-
-	return result;
-
-}
+///** Computes the objective function value given the current parameter setting
+// * by Gibbs sampling. It is assumed that initIndicators() has been 
+// * successfully executed.
+// * 
+// * Also returns the confusion matrix values TP,FP,FN,TN
+// * (only useful when data is complete, and no Gibbs sampling
+// * involved)
+// * 
+// * Returns double array with result[0]=per node likelihood, 
+// * result[1]=objective function value, result[2]=TP, 
+// * result[3]=FP, result[4]=FN, result[5]=TN
+// * 
+// * @return
+// */	
+//public double[] computeObjectiveandConfusion(GGThread mythread)
+//		throws RBNNaNException{
+//	double[] result = new double[6];
+//	double nodelik;
+//
+//	for (int i = 0; i<windowsize; i++)
+//		gibbsSample(mythread);
+//
+//	evaluateLikelihoodAndPartDerivs(true);
+//
+//	if (llnode.numChildren()>0)
+//		nodelik=currentLogLikelihood()/llnode.numChildren();
+//	else
+//		nodelik = 0.0;
+//
+//	result[0] = nodelik;
+//	result [1] =  llnode.objective()+this.objectiveconstant;
+//
+//	int[] conf = llnode.getConfusion();
+//	for (int i=0;i<4;i++)
+//		conf[i] += confusionconst[i];
+//	for (int i=0;i<4;i++)
+//		result[2+i]=conf[i];
+//
+//	return result;
+//
+//}
 
 
 

@@ -401,24 +401,28 @@ public  class ProbFormAtom extends ProbForm {
 		}
 		else if (relation.isprobabilistic()){
 			value = inst.valueOf(substituted.relation, rbnutilities.stringArrayToIntArray(substituted.getArguments()));
-			if (value != -1 
-//					&&
-//					(mapatoms == null 
-//					|| mapatoms.get(relation)== null 
-//					|| !mapatoms.get(relation).contains(relation,substituted.argsIfGround())
-//					|| useCurrentMvals)
-				)
+			if (value != -1 )
 				result[0] = value;
-			else
-				result[0] = Double.NaN; // TODO use mapatoms
-			result[1]=new Hashtable<String,Double>();
+			else 
+				result[0] = Double.NaN; 
+			//			else if (!useCurrentMvals 
+			//					&& mapatoms != null 
+			//					&&  mapatoms.get(relation)!= null 
+			//					&&  mapatoms.get(relation).contains(relation,substituted.argsIfGround())
+			//					result[0] = Double.NaN; 
+			if (!valonly) {
+				if (returntype==ProbForm.RETURN_ARRAY) 
+					result[1]=new double[params.size()];
+				else 
+					result[1]=new Hashtable<String,Double>();
+			}
 		}
 		else if (relation.ispredefined()) {		
 			String thisstr = this.asString(A);
 			Integer i = null;
 			if (params!= null)
 				i = params.get(thisstr);
-			
+
 			if (i==null || useCurrentPvals)
 				result[0] = A.valueOf(relation, rbnutilities.stringArrayToIntArray(substituted.getArguments()));
 			else
