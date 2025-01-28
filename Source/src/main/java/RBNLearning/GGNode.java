@@ -202,19 +202,30 @@ public abstract class GGNode implements Comparable<GGNode>{
 
 
 	public void resetGradient(Integer sno){
-		for (String pname: gradient_for_samples.get(sno).keySet()){
+		for (String pname: gradient_for_samples.get(0).keySet()){ // gradients for all samples are for the same parameters
 			resetGradient(sno,pname);
 		}
 	}
-	
+
 	public void resetGradient(Integer sno,String p){
-		if (gradient_for_samples.get(sno).containsKey(p)) {
-			Double[] initgrad = new Double[this.outDim];
-			initgrad[0]=Double.NaN;
-			gradient_for_samples.get(sno).put(p, initgrad);
+		if (depends_on_sample) { 
+			if (sno==null) {
+				for (int i=0;i<gradient_for_samples.size();i++)
+					resetGradient(i,p);
+			}
+			else {
+				is_evaluated_for_samples[sno]=false;
+				gradient_for_samples.remove((int)sno);
+				gradient_for_samples.add(sno,new TreeMap<String,Double[]>());
+			}
+		}
+		else {
+			is_evaluated_for_samples[0]=false;
+			gradient_for_samples.remove(0);
+			gradient_for_samples.add(0,new TreeMap<String,Double[]>());
 		}
 	}
-	
+
 
 	public int childrenSize(){
 		if (children == null)

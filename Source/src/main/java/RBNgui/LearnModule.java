@@ -396,13 +396,13 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 		restarts = 1; /*-1 is for open-ended restarts */
 		subsamples = 100;
 		numblocks = 1;
-		numbatches =1;
-		splitmode = RelData.SPLIT_ACROSS_DOMAINS;
+		numbatches =2;
+		splitmode = RelData.SPLIT_BY_DOMAIN;
 		dampingfac =0.99;
 		numchains = 2;
 		windowsize = 2;
 		maxfails = 5;
-		maxiterations = 20;
+		maxiterations = 2;
 		linedistancethresh = 0.0001;
 //		linelikelihoodthresh = 0.001;
 		likelihoodwindow = 5;
@@ -417,7 +417,7 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 		numrelsfromfile = false;
 		aca = false;
 		readNumRels();
-		useggs=false;
+		useggs=true;
 		usememoize=true;
 		
 		//selectednumrels = new Vector<String>();

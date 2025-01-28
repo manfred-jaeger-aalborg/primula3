@@ -2445,7 +2445,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 						Vector<int[]> at = osd.allTrue(r);
 						for (int[] intargs : at){
 							try{
-								prob = ((Double[])cpm.evaluate(A,
+								prob = ((Double)cpm.evaluate(A,
 										osd,
 										varargs,
 										intargs,
@@ -2458,13 +2458,13 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 										null,
 										ProbForm.RETURN_ARRAY,
 										true,
-										null)[0])[0];
+										null)[0]);
 							}
 							catch (RBNCompatibilityException ex){System.out.println(ex);}
 							if (prob < 0.5) // false prediction
 								result[1]++;
 							else //true prediction
-								result[1]++;
+								result[0]++;
 						}
 
 						/* Now the false cases (near duplicate code): */
@@ -2473,7 +2473,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 							boolean predpos;
 
 							try{
-								prob = ((Double[])cpm.evaluate(A,
+								prob = ((Double)cpm.evaluate(A,
 										osd,
 										varargs,
 										intargs,
@@ -2486,7 +2486,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 										null,
 										ProbForm.RETURN_ARRAY,
 										true,
-										null)[0])[0];
+										null)[0]);
 							}
 							catch (RBNCompatibilityException ex){System.out.println(ex);}
 							if (prob < 0.5) // true negative

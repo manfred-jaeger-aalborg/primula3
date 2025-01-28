@@ -1884,8 +1884,9 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 	private void loadDefaults(){
 
 
-		String rbninputfilestring = "/home/jaeger/B/Primula/Examples/SWF/swf_nodefeat.rbn";	
-		String rstinputfilestring = "/home/jaeger/B/Primula/Examples/SWF/swf_coordinates_nodefeat.rdef";
+		String rbninputfilestring = "/home/jaeger/B/Primula/Examples/GraphNN-develop/alpha1-[4].rbn";	
+		String rstinputfilestring = "/home/jaeger/B/Primula/Examples/GraphNN-develop/GNNdata/p1/test-random-erdos-500-40-50.rdef";
+//		String rstinputfilestring = "/home/jaeger/B/Primula/Examples/GraphNN-develop/GNNdata/p1/tiny-synthetic-5cols-2samples.rdef";	
 	
 //		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Categorical/onecat_param.rbn";	
 //		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Categorical/onecat_sample.rdef";

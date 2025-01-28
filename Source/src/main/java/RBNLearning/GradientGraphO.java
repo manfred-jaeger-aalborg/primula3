@@ -124,7 +124,7 @@ public class GradientGraphO extends GradientGraph{
 	{	
 		super(mypr,data,params,go,mapats,m,showInfoInPrimula);
 
-		this.debugPrint = true;
+		this.debugPrint = false;
 
 		RBN rbn = myPrimula.getRBN();
 		// During the GG construction, the evaluation can include also parts that need the GNN output.
@@ -213,13 +213,15 @@ public class GradientGraphO extends GradientGraph{
 		/* Start by constructing upper ground atom nodes for the map-query atoms
 		 * 
 		 */
-		System.out.println("Building GG:");
+		if (debugPrint)
+			System.out.println("Building GG:");
 		if (mode == MAPMODE || mode == LEARNANDMAPMODE){
 			int[] naargs;
 			GroundAtom nextatom;
 			GGAtomMaxNode ggmn;
 
-			System.out.println("\t-constructing uga nodes for map-query atom...");
+			if (debugPrint)
+				System.out.println("\t-constructing uga nodes for map-query atom...");
 			long startTime = System.currentTimeMillis();
 			for (Rel narel: mapatoms.keySet()) {
 				for (int qano=0; qano<mapatoms.get(narel).size(); qano++){
@@ -287,7 +289,8 @@ public class GradientGraphO extends GradientGraph{
 						currentpercentage++;
 					}
 				}
-				System.out.println("\t-uga map-query atoms constructed in: " + (System.currentTimeMillis()-((double)startTime))/1000.0 + " sec.");
+				if (debugPrint)
+					System.out.println("\t-uga map-query atoms constructed in: " + (System.currentTimeMillis()-((double)startTime))/1000.0 + " sec.");
 			} //for (Rel narel: mapatoms.keySet())
 		} // if (mode == MAPMODE || mode == LEARNANDMAPMODE)
 
@@ -296,7 +299,8 @@ public class GradientGraphO extends GradientGraph{
 		/* Now construct the nodes for the data/evidence atoms 
 		 * 
 		 */
-		System.out.println("\t-constructing nodes for data/evidence atom...");
+		if (debugPrint)
+			System.out.println("\t-constructing nodes for data/evidence atom...");
 		int numNodes = 0;
 		long startTime = System.currentTimeMillis();
 		for (inputcaseno=0; inputcaseno<data.size(); inputcaseno++){
@@ -316,8 +320,9 @@ public class GradientGraphO extends GradientGraph{
 					long startTimeProg = System.currentTimeMillis();
 
 					inrel=osd.allInstantiated(nextrel);
-					System.out.println("next rel: " + nextrel.name());
-					System.out.println();
+					if (debugPrint) {
+						System.out.println("next rel: " + nextrel.name());
+						System.out.println();}
 					for (int k=0;k<inrel.size();k++){
 						nexttup = (int[])inrel.elementAt(k);
 						int instvalue = (int)osd.valueOf(nextrel,nexttup); // A bit complicated; should directly get
@@ -327,7 +332,8 @@ public class GradientGraphO extends GradientGraph{
 						groundnextcpm = nextcpm.substitute(vars,nexttup);
 						atomstring = nextrel.name()+StringOps.arrayToString((int[])inrel.elementAt(k),"(",")");
 						//							System.out.print("\r\t\t\tcurrent atom: " + atomstring);
-						printProgress(startTimeProg, inrel.size(), k+1); // we keep deatciate for now
+						if (debugPrint)
+							printProgress(startTimeProg, inrel.size(), k+1); // we keep deatciate for now
 
 						/* check whether this atom has already been included as an upper ground atom node because
 						 * it is a map atom
@@ -418,7 +424,8 @@ public class GradientGraphO extends GradientGraph{
 			} /* int j=0; j<rdoi.numObservations(); */
 
 		}
-		System.out.println("\t-finished constructing " + numNodes + " nodes in " + (System.currentTimeMillis()-((double)startTime))/1000.0 + " sec.");
+		if (debugPrint)
+			System.out.println("\t-finished constructing " + numNodes + " nodes in " + (System.currentTimeMillis()-((double)startTime))/1000.0 + " sec.");
 
 		if (showInfoInPrimula) 
 			myPrimula.appendMessageThis("100%");
@@ -510,7 +517,6 @@ public class GradientGraphO extends GradientGraph{
 		TreeSet<GGCPMNode> ancs;
 
 		for (String par : parameters.keySet()){
-			System.out.println("paramaeter " + par);
 			int pidx = parameters.get(par);
 
 			nextcn = (GGConstantNode)allNodes.get(par);
@@ -612,10 +618,12 @@ public class GradientGraphO extends GradientGraph{
 		//		System.out.println("Time 1:" + profiler.time1);
 		//		System.out.println("Time 2:" + profiler.time2);
 		//		System.out.println("Count 1:" + profiler.count1);
-		System.out.println("#Ground atoms:" + llnode.childrenSize());
-		System.out.println("#Sum atoms:" + sumindicators.size());
-		System.out.println("#Max atoms:" + maxindicators.size());
-		System.out.println("#Internal nodes:" + allNodes.size());
+		if (debugPrint) {
+			System.out.println("#Ground atoms:" + llnode.childrenSize());
+			System.out.println("#Sum atoms:" + sumindicators.size());
+			System.out.println("#Max atoms:" + maxindicators.size());
+			System.out.println("#Internal nodes:" + allNodes.size());
+		}
 	}
 
 
@@ -1958,7 +1966,6 @@ public double[] getParameters(){
 
 public double[] getGradient()
 		throws RBNNaNException{
-	llnode.evaluateGradients(null);
 	return llnode.gradientAsDouble();
 }
 
