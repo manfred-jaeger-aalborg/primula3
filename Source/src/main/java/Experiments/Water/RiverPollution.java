@@ -149,7 +149,7 @@ public class RiverPollution {
 //                "river.net"); // something.net
 //        try {
 //            constructor.constructCPTNetwork(
-//                    0,
+//                    1,
 //                    0,
 //                    2,
 //                    1,
@@ -188,8 +188,10 @@ public class RiverPollution {
             }
             im.addQueryAtoms(tmp_query, gal);
             im.setMapSeachAlg(0);
-            im.setNumIterGreedyMap(20000);
+            im.setNumIterGreedyMap(100);
             im.setNumRestarts(1);
+            im.setWindowSize(10);
+            im.setLearnSampleSize(2);
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();
 

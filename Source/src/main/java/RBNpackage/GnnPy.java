@@ -1126,9 +1126,10 @@ public class GnnPy {
                     int[][] nodes = GGnumNodesDict.get(rel);
                     int min_node = nodes[0][0];
                     for (GGCPMNode node: childred) {
-                        if (node.getMyatom().equals(rel)) {
+                        if (((GGAtomNode) node).myatom().rel().equals(rel)) {
+//                        if (node.getMyatom().equals(rel)) {
                             GGAtomMaxNode maxNode = (GGAtomMaxNode) node;
-                            if (maxNode.getmapInstVal() != -1) { // if the value is not in the evidence
+                            if (maxNode.getmapInstVal() == -1) { // if the value is not in the evidence
                                 int arg = maxNode.myatom().args[0];
                                 int value = maxNode.getCurrentInst();
                                 if (subRel instanceof CatRel)

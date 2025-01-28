@@ -327,8 +327,8 @@ public class GradientGraphO extends GradientGraph{
 						nexttup = (int[])inrel.elementAt(k);
 						int instvalue = (int)osd.valueOf(nextrel,nexttup); // A bit complicated; should directly get
 						// from osd instantiated and their values.
-//						if (vars.length == 0)
-//							vars = new String[]{""};
+						if (vars.length == 0)
+							vars = new String[]{""};
 						groundnextcpm = nextcpm.substitute(vars,nexttup);
 						atomstring = nextrel.name()+StringOps.arrayToString((int[])inrel.elementAt(k),"(",")");
 						//							System.out.print("\r\t\t\tcurrent atom: " + atomstring);
@@ -932,7 +932,7 @@ public void gibbsSample(Thread mythread){
 				else
 					System.out.println("already selected!");
 			}
-			System.out.println(neighborhood.get(0).getMyatom());
+			System.out.println("selected: " + neighborhood.get(0).getMyatom());
 
 			// evaluate the score for nodes in the selected neighborhood
 			bestLocalScore = Double.NEGATIVE_INFINITY;

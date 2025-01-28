@@ -1884,8 +1884,8 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 	private void loadDefaults(){
 
 
-		String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/examples-primula/GNN-RBN-explainer/rbn_acr.rbn";
-		String rstinputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/examples-primula/GNN-RBN-explainer/base_class_0_n6_0.rdef";
+		String rbninputfilestring = "/Users/lz50rg/Dev/water-hawqs/water_rbn.rbn";
+		String rstinputfilestring = "/Users/lz50rg/Dev/water-hawqs/test_small_new.rdef";
 
 		
 //		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Categorical/onecat_param.rbn";	
