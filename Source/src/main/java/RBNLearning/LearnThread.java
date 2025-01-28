@@ -350,7 +350,7 @@ public class LearnThread extends GGThread {
 			break;
 		case LearnModule.AscentAdam:
 			
-			System.out.println("# Iteration" + '\t' + "Time"+ '\t' +  "stepsize"   + '\t' +  "objective"+ '\t' +  "no progress (out of " + myLearnModule.getLikelihoodWindow() +")");
+			System.out.println("# Iteration" + '\t' + "Time (Epoch)"+ '\t' + "Time (Total)"+ '\t' +  "stepsize"   + '\t' +  "objective"+ '\t' +  "no progress (out of " + myLearnModule.getLikelihoodWindow() +")");
 			break;
 
 		}
@@ -370,19 +370,22 @@ public class LearnThread extends GGThread {
 
 			epochobj =0;
 			epochconfusion = new double[4];
+			long startepoch = System.currentTimeMillis();
 			
 			for (int i=0;i<databatches.length && !isstopped();i++){
-				
 				if (usegradientgraphs) {
 					// if (myLearnModule.getUseGGs()) {
 						if (isfirstloop) {
 							gg = buildGGO(parameters,minmaxbounds,
 									isfirstrestart && isfirstloop,databatches[i]);
+
+							gg.evaluateLikelihoodAndPartDerivs(false);
 							allggs[i]=gg;
 						}
 						else {
 							gg=allggs[i];
 							gg.setParametersFromAandRBN();
+							gg.resetValues(null, false);
 							gg.evaluateLikelihoodAndPartDerivs(false);
 						}
 //					}
@@ -407,8 +410,8 @@ public class LearnThread extends GGThread {
 					if (usegradientgraphs) {
 						gradient = gg.getGradient();
 						batchobj=gg.currentLogLikelihood();
-						batchconfusion = gg.getConfusionDouble();
-						batchaccuracy = gg.getAccuracy();
+//						batchconfusion = gg.getConfusionDouble();
+//						batchaccuracy = gg.getAccuracy();
 //						for (int j=0;j<parameters.length;j++)
 //							System.out.println(parameters[j] + "  "  + gradient[j] + "  " + lossgrad[2][j]);
 //						System.out.println();
@@ -465,7 +468,8 @@ public class LearnThread extends GGThread {
 
 					//System.out.println(itcount + "\t" + rbnutilities.euclidDist(oldparamvals, newparamvals) + "\t" +   batchobj + "\t" + batchaccuracy );
 					myprimula.setParameters(parameters,newparamvals);
-					
+					if (usegradientgraphs)
+						gg.setParametersFromAandRBN();
 				} // switch (myLearnModule.threadascentstrategy()){
 
 				batchcount++;
@@ -496,8 +500,11 @@ public class LearnThread extends GGThread {
 						+ rbnutilities.euclidDist(oldparamvals, newparamvals) +"  "  +  epochobj );
 				break;
 			case LearnModule.AscentAdam:
-				long tick = System.currentTimeMillis()-startiterations;
-				System.out.println(itcount + "\t" +  tick + "\t" + rbnutilities.euclidDist(beforeepochparamvals, newparamvals) 
+				long tick = System.currentTimeMillis();
+				long totalt = tick-startiterations;
+				long epocht = tick - startepoch;
+				
+				System.out.println(itcount + "\t" +  epocht +'\t' + totalt + "\t" + rbnutilities.euclidDist(beforeepochparamvals, newparamvals) 
 				+ "\t" +   epochobj + "\t" + tries);
 				break;
 

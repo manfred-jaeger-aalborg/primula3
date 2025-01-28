@@ -12,7 +12,7 @@ public class Profiler {
 	public static final int TIME_HASHCREATE = 7;
 	public static final int TIME_ARRAYCREATE = 8;
 	public static final int TIME_COMPGRAD = 9;
-	public static final int TIME_XXX = 10;
+	public static final int TIME_EVALCOMBFUNC = 10;
 	public static final int TIME_RESTARTS = 11;
 	
 	public static final String timers_names[] = 
@@ -26,7 +26,7 @@ public class Profiler {
 			"TIME_HASHCREATE",
 			"TIME_ARRAYCREATE",
 			"TIME_COMPGRAD",
-			"TIME_XXX",
+			"TIME_EVALCOMBFUNC",
 			"TIME_RESTARTS"};
 	
 	

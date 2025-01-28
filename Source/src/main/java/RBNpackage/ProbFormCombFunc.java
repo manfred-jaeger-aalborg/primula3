@@ -385,12 +385,14 @@ public class ProbFormCombFunc extends ProbForm{
 		String key="";
 		
 		long timebeforelookup = System.currentTimeMillis();
+		long beforeeval = 0;
+		
 		if (evaluated != null) {
 			key = this.makeKey(vars,tuple,false);		
 //			System.out.println("debug: looking for " + key);
 			Object[] d = evaluated.get(key);
 			if (d!=null) {
-				//System.out.println("debug:  yes found");
+//				System.out.println("debug:  yes found");
 				if (profile) {
 					profiler.addTime(Profiler.NUM_EVALUATE_OLD, 1);
 					profiler.addTime(Profiler.TIME_OLDLOOKUP, System.currentTimeMillis()-timebeforelookup);
@@ -400,7 +402,7 @@ public class ProbFormCombFunc extends ProbForm{
 		}
 		if (profile)
 			profiler.addTime(Profiler.TIME_OLDLOOKUP, System.currentTimeMillis()-timebeforelookup);
-		//System.out.println("debug:   not found");
+//		System.out.println("debug:   not found");
 		
 		long beforesat = System.currentTimeMillis();
 		
@@ -408,8 +410,10 @@ public class ProbFormCombFunc extends ProbForm{
 		
 		int[][] subslist = tuplesSatisfyingCConstr(A, vars, tuple);
 
-		if (profile)
-			profiler.addTime(Profiler.TIME_GETSATISFYING, System.currentTimeMillis()-beforesat);
+		if (profile) {
+			beforeeval = System.currentTimeMillis();
+			profiler.addTime(Profiler.TIME_GETSATISFYING, beforeeval-beforesat);
+		}
 		
 		/* Initialize array of arguments for combination function */
 		Vector<Object[]> combargs = new Vector<Object[]>();
@@ -456,7 +460,8 @@ public class ProbFormCombFunc extends ProbForm{
 		}
 		result[0]=mycomb.evaluate(vals);
 		
-	
+		if (profile)
+			profiler.addTime(Profiler.TIME_EVALCOMBFUNC, System.currentTimeMillis() - beforeeval);
 		if (!valonly) {
 			if (returntype == ProbForm.RETURN_ARRAY) {
 				long timebeforearraycreate = System.currentTimeMillis();

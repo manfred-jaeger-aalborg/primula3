@@ -260,27 +260,38 @@ public class GGCombFuncNode extends GGCPMNode{
 
 	public Double[] evaluatePartDeriv(Integer sno, String param)
 			throws RBNNaNException{
+		String label="";
+		if (this.isuga())
+			label=this.getMyatom();
+		else
+			label=Integer.toString(this.identifier());
+//		System.out.println("evalPD for " + label + " param " +param);
 		
-		if (!dependsOn(param))
+		if (!dependsOn(param)) {
+//			System.out.println("no rec 1");
 			return new Double[] {0.0}; // In this case need not fill the gradient_for_samples array
+		}
 		
 		if (this.depends_on_sample && sno==null) {
 			for (int i=0;i<thisgg.numchains*thisgg.windowsize;i++)
 				this.evaluatePartDeriv(i,param);
 			return null;
 		}
-		
+
 		Double[] g;
 		if (this.depends_on_sample) 
 			g = gradient_for_samples.get(sno).get(param);
 		else
 			g = gradient_for_samples.get(0).get(param);
-		if (g!=null && g[0] != Double.NaN)
+		if (g!=null && g[0] != Double.NaN) {
+//			System.out.println("no rec 2");
 			return g;
-		
-		/*
-		 * Now the 'main' case: evaluated the gradient for a specific sample number sno.
-		 * (sno=0 if no dependence on samples)
+		}
+	
+
+	/*
+	 * Now the 'main' case: evaluated the gradient for a specific sample number sno.
+	 * (sno=0 if no dependence on samples)
 		 */
 		double result = 0;
 		switch (typeOfComb){

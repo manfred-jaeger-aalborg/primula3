@@ -74,9 +74,30 @@ public class ProbFormMacroCall extends ProbForm {
 			boolean useCurrentPvals, Hashtable<Rel,GroundAtomList> mapatoms, boolean useCurrentMvals,
 			Hashtable<String, Object[]> evaluated, Hashtable<String, Integer> params, int returntype, boolean valonly,
 			Profiler profiler) throws RBNCompatibilityException {
-			setpf();
 
-			Object[] result = pf_sub.evaluate(A, 
+		Boolean profile = (profiler != null);
+		String key="";
+
+		long timebeforelookup = System.currentTimeMillis();
+
+		if (evaluated != null) {
+			key = this.makeKey(vars,tuple,false);		
+//			System.out.println("debug (macro): looking for " + key);
+			Object[] d = evaluated.get(key);
+			if (d!=null) {
+//				System.out.println("debug (macro):  yes found");
+				if (profile) {
+					profiler.addTime(Profiler.NUM_EVALUATE_OLD, 1);
+					profiler.addTime(Profiler.TIME_OLDLOOKUP, System.currentTimeMillis()-timebeforelookup);
+				}
+				return d; 
+			}
+		}
+//		System.out.println("debug (macro):   not found");
+
+		setpf();
+
+		Object[] result = pf_sub.evaluate(A, 
 				inst,
 				vars, 
 				tuple, 
@@ -89,8 +110,11 @@ public class ProbFormMacroCall extends ProbForm {
 				returntype, 
 				valonly, 
 				profiler);
-		
 
+		if (evaluated != null) {
+			evaluated.put(key, result);
+		}
+		
 		return result;
 	}
 

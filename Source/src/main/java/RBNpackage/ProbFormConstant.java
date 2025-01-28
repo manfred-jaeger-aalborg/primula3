@@ -88,7 +88,7 @@ public class ProbFormConstant extends ProbForm
 			ctype=CONSTANT_BERNOULLI;
 		}
 		else if (pn.charAt(0)=='$') {
-			cval = 0.0;
+			cval = 0.5;
 			ctype=CONSTANT_GENERAL;
 		}
 		else // this is a constant for a numeric relation
