@@ -223,8 +223,8 @@ private int highvalue;
 //		}
 //	}
 
-	public Double[] evaluate(Integer sno) {
-		return new Double[] {Double.valueOf(currentInst)};
+	public double[] evaluate(Integer sno) {
+		return new double[] {Double.valueOf(currentInst)};
 	}
 
 	public void addMeToIndicators(GGCPMNode ggpfn){

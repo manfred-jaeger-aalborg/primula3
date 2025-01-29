@@ -119,7 +119,7 @@ public class GGConvCombNode extends GGCPMNode{
 
 
 
-	public Double[] evaluate(Integer sno){
+	public double[] evaluate(Integer sno){
 
 		if (this.depends_on_sample && sno==null) {
 			for (int i=0;i<thisgg.numchains*thisgg.windowsize;i++)
@@ -165,7 +165,7 @@ public class GGConvCombNode extends GGCPMNode{
 		if (Double.isNaN(r))
 			System.out.println("result = NaN in evaluate for convcomb.func " );
 
-		Double[] result = new Double[]{r};
+		double[] result = new double[]{r};
 
 		if (this.depends_on_sample) {
 			values_for_samples[sno] = result;

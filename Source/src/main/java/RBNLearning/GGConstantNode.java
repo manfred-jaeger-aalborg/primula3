@@ -57,8 +57,8 @@ public class GGConstantNode extends GGCPMNode{
 			isUnknown = true;
 			cval = 0;
 			currentParamVal = 0.5;
-			values_for_samples = new Double[1][];
-			values_for_samples[0]=new Double[] {currentParamVal};
+			values_for_samples = new double[1][];
+			values_for_samples[0]=new double[] {currentParamVal};
 		}
 		else{ // This represents a known constant 
 			isUnknown = false;
@@ -70,7 +70,7 @@ public class GGConstantNode extends GGCPMNode{
 		
 	}
 
-	public Double[] evaluate(Integer sno){
+	public double[] evaluate(Integer sno){
 		double result = 0;
 		if (!isUnknown){
 			result = cval;
@@ -81,7 +81,7 @@ public class GGConstantNode extends GGCPMNode{
 				System.out.println("evaluate constant for  " + this.paramname()+  " gives " + currentParamVal);
 		}
 
-		values_for_samples[0] = new Double[]{result};
+		values_for_samples[0] = new double[]{result};
 		return values_for_samples[0];
 	}
 
@@ -145,7 +145,7 @@ public class GGConstantNode extends GGCPMNode{
 		/* The following assumes that setCurrentParamVal is only called when 
 		 * isUnknown=true 
 		 */
-		values_for_samples[0] = new Double[]{currentParamVal};
+		values_for_samples[0] = new double[]{currentParamVal};
 	}
 
 	public double getCurrentParamVal(){

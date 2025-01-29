@@ -152,9 +152,9 @@ public abstract class GGAtomNode extends GGCPMNode{
 	public abstract void addMeToIndicators(GGCPMNode ggpfn);
 	
 	public void setAllugas(){
-		TreeSet<GGCPMNode> ancs = this.ancestors();
-		for (GGCPMNode nextggn: ancs){
-			if (nextggn.isuga()){
+		TreeSet<GGNode> ancs = this.ancestors();
+		for (GGNode nextggn: ancs){
+			if (nextggn instanceof GGCPMNode && ((GGCPMNode)nextggn).isuga()){
 				allugas.add((GGCPMNode)nextggn);
 				addMeToIndicators((GGCPMNode)nextggn);
 			}

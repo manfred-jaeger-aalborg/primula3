@@ -68,7 +68,7 @@ public class GGAtomEqualityNode extends GGCPMNode{
     }
 
     @Override
-    public Double[] evaluate(Integer sno) {
+    public double[] evaluate(Integer sno) {
         
 		if (this.depends_on_sample && sno==null) {
 			for (int i=0;i<thisgg.numchains*thisgg.windowsize;i++)
@@ -81,7 +81,7 @@ public class GGAtomEqualityNode extends GGCPMNode{
 			return this.values_for_samples[0];
 		
         double[] both_sides = new double[2];
-        Double[] value = new Double[1];
+        double[] value = new double[1];
 
         for (int i = 0; i < 2; i++) {
         	if (!Double.isNaN(evalOfPFs[i]))

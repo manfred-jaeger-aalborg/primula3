@@ -183,7 +183,7 @@ public class GGCombFuncNode extends GGCPMNode{
 		return result;
 	}
 
-	public Double[] evaluate(Integer sno){
+	public double[] evaluate(Integer sno){
 
 		
 		if (this.depends_on_sample && sno==null) {
@@ -209,7 +209,7 @@ public class GGCombFuncNode extends GGCPMNode{
 		if (Double.isNaN(r))
 			System.out.println("result = NaN in evaluate for comb.func " );
 
-		Double[] result = new Double[]{r};
+		double[] result = new double[]{r};
 
 		
 		if (this.depends_on_sample) {

@@ -66,12 +66,12 @@ public class GGAtomSumNode extends GGAtomNode{
 
 	/** Sets value in sno's sample to tv */
 	public void setSampleVal(int sno, int val){
-		values_for_samples[sno] = new Double[] {(double) val};
+		values_for_samples[sno] = new double[] {(double) val};
 	}
 
 	public void setRandomSampleVal(int sno) {
 		int currentInst = (int)(Math.random()*myatom.rel().numvals());
-		values_for_samples[sno] = new Double[] {(double) currentInst};
+		values_for_samples[sno] = new double[] {(double) currentInst};
 	}
 
 //	/** Sets value in sno's sample to current instantiation */
@@ -89,7 +89,7 @@ public class GGAtomSumNode extends GGAtomNode{
 		ggpfn.addToSumIndicators(this);
 	}
 
-	public Double[] evaluate(Integer sno){
+	public double[] evaluate(Integer sno){
 		if (sno==null) {
 			System.out.println("Called GGAtomSumNode.evaluate without sample number!");
 			return null;
@@ -106,11 +106,11 @@ public class GGAtomSumNode extends GGAtomNode{
 	public int[] getSampledVals() {
 		int[] result  = new int[values_for_samples.length];
 		for (int i=0;i<result.length;i++)
-			result[i]=values_for_samples[i][0].intValue();
+			result[i]=(int)values_for_samples[i][0];
 		return result;
 	}
 	
 	public int getSampledVals(int sno) {
-		return values_for_samples[sno][0].intValue();
+		return (int)values_for_samples[sno][0];
 	}
 }

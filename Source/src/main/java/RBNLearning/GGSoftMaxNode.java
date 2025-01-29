@@ -127,7 +127,7 @@ public class GGSoftMaxNode extends GGCPMNode{
 //		}
 //	}
 
-	public Double[] evaluate(Integer sno){
+	public double[] evaluate(Integer sno){
 		
 		if (this.depends_on_sample && sno==null) {
 			for (int i=0;i<thisgg.numchains*thisgg.windowsize;i++)
@@ -150,7 +150,7 @@ public class GGSoftMaxNode extends GGCPMNode{
 				valsofpfs[i] = evalOfPFs[i];
 		}
 
-		Double[] result = rbnutilities.softmax(valsofpfs);
+		double[] result = rbnutilities.softmax(valsofpfs);
 
 		
 		if (this.depends_on_sample) {
@@ -195,7 +195,7 @@ public class GGSoftMaxNode extends GGCPMNode{
 			return g;
 		
 		
-		Double[] values = null;
+		double[] values = null;
 		if (this.depends_on_sample)
 			values = values_for_samples[sno];
 		else

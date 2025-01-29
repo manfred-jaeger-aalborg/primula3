@@ -33,7 +33,7 @@ import RBNutilities.*;
 public abstract class GGCPMNode extends GGNode{
 
 	TreeSet<GGCPMNode> parents;
-	TreeSet<GGCPMNode> ancestors; // Does not include the likelihood node
+	TreeSet<GGNode> ancestors; // Includes the likelihood node
 
 
 	//String probformasstring;
@@ -295,14 +295,7 @@ public abstract class GGCPMNode extends GGNode{
 	//			return "uga_" + myatom +":" + probformasstring;
 	//	}
 
-	/* For nodes depending on a sum node: evaluation relative 
-	 * to the the values in the sample with index sno.
-	 * 
-	 * For nodes not depending on a sum node: call evaluate(null)
-	 * 
-	 * evaluate(null) at nodes with values_for_samples: evaluate for all samples!
-	 */
-	public abstract Double[] evaluate(Integer sno);
+
 
 	/*
 	 * Partial derivative with regard to sample sno and for the parameter param.
@@ -351,7 +344,7 @@ public abstract class GGCPMNode extends GGNode{
 		}
 		int result;
 		if (instval instanceof GGAtomNode)
-			result = ((GGAtomNode)instval).evaluate(sno)[0].intValue();
+			result = (int)((GGAtomNode)instval).evaluate(sno)[0];
 		else 
 			result = (Integer)instval;
 		return result;
@@ -422,16 +415,18 @@ public abstract class GGCPMNode extends GGNode{
 	public void addToParents(GGCPMNode ggn){
 		parents.add(ggn);
 	}
+	
 	/** Returns the set of all ancestors of this node
 	 * in the Graph
 	 * @return
 	 */
-	public TreeSet<GGCPMNode> ancestors(){
-		TreeSet<GGCPMNode> result = new TreeSet<GGCPMNode>();
+	public TreeSet<GGNode> ancestors(){
+		TreeSet<GGNode> result = new TreeSet<GGNode>();
 		for (GGCPMNode nextggn:parents){
 			result.add((GGCPMNode)nextggn);
 			nextggn.collectAncestors(result);
 		}
+		result.add(thisgg.llnode);
 		return result;
 	}
 
@@ -443,7 +438,7 @@ public abstract class GGCPMNode extends GGNode{
 		ancestors = null;
 	}
 
-	private void collectAncestors(TreeSet<GGCPMNode> ancests){
+	private void collectAncestors(TreeSet<GGNode> ancests){
 		for (GGCPMNode nextggn: parents){
 			if (!ancests.contains(nextggn)){
 				ancests.add(nextggn);
@@ -456,7 +451,7 @@ public abstract class GGCPMNode extends GGNode{
 		if (ancestors == null) 
 			ancestors = ancestors();
 
-		for (GGCPMNode anc: ancestors)
+		for (GGNode anc: ancestors)
 			anc.resetValue(sno);
 	}
 
@@ -470,7 +465,7 @@ public abstract class GGCPMNode extends GGNode{
 
 		resetUpstream(sno);
 
-		for (GGCPMNode anc: ancestors)
+		for (GGNode anc: ancestors)
 			anc.evaluate(sno);
 	}
 
