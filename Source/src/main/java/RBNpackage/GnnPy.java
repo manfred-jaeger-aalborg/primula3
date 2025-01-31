@@ -35,7 +35,7 @@ public class GnnPy {
 
     private String currentMethod;
 
-    private Double[][] currentResult;
+    private double[][] currentResult;
 
     // Also for heterogeneous
     private Map<String, String> currentXdictString;
@@ -170,12 +170,12 @@ public class GnnPy {
         }
     }
 
-    public static Double[][] convertTo2D(float[] inputArray, int rows, int cols) {
+    public static double[][] convertTo2D(float[] inputArray, int rows, int cols) {
         if (inputArray.length != rows * cols) {
             throw new IllegalArgumentException("The length of the input array does not match the provided dimensions.");
         }
 
-        Double[][] outputArray = new Double[rows][cols];
+        double[][] outputArray = new double[rows][cols];
 
         for (int i = 0; i < inputArray.length; i++) {
             int row = i / cols;
@@ -186,7 +186,7 @@ public class GnnPy {
         return outputArray;
     }
 
-    public Double[] inferModelNodeDoubleString(int node, String x, String edge_index, String idGnn, String method, boolean boundValue) {
+    public double[] inferModelNodeDoubleString(int node, String x, String edge_index, String idGnn, String method, boolean boundValue) {
         assert this.sharedInterpreter != null;
         this.createModelIfNull(idGnn);
 
@@ -226,7 +226,7 @@ public class GnnPy {
                 NDArray ndArray = (NDArray) this.sharedInterpreter.getValue("out");
                 float[] tarr = (float[]) ndArray.getData();
                 currentResult = convertTo2D(tarr, ndArray.getDimensions()[0], ndArray.getDimensions()[1]);
-                Double[] catres = currentResult[node];
+                double[] catres = currentResult[node];
                 return catres;
             }
             // else nothing
@@ -237,7 +237,7 @@ public class GnnPy {
         }
     }
 
-    public Double[] inferModelNodeDouble(int node, double[][] x, int[][] edge_index, String idGnn, String method) {
+    public double[] inferModelNodeDouble(int node, double[][] x, int[][] edge_index, String idGnn, String method) {
         assert this.sharedInterpreter != null;
         this.createModelIfNull(idGnn);
 
@@ -278,7 +278,7 @@ public class GnnPy {
                 NDArray ndArray = (NDArray) this.sharedInterpreter.getValue("out");
                 float[] tarr = (float[]) ndArray.getData();
                 currentResult = convertTo2D(tarr, ndArray.getDimensions()[0], ndArray.getDimensions()[1]);
-                Double[] catres = currentResult[node];
+                double[] catres = currentResult[node];
                 return catres;
             }
             // else nothing
@@ -290,7 +290,7 @@ public class GnnPy {
     }
 
     // if node is set to -1, we perform graph classification (arity 0)
-    public Double[] inferModel(int node, Map<String, double[][]> x_dict, Map<String, int[][]> edge_dict, String idGnn) {
+    public double[] inferModel(int node, Map<String, double[][]> x_dict, Map<String, int[][]> edge_dict, String idGnn) {
         assert this.sharedInterpreter != null;
         this.createModelIfNull(idGnn);
         int currentNode = 0;
@@ -341,7 +341,7 @@ public class GnnPy {
                 this.sharedInterpreter.exec("out = out.detach().numpy()");
                 NDArray ndArray = (NDArray) this.sharedInterpreter.getValue("out");
                 float[] tarr = (float[]) ndArray.getData();
-                Double[] res = new Double[2];
+                double[] res = new double[2];
                 res[0] = Double.valueOf(tarr[0]);
                 res[1] = Double.valueOf(tarr[1]);
                 return res;
@@ -359,7 +359,7 @@ public class GnnPy {
         }
     }
 
-    public Double[] inferModelNodeHetero(int node, Map<String, double[][]> x_dict, Map<String, int[][]> edge_dict, String idGnn) {
+    public double[] inferModelNodeHetero(int node, Map<String, double[][]> x_dict, Map<String, int[][]> edge_dict, String idGnn) {
         assert this.sharedInterpreter != null;
         this.createModelIfNull(idGnn);
         int currentNode = 0;
@@ -424,7 +424,7 @@ public class GnnPy {
         }
     }
 
-    public Double[] inferModelGraphDouble(double[][] x, int[][] edge_index, String idGnn, String method) {
+    public double[] inferModelGraphDouble(double[][] x, int[][] edge_index, String idGnn, String method) {
         assert this.sharedInterpreter != null;
         this.createModelIfNull(idGnn);
 
@@ -755,7 +755,7 @@ public class GnnPy {
     }
 
     // Return the probability of the given graph by calling the Gnn model
-    private Double[] evaluateInputGraph(CPMGnn cpmGnn,
+    private double[] evaluateInputGraph(CPMGnn cpmGnn,
                                       SparseRelStruc sampledRel,
                                       int num_nodes) {
 
@@ -937,7 +937,7 @@ public class GnnPy {
         return result;
     }
 
-    public Double[] GGevaluate_gnn(RelStruc A, GradientGraphO gg, CPMGnn cpmGnn, GGCPMNode ggcpmGnn) {
+    public double[] GGevaluate_gnn(RelStruc A, GradientGraphO gg, CPMGnn cpmGnn, GGCPMNode ggcpmGnn) {
         if (sharedInterpreter == null)
             throw new NullPointerException("GnnPy object null in GGevaluate_gnn ...");
         if (!(cpmGnn instanceof CatGnn))
@@ -954,7 +954,7 @@ public class GnnPy {
             // TODO do also the edges!
         }
 
-        Double[] res = null;
+        double[] res = null;
         if (Objects.equals(cpm.getGnn_inference(), "node"))
             res = this.inferModel(Integer.parseInt(cpmGnn.getArgument()), GGxDict, GGedgeDict, cpm.getIdGnn());
 //            res = inferModelNode(Integer.parseInt(cpmGnn.getArgument()), GGxDict, GGedgeDict, cpmGnn.getIdGnn());
@@ -1204,7 +1204,7 @@ public class GnnPy {
         GGedgeDict = new HashMap<>();
     }
 
-    public Double[] GGevaluate_gnnHetero(RelStruc A, GradientGraphO gg, CPMGnn cpmGnn, GGCPMNode ggcpmGnn) {
+    public double[] GGevaluate_gnnHetero(RelStruc A, GradientGraphO gg, CPMGnn cpmGnn, GGCPMNode ggcpmGnn) {
         if (this.sharedInterpreter == null)
             throw new NullPointerException("GnnPy object null!");
         if (!(cpmGnn instanceof CatGnnHetero))
@@ -1221,7 +1221,7 @@ public class GnnPy {
             });
         }
 
-        Double[] res = null;
+        double[] res = null;
         if (Objects.equals(cpmHetero.getGnn_inference(), "node"))
             res = inferModelNodeHetero(Integer.parseInt(cpmGnn.getArgument()), GGxDict, GGedgeDict, cpmGnn.getIdGnn());
         else if (Objects.equals(cpmHetero.getGnn_inference(), "graph")) {
@@ -1362,7 +1362,7 @@ public class GnnPy {
 
 //        String x = this.stringifyGnnFeatures(num_features, sampledRel, cpmGnn);
         double[][] x = this.nodeToEncoding(num_features, sampledRel, cpmGnn);
-        Double[] res_py =  this.inferModelNodeDouble(Integer.parseInt(cpmGnn.getArgument()), x, edge_index, cpmGnn.getIdGnn(), "");
+        double[] res_py =  this.inferModelNodeDouble(Integer.parseInt(cpmGnn.getArgument()), x, edge_index, cpmGnn.getIdGnn(), "");
         double[] res = new double[res_py.length];
         for (int i = 0; i < res_py.length; i++) {
             res[i] = res_py[i];

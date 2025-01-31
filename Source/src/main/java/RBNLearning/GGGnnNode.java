@@ -127,7 +127,7 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
     }
 
     @Override
-    public Double[] evaluate(Integer sno) {
+    public double[] evaluate(Integer sno) {
         if (!savedData) {
             this.gnnPy.saveGnnData((CPMGnn) cpm, A, inst);
             savedData = true;
@@ -143,7 +143,7 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
         if (!this.depends_on_sample && is_evaluated_for_samples[0])
             return this.values_for_samples[0];
 
-        Double[] result = null;
+        double[] result = null;
         if (cpm instanceof CatGnnHetero)
             result = gnnPy.GGevaluate_gnnHetero(A, thisgg, (CPMGnn) cpm, this);
         else
