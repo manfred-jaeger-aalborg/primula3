@@ -92,8 +92,10 @@ public class graph_class_yannick {
 //        new BoolRel("edge", 2, typeStringToArray("node,node",2))
 //        attrs_rels.get(0).get(5).setInout(Rel.PROBABILISTIC);
 
-        ArrayList<String> edge_attr = new ArrayList<>();
-        edge_attr.add("edge");
+        ArrayList<Rel> edge_attr = new ArrayList<>();
+        edge_attr.add(edgeRel);
+        edge_attr.get(0).setInout(Rel.PROBABILISTIC);
+//        edge_attr.add("edge");
 
         Vector<ProbForm> softmaxA = new Vector<>();
         for (int i = 0; i < 2; i++) {

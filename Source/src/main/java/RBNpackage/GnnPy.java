@@ -950,7 +950,7 @@ public class GnnPy {
 
             // we need to use the sampled values in the gradient graph structure (maxindicator) and assign them to the rel
             // for GNNs the order of the features need to be respected: the order in input_attr in CatGnn will be used for constructing the vector
-            updateInputDict2(GGxDict, cpm, GGNodesDict, gg, ggcpmGnn);
+            updateInputDict2(GGxDict, GGNodesDict, cpm, ggcpmGnn);
             // TODO do also the edges!
         }
 
@@ -1148,7 +1148,7 @@ public class GnnPy {
         }
     }
 
-    public void updateInputDict2(Map<String, double[][]> input_dict, CPMGnn cpmGnn, Map<Rel, int[][]> GGnumNodesDict, GradientGraphO gg, GGCPMNode ggcpmNode) {
+    public void updateInputDict2(Map<String, double[][]> input_dict,  Map<Rel, int[][]> GGnumNodesDict, CPMGnn cpmGnn, GGCPMNode ggcpmNode) {
         Vector<GGCPMNode> childred = ggcpmNode.getChildren(); // is this always will work?
         TreeSet<Rel> parentRels = cpmGnn.parentRels();
         for (ArrayList<Rel> inputRels: cpmGnn.getInput_attr()) {
@@ -1179,6 +1179,10 @@ public class GnnPy {
                     idxFeat++;
             }
         }
+    }
+
+    public void updateEdgeDict(Map<String, int[][]> edge_dict, CPMGnn cpmGnn, Map<Rel, int[][]> GGnumNodesDict, GGCPMNode ggcpmNode) {
+        return;
     }
 
     public Map<String, int[][]> initEdgesDict(Vector<BoolRel> GGboolRel, SparseRelStruc sampledRel) {

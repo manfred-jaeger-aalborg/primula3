@@ -228,6 +228,11 @@ public class CatGnn extends CPModel implements CPMGnn {
                     parent.add(rel);
             }
         }
+        for (Rel rel: this.getEdge_attr()) {
+            if (rel.isprobabilistic())
+                parent.add(rel);
+        }
+
         return parent;
     }
 
@@ -237,6 +242,9 @@ public class CatGnn extends CPModel implements CPMGnn {
     }
 
     @Override
+    public ArrayList<Rel> getEdge_attr() { return edge_attr; }
+
+    @Override
     public TreeSet<Rel> parentRels(TreeSet<String> processed) {
         System.out.println("parentRels code 2");
         TreeSet<Rel> result = new TreeSet<Rel>();
@@ -244,6 +252,9 @@ public class CatGnn extends CPModel implements CPMGnn {
         assert !processed.isEmpty();
         TreeSet<Rel> parent = new TreeSet<>();
         for (Rel rel: this.getGnnattr())
+            if (rel.isprobabilistic())
+                parent.add(rel);
+        for (Rel rel: this.getEdge_attr())
             if (rel.isprobabilistic())
                 parent.add(rel);
         return parent;
