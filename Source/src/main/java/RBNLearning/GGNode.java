@@ -74,7 +74,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 	 * if this.depends_on_sample == false, then the dimensions are
 	 * 1 x this.outDim
 	 */
-	Double[][] values_for_samples;
+	double[][] values_for_samples;
 
 	/**
 	 * Flags that indicates whether in the current computation this node has already been
@@ -87,6 +87,20 @@ public abstract class GGNode implements Comparable<GGNode>{
 	 * 1 
 	 */	
 	Boolean[] is_evaluated_for_samples;
+	
+	/* For nodes depending on a sum node: evaluation relative 
+	 * to the the values in the sample with index sno.
+	 * 
+	 * For nodes not depending on a sum node: call evaluate(null)
+	 * 
+	 * evaluate(null) at nodes with values_for_samples: evaluate for all samples!
+	 * 
+	 * Return array has different structure/content for different types of GGNodes:
+	 * - likelihood node: likelihood expressed as a small double
+	 * - 'scalar' GGNodes (the most common case): 1-dim array containing the scalar value  of the probability (sub-) formula represented by this node
+	 * - GGNodes representing categorical atoms: array whose dimension is equal to the number of possible values of the relation
+	 */
+	public abstract double[] evaluate(Integer sno);
 	
 //	/** The result of the most recent call to evaluatesTo()
 //	*  0: evaluatesTo() = 0
@@ -312,7 +326,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 			dim = thisgg.numchains*thisgg.windowsize;
 		else
 			dim =1;
-		values_for_samples = new Double[dim][];
+		values_for_samples = new double[dim][];
 		is_evaluated_for_samples = new Boolean[dim];
 		for (int i=0;i<dim;i++) {
 			values_for_samples[i]=null;

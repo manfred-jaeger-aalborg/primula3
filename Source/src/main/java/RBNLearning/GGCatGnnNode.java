@@ -15,8 +15,8 @@ public class GGCatGnnNode extends GGCPMNode implements GGCPMGnn {
     }
 
     @Override
-    public Double[] evaluate(Integer sno) {
-        return new Double[0];
+    public double[] evaluate(Integer sno) {
+        return new double[0];
     }
 
     @Override

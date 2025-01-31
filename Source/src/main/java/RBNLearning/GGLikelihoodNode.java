@@ -176,20 +176,14 @@ public  class GGLikelihoodNode extends GGNode{
 		return evaluate(sno,children,false,true,null);
 	}
 	
-	/** Computes the (log-)likelihood 
+	/** Computes the likelihood 
 	 * (ignoring those terms that are not dependent
 	 * on unknown atoms or parameters)
 	 * 
-	 * CONFUSION MATRIX currently disabled (needs revision for categorical variables)!
-	 * 
-	 * In case of LearnModule.UseLik: returns likelihood value as small double in the form [Double,Double]
-	 * In case of LearnModule.UseLogLik: returns log-likelihood value as [Double]
-	 * 
+     *  returns likelihood value as small double in the form [Double,Double]
+     *  
 	 * See this.evaluateSmallGrad for batchelements parameter
 	 * 
-	 * Depending on thisgg.objective: if LearnModule.UseLogLik then return a one-dim array containing
-	 * the log-likelihood. if LearnModule.UseLik then return a two-dim. array with a small double  
-	 * representation of the likelihood.
 	 * 
 	 * oldsmallls: array of dimension thisgg.windowsize*thisgg.numchains x 2 of small double values.
 	 * oldsmallls[sno][] contains the small double representation of the likelihood factor contributed
@@ -246,11 +240,16 @@ public  class GGLikelihoodNode extends GGNode{
 			return small_likelihood;
 		}
 
+		/*
+		 * The case where the requested likelihood is already computed:
+		 */
+		if (sno!= null && is_evaluated_for_samples[sno])
+			return small_likelihoods_for_samples[sno];
 
 		double[] local_small_likelihood = new double[] {1.0,0.0}; 
 		
 		// Main iteration over the children 	
-		Double[] childval;
+		double[] childval;
 		int childinst;
 		double childlik;
 
@@ -424,7 +423,7 @@ public  class GGLikelihoodNode extends GGNode{
 
 		double[] relevantlikelihood = small_likelihood.clone();
 
-		Double[] childval;
+		double[] childval;
 		int childinst;
 		double childlik;
 		Double[] childgrad;

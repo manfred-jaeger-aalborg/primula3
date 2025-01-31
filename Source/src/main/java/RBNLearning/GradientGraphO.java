@@ -338,7 +338,7 @@ public class GradientGraphO extends GradientGraph{
 						/* check whether this atom has already been included as an upper ground atom node because
 						 * it is a map atom
 						 */
-						// TODO: current code means that evidence on atoms that also are MAP query atoms is ignored!
+						// TODO: check correct handling of mapatoms that are also instantiated by the evidence!
 						if (mapatoms == null || mapatoms.get(nextrel)==null || !mapatoms.get(nextrel).contains(nextrel,nexttup)){
 
 							if (groundnextcpm instanceof CPMGnn && ((CPMGnn) groundnextcpm).getGnnPy() == null)
@@ -514,7 +514,7 @@ public class GradientGraphO extends GradientGraph{
 		//		for (int i=0;i<deletethese.length;i++)
 		//			deletethese[i]=false;
 
-		TreeSet<GGCPMNode> ancs;
+		TreeSet<GGNode> ancs;
 
 		for (String par : parameters.keySet()){
 			int pidx = parameters.get(par);
@@ -553,12 +553,11 @@ public class GradientGraphO extends GradientGraph{
 				paramNodes[pidx]=nextcn;
 				nextcn.setDependsOn(par);
 				ancs = nextcn.ancestors();
-				for (GGCPMNode nextggn: ancs){
+				for (GGNode nextggn: ancs){
 					nextggn.setDependsOn(par);
-					if ( nextggn.isuga()) {
+					if (nextggn instanceof GGCPMNode &&  ((GGCPMNode)nextggn).isuga()) {
 						llnode.addUgaForParam(par, (GGCPMNode)nextggn);
 					}
-					llnode.setDependsOn(par);
 				}
 			}
 		}
@@ -851,7 +850,7 @@ public void gibbsSample(Thread mythread){
 		// regardless whether they already have been re-sampled in this round of Gibbs sampling
 		// or still have the value from the previous round
 		for (GGAtomSumNode gast:sumindicators) {
-			gast.setSampleVal(sno, gast.evaluate(k*windowsize+recentindex)[0].intValue());
+			gast.setSampleVal(sno, (int)gast.evaluate(k*windowsize+recentindex)[0]);
 		}
 
 		for (GGAtomSumNode gast:sumindicators){
