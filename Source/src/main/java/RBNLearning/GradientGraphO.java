@@ -989,7 +989,6 @@ public double mapSearch(GGThread mythread,TreeSet<GGAtomMaxNode> flipcandidates,
 //		long estimatedTime = System.currentTimeMillis() - startTime;
 //		System.out.println(mxnode.getMyatom() + " " + mxnode.getScore() + " in " + estimatedTime);
 		scored_atoms.add(mxnode);
-
 	}
 
 //	System.out.println("Flip scores");
@@ -1020,9 +1019,6 @@ public double mapSearch(GGThread mythread,TreeSet<GGAtomMaxNode> flipcandidates,
 //			Vector<GGCPMNode> ugas = flipnext.getAllugas();
 //			double[] oldll = llnode.evaluate(null, ugas, true, false, null);
 //			System.out.println(oldll);
-
-
-
 
 			/** sample
 			 * 

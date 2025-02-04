@@ -19,6 +19,7 @@ import java.util.*;
 public class CatGnn extends CPModel implements CPMGnn {
     // the order of attributes need to be respected! this order will be used for the gnn encoding
     private Rel gnnattr[];
+//    private ArrayList<ArrayList<Rel>> gnnattr; // this attribute should be used to reference ALL the attributes (probabilistic rel) of the gnn (input, edges ...)
     private String argument;
     private ArrayList<ArrayList<Rel>> input_attr;
     private ArrayList edge_attr;
@@ -59,19 +60,7 @@ public class CatGnn extends CPModel implements CPMGnn {
         this.gnn_inference = gnn_inference;
     }
 
-    /**
-     *
-     * @param argument argument
-     * @param idGnn id used in the load_gnn.py to load the GNN weights
-     * @param categorical boolean flag, True if the GNN is used for multiple classes
-     * @param attr array of Rel for the GNN attributes
-     * @param edge_name the name of the edge relation in the formula
-     * @param edge_direction how the adjacency matrix is composed (AB, BA, ABBA)
-     * @param gnn_inference "node" if the GNN is used for node classification, "graph" for graph classification
-     * @param oneHotEncoding true if the representation of the features are in a one-hot encoding representation
-     * @param classId index of the True value for which the CPMGnn will evaluate the probability
-     */
-    public CatGnn(String argument, String idGnn, Boolean categorical, int numvals, Rel[] attr, String edge_name, String edge_direction, String gnn_inference, boolean oneHotEncoding, int classId) {
+    public CatGnn(String argument, String idGnn, Boolean categorical, int numvals, ArrayList input_attr, ArrayList edge_attr, String gnn_inference, boolean oneHotEncoding, int classId) {
         this.setEdge_name(edge_name);
         this.setEdge_direction(edge_direction);
 
@@ -79,7 +68,7 @@ public class CatGnn extends CPModel implements CPMGnn {
         this.idGnn = idGnn;
         this.categorical = categorical;
         this.numvals = numvals;
-        this.gnnattr = attr;
+
         this.classId = classId;
         this.gnn_inference = gnn_inference;
         this.oneHotEncoding = oneHotEncoding;
@@ -194,7 +183,7 @@ public class CatGnn extends CPModel implements CPMGnn {
             result = new CatGnn(this.argument, this.idGnn, this.categorical, this.numvals, this.input_attr, this.edge_attr, this.gnn_inference, this.oneHotEncoding);
 //            result = new CatGnn(this.argument, this.idGnn, this.categorical, this.numvals, this.gnnattr, this.edge_name, this.edge_direction, this.gnn_inference, this.oneHotEncoding);
         else
-            result = new CatGnn("-1", this.idGnn, this.categorical, this.numvals, this.gnnattr, this.edge_name, this.edge_direction, this.gnn_inference, this.oneHotEncoding, this.classId);
+            result = new CatGnn("-1", this.idGnn, this.categorical, this.numvals, this.input_attr, this.edge_attr, this.gnn_inference, this.oneHotEncoding, this.classId);
 
         if (vars.length == 0)
             result.argument = Arrays.toString(new String[0]);

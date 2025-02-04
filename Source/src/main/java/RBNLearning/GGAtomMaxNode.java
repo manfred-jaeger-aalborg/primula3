@@ -138,7 +138,8 @@ private int highvalue;
 		if (this.flipscores == null) { // First time we do MAP inference on this node
 			flipscores = new double[(int)this.myatom().rel().numvals()];
 		}
-		
+//		if (this.myatom.relname() == "edge")
+//			System.out.println("edge");
 		double oldll = SmallDouble.log(thisgg.llnode.evaluate(null,allugas,true,false,null));
 		double newll,fs;
 		highscore = Double.NEGATIVE_INFINITY;
@@ -161,17 +162,17 @@ private int highvalue;
 				}
 
 				// trick for faster computation, we create only once the input for all the parents.
-				// The parents will check only if the dictionaries are empty or not
+				// GnnPy will check only if the dictionaries are empty or not
 				// if empty, create the input. Otherwise, keep the same input.
 				// This assumes that maxatoms of CatRel have all the parents connected
-				if (this.myatom.rel instanceof CatRel) {
+//				if (this.myatom.rel instanceof CatRel) {
 					for (GGCPMNode ggcpmNode: this.parents()) {
 						if (ggcpmNode instanceof GGGnnNode) {
 							GGGnnNode gggnn = (GGGnnNode) ggcpmNode;
-							gggnn.getGnnPy().resetDict();
+							gggnn.getGnnPy().resetDict(gggnn.isXPred(), gggnn.isEdgePred());
 						}
 					}
-				}
+//				}
 
 				reEvaluateUpstream(null);
 				
