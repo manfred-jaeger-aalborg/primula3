@@ -22,7 +22,7 @@ def infer_model_graph(model, x, edge_index, **kwargs):
 
 def set_model(model_class, weights_path, **kwargs):
     model = model_class(**kwargs).to("cpu")
-    model.load_state_dict(torch.load(weights_path, map_location="cpu", weights_only=False)) # find out why False with water
+    model.load_state_dict(torch.load(weights_path, map_location="cpu", weights_only=True)) # find out why False with water
     model.eval()
     return model
 
@@ -31,7 +31,7 @@ def create_models_info(base_path, models_definitions):
     models_info = {}
     for model_id, (model_class, model_name, parameters) in models_definitions.items():
         # raise KeyError(f"PROVA {base_path}{model_name}")
-        weights_path = f"{base_path}{model_name}.pth" ## .pt for the others!! only water pth
+        weights_path = f"{base_path}{model_name}.pt" ## .pt for the others!! only water pth
         models_info[model_id] = (model_class, weights_path, parameters)
     return models_info
 

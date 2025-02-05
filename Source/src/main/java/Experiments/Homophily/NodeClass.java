@@ -112,8 +112,10 @@ public class NodeClass {
                 )
         );
 
-        ArrayList<String> edge_attr = new ArrayList<>();
-        edge_attr.add("edge");
+        BoolRel edgeRel = new BoolRel("edge", 2, typeStringToArray("node,node",2));
+        ArrayList<Rel> edge_attr = new ArrayList<>();
+        edge_attr.add(edgeRel);
+        edge_attr.get(0).setInout(Rel.PREDEFINED);
 
         String sclass = generateCommaSeparatedString(NUM_CLASS);
 

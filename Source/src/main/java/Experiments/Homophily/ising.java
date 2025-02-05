@@ -7,9 +7,7 @@ import RBNgui.Primula;
 import RBNpackage.*;
 import RBNutilities.rbnutilities;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 public class ising {
@@ -87,7 +85,7 @@ public class ising {
         ArrayList<ArrayList<Rel>> attrs_rels = new ArrayList<>();
         Rel[] inp_rel = new Rel[1];
         for (int i = 0; i < 1; i++) {
-            inp_rel[i] = new BoolRel("attr" + i, 1);
+            inp_rel[i] = new NumRel("attr" + i, 1);
         }
         attrs_rels.add(
                 new ArrayList<Rel>(
@@ -97,8 +95,10 @@ public class ising {
                 )
         );
 
-        ArrayList<String> edge_attr = new ArrayList<>();
-        edge_attr.add("edge");
+        BoolRel edgeRel = new BoolRel("edge", 2, typeStringToArray("node,node",2));
+        ArrayList<Rel> edge_attr = new ArrayList<>();
+        edge_attr.add(edgeRel);
+        edge_attr.get(0).setInout(Rel.PREDEFINED);
 
         RBNPreldef gnn_rbn = new  RBNPreldef(
                 new CatRel("CAT", 1, typeStringToArray("node",1), valStringToArray("POS,NEG")),
@@ -146,6 +146,12 @@ public class ising {
         GroundAtomList gal = new GroundAtomList();
         RelStruc input_struct = primula.getRels();
         RelDataForOneInput prob_data = primula.getReldata().elementAt(0);
+//        try {
+//            PrintStream fileOut = new PrintStream(new File("/Users/lz50rg/Dev/homophily/experiments/ising/output.txt"));
+//            System.setOut(fileOut);
+//        } catch (FileNotFoundException e) {
+//            throw new RuntimeException(e);
+//        }
 
         try {
             InferenceModule im = primula.openInferenceModule(false);
@@ -166,8 +172,8 @@ public class ising {
             im.addQueryAtoms(tmp_query, gal);
 
             // perform map inference
-            im.setNumRestarts(3);
-            im.setMapSeachAlg(0);
+            im.setNumRestarts(10);
+            im.setMapSeachAlg(2);
             im.setNumIterGreedyMap(50000);
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();
@@ -255,7 +261,7 @@ public class ising {
             }
 
         } catch (Exception e) {
-            System.out.println(e);
+            e.printStackTrace();
         }
         System.exit(0);
     }
