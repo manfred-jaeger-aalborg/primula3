@@ -42,6 +42,7 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
         this.A = A;
         this.inst = I;
         savedData = false;
+        xPred = false; edgePred = false;
         if (this.cpm instanceof ProbFormGnn) {
             Rel[] pfargs = ((CPMGnn) this.cpm).getGnnattr();
             for (int i = 0; i < pfargs.length; i++) {
