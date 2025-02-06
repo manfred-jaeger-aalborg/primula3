@@ -1168,9 +1168,8 @@ public double mapSearch(GGThread mythread,TreeSet<GGAtomMaxNode> flipcandidates,
 		}
 		/* If we have obtained an improvement in likelihood, then we terminate
 		 * here. Otherwise we determine the next indicator to flip.
-		 * If there are any ugas that are lower than before, continue.
 		 */
-		if (currentllratio > 1 && worstUgasCount <= 1) {
+		if (currentllratio > 1) {
 			System.out.println(depthS + "2 returning " + currentllratio);
 			return currentllratio;
 		}
