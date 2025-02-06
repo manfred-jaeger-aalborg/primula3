@@ -298,11 +298,15 @@ public abstract class GGCPMNode extends GGNode{
 
 
 	/*
-	 * Partial derivative with regard to sample sno and for the parameter param.
+	 * See GGNode.evaluate for the use of sno
 	 * 
-	 * Dimension of return array equal to this.outDim()
+	 * Gradient returned as TreeMap keyed by the parameter names for which the gradient is != 0
+	 * 
+	 * Dimension of array value for a given parameter is equal to this.outDim()
+	 * 
+	 *  
 	 */
-	public abstract Double[] evaluatePartDeriv(Integer sno, String param) throws RBNNaNException;
+	public abstract TreeMap<String,double[]> evaluateGradient(Integer sno) throws RBNNaNException;
 
 	public void setMyindicator(GGAtomNode mind){
 		myindicator = mind;

@@ -49,7 +49,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 	 * All the RBN parameters (or numerical max. atoms) that this
 	 * Node depends on
 	 */
-	private TreeSet<String> myparameters;
+	protected TreeSet<String> myparameters;
 	
 	/**
 	 * Flag for whether this node depends on an unknown atom, i.e., has a AtomSumNode as a descendant
@@ -125,7 +125,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 	 */
 
 	//TreeMap<String,Double[]>[] gradient_for_samples;
-	ArrayList<TreeMap<String,Double[]>> gradient_for_samples;
+	ArrayList<TreeMap<String,double[]>> gradient_for_samples;
 
 
 	// The dimension of the output computed by this GGNode. isScalar = true iff outDim=1.
@@ -193,7 +193,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 //		return values_for_samples[sno];
 //	}
 
-	public TreeMap<String,Double[]> gradient(Integer sno){
+	public TreeMap<String,double[]> gradient(Integer sno){
 		return gradient_for_samples.get(sno);
 	}
 
@@ -216,29 +216,39 @@ public abstract class GGNode implements Comparable<GGNode>{
 
 
 	public void resetGradient(Integer sno){
-		for (String pname: gradient_for_samples.get(0).keySet()){ // gradients for all samples are for the same parameters
-			resetGradient(sno,pname);
-		}
-	}
-
-	public void resetGradient(Integer sno,String p){
+		
+		int idx = 0;
 		if (depends_on_sample) { 
 			if (sno==null) {
 				for (int i=0;i<gradient_for_samples.size();i++)
-					resetGradient(i,p);
+					resetGradient(i);
 			}
-			else {
-				is_evaluated_for_samples[sno]=false;
-				gradient_for_samples.remove((int)sno);
-				gradient_for_samples.add(sno,new TreeMap<String,Double[]>());
-			}
+			else
+				idx = sno;
 		}
-		else {
-			is_evaluated_for_samples[0]=false;
-			gradient_for_samples.remove(0);
-			gradient_for_samples.add(0,new TreeMap<String,Double[]>());
-		}
+		gradient_for_samples.remove(idx);
+		gradient_for_samples.add(idx,null);
+		
 	}
+
+//	public void resetGradient(Integer sno,String p){
+//		if (depends_on_sample) { 
+//			if (sno==null) {
+//				for (int i=0;i<gradient_for_samples.size();i++)
+//					resetGradient(i,p);
+//			}
+//			else {
+//				is_evaluated_for_samples[sno]=false;
+//				gradient_for_samples.remove((int)sno);
+//				gradient_for_samples.add(sno,new TreeMap<String,Double[]>());
+//			}
+//		}
+//		else {
+//			is_evaluated_for_samples[0]=false;
+//			gradient_for_samples.remove(0);
+//			gradient_for_samples.add(0,new TreeMap<String,Double[]>());
+//		}
+//	}
 
 
 	public int childrenSize(){
@@ -307,6 +317,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 	public boolean dependsOn(String param){
 		return (myparameters.contains(param));
 	}
+	
 	public int identifier(){
 		return identifier;
 	}
@@ -333,9 +344,9 @@ public abstract class GGNode implements Comparable<GGNode>{
 			is_evaluated_for_samples[i]=false; 
 		}
 		if (!valuesonly) { // Also need gradients
-			gradient_for_samples =  new ArrayList<TreeMap< String,Double[]>>();
+			gradient_for_samples =  new ArrayList<TreeMap< String,double[]>>();
 			for (int i=0;i<dim;i++) {
-				gradient_for_samples.add(new TreeMap<String,Double[]>());
+				gradient_for_samples.add(null);
 			}
 			
 		}

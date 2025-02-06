@@ -23,6 +23,8 @@
 
 package RBNLearning;
 
+import java.util.*;
+
 import RBNpackage.*;
 import RBNgui.*;
 import RBNExceptions.*;
@@ -114,20 +116,16 @@ public class GGConstantNode extends GGCPMNode{
 //		}
 //	}
 
-	public Double[] evaluatePartDeriv(Integer sno,String param){
-		Double[] result = new Double[1];
+	public TreeMap<String,double[]> evaluateGradient(Integer sno){
+		TreeMap<String,double[]> result = gradient_for_samples.get(0);
+		
+		if (result !=null)
+			return result; 
+
 		if (isUnknown){
-			
-			if (paramname.equals(param)){
-				result[0]=1.0;
-				gradient_for_samples.get(0).put(param, result);
-				return result;
-			}
-			else {
-				result[0]=0.0;
-				gradient_for_samples.get(0).put(param,result);
-				return result;
-			}
+			result  = new TreeMap<String,double[]>();
+			result.put(paramname, new double[] {1.0});
+			gradient_for_samples.add(result); //No dependence on samples -- gradient_for_samples will always only contain this one element
 		}
 		return result;
 	}

@@ -48,7 +48,7 @@ public  class CombFuncLReg extends CombFunc{
 		if (sum > 100)
 			result = 1; //Avoid overflow when evaluating Math.exp(sum)
 		else
-			result = Math.exp(sum)/(1+Math.exp(sum));
+			result = 1/(1+Math.exp(-sum));
 
 	
 		return result;

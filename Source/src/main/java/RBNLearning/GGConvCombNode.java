@@ -236,82 +236,70 @@ public class GGConvCombNode extends GGCPMNode{
 //		}
 //	}
 
-	public Double[] evaluatePartDeriv(Integer sno, String param)
+	public TreeMap<String,double[]> evaluateGradient(Integer sno)
 	throws RBNNaNException
 	{
-		if (!dependsOn(param))
-			return new Double[] {0.0}; // In this case need not fill the gradient_for_samples array
+//		String label="";
+//		if (this.isuga())
+//			label=this.getMyatom();
+//		else
+//			label=Integer.toString(this.identifier());
+//		System.out.println("(Conv)evalPD for " + label + " sno " + sno);
 		
+
 		if (this.depends_on_sample && sno==null) {
 			for (int i=0;i<thisgg.numchains*thisgg.windowsize;i++)
-				this.evaluatePartDeriv(i,param);
+				this.evaluateGradient(i);
 			return null;
 		}
 		
-		Double[] g;
-		if (this.depends_on_sample) 
-			g = gradient_for_samples.get(sno).get(param);
-		else
-			g = gradient_for_samples.get(0).get(param);
-		if (g!=null && g[0] != Double.NaN)
+		int idx=0;
+		if (this.depends_on_sample)
+			idx=sno;
+		
+		TreeMap<String,double[]> g = gradient_for_samples.get(sno);
+		if (g!=null)
 			return g;
 		
-		double result =0;	
+		TreeMap<String,double[]> result = null;	
 		
-		GGCPMNode F0 = children.elementAt(0);
-		GGCPMNode F1 = children.elementAt(1);
-		GGCPMNode F2 = children.elementAt(2);
+
+		double[] childvals=new double[3];
+		Vector<TreeMap<String,double[]>> childgradients = new Vector<TreeMap<String,double[]>>();
+		for (int i=0;i<3;i++) {
+			if (children.elementAt(i)!=null) {
+				childvals[i]=children.elementAt(i).evaluate(idx)[0];
+				childgradients.add(children.elementAt(i).evaluateGradient(sno));
+			}
+			else {
+				childvals[i]=evalOfSubPFs[i];
+				childgradients.add(new TreeMap<String,double[]>());
+			}
+		}
+		
+		
 
 
-		/* F0'F1: */
-		if (F0 != null){
-			if (F0.dependsOn(param)){
-				if (F1 != null)
-					result = result + F0.evaluatePartDeriv(sno,param)[0]*F1.evaluate(sno)[0];
-				else 
-					result = result + F0.evaluatePartDeriv(sno,param)[0]*evalOfSubPFs[1];
-			}
-		}
-		/* +F0F1': */
-		if (F1 != null){
-			if (F1.dependsOn(param)){
-				if (F0 != null)
-					result = result + F1.evaluatePartDeriv(sno,param)[0]*F0.evaluate(sno)[0];
-				else 
-					result = result + F1.evaluatePartDeriv(sno,param)[0]*evalOfSubPFs[0];
-			}
-		}
-		/* -F0'F2: */
-		if (F0 != null){
-			if (F0.dependsOn(param)){
-				if (F2 != null)
-					result = result - F0.evaluatePartDeriv(sno,param)[0]*F2.evaluate(sno)[0];
-				else
-					result = result - F0.evaluatePartDeriv(sno,param)[0]*evalOfSubPFs[2];
-			}
-		}
-		/* -F0F2': */
-		if (F2 != null){
-			if (F2.dependsOn(param)){
-				if (F0 != null)
-					result = result - F2.evaluatePartDeriv(sno,param)[0]*F0.evaluate(sno)[0];
-				else
-					result = result - F2.evaluatePartDeriv(sno,param)[0]*evalOfSubPFs[0];
-			}
-		}
-		/* +F2' */
-		if (F2 != null && F2.dependsOn(param))
-			result = result + F2.evaluatePartDeriv(sno,param)[0];
+		for (String param: this.myparameters) {
+			double partderiv = 0;
+			/* F0'F1: */
+			partderiv += childgradients.elementAt(0).get(param)[0]*childvals[1];
+			/* +F0F1': */
+			partderiv +=childvals[0]*childgradients.elementAt(1).get(param)[0];
+			/* -F0'F2: */
+			partderiv -=childgradients.elementAt(0).get(param)[0]*childvals[2];
+			/* -F0F2': */
+			partderiv -=childvals[0]*childgradients.elementAt(2).get(param)[0];
+			/* +F2' */
+			partderiv +=childgradients.elementAt(2).get(param)[0];
 
-		Double[] resultarr = new Double[] {result};
-		
-		if (sno != null)
-			gradient_for_samples.get(sno).put(param,resultarr);
-		else
-			gradient_for_samples.get(0).put(param,resultarr);
-		
-		//System.out.println("Gradient value (GGConvC): " + result);
-		return resultarr;
+			result.put(param, new double[] {partderiv});
+		}
+
+		gradient_for_samples.remove(idx);
+		gradient_for_samples.add(idx,result);
+
+		return result;
 	}
 
 	@Override

@@ -24,6 +24,7 @@ package RBNLearning;
 
 
 
+import java.util.TreeMap;
 import java.util.Vector;
 
 import myio.StringOps;
@@ -220,17 +221,21 @@ private int highvalue;
 //				score = score + Math.log( oldvalues[i]/newvalues[i]);
 //			}
 //			System.out.println("result = " + score);
-//		}
-//	}
+	//		}
+	//	}
 
 	public double[] evaluate(Integer sno) {
 		return new double[] {Double.valueOf(currentInst)};
 	}
 
+	public TreeMap<String,double[]> evaluateGradient(Integer sno) throws RBNNaNException {
+		return new TreeMap<String,double[]>();
+	}
+
 	public void addMeToIndicators(GGCPMNode ggpfn){
 		ggpfn.addToMaxIndicators(this);
 	}
-	
+
 	public void reEvaluateUpstream(Integer sno){
 		super.reEvaluateUpstream(sno);
 		// Also need to re-evaluate the upper ground atom node, which

@@ -23,6 +23,9 @@
 package RBNLearning;
 
 import RBNpackage.*;
+
+import java.util.TreeMap;
+
 import RBNExceptions.*;
 
 
@@ -96,6 +99,10 @@ public class GGAtomSumNode extends GGAtomNode{
 		}
 		else
 			return values_for_samples[sno];
+	}
+	
+	public TreeMap<String,double[]> evaluateGradient(Integer sno) throws RBNNaNException {
+		return new TreeMap<String,double[]>();
 	}
 
 	@Override

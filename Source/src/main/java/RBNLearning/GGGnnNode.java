@@ -181,7 +181,7 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
 //    }
 
     @Override
-    public Double[] evaluatePartDeriv(Integer sno, String param) throws RBNNaNException {
+    public Double[] evaluateGradient(Integer sno, String param) throws RBNNaNException {
         throw new RuntimeException("evaluatePartDeriv(Integer sno, String param) NOT IMPLEMENTED in GGGnnNode");
     }
 

@@ -1,5 +1,6 @@
 package RBNLearning;
 
+import java.util.*;
 import RBNExceptions.RBNCompatibilityException;
 import RBNExceptions.RBNNaNException;
 import RBNpackage.*;
@@ -107,8 +108,8 @@ public class GGAtomEqualityNode extends GGCPMNode{
     }
 
     @Override
-    public Double[] evaluatePartDeriv(Integer sno, String param) throws RBNNaNException {
-        return new Double[] {0.0};
+    public TreeMap<String,double[]> evaluateGradient(Integer sno) throws RBNNaNException {
+        return new TreeMap<String,double[]>();
     }
 
 

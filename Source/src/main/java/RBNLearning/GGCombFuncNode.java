@@ -258,227 +258,274 @@ public class GGCombFuncNode extends GGCPMNode{
 //		}
 //	}
 
-	public Double[] evaluatePartDeriv(Integer sno, String param)
+	public TreeMap<String,double[]> evaluateGradient(Integer sno)
 			throws RBNNaNException{
-		String label="";
-		if (this.isuga())
-			label=this.getMyatom();
-		else
-			label=Integer.toString(this.identifier());
-//		System.out.println("evalPD for " + label + " param " +param);
 		
-		if (!dependsOn(param)) {
-//			System.out.println("no rec 1");
-			return new Double[] {0.0}; // In this case need not fill the gradient_for_samples array
-		}
+//		String label="";
+//		if (this.isuga())
+//			label=this.getMyatom();
+//		else
+//			label=Integer.toString(this.identifier());
+//		System.out.println("(Comb)evalPD for " + label + " sno " + sno);
+		
+//		if (!dependsOn(param)) {
+//			System.out.println("... no dependence");
+//			return new Double[] {0.0}; // In this case need not fill the gradient_for_samples array
+//		}
 		
 		if (this.depends_on_sample && sno==null) {
 			for (int i=0;i<thisgg.numchains*thisgg.windowsize;i++)
-				this.evaluatePartDeriv(i,param);
+				this.evaluateGradient(i);
 			return null;
 		}
 
-		Double[] g;
+		TreeMap<String,double[]> g;
 		if (this.depends_on_sample) 
-			g = gradient_for_samples.get(sno).get(param);
+			g = gradient_for_samples.get(sno);
 		else
-			g = gradient_for_samples.get(0).get(param);
-		if (g!=null && g[0] != Double.NaN) {
-//			System.out.println("no rec 2");
+			g = gradient_for_samples.get(0);
+		if (g!=null) 
 			return g;
-		}
 	
 
 	/*
 	 * Now the 'main' case: evaluated the gradient for a specific sample number sno.
 	 * (sno=0 if no dependence on samples)
 		 */
-		double result = 0;
+		
+		int idx=0;
+		if (this.depends_on_sample)
+			idx=sno;
+		
+		TreeMap<String,double[]> result = null;
 		switch (typeOfComb){
 		case CombFunc.NOR:
-			result = computeDerivNOR(sno,param);
+			result = computeGradientNOR(sno);
 			break;
 
 		case CombFunc.MEAN:
-			result = computeDerivMEAN(sno,param);
+			result = computeGradientMEAN(sno);
 			break;
 
 		case CombFunc.INVSUM:
-			result = computeDerivINVSUM(sno,param);
+			result = computeGradientINVSUM(sno);
 			break;
 
 		case CombFunc.ESUM:
-			result = computeDerivESUM(sno,param);
+			result = computeGradientESUM(sno);
 			break;
 
 		case CombFunc.LREG:
-			result = computeDerivLREG(sno,param);
+			result = computeGradientLREG(sno);
 			break;
 			
 		case CombFunc.LLREG:
-			result = computeDerivLLREG(sno,param);
+			result = computeGradientLLREG(sno);
 			break;
 			
 		case CombFunc.SUM:
-			result = computeDerivSUM(sno,param);
+			result = computeGradientSUM(sno);
 			break;
 		case CombFunc.PROD:
-			result = computeDerivPROD(sno,param);
+			result = computeGradientPROD(sno);
 			break;
 		}
-		
-		Double[] resultarr = new Double[] {result};
-		
-		if (sno != null)
-			gradient_for_samples.get(sno).put(param,resultarr);
-		else
-			gradient_for_samples.get(0).put(param,resultarr);
-		
-		return resultarr;
+
+		gradient_for_samples.remove(idx);
+		gradient_for_samples.add(idx,result);
+
+		return result;
 	}
 
 
 
-	private double computeDerivNOR(Integer sno, String param)
+	private TreeMap<String,double[]> computeGradientNOR(Integer sno)
 	throws RBNNaNException
 	{
-		double result = 0;
+		TreeMap<String,double[]> result = new TreeMap<String,double[]>();
         /* First compute \prod (1-Fi) over all subformulas */
         double factor = aggregateOfSubPFs;
-        
-        for (int i=0;i<children.size();i++)
-                factor = factor*(1-children.elementAt(i).evaluate(sno)[0]);
-        
-        if (factor == 0)
-        	return 0.0;
-        
-        /* Now compute the partial derivative as
-         *
-         * \sum_{F_i\in fthetalist} (factor/(1-F_i))*(F_i')
-         */
-        for (int i=0;i<children.size();i++){
-                if (children.elementAt(i).dependsOn(param))
-                        result = result + 
-                        (factor/(1-children.elementAt(i).evaluate(sno)[0]))*(children.elementAt(i).evaluatePartDeriv(sno,param)[0]);
+        Vector<TreeMap<String,double[]>> childgrads = new Vector<TreeMap<String,double[]>>();
+        double[] childvals = new double[children.size()];
+        for (int i=0;i<children.size();i++) {
+        		childvals[i]=children.elementAt(i).evaluate(sno)[0];
+                factor = factor*(1-childvals[i]);
+                childgrads.add(children.elementAt(i).evaluateGradient(sno));
         }
-        
-		return result;
-	}
-
-	private double computeDerivPROD(Integer sno, String param)
-			throws RBNNaNException{
-		double result = 0;
-        /* First compute \prod Fi over all subformulas */
-        double factor = aggregateOfSubPFs;
-        
-        for (int i=0;i<children.size();i++)
-                factor = factor*children.elementAt(i).evaluate(sno)[0];
-        
         if (factor == 0)
-        	return 0.0;
+        	return result;
         
-        /* Now compute the partial derivative as
+        /* Now compute the partial derivatives as
          *
-         * \sum_{F_i\in fthetalist} (factor/F_i)*(F_i')
+         * \sum_{F_i} (factor/(1-F_i))*(F_i')
          */
-        for (int i=0;i<children.size();i++){
-                if (children.elementAt(i).dependsOn(param))
-                        result = result + (factor/children.elementAt(i).evaluate(sno)[0])*(children.elementAt(i).evaluatePartDeriv(sno,param)[0]);
+        
+        for (String param: this.myparameters) {
+        	double partderiv = 0;
+        	for (int i=0;i<children.size();i++){
+        		double[] childpartderiv = childgrads.elementAt(i).get(param); // will be null or 1-dim array
+        		if (childpartderiv != null)
+        			partderiv = partderiv + 
+        			(factor/(1-childvals[i])*childpartderiv[0]);
+        	}
+        	result.put(param, new double[] {partderiv});
         }
 		return result;
 	}
 
-	private double computeDerivMEAN(Integer sno,String param )
+	private TreeMap<String,double[]>  computeGradientPROD(Integer sno)
 			throws RBNNaNException{
-		double result = 0;
-		for (int i=0;i<children.size();i++)
-			result = result + children.elementAt(i).evaluatePartDeriv(sno,param)[0];
-		result = result/(valuesOfSubPFs.length + children.size());
-		return result;
-	}
-
-	private double computeDerivLREG(Integer sno, String param )
-			throws RBNNaNException{
+		TreeMap<String,double[]> result = new TreeMap<String,double[]>();
 		
+        /* \prod Fi over all subformulas */
+        double factor = aggregateOfSubPFs;
+        Vector<TreeMap<String,double[]>> childgrads = new Vector<TreeMap<String,double[]>>();
+        double[] childvals = new double[children.size()];
+        for (int i=0;i<children.size();i++) {
+        		childvals[i]=children.elementAt(i).evaluate(sno)[0];
+                factor = factor*childvals[i];
+                childgrads.add(children.elementAt(i).evaluateGradient(sno));
+        }
+        
+        
+        if (factor == 0)
+        	return result;
+        
+        /* Now compute the partial derivative as
+         *
+         * \sum_{F_i} (factor/F_i)*(F_i')
+         */
+ 
+        for (String param: this.myparameters) {
+        	double partderiv = 0;
+        	for (int i=0;i<children.size();i++){
+        		double[] childpartderiv = childgrads.elementAt(i).get(param); // will be null or 1-dim array
+        		if (childpartderiv != null)
+        			partderiv = partderiv + 
+        			(factor/(childvals[i])*childpartderiv[0]);
+        	}
+        	result.put(param, new double[] {partderiv});
+        }
+		return result;
+	}
+
+	private TreeMap<String,double[]>  computeGradientMEAN(Integer sno)
+			throws RBNNaNException{
+		TreeMap<String,double[]> result = new TreeMap<String,double[]>();
+
+
+
+		for (String param: this.myparameters) {
+			double partderiv = 0;
+			for (int i=0;i<children.size();i++)
+				partderiv = partderiv + children.elementAt(i).evaluateGradient(sno).get(param)[0];
+
+			partderiv = partderiv/(valuesOfSubPFs.length + children.size());
+        	result.put(param, new double[] {partderiv});
+		}
+
+		return result;
+	}
+
+	private TreeMap<String,double[]>  computeGradientLREG(Integer sno)
+			throws RBNNaNException{
+		TreeMap<String,double[]> result = new TreeMap<String,double[]>();
 		double sum = aggregateOfSubPFs;
-		double sumpr = 0;
+        Vector<TreeMap<String,double[]>> childgrads = new Vector<TreeMap<String,double[]>>();
+        double[] childvals = new double[children.size()];
+        
 		for (int i=0;i<children.size();i++){
-			sum = sum + children.elementAt(i).evaluate(sno)[0];
-			sumpr = sumpr + children.elementAt(i).evaluatePartDeriv(sno,param)[0];
+			childvals[i]=children.elementAt(i).evaluate(sno)[0];
+			sum = sum + childvals[i];
+			childgrads.add(children.elementAt(i).evaluateGradient(sno));
 		}
 		double esum = Math.exp(sum);
-		//if (Double.isInfinite(esum))
-		if (Double.isInfinite(Math.pow(1+esum,2)))
-				return 0;
-		double result = (esum*sumpr)/Math.pow(1+esum,2);
-		if (Double.isNaN(result)){
-			System.out.println("NaN in ggCombFuncNode.computeDerivLREG");
-		}
-		return result;
+		// Watch: can be issues with infinite values ...?
 		
-	}
-
-	private double computeDerivLLREG(Integer sno, String param )
-			throws RBNNaNException{
-		
-		double sum = aggregateOfSubPFs;
-		double sumpr = 0;
-		for (int i=0;i<children.size();i++){
-			sum = sum + children.elementAt(i).evaluate(sno)[0];
-			sumpr = sumpr + children.elementAt(i).evaluatePartDeriv(sno,param)[0];
+		for (String param: this.myparameters) {
+			double partderiv = 0;
+			for (int i=0;i<children.size();i++){
+				double[] childgrad = childgrads.elementAt(i).get(param);
+				if (childgrad != null)
+					partderiv+=childgrad[0];
+			}
+			partderiv *= (esum/Math.pow(1+esum,2));
+			result.put(param, new double[] {partderiv});
 		}
 		
-		return sumpr/Math.pow(1+sum,2);
-		
-	}
-
 	
-//	private double computeValueINVSUM(Integer sno){
-//		double[] args = new double[valuesOfSubPFs.length+ children.size()];
-//		for (int i=0;i<valuesOfSubPFs.length;i++)
-//			args[i]=valuesOfSubPFs[i];
+		return result;
+		
+	}
+
+	private TreeMap<String,double[]>  computeGradientLLREG(Integer sno)
+			throws RBNNaNException{
+		System.out.println("Gradient for INVSUM not implemented");
+		return null;
+//		TreeMap<String,double[]> result = new TreeMap<String,double[]>();
+//		double sum = aggregateOfSubPFs;
+//		double sumpr = 0;
+//		for (int i=0;i<children.size();i++){
+//			sum = sum + children.elementAt(i).evaluate(sno)[0];
+//			sumpr = sumpr + children.elementAt(i).evaluateGradient(sno,param)[0];
+//		}
+//		
+//		return sumpr/Math.pow(1+sum,2);
+		
+	}
+
+
+
+	private TreeMap<String,double[]>  computeGradientINVSUM(Integer sno)
+	
+			throws RBNNaNException{
+		System.out.println("Gradient for INVSUM not implemented");
+		return null;
+//		TreeMap<String,double[]> result = new TreeMap<String,double[]>();
+//		double val = this.evaluate(sno)[0];
+//		if (val == 1.0)
+//			return 0;
+//		else{
+//			double derivsum = 0;
+//			result = -Math.pow(val,-2);
+//			for (int i=0;i<children.size();i++)
+//				derivsum = derivsum + children.elementAt(i).evaluateGradient(sno,param)[0];
+//			result = result*derivsum;
+//		}
+//		return result;
+	}
+
+	private TreeMap<String,double[]>  computeGradientESUM(Integer sno )
+			throws RBNNaNException{
+		System.out.println("Gradient for ESUM not implemented");
+		return null;
+//		TreeMap<String,double[]> result = new TreeMap<String,double[]>();
+//		double val = this.evaluate(sno)[0];
+//
+//		double derivsum = 0;
+//		result = -val;
 //		for (int i=0;i<children.size();i++)
-//			args[i+valuesOfSubPFs.length]= children.elementAt(i).evaluate(sno)[0];
-//		return thisgg.computeCombFunc(CombFunc.INVSUM,args);
-//	}
+//			derivsum = derivsum + children.elementAt(i).evaluateGradient(sno,param)[0];
+//		result = result*derivsum;
+//
+//		return result;
+	}
 
-	private double computeDerivINVSUM(Integer sno,String param )
+	private TreeMap<String,double[]>  computeGradientSUM(Integer sno )
 			throws RBNNaNException{
-		double result = 0;
-		double val = this.evaluate(sno)[0];
-		if (val == 1.0)
-			return 0;
-		else{
-			double derivsum = 0;
-			result = -Math.pow(val,-2);
+		TreeMap<String,double[]> result = new TreeMap<String,double[]>();
+		
+		
+		for (String param: this.myparameters) {
+			double partderiv = 0;
 			for (int i=0;i<children.size();i++)
-				derivsum = derivsum + children.elementAt(i).evaluatePartDeriv(sno,param)[0];
-			result = result*derivsum;
+				partderiv = partderiv + children.elementAt(i).evaluateGradient(sno).get(param)[0];
+
+        	result.put(param, new double[] {partderiv});
 		}
-		return result;
-	}
-
-	private double computeDerivESUM(Integer sno,String param )
-			throws RBNNaNException{
-		double result = 0;
-		double val = this.evaluate(sno)[0];
-
-		double derivsum = 0;
-		result = -val;
-		for (int i=0;i<children.size();i++)
-			derivsum = derivsum + children.elementAt(i).evaluatePartDeriv(sno,param)[0];
-		result = result*derivsum;
 
 		return result;
-	}
-
-	private double computeDerivSUM(Integer sno,String param )
-			throws RBNNaNException{
-
-		double derivsum = 0;
-		for (int i=0;i<children.size();i++)
-			derivsum = derivsum + children.elementAt(i).evaluatePartDeriv(sno,param)[0];
-		return derivsum;
+		
 	}
 
 	@Override
