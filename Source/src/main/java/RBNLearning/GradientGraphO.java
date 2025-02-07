@@ -687,7 +687,7 @@ public class GradientGraphO extends GradientGraph{
 			throws RBNNaNException{
 		llnode.evaluate(null);
 		if (!likelihoodonly)
-			llnode.evaluateGradients(null);
+			llnode.evaluateSmallGrad(null);
 	}
 
 

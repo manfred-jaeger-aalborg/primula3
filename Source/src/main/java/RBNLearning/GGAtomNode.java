@@ -97,7 +97,7 @@ public abstract class GGAtomNode extends GGCPMNode{
 
 
 	
-	public Double[] evaluatePartDeriv(Integer sno,String param){
+	public Double[] evaluateGradient(Integer sno,String param){
 		return new Double[] {0.0};
 	}
 

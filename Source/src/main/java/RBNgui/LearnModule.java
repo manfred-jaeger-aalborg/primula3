@@ -402,7 +402,7 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 		numchains = 2;
 		windowsize = 2;
 		maxfails = 5;
-		maxiterations = 2;
+		maxiterations = 20;
 		linedistancethresh = 0.0001;
 //		linelikelihoodthresh = 0.001;
 		likelihoodwindow = 5;

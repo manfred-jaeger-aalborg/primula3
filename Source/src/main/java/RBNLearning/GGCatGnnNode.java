@@ -1,5 +1,6 @@
 package RBNLearning;
 
+import java.util.*;
 import RBNExceptions.RBNCompatibilityException;
 import RBNExceptions.RBNNaNException;
 import RBNpackage.CPModel;
@@ -20,7 +21,7 @@ public class GGCatGnnNode extends GGCPMNode implements GGCPMGnn {
     }
 
     @Override
-    public Double[] evaluatePartDeriv(Integer sno, String param) throws RBNNaNException {
+    public TreeMap<String,double[]> evaluateGradient(Integer sno) throws RBNNaNException {
         throw new UnsupportedOperationException("Unimplemented method 'evaluatePartDeriv'");
     }
 
@@ -50,7 +51,7 @@ public class GGCatGnnNode extends GGCPMNode implements GGCPMGnn {
 //    }
 
 //    @Override
-    public double evaluateGrad(Integer sno, String param) throws RBNNaNException {
+    public double evaluateGrad(Integer sno) throws RBNNaNException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'evaluateGrad'");
     }

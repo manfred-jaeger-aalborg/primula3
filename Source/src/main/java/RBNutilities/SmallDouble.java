@@ -67,6 +67,7 @@ public class SmallDouble implements Comparator{
 		return result;
 	}
 
+	
 	public static Double[] add(Double[] sd1, Double[] sd2){
 		//System.out.print("add " + rbnutilities.arrayToString(sd1) + " " + rbnutilities.arrayToString(sd2));
 		if (sd1[0]==0)
@@ -96,6 +97,17 @@ public class SmallDouble implements Comparator{
 		return result;
 	}
 
+	public static double[][] addArray(double[][] sdarr1, double[][] sdarr2) {
+		/*
+		 * adds componentwise two n x 2 arrays of small doubles; 
+		 */
+		
+		double[][] result = new double[sdarr1.length][2];
+		for (int i=0;i<sdarr1.length;i++)
+			result[i]=SmallDouble.add(sdarr1[i], sdarr2[i]);
+		return result;
+	}
+	
 	public static double[] multiply(double[] sd1, double[] sd2){
 		double[] result = new double[2];
 		double mainprod = sd1[0]*sd2[0];
@@ -172,6 +184,16 @@ public class SmallDouble implements Comparator{
 		return result;
 	}
 
+	public static double[][] divide(double[][] sdarray, int i2){
+		/* Divides array of small doubles component-wise by small double
+		 * 
+		 */
+		double[][] result = new double[sdarray.length][2];
+		for (int i=0;i<sdarray.length;i++)
+			result[i]=SmallDouble.divide(sdarray[i], i2);
+		return result;
+	}
+	
 	public static double[] divide(double[] sd1, double d2){
 
 		double sd2[]={d2,0};

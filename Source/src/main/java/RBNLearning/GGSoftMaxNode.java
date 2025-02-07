@@ -174,49 +174,53 @@ public class GGSoftMaxNode extends GGCPMNode{
 //		System.out.println("GGSoftMaxNode.evaluateBounds is called but not implemented!");
 //	}
 
-	public Double[] evaluatePartDeriv(Integer sno, String param)
-	throws RBNNaNException
+	public TreeMap<String,double[]> evaluateGradient(Integer sno)
+			throws RBNNaNException
 	{
-		if (!dependsOn(param))
-			return new Double[] {0.0}; // In this case need not fill the gradient_for_samples array
-		
+
 		if (this.depends_on_sample && sno==null) {
 			for (int i=0;i<thisgg.numchains*thisgg.windowsize;i++)
-				this.evaluatePartDeriv(i,param);
+				this.evaluateGradient(i);
 			return null;
 		}
-		
-		Double[] g;
-		if (this.depends_on_sample) 
-			g = gradient_for_samples.get(sno).get(param);
-		else
-			g = gradient_for_samples.get(0).get(param);
-		if (g!=null && g[0] != Double.NaN)
-			return g;
-		
-		
-		double[] values = null;
+
+		int idx =0;
 		if (this.depends_on_sample)
-			values = values_for_samples[sno];
-		else
-			values = values_for_samples[0];
-		
-		double derivsum = 0;
-		for (int i=0;i<this.outDim && children.elementAt(i)!=null;i++) {
-			derivsum+=values[i]*children.elementAt(i).evaluatePartDeriv(sno,param)[0];
-		}
-		
-		Double[] result= new Double[this.outDim];
-		
-		for (int i=0;i<this.outDim && children.elementAt(i)!=null;i++) {
-			result[i]=values[i]*(children.elementAt(i).evaluatePartDeriv(sno,param)[0]-derivsum);
+			idx=sno;
+
+		TreeMap<String,double[]> result = gradient_for_samples.get(idx);
+
+		if (result !=null)
+			return result;
+
+
+		double[] values = values_for_samples[idx];
+
+
+
+		for (String param: this.myparameters) {
+			double[][] childpds = new double[children.size()][];
+			for (int i=0;i<children.size();i++) {
+				if (children.elementAt(i)!=null)
+					childpds[i]=children.elementAt(i).evaluateGradient(sno).get(param);
+			}
+
+			double[] partderiv = new double[this.outDim];
+			double derivsum = 0;
+			for (int i=0;i<this.outDim();i++) {
+				derivsum+=values[i]*childpds[i][0];
+			}
+
+			for (int i=0;i<this.outDim;i++) {
+				partderiv[i]=values[i]*(childpds[i][0]-derivsum);
+			}
+			result.put(param, partderiv);
 		}
 
-		if (sno != null)
-			gradient_for_samples.get(sno).put(param,result);
-		else
-			gradient_for_samples.get(0).put(param,result);
-		
+
+		gradient_for_samples.remove(idx);
+		gradient_for_samples.add(idx,result);
+
 		//System.out.println("Gradient value (GGConvC): " + result);
 		return result;
 	}
