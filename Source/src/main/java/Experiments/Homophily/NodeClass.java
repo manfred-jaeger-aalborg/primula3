@@ -55,19 +55,22 @@ public class NodeClass {
         int ij = Integer.parseInt(args[0]);
         String datasetName = args[1];
         int NUM_ATTR = Integer.parseInt(args[2]);
-        int nhidd = Integer.parseInt(args[3]);
-        int nlayers = Integer.parseInt(args[4]);
-        int NUM_CLASS = Integer.parseInt(args[5]);
-        String expName = args[6];
+        String modelName = args[3];
+        int nhidd = Integer.parseInt(args[4]);
+        int nlayers = Integer.parseInt(args[5]);
+        int NUM_CLASS = Integer.parseInt(args[6]);
+        String expName = args[7];
 
 //        int ij = 0;
 //        String datasetName = "texas";
 //        int NUM_ATTR = 1703;
+//        String modelName = "GGCN";
 //        int nhidd = 16;
 //        int nlayers = 2;
 //        int NUM_CLASS = 5;
+//        String expName = "real-dataset";
 
-        String modelName = "GCN";
+//        String modelName = "GGCN";
         String base_path = "/Users/lz50rg/Dev/homophily/experiments/";
 
         Map<String, Object> load_gnn_set = new HashMap<>();
@@ -78,6 +81,7 @@ public class NodeClass {
         load_gnn_set.put("nlayers", nlayers);
         load_gnn_set.put("nclass", NUM_CLASS);
         load_gnn_set.put("nhid", nhidd);
+        load_gnn_set.put("exp", "real-dataset");
 
         Primula primula = new Primula();
         primula.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
@@ -147,20 +151,20 @@ public class NodeClass {
         RBN file_rbn = new RBN(input_file, primula.getSignature());
         RBNPreldef[] preledef = file_rbn.prelements();
 
-//        RBN manual_rbn = null;
-//        if (count_h) {
-//            manual_rbn = new RBN(2, 0);
-//            manual_rbn.insertPRel(gnn_rbn, 0);
-////            manual_rbn.insertPRel(preledef[0], 1);
-//            manual_rbn.insertPRel(preledef[1], 2);
-//        } else {
-//            manual_rbn = new RBN(2, 0);
-//            manual_rbn.insertPRel(gnn_rbn, 0);
+        RBN manual_rbn = null;
+        if (count_h) {
+            manual_rbn = new RBN(2, 0);
+            manual_rbn.insertPRel(gnn_rbn, 0);
 //            manual_rbn.insertPRel(preledef[0], 1);
-//        }
+            manual_rbn.insertPRel(preledef[1], 2);
+        } else {
+            manual_rbn = new RBN(2, 0);
+            manual_rbn.insertPRel(gnn_rbn, 0);
+            manual_rbn.insertPRel(preledef[0], 1);
+        }
 
-        RBN manual_rbn = new RBN(1, 0);
-        manual_rbn.insertPRel(gnn_rbn, 0);
+//        RBN manual_rbn = new RBN(1, 0);
+//        manual_rbn.insertPRel(gnn_rbn, 0);
 
         // add the rbn to primula
         primula.setRbn(manual_rbn);
@@ -194,7 +198,7 @@ public class NodeClass {
 
             // perform map inference
             im.setNumRestarts(1);
-            im.setMapSeachAlg(0);
+            im.setMapSeachAlg(2);
             im.setNumIterGreedyMap(10000);
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();

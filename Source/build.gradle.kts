@@ -64,6 +64,7 @@ tasks.register("runExperiment") {
     doLast {
         val dataset = project.findProperty("dataset")?.toString() ?: "wisconsin"
         val nfeat = project.findProperty("nfeat")?.toString() ?: "1703"
+        val model = project.findProperty("modelName")?.toString() ?: "GCN"
         val nhid = project.findProperty("nhid")?.toString() ?: "16"
         val nlayer = project.findProperty("nlayer")?.toString() ?: "2"
         val nclass = project.findProperty("nclass")?.toString() ?: "5"
@@ -74,7 +75,7 @@ tasks.register("runExperiment") {
                 commandLine(
 //                    "xvfb-run", "-a",
                     "java", "-cp", sourceSets["main"].runtimeClasspath.asPath,
-                    "Experiments.Homophily.NodeClass", i.toString(), dataset, nfeat, nhid, nlayer, nclass, expName
+                    "Experiments.Homophily.NodeClass", i.toString(), dataset, nfeat, model, nhid, nlayer, nclass, expName
                 )
             }
         }

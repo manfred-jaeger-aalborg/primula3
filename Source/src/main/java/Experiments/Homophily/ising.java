@@ -42,8 +42,8 @@ public class ising {
 
     public static void main(String[] args) {
         String N = "32";
-        String J = "-1.0";
-        String Jb = "0.3";
+        String J = "-0.4";
+        String Jb = "0.1";
         String temp = "0.4";
         Boolean loc_h = false;
         Boolean node_const= true;
@@ -68,6 +68,7 @@ public class ising {
         load_gnn_set.put("Jb", Double.valueOf(Jb));
         load_gnn_set.put("temp", Double.valueOf(temp));
         load_gnn_set.put("iter", 4);
+        load_gnn_set.put("noisy", false);
 
         primula.setLoadGnnSet(load_gnn_set);
 
