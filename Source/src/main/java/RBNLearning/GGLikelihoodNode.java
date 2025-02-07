@@ -525,13 +525,20 @@ public  class GGLikelihoodNode extends GGNode{
 	//	}
 
 
+//	public double[] gradientAsDouble(){
+//		return SmallDouble.toStandardDoubleArray(small_gradient);
+//	}
+
+
+	/* New version actually returning the gradient of the log-likelihood
+	*
+	 */
 	public double[] gradientAsDouble(){
-		return SmallDouble.toStandardDoubleArray(small_gradient);
+		return SmallDouble.toStandardDoubleArray(SmallDouble.divide(small_gradient,small_likelihood));
 	}
 
 
-
-	/** Returns the gradient (scaled to fit double precision) 
+	/** Returns the gradient (scaled to fit double precision)
 	 * with all components where zeros[i]=1 set to 0
 	 * 
 	 * Corresponds to taking partial derivatives, ignoring
@@ -609,17 +616,7 @@ public  class GGLikelihoodNode extends GGNode{
 		}
 	}
 
-	//	public void resetLikelihoodSum(){
-	//		likelihoodsum[0] = 0;
-	//		likelihoodsum[1] = 0;
-	//	}
 
-	//	public void resetGradientSum(){
-	//		for (int i=0;i<gradientsum.length;i++){
-	//			gradientsum[i][0]=0.0;
-	//			gradientsum[i][1]=0.0;
-	//		}
-	//	}
 
 	//	public void resetBounds(){
 	//		bounds[0][0]=-1;
@@ -629,19 +626,6 @@ public  class GGLikelihoodNode extends GGNode{
 	//
 	//	}
 
-	//	/** Sets the current likelihood value as the likelihood value for the i'th sample */
-	//	public void setSampleLikelihood(int i){
-	//		samplelikelihoods[i][0]=likelihood[0];
-	//		samplelikelihoods[i][1]=likelihood[1];
-	//	}
-
-	//	public double[][] getSampleLikelihoods(){
-	//		return samplelikelihoods;
-	//	}
-
-	//	public double[] getSampleLikelihood(int sno){
-	//		return samplelikelihoods[sno];
-	//	}
 
 
 	//	public void showChildren(RelStruc A){
@@ -650,16 +634,6 @@ public  class GGLikelihoodNode extends GGNode{
 	//			System.out.println(children.elementAt(i).name(A));
 	//	}
 
-
-	//	public void updateGradSum(){
-	//		for (int i=0; i<gradientsum.length; i++){
-	//			gradientsum[i]=SmallDouble.add(gradientsum[i],small_gradient[i]);
-	//		}
-	//	}
-
-	public double[][] getSmallgradient(){
-		return small_gradient;
-	}
 
 	public int[] getConfusion() {
 		return confusion;
