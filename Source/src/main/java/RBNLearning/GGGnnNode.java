@@ -23,7 +23,8 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
     static private int num_nodes = -1;
     static private Vector<BoolRel> boolrel;
     static private String edge_index;
-    private boolean edge_pred; // true if the edges are predefined --> avoid to reconstruct again in evaluate
+    private boolean xPred;
+    private boolean edgePred; // true if the edges are predefined --> avoid to reconstruct again in evaluate
     private boolean savedData;
     public GGGnnNode(GradientGraphO gg,
                      CPModel cpm,
@@ -41,6 +42,7 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
         this.A = A;
         this.inst = I;
         savedData = false;
+        xPred = false; edgePred = false;
         if (this.cpm instanceof ProbFormGnn) {
             Rel[] pfargs = ((CPMGnn) this.cpm).getGnnattr();
             for (int i = 0; i < pfargs.length; i++) {
@@ -87,6 +89,7 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
             for (int i = 0; i < pfargs.size(); i++) {
                 for (int j = 0; j < pfargs.get(i).size(); j++) {
                     if (!pfargs.get(i).get(j).ispredefined()) { // do not add predefined values
+                        xPred = true;
                         try {
                             int[][] mat = A.allTypedTuples(pfargs.get(i).get(j).getTypes());
                             for (int k = 0; k < mat.length; k++) {
@@ -121,13 +124,51 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
                     }
                 }
             }
+            // also for the edges
+            ArrayList <Rel> pfargs_edges = ((CPMGnn) this.cpm).getEdge_attr();
+            for (Rel edge : pfargs_edges) {
+                if (!edge.ispredefined()) {
+                    edgePred = true;
+                    try {
+                        int[][] mat = A.allTypedTuples(edge.getTypes());
+                        for (int k = 0; k < mat.length; k++) {
+                            ProbFormAtom atomAsPf = new ProbFormAtom(edge, mat[k]);
+                            GGCPMNode ggmn = gg.findInAllnodes(atomAsPf, 0, 0, A);
+                            if (ggmn == null) {
+                                ggmn = GGCPMNode.constructGGPFN(
+                                        gg,
+                                        atomAsPf,
+                                        allnodes,
+                                        A,
+                                        I,
+                                        inputcaseno,
+                                        observcaseno,
+                                        parameters,
+                                        false,
+                                        false,
+                                        "",
+                                        mapatoms,
+                                        evaluated);
+                                allnodes.put(gg.makeKey(atomAsPf, 0, 0, A), ggmn);
+                                this.children.add(ggmn);
+                                ggmn.addToParents(this);
+                            }
+                            this.children.add(ggmn);
+                            ggmn.addToParents(this);
+                        }
+
+                    } catch (RBNIllegalArgumentException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
         } else {
             System.out.println("GGGnnNode cannot accept " + this.cpm.toString() + " as valid pf");
         }
     }
 
     @Override
-    public Double[] evaluate(Integer sno) {
+    public double[] evaluate(Integer sno) {
         if (!savedData) {
             this.gnnPy.saveGnnData((CPMGnn) cpm, A, inst);
             savedData = true;
@@ -143,7 +184,7 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
         if (!this.depends_on_sample && is_evaluated_for_samples[0])
             return this.values_for_samples[0];
 
-        Double[] result = null;
+        double[] result = null;
         if (cpm instanceof CatGnnHetero)
             result = gnnPy.GGevaluate_gnnHetero(A, thisgg, (CPMGnn) cpm, this);
         else
@@ -179,6 +220,15 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
 //    public void setValue(Double[] value) {
 //        this.value = value;
 //    }
+
+
+    public boolean isXPred() {
+        return xPred;
+    }
+
+    public boolean isEdgePred() {
+        return edgePred;
+    }
 
     @Override
     public Double[] evaluateGradient(Integer sno, String param) throws RBNNaNException {

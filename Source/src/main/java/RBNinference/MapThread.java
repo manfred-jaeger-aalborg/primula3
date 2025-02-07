@@ -75,7 +75,7 @@ public class MapThread extends GGThread {
 		Hashtable<Rel,int[]> newmapvals = new Hashtable<>();
 
 		Map<String, double[][]> xDict = new HashMap<>();
-		Map<String, int[][]> edgeDict = new HashMap<>();
+		Map<String, ArrayList<ArrayList<Integer>>> edgeDict = new HashMap<>();
 		
 		int maxrestarts = myinfmodule.getMAPRestarts();
 		int restarts =1;

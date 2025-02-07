@@ -214,6 +214,8 @@ public class ProbFormGnn extends ProbForm implements CPMGnn {
         return null;
     }
 
+    public ArrayList<Rel> getEdge_attr() { return null; }
+
     @Override
     public TreeSet<Rel> parentRels(TreeSet<String> processed) {
         System.out.println("parentRels code 2");

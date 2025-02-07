@@ -32,4 +32,6 @@ public interface CPMGnn {
     TreeSet<Rel> parentRels();
 
     ArrayList<ArrayList<Rel>> getInput_attr();
+
+    ArrayList<Rel> getEdge_attr();
 }
