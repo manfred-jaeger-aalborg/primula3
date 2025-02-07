@@ -185,7 +185,7 @@ public class SmallDouble implements Comparator{
 	}
 
 	public static double[][] divide(double[][] sdarray, int i2){
-		/* Divides array of small doubles component-wise by small double
+		/* Divides array of small doubles component-wise by int i2
 		 * 
 		 */
 		double[][] result = new double[sdarray.length][2];
@@ -193,7 +193,16 @@ public class SmallDouble implements Comparator{
 			result[i]=SmallDouble.divide(sdarray[i], i2);
 		return result;
 	}
-	
+	public static double[][] divide(double[][] sdarray, double i2){
+		/* Divides array of small doubles component-wise by double i2
+		 *
+		 */
+		double[][] result = new double[sdarray.length][2];
+		for (int i=0;i<sdarray.length;i++)
+			result[i]=SmallDouble.divide(sdarray[i], i2);
+		return result;
+	}
+
 	public static double[] divide(double[] sd1, double d2){
 
 		double sd2[]={d2,0};
@@ -315,10 +324,7 @@ public class SmallDouble implements Comparator{
 	 * @return
 	 */
 	public static double[] toStandardDoubleArray(double[][] sdarr){
-		//    	System.out.print("In: ");
-		//    	for (int i=0;i<sdarr.length;i++)
-		//    		System.out.print(rbnutilities.arrayToString(sdarr[i]) + ";");
-		//    	System.out.println();
+
 		double result[] = new double[sdarr.length];
 		int minfactor = Integer.MAX_VALUE;
 		double[] prelim = new double[2];
@@ -332,7 +338,9 @@ public class SmallDouble implements Comparator{
 			result[i]=SmallDouble.toStandardDouble(prelim);
 
 		}
-		//  	System.out.println("Out: " + rbnutilities.arrayToString(result));
+//		System.out.println("************************8");
+//		for (int i=0;i<sdarr.length;i++)
+//		  	System.out.println(rbnutilities.arrayToString(sdarr[i]) +"\t" + result[i]);
 		return result;
 	}
 
