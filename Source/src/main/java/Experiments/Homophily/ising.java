@@ -7,9 +7,7 @@ import RBNgui.Primula;
 import RBNpackage.*;
 import RBNutilities.rbnutilities;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 public class ising {
@@ -44,11 +42,12 @@ public class ising {
 
     public static void main(String[] args) {
         String N = "32";
-        String J = "-0.5";
-        String Jb = "-0.1";
+        String J = "-0.4";
+        String Jb = "0.1";
         String temp = "0.4";
         Boolean loc_h = false;
-        Boolean loc_h2 = true;
+        Boolean node_const= true;
+        String expName = "HP";
 
         Primula primula = new Primula();
         primula.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
@@ -69,14 +68,15 @@ public class ising {
         load_gnn_set.put("Jb", Double.valueOf(Jb));
         load_gnn_set.put("temp", Double.valueOf(temp));
         load_gnn_set.put("iter", 4);
+        load_gnn_set.put("noisy", false);
 
         primula.setLoadGnnSet(load_gnn_set);
 
         File srsfile = null;
         if (loc_h)
             srsfile = new File("/Users/lz50rg/Dev/homophily/experiments/ising/rdef/ising_" + N + "_" + J + "_" + Jb + "_" + temp + "_" + "4_loc.rdef");
-        else if (loc_h2)
-            srsfile = new File("/Users/lz50rg/Dev/homophily/experiments/ising/rdef/ising_" + N + "_" + J + "_" + Jb + "_" + temp + "_" + "4_nodeconst.rdef");
+        else if (node_const)
+            srsfile = new File("/Users/lz50rg/Dev/homophily/experiments/ising/rdef/ising_" + N + "_" + J + "_" + Jb + "_" + temp + "_" + "4_nodeconst_" + expName + ".rdef");
         else
             srsfile = new File("/Users/lz50rg/Dev/homophily/experiments/ising/rdef/ising_" + N + "_" + J + "_" + Jb + "_" + temp + "_" + "4.rdef");
         System.out.println(srsfile);
@@ -86,7 +86,7 @@ public class ising {
         ArrayList<ArrayList<Rel>> attrs_rels = new ArrayList<>();
         Rel[] inp_rel = new Rel[1];
         for (int i = 0; i < 1; i++) {
-            inp_rel[i] = new BoolRel("attr" + i, 1);
+            inp_rel[i] = new NumRel("attr" + i, 1);
         }
         attrs_rels.add(
                 new ArrayList<Rel>(
@@ -96,8 +96,10 @@ public class ising {
                 )
         );
 
-        ArrayList<String> edge_attr = new ArrayList<>();
-        edge_attr.add("edge");
+        BoolRel edgeRel = new BoolRel("edge", 2, typeStringToArray("node,node",2));
+        ArrayList<Rel> edge_attr = new ArrayList<>();
+        edge_attr.add(edgeRel);
+        edge_attr.get(0).setInout(Rel.PREDEFINED);
 
         RBNPreldef gnn_rbn = new  RBNPreldef(
                 new CatRel("CAT", 1, typeStringToArray("node",1), valStringToArray("POS,NEG")),
@@ -116,7 +118,7 @@ public class ising {
         File input_file = null;
         if (loc_h)
             input_file = new File("/Users/lz50rg/Dev/homophily/experiments/ising/const_ising_loc.rbn");
-        else if (loc_h2)
+        else if (node_const)
 //            input_file = new File("/Users/lz50rg/Dev/homophily/experiments/ising/const_ising_glob.rbn");
             input_file = new File("/Users/lz50rg/Dev/homophily/experiments/rbn_constraints/const_nodeconst.rbn");
         else
@@ -136,6 +138,7 @@ public class ising {
         // add the rbn to primula
         primula.setRbn(manual_rbn);
         primula.getInstantiation().init(manual_rbn);
+        primula.setRbnparameters(manual_rbn.parameters());
 
         // the relation to query
         CatRel tmp_query = new CatRel("CAT", 1, typeStringToArray("node",1), valStringToArray("POS,NEG"));
@@ -144,6 +147,12 @@ public class ising {
         GroundAtomList gal = new GroundAtomList();
         RelStruc input_struct = primula.getRels();
         RelDataForOneInput prob_data = primula.getReldata().elementAt(0);
+//        try {
+//            PrintStream fileOut = new PrintStream(new File("/Users/lz50rg/Dev/homophily/experiments/ising/output.txt"));
+//            System.setOut(fileOut);
+//        } catch (FileNotFoundException e) {
+//            throw new RuntimeException(e);
+//        }
 
         try {
             InferenceModule im = primula.openInferenceModule(false);
@@ -164,8 +173,8 @@ public class ising {
             im.addQueryAtoms(tmp_query, gal);
 
             // perform map inference
-            im.setNumRestarts(1);
-            im.setMapSeachAlg(1);
+            im.setNumRestarts(10);
+            im.setMapSeachAlg(2);
             im.setNumIterGreedyMap(50000);
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();
@@ -228,8 +237,8 @@ public class ising {
             String pred_node_path = null;
             if (loc_h)
                 pred_node_path = "/Users/lz50rg/Dev/homophily/experiments/ising/pred_labels/pred_labels_" + load_gnn_set.get("model") + "_" + N + "_" + J + "_" + Jb + "_" + temp + "_loc.txt";
-            else if (loc_h2)
-                pred_node_path = "/Users/lz50rg/Dev/homophily/experiments/ising/pred_labels/pred_labels_" + load_gnn_set.get("model") + "_" + N + "_" + J + "_" + Jb + "_" + temp + "_nodeconst.txt";
+            else if (node_const)
+                pred_node_path = "/Users/lz50rg/Dev/homophily/experiments/ising/pred_labels/pred_labels_" + load_gnn_set.get("model") + "_" + N + "_" + J + "_" + Jb + "_" + temp + "_nodeconst_" + expName + ".txt";
             else
                 pred_node_path = "/Users/lz50rg/Dev/homophily/experiments/ising/pred_labels/pred_labels_" + load_gnn_set.get("model") + "_" + N + "_" + J + "_" + Jb + "_" + temp + ".txt";
 
@@ -253,7 +262,7 @@ public class ising {
             }
 
         } catch (Exception e) {
-            System.out.println(e);
+            e.printStackTrace();
         }
         System.exit(0);
     }

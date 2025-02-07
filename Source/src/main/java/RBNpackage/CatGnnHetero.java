@@ -213,6 +213,7 @@ public class CatGnnHetero extends CPModel implements CPMGnn {
                     parent.add(rel);
             }
         }
+        // TODO also for edges
         return parent;
     }
 
