@@ -67,7 +67,7 @@ def set_vars(setd):
         models_definitions = {
             f"GGCN{setd['sdataset']}{i}": (GGCN_raf, f"{setd['model']}_{setd['sdataset']}_{i}", {
                 "nfeat": setd['nfeat'], "nlayers": setd['nlayers'], "nhidden": setd['nhid'], "nclass": setd['nclass'], "dropout": 0.5,
-                "decay_rate": 1, "exponent": 3.0, "use_degree": True, "use_sign": True, "use_decay": True, "use_sparse": False,
+                "decay_rate": setd['decayRate'], "exponent": 3.0, "use_degree": True, "use_sign": True, "use_decay": True, "use_sparse": False,
                 "scale_init": 0.5, "deg_intercept_init": 0.5, "use_bn": False, "use_ln": False, "generated": False, "pre_feature": True, "primula": True
             }) for i in range(10)
         }

@@ -59,15 +59,17 @@ public class NodeClass {
         int nhidd = Integer.parseInt(args[4]);
         int nlayers = Integer.parseInt(args[5]);
         int NUM_CLASS = Integer.parseInt(args[6]);
-        String expName = args[7];
+        double decayRate = Double.parseDouble(args[7]);
+        String expName = args[8];
 
 //        int ij = 0;
-//        String datasetName = "texas";
-//        int NUM_ATTR = 1703;
+//        String datasetName = "cora";
+//        int NUM_ATTR = 1433;
 //        String modelName = "GGCN";
 //        int nhidd = 16;
-//        int nlayers = 2;
-//        int NUM_CLASS = 5;
+//        int nlayers = 32;
+//        int NUM_CLASS = 7;
+//        double decayRate = 0.9;
 //        String expName = "real-dataset";
 
 //        String modelName = "GGCN";
@@ -81,6 +83,7 @@ public class NodeClass {
         load_gnn_set.put("nlayers", nlayers);
         load_gnn_set.put("nclass", NUM_CLASS);
         load_gnn_set.put("nhid", nhidd);
+        load_gnn_set.put("decayRate", decayRate);
         load_gnn_set.put("exp", "real-dataset");
 
         Primula primula = new Primula();
