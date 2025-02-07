@@ -203,6 +203,11 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
     }
 
     @Override
+    public TreeMap<String, double[]> evaluateGradient(Integer sno) throws RBNNaNException {
+        throw new RuntimeException("evaluatePartDeriv(Integer sno, String param) NOT IMPLEMENTED in GGGnnNode");
+    }
+
+    @Override
     public boolean isBoolean() {
         return !(cpm instanceof CatGnn || cpm instanceof CatGnnHetero);
     } // for now, we return true if is not CatGnn
@@ -228,11 +233,6 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
 
     public boolean isEdgePred() {
         return edgePred;
-    }
-
-    @Override
-    public Double[] evaluateGradient(Integer sno, String param) throws RBNNaNException {
-        throw new RuntimeException("evaluatePartDeriv(Integer sno, String param) NOT IMPLEMENTED in GGGnnNode");
     }
 
     public int outDim() {
