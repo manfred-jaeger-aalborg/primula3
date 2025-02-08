@@ -62,32 +62,33 @@ tasks.register("runExperiment") {
     group = "application"
 
     doLast {
-        val allProperties = project.properties
+//        val allProperties = project.properties
 
-//        val dataset = project.findProperty("dataset")?.toString() ?: "wisconsin"
-//        val nfeat = project.findProperty("nfeat")?.toString() ?: "1703"
-//        val model = project.findProperty("modelName")?.toString() ?: "GCN"
-//        val nhid = project.findProperty("nhid")?.toString() ?: "16"
-//        val nlayer = project.findProperty("nlayer")?.toString() ?: "2"
-//        val nclass = project.findProperty("nclass")?.toString() ?: "5"
-//        val expName = project.findProperty("expName")?.toString() ?: "exp"
+        val dataset = project.findProperty("dataset")?.toString() ?: "wisconsin"
+        val nfeat = project.findProperty("nfeat")?.toString() ?: "1703"
+        val model = project.findProperty("modelName")?.toString() ?: "GCN"
+        val nhid = project.findProperty("nhid")?.toString() ?: "16"
+        val nlayer = project.findProperty("nlayer")?.toString() ?: "2"
+        val nclass = project.findProperty("nclass")?.toString() ?: "5"
+        val decayRate = project.findProperty("decayRate")?.toString() ?: "1.0"
+        val expName = project.findProperty("expName")?.toString() ?: "exp"
 
         for (i in 0..9) {
             exec {
-//                commandLine(
-////                    "xvfb-run", "-a",
-//                    "java", "-cp", sourceSets["main"].runtimeClasspath.asPath,
-//                    "Experiments.Homophily.NodeClass", i.toString(), dataset, nfeat, model, nhid, nlayer, nclass, expName
-//                )
-                val commandArgs = mutableListOf(
-                        "java", "-cp", sourceSets["main"].runtimeClasspath.asPath,
-                        "Experiments.Homophily.NodeClass", i.toString()
+                commandLine(
+//                    "xvfb-run", "-a",
+                    "java", "-cp", sourceSets["main"].runtimeClasspath.asPath,
+                    "Experiments.Homophily.NodeClass", i.toString(), dataset, nfeat, model, nhid, nlayer, nclass, decayRate, expName
                 )
-                allProperties.values.forEach { value ->
-                    commandArgs.add(value.toString())
-                }
-
-                commandLine(commandArgs)
+//                val commandArgs = mutableListOf(
+//                        "java", "-cp", sourceSets["main"].runtimeClasspath.asPath,
+//                        "Experiments.Homophily.NodeClass", i.toString()
+//                )
+//                allProperties.values.forEach { value ->
+//                    commandArgs.add(value.toString())
+//                }
+//
+//                commandLine(commandArgs)
             }
         }
     }

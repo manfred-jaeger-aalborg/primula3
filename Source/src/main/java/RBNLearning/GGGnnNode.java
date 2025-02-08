@@ -23,9 +23,9 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
     static private int num_nodes = -1;
     static private Vector<BoolRel> boolrel;
     static private String edge_index;
-    private boolean xPred;
-    private boolean edgePred; // true if the edges are predefined --> avoid to reconstruct again in evaluate
-    private boolean savedData;
+    private static boolean xPred;
+    private static boolean edgePred; // true if the edges are predefined --> avoid to reconstruct again in evaluate
+    private static boolean savedData;
     public GGGnnNode(GradientGraphO gg,
                      CPModel cpm,
                      Hashtable allnodes,
