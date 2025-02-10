@@ -1269,6 +1269,35 @@ public class GnnPy {
         System.out.println("Pickle written in /Users/lz50rg/Dev/water-hawqs/map-inf-low.pkl!");
     }
 
+    public void savePickleGraph(Map<String, double[][]> xDict,
+                                Map<String, ArrayList<ArrayList<Integer>>> edgeDict,
+                                String path) {
+        this.sharedInterpreter.set("java_map_x", xDict);
+        this.sharedInterpreter.set("java_map_edge", edgeDict);
+
+        this.sharedInterpreter.exec(
+                    "import pickle\n" +
+                        "import torch\n" +
+                        "from torch_geometric.data import Data\n" +
+                        "data = Data()\n" +
+                        "if len(java_map_x) > 0:\n" +
+                        "    key = list(java_map_x.keys())[0]\n" +
+                        "    data.x = torch.as_tensor(java_map_x[key], dtype=torch.float32)\n" +
+
+                        "if len(java_map_edge) > 0:\n" +
+                        "    key = list(java_map_edge.keys())[0]\n" +
+                        "    value = java_map_edge[key]\n" +
+                        "    if value and len(value) > 0 and len(value[0]) > 0:\n" +
+                        "        data.edge_index = torch.as_tensor(value, dtype=torch.long)\n" +
+                        "    else:\n" +
+                        "        data.edge_index = torch.empty((2, 0), dtype=torch.long)\n" +
+                        "\n" +
+                        "with open('" + path + "', 'wb') as f:\n" +
+                        "    pickle.dump(data, f)\n"
+        );
+        System.out.println("Pickle written in: " + path);
+    }
+
     private String edgeDirection(SparseRelStruc sampledRel, CPMGnn cpmGnn, BoolRel element) {
         if (Objects.equals(cpmGnn.getEdge_direction(), "ABBA"))
             return this.stringifyGnnEdgesABBA(sampledRel, element);
