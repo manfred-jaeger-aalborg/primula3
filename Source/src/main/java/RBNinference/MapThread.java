@@ -4,6 +4,7 @@ import java.util.*;
 
 import RBNExceptions.RBNNaNException;
 import RBNLearning.*;
+import RBNgui.PrimulaGUI;
 import RBNpackage.*;
 import RBNgui.InferenceModule;
 import RBNgui.LearnModule;
@@ -29,16 +30,15 @@ public class MapThread extends GGThread {
     private String pythonHome;
 
     public boolean isSampling;
-	public MapThread(
-            Observer valueObserver,
-            InferenceModule infmodule,
+	public MapThread(InferenceModule infmodule,
 			Primula mypr,
 			GradientGraphO ggarg){
 		myinfmodule = infmodule;
 		myprimula = mypr;
 		gg = ggarg;
 		mapprobs = new MapVals(infmodule.getQueryatoms());
-		mapprobs.addObserver(infmodule);
+		if (infmodule.getInferenceModuleGUI() != null)
+			mapprobs.addObserver(infmodule.getInferenceModuleGUI());
 
         this.gnnIntegration = this.checkGnnRel(this.myprimula.getRBN());
         this.isSampling = false;
@@ -64,7 +64,8 @@ public class MapThread extends GGThread {
 		 */
 		
 		if (gg.parameters().size() > 0){
-			myLearnModule = myprimula.openLearnModule(true);			
+			if (myprimula.getPrimulaGUI() != null)
+				myLearnModule = myprimula.getPrimulaGUI().openLearnModule(true);
 			myLearnModule.disableDataTab();
 			myLearnModule.setParameters(gg.parameters());
 			gg.setLearnModule(myLearnModule);

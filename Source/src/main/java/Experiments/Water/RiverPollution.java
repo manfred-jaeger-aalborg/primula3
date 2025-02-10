@@ -164,7 +164,7 @@ public class RiverPollution {
 //        }
 
         try {
-            InferenceModule im = primula.openInferenceModule(false);
+            InferenceModule im = primula.createInferenceModule();
 
             // do not query for already instantiated values (in this case if a node is OTHER)
             OneStrucData inst = primula.getInstantiation();

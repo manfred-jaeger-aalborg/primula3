@@ -21,7 +21,7 @@ public class graph_class_yannick {
             SparseRelStruc temp = (SparseRelStruc) primula.getRels();
             if (temp.getCoords().size() == 0)
                 temp.createCoords();
-            new Bavaria(temp, srsfile, primula, false);
+            new Bavaria(temp, srsfile, primula.getPrimulaGUI(), false);
         }
     }
 
@@ -162,7 +162,7 @@ public class graph_class_yannick {
         RelDataForOneInput prob_data = primula.getReldata().elementAt(0);
 
         try {
-            InferenceModule im = primula.openInferenceModule(false);
+            InferenceModule im = primula.createInferenceModule();
 
             int[][] mat = input_struct.allTypedTuples(catRelX.getTypes());
             catRelX.setInout(1);

@@ -430,6 +430,7 @@ public class Bavaria extends JFrame implements ActionListener,ItemListener,KeyLi
 	 * @uml.associationEnd  multiplicity="(1 1)" inverse="bavaria:RBNgui.Primula"
 	 */
 	private Primula myPrimula;
+	private PrimulaGUI myPrimulaGUI;
 
 	/**
 	 * @uml.property  name="background"
@@ -458,10 +459,12 @@ public class Bavaria extends JFrame implements ActionListener,ItemListener,KeyLi
 	 */
 	private JPanel boolnumselect = new JPanel();
 
-	public Bavaria(SparseRelStruc srs, final Primula mw, boolean edited){
+	public Bavaria(SparseRelStruc srs, final PrimulaGUI mw, boolean edited){
 
 		struc = srs;
-		myPrimula = mw;
+		myPrimula = mw.primula;
+		myPrimulaGUI = mw;
+
 		isEdited = edited;
 
 		editPanel       = new EditPanel(this);
@@ -643,11 +646,11 @@ public class Bavaria extends JFrame implements ActionListener,ItemListener,KeyLi
 		
 		
 		//set background color
-		addNode.setBackground(Primula.COLOR_YELLOW);
-		moveNode.setBackground(Primula.COLOR_YELLOW_SELECTED);
-		deleteNode.setBackground(Primula.COLOR_YELLOW);
-		addTuple.setBackground(Primula.COLOR_GREEN);
-		deleteRelation.setBackground(Primula.COLOR_RED);
+		addNode.setBackground(PrimulaGUI.COLOR_YELLOW);
+		moveNode.setBackground(PrimulaGUI.COLOR_YELLOW_SELECTED);
+		deleteNode.setBackground(PrimulaGUI.COLOR_YELLOW);
+		addTuple.setBackground(PrimulaGUI.COLOR_GREEN);
+		deleteRelation.setBackground(PrimulaGUI.COLOR_RED);
 		
 		
 		//Creates the action-bar
@@ -738,11 +741,11 @@ public class Bavaria extends JFrame implements ActionListener,ItemListener,KeyLi
 			binaryPanel.setMode(ADDNODE);
 			arbitraryPanel.setMode(ADDNODE);
 			clearSelections(0);
-			addNode.setBackground(Primula.COLOR_YELLOW_SELECTED);
-			moveNode.setBackground(Primula.COLOR_YELLOW);
-			deleteNode.setBackground(Primula.COLOR_YELLOW);
-			addTuple.setBackground(Primula.COLOR_GREEN);
-			deleteRelation.setBackground(Primula.COLOR_RED);
+			addNode.setBackground(PrimulaGUI.COLOR_YELLOW_SELECTED);
+			moveNode.setBackground(PrimulaGUI.COLOR_YELLOW);
+			deleteNode.setBackground(PrimulaGUI.COLOR_YELLOW);
+			addTuple.setBackground(PrimulaGUI.COLOR_GREEN);
+			deleteRelation.setBackground(PrimulaGUI.COLOR_RED);
 		}
 		else if( source == moveNode ){
 			editPanel.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
@@ -752,11 +755,11 @@ public class Bavaria extends JFrame implements ActionListener,ItemListener,KeyLi
 			binaryPanel.setMode(MOVENODE);
 			arbitraryPanel.setMode(MOVENODE);
 			clearSelections(0);
-			moveNode.setBackground(Primula.COLOR_YELLOW_SELECTED);
-			addNode.setBackground(Primula.COLOR_YELLOW);
-			deleteNode.setBackground(Primula.COLOR_YELLOW);
-			addTuple.setBackground(Primula.COLOR_GREEN);
-			deleteRelation.setBackground(Primula.COLOR_RED);
+			moveNode.setBackground(PrimulaGUI.COLOR_YELLOW_SELECTED);
+			addNode.setBackground(PrimulaGUI.COLOR_YELLOW);
+			deleteNode.setBackground(PrimulaGUI.COLOR_YELLOW);
+			addTuple.setBackground(PrimulaGUI.COLOR_GREEN);
+			deleteRelation.setBackground(PrimulaGUI.COLOR_RED);
 		}
 		else if( source == deleteNode ){
 			editPanel.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
@@ -766,11 +769,11 @@ public class Bavaria extends JFrame implements ActionListener,ItemListener,KeyLi
 			binaryPanel.setMode(DELETENODE);
 			arbitraryPanel.setMode(DELETENODE);
 			clearSelections(0);
-			deleteNode.setBackground(Primula.COLOR_YELLOW_SELECTED);
-			addNode.setBackground(Primula.COLOR_YELLOW);
-			moveNode.setBackground(Primula.COLOR_YELLOW);
-			addTuple.setBackground(Primula.COLOR_GREEN);
-			deleteRelation.setBackground(Primula.COLOR_RED);
+			deleteNode.setBackground(PrimulaGUI.COLOR_YELLOW_SELECTED);
+			addNode.setBackground(PrimulaGUI.COLOR_YELLOW);
+			moveNode.setBackground(PrimulaGUI.COLOR_YELLOW);
+			addTuple.setBackground(PrimulaGUI.COLOR_GREEN);
+			deleteRelation.setBackground(PrimulaGUI.COLOR_RED);
 		}
 		else if( source == addTuple ){
 			editPanel.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
@@ -778,11 +781,11 @@ public class Bavaria extends JFrame implements ActionListener,ItemListener,KeyLi
 			attributesPanel.setMode(ADDTUPLE);
 			binaryPanel.setMode(ADDTUPLE);
 			arbitraryPanel.setMode(ADDTUPLE);
-			addTuple.setBackground(Primula.COLOR_GREEN_SELECTED);
-			addNode.setBackground(Primula.COLOR_YELLOW);
-			moveNode.setBackground(Primula.COLOR_YELLOW);
-			deleteNode.setBackground(Primula.COLOR_YELLOW);
-			deleteRelation.setBackground(Primula.COLOR_RED);
+			addTuple.setBackground(PrimulaGUI.COLOR_GREEN_SELECTED);
+			addNode.setBackground(PrimulaGUI.COLOR_YELLOW);
+			moveNode.setBackground(PrimulaGUI.COLOR_YELLOW);
+			deleteNode.setBackground(PrimulaGUI.COLOR_YELLOW);
+			deleteRelation.setBackground(PrimulaGUI.COLOR_RED);
 		}
 		else if( source == deleteRelation ){
 			editPanel.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
@@ -792,11 +795,11 @@ public class Bavaria extends JFrame implements ActionListener,ItemListener,KeyLi
 			binaryPanel.setMode(DELETERELATION);
 			arbitraryPanel.setMode(DELETERELATION);
 			clearSelections(0);
-			deleteRelation.setBackground(Primula.COLOR_RED_SELECTED);
-			addNode.setBackground(Primula.COLOR_YELLOW);
-			moveNode.setBackground(Primula.COLOR_YELLOW);
-			deleteNode.setBackground(Primula.COLOR_YELLOW);
-			addTuple.setBackground(Primula.COLOR_GREEN);
+			deleteRelation.setBackground(PrimulaGUI.COLOR_RED_SELECTED);
+			addNode.setBackground(PrimulaGUI.COLOR_YELLOW);
+			moveNode.setBackground(PrimulaGUI.COLOR_YELLOW);
+			deleteNode.setBackground(PrimulaGUI.COLOR_YELLOW);
+			addTuple.setBackground(PrimulaGUI.COLOR_GREEN);
 		}
 		else if( source == reset ){
 			if (editPanel.reset() == false)
@@ -1045,7 +1048,7 @@ public class Bavaria extends JFrame implements ActionListener,ItemListener,KeyLi
 		
 		
 	}
-	public Bavaria(SparseRelStruc srs, File srsfile, final Primula mw, boolean edited){
+	public Bavaria(SparseRelStruc srs, File srsfile, final PrimulaGUI mw, boolean edited){
 
 		this(srs, mw, edited);
 
@@ -1065,7 +1068,7 @@ public class Bavaria extends JFrame implements ActionListener,ItemListener,KeyLi
 	public void emptyFunction(){
 		editPanel.closeAllNodeWindows();
 		struc = new SparseRelStruc();
-		myPrimula.setRelStruc(struc);
+		myPrimulaGUI.setRelStruc(struc);
 		myPrimula.setInputFile(null);
 		isSaved = false;
 		editPanel.repaint();
@@ -1374,7 +1377,7 @@ public class Bavaria extends JFrame implements ActionListener,ItemListener,KeyLi
 	public void addNode(int xc, int yc){
 		if (relmode != DISPLAYALLMODE){
 			struc.addNode(xc, yc);
-			myPrimula.addOrRenameEvidenceModuleNode();
+			myPrimulaGUI.addOrRenameEvidenceModuleNode();
 			setIsEdited(true);}
 		else showMessage("Editing disabled");
 	}
@@ -1384,7 +1387,7 @@ public class Bavaria extends JFrame implements ActionListener,ItemListener,KeyLi
 		if (relmode != DISPLAYALLMODE){
 			editPanel.nodeWindowNodeDeleted(node);
 			struc.deleteNode(node);
-			myPrimula.deleteElementFromEvidenceModule(node);
+			myPrimulaGUI.deleteElementFromEvidenceModule(node);
 			setIsEdited(true);
 		}
 		else showMessage("Editing disabled");
@@ -1405,7 +1408,7 @@ public class Bavaria extends JFrame implements ActionListener,ItemListener,KeyLi
 	public int setName(String name, int index){
 		int i = struc.setName(name, index);
 		if(i != 0){
-			myPrimula.addOrRenameEvidenceModuleNode();
+			myPrimulaGUI.addOrRenameEvidenceModuleNode();
 			setIsEdited(true);
 		}
 		return i;
@@ -1593,7 +1596,7 @@ public class Bavaria extends JFrame implements ActionListener,ItemListener,KeyLi
 	 */
 	public void setIsEdited(boolean b){
 		isEdited = b;
-		myPrimula.setStrucEdited(b);
+		myPrimulaGUI.setStrucEdited(b);
 	}
 
 
@@ -1614,7 +1617,7 @@ public class Bavaria extends JFrame implements ActionListener,ItemListener,KeyLi
 //			
 //		}
 		else
-			myPrimula.showMessage("Unknown file format " + savefile.getName());
+			myPrimulaGUI.showMessage("Unknown file format " + savefile.getName());
 
 	}
 

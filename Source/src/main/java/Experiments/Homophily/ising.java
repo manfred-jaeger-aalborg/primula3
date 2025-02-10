@@ -155,7 +155,7 @@ public class ising {
 //        }
 
         try {
-            InferenceModule im = primula.openInferenceModule(false);
+            InferenceModule im = primula.createInferenceModule();
 
             // retrieve the data to query
             OneBoolRelData query_nodes = prob_data.inputDomain().getData().findInBoolRel("query_nodes");
@@ -173,7 +173,7 @@ public class ising {
             im.addQueryAtoms(tmp_query, gal);
 
             // perform map inference
-            im.setNumRestarts(10);
+            im.setNumRestarts(1);
             im.setMapSeachAlg(2);
             im.setNumIterGreedyMap(50000);
             GradientGraph GG = im.startMapThread();

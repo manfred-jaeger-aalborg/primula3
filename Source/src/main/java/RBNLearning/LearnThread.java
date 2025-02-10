@@ -625,8 +625,8 @@ public class LearnThread extends GGThread {
 	private GradientGraphO buildGGO(Hashtable<String,Integer> parameters,double[][] minmaxbounds,
 			Boolean showInfoInPrimula,RelData datafold){
 		GradientGraphO gg = null;
-		if (showInfoInPrimula)
-			myprimula.showMessageThis("Building Gradient Graph ...");
+		if (showInfoInPrimula && myprimula.getPrimulaGUI() != null)
+			myprimula.getPrimulaGUI().showMessageThis("Building Gradient Graph ...");
 		double timestart=System.currentTimeMillis();
 		try{
 			gg = new GradientGraphO(myprimula,
@@ -641,8 +641,8 @@ public class LearnThread extends GGThread {
 		catch (RBNCompatibilityException ex){System.out.println(ex);}
 		double timediff = (System.currentTimeMillis()-timestart)/1000;
 
-		if (showInfoInPrimula)
-			myprimula.showMessageThis("Construction time: " + timeformat.format(timediff) +"s" +'\n' );
+		if (showInfoInPrimula && myprimula.getPrimulaGUI() != null)
+			myprimula.getPrimulaGUI().showMessageThis("Construction time: " + timeformat.format(timediff) +"s" +'\n' );
 		return gg;
 	}
 

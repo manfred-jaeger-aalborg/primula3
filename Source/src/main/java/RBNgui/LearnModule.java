@@ -243,6 +243,7 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 	 * @uml.associationEnd  multiplicity="(1 1)" inverse="learnModule:RBNgui.Primula"
 	 */
 	private Primula myprimula;
+	private PrimulaGUI myprimulaGUI;
 	/**
 	 * @uml.property  name="mystaticprimula"
 	 * @uml.associationEnd  readOnly="true"
@@ -380,7 +381,8 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 	public LearnModule(Primula mypr,boolean visible){
 
 		myprimula = mypr;
-		data = mypr.getReldata();
+
+		data = myprimula.getReldata();
 		
 		
 		threadascentstrategy = AscentAdam;
@@ -437,7 +439,7 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 //		loadDataButton.addActionListener(this);
 //		loadDataButton.setBackground(Primula.COLOR_BLUE);
 		sampleDataButton.addActionListener(this);
-		sampleDataButton.setBackground(Primula.COLOR_RED);
+		sampleDataButton.setBackground(PrimulaGUI.COLOR_RED);
 //		saveDataButton.addActionListener(this);
 //		saveDataButton.setBackground(Primula.COLOR_GREEN);
 		textsamplesize.addKeyListener(this);
@@ -484,13 +486,13 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 	  	parameterScrollList.getViewport().add(parametertable);
 		parameterScrollList.setMinimumSize(new Dimension(0,100));
 		learnButton.addActionListener(this);
-	  	learnButton.setBackground(Primula.COLOR_GREEN);
+	  	learnButton.setBackground(PrimulaGUI.COLOR_GREEN);
 	  	stoplearnButton.addActionListener(this);
-	  	stoplearnButton.setBackground(Primula.COLOR_RED);
+	  	stoplearnButton.setBackground(PrimulaGUI.COLOR_RED);
 	  	setParamButton.addActionListener(this);
-	  	setParamButton.setBackground(Primula.COLOR_YELLOW);
+	  	setParamButton.setBackground(PrimulaGUI.COLOR_YELLOW);
 	  	learnSettingButton.addActionListener(this);
-	  	learnSettingButton.setBackground(Primula.COLOR_BLUE);
+	  	learnSettingButton.setBackground(PrimulaGUI.COLOR_BLUE);
 	  	learnButtons.add(learnButton);
 	  	learnButtons.add(stoplearnButton);
 	  	learnButtons.add(setParamButton);
@@ -548,20 +550,21 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 		if (source == sampleDataButton){
 			if (!myprimula.getReldata().hasProbData() || confirm("Unsaved sampled data or evidence will be lost. Continue?")){				
 				Sampler sampl = new Sampler();
-				sampl.makeSampleStruc(myprimula);
-				mystaticprimula.showMessage("Sampling ... 0% ");
+				sampl.makeSampleStruc(myprimulaGUI);
+				myprimulaGUI.showMessage("Sampling ... 0% ");
+				System.out.println("Sampling ... 0% ");
 				data = new RelData();
 				RelDataForOneInput dataforinput = new RelDataForOneInput(myprimula.getRels());
 				int completion = 0;
 				for (int i=0;i<samplesize;i++){
 					dataforinput.addCase(sampl.sampleOneStrucData(percmiss));
 					if (10*i/samplesize>completion){
-						mystaticprimula.appendMessage("X");
+						myprimulaGUI.appendMessage("X");
 						completion++;
 					}					
 				}
 				data.add(dataforinput);
-				mystaticprimula.appendMessage("100%");
+				myprimulaGUI.appendMessage("100%");
 				myprimula.setRelData(data);
 				myprimula.getInstFromReldata();
 				myprimula.updateBavaria();
@@ -1119,4 +1122,6 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 	public boolean ggverbose() {
 		return false;
 	}
+
+	public void setMyprimulaGUI(PrimulaGUI myprimulaGUI) { this.myprimulaGUI = myprimulaGUI; }
 }

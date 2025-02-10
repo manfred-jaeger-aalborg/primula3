@@ -28,7 +28,7 @@ public class SamiamManager
 		myPackageSamiam = new SoftwareEntity( STR_DISPLAY_NAME_SAMIAM, STR_PACKAGENAME_SAMIAM, STR_CLASSNAME_SAMIAM, STR_FILENAME_JAR_DEFAULT_SAMIAM );
 		myPackageSamiam.setCodeLocation( myPrimula.getPreferences().getFile( Preferences.Key.UserSamiamLocation ) );
 
-		myRuntimeSoftwareLocationBrowser = new RuntimeSoftwareLocationBrowser( new SoftwareEntity[]{ myPackageInflib, myPackageSamiam }, myPrimula );
+		myRuntimeSoftwareLocationBrowser = new RuntimeSoftwareLocationBrowser( new SoftwareEntity[]{ myPackageInflib, myPackageSamiam }, myPrimula.getPrimulaGUI() );
 	}
 
 	public void openSamiam() throws UnsatisfiedLinkError
@@ -99,7 +99,7 @@ public class SamiamManager
 					mySamiamUIInt = (edu.ucla.belief.ui.primula.SamiamUIInt) ui;
 					mySamiamUIInt.setSystemExitEnabled( false );
 					mySamiamUIInt.setInvokerName( "Primula" );
-					mySamiamUIInt.setPrimulaUIInstance( myPrimula );
+					mySamiamUIInt.setPrimulaUIInstance( myPrimula.getPrimulaGUI() );
 				}
 				else{
 					if( ui != null ){

@@ -85,6 +85,8 @@ public class GradientGraphO extends GradientGraph{
 	private int mapSearchAlg;
 	private int nIterGreedy;
 
+	private PrimulaGUI primulaGUI;
+
 	// https://stackoverflow.com/questions/4573123/java-updating-text-in-the-command-line-without-a-new-line
 	// for now the function will not be integrated (merging conflicts)
 	private static void printProgress(long startTime, long total, long current) {
@@ -206,7 +208,8 @@ public class GradientGraphO extends GradientGraph{
 		int processedcounter = 0;
 		int currentpercentage = 0;
 		if (showInfoInPrimula)
-			myPrimula.appendMessageThis("0%");
+			if (myPrimula.getPrimulaGUI() != null)
+				myPrimula.getPrimulaGUI().appendMessageThis("0%");
 
 
 
@@ -285,7 +288,8 @@ public class GradientGraphO extends GradientGraph{
 					ggmn.setUGA(fnode);
 					processedcounter++;
 					if (showInfoInPrimula && (10*processedcounter)/ugacounter > currentpercentage){
-						myPrimula.appendMessageThis("X");
+						if (myPrimula.getPrimulaGUI() != null)
+							myPrimula.getPrimulaGUI().appendMessageThis("X");
 						currentpercentage++;
 					}
 				}
@@ -414,7 +418,8 @@ public class GradientGraphO extends GradientGraph{
 							}
 							processedcounter++;
 							if (showInfoInPrimula && (10*processedcounter)/ugacounter > currentpercentage){
-								myPrimula.appendMessageThis("X");
+								if (myPrimula.getPrimulaGUI() != null)
+									myPrimula.getPrimulaGUI().appendMessageThis("X");
 								currentpercentage++;
 							}
 						} /* if (!mapatoms.contains(nextrel,nexttup)) */
@@ -427,8 +432,9 @@ public class GradientGraphO extends GradientGraph{
 		if (debugPrint)
 			System.out.println("\t-finished constructing " + numNodes + " nodes in " + (System.currentTimeMillis()-((double)startTime))/1000.0 + " sec.");
 
-		if (showInfoInPrimula) 
-			myPrimula.appendMessageThis("100%");
+		if (showInfoInPrimula)
+			if (myPrimula.getPrimulaGUI() != null)
+				myPrimula.getPrimulaGUI().appendMessageThis("100%");
 
 		/* Construct ProbFormNodes for all SumIndicator nodes.
 		 */
@@ -598,12 +604,14 @@ public class GradientGraphO extends GradientGraph{
 		}
 
 		if (showInfoInPrimula){
-			myPrimula.showMessageThis("#Ground atoms:" + llnode.childrenSize());
-			myPrimula.showMessageThis("#Sum atoms:" + sumindicators.size());
-			myPrimula.showMessageThis("#Max atoms:" + this.numberOfMaxIndicators() );
-			myPrimula.showMessageThis("#Internal nodes:" + allNodes.size());
-			//myPrimula.showMessageThis("#Links:" + numLinks());
-			myPrimula.showMessageThis("");
+			if (myPrimula.getPrimulaGUI() != null) {
+				myPrimula.getPrimulaGUI().showMessageThis("#Ground atoms:" + llnode.childrenSize());
+				myPrimula.getPrimulaGUI().showMessageThis("#Sum atoms:" + sumindicators.size());
+				myPrimula.getPrimulaGUI().showMessageThis("#Max atoms:" + this.numberOfMaxIndicators());
+				myPrimula.getPrimulaGUI().showMessageThis("#Internal nodes:" + allNodes.size());
+				//myPrimula.showMessageThis("#Links:" + numLinks());
+				myPrimula.getPrimulaGUI().showMessageThis("");
+			}
 		}
 		//showAllNodes(6,null);
 
@@ -1654,8 +1662,10 @@ public double[] learnParameters(GGThread mythread, int fullorincremental, boolea
 		while (!success && !mythread.isstopped()){
 			if (initIndicators(mythread))
 				success = true;
-			else
-				myPrimula.showMessageThis("Failed to sample missing values");
+			else {
+				if (myPrimula.getPrimulaGUI() != null)
+					myPrimula.getPrimulaGUI().showMessageThis("Failed to sample missing values");
+			}
 		}
 	}
 
@@ -2398,4 +2408,6 @@ public void setGnnPy(GnnPy gnnPy) {
 			gnnPy.load_gnn_set(sett);
 		}
 	}
+
+	public void setPrimulaGUI(PrimulaGUI primulaGUI) { this.primulaGUI = primulaGUI; }
 }

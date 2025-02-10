@@ -145,7 +145,7 @@ public class WebKB {
         RelDataForOneInput prob_data = primula.getReldata().elementAt(0);
 
         try {
-            InferenceModule im = primula.openInferenceModule(false);
+            InferenceModule im = primula.createInferenceModule();
             // retrieve the data to query
             OneBoolRelData query_nodes = prob_data.inputDomain().getData().findInBoolRel("query_nodes");
             TreeSet<int[]> true_data = query_nodes.allTrue();

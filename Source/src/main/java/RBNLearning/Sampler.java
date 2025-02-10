@@ -37,19 +37,21 @@ import java.util.*;
 public class Sampler{
 
 	private Primula myPrimula;
+	private PrimulaGUI myPrimulaGUI;
 	private PFNetwork pfnetw;
 
 	public Sampler(){
 		myPrimula = null;
+		myPrimulaGUI = null;
 		pfnetw = null;
 	}
 
 	
 	
 	
-	public void makeSampleStruc(Primula pr){
-		myPrimula = pr;
-		BayesConstructor bcons = new BayesConstructor(myPrimula, new OneStrucData(), new GroundAtomList());
+	public void makeSampleStruc(PrimulaGUI prGUI){
+		myPrimula = prGUI.primula;
+		BayesConstructor bcons = new BayesConstructor(myPrimulaGUI, new OneStrucData(), new GroundAtomList());
 		try{
 			pfnetw = bcons.constructPFNetwork(Primula.OPTION_NOT_EVIDENCE_CONDITIONED,
 					Primula.OPTION_NOT_QUERY_SPECIFIC,
@@ -280,7 +282,7 @@ public class Sampler{
 	 *  
 	 *  There are numcomp disjoint connected components of this structure
 	 *  
-	 * @param size
+	 * @param
 	 * @param numsuccs
 	 * @param numtypes
 	 * @return

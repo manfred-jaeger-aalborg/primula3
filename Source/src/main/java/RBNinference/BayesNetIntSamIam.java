@@ -50,15 +50,17 @@ public class BayesNetIntSamIam extends BayesNetIntHuginNet implements BayesNetIn
 	private StringWriter myStringWriter;
 	private String myNetworkName;
 	private Primula myPrimula;
+	private PrimulaGUI myPrimulaGUI;
 	private static int scale = 50;
 	private static DecimalFormat DECIMAL_FORMAT;
 
 	/** Creates new BayesNetIntSamIam */
-	public BayesNetIntSamIam( Primula primula, String netname )
+	public BayesNetIntSamIam( PrimulaGUI primulaGUI, String netname )
 	{
 		super();
 
-		myPrimula = primula;
+		myPrimula = primulaGUI.primula;
+		myPrimulaGUI = primulaGUI;
 		myNetworkName = netname;
 		if( myNetworkName.length() < (int)1 ) myNetworkName = STR_ID_DEFAULT + STR_FILE_EXTENSION_NET;
 
@@ -103,10 +105,10 @@ public class BayesNetIntSamIam extends BayesNetIntHuginNet implements BayesNetIn
 
 			String pathEffective = myNetworkName;
 
-			SamiamUIInt ui = myPrimula.getSamIamUIInstanceThis();
+			SamiamUIInt ui = myPrimulaGUI.getSamIamUIInstanceThis();
 			if( ui != null ){
 				while( ui.pathConflicts( pathEffective ) ){
-					int result = JOptionPane.showOptionDialog( myPrimula,
+					int result = JOptionPane.showOptionDialog( myPrimulaGUI,
 						"Model with name \"" + pathEffective + "\" already open in SamIam.  What would you like to do?",
 						"File name conflict",
 						JOptionPane.YES_NO_OPTION,
