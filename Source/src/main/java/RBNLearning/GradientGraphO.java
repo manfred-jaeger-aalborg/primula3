@@ -1224,17 +1224,34 @@ public double mapInference(GGThread mythread)
 		}
 	}
 
-	while (!terminate){
-		if (debugPrint)
-			System.out.println("starting from the top ..." + itcount);
-		//		showParameterValues("Current parameters: ");
+	while (!terminate) {
+		// Create a Runtime instance for memory measurement
+		Runtime runtime = Runtime.getRuntime();
+
+		// Mark the start of the iteration.
+		long iterStartTime = System.currentTimeMillis();
+		long memBefore = runtime.totalMemory() - runtime.freeMemory();
+
+		if (debugPrint) {
+			System.out.println("Iteration " + itcount + " starting ...");
+			System.out.println("Time: " + iterStartTime + " ms, Memory used: " + (memBefore/1048576) + " MB");
+		}
+
 		itcount++;
+
+		// --- Evaluate likelihood and its partial derivatives ---
+		long t1 = System.currentTimeMillis();
 		evaluateLikelihoodAndPartDerivs(true);
-		oldll=currentLogLikelihood(); 
-		
+		long t2 = System.currentTimeMillis();
+		if (debugPrint)
+			System.out.println("evaluateLikelihoodAndPartDerivs() took " + (t2 - t1) + " ms");
+
+		oldll = currentLogLikelihood();
 		if (debugPrint)
 			System.out.println("log-likelihood= " + oldll);
 
+		// --- Run search algorithm ---
+		long tSearchStart = System.currentTimeMillis();
 		if (mapSearchAlg == 0)
 			score = mapSearch(mythread, maxind_as_ts(), 3);
 		else if (mapSearchAlg == 1)
@@ -1244,24 +1261,52 @@ public double mapInference(GGThread mythread)
 			if (score <= 1)
 				terminate = true;
 		}
+		long tSearchEnd = System.currentTimeMillis();
+		if (debugPrint) {
+			System.out.println("Search operation took " + (tSearchEnd - tSearchStart) + " ms");
+			// For algorithms 0 and 1, print likelihood improvement.
+			if (mapSearchAlg != 2)
+				System.out.println("log-likelihood improvement " + (oldll/score));
+		}
 
-		if (debugPrint && mapSearchAlg != 2)
-			System.out.println("log-likelihood improvement " + oldll/score);
-		
-		if (mapSearchAlg != 2 && oldll/score <= 1+myggoptions.getLLikThresh()) {
+		// Print memory after search.
+		long memAfterSearch = runtime.totalMemory() - runtime.freeMemory();
+		if (debugPrint)
+			System.out.println("Memory used after search: " + (memAfterSearch/1048576) + " MB");
+
+		if (mapSearchAlg != 2 && oldll/score <= 1 + myggoptions.getLLikThresh()) {
 			terminate = true;
-			System.out.println("terminate");
+			System.out.println("Terminate condition reached based on likelihood improvement");
 		}
-		if (!terminate) {
-			if (mode == LEARNMODE) {
-				if (debugPrint)
-					System.out.print("Learning parameters ...");
-				learnParameters(mythread, GradientGraph.FullLearn, false);
-				if (debugPrint)
-					System.out.println("... done");
-			}
+
+		// --- Learn parameters if needed ---
+		if (!terminate && mode == LEARNMODE) {
+			long tLearnStart = System.currentTimeMillis();
+			if (debugPrint)
+				System.out.print("Learning parameters ...");
+			learnParameters(mythread, GradientGraph.FullLearn, false);
+			long tLearnEnd = System.currentTimeMillis();
+			if (debugPrint)
+				System.out.println("... done. Learning took " + (tLearnEnd - tLearnStart) + " ms");
+
+			long memAfterLearn = runtime.totalMemory() - runtime.freeMemory();
+			if (debugPrint)
+				System.out.println("Memory used after learning: " + (memAfterLearn/1048576) + " MB");
 		}
+
+		// --- End of iteration ---
+		long iterEndTime = System.currentTimeMillis();
+		long memAfterIter = runtime.totalMemory() - runtime.freeMemory();
+		if (debugPrint) {
+			System.out.println("Iteration " + itcount + " complete.");
+			System.out.println("Total iteration time: " + (iterEndTime - iterStartTime) + " ms");
+			System.out.println("Memory used at iteration end: " + (memAfterIter/1048576) + " MB");
+		}
+
+		System.out.println("Calling GC");
+		System.gc();
 	}
+
 
 	evaluateLikelihoodAndPartDerivs(true);
 	if (debugPrint)

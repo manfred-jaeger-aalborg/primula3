@@ -1194,6 +1194,18 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
         return primula.learnModule;
     }
 
+    private void loadDefaults() throws RBNIllegalArgumentException {
+
+        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/alpha1-[4].rbn";
+        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/test-random-erdos-500-40-50.rdef";
+
+        primula.srsfile = new File(rstinputfilestring);
+        primula.rbnfile = new File(rbninputfilestring);
+
+        primula.loadSparseRelFile(primula.srsfile);
+        primula.loadRBNFunction(primula.rbnfile);
+    }
+
     public static void main( String[] args ) throws RBNIllegalArgumentException {
         // cross platform look
         try {
@@ -1207,8 +1219,10 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
         }
         PrimulaGUI win = new PrimulaGUI(new Primula());
 //		SamiamManager.centerWindow( win );
+        win.loadDefaults();
 		win.show();
-//        win.loadDefaults();
+
+
 
 //		win.setGNNPath();
 //		win.loadCatRBN();

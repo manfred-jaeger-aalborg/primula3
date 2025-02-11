@@ -707,27 +707,4 @@ public class Primula {
 		setScriptPath("/Users/lz50rg/Dev/primula-workspace/primula3/Source/python/");
 		setScriptName("load_gnn");
 	}
-
-	public static void main( String[] args ) throws RBNIllegalArgumentException {
-		// cross platform look
-		try {
-			UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-
-		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
-			e.printStackTrace();
-		}
-		for( String arg : args ){
-			if( STR_OPTION_DEBUG.equals( arg ) ) FLAG_DEBUG = true;
-		}
-		Primula win = new Primula();
-//		SamiamManager.centerWindow( win );
-//		win.show();
-		win.loadDefaults();
-
-//		win.setGNNPath();
-//		win.loadCatRBN();
-//		win.loadGNNRBN_blue();
-//		win.loadGNNRBN_triangle();
-//		win.loadHomophilyGraph();
-	}
 }

@@ -56,12 +56,14 @@ public class GnnPy {
     static private double[][] GGx;
     static private String GGedge_indexString;
     static private int[][] GGedge_index;
-
+    static private Map<String, double[][]> xDict;
+    static private Map<String, ArrayList<ArrayList<Integer>>> edgeDict;
     static private Map<String, double[][]> GGxDict;
     static private Map<String, ArrayList<ArrayList<Integer>>> GGedgeDict;
     private boolean GGedge_pred;
     static private int GGnumNodes;
     static private Map<Rel, int[][]> GGNodesDict;
+    static private SparseRelStruc sampledRelGobal;
     public GnnPy(String scriptPath, String scriptName, String pythonHome) throws IOException {
         this.scriptPath = scriptPath;
         this.scriptName = scriptName;
@@ -789,24 +791,33 @@ public class GnnPy {
 
         // only val no gradient computed
         if (valonly) {
-            OneStrucData onsd = new OneStrucData(A.getmydata().copy()); // maybe i can avoid using the copy...
-            SparseRelStruc sampledRel = new SparseRelStruc(A.getNames(), onsd, A.getCoords(), A.signature());
-            sampledRel.getmydata().add(inst.copy());
+            if (sampledRelGobal == null) { // for faster computation, we assume that during the GG creation there is only 1 observation!
+                OneStrucData onsd = new OneStrucData(A.getmydata().copy()); // maybe i can avoid using the copy...
+                sampledRelGobal = new SparseRelStruc(A.getNames(), onsd, A.getCoords(), A.signature());
+                sampledRelGobal.getmydata().add(inst.copy());
+                xDict = null;
+                edgeDict = null;
+            }
+
             TreeSet<Rel> attr_parents = cpmGnn.parentRels();
             if (GGboolRel == null)
-                GGboolRel = sampledRel.getBoolBinaryRelations();
+                GGboolRel = sampledRelGobal.getBoolBinaryRelations();
             if (GGNodesDict.isEmpty())
                 GGNodesDict = constructNodesDict(catGnn, A);
 
             // if it has no parents we use the current attributes (should work for numeric rel)
             if (attr_parents.isEmpty()) {
-                Map<String, double[][]> x_dict = inputAttrToDict(catGnn, GGNodesDict, sampledRel);
-                Map<String, ArrayList<ArrayList<Integer>>> edge_dict = edgesToDict(GGboolRel, sampledRel);
+//                Map<String, double[][]> x_dict = inputAttrToDict(catGnn, GGNodesDict, sampledRel);
+//                Map<String, ArrayList<ArrayList<Integer>>> edge_dict = edgesToDict(GGboolRel, sampledRel);
+                if (xDict == null && edgeDict == null) {
+                    xDict = inputAttrToDict(catGnn, GGNodesDict, sampledRelGobal);
+                    edgeDict = edgesToDict(GGboolRel, sampledRelGobal);
+                }
 
                 if (cpmGnn.getGnn_inference().equals("node"))
-                    result[0] = inferModel(Integer.parseInt(cpmGnn.getArgument()), x_dict, edge_dict, cpmGnn.getIdGnn());
+                    result[0] = inferModel(Integer.parseInt(cpmGnn.getArgument()), xDict, edgeDict, cpmGnn.getIdGnn());
                 if (cpmGnn.getGnn_inference().equals("graph"))
-                    result[0] = inferModel(-1, x_dict, edge_dict, cpmGnn.getIdGnn());
+                    result[0] = inferModel(-1, xDict, edgeDict, cpmGnn.getIdGnn());
                 return result;
             } // else
             try {
@@ -830,8 +841,8 @@ public class GnnPy {
                         }
                     }
                 }
-                Map<String, double[][]> x_dict = inputAttrToDict(cpmGnn, GGNodesDict, sampledRel);
-                Map<String, ArrayList<ArrayList<Integer>>> edge_dict = edgesToDict(GGboolRel, sampledRel);
+                Map<String, double[][]> x_dict = inputAttrToDict(cpmGnn, GGNodesDict, sampledRelGobal);
+                Map<String, ArrayList<ArrayList<Integer>>> edge_dict = edgesToDict(GGboolRel, sampledRelGobal);
                 if (cpmGnn.getGnn_inference().equals("node"))
                     result[0] = inferModel(Integer.parseInt(cpmGnn.getArgument()), x_dict, edge_dict, cpmGnn.getIdGnn());
                 if (cpmGnn.getGnn_inference().equals("graph"))

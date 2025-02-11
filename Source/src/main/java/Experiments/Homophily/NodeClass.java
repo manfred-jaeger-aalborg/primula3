@@ -205,6 +205,7 @@ public class NodeClass {
             im.setNumIterGreedyMap(10000);
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();
+            im.getSampthr().interrupt();
 
             // collect results
             Hashtable<Rel, int[]> bestMapVals = im.getMapthr().getBestMapVals();

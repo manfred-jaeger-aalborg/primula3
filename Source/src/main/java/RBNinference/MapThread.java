@@ -119,10 +119,11 @@ public class MapThread extends GGThread {
 		System.out.println("Best log-likelihood found: " + oldll);
 
 		// path.pkl
-		String path = "../path.pkl";
-		if (gnnPy != null) {
-			gnnPy.savePickleGraph(xDict, edgeDict, path);
-		}
+//		String path = "/Users/lz50rg/Dev/football/res.pkl";
+//		if (gnnPy != null) {
+//			System.out.println("Exported");
+//			gnnPy.savePickleGraph(xDict, edgeDict, path);
+//		}
 
         if (this.gnnIntegration)
 			this.gnnPy.closeInterpreter();
