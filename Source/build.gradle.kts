@@ -77,22 +77,133 @@ tasks.register("runExperiment") {
                 commandLine(
                     "java",
                     "-cp", sourceSets["main"].runtimeClasspath.asPath,
-                    "Experiments.Homophily.NodeClass", i.toString(), dataset, nfeat, model, nhid, nlayer, nclass, decayRate, expName, "homGT"
+                    "Experiments.Homophily.NodeClass", i.toString(), dataset, nfeat, model, nhid, nlayer, nclass, decayRate, expName, "homLP"
                 )
             }
         }
 
-//        for (i in 0..9) {
-//            exec {
-//                commandLine(
-//                        "java",
-//                        "-cp", sourceSets["main"].runtimeClasspath.asPath,
-//                        "Experiments.Homophily.NodeClass", i.toString(), dataset, nfeat, model, nhid, nlayer, nclass, decayRate, expName, "homProp"
-//                )
-//            }
-//        }
+        for (i in 0..9) {
+            exec {
+                commandLine(
+                        "java",
+                        "-cp", sourceSets["main"].runtimeClasspath.asPath,
+                        "Experiments.Homophily.NodeClass", i.toString(), dataset, nfeat, model, nhid, nlayer, nclass, decayRate, expName, "homProp"
+                )
+            }
+        }
     }
 }
+
+tasks.register("runAllExperiments") {
+    group = "application"
+
+    doLast {
+        val datasets = listOf(
+                DatasetConfig("texas", nfeat = "1703", nclass = "5"),
+                DatasetConfig("wisconsin", nfeat = "1703", nclass = "5"),
+                DatasetConfig("film", nfeat = "932", nclass = "5"),
+                DatasetConfig("squirrel", nfeat = "2089", nclass = "5"),
+                DatasetConfig("chameleon", nfeat = "2325", nclass = "5"),
+                DatasetConfig("cornell", nfeat = "1703", nclass = "5"),
+                DatasetConfig("citeseer", nfeat = "3703", nclass = "6"),
+//                DatasetConfig("pubmed", nfeat = "500", nclass = "3"),
+                DatasetConfig("cora", nfeat = "1433", nclass = "7")
+        )
+
+        val models = listOf(
+                ModelConfig(
+                        "GCN",
+                        datasetSettings = mapOf(
+                                "texas" to ModelSettings(nhid = "16", nlayer = "2"),
+                                "wisconsin" to ModelSettings(nhid = "16", nlayer = "2"),
+                                "film" to ModelSettings(nhid = "16", nlayer = "2"),
+                                "squirrel" to ModelSettings(nhid = "16", nlayer = "2"),
+                                "chameleon" to ModelSettings(nhid = "16", nlayer = "2"),
+                                "cornell" to ModelSettings(nhid = "16", nlayer = "2"),
+                                "citeseer" to ModelSettings(nhid = "16", nlayer = "2"),
+//                                "pubmed" to ModelSettings(nhid = "16", nlayer = "2"),
+                                "cora" to ModelSettings(nhid = "16", nlayer = "2"),
+                        )
+                ),
+                ModelConfig(
+                        "GGCN",
+                        datasetSettings = mapOf(
+                                "texas" to ModelSettings(nhid = "16", nlayer = "2"),
+                                "wisconsin" to ModelSettings(nhid = "16", nlayer = "5"),
+                                "film" to ModelSettings(nhid = "32", nlayer = "4", decayRate = "1.2"),
+                                "squirrel" to ModelSettings(nhid = "32", nlayer = "2"),
+                                "chameleon" to ModelSettings(nhid = "32", nlayer = "5", decayRate = "0.8"),
+                                "cornell" to ModelSettings(nhid = "16", nlayer = "6", decayRate = "0.7"),
+                                "citeseer" to ModelSettings(nhid = "80", nlayer = "10", decayRate = "0.02"),
+//                                "pubmed" to ModelSettings(nhid = "32", nlayer = "5", decayRate = "1.1", useSparse="true"),
+                                "cora" to ModelSettings(nhid = "16", nlayer = "32", decayRate = "0.9"),
+                        )
+                )
+        )
+
+        val homTypes = listOf("homLP", "homProp")
+
+        for (datasetConfig in datasets) {
+            val datasetName = datasetConfig.name
+            val datasetNfeat = datasetConfig.nfeat
+            val datasetNclass = datasetConfig.nclass
+
+            for (modelConfig in models) {
+                val modelName = modelConfig.name
+                val modelSettingsForDataset = modelConfig.datasetSettings[datasetName]
+
+                if (modelSettingsForDataset != null) {
+                    val modelNhid = modelSettingsForDataset.nhid
+                    val modelNlayer = modelSettingsForDataset.nlayer
+                    val modelDecayRate = modelSettingsForDataset.decayRate
+                    val useSparse = modelSettingsForDataset.useSparse
+
+                    for (homType in homTypes) {
+                        for (i in 0..9) {
+                            exec {
+                                commandLine(
+                                        "java",
+                                        "-cp", sourceSets["main"].runtimeClasspath.asPath,
+                                        "Experiments.Homophily.NodeClass",
+                                        i.toString(),
+                                        datasetName,
+                                        datasetNfeat,
+                                        modelName,
+                                        modelNhid,
+                                        modelNlayer,
+                                        datasetNclass,
+                                        modelDecayRate,
+                                        useSparse,
+                                        "realDataset",
+                                        homType
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    println("Warning: No settings defined for model '${modelName}' on dataset '${datasetName}'. Skipping this combination.")
+                }
+            }
+        }
+    }
+}
+
+data class DatasetConfig(
+        val name: String,
+        val nfeat: String,
+        val nclass: String
+)
+
+data class ModelSettings(
+        val nhid: String,
+        val nlayer: String,
+        val decayRate: String? = "1.0",
+        val useSparse: String? = "false"
+)
+data class ModelConfig(
+        val name: String,
+        val datasetSettings: Map<String, ModelSettings>
+)
 
 
 tasks.register("runIsing") {

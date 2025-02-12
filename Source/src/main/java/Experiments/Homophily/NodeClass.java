@@ -60,8 +60,9 @@ public class NodeClass {
         int nlayers = Integer.parseInt(args[5]);
         int NUM_CLASS = Integer.parseInt(args[6]);
         double decayRate = Double.parseDouble(args[7]);
-        String expName = args[8];
-        String homType = args[9];
+        boolean useSparse = Boolean.parseBoolean(args[8]);
+        String expName = args[9];
+        String homType = args[10];
 
 //        int ij = 0;
 //        String datasetName = "cora";
@@ -79,13 +80,14 @@ public class NodeClass {
 
         Map<String, Object> load_gnn_set = new HashMap<>();
         load_gnn_set.put("sdataset", datasetName);
-        load_gnn_set.put("base_path", "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/");
+        load_gnn_set.put("base_path", "/nfs/home/cs.aau.dk/lz50rg/dev/Heterophily_and_oversmoothing-clus/pretrained/");
         load_gnn_set.put("model", modelName);
         load_gnn_set.put("nfeat", NUM_ATTR);
         load_gnn_set.put("nlayers", nlayers);
         load_gnn_set.put("nclass", NUM_CLASS);
         load_gnn_set.put("nhid", nhidd);
         load_gnn_set.put("decayRate", decayRate);
+        load_gnn_set.put("use_sparse", useSparse);
         load_gnn_set.put("exp", expName);
 
         Primula primula = new Primula();
@@ -110,6 +112,9 @@ public class NodeClass {
         ArrayList<ArrayList<Rel>> attrs_rels = new ArrayList<>();
         Rel[] inp_rel = new Rel[NUM_ATTR];
         for (int i = 0; i < NUM_ATTR; i++) {
+            if (datasetName == "pubmed")
+                inp_rel[i] = new NumRel("attr" + i, 1);
+            else
             inp_rel[i] = new BoolRel("attr" + i, 1);
         }
 
