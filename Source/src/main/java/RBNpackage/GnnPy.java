@@ -29,41 +29,25 @@ public class GnnPy {
     // those 4 next vairables are used to save the current query
     private String currentXString;
     private double[][] currentX;
-
-    private String currentEdgeIndexString;
     private ArrayList<ArrayList<Integer>> currentEdgeIndex;
-
     private String currentMethod;
-
     private double[][] currentResult;
-
-    // Also for heterogeneous
-    private Map<String, String> currentXdictString;
     private Map<String, double[][]> currentXdict;
-    private Map<String, String> currentEdgeDictString;
     private Map<String, ArrayList<ArrayList<Integer>>> currentEdgeDict;
-
     private String lastId;
-
     private long dimOut;
     private int numClass;
     private ArrayList<String> gnnModelsId;
-
-    static private OneStrucData GGonsd;
-    static private SparseRelStruc GGsampledRel;
-    static private Vector<BoolRel> GGboolRel;
-    static private String GGxString;
-    static private double[][] GGx;
-    static private String GGedge_indexString;
-    static private int[][] GGedge_index;
-    static private Map<String, double[][]> xDict;
-    static private Map<String, ArrayList<ArrayList<Integer>>> edgeDict;
-    static private Map<String, double[][]> GGxDict;
-    static private Map<String, ArrayList<ArrayList<Integer>>> GGedgeDict;
-    private boolean GGedge_pred;
-    static private int GGnumNodes;
-    static private Map<Rel, int[][]> GGNodesDict;
-    static private SparseRelStruc sampledRelGobal;
+    private OneStrucData GGonsd;
+    private SparseRelStruc GGsampledRel;
+    private Vector<BoolRel> GGboolRel;
+    private Map<String, double[][]> xDict;
+    private Map<String, ArrayList<ArrayList<Integer>>> edgeDict;
+    private Map<String, double[][]> GGxDict;
+    private Map<String, ArrayList<ArrayList<Integer>>> GGedgeDict;
+    private int GGnumNodes;
+    private Map<Rel, int[][]> GGNodesDict;
+    private SparseRelStruc sampledRelGobal;
     public GnnPy(String scriptPath, String scriptName, String pythonHome) throws IOException {
         this.scriptPath = scriptPath;
         this.scriptName = scriptName;
@@ -71,15 +55,15 @@ public class GnnPy {
         this.gnnModelsId = new ArrayList<>();
         this.numClass = -1;
         this.dimOut = -1;
-        currentXdictString = new Hashtable<>();
-        currentEdgeDictString = new Hashtable<>();
         currentXdict = new Hashtable<>();
         currentEdgeDict = new Hashtable<>();
         GGNodesDict = new Hashtable<>();
-
+        xDict = new Hashtable<>();
+        edgeDict = new Hashtable<>();
+        sharedInterpreter = null;
         // pip install jep in a miniconda env (torch)
         initializeJep();
-        sharedInterpreter = threadSharedInterp.get();
+//        sharedInterpreter = threadSharedInterp.get();
 //        sharedInterpreter.exec("data = HeteroData()");
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             handleShutdown();
@@ -87,6 +71,7 @@ public class GnnPy {
     }
 
     public GnnPy() {
+        System.out.println("empty gnnpy");
     }
 
     public String loadjep(String pythonHome) throws IOException {
@@ -162,12 +147,12 @@ public class GnnPy {
     private void createModelIfNull(String id) {
         if (this.gnnModelsId != null) {
             if (!this.gnnModelsId.contains(id)) {
-                this.sharedInterpreter.exec(id + " = intt.use_model(\"" + id + "\")");
+                threadSharedInterp.get().exec(id + " = intt.use_model(\"" + id + "\")");
                 this.gnnModelsId.add(id);
             }
         } else {
             this.gnnModelsId = new ArrayList<>();
-            this.sharedInterpreter.exec(id + " = intt.use_model(\"" + id + "\")");
+            threadSharedInterp.get().exec(id + " = intt.use_model(\"" + id + "\")");
             this.gnnModelsId.add(id);
         }
     }
@@ -188,112 +173,9 @@ public class GnnPy {
         return outputArray;
     }
 
-    public double[] inferModelNodeDoubleString(int node, String x, String edge_index, String idGnn, String method, boolean boundValue) {
-        assert this.sharedInterpreter != null;
-        this.createModelIfNull(idGnn);
-
-        try {
-            // check if there is already computed the results for the specific node in the result matrix, otherwise compute for all nodes with one forward propagation
-            // needs also to have the same id as before
-            if (checkValuesCacheString(x, edge_index, idGnn, method)) return currentResult[node];
-            this.currentXString = x;
-            this.currentEdgeIndexString = edge_index;
-            this.currentMethod = method;
-            this.lastId = idGnn;
-            this.sharedInterpreter.eval(edge_index);
-            this.sharedInterpreter.eval(x);
-
-            if (!Objects.equals(method, "")) {
-                this.sharedInterpreter.eval("out = intt." + method + "(" + idGnn + ", x, edge_index)");
-            } else {
-                this.sharedInterpreter.eval("out = intt." + this.INFER_NODE + "(" + idGnn + ", x, edge_index)");
-            }
-            this.sharedInterpreter.eval("out_size = len(out.shape)");
-
-            if (this.numClass == -1) {
-                this.sharedInterpreter.eval("class_num = out.shape[1] if out_size == 2 else 1");
-                long nc = (Long) this.sharedInterpreter.getValue("class_num");
-                this.numClass = (int) nc;
-            }
-
-            this.dimOut = (Long) this.sharedInterpreter.getValue("out_size");
-            if (dimOut == 1) {
-                System.out.println("not implemented");
-//                this.sharedInterpreter.eval("out = out.detach().numpy().flatten()");
-//                NDArray ndArray = (NDArray) this.sharedInterpreter.getValue("out");
-//                this.currentResult = (float[]) ndArray.getData();
-//                return (double) this.currentResult[node];
-            } else if (dimOut == 2) {
-                this.sharedInterpreter.eval("out = out.detach().numpy()");
-                NDArray ndArray = (NDArray) this.sharedInterpreter.getValue("out");
-                float[] tarr = (float[]) ndArray.getData();
-                currentResult = convertTo2D(tarr, ndArray.getDimensions()[0], ndArray.getDimensions()[1]);
-                double[] catres = currentResult[node];
-                return catres;
-            }
-            // else nothing
-            return null;
-        } catch (JepException e) {
-            System.err.println("Failed to execute inference: " + e);
-            return null;
-        }
-    }
-
-    public double[] inferModelNodeDouble(int node, double[][] x, ArrayList<ArrayList<Integer>> edge_index, String idGnn, String method) {
-        assert this.sharedInterpreter != null;
-        this.createModelIfNull(idGnn);
-
-        try {
-            // check if there is already computed the results for the specific node in the result matrix, otherwise compute for all nodes with one forward propagation
-            // needs also to have the same id as before
-            if (checkValuesCache(x, edge_index, idGnn, method)) return currentResult[node];
-            this.currentX = x;
-            this.currentEdgeIndex = edge_index;
-            this.currentMethod = method;
-            this.lastId = idGnn;
-            this.sharedInterpreter.set("java_x", x);
-            this.sharedInterpreter.set("java_edge", edge_index);
-            this.sharedInterpreter.exec("xi = torch.as_tensor(java_x, dtype=torch.float32)");
-            if (edge_index.size() > 0)
-                this.sharedInterpreter.exec("ei = torch.as_tensor(java_edge, dtype=torch.long)");
-            else
-                this.sharedInterpreter.exec("ei = torch.empty((2, 0), dtype=torch.long)");
-
-            if (!Objects.equals(method, "")) {
-                this.sharedInterpreter.eval("out = intt." + method + "(" + idGnn + ", xi, ei)");
-            } else {
-                this.sharedInterpreter.eval("out = intt." + this.INFER_NODE + "(" + idGnn + ", xi, ei)");
-            }
-            this.sharedInterpreter.eval("out_size = len(out.shape)");
-
-            if (this.numClass == -1) {
-                this.sharedInterpreter.eval("class_num = out.shape[1] if out_size == 2 else 1");
-                long nc = (Long) this.sharedInterpreter.getValue("class_num");
-                this.numClass = (int) nc;
-            }
-
-            this.dimOut = (Long) this.sharedInterpreter.getValue("out_size");
-            if (dimOut == 1) {
-                System.out.println("not implemented");
-            } else if (dimOut == 2) {
-                this.sharedInterpreter.eval("out = out.detach().numpy()");
-                NDArray ndArray = (NDArray) this.sharedInterpreter.getValue("out");
-                float[] tarr = (float[]) ndArray.getData();
-                currentResult = convertTo2D(tarr, ndArray.getDimensions()[0], ndArray.getDimensions()[1]);
-                double[] catres = currentResult[node];
-                return catres;
-            }
-            // else nothing
-            return null;
-        } catch (JepException e) {
-            System.err.println("Failed to execute inference: " + e);
-            return null;
-        }
-    }
-
     // if node is set to -1, we perform graph classification (arity 0)
     public double[] inferModel(int node, Map<String, double[][]> x_dict, Map<String, ArrayList<ArrayList<Integer>>> edge_dict, String idGnn) {
-        assert this.sharedInterpreter != null;
+        assert threadSharedInterp.get() != null;
         this.createModelIfNull(idGnn);
         int currentNode = 0;
         if (node != -1)
@@ -309,41 +191,41 @@ public class GnnPy {
             currentEdgeDict = edge_dict;
             lastId = idGnn;
 
-            this.sharedInterpreter.set("java_map_x", currentXdict);
+            threadSharedInterp.get().set("java_map_x", currentXdict);
             String keyX = currentXdict.entrySet().iterator().next().getKey(); // in this case the dictionary should have only one key
-            this.sharedInterpreter.set("java_map_edge", currentEdgeDict);
-            this.sharedInterpreter.exec("xi = torch.as_tensor(java_map_x['" + keyX + "'], dtype=torch.float32)"); // TODO maybe this key can be more general (like take just the first element in the dict)
+            threadSharedInterp.get().set("java_map_edge", currentEdgeDict);
+            threadSharedInterp.get().exec("xi = torch.as_tensor(java_map_x['" + keyX + "'], dtype=torch.float32)"); // TODO maybe this key can be more general (like take just the first element in the dict)
             if (!edge_dict.isEmpty())
-                this.sharedInterpreter.exec("ei = torch.as_tensor(java_map_edge['edge'], dtype=torch.long)");
+                threadSharedInterp.get().exec("ei = torch.as_tensor(java_map_edge['edge'], dtype=torch.long)");
             else
-                this.sharedInterpreter.exec("ei = torch.empty((2, 0), dtype=torch.long)");
+                threadSharedInterp.get().exec("ei = torch.empty((2, 0), dtype=torch.long)");
 
 //            printPython(sharedInterpreter, "ei");
 
             if (node == -1)
-                this.sharedInterpreter.eval("out = intt." + this.INFER_GRAPH + "(" + idGnn + ", xi, ei)");
+                threadSharedInterp.get().eval("out = intt." + this.INFER_GRAPH + "(" + idGnn + ", xi, ei)");
             else
-                this.sharedInterpreter.eval("out = intt." + this.INFER_NODE + "(" + idGnn + ", xi, ei)");
-            this.sharedInterpreter.exec("out_size = len(out.shape)");
+                threadSharedInterp.get().eval("out = intt." + this.INFER_NODE + "(" + idGnn + ", xi, ei)");
+            threadSharedInterp.get().exec("out_size = len(out.shape)");
 
             if (this.numClass == -1) {
-                this.sharedInterpreter.exec("class_num = out.shape[1] if out_size == 2 else 1");
-                long nc = (Long) this.sharedInterpreter.getValue("class_num");
+                threadSharedInterp.get().exec("class_num = out.shape[1] if out_size == 2 else 1");
+                long nc = (Long) threadSharedInterp.get().getValue("class_num");
                 this.numClass = (int) nc;
             }
 
-            this.dimOut = (Long) this.sharedInterpreter.getValue("out_size");
+            this.dimOut = (Long) threadSharedInterp.get().getValue("out_size");
             if (dimOut == 1) {
-                this.sharedInterpreter.exec("out = out.detach().numpy()");
-                NDArray ndArray = (NDArray) this.sharedInterpreter.getValue("out");
+                threadSharedInterp.get().exec("out = out.detach().numpy()");
+                NDArray ndArray = (NDArray) threadSharedInterp.get().getValue("out");
                 float[] tarr = (float[]) ndArray.getData();
                 double[] res = new double[2];
                 res[0] = Double.valueOf(tarr[0]);
                 res[1] = Double.valueOf(tarr[1]);
                 return res;
             } else if (dimOut == 2) {
-                this.sharedInterpreter.exec("out = out.detach().numpy()");
-                NDArray ndArray = (NDArray) this.sharedInterpreter.getValue("out");
+                threadSharedInterp.get().exec("out = out.detach().numpy()");
+                NDArray ndArray = (NDArray) threadSharedInterp.get().getValue("out");
                 float[] tarr = (float[]) ndArray.getData();
                 currentResult = convertTo2D(tarr, ndArray.getDimensions()[0], ndArray.getDimensions()[1]);
                 return currentResult[currentNode];
@@ -356,7 +238,7 @@ public class GnnPy {
     }
 
     public double[] inferModelNodeHetero(int node, Map<String, double[][]> x_dict, Map<String, ArrayList<ArrayList<Integer>>> edge_dict, String idGnn) {
-        assert this.sharedInterpreter != null;
+        assert threadSharedInterp.get() != null;
         this.createModelIfNull(idGnn);
         int currentNode = 0;
         if (node != -1)
@@ -372,10 +254,10 @@ public class GnnPy {
             currentEdgeDict = edge_dict;
             lastId = idGnn;
 
-            this.sharedInterpreter.set("java_map_x", currentXdict);
-            this.sharedInterpreter.set("java_map_edge", currentEdgeDict);
+            threadSharedInterp.get().set("java_map_x", currentXdict);
+            threadSharedInterp.get().set("java_map_edge", currentEdgeDict);
 
-            this.sharedInterpreter.exec(
+            threadSharedInterp.get().exec(
                          "data_h = HeteroData()\n" +
 
                             "for key, value in java_map_x.items():\n" +
@@ -390,25 +272,25 @@ public class GnnPy {
             );
 
             if (node == -1)
-            this.sharedInterpreter.exec("out = intt." + this.INFER_GRAPH + "(" + idGnn + ", data_h.x_dict, data_h.edge_index_dict)");
+            threadSharedInterp.get().exec("out = intt." + this.INFER_GRAPH + "(" + idGnn + ", data_h.x_dict, data_h.edge_index_dict)");
             else
-            this.sharedInterpreter.exec("out = intt." + this.INFER_NODE + "(" + idGnn + ", data_h.x_dict, data_h.edge_index_dict)");
+            threadSharedInterp.get().exec("out = intt." + this.INFER_NODE + "(" + idGnn + ", data_h.x_dict, data_h.edge_index_dict)");
 
-            this.sharedInterpreter.exec("out_size = len(out.shape)");
+            threadSharedInterp.get().exec("out_size = len(out.shape)");
 
             if (this.numClass == -1) {
-                this.sharedInterpreter.exec("class_num = out.shape[1] if out_size == 2 else 1");
-                long nc = (Long) this.sharedInterpreter.getValue("class_num");
+                threadSharedInterp.get().exec("class_num = out.shape[1] if out_size == 2 else 1");
+                long nc = (Long) threadSharedInterp.get().getValue("class_num");
                 this.numClass = (int) nc;
             }
 
 
-            this.dimOut = (Long) this.sharedInterpreter.getValue("out_size");
+            this.dimOut = (Long) threadSharedInterp.get().getValue("out_size");
             if (dimOut == 1) {
                 System.out.println("not implemented");
             } else if (dimOut == 2) {
-                this.sharedInterpreter.exec("out = out.detach().numpy()");
-                NDArray ndArray = (NDArray) this.sharedInterpreter.getValue("out");
+                threadSharedInterp.get().exec("out = out.detach().numpy()");
+                NDArray ndArray = (NDArray) threadSharedInterp.get().getValue("out");
                 float[] tarr = (float[]) ndArray.getData();
                 currentResult = convertTo2D(tarr, ndArray.getDimensions()[0], ndArray.getDimensions()[1]);
                 return currentResult[currentNode];
@@ -418,65 +300,6 @@ public class GnnPy {
             System.err.println("Failed to execute inference: " + e);
             return null;
         }
-    }
-
-    public double[] inferModelGraphDouble(double[][] x, ArrayList<ArrayList<Integer>> edge_index, String idGnn, String method) {
-        assert this.sharedInterpreter != null;
-        this.createModelIfNull(idGnn);
-
-        try {
-            if (checkValuesCache(x, edge_index, idGnn, method)) return this.currentResult[0];
-            this.currentX= x;
-            this.currentEdgeIndex = edge_index;
-            this.currentMethod = method;
-            this.lastId = idGnn;
-            this.sharedInterpreter.set("java_x", x);
-            this.sharedInterpreter.set("java_edge", edge_index);
-            this.sharedInterpreter.exec("xi = torch.as_tensor(java_x, dtype=torch.float32)");
-            if (edge_index.size() > 0)
-                this.sharedInterpreter.exec("ei = torch.as_tensor(java_edge, dtype=torch.long)");
-            else
-                this.sharedInterpreter.exec("ei = torch.empty((2, 0), dtype=torch.long)");
-
-            if (!Objects.equals(method, "")) {
-                this.sharedInterpreter.eval("out = intt." + method + "(" + idGnn + ", xi, ei)");
-            } else {
-                this.sharedInterpreter.eval("out = intt." + this.INFER_GRAPH + "(" + idGnn + ", xi, ei)");
-            }
-
-            this.sharedInterpreter.eval("out = out.detach().numpy()");
-            NDArray ndArray = (NDArray) this.sharedInterpreter.getValue("out");
-            float[] tarr = (float[]) ndArray.getData();
-            currentResult = convertTo2D(tarr, ndArray.getDimensions()[0], ndArray.getDimensions()[1]);
-            return currentResult[0];
-        } catch (JepException e) {
-            System.err.println("Failed to execute inference: " + e);
-            return null;
-        }
-    }
-
-    private boolean checkValuesCacheString(String x, String edge_index, String idGnn, String method) {
-        if (this.currentX != null && this.currentEdgeIndex != null && this.currentMethod != null && this.currentResult != null && Objects.equals(this.lastId, idGnn)) {
-            if (this.currentX.equals(x) && this.currentEdgeIndex.equals(edge_index) && this.currentMethod.equals(method)) {
-                if (this.dimOut == 1)
-                    System.out.println("not implemented");
-                else return this.dimOut == 2;
-            } else
-                this.currentResult = null;
-        }
-        return false;
-    }
-
-    private boolean checkValuesCache(double[][] x, ArrayList<ArrayList<Integer>> edge_index, String idGnn, String method) {
-        if (this.currentX != null && this.currentEdgeIndex != null && this.currentMethod != null && this.currentResult != null && Objects.equals(this.lastId, idGnn)) {
-            if (Arrays.deepEquals(currentX, x) && currentEdgeIndex.equals(edge_index) && this.currentMethod.equals(method)) {
-                if (this.dimOut == 1)
-                    System.out.println("not implemented");
-                else return this.dimOut == 2;
-            } else
-                this.currentResult = null;
-        }
-        return false;
     }
 
     private boolean checkValuesDictCache(Map<String, double[][]> x_dict, Map<String, ArrayList<ArrayList<Integer>>> edge_dict, String idGnn) {
@@ -501,13 +324,13 @@ public class GnnPy {
     }
 
     public double[] getData(PyObject out){
-        assert this.sharedInterpreter != null;
+        assert threadSharedInterp.get() != null;
         try {
-            this.sharedInterpreter.set("out_np", out);
-            this.sharedInterpreter.exec("torch.tensor(X_before, dtype=torch.float32");
-            this.sharedInterpreter.exec("out_np_np = np.array(out_np)");
+            threadSharedInterp.get().set("out_np", out);
+            threadSharedInterp.get().exec("torch.tensor(X_before, dtype=torch.float32");
+            threadSharedInterp.get().exec("out_np_np = np.array(out_np)");
             // Retrieve the numerical values directly as a Java array
-            return (double[]) this.sharedInterpreter.getValue("out_np_np");
+            return (double[]) threadSharedInterp.get().getValue("out_np_np");
         } catch (JepException e) {
             System.err.println("Failed to getData: " + e);
             return null;
@@ -611,175 +434,9 @@ public class GnnPy {
         return node_bool;
     }
 
-    public String stringifyGnnFeatures(int num_nodes, SparseRelStruc finalre, CPMGnn cpmGnn) {
-        double[][] bool_nodes = this.nodeToEncoding(num_nodes, finalre, cpmGnn);
-        return getTensorString(bool_nodes, true);
-    }
-
-    public String getTensorString(double[][] bool_nodes, boolean includeDeclaration) {
-        StringBuilder node_features = new StringBuilder();
-        if (includeDeclaration)
-            node_features.append("x=torch.tensor([");
-        else
-            node_features.append("torch.tensor([");
-
-        for (int i = 0; i < bool_nodes.length; i++) {
-            node_features.append("[");
-            for (int j = 0; j < bool_nodes[i].length; j++) {
-                node_features.append(bool_nodes[i][j]);
-//                node_features.append(".");
-                if (j < bool_nodes[i].length - 1) {
-                    node_features.append(",");
-                }
-            }
-            node_features.append("]");
-            if (i < bool_nodes.length - 1) {
-                node_features.append(",");
-            }
-        }
-        node_features.append("])");
-        return node_features.toString();
-    }
-
-    public String arraysToEdgeTensor(int[][] edges, boolean includeDeclaration) {
-        StringBuilder result = new StringBuilder();
-        if (includeDeclaration)
-            result.append("edge_index=torch.tensor([[");
-        else
-            result.append("torch.tensor([[");
-        for (int i = 0; i < edges.length; i++) {
-            result.append(edges[i][0]);
-            if (i < edges.length - 1) {
-                result.append(",");
-            }
-        }
-        result.append("],[");
-        for (int i = 0; i < edges.length; i++) {
-            result.append(edges[i][1]);
-            if (i < edges.length - 1) {
-                result.append(",");
-            }
-        }
-        result.append("]])");
-        return result.toString();
-    }
-
-    /**
-     * This function will write the edges in both directions
-     * A -> B and B -> A
-     * @param sampledRel
-     * @param edgerel
-     * @return
-     */
-    public String stringifyGnnEdgesABBA(SparseRelStruc sampledRel, BoolRel edgerel) {
-        // use the edge relation present in mydata
-        OneBoolRelData edgeinst = null;
-        String edge_index = "";
-
-        edgeinst = (OneBoolRelData) sampledRel.getmydata().find(edgerel);
-        TreeSet<int[]> edges_list = edgeinst.allTrue();
-        // in order to transpose the edge matrix we use 2 arrays
-        // we are dealing with directed edges while in our PyTorch data is undirected!
-        int[][] arrays = new int[edges_list.size()*2][2];
-        int idx = 0;
-        for (int[] array : edges_list) {
-            arrays[idx][0] = array[0];
-            arrays[idx][1] = array[1];
-            arrays[idx+1][0] = array[1];
-            arrays[idx+1][1] = array[0];
-            idx += 2;
-        }
-        // Sort the arrays based on the first column
-        Arrays.sort(arrays, Comparator.comparingInt(a -> a[0]));
-        return this.arraysToEdgeTensor(arrays, true);
-    }
-
-    /**
-     * This function will write the edges in one direction
-     * A -> B
-     * @param sampledRel
-     * @param edgerel
-     * @return
-     */
-    public String stringifyGnnEdgesAB(SparseRelStruc sampledRel, BoolRel edgerel) {
-        // use the edge relation present in mydata
-        OneBoolRelData edgeinst = null;
-        String edge_index = "";
-
-        edgeinst = (OneBoolRelData) sampledRel.getmydata().find(edgerel);
-        TreeSet<int[]> edges_list = edgeinst.allTrue();
-        // in order to transpose the edge matrix we use 2 arrays
-        // we are dealing with directed edges while in our PyTorch data is undirected!
-        int[][] arrays = new int[edges_list.size()][2];
-        int idx = 0;
-        for (int[] array : edges_list) {
-            arrays[idx][0] = array[0];
-            arrays[idx][1] = array[1];
-            idx++;
-        }
-        // Sort the arrays based on the first column
-        Arrays.sort(arrays, Comparator.comparingInt(a -> a[0]));
-        return this.arraysToEdgeTensor(arrays, true);
-    }
-
-    /**
-     * This function will write the edges in one direction but opposite
-     * B -> A
-     * @param sampledRel
-     * @param edgerel
-     * @return
-     */
-    public String stringifyGnnEdgesBA(SparseRelStruc sampledRel, BoolRel edgerel) {
-        // use the edge relation present in mydata
-        OneBoolRelData edgeinst = null;
-        String edge_index = "";
-
-        edgeinst = (OneBoolRelData) sampledRel.getmydata().find(edgerel);
-        TreeSet<int[]> edges_list = edgeinst.allTrue();
-        // in order to transpose the edge matrix we use 2 arrays
-        // we are dealing with directed edges while in our PyTorch data is undirected!
-        int[][] arrays = new int[edges_list.size()][2];
-        int idx = 0;
-        for (int[] array : edges_list) {
-            arrays[idx][0] = array[1];
-            arrays[idx][1] = array[0];
-            idx++;
-        }
-        // Sort the arrays based on the first column
-        Arrays.sort(arrays, Comparator.comparingInt(a -> a[0]));
-        return this.arraysToEdgeTensor(arrays, true);
-    }
-
-    // Return the probability of the given graph by calling the Gnn model
-    private double[] evaluateInputGraph(CPMGnn cpmGnn,
-                                      SparseRelStruc sampledRel,
-                                      int num_nodes) {
-
-        // find the bool relations in the .rdef (edges)
-        Vector<BoolRel> boolrel = sampledRel.getBoolBinaryRelations();
-        ArrayList<ArrayList<Integer>> edge_index = null;
-        for (BoolRel element : boolrel) {
-            OneBoolRelData edgeinst = (OneBoolRelData) sampledRel.getmydata().find(element);
-            Type[] argType = element.getTypes();
-            int[] minValue = findStartNode(argType, sampledRel);
-            TreeSet<int[]> edges_list = edgeinst.allTrue();
-            edge_index = createEdgeArray(edges_list, minValue);
-        }
-
-        double[][] x = this.nodeToEncoding(num_nodes, sampledRel, cpmGnn);
-
-        if (Objects.equals(cpmGnn.getGnn_inference(), "node"))
-            return this.inferModelNodeDouble(Integer.parseInt(cpmGnn.getArgument()), x, edge_index, cpmGnn.getIdGnn(), "");
-        else if (Objects.equals(cpmGnn.getGnn_inference(), "graph")) {
-            return this.inferModelGraphDouble(x, edge_index, cpmGnn.getIdGnn(), "");
-        }
-        else
-            throw new IllegalArgumentException("not valid keyword used: " + cpmGnn.getGnn_inference());
-    }
-
     // this function encapsulate in one, all the evaluate function for a GNN inside Primula. The idea is to have a single point where the call to the python interface will be done.
     public Object[] evaluate_gnn(RelStruc A, OneStrucData inst, CPMGnn cpmGnn, boolean valonly) {
-        if (this.sharedInterpreter == null)
+        if (threadSharedInterp.get() == null)
             throw new NullPointerException("GnnPy object null!");
         if (!(cpmGnn instanceof CatGnn))
             throw new RuntimeException("CPMGnn must be CatGnn");
@@ -795,8 +452,8 @@ public class GnnPy {
                 OneStrucData onsd = new OneStrucData(A.getmydata().copy()); // maybe i can avoid using the copy...
                 sampledRelGobal = new SparseRelStruc(A.getNames(), onsd, A.getCoords(), A.signature());
                 sampledRelGobal.getmydata().add(inst.copy());
-                xDict = null;
-                edgeDict = null;
+                xDict = new Hashtable<>();
+                edgeDict = new Hashtable<>();
             }
 
             TreeSet<Rel> attr_parents = cpmGnn.parentRels();
@@ -809,7 +466,7 @@ public class GnnPy {
             if (attr_parents.isEmpty()) {
 //                Map<String, double[][]> x_dict = inputAttrToDict(catGnn, GGNodesDict, sampledRel);
 //                Map<String, ArrayList<ArrayList<Integer>>> edge_dict = edgesToDict(GGboolRel, sampledRel);
-                if (xDict == null && edgeDict == null) {
+                if (xDict.isEmpty() && edgeDict.isEmpty()) {
                     xDict = inputAttrToDict(catGnn, GGNodesDict, sampledRelGobal);
                     edgeDict = edgesToDict(GGboolRel, sampledRelGobal);
                 }
@@ -874,7 +531,7 @@ public class GnnPy {
     }
 
     public Object[] evaluate_gnnHetero(RelStruc A, OneStrucData inst, CPMGnn cpmGnn, boolean valonly) {
-        if (this.sharedInterpreter == null)
+        if (threadSharedInterp.get() == null)
             throw new NullPointerException("GnnPy object null!");
         if (!(cpmGnn instanceof CatGnnHetero))
             throw new RuntimeException("CPMGnn must be CatGnnHetero");
@@ -943,7 +600,7 @@ public class GnnPy {
     }
 
     public double[] GGevaluate_gnn(RelStruc A, GradientGraphO gg, CPMGnn cpmGnn, GGCPMNode ggcpmGnn) {
-        if (sharedInterpreter == null)
+        if (threadSharedInterp.get() == null)
             throw new NullPointerException("GnnPy object null in GGevaluate_gnn ...");
         if (!(cpmGnn instanceof CatGnn))
             throw new RuntimeException("CPMGnn must be CatGnn in GGevaluate_gnn ...");
@@ -1230,7 +887,7 @@ public class GnnPy {
     }
 
     public double[] GGevaluate_gnnHetero(RelStruc A, GradientGraphO gg, CPMGnn cpmGnn, GGCPMNode ggcpmGnn) {
-        if (this.sharedInterpreter == null)
+        if (threadSharedInterp.get() == null)
             throw new NullPointerException("GnnPy object null!");
         if (!(cpmGnn instanceof CatGnnHetero))
             throw new RuntimeException("CPMGnn must be CatGnnHetero");
@@ -1257,10 +914,10 @@ public class GnnPy {
     }
 
     public void savePickleHetero(Map<String, double[][]> xDict, Map<String, int[][]> edgeDict) {
-        this.sharedInterpreter.set("java_map_x", xDict);
-        this.sharedInterpreter.set("java_map_edge", edgeDict);
+        threadSharedInterp.get().set("java_map_x", xDict);
+        threadSharedInterp.get().set("java_map_edge", edgeDict);
 
-        this.sharedInterpreter.exec(
+        threadSharedInterp.get().exec(
                  "import pickle\n" +
                     "data_h = HeteroData()\n" +
 
@@ -1283,10 +940,10 @@ public class GnnPy {
     public void savePickleGraph(Map<String, double[][]> xDict,
                                 Map<String, ArrayList<ArrayList<Integer>>> edgeDict,
                                 String path) {
-        this.sharedInterpreter.set("java_map_x", xDict);
-        this.sharedInterpreter.set("java_map_edge", edgeDict);
+        threadSharedInterp.get().set("java_map_x", xDict);
+        threadSharedInterp.get().set("java_map_edge", edgeDict);
 
-        this.sharedInterpreter.exec(
+        threadSharedInterp.get().exec(
                     "import pickle\n" +
                         "import torch\n" +
                         "from torch_geometric.data import Data\n" +
@@ -1309,16 +966,6 @@ public class GnnPy {
         System.out.println("Pickle written in: " + path);
     }
 
-    private String edgeDirection(SparseRelStruc sampledRel, CPMGnn cpmGnn, BoolRel element) {
-        if (Objects.equals(cpmGnn.getEdge_direction(), "ABBA"))
-            return this.stringifyGnnEdgesABBA(sampledRel, element);
-        if (Objects.equals(cpmGnn.getEdge_direction(), "AB"))
-            return this.stringifyGnnEdgesAB(sampledRel, element);
-        if (Objects.equals(cpmGnn.getEdge_direction(), "BA"))
-            return this.stringifyGnnEdgesBA(sampledRel, element);
-        return null;
-    }
-
     // Initial caching of the data in GGGnnNode
     public void saveGnnData(CPMGnn cpmGnn, RelStruc A, OneStrucData inst) {
         if (GGonsd == null && GGsampledRel == null) {
@@ -1326,8 +973,6 @@ public class GnnPy {
             GGsampledRel = new SparseRelStruc(A.getNames(), GGonsd, A.getCoords(), A.signature());
             GGsampledRel.getmydata().add(inst.copy());
         }
-        GGxString = "";
-        GGx = null;
 
         if (cpmGnn instanceof CatGnnHetero || cpmGnn instanceof CatGnn) {
             GGNodesDict = constructNodesDict(cpmGnn, A);
@@ -1335,7 +980,6 @@ public class GnnPy {
             GGedgeDict = new HashMap<>();
             if (GGboolRel == null)
                 GGboolRel = GGsampledRel.getBoolBinaryRelations();
-            GGedge_indexString = "";
         } else {
             GGnumNodes = -1;
             for (Rel attr : cpmGnn.getGnnattr()) {
@@ -1351,15 +995,6 @@ public class GnnPy {
             // if the edge relations are predefined compute only once
             if (GGboolRel == null)
                 GGboolRel = GGsampledRel.getBoolBinaryRelations();
-            GGedge_indexString = "";
-            GGedge_index = null;
-            GGedge_pred = false;
-            for (BoolRel element : GGboolRel) {
-                if (element.ispredefined()) {
-                    if (Objects.equals(element.name(), cpmGnn.getEdge_name()))
-                        GGedge_pred = true;
-                }
-            }
         }
     }
 
@@ -1416,12 +1051,18 @@ public class GnnPy {
 
 //        String x = this.stringifyGnnFeatures(num_features, sampledRel, cpmGnn);
         double[][] x = this.nodeToEncoding(num_features, sampledRel, cpmGnn);
-        double[] res_py =  this.inferModelNodeDouble(Integer.parseInt(cpmGnn.getArgument()), x, edge_index, cpmGnn.getIdGnn(), "");
+//        double[] res_py =  this.inferModelNodeDouble(Integer.parseInt(cpmGnn.getArgument()), x, edge_index, cpmGnn.getIdGnn(), "");
+        double[] res_py = null;
         double[] res = new double[res_py.length];
         for (int i = 0; i < res_py.length; i++) {
             res[i] = res_py[i];
         }
-        return res;
+//        return res;
+        try {
+            throw new UnsupportedOperationException(" still missing implementation");
+        } catch (UnsupportedOperationException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void printPython(Interpreter interpreter, String var) {

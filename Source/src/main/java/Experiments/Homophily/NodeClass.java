@@ -61,6 +61,7 @@ public class NodeClass {
         int NUM_CLASS = Integer.parseInt(args[6]);
         double decayRate = Double.parseDouble(args[7]);
         String expName = args[8];
+        String homType = args[9];
 
 //        int ij = 0;
 //        String datasetName = "cora";
@@ -70,7 +71,8 @@ public class NodeClass {
 //        int nlayers = 32;
 //        int NUM_CLASS = 7;
 //        double decayRate = 0.9;
-//        String expName = "real-dataset";
+//        String expName = "realDataset";
+//        String homType = "homProp";
 
 //        String modelName = "GGCN";
         String base_path = "/Users/lz50rg/Dev/homophily/experiments/";
@@ -84,7 +86,7 @@ public class NodeClass {
         load_gnn_set.put("nclass", NUM_CLASS);
         load_gnn_set.put("nhid", nhidd);
         load_gnn_set.put("decayRate", decayRate);
-        load_gnn_set.put("exp", "real-dataset");
+        load_gnn_set.put("exp", expName);
 
         Primula primula = new Primula();
         primula.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
@@ -101,7 +103,7 @@ public class NodeClass {
         if (loc_h)
             srsfile = new File(base_path + datasetName + "/rdef/" + datasetName + "_loc_" + index + ".rdef");
         else if (node_const)
-            srsfile = new File(base_path + datasetName + "/rdef/" + datasetName + "_nodeconst_homProp_" + index + ".rdef");
+            srsfile = new File(base_path + datasetName + "/rdef/" + datasetName + "_nodeconst_" + homType + "_" + index + ".rdef");
         primula.loadSparseRelFile(srsfile);
 
         // create rbn
@@ -200,12 +202,11 @@ public class NodeClass {
             im.addQueryAtoms(tmp_query, gal);
 
             // perform map inference
-            im.setNumRestarts(1);
-            im.setMapSeachAlg(2);
+            im.setNumRestarts(5);
+            im.setMapSeachAlg(0);
             im.setNumIterGreedyMap(10000);
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();
-            im.getSampthr().interrupt();
 
             // collect results
             Hashtable<Rel, int[]> bestMapVals = im.getMapthr().getBestMapVals();
@@ -217,9 +218,9 @@ public class NodeClass {
                 pred_res.add(new ArrayList<>());
 
             // print results
-            System.out.println("\nMAP INFERENCE RESULTS:\n");
+//            System.out.println("\nMAP INFERENCE RESULTS:\n");
             for (int i = 0; i < gal.allAtoms().size(); i++) {
-                System.out.println(gal.atomAt(i).rel().toString() + "(" + gal.atomAt(i).args()[0] + "): " + res[i]);
+//                System.out.println(gal.atomAt(i).rel().toString() + "(" + gal.atomAt(i).args()[0] + "): " + res[i]);
                 pred_res.get(res[i]).add(Integer.valueOf(gal.atomAt(i).args()[0]));
             }
 
@@ -269,7 +270,7 @@ public class NodeClass {
             else if (count_h)
                 path_lab = base_path + datasetName + "/pred_labels/pred_labels_" + modelName + "_" + datasetName + "_count_" + index + ".txt";
             else if (node_const)
-                path_lab = base_path + datasetName + "/pred_labels/pred_labels_" + modelName + "_" + datasetName + "_nodeconst_" + expName + "_" + index + ".txt";
+                path_lab = base_path + datasetName + "/pred_labels/pred_labels_" + modelName + "_" + datasetName + "_nodeconst_" + homType + "_" + expName + "_" + index + ".txt";
             else
                 path_lab = base_path + datasetName + "/pred_labels/pred_labels_" + modelName + "_" + datasetName + "_" + index + ".txt";
 
@@ -293,10 +294,10 @@ public class NodeClass {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
         } catch (Exception e) {
             System.out.println(e);
         }
+        primula = null;
         System.exit(0);
     }
 }

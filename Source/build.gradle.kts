@@ -62,8 +62,6 @@ tasks.register("runExperiment") {
     group = "application"
 
     doLast {
-//        val allProperties = project.properties
-
         val dataset = project.findProperty("dataset")?.toString() ?: "wisconsin"
         val nfeat = project.findProperty("nfeat")?.toString() ?: "1703"
         val model = project.findProperty("modelName")?.toString() ?: "GCN"
@@ -72,25 +70,27 @@ tasks.register("runExperiment") {
         val nclass = project.findProperty("nclass")?.toString() ?: "5"
         val decayRate = project.findProperty("decayRate")?.toString() ?: "1.0"
         val expName = project.findProperty("expName")?.toString() ?: "exp"
+        val homType = project.findProperty("homType")?.toString() ?: "hom"
 
         for (i in 0..9) {
             exec {
                 commandLine(
-//                    "xvfb-run", "-a",
-                    "java", "-cp", sourceSets["main"].runtimeClasspath.asPath,
-                    "Experiments.Homophily.NodeClass", i.toString(), dataset, nfeat, model, nhid, nlayer, nclass, decayRate, expName
+                    "java",
+                    "-cp", sourceSets["main"].runtimeClasspath.asPath,
+                    "Experiments.Homophily.NodeClass", i.toString(), dataset, nfeat, model, nhid, nlayer, nclass, decayRate, expName, "homGT"
                 )
-//                val commandArgs = mutableListOf(
-//                        "java", "-cp", sourceSets["main"].runtimeClasspath.asPath,
-//                        "Experiments.Homophily.NodeClass", i.toString()
-//                )
-//                allProperties.values.forEach { value ->
-//                    commandArgs.add(value.toString())
-//                }
-//
-//                commandLine(commandArgs)
             }
         }
+
+//        for (i in 0..9) {
+//            exec {
+//                commandLine(
+//                        "java",
+//                        "-cp", sourceSets["main"].runtimeClasspath.asPath,
+//                        "Experiments.Homophily.NodeClass", i.toString(), dataset, nfeat, model, nhid, nlayer, nclass, decayRate, expName, "homProp"
+//                )
+//            }
+//        }
     }
 }
 

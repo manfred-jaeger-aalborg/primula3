@@ -126,7 +126,7 @@ public class GradientGraphO extends GradientGraph{
 	{	
 		super(mypr,data,params,go,mapats,m,showInfoInPrimula);
 
-		this.debugPrint = true;
+		this.debugPrint = false;
 
 		RBN rbn = myPrimula.getRBN();
 		// During the GG construction, the evaluation can include also parts that need the GNN output.
@@ -424,6 +424,7 @@ public class GradientGraphO extends GradientGraph{
 							}
 						} /* if (!mapatoms.contains(nextrel,nexttup)) */
 					} /* for (int k=0;k<inrel.size();k++) */
+											System.gc();
 					//System.out.println();
 				} /* for int i; i<rbn.NumPFs()*/
 			} /* int j=0; j<rdoi.numObservations(); */
@@ -987,50 +988,40 @@ public void gibbsSample(Thread mythread){
 		return currentLogLikelihood();
 	}
 
-public double mapSearch(GGThread mythread,TreeSet<GGAtomMaxNode> flipcandidates, int depth) {
-//	System.out.println("mapSearch with depth " + depth); // Currently depth is not used!
+public double mapSearch(GGThread mythread,TreeSet<GGAtomMaxNode> flipcandidates) throws RBNNaNException {
 	PriorityQueue<GGAtomMaxNode> scored_atoms = new PriorityQueue<GGAtomMaxNode>(new GGAtomMaxNode_Comparator()); // NB. with priority queue only the best is guarantee to be on the top
 
 	for (GGAtomMaxNode mxnode: flipcandidates) {
-//		long startTime = System.currentTimeMillis();
 		mxnode.setScore(mythread);
-//		long estimatedTime = System.currentTimeMillis() - startTime;
-//		System.out.println(mxnode.getMyatom() + " " + mxnode.getScore() + " in " + estimatedTime);
 		scored_atoms.add(mxnode);
 	}
 
-//	System.out.println("Flip scores");
-//	showMaxAtomFlipScores(scored_atoms);
+	if (debugPrint) {
+		System.out.println("Flip scores");
+		showMaxAtomFlipScores(scored_atoms);
+	}
 
 	int num_flipped = 0;
-	Boolean terminate = false;
 	GGAtomMaxNode flipnext;
-	while (!terminate) {
+	while (true) {
 		flipnext = scored_atoms.poll();
 		if (flipnext.getScore() <= 0) {
-			terminate = true;
-			if (num_flipped == 0)
+			if (num_flipped == 0 && debugPrint)
 				System.out.println("Ineffective search, no atoms flipped!");
-			else
+			else if (num_flipped > 0 && debugPrint)
 				System.out.println("Flipped " + num_flipped + " atoms");
 			break;
 		}
-		// check if it is not null (why??)
 		if (flipnext != null) {
 			if (myggoptions.ggverbose()) {
-				System.out.println("Flipping: " + flipnext.getMyatom() + " to " + flipnext.getHighvalue());
+				if (debugPrint)
+					System.out.println("Flipping: " + flipnext.getMyatom() + " to " + flipnext.getHighvalue());
 			}
 			flipnext.setCurrentInst(flipnext.getHighvalue());
 			flipnext.reEvaluateUpstream(null);
 			num_flipped++;
 
-//			Vector<GGCPMNode> ugas = flipnext.getAllugas();
-//			double[] oldll = llnode.evaluate(null, ugas, true, false, null);
-//			System.out.println(oldll);
-
-			/** sample
-			 * 
-			 */
+			/** sample **/
 			for (int j=1;j<windowsize;j++){
 				gibbsSample(mythread);
 			}
@@ -1055,33 +1046,39 @@ public double mapSearch(GGThread mythread,TreeSet<GGAtomMaxNode> flipcandidates,
 				scored_atoms.add(mx);
 			}
 			if (myggoptions.ggverbose()) {
-				System.out.println("New flip scores");
+				if (debugPrint) {
+					System.out.println("New flip scores");
 //				showMaxAtomFlipScores(scored_atoms);
-				showMaxAtomFlipScoresBestK(scored_atoms, 10);
+					showMaxAtomFlipScoresBestK(scored_atoms, 10);
+				}
 			}
-			//				System.out.println("Current likelihood: " + SmallDouble.toStandardDouble(llnode.likelihood()));
 		}
+//		evaluateLikelihoodAndPartDerivs(true);
+//		printProgressBar(num_flipped, scored_atoms.size(), currentLogLikelihood());
 	}
 
-	System.out.println("Map search result");
-	for (Rel r: maxindicators.keySet()) {
-		for (GGAtomMaxNode nextgimn: maxindicators.get(r))
-			System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst());
+	if (debugPrint) {
+		System.out.println("Map search result");
+		for (Rel r : maxindicators.keySet()) {
+			for (GGAtomMaxNode nextgimn : maxindicators.get(r))
+				System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst());
+		}
+		llnode.evaluate(null);
+		System.out.println("Log-Likelihood: " + currentLogLikelihood());
+		System.out.println("-----------------");
 	}
-	llnode.evaluate(null);
-	System.out.println("Log-Likelihood: " + currentLogLikelihood());
-	System.out.println("-----------------");
 
 	return currentLogLikelihood();
 }
 
-	public double mapSearchRecursiveWrap(GGThread mythread, Vector<GGAtomMaxNode> flipcandidates, int maxDepth) {
-		return mapSearchRecursive(mythread, new Vector<GGAtomMaxNode>(), flipcandidates, 1, 0, maxDepth);
+	public double mapSearchRecursiveWrap(GGThread mythread, Vector<GGAtomMaxNode> flipcandidates, int maxDepth, MyCount count) {
+		return mapSearchRecursive(mythread, new Vector<GGAtomMaxNode>(), flipcandidates, 1, 0, maxDepth, count);
 	}
 
-	public double mapSearchRecursive(GGThread mythread, Vector<GGAtomMaxNode> alreadyflipped, Vector<GGAtomMaxNode> flipcandidates, double currentllratio, int depth, int maxDepth) {
+	public double mapSearchRecursive(GGThread mythread, Vector<GGAtomMaxNode> alreadyflipped, Vector<GGAtomMaxNode> flipcandidates, double currentllratio, int depth, int maxDepth, MyCount count) {
 		if (depth == maxDepth) {
-			System.out.println("Max depth reached, return");
+			if (debugPrint)
+				System.out.println("Max depth reached, return");
 			return currentllratio;
 		}
 
@@ -1089,11 +1086,14 @@ public double mapSearch(GGThread mythread,TreeSet<GGAtomMaxNode> flipcandidates,
 		for (int i = 0; i < depth; i++) {
 			depthS += "\t";
 		}
-		System.out.println(depthS + "current depth " + depth);
+		if (debugPrint)
+			System.out.println(depthS + "current depth " + depth);
 		PriorityQueue<GGAtomMaxNode> scored_atoms = new PriorityQueue<GGAtomMaxNode>(new GGAtomMaxNode_Comparator()); // NB. with priority queue only the best is guarantee to be on the top
 
 		for (GGAtomMaxNode mxnode: flipcandidates) {
 			mxnode.setScore(mythread);
+			if (mxnode.getScore() <= 0)
+				count.count++;
 			scored_atoms.add(mxnode);
 		}
 
@@ -1107,16 +1107,20 @@ public double mapSearch(GGThread mythread,TreeSet<GGAtomMaxNode> flipcandidates,
 		}
 
 		if (flipnext == null){
-			System.out.println(depthS + "could not find new candidate for flipping");
-			System.out.println(depthS + "1 returning " + currentllratio);
+			if (debugPrint) {
+				System.out.println(depthS + "could not find new candidate for flipping");
+				System.out.println(depthS + "1 returning " + currentllratio);
+			}
 			return currentllratio;
 		}
 
 		Vector<GGCPMNode> ugas = flipnext.getAllugas();
 		double[] oldvalues = new double[ugas.size()];
 		double oldll = SmallDouble.log(llnode.evaluate(null, ugas,true,false,null));
-		System.out.println(depthS + "Old UGAS");
-		System.out.print(depthS);
+		if (debugPrint) {
+			System.out.println(depthS + "Old UGAS");
+			System.out.print(depthS);
+		}
 		for (int i = 0; i < oldvalues.length; i++) {
 			int childinst = ugas.get(i).instval(null);
 			double[] childval = ugas.get(i).values_for_samples[0];
@@ -1128,12 +1132,14 @@ public double mapSearch(GGThread mythread,TreeSet<GGAtomMaxNode> flipcandidates,
 				else
 					oldvalues[i] = 1 - childval[0];
 			}
-			System.out.print(ugas.get(i).getMyatom() + " ");
+			if (debugPrint)
+				System.out.print(ugas.get(i).getMyatom() + " ");
 		}
-		System.out.println();
-		System.out.println(depthS + Arrays.toString(oldvalues));
-
-		System.out.println(depthS + "Flipping: " + flipnext.getMyatom() + " to " + flipnext.getHighvalue());
+		if (debugPrint) {
+			System.out.println();
+			System.out.println(depthS + Arrays.toString(oldvalues));
+			System.out.println(depthS + "Flipping: " + flipnext.getMyatom() + " to " + flipnext.getHighvalue());
+		}
 
 		int oldValue = flipnext.getCurrentInst();
 		flipnext.setCurrentInst(flipnext.getHighvalue());
@@ -1142,8 +1148,10 @@ public double mapSearch(GGThread mythread,TreeSet<GGAtomMaxNode> flipcandidates,
 		double[] newvalues = new double[ugas.size()];
 		double newll = SmallDouble.log(llnode.evaluate(null, ugas,true,false,null));
 		currentllratio = currentllratio*oldll/newll;
-		System.out.println(depthS + "New UGAS");
-		System.out.print(depthS);
+		if (debugPrint) {
+			System.out.println(depthS + "New UGAS");
+			System.out.print(depthS);
+		}
 		for (int i = 0; i < newvalues.length; i++) {
 			int childinst = ugas.get(i).instval(null);
 			double[] childval = ugas.get(i).values_for_samples[0];
@@ -1155,30 +1163,36 @@ public double mapSearch(GGThread mythread,TreeSet<GGAtomMaxNode> flipcandidates,
 				else
 					newvalues[i] = 1 - childval[0];
 			}
-			System.out.print(ugas.get(i).getMyatom() + " ");
+			if (debugPrint)
+				System.out.print(ugas.get(i).getMyatom() + " ");
 		}
-		System.out.println();
-		System.out.println(depthS + Arrays.toString(newvalues));
+		if (debugPrint) {
+			System.out.println();
+			System.out.println(depthS + Arrays.toString(newvalues));
+		}
 
 		int worstUgasCount=0;
 		for (int i = 0; i < newvalues.length; i++) {
 			if (newvalues[i]<oldvalues[i])
 				worstUgasCount++;
 		}
-		System.out.println(depthS + "Worst UGAS: " + worstUgasCount + "/" + newvalues.length);
+		if (debugPrint)
+			System.out.println(depthS + "Worst UGAS: " + worstUgasCount + "/" + newvalues.length);
 
 		for (int j=1;j<windowsize;j++){
 			gibbsSample(mythread);
 		}
 		if (windowsize > 0 && myggoptions.ggverbose()) {
-			System.out.println(depthS + "New sampled values:");
+			if (debugPrint)
+				System.out.println(depthS + "New sampled values:");
 			showSumAtomsVals();
 		}
 		/* If we have obtained an improvement in likelihood, then we terminate
 		 * here. Otherwise we determine the next indicator to flip.
 		 */
 		if (currentllratio > 1) {
-			System.out.println(depthS + "2 returning " + currentllratio);
+			if (debugPrint)
+				System.out.println(depthS + "2 returning " + currentllratio);
 			return currentllratio;
 		}
 
@@ -1193,14 +1207,38 @@ public double mapSearch(GGThread mythread,TreeSet<GGAtomMaxNode> flipcandidates,
 			}
 		}
 		GGCPMNode minuga = ugas.elementAt(minind);
-		double recsearch = mapSearchRecursive(mythread, alreadyflipped, minuga.getMaxIndicators(), currentllratio,depth+1, maxDepth);
-		if (recsearch < 1) { /* Recursive search was unsuccessful. Undo flip and return */
-			System.out.println(depthS + "flipping back " + flipnext.getMyatom() + " to " + oldValue);
+		double recsearch = mapSearchRecursive(mythread, alreadyflipped, minuga.getMaxIndicators(), currentllratio,depth+1, maxDepth, count);
+		if (recsearch < 1) {
+			if (debugPrint)
+				System.out.println(depthS + "flipping back " + flipnext.getMyatom() + " to " + oldValue);
 			flipnext.setCurrentInst(oldValue);
 		}
 
-		System.out.println(depthS + "3 returning " + recsearch);
+		if (debugPrint)
+			System.out.println(depthS + "3 returning " + recsearch);
 		return recsearch;
+	}
+
+	class MyCount {
+		int count;
+	}
+
+	public static void printProgressBar(int current, int total, double curll) {
+		int progressBarLength = 40;
+		double progressPercentage = (double) current / total;
+		int filledBars = (int) (progressBarLength * progressPercentage);
+
+		StringBuilder progressBar = new StringBuilder("[");
+		for (int i = 0; i < filledBars; i++) {
+			progressBar.append("#");
+		}
+		for (int i = filledBars; i < progressBarLength; i++) {
+			progressBar.append("-");
+		}
+		progressBar.append("]");
+
+		String percentageText = String.format("%.2f%%", progressPercentage * 100);
+		System.out.print("\rProgress: " + progressBar.toString() + " " + percentageText + " (" + current + "/" + total + ") - current log-ll: " + curll);
 	}
 
 public double mapInference(GGThread mythread)
@@ -1216,101 +1254,71 @@ public double mapInference(GGThread mythread)
 	}
 	//		this.showAllNodes(6, myPrimula.getRels());
 	if (myggoptions.ggverbose()) {
-		System.out.println("Initial max values:");
-		showMaxAtomsVals();
+		if (debugPrint) {
+			System.out.println("Initial max values:");
+			showMaxAtomsVals();
+		}
 		if (this.numchains>0) {
 			System.out.println("Initial sampled values:");
 			showSumAtomsVals();
 		}
 	}
 
-	while (!terminate) {
-		// Create a Runtime instance for memory measurement
-		Runtime runtime = Runtime.getRuntime();
+	MyCount myCount = new MyCount();
+	evaluateLikelihoodAndPartDerivs(true);
+	double curll = currentLogLikelihood();
+//	System.out.println("initial likelihood= " + SmallDouble.toStandardDouble(llnode.likelihood()) + "   " + StringOps.arrayToString(llnode.likelihood(), "(", ")"));
+	System.out.println("initial log-likelihood= " + curll);
 
-		// Mark the start of the iteration.
-		long iterStartTime = System.currentTimeMillis();
-		long memBefore = runtime.totalMemory() - runtime.freeMemory();
-
-		if (debugPrint) {
-			System.out.println("Iteration " + itcount + " starting ...");
-			System.out.println("Time: " + iterStartTime + " ms, Memory used: " + (memBefore/1048576) + " MB");
-		}
-
-		itcount++;
-
-		// --- Evaluate likelihood and its partial derivatives ---
-		long t1 = System.currentTimeMillis();
-		evaluateLikelihoodAndPartDerivs(true);
-		long t2 = System.currentTimeMillis();
+	while (!terminate){
 		if (debugPrint)
-			System.out.println("evaluateLikelihoodAndPartDerivs() took " + (t2 - t1) + " ms");
+			System.out.println("starting from the top ..." + itcount);
+		//		showParameterValues("Current parameters: ");
+		itcount++;
+		evaluateLikelihoodAndPartDerivs(true);
+		oldll=currentLogLikelihood();
 
-		oldll = currentLogLikelihood();
 		if (debugPrint)
 			System.out.println("log-likelihood= " + oldll);
 
-		// --- Run search algorithm ---
-		long tSearchStart = System.currentTimeMillis();
-		if (mapSearchAlg == 0)
-			score = mapSearch(mythread, maxind_as_ts(), 3);
+		if (mapSearchAlg == 0) {
+			System.out.println("MAP search (0)...");
+			score = mapSearch(mythread, maxind_as_ts());
+		}
 		else if (mapSearchAlg == 1)
 			score = greedySearch(mythread, maxind_as_ts(), nIterGreedy, 1, 1);
 		else if (mapSearchAlg == 2) {
-			score = mapSearchRecursiveWrap(mythread, maxind_as_vec(), 10);
+			Vector flip = maxind_as_vec();
+			myCount.count = 0;
+			score = mapSearchRecursiveWrap(mythread, flip, 10, myCount);
+			evaluateLikelihoodAndPartDerivs(true);
+			curll = currentLogLikelihood();
+			printProgressBar( myCount.count, flip.size(), curll);
 			if (score <= 1)
 				terminate = true;
 		}
-		long tSearchEnd = System.currentTimeMillis();
-		if (debugPrint) {
-			System.out.println("Search operation took " + (tSearchEnd - tSearchStart) + " ms");
-			// For algorithms 0 and 1, print likelihood improvement.
-			if (mapSearchAlg != 2)
-				System.out.println("log-likelihood improvement " + (oldll/score));
-		}
 
-		// Print memory after search.
-		long memAfterSearch = runtime.totalMemory() - runtime.freeMemory();
-		if (debugPrint)
-			System.out.println("Memory used after search: " + (memAfterSearch/1048576) + " MB");
+		if (debugPrint && mapSearchAlg != 2)
+			System.out.println("log-likelihood improvement " + oldll/score);
 
-		if (mapSearchAlg != 2 && oldll/score <= 1 + myggoptions.getLLikThresh()) {
+		if (mapSearchAlg != 2 && oldll/score <= 1+myggoptions.getLLikThresh()) {
 			terminate = true;
-			System.out.println("Terminate condition reached based on likelihood improvement");
 		}
-
-		// --- Learn parameters if needed ---
-		if (!terminate && mode == LEARNMODE) {
-			long tLearnStart = System.currentTimeMillis();
-			if (debugPrint)
-				System.out.print("Learning parameters ...");
-			learnParameters(mythread, GradientGraph.FullLearn, false);
-			long tLearnEnd = System.currentTimeMillis();
-			if (debugPrint)
-				System.out.println("... done. Learning took " + (tLearnEnd - tLearnStart) + " ms");
-
-			long memAfterLearn = runtime.totalMemory() - runtime.freeMemory();
-			if (debugPrint)
-				System.out.println("Memory used after learning: " + (memAfterLearn/1048576) + " MB");
+		if (!terminate) {
+			if (mode == LEARNMODE) {
+				if (debugPrint)
+					System.out.print("Learning parameters ...");
+				learnParameters(mythread, GradientGraph.FullLearn, false);
+				if (debugPrint)
+					System.out.println("... done");
+			}
 		}
-
-		// --- End of iteration ---
-		long iterEndTime = System.currentTimeMillis();
-		long memAfterIter = runtime.totalMemory() - runtime.freeMemory();
-		if (debugPrint) {
-			System.out.println("Iteration " + itcount + " complete.");
-			System.out.println("Total iteration time: " + (iterEndTime - iterStartTime) + " ms");
-			System.out.println("Memory used at iteration end: " + (memAfterIter/1048576) + " MB");
-		}
-
-		System.out.println("Calling GC");
-		System.gc();
 	}
 
-
+	System.out.println();
 	evaluateLikelihoodAndPartDerivs(true);
-	if (debugPrint)
-		System.out.println("final likelihood= " + SmallDouble.toStandardDouble(llnode.likelihood()) + "   " + StringOps.arrayToString(llnode.likelihood(), "(", ")"));
+	curll = currentLogLikelihood();
+	System.out.println("final log-likelihood= " + curll);
 
 	for (GGCPMNode nextchild: this.llnode.children) {
 		if (nextchild.getMyatom().equals("constr(0)")) {

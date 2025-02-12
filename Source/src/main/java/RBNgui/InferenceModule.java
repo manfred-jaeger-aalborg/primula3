@@ -494,7 +494,7 @@ public class InferenceModule implements GradientGraphOptions {
                     mapthr.setPythonHome(this.myprimula.getPythonHome());
                     mapthr.setScriptPath(this.myprimula.getScriptPath());
                     mapthr.setScriptName(this.myprimula.getScriptName());
-                    ((GradientGraphO) gg).setGnnPy(mapthr.getGnnPy());
+//                    ((GradientGraphO) gg).setGnnPy(mapthr.getGnnPy());
                 }
                 mapthr.start();
                 threads.add(mapthr);

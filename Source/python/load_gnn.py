@@ -56,14 +56,14 @@ def set_vars(setd):
 #         }) for i in range(10)
 #     }
     ##################### REAL DATASETS ###################################
-    if setd['model'] == 'GCN' and setd['exp'] == 'real-dataset':
+    if setd['model'] == 'GCN' and setd['exp'] == 'realDataset':
         models_definitions = {
             f"GCN{setd['sdataset']}{i}": (GCN_graph, f"GCN_{setd['sdataset']}_{i}", {
                 "nfeat": setd['nfeat'], "nlayers": setd['nlayers'], "nhid": setd['nhid'], "nclass": setd['nclass'], "dropout": 0.5, "primula": True
             }) for i in range(10)
         }
 
-    if setd['model'] == 'GGCN' and setd['exp'] == 'real-dataset':
+    if setd['model'] == 'GGCN' and setd['exp'] == 'realDataset':
         models_definitions = {
             f"GGCN{setd['sdataset']}{i}": (GGCN_raf, f"{setd['model']}_{setd['sdataset']}_{i}", {
                 "nfeat": setd['nfeat'], "nlayers": setd['nlayers'], "nhidden": setd['nhid'], "nclass": setd['nclass'], "dropout": 0.5,
