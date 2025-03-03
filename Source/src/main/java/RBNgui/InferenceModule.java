@@ -773,7 +773,7 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 		for (int i=0;i<samplelogmode.length;i++)
 			samplelogmode[i]=false;
 
-		numchains = 3;
+		numchains = 5;
 		windowsize = 3;
 		numrestarts = 1;
 		
@@ -2699,6 +2699,11 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	}
 
 	public  double adagradfade(){
+		return 0;
+	}
+
+	@Override
+	public int getType_of_gradient() {
 		return 0;
 	}
 

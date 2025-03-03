@@ -158,8 +158,8 @@ private int highvalue;
 					for (int j = 0; j < thisgg.windowsize; j++) {
 						thisgg.gibbsSample(mythread);
 					}
-					System.out.println("New sampled values for setScore():");
-					thisgg.showSumAtomsVals();
+//					System.out.println("New sampled values for setScore():");
+//					thisgg.showSumAtomsVals();
 				}
 
 				// trick for faster computation, we create only once the input for all the parents.
@@ -229,8 +229,8 @@ private int highvalue;
 		return new double[] {Double.valueOf(currentInst)};
 	}
 
-	public TreeMap<String,double[]> evaluateGradient(Integer sno) throws RBNNaNException {
-		return new TreeMap<String,double[]>();
+	public Gradient evaluateGradient(Integer sno){
+		return gradient_for_samples.get(sno); // This will always be the 'empty' gradient
 	}
 
 	public void addMeToIndicators(GGCPMNode ggpfn){

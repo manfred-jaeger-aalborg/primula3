@@ -40,7 +40,9 @@ public abstract class ProbForm extends CPModel
 	public static final int PFCOMBFUNC = 2;
 	public static final int PFCONVCOMB = 3;
 	public static final int PFCONST = 4;
-	
+
+	/* flags for data type of computed gradients: array or hashtable
+	 */
 	public static final int RETURN_ARRAY=0;
 	public static final int RETURN_SPARSE=1;
 	

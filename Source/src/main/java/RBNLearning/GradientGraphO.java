@@ -85,6 +85,7 @@ public class GradientGraphO extends GradientGraph{
 	private int mapSearchAlg;
 	private int nIterGreedy;
 
+
 	// https://stackoverflow.com/questions/4573123/java-updating-text-in-the-command-line-without-a-new-line
 	// for now the function will not be integrated (merging conflicts)
 	private static void printProgress(long startTime, long total, long current) {
@@ -807,8 +808,9 @@ public class GradientGraphO extends GradientGraph{
 			if (myggoptions.ggverbose())
 				System.out.print(",");
 		}
+		llnode.evaluate(null);
 	}
-	llnode.evaluate(null);
+
 	return !abort;
 }
 

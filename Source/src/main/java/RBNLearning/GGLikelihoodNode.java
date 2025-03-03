@@ -26,7 +26,6 @@ package RBNLearning;
 
 import RBNutilities.*;
 import RBNExceptions.*;
-import RBNgui.LearnModule;
 
 import java.util.*;
 
@@ -243,7 +242,7 @@ public  class GGLikelihoodNode extends GGNode{
 		/*
 		 * The case where the requested likelihood is already computed:
 		 */
-		if (sno!= null && is_evaluated_for_samples[sno])
+		if (sno!= null && is_evaluated_val_for_samples[sno])
 			return small_likelihoods_for_samples[sno];
 
 		double[] local_small_likelihood = new double[] {1.0,0.0}; 
@@ -287,7 +286,7 @@ public  class GGLikelihoodNode extends GGNode{
 		if (updatelik && !incremental && this.depends_on_sample) {
 			small_likelihoods_for_samples[idx] = local_small_likelihood.clone();
 		}
-		is_evaluated_for_samples[idx] = true;
+		is_evaluated_val_for_samples[idx] = true;
 
 		return local_small_likelihood;
 	}
@@ -412,10 +411,10 @@ public  class GGLikelihoodNode extends GGNode{
 			return small_gradient;
 		}
 
-		if (this.depends_on_sample && !is_evaluated_for_samples[sno]){
+		if (this.depends_on_sample && !is_evaluated_val_for_samples[sno]){
 			this.evaluate(sno,batchelements,false,false,null); // TODO: incremental version of evaluateSmallGrad ?
 		}
-		if (!this.depends_on_sample && !is_evaluated_for_samples[0]){
+		if (!this.depends_on_sample && !is_evaluated_val_for_samples[0]){
 			this.evaluate(sno,batchelements,false,false,null);
 		}
 
@@ -426,59 +425,90 @@ public  class GGLikelihoodNode extends GGNode{
 
 		int childinst;
 		double childlik;
-		TreeMap<String,double[]> childgrad;
+		double childpartderiv;
+		//TreeMap<String,double[]> childgrad;
 		double childgrad_at_value;
 
 		if (relevantlikelihood[0]!=0 ){
-			Vector<double[]> childvals = new Vector<double[]>();
-			Vector<TreeMap<String,double[]>>childgrads = new Vector<TreeMap<String,double[]>>();
+//			Vector<double[]> childvals = new Vector<double[]>();
+//			Vector<Gradient>childgrads = new Vector<Gradient>();
+//			for (GGCPMNode child: batchelements) {
+//				childvals.add(child.evaluate(sno));
+//				childgrads.add(child.evaluateGradient(sno));
+//			}
+
 			for (GGCPMNode child: batchelements) {
-				childvals.add(child.evaluate(sno));
-				childgrads.add(child.evaluateGradient(sno));
-			}
+				double[] childval = child.evaluate(sno);
+				Gradient childgrad = child.evaluateGradient(sno);
+				childinst = child.instval(sno);
 
-			for (String param: thisgg.parameters.keySet()) {
+				for(Gradient.IdxPD idpd: childgrad.as_idxpd_list()){
 
-				double[] batch_small_partderiv = new double[2]; 
+					if (!child.isBoolean()) {
+						childlik = childval[childinst];
+						childgrad_at_value=idpd.getPd()[childinst];
 
-				for (int i=0;i<childvals.size();i++){
-
-					childinst = batchelements.elementAt(i).instval(sno); 
-					double[] childpartderiv = childgrads.elementAt(i).get(param);
-
-
-					if (!batchelements.elementAt(i).isBoolean()) {
-						childlik = childvals.elementAt(i)[childinst];					
-						if (childpartderiv!=null)
-							childgrad_at_value=childpartderiv[childinst];
-						else
-							childgrad_at_value=0.0;
 					} else {
 						if (childinst==1) {
-							childlik = childvals.elementAt(i)[0];
-							if (childpartderiv!=null)
-								childgrad_at_value=childpartderiv[0];
-							else
-								childgrad_at_value=0.0;
+							childlik = childval[0];
+							childgrad_at_value=idpd.getPd()[0];
 						}
 						else {
-							childlik = 1- childvals.elementAt(i)[0];
-
-							if (childpartderiv!=null)
-								childgrad_at_value=-childpartderiv[0];
-							else
-								childgrad_at_value=0.0;
+							childlik = 1- childval[0];
+							childgrad_at_value=-idpd.getPd()[0];
 						}
 					}
-
-					batch_small_partderiv = SmallDouble.add(batch_small_partderiv,
+					result[idpd.getIdx()]=SmallDouble.add(result[idpd.getIdx()],
 							SmallDouble.multiply(SmallDouble.divide(relevantlikelihood,
-									childlik),
+											childlik),
 									SmallDouble.asSmallDouble(childgrad_at_value)
-									));
+							));
 				}
-				result[thisgg.parameters().get(param)] = batch_small_partderiv;
+//				childvals.add(child.evaluate(sno));
+//				childgrads.add(child.evaluateGradient(sno));
 			}
+//			for (String param: thisgg.parameters.keySet()) {
+//
+//				double[] batch_small_partderiv = new double[2];
+//
+//				for (int i=0;i<childvals.size();i++){
+//
+//					childinst = batchelements.elementAt(i).instval(sno);
+//					double[] childpartderiv = childgrads.elementAt(i).get_part_deriv(param);
+//
+//
+//					if (!batchelements.elementAt(i).isBoolean()) {
+//						childlik = childvals.elementAt(i)[childinst];
+//						if (childpartderiv!=null)
+//							childgrad_at_value=childpartderiv[childinst];
+//						else
+//							childgrad_at_value=0.0;
+//					} else {
+//						if (childinst==1) {
+//							childlik = childvals.elementAt(i)[0];
+//							if (childpartderiv!=null)
+//								childgrad_at_value=childpartderiv[0];
+//							else
+//								childgrad_at_value=0.0;
+//						}
+//						else {
+//							childlik = 1- childvals.elementAt(i)[0];
+//
+//							if (childpartderiv!=null)
+//								childgrad_at_value=-childpartderiv[0];
+//							else
+//								childgrad_at_value=0.0;
+//						}
+//					}
+//
+//					batch_small_partderiv = SmallDouble.add(batch_small_partderiv,
+//							SmallDouble.multiply(SmallDouble.divide(relevantlikelihood,
+//									childlik),
+//									SmallDouble.asSmallDouble(childgrad_at_value)
+//									));
+//				}
+//				result[thisgg.parameters().get(param)] = batch_small_partderiv;
+//			}
 		}
 		else {
 			System.out.println("likelihood[0]=0 in evaluateSmallGrad");
@@ -492,8 +522,6 @@ public  class GGLikelihoodNode extends GGNode{
 		
 		return result;	    
 	}
-
-
 
 
 	//	private int getInstVal(int i){
@@ -603,7 +631,7 @@ public  class GGLikelihoodNode extends GGNode{
 
 	public void resetValue(Integer sno){
 		if (!this.depends_on_sample) {
-			is_evaluated_for_samples[0] = false;
+			is_evaluated_val_for_samples[0] = false;
 			//			log_likelihood = 0;
 			small_likelihood[0]=0.0;
 			small_likelihood[1]=0.0;
@@ -611,7 +639,7 @@ public  class GGLikelihoodNode extends GGNode{
 		else if (sno==null)
 			this.init_values_and_grad(true);
 		else {
-			is_evaluated_for_samples[sno] = false;
+			is_evaluated_val_for_samples[sno] = false;
 			small_likelihoods_for_samples[sno]=null;
 		}
 	}

@@ -43,4 +43,6 @@ public interface GradientGraphOptions {
 	public abstract double adagradepsilon();
 	
 	public abstract double adagradfade();
+
+	public abstract int getType_of_gradient();
 }

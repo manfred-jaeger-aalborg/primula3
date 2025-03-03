@@ -6,7 +6,6 @@ import RBNExceptions.RBNNaNException;
 import RBNpackage.*;
 
 import java.util.Hashtable;
-import java.util.Vector;
 
 public class GGAtomEqualityNode extends GGCPMNode{
 
@@ -76,9 +75,9 @@ public class GGAtomEqualityNode extends GGCPMNode{
 				this.evaluate(i);
 			return null;
 		}			
-		if (this.depends_on_sample && is_evaluated_for_samples[sno]) 
+		if (this.depends_on_sample && is_evaluated_val_for_samples[sno])
 				return this.values_for_samples[sno];
-		if (!this.depends_on_sample && is_evaluated_for_samples[0])
+		if (!this.depends_on_sample && is_evaluated_val_for_samples[0])
 			return this.values_for_samples[0];
 		
         double[] both_sides = new double[2];
@@ -97,19 +96,19 @@ public class GGAtomEqualityNode extends GGCPMNode{
 
         if (this.depends_on_sample) {
 			values_for_samples[sno] = value;
-			is_evaluated_for_samples[sno]=true;
+			is_evaluated_val_for_samples[sno]=true;
 		}
 		else {
 			values_for_samples[0] = value;
-			is_evaluated_for_samples[0]=true;
+			is_evaluated_val_for_samples[0]=true;
 		}
 
         return value;
     }
 
     @Override
-    public TreeMap<String,double[]> evaluateGradient(Integer sno) throws RBNNaNException {
-        return new TreeMap<String,double[]>();
+    public Gradient evaluateGradient(Integer sno) throws RBNNaNException {
+        return gradient_for_samples.get(sno);
     }
 
 

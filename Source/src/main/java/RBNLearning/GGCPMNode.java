@@ -298,14 +298,12 @@ public abstract class GGCPMNode extends GGNode{
 
 	/*
 	 * See GGNode.evaluate for the use of sno
-	 * 
-	 * Gradient returned as TreeMap keyed by the parameter names for which the gradient is != 0
-	 * 
+	 *
 	 * Dimension of array value for a given parameter is equal to this.outDim()
 	 * 
 	 *  
 	 */
-	public abstract TreeMap<String,double[]> evaluateGradient(Integer sno) throws RBNNaNException;
+	public abstract Gradient evaluateGradient(Integer sno) throws RBNNaNException;
 
 	public void setMyindicator(GGAtomNode mind){
 		myindicator = mind;

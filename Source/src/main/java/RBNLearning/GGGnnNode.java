@@ -179,9 +179,9 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
                 this.evaluate(i);
             return null;
         }
-        if (this.depends_on_sample && is_evaluated_for_samples[sno])
+        if (this.depends_on_sample && is_evaluated_val_for_samples[sno])
             return this.values_for_samples[sno];
-        if (!this.depends_on_sample && is_evaluated_for_samples[0])
+        if (!this.depends_on_sample && is_evaluated_val_for_samples[0])
             return this.values_for_samples[0];
 
         double[] result = null;
@@ -193,17 +193,17 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
         if (this.depends_on_sample) {
             if (cpm instanceof CatGnnHetero)
                 values_for_samples[sno] = result;
-            is_evaluated_for_samples[sno] = true;
+            is_evaluated_val_for_samples[sno] = true;
         } else {
             values_for_samples[0] = result;
-            is_evaluated_for_samples[0] = true;
+            is_evaluated_val_for_samples[0] = true;
         }
 
         return result;
     }
 
     @Override
-    public TreeMap<String, double[]> evaluateGradient(Integer sno) throws RBNNaNException {
+    public Gradient evaluateGradient(Integer sno) throws RBNNaNException {
         throw new RuntimeException("evaluatePartDeriv(Integer sno, String param) NOT IMPLEMENTED in GGGnnNode");
     }
 
@@ -234,6 +234,7 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
     public boolean isEdgePred() {
         return edgePred;
     }
+
 
     public int outDim() {
     	System.out.println("outDim still needs to be implemented for GGGnnNode");
