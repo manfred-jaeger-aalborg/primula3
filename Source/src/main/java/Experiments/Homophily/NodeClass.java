@@ -52,35 +52,37 @@ public class NodeClass {
 
     public static void main(String[] args) {
 
-        int ij = Integer.parseInt(args[0]);
-        String datasetName = args[1];
-        int NUM_ATTR = Integer.parseInt(args[2]);
-        String modelName = args[3];
-        int nhidd = Integer.parseInt(args[4]);
-        int nlayers = Integer.parseInt(args[5]);
-        int NUM_CLASS = Integer.parseInt(args[6]);
-        double decayRate = Double.parseDouble(args[7]);
-        boolean useSparse = Boolean.parseBoolean(args[8]);
-        String expName = args[9];
-        String homType = args[10];
+//        int ij = Integer.parseInt(args[0]);
+//        String datasetName = args[1];
+//        int NUM_ATTR = Integer.parseInt(args[2]);
+//        String modelName = args[3];
+//        int nhidd = Integer.parseInt(args[4]);
+//        int nlayers = Integer.parseInt(args[5]);
+//        int NUM_CLASS = Integer.parseInt(args[6]);
+//        double decayRate = Double.parseDouble(args[7]);
+//        boolean useSparse = Boolean.parseBoolean(args[8]);
+//        String expName = args[9];
+//        String homType = args[10];
+//
+//        String constWeight = args[11];
 
-//        int ij = 0;
-//        String datasetName = "cora";
-//        int NUM_ATTR = 1433;
-//        String modelName = "GGCN";
-//        int nhidd = 16;
-//        int nlayers = 32;
-//        int NUM_CLASS = 7;
-//        double decayRate = 0.9;
-//        String expName = "realDataset";
-//        String homType = "homProp";
+        int ij = 1;
+        String datasetName = "pubmed";
+        int NUM_ATTR = 6;
+        String modelName = "GCN";
+        int nhidd = 16;
+        int nlayers = 2;
+        int NUM_CLASS = 3;
+        double decayRate = 1.0;
+        String expName = "realDataset";
+        String homType = "homProp";
+        boolean useSparse = false;
 
-//        String modelName = "GGCN";
         String base_path = "/Users/lz50rg/Dev/homophily/experiments/";
 
         Map<String, Object> load_gnn_set = new HashMap<>();
         load_gnn_set.put("sdataset", datasetName);
-        load_gnn_set.put("base_path", "/nfs/home/cs.aau.dk/lz50rg/dev/Heterophily_and_oversmoothing-clus/pretrained/");
+        load_gnn_set.put("base_path", "/Users/lz50rg/Dev/homophily/experiments/Heterophily_and_oversmoothing/pretrained/");
         load_gnn_set.put("model", modelName);
         load_gnn_set.put("nfeat", NUM_ATTR);
         load_gnn_set.put("nlayers", nlayers);
@@ -112,10 +114,10 @@ public class NodeClass {
         ArrayList<ArrayList<Rel>> attrs_rels = new ArrayList<>();
         Rel[] inp_rel = new Rel[NUM_ATTR];
         for (int i = 0; i < NUM_ATTR; i++) {
-            if (datasetName == "pubmed")
+            if (datasetName.equals("pubmed"))
                 inp_rel[i] = new NumRel("attr" + i, 1);
             else
-            inp_rel[i] = new BoolRel("attr" + i, 1);
+                inp_rel[i] = new BoolRel("attr" + i, 1);
         }
 
         attrs_rels.add(
@@ -152,6 +154,8 @@ public class NodeClass {
             const_path = base_path + datasetName + "/const_" + datasetName + "_loc.rbn";
         else if (count_h)
             const_path = base_path + datasetName + "/const_" + datasetName + "_count.rbn";
+//        else if (node_const && constWeight != "-1")
+//            const_path = base_path + "rbn_constraints/const_nodeconst_" + constWeight  +".rbn";
         else if (node_const)
             const_path = base_path + "rbn_constraints/const_nodeconst.rbn";
         else
@@ -207,8 +211,8 @@ public class NodeClass {
             im.addQueryAtoms(tmp_query, gal);
 
             // perform map inference
-            im.setNumRestarts(5);
-            im.setMapSeachAlg(0);
+            im.setNumRestarts(15);
+            im.setMapSearchAlg(2);
             im.setNumIterGreedyMap(10000);
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();
@@ -274,6 +278,8 @@ public class NodeClass {
                 path_lab = base_path + datasetName + "/pred_labels/pred_labels_" + modelName + "_" + datasetName + "_loc_" + index + ".txt";
             else if (count_h)
                 path_lab = base_path + datasetName + "/pred_labels/pred_labels_" + modelName + "_" + datasetName + "_count_" + index + ".txt";
+//            else if (node_const && constWeight != "-1")
+//                path_lab = base_path + datasetName + "/pred_labels/pred_labels_" + modelName + "_" + datasetName + "_nodeconst_" + homType + "_" + expName + "_" + index + "_" + constWeight+ ".txt";
             else if (node_const)
                 path_lab = base_path + datasetName + "/pred_labels/pred_labels_" + modelName + "_" + datasetName + "_nodeconst_" + homType + "_" + expName + "_" + index + ".txt";
             else

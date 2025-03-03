@@ -2,7 +2,6 @@ package RBNgui;
 
 import RBNinference.MapVals;
 import RBNinference.SampleProbs;
-import RBNinference.SampleThread;
 import RBNpackage.*;
 import edu.ucla.belief.ace.Control;
 import edu.ucla.belief.ace.SettingsPanel;
@@ -827,6 +826,7 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
         /** keith cascio 20060511 ... */
         SamiamManager.centerWindow( this );
         /** ... keith cascio */
+        inferenceModuleCore.mapSearchAlg = 3;
     }
 
     public InferenceModuleGUI(InferenceModule evidenceModule) {
@@ -1004,8 +1004,6 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
         /** keith cascio 20060511 ... */
         else if( source == aceButtonSettings ) doAceSettings();
         /** ... keith cascio */
-
-        inferenceModuleCore.mapSeachAlg = 0;
     }
 
     /** @author keith cascio
@@ -1276,7 +1274,7 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
      * when 'qtm' consists of different subclasses of QueryTableModel.
      * @param qtm
      */
-    private void buildQueryatomsTables(Vector<? extends QueryTableModel> qtm) {
+    private void  buildQueryatomsTables(Vector<? extends QueryTableModel> qtm) {
         // Initialize the GUI components:
         queryatomsPanel.removeAll();
         querytables = new Vector<JTable>();

@@ -42,12 +42,11 @@ public class ising {
 
     public static void main(String[] args) {
         String N = "32";
-        String J = "-0.4";
-        String Jb = "0.1";
+        String J = "-0.3";
+        String Jb = "-0.2";
         String temp = "0.4";
-        Boolean loc_h = false;
         Boolean node_const= true;
-        String expName = "HP";
+        String expName = "HP_3";
 
         Primula primula = new Primula();
         primula.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
@@ -57,8 +56,8 @@ public class ising {
         Map<String, Object> load_gnn_set = new HashMap<>();
         load_gnn_set.put("sdataset", "ising");
         load_gnn_set.put("base_path", "/Users/lz50rg/Dev/homophily/experiments/ising/trained/");
-//        load_gnn_set.put("model", "GGCN_raf");
-        load_gnn_set.put("model", "GraphNet");
+        load_gnn_set.put("model", "GGCN_raf");
+//        load_gnn_set.put("model", "GraphNet");
         load_gnn_set.put("nfeat", 1);
         load_gnn_set.put("nlayers", 2);
         load_gnn_set.put("nclass", 2);
@@ -73,9 +72,7 @@ public class ising {
         primula.setLoadGnnSet(load_gnn_set);
 
         File srsfile = null;
-        if (loc_h)
-            srsfile = new File("/Users/lz50rg/Dev/homophily/experiments/ising/rdef/ising_" + N + "_" + J + "_" + Jb + "_" + temp + "_" + "4_loc.rdef");
-        else if (node_const)
+        if (node_const)
             srsfile = new File("/Users/lz50rg/Dev/homophily/experiments/ising/rdef/ising_" + N + "_" + J + "_" + Jb + "_" + temp + "_" + "4_nodeconst_" + expName + ".rdef");
         else
             srsfile = new File("/Users/lz50rg/Dev/homophily/experiments/ising/rdef/ising_" + N + "_" + J + "_" + Jb + "_" + temp + "_" + "4.rdef");
@@ -116,9 +113,7 @@ public class ising {
         );
 
         File input_file = null;
-        if (loc_h)
-            input_file = new File("/Users/lz50rg/Dev/homophily/experiments/ising/const_ising_loc.rbn");
-        else if (node_const)
+        if (node_const)
 //            input_file = new File("/Users/lz50rg/Dev/homophily/experiments/ising/const_ising_glob.rbn");
             input_file = new File("/Users/lz50rg/Dev/homophily/experiments/rbn_constraints/const_nodeconst.rbn");
         else
@@ -174,7 +169,9 @@ public class ising {
 
             // perform map inference
             im.setNumRestarts(1);
-            im.setMapSeachAlg(2);
+            im.setNumChains(0);
+            im.setWindowSize(0);
+            im.setMapSearchAlg(2);
             im.setNumIterGreedyMap(50000);
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();
@@ -189,9 +186,9 @@ public class ising {
                 pred_res.add(new ArrayList<>());
 
             // print results
-            System.out.println("\nMAP INFERENCE RESULTS:\n");
+//            System.out.println("\nMAP INFERENCE RESULTS:\n");
             for (int i = 0; i < gal.allAtoms().size(); i++) {
-                System.out.println(gal.atomAt(i).rel().toString() + "(" + gal.atomAt(i).args()[0] + "): " + res[i]);
+//                System.out.println(gal.atomAt(i).rel().toString() + "(" + gal.atomAt(i).args()[0] + "): " + res[i]);
                 pred_res.get(res[i]).add(Integer.valueOf(gal.atomAt(i).args()[0]));
             }
 
@@ -235,9 +232,7 @@ public class ising {
             System.out.println("Accuracy: " + accuracy);
 
             String pred_node_path = null;
-            if (loc_h)
-                pred_node_path = "/Users/lz50rg/Dev/homophily/experiments/ising/pred_labels/pred_labels_" + load_gnn_set.get("model") + "_" + N + "_" + J + "_" + Jb + "_" + temp + "_loc.txt";
-            else if (node_const)
+            if (node_const)
                 pred_node_path = "/Users/lz50rg/Dev/homophily/experiments/ising/pred_labels/pred_labels_" + load_gnn_set.get("model") + "_" + N + "_" + J + "_" + Jb + "_" + temp + "_nodeconst_" + expName + ".txt";
             else
                 pred_node_path = "/Users/lz50rg/Dev/homophily/experiments/ising/pred_labels/pred_labels_" + load_gnn_set.get("model") + "_" + N + "_" + J + "_" + Jb + "_" + temp + ".txt";

@@ -163,7 +163,7 @@ public class WebKB {
 
             // perform map inference
             im.setNumRestarts(5);
-            im.setMapSeachAlg(0); // set greedy search
+            im.setMapSearchAlg(0); // set greedy search
             im.setNumIterGreedyMap(4000);
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();

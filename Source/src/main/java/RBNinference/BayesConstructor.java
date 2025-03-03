@@ -557,7 +557,7 @@ public class BayesConstructor extends java.lang.Object {
 			if (this.checkGnnRel(this.rbnarg)) {
 				System.out.println("GNN detected");
 				try {
-					this.gnnPy = new GnnPy(this.myprimula.getScriptPath(), this.myprimula.getScriptName(), this.myprimula.getPythonHome());
+					this.gnnPy = new GnnPy(myprimula);
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}

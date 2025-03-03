@@ -25,7 +25,7 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
     static private String edge_index;
     private static boolean xPred;
     private static boolean edgePred; // true if the edges are predefined --> avoid to reconstruct again in evaluate
-    private static boolean savedData;
+    private static boolean savedData = false;
     public GGGnnNode(GradientGraphO gg,
                      CPModel cpm,
                      Hashtable allnodes,
@@ -41,7 +41,8 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
         this.cpm = cpm;
         this.A = A;
         this.inst = I;
-        savedData = false;
+        if (this.gnnPy == null)
+            savedData = false;
         xPred = false; edgePred = false;
         if (this.cpm instanceof ProbFormGnn) {
             Rel[] pfargs = ((CPMGnn) this.cpm).getGnnattr();
@@ -85,15 +86,20 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
                 }
             }
         } else if (this.cpm instanceof CatGnnHetero || this.cpm instanceof CatGnn) {
-            ArrayList<ArrayList <Rel>> pfargs = ((CPMGnn) this.cpm).getInput_attr();
-            for (int i = 0; i < pfargs.size(); i++) {
-                for (int j = 0; j < pfargs.get(i).size(); j++) {
-                    if (!pfargs.get(i).get(j).ispredefined()) { // do not add predefined values
+            for (ArrayList<Rel> pfargs: ((CPMGnn) this.cpm).getInput_attr()) {
+                for (Rel pfargRel: pfargs) {
+                    if (!pfargRel.ispredefined()) { // do not add predefined values
                         xPred = true;
                         try {
-                            int[][] mat = A.allTypedTuples(pfargs.get(i).get(j).getTypes());
+                            int[][] mat = A.allTypedTuples(pfargRel.getTypes());
                             for (int k = 0; k < mat.length; k++) {
-                                ProbFormAtom atomAsPf = new ProbFormAtom(pfargs.get(i).get(j), mat[k]);
+                                ProbFormAtom atomAsPf = new ProbFormAtom(pfargRel, mat[k]);
+
+                                // we add as children only atoms that are influenced up to a max layer
+                                Set<Integer> allReached = null;
+                                if (((CPMGnn) cpm).getNumLayers() > 0)
+                                    allReached = getNodesInDepth(((CPMGnn) cpm).getNumLayers(), mat[k][0], (CPMGnn) cpm);
+
                                 GGCPMNode ggmn = gg.findInAllnodes(atomAsPf, 0, 0, A);
                                 if (ggmn == null) {
                                     ggmn = GGCPMNode.constructGGPFN(
@@ -114,8 +120,14 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
                                     this.children.add(ggmn);
                                     ggmn.addToParents(this);
                                 }
-                                this.children.add(ggmn);
-                                ggmn.addToParents(this);
+                                if (((CPMGnn) cpm).getNumLayers() > 0 && allReached != null && allReached.contains(Integer.parseInt(((CPMGnn) this.cpm).getArgument())) ) {
+                                    this.children.add(ggmn);
+                                     ggmn.addToParents(this);
+                                } else if (((CPMGnn) cpm).getNumLayers() < 0){
+                                    this.children.add(ggmn);
+                                    ggmn.addToParents(this);
+                                } else if (allReached == null && ((CPMGnn) cpm).getNumLayers() > 0)
+                                    throw new RuntimeException("Something bad happened in the construction of GGGnnNode");
                             }
 
                         } catch (RBNIllegalArgumentException e) {
@@ -125,11 +137,11 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
                 }
             }
             // also for the edges
-            ArrayList <Rel> pfargs_edges = ((CPMGnn) this.cpm).getEdge_attr();
-            for (Rel edge : pfargs_edges) {
+            for (Rel edge : ((CPMGnn) this.cpm).getEdge_attr()) {
                 if (!edge.ispredefined()) {
                     edgePred = true;
                     try {
+                        // TODO we can optimize the child with the layers depth also for the edges
                         int[][] mat = A.allTypedTuples(edge.getTypes());
                         for (int k = 0; k < mat.length; k++) {
                             ProbFormAtom atomAsPf = new ProbFormAtom(edge, mat[k]);
@@ -164,6 +176,40 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
             }
         } else {
             System.out.println("GGGnnNode cannot accept " + this.cpm.toString() + " as valid pf");
+        }
+    }
+
+    public Set<Integer> getNodesInDepth(int maxDepth, int nodeArg, CPMGnn cpmGnn) {
+        Set<Integer> allReached = new LinkedHashSet<>();
+        Queue<Integer> queue = new LinkedList<>();
+        Map<Integer, Integer> nodeLayer = new HashMap<>();
+        try {
+            queue.add(nodeArg);
+            nodeLayer.put(nodeArg, 0);
+            while (!queue.isEmpty()) {
+                int current = queue.poll();
+                int currentLayer = nodeLayer.get(current);
+
+                if (currentLayer >= maxDepth) {
+                    continue;
+                }
+
+                for (Rel edge : cpmGnn.getEdge_attr()) {
+                    ProbFormBoolAtom temp = new ProbFormBoolAtom(new ProbFormAtom(edge, new String[]{Integer.toString(current), "z"}), true);
+                    int[][] res = thisgg.myPrimula.getRels().allTrue(temp, new String[]{"z"});
+                    for (int[] node : res) {
+                        if (!allReached.contains(node[0])) {
+                            allReached.add(node[0]);
+                            queue.add(node[0]);
+                            nodeLayer.put(node[0], currentLayer + 1);
+                        }
+                    }
+
+                }
+            }
+            return allReached;
+        } catch (RBNCompatibilityException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -226,6 +272,10 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
 //        this.value = value;
 //    }
 
+
+    public CPModel getCpm() {
+        return cpm;
+    }
 
     public boolean isXPred() {
         return xPred;

@@ -63,7 +63,7 @@ public class SampleThread extends Thread{
 	private String scriptName;
 	private String pythonHome;
 	private InferenceModuleGUI infmoduleGUI;
-	public SampleThread(Observer infomoduleGUI,
+	public SampleThread(InferenceModule infmodule,
 			PFNetwork pfn,
 			Hashtable<Rel,GroundAtomList> queryatoms,
 //			int num_subsamples_param,
@@ -77,8 +77,8 @@ public class SampleThread extends Thread{
 		num_subsamples = pfn.getNum_subsamples_minmax();
 		logwriter = logwriter_param;
 		sprobs = new SampleProbs(queryatoms);
-		if (infmoduleGUI != null)
-			sprobs.addObserver(infmoduleGUI);
+		if (infmodule.getInferenceModuleGUI() != null)
+			sprobs.addObserver(infmodule.getInferenceModuleGUI());
 		pause = false;
 //		test = new double[queryAtomSize];
         this.gnnIntegration = this.pfn.checkGnnRel();
@@ -142,6 +142,7 @@ public class SampleThread extends Thread{
 		// the interpreter needs to be closed from the same thread
 		if (this.gnnIntegration)
 			this.closeGnnIntepreter();
+		this.gnnPy = null;
 	}
 
 	public int getNumsamp() {

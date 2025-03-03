@@ -376,6 +376,9 @@ public abstract class GGCPMNode extends GGNode{
 	public Vector<GGAtomMaxNode> getMaxIndicators(){
 		return mymaxindicators;
 	}
+	public Vector<GGAtomSumNode> getSumIndicators(){
+		return mysumindicators;
+	}
 
 	public void printMyMaxIndicators(){
 		GGAtomMaxNode nextggmax = null;

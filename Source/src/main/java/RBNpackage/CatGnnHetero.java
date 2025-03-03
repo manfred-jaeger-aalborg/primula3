@@ -46,10 +46,11 @@ public class CatGnnHetero extends CPModel implements CPMGnn {
     // if is set to true, means that the GNN is for categorical output, if false is boolean
     private boolean categorical;
     private int numvals;
-
+    private static boolean savedData = false;
     // this variable is used to set the inference for node or graph classification. Keyword: "node" or "graph"
     private String gnn_inference;
-    public CatGnnHetero(String argument, String idGnn, int numvals, ArrayList input_attr, ArrayList edge_attr, String gnn_inference, boolean oneHotEncoding) {
+    private int numLayers;
+    public CatGnnHetero(String argument, String idGnn, int numLayers, int numvals, ArrayList input_attr, ArrayList edge_attr, String gnn_inference, boolean oneHotEncoding) {
         this.setEdge_name(edge_name);
         this.setEdge_direction(edge_direction);
 
@@ -57,10 +58,13 @@ public class CatGnnHetero extends CPModel implements CPMGnn {
         this.idGnn = idGnn;
         this.categorical = true; // TODO: handle this with counting vals
         this.numvals = numvals;
+        this.numLayers = numLayers;
         this.input_attr = input_attr;
         this.edge_attr = edge_attr;
         this.oneHotEncoding = oneHotEncoding;
         this.gnn_inference = gnn_inference;
+        if (this.gnnPy == null)
+            savedData = false;
     }
 
     public CatGnnHetero(String argument, GnnPy gnnpy) {
@@ -123,6 +127,10 @@ public class CatGnnHetero extends CPModel implements CPMGnn {
 
     @Override
     public double[] evalSample(RelStruc A, Hashtable<String, PFNetworkNode> atomhasht, OneStrucData inst, Hashtable<String,double[]> evaluated, long[] timers) throws RBNCompatibilityException {
+        if (!savedData) {
+            this.gnnPy.saveGnnData((CPMGnn) this, A, inst);
+            savedData = true;
+        }
         return gnnPy.evalSample_gnn(this, A, atomhasht, inst);
     }
 
@@ -172,7 +180,7 @@ public class CatGnnHetero extends CPModel implements CPMGnn {
      */
     @Override
     public CPModel sEval(RelStruc A) throws RBNCompatibilityException {
-        System.out.println("sEval code");
+//        System.out.println("sEval code");
         return this;
     }
 
@@ -180,7 +188,7 @@ public class CatGnnHetero extends CPModel implements CPMGnn {
     @Override
     public CPModel substitute(String[] vars, int[] args) {
 //        System.out.println("substitute code 1");
-        CatGnnHetero result = new CatGnnHetero(this.argument, this.idGnn, this.numvals, this.input_attr, this.edge_attr, this.gnn_inference, this.oneHotEncoding);
+        CatGnnHetero result = new CatGnnHetero(this.argument, this.idGnn, this.numLayers, this.numvals, this.input_attr, this.edge_attr, this.gnn_inference, this.oneHotEncoding);
         if (vars.length == 0)
             result.argument = Arrays.toString(new String[0]);
         else
@@ -213,7 +221,9 @@ public class CatGnnHetero extends CPModel implements CPMGnn {
                     parent.add(rel);
             }
         }
-        // TODO also for edges
+        for (Rel rel: this.getEdge_attr())
+            if (rel.isprobabilistic())
+                parent.add(rel);
         return parent;
     }
 
@@ -225,6 +235,9 @@ public class CatGnnHetero extends CPModel implements CPMGnn {
         assert !processed.isEmpty();
         TreeSet<Rel> parent = new TreeSet<>();
         for (Rel rel: this.getGnnattr())
+            if (rel.isprobabilistic())
+                parent.add(rel);
+        for (Rel rel: this.getEdge_attr())
             if (rel.isprobabilistic())
                 parent.add(rel);
         return parent;
@@ -266,14 +279,20 @@ public class CatGnnHetero extends CPModel implements CPMGnn {
 
     @Override
     public Rel[] getGnnattr() {
-        return null;
+        List<Rel> rels = new ArrayList<>();
+        for (ArrayList<Rel> attr_list: input_attr) {
+            for (Rel r: attr_list) {
+                rels.add(r);
+            }
+        }
+        return rels.toArray(new Rel[0]);
     }
 
     public ArrayList<ArrayList<Rel>> getInput_attr() {
         return input_attr;
     }
 
-    public ArrayList getEdge_attr() {
+    public ArrayList<Rel> getEdge_attr() {
         return edge_attr;
     }
 
@@ -299,4 +318,9 @@ public class CatGnnHetero extends CPModel implements CPMGnn {
 
     @Override
     public boolean isBoolean() { return !categorical; }
+
+    @Override
+    public int getNumLayers() {
+        return numLayers;
+    }
 }

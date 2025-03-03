@@ -14,7 +14,7 @@ import java.util.*;
  * FOR INPUTS
  *      <list of attributes>
  * FORALL b
- *      WITH edge(a, b) <> WITH edge(b, a) <> WITH edge(a, b) || WITH edge(b, a)
+ *      WITH edge(a, b)
  */
 public class CatGnn extends CPModel implements CPMGnn {
     // the order of attributes need to be respected! this order will be used for the gnn encoding
@@ -45,6 +45,7 @@ public class CatGnn extends CPModel implements CPMGnn {
 
     // this variable is used to set the inference for node or graph classification. Keyword: "node" or "graph"
     private String gnn_inference;
+    private int numLayers;
     public CatGnn(String argument, String idGnn, Boolean categorical, int numvals, ArrayList input_attr, ArrayList edge_attr, String gnn_inference, boolean oneHotEncoding) {
         this.setEdge_name(edge_name);
         this.setEdge_direction(edge_direction);
@@ -170,7 +171,7 @@ public class CatGnn extends CPModel implements CPMGnn {
      */
     @Override
     public CPModel sEval(RelStruc A) throws RBNCompatibilityException {
-        System.out.println("sEval code");
+//        System.out.println("sEval code");
         return this;
     }
 
@@ -310,4 +311,9 @@ public class CatGnn extends CPModel implements CPMGnn {
 
     @Override
     public boolean isBoolean() { return !categorical; }
+
+    @Override
+    public int getNumLayers() {
+        return -1; // TODO add layers optimization
+    }
 }

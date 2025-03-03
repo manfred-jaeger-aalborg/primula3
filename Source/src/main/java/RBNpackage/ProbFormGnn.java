@@ -33,6 +33,7 @@ public class ProbFormGnn extends ProbForm implements CPMGnn {
 
     // this variable is used to set the inference for node or graph classification. Keyword: "node" or "graph"
     private String gnn_inference;
+    private int numLayers;
     public ProbFormGnn(String argument, String idGnn, Rel[] attr, String edge_name, String edge_direction, boolean oneHotEncoding) {
         this.setEdge_name(edge_name);
         this.setEdge_direction(edge_direction);
@@ -285,4 +286,9 @@ public class ProbFormGnn extends ProbForm implements CPMGnn {
 
     @Override
     public boolean isBoolean() { return true; }
+
+    @Override
+    public int getNumLayers() {
+        return -1; // TODO add layers optimization
+    }
 }

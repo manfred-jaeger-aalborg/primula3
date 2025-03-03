@@ -24,8 +24,7 @@ package RBNLearning;
 
 
 
-import java.util.TreeMap;
-import java.util.Vector;
+import java.util.*;
 
 import myio.StringOps;
 
@@ -68,6 +67,14 @@ public int getCurrentInst() {
 
 public void setCurrentInst(int currentInst) {
 	this.currentInst = currentInst;
+
+	for (GGCPMNode ggcpmNode: this.parents()) {
+		if (ggcpmNode instanceof GGGnnNode) {
+			GGGnnNode gggnn = (GGGnnNode) ggcpmNode;
+			gggnn.getGnnPy().setCurrentInstPy(currentInst, this, gggnn);
+			break;
+		}
+	}
 }
 
 ///* A value that represents the contribution of this node with its
@@ -139,9 +146,8 @@ private int highvalue;
 		if (this.flipscores == null) { // First time we do MAP inference on this node
 			flipscores = new double[(int)this.myatom().rel().numvals()];
 		}
-//		if (this.myatom.relname() == "edge")
-//			System.out.println("edge");
-		double oldll = SmallDouble.log(thisgg.llnode.evaluate(null,allugas,true,false,null));
+
+		double oldll = SmallDouble.log(thisgg.llnode.evaluate(null, allugas, true, false, null));
 		double newll,fs;
 		highscore = Double.NEGATIVE_INFINITY;
 		highvalue = 0;
@@ -152,31 +158,11 @@ private int highvalue;
 			}
 			else {
 				this.setCurrentInst(v);
-
-				// sample again the nodes after flipping. TODO: a more clever sampling could be implemented (sample only the parents of the flipped nodes)
-				if (thisgg.sumindicators.size() > 0) {
-					for (int j = 0; j < thisgg.windowsize; j++) {
-						thisgg.gibbsSample(mythread);
-					}
-					System.out.println("New sampled values for setScore():");
-					thisgg.showSumAtomsVals();
-				}
-
-				// trick for faster computation, we create only once the input for all the parents.
-				// GnnPy will check only if the dictionaries are empty or not
-				// if empty, create the input. Otherwise, keep the same input.
-				// This assumes that maxatoms of CatRel have all the parents connected
-//				if (this.myatom.rel instanceof CatRel) {
-					for (GGCPMNode ggcpmNode: this.parents()) {
-						if (ggcpmNode instanceof GGGnnNode) {
-							GGGnnNode gggnn = (GGGnnNode) ggcpmNode;
-							gggnn.getGnnPy().resetDict(gggnn.isXPred(), gggnn.isEdgePred());
-						}
-					}
-//				}
-
+				// sample again the nodes after flipping.
+				if (thisgg.sumindicators.size() > 0)
+					for (int j=0; j<thisgg.windowsize; j++) thisgg.gibbsSample(mythread, this.parents());
+					// for (int j=0; j<thisgg.windowsize; j++) thisgg.gibbsSample(mythread); run this for the gibb sampling on all the sumnodes
 				reEvaluateUpstream(null);
-				
 				newll = SmallDouble.log(thisgg.llnode.evaluate(null,allugas,true,false,null));
 				fs=newll-oldll;
 				if (fs>highscore) {

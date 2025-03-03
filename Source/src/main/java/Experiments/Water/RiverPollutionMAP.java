@@ -2,18 +2,16 @@ package Experiments.Water;
 
 import RBNExceptions.RBNIllegalArgumentException;
 import RBNLearning.GradientGraph;
-import RBNgui.*;
+import RBNgui.InferenceModule;
+import RBNgui.Primula;
 import RBNinference.SampleProbs;
 import RBNpackage.*;
 import RBNutilities.rbnutilities;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.util.*;
 
-public class RiverPollution {
+public class RiverPollutionMAP {
 
     // functions copied from RDEFReader.java
     private static Type[] typeStringToArray(String ts, int arity){
@@ -55,8 +53,8 @@ public class RiverPollution {
         load_gnn_set.put("base_path", "/Users/lz50rg/Dev/water-hawqs/models/");
         primula.setLoadGnnSet(load_gnn_set);
 
-//        File srsfile = new File("/Users/lz50rg/Dev/water-hawqs/src/test.rdef");
-        File srsfile = new File("/Users/lz50rg/Dev/water-hawqs/river_test.rdef");
+        File srsfile = new File("/Users/lz50rg/Dev/water-hawqs/src/test.rdef");
+//        File srsfile = new File("/Users/lz50rg/Dev/water-hawqs/river_test.rdef");
         primula.loadSparseRelFile(srsfile);
 
         String val_name = "CORN,COSY,PAST,SOYB";
@@ -105,7 +103,7 @@ public class RiverPollution {
                 new String[]{"v"},
                 new CatGnnHetero("v",
                         "HeteroGraphpollution",
-                        2,
+                        3,
                         3,
                         attrs_rels,
                         edge_attr,
@@ -143,51 +141,34 @@ public class RiverPollution {
         primula.setRbn(manual_rbn);
         primula.getInstantiation().init(manual_rbn);
         primula.setRbnparameters(manual_rbn.parameters());
-        
-        CatRel tmp_query = new CatRel("LandUse", 1, typeStringToArray("hru_agr", 1), valStringToArray(val_name));
-        tmp_query.setInout(Rel.PROBABILISTIC);
 
-//        BayesConstructor constructor = new BayesConstructor(
-//                primula,
-//                primula.getInstantiation(), // onestructdata
-//                new GroundAtomList(), // groundatom list (empty)
-//                "river.net"); // something.net
-//        try {
-//            constructor.constructCPTNetwork(
-//                    1,
-//                    0,
-//                    2,
-//                    1,
-//                    0,
-//                    3);
-//        } catch (RBNCompatibilityException e) {
-//            throw new RuntimeException(e);
-//        } catch (RBNCyclicException e) {
-//            throw new RuntimeException(e);
-//        } catch (RBNIllegalArgumentException e) {
-//            throw new RuntimeException(e);
-//        }
+        Vector<GroundAtomList> gal_vec = new Vector<>();
+        RelStruc input_struct = primula.getRels();
+        CatRel tmp_query = new CatRel("LandUse", 1, typeStringToArray("hru_agr", 1), valStringToArray(val_name));
+        CatRel pollRel = new CatRel("Pollution", 1, typeStringToArray("sub",1), valStringToArray("LOW,MED,HIG"));
+        tmp_query.setInout(Rel.PROBABILISTIC);
+        pollRel.setInout(Rel.PROBABILISTIC);
+
 
         try {
             InferenceModule im = primula.createInferenceModule();
 
-            // do not query for already instantiated values (in this case if a node is OTHER)
-            OneStrucData inst = primula.getInstantiation();
-            Vector<OneCatRelData> catInst = inst.getAllonecatdata();
-
-            RelStruc input_struct = primula.getRels();
             int[][] mat = input_struct.allTypedTuples(tmp_query.getTypes());
+            gal_vec.add(new GroundAtomList());
+            for (int[] ints: mat) gal_vec.get(0).add(tmp_query, ints);
+            im.addQueryAtoms(tmp_query, gal_vec.get(0));
 
-            GroundAtomList gal = new GroundAtomList();
-            for (int i = 0; i < mat.length; i++) {
-                    gal.add(tmp_query, new int[]{mat[i][0]});
-            }
-            im.addQueryAtoms(tmp_query, gal);
-            im.setMapSearchAlg(1);
-            im.setNumIterGreedyMap(150);
+            mat = input_struct.allTypedTuples(pollRel.getTypes());
+            gal_vec.add(new GroundAtomList());
+            for (int[] ints: mat) gal_vec.get(1).add(pollRel, ints);
+            im.addQueryAtoms(pollRel, gal_vec.get(1));
+
+//            im.toggleAtom(tmp_query, 0);
+            im.setMapSearchAlg(2);
+            im.setNumIterGreedyMap(4000);
             im.setNumRestarts(1);
             im.setWindowSize(100);
-            im.setNumChains(5);
+            im.setNumChains(0);
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();
 
@@ -208,10 +189,12 @@ public class RiverPollution {
 
 //            PrintWriter writer = new PrintWriter("final-graph.txt", "UTF-8");
             System.out.println("\nMAP INFERENCE RESULTS:\n");
-            for (int i = 0; i < gal.size(); i++) {
-//                writer.println(gal.atomAt(i).args()[0] + " : " + res[i]);
-                System.out.println(gal.atomAt(i).rel().toString() + "(" + gal.atomAt(i).args()[0] + "): " + res[i]);
-                values_count.put(crops.get(res[i]), values_count.get(crops.get(res[i]))+1);
+            for (GroundAtomList gal: gal_vec) {
+                for (int i = 0; i < gal.size(); i++) {
+                    System.out.println(gal.atomAt(i).rel + Arrays.toString(gal.atomAt(i).args) + ": " + bestMapVals.get(gal.atomAt(i).rel)[i]);
+                    if (gal.atomAt(i).relname().equals("LandUse"))
+                        values_count.put(crops.get(res[i]), values_count.get(crops.get(res[i]))+1);
+                }
             }
 //            writer.close();
 
@@ -220,48 +203,7 @@ public class RiverPollution {
             System.out.println(values_count);
 
             // Save values
-            OneStrucData result = new OneStrucData();
-            result.setParentRelStruc(primula.getRels());
-            Enumeration<Rel> e = bestMapVals.keys();
-            while (e.hasMoreElements()) {
-                Rel rel = e.nextElement();
-                int[] nodes = bestMapVals.get(rel);
-                for (int i = 0; i < nodes.length; i++) {
-                    result.add(new GroundAtom(gal.atomAt(i).rel(), gal.atomAt(i).args), bestMapVals.get(rel)[i],"?");
-                }
-            }
-            primula.getInstantiation().add(result);
-            // ------------------------------------
 
-            im.deleteQueryAtoms();
-            BoolRel queryRel = new BoolRel("constr", 0);
-            primula.getInstantiation().delete(queryRel, new int[0]);
-
-            GroundAtomList queryGround = new GroundAtomList();
-            if (queryRel.getArity()==0) {
-                queryGround.add(new GroundAtom(queryRel,new int[0]));
-            }
-            im.addQueryAtom(queryRel, queryGround, 0);
-
-            im.startSampleThread();
-            System.out.println("Start sampling...");
-
-            double size = 0;
-            double oldsize = -1;
-            System.out.println("Sampling ...");
-            while (size < 20000) {
-                size = im.getSamThr().getNumsamp();
-                if (oldsize != size) {
-                    oldsize = size;
-                    if (size % 10000 == 0)
-                        System.out.println("Sample size: " + size);
-                }
-            }
-
-            im.stopSampleThread();
-            im.getSampthr().join();
-            SampleProbs finalSprobs = im.getSampthr().getSprobs();
-            System.out.println(Arrays.deepToString(finalSprobs.getProbs(queryRel)));
 
             System.exit( 0 );
         } catch (InterruptedException e) {

@@ -726,10 +726,15 @@ public class PFNetwork{
 	}
 
 	public boolean checkGnnRel() {
-		for (PFNetworkNode node: allnodes) {
-			if (node.cpmodel() instanceof CPMGnn)
+		for(int i=0; i<myprimula.getRBN().prelements().length; i++) {
+			if (myprimula.getRBN().cpmod_prelements_At(i) instanceof CPMGnn)
 				return true;
 		}
 		return false;
+//		for (PFNetworkNode node: allnodes) {
+//			if (node.cpmodel() instanceof CPMGnn)
+//				return true;
+//		}
+//		return false;
 	}
 }

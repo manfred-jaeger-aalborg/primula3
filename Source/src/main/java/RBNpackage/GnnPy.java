@@ -4,6 +4,7 @@
 package RBNpackage;
 import RBNExceptions.RBNIllegalArgumentException;
 import RBNLearning.*;
+import RBNgui.Primula;
 import RBNinference.PFNetworkNode;
 import jep.*;
 import jep.python.PyObject;
@@ -48,6 +49,9 @@ public class GnnPy {
     private int GGnumNodes;
     private Map<Rel, int[][]> GGNodesDict;
     private SparseRelStruc sampledRelGobal;
+    private boolean changedUpdate;
+    private Primula myprimula;
+    private GradientGraphO mygg;
     public GnnPy(String scriptPath, String scriptName, String pythonHome) throws IOException {
         this.scriptPath = scriptPath;
         this.scriptName = scriptName;
@@ -58,8 +62,61 @@ public class GnnPy {
         currentXdict = new Hashtable<>();
         currentEdgeDict = new Hashtable<>();
         GGNodesDict = new Hashtable<>();
+        GGedgeDict = new Hashtable<>();
         xDict = new Hashtable<>();
         edgeDict = new Hashtable<>();
+        changedUpdate = false;
+        sharedInterpreter = null;
+        // pip install jep in a miniconda env (torch)
+        initializeJep();
+//        sharedInterpreter = threadSharedInterp.get();
+//        sharedInterpreter.exec("data = HeteroData()");
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            handleShutdown();
+        }));
+    }
+
+    public GnnPy(Primula primula) throws IOException {
+        this.scriptPath = primula.getScriptPath();
+        this.scriptName = primula.getScriptName();
+        this.pythonHome = primula.getPythonHome();
+        myprimula = primula;
+        this.gnnModelsId = new ArrayList<>();
+        this.numClass = -1;
+        this.dimOut = -1;
+        currentXdict = new Hashtable<>();
+        currentEdgeDict = new Hashtable<>();
+        GGNodesDict = new Hashtable<>();
+        GGedgeDict = new Hashtable<>();
+        xDict = new Hashtable<>();
+        edgeDict = new Hashtable<>();
+        changedUpdate = false;
+        sharedInterpreter = null;
+        // pip install jep in a miniconda env (torch)
+        initializeJep();
+//        sharedInterpreter = threadSharedInterp.get();
+//        sharedInterpreter.exec("data = HeteroData()");
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            handleShutdown();
+        }));
+    }
+
+    public GnnPy(Primula primula, GradientGraphO gg) throws IOException {
+        this.scriptPath = primula.getScriptPath();
+        this.scriptName = primula.getScriptName();
+        this.pythonHome = primula.getPythonHome();
+        myprimula = primula;
+        mygg = gg;
+        this.gnnModelsId = new ArrayList<>();
+        this.numClass = -1;
+        this.dimOut = -1;
+        currentXdict = new Hashtable<>();
+        currentEdgeDict = new Hashtable<>();
+        GGNodesDict = new Hashtable<>();
+        GGedgeDict = new Hashtable<>();
+        xDict = new Hashtable<>();
+        edgeDict = new Hashtable<>();
+        changedUpdate = false;
         sharedInterpreter = null;
         // pip install jep in a miniconda env (torch)
         initializeJep();
@@ -101,6 +158,7 @@ public class GnnPy {
         interpreter.exec("from torch_geometric.data import Data, HeteroData");
         interpreter.exec("sys.path.append('" + this.scriptPath + "')");
         interpreter.exec("import " + this.scriptName + " as intt");
+        System.out.println("Setting up interpreter for thread: " + Thread.currentThread().getName());
         threadSharedInterp.set(interpreter);
     }
 
@@ -110,12 +168,12 @@ public class GnnPy {
             interpreter.exec("import gc; gc.collect()");
             interpreter.close();
             threadSharedInterp.remove();
-            System.out.println("Interpreter closed for thread " + Thread.currentThread().getName());
+            System.out.println("Interpreter closed for thread: " + Thread.currentThread().getName());
         }
     }
 
     private void handleShutdown() {
-        System.out.println("Shutdown hook triggered! Closing interpreter...");
+        System.out.println("Shutdown hook triggered! Closing interpreter for thread: " + Thread.currentThread().getName());
         closeInterpreter();
     }
 
@@ -190,6 +248,7 @@ public class GnnPy {
             currentXdict = x_dict;
             currentEdgeDict = edge_dict;
             lastId = idGnn;
+            changedUpdate = false;
 
             threadSharedInterp.get().set("java_map_x", currentXdict);
             String keyX = currentXdict.entrySet().iterator().next().getKey(); // in this case the dictionary should have only one key
@@ -199,8 +258,6 @@ public class GnnPy {
                 threadSharedInterp.get().exec("ei = torch.as_tensor(java_map_edge['edge'], dtype=torch.long)");
             else
                 threadSharedInterp.get().exec("ei = torch.empty((2, 0), dtype=torch.long)");
-
-//            printPython(sharedInterpreter, "ei");
 
             if (node == -1)
                 threadSharedInterp.get().eval("out = intt." + this.INFER_GRAPH + "(" + idGnn + ", xi, ei)");
@@ -228,6 +285,8 @@ public class GnnPy {
                 NDArray ndArray = (NDArray) threadSharedInterp.get().getValue("out");
                 float[] tarr = (float[]) ndArray.getData();
                 currentResult = convertTo2D(tarr, ndArray.getDimensions()[0], ndArray.getDimensions()[1]);
+                if (currentNode < 0 || currentNode >= currentResult.length)
+                    throw new IndexOutOfBoundsException("Index out of bounds for node " + currentNode);
                 return currentResult[currentNode];
             }
             return null;
@@ -237,7 +296,7 @@ public class GnnPy {
         }
     }
 
-    public double[] inferModelNodeHetero(int node, Map<String, double[][]> x_dict, Map<String, ArrayList<ArrayList<Integer>>> edge_dict, String idGnn) {
+    public double[] inferModelHetero(int node, Map<String, double[][]> x_dict, Map<String, ArrayList<ArrayList<Integer>>> edge_dict, String idGnn) {
         assert threadSharedInterp.get() != null;
         this.createModelIfNull(idGnn);
         int currentNode = 0;
@@ -247,12 +306,12 @@ public class GnnPy {
             // check if there is already computed the results for the specific node in the result matrix,
             // otherwise compute for all nodes with one forward propagation
             // needs also to have the same id as before
-
             if (checkValuesDictCache(x_dict, edge_dict, idGnn))
                 return currentResult[currentNode];
             currentXdict = x_dict;
             currentEdgeDict = edge_dict;
             lastId = idGnn;
+            changedUpdate = false;
 
             threadSharedInterp.get().set("java_map_x", currentXdict);
             threadSharedInterp.get().set("java_map_edge", currentEdgeDict);
@@ -272,9 +331,9 @@ public class GnnPy {
             );
 
             if (node == -1)
-            threadSharedInterp.get().exec("out = intt." + this.INFER_GRAPH + "(" + idGnn + ", data_h.x_dict, data_h.edge_index_dict)");
+                threadSharedInterp.get().exec("out = intt." + this.INFER_GRAPH + "(" + idGnn + ", data_h.x_dict, data_h.edge_index_dict)");
             else
-            threadSharedInterp.get().exec("out = intt." + this.INFER_NODE + "(" + idGnn + ", data_h.x_dict, data_h.edge_index_dict)");
+                threadSharedInterp.get().exec("out = intt." + this.INFER_NODE + "(" + idGnn + ", data_h.x_dict, data_h.edge_index_dict)");
 
             threadSharedInterp.get().exec("out_size = len(out.shape)");
 
@@ -293,6 +352,8 @@ public class GnnPy {
                 NDArray ndArray = (NDArray) threadSharedInterp.get().getValue("out");
                 float[] tarr = (float[]) ndArray.getData();
                 currentResult = convertTo2D(tarr, ndArray.getDimensions()[0], ndArray.getDimensions()[1]);
+                if (currentNode < 0 || currentNode >= currentResult.length)
+                    throw new IndexOutOfBoundsException("Index out of bounds for node " + currentNode);
                 return currentResult[currentNode];
             }
             return null;
@@ -303,6 +364,9 @@ public class GnnPy {
     }
 
     private boolean checkValuesDictCache(Map<String, double[][]> x_dict, Map<String, ArrayList<ArrayList<Integer>>> edge_dict, String idGnn) {
+        if (changedUpdate)
+            return false;
+
         if (currentXdict != null && currentEdgeDict != null && this.currentResult != null && Objects.equals(this.lastId, idGnn)) {
             if (!currentXdict.keySet().equals(x_dict.keySet()) || !currentEdgeDict.keySet().equals(edge_dict.keySet()))
                 return false;
@@ -448,7 +512,7 @@ public class GnnPy {
 
         // only val no gradient computed
         if (valonly) {
-            if (sampledRelGobal == null) { // for faster computation, we assume that during the GG creation there is only 1 observation!
+            if (sampledRelGobal == null) { // for faster computation, we assume that during the GG creation there is ONLY 1 observation!
                 OneStrucData onsd = new OneStrucData(A.getmydata().copy()); // maybe i can avoid using the copy...
                 sampledRelGobal = new SparseRelStruc(A.getNames(), onsd, A.getCoords(), A.signature());
                 sampledRelGobal.getmydata().add(inst.copy());
@@ -543,23 +607,32 @@ public class GnnPy {
 
         // only val no gradient computed
         if (valonly) {
-            OneStrucData onsd = new OneStrucData(A.getmydata().copy());
-            SparseRelStruc sampledRel = new SparseRelStruc(A.getNames(), onsd, A.getCoords(), A.signature());
-            sampledRel.getmydata().add(inst.copy());
+        if (sampledRelGobal == null) { // for faster computation, we assume that during the GG creation there is ONLY 1 observation!
+                OneStrucData onsd = new OneStrucData(A.getmydata().copy()); // maybe i can avoid using the copy...
+                sampledRelGobal = new SparseRelStruc(A.getNames(), onsd, A.getCoords(), A.signature());
+                sampledRelGobal.getmydata().add(inst.copy());
+                xDict = new Hashtable<>();
+                edgeDict = new Hashtable<>();
+        }
+//            OneStrucData onsd = new OneStrucData(A.getmydata().copy());
+//            SparseRelStruc sampledRel = new SparseRelStruc(A.getNames(), onsd, A.getCoords(), A.signature());
+//            sampledRel.getmydata().add(inst.copy());
+
+
             TreeSet<Rel> attr_parents = cpmGnn.parentRels();
             if (GGboolRel == null)
-                GGboolRel = sampledRel.getBoolBinaryRelations();
+                GGboolRel = sampledRelGobal.getBoolBinaryRelations();
             if (GGNodesDict.isEmpty())
                 GGNodesDict = constructNodesDict(cpmHetero, A);
             // if it has no parents we use the current attributes
             if (attr_parents.isEmpty()) {
-                Map<String, double[][]> x_dict = inputAttrToDict(cpmHetero, GGNodesDict, sampledRel);
-                Map<String, ArrayList<ArrayList<Integer>>> edge_dict = edgesToDict(GGboolRel, sampledRel);
+                Map<String, double[][]> x_dict = inputAttrToDict(cpmHetero, GGNodesDict, sampledRelGobal);
+                Map<String, ArrayList<ArrayList<Integer>>> edge_dict = edgesToDict(GGboolRel, sampledRelGobal);
 
                 if (cpmGnn.getGnn_inference().equals("node"))
-                    result[0] = inferModelNodeHetero(Integer.parseInt(cpmGnn.getArgument()), x_dict, edge_dict, cpmGnn.getIdGnn());
+                    result[0] = inferModelHetero(Integer.parseInt(cpmGnn.getArgument()), x_dict, edge_dict, cpmGnn.getIdGnn());
                 if (cpmGnn.getGnn_inference().equals("graph"))
-                    result[0] = inferModelNodeHetero(-1, x_dict, edge_dict, cpmGnn.getIdGnn());
+                    result[0] = inferModelHetero(-1, x_dict, edge_dict, cpmGnn.getIdGnn());
                 return result;
             }
             // else
@@ -584,12 +657,12 @@ public class GnnPy {
                         }
                     }
                 }
-                Map<String, double[][]> x_dict = inputAttrToDict(cpmHetero, GGNodesDict, sampledRel);
-                Map<String, ArrayList<ArrayList<Integer>>> edge_dict = edgesToDict(GGboolRel, sampledRel);
+                Map<String, double[][]> x_dict = inputAttrToDict(cpmHetero, GGNodesDict, sampledRelGobal);
+                Map<String, ArrayList<ArrayList<Integer>>> edge_dict = edgesToDict(GGboolRel, sampledRelGobal);
                 if (cpmGnn.getGnn_inference().equals("node"))
-                    result[0] = inferModelNodeHetero(Integer.parseInt(cpmGnn.getArgument()), x_dict, edge_dict, cpmGnn.getIdGnn());
+                    result[0] = inferModelHetero(Integer.parseInt(cpmGnn.getArgument()), x_dict, edge_dict, cpmGnn.getIdGnn());
                 if (cpmGnn.getGnn_inference().equals("graph"))
-                    result[0] = inferModelNodeHetero(-1, x_dict, edge_dict, cpmGnn.getIdGnn());
+                    result[0] = inferModelHetero(-1, x_dict, edge_dict, cpmGnn.getIdGnn());
             } catch (RBNIllegalArgumentException e) {
                 throw new RuntimeException(e);
             }
@@ -611,10 +684,12 @@ public class GnnPy {
             // we need to use the sampled values in the gradient graph structure (maxindicator) and assign them to the rel
             // for GNNs the order of the features need to be respected: the order in input_attr in CatGnn will be used for constructing the vector
             updateInputDict2(GGxDict, GGNodesDict, cpm, ggcpmGnn);
+            changedUpdate=false;
         }
         if (GGedgeDict.isEmpty()) {
             GGedgeDict = initEdgesDict(GGboolRel, GGsampledRel);
             updateEdgeDict(GGedgeDict, cpm, ggcpmGnn);
+            changedUpdate=false;
         }
 
         double[] res = null;
@@ -812,7 +887,14 @@ public class GnnPy {
     }
 
     public void updateInputDict2(Map<String, double[][]> input_dict,  Map<Rel, int[][]> GGnumNodesDict, CPMGnn cpmGnn, GGCPMNode ggcpmNode) {
-        Vector<GGCPMNode> childred = ggcpmNode.getChildren(); // is this always will work?
+        Vector<GGCPMNode> children = ggcpmNode.getChildren();
+        // collect all the nodes of the GNN
+        Set<GGCPMNode> uniqueChildren = new HashSet<>(children);
+        for (GGCPMNode llchild: mygg.getllchildred()) {
+            if( llchild instanceof GGGnnNode)
+                uniqueChildren.addAll(llchild.getChildren());
+        }
+
         TreeSet<Rel> parentRels = cpmGnn.parentRels();
         for (ArrayList<Rel> inputRels: cpmGnn.getInput_attr()) {
             Rel firstRel = inputRels.get(0);
@@ -823,7 +905,7 @@ public class GnnPy {
                 if (parentRels.contains(subRel)) {
                     int[][] nodes = GGnumNodesDict.get(subRel);
                     int min_node = nodes[0][0];
-                    for (GGCPMNode node: childred) {
+                    for (GGCPMNode node: uniqueChildren) {
                         GGAtomMaxNode maxNode = (GGAtomMaxNode) node;
                         // if the value is not in the evidence
                         if (maxNode.getmapInstVal() == -1 && maxNode.myatom().rel().equals(subRel)) {
@@ -841,6 +923,69 @@ public class GnnPy {
                 else
                     idxFeat++;
             }
+        }
+    }
+
+    public void setCurrentInstPy(int currentInst, GGAtomMaxNode currentMaxNode, GGGnnNode parent) {
+        if (!GGNodesDict.isEmpty() && !GGxDict.isEmpty() && currentMaxNode.myatom().args.length==1) {
+            int nodeToUpdate = currentMaxNode.myatom().args()[0];
+            // count the starting position for the feature
+            int idxFeat = 0;
+            CPMGnn cpmGnn = (CPMGnn) parent.getCpm();
+            for (ArrayList<Rel> inputRels : cpmGnn.getInput_attr()) {
+                Rel firstRel = inputRels.get(0);
+                if (firstRel.equals(currentMaxNode.myatom().rel()))
+                    break;
+                idxFeat++;
+            }
+
+            // if found, set to zero the current feature vector corresponding to the rel
+            // then, set the value of currentInst
+            if (nodeToUpdate != -1) {
+                int min_node = GGNodesDict.get(currentMaxNode.myatom().rel())[0][0];
+                if (currentMaxNode.myatom().rel() instanceof CatRel) {
+                    String key = currentMaxNode.myatom().rel().getTypes()[0].getName();
+                    if (currentMaxNode.myatom().rel() instanceof CatRel) {
+                        for (int i = 0; i < currentMaxNode.myatom().rel().numvals(); i++) {
+                            GGxDict.get(key)[nodeToUpdate - min_node][i + idxFeat] = 0;
+                        }
+                        GGxDict.get(key)[nodeToUpdate - min_node][currentInst + idxFeat] = 1;
+                    }
+                }
+                changedUpdate = true;
+            } else
+                throw new RuntimeException("Something went wrong in setCurrentInstPy!");
+        }
+        if (!GGedgeDict.isEmpty() && currentMaxNode.myatom().args.length==2) {
+            int[] nodesToUpdate = currentMaxNode.myatom().args();
+            // count the starting position for the feature
+            Rel edgeRelToUpdate = null;
+            CPMGnn cpmGnn = (CPMGnn) parent.getCpm();
+            for (Rel edgeRel : cpmGnn.getEdge_attr()) {
+                if (edgeRel.equals(currentMaxNode.myatom().rel()))
+                    edgeRelToUpdate = edgeRel;
+            }
+
+            // if found, set to zero the current feature vector corresponding to the rel
+            // then, set the value of currentInst
+            if (edgeRelToUpdate != null) {
+                ArrayList<ArrayList<Integer>> edges = GGedgeDict.get(edgeRelToUpdate.name());
+                if (currentInst == 0) {
+                    for (int i = 0; i < edges.get(0).size(); i++) {
+                        if (edges.get(0).get(i) == nodesToUpdate[0] && edges.get(1).get(i) == nodesToUpdate[1]) {
+                            edges.get(0).remove(i);
+                            edges.get(1).remove(i);
+                            break;
+                        }
+                    }
+                } else {
+                    edges.get(0).add(nodesToUpdate[0]);
+                    edges.get(1).add(nodesToUpdate[1]);
+                }
+
+                changedUpdate = true;
+            } else
+                throw new RuntimeException("Something went wrong in setCurrentInstPy!");
         }
     }
 
@@ -893,36 +1038,51 @@ public class GnnPy {
             throw new RuntimeException("CPMGnn must be CatGnnHetero");
         CatGnnHetero cpmHetero = (CatGnnHetero) cpmGnn;
 
-        if (GGxDict.isEmpty() && GGedgeDict.isEmpty()) {
+        if (GGxDict.isEmpty()) {
             GGxDict = initXdict(cpmHetero, GGNodesDict, GGsampledRel);
-            GGedgeDict = initEdgesDict(GGboolRel, GGsampledRel);
-
             // we need to use the sampled values in the gradient graph structure (maxindicator) and assign them to the rel
-            cpmHetero.parentRels().forEach(parent -> {
-                updateInputDict(GGxDict, parent, cpmHetero, GGNodesDict, gg, ggcpmGnn);
-            });
+            // for GNNs the order of the features need to be respected: the order in input_attr in CatGnn will be used for constructing the vector
+            updateInputDict2(GGxDict, GGNodesDict, cpmHetero, ggcpmGnn);
+        }
+        if (GGedgeDict.isEmpty()) {
+            GGedgeDict = initEdgesDict(GGboolRel, GGsampledRel);
+            updateEdgeDict(GGedgeDict, cpmHetero, ggcpmGnn);
         }
 
         double[] res = null;
         if (Objects.equals(cpmHetero.getGnn_inference(), "node"))
-            res = inferModelNodeHetero(Integer.parseInt(cpmGnn.getArgument()), GGxDict, GGedgeDict, cpmGnn.getIdGnn());
+            res = inferModelHetero(Integer.parseInt(cpmGnn.getArgument()), GGxDict, GGedgeDict, cpmGnn.getIdGnn());
         else if (Objects.equals(cpmHetero.getGnn_inference(), "graph")) {
-            res = inferModelNodeHetero(-1, GGxDict, GGedgeDict, cpmGnn.getIdGnn());
+            res = inferModelHetero(-1, GGxDict, GGedgeDict, cpmGnn.getIdGnn());
         } else
             throw new IllegalArgumentException("not valid keyword used: " + cpmHetero.getGnn_inference());
+
+        // normalize
+        if (gg.cooling_fact > 0) {
+            double[] newres = new double[res.length];
+            double sum = 0;
+            double extr = (gg.cooling_fact / (gg.num_iter + gg.cooling_fact));
+//            double extr = 0.1;
+            for (int i = 0; i < res.length; i++)
+                sum += res[i] + extr;
+            for (int i = 0; i < res.length; i++) {
+                newres[i] = res[i] / sum;
+            }
+        }
+
         return res;
     }
 
-    public void savePickleHetero(Map<String, double[][]> xDict, Map<String, int[][]> edgeDict) {
+    public void savePickleHetero(Map<String, double[][]> xDict, Map<String, ArrayList<ArrayList<Integer>>> edgeDict, String path) {
         threadSharedInterp.get().set("java_map_x", xDict);
         threadSharedInterp.get().set("java_map_edge", edgeDict);
 
         threadSharedInterp.get().exec(
                  "import pickle\n" +
-                    "data_h = HeteroData()\n" +
+                     "data_h = HeteroData()\n" +
 
-                    "for key, value in java_map_x.items():\n" +
-                    "    data_h[key].x = torch.as_tensor(value, dtype=torch.float32)\n" +
+                     "for key, value in java_map_x.items():\n" +
+                     "    data_h[key].x = torch.as_tensor(value, dtype=torch.float32)\n" +
 
                      "for key, value in java_map_edge.items():\n" +
                      "    n_key = key.split('_to_')\n" + // here the key must have the form type_to_type
@@ -931,10 +1091,10 @@ public class GnnPy {
                      "    else:\n" +
                      "        data_h[n_key[0], 'to', n_key[1]].edge_index = torch.empty((2, 0), dtype=torch.long)\n" +
 
-                    "with open('/Users/lz50rg/Dev/water-hawqs/map-inf-low.pkl', 'wb') as f:\n" +
-                    "    pickle.dump(data_h, f)\n"
+                     "with open('" + path + "', 'wb') as f:\n" +
+                     "    pickle.dump(data_h, f)\n"
         );
-        System.out.println("Pickle written in /Users/lz50rg/Dev/water-hawqs/map-inf-low.pkl!");
+        System.out.println("Pickle written in: " + path);
     }
 
     public void savePickleGraph(Map<String, double[][]> xDict,
@@ -998,71 +1158,118 @@ public class GnnPy {
         }
     }
 
-    public double[] evalSample_gnn(CPMGnn cpmGnn, RelStruc A, Hashtable<String, PFNetworkNode> atomhasht, OneStrucData inst) {
-        OneStrucData onsd = new OneStrucData(A.getmydata().copy());
-        // we need to sample the entire structure before sending to python
-        int num_features = 0;
-        SparseRelStruc sampledRel = new SparseRelStruc(A.getNames(), onsd, A.getCoords(), A.signature());
-        sampledRel.getmydata().add(inst.copy());
-        TreeSet<Rel> attr_parents = cpmGnn.parentRels();
-        // if it has no parents we use the current attributes (should work for numeric rel)
-        if (attr_parents.isEmpty()) {
-            attr_parents.addAll(Arrays.asList(cpmGnn.getGnnattr()));
-        }
-        for (Rel parent : attr_parents) {
-            try {
-                int[][] mat = A.allTypedTuples(parent.getTypes());
-                // maybe there could be attributes with different number, we keep the biggest
-                if (parent.arity == 1 && mat.length >= num_features)
-                    num_features = mat.length;
+    public void updateEdgeDictForSampling(Map<String, ArrayList<ArrayList<Integer>>> edge_dict, CPMGnn cpmGnn, Hashtable<String, PFNetworkNode> atomhasht) {
+        // at the moment, edge-features are not implemented/supported
+//        Vector<GGCPMNode> childred = ggcpmNode.getChildren();
+//        TreeSet<Rel> parentRels = cpmGnn.parentRels();
+//        for (Rel edge: cpmGnn.getEdge_attr()) {
+//            ArrayList<ArrayList<Integer>> edge_index = edge_dict.get(edge.name());
+//            if (parentRels.contains(edge)) {
+//                for (GGCPMNode node: childred) {
+//                    GGAtomMaxNode maxNode = (GGAtomMaxNode) node;
+//                    if (maxNode.getmapInstVal() == -1 && maxNode.myatom().rel().equals(edge) && maxNode.myatom().args.length == 2) {
+////                        System.out.println(maxNode.myatom().rel() + "(" + maxNode.myatom().args[0] + "," +  maxNode.myatom().args[1] + ")");
+//                        if (maxNode.getCurrentInst() > 0) {
+//                            edge_index.get(0).add(maxNode.myatom().args[0]);
+//                            edge_index.get(1).add(maxNode.myatom().args[1]);
+//                        }
+//                    }
+//                }
+//            }
+//        }
 
-                for (int i = 0; i < mat.length; i++) {
-                    if (sampledRel.truthValueOf(parent, mat[i]) == -1) {
-                        GroundAtom myatom = new GroundAtom(parent, mat[i]);
-                        String myatomname = myatom.asString();
-                        PFNetworkNode gan = (PFNetworkNode) atomhasht.get(myatomname);
-                        if (gan != null) {
-                            double result = (double) gan.sampleinstVal();
-                            boolean sampledVal = false;
-                            if (result == 1)
-                                sampledVal = true;
-                            sampledRel.getmydata().findInBoolRel(parent).add(mat[i], sampledVal);
+//        TreeSet<Rel> parentRels = cpmGnn.parentRels();
+//        for (Rel edge: cpmGnn.getEdge_attr()) {
+//            ArrayList<ArrayList<Integer>> edge_index = edge_dict.get(edge.name());
+//            if (parentRels.contains(edge)) {
+//                for (int i = 0; i < edge_index.size(); i++) {
+//                    if (GGsampledRel.truthValueOf(edge, Arrays.a edge_index[i]) == -1) {
+//                        if (maxNode.getmapInstVal() == -1 && maxNode.myatom().rel().equals(edge) && maxNode.myatom().args.length == 2) {
+//                            if (maxNode.getCurrentInst() > 0) {
+//                                edge_index.get(0).add(maxNode.myatom().args[0]);
+//                                edge_index.get(1).add(maxNode.myatom().args[1]);
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+
+    }
+
+    public void updateInputDictForSample(Map<String, double[][]> input_dict,  Map<Rel, int[][]> GGnumNodesDict, CPMGnn cpmGnn, Hashtable<String, PFNetworkNode> atomhasht) {
+        TreeSet<Rel> parentRels = cpmGnn.parentRels();
+        for (ArrayList<Rel> inputRels: cpmGnn.getInput_attr()) {
+            Rel firstRel = inputRels.get(0);
+            String key = firstRel.getTypes()[0].getName(); // should have the same type, we take the first
+            int idxFeat = 0;
+            double[][] inputMatrix = input_dict.get(key);
+            for (Rel subRel: inputRels) {
+                if (parentRels.contains(subRel)) {
+                    int[][] nodes = GGnumNodesDict.get(subRel);
+                    int min_node = nodes[0][0];
+                    for (int i = 0; i < nodes.length; i++) {
+                        if (GGsampledRel.truthValueOf(subRel, nodes[i]) == -1) {
+                            GroundAtom myatom = new GroundAtom(subRel, nodes[i]);
+                            PFNetworkNode gan = (PFNetworkNode) atomhasht.get(myatom.asString());
+                            if (gan != null) {
+                                int value = gan.sampleinstVal();
+                                int arg = gan.myatom().args[0];
+                                if (subRel instanceof CatRel)
+                                    inputMatrix[arg - min_node][value + idxFeat] = 1;
+                                else
+                                    inputMatrix[arg - min_node][idxFeat] = 1;
+                            }
                         }
+
                     }
                 }
-
-            } catch (RBNIllegalArgumentException e) {
-                throw new RuntimeException(e);
             }
         }
+//
+//                    for (int i = 0; i < mat.length; i++) {
+//                        if (GGsampledRel.truthValueOf(parent, mat[i]) == -1) {
+//                            GroundAtom myatom = new GroundAtom(parent, mat[i]);
+//                            String myatomname = myatom.asString();
+//                            PFNetworkNode gan = (PFNetworkNode) atomhasht.get(myatomname);
+//                            if (gan != null) {
+//                                double result = (double) gan.sampleinstVal();
+//                                boolean sampledVal = false;
+////                            GGsampledRel.getmydata().find(parent).
+//                                if (result == 1)
+//                                    sampledVal = true;
+//                                GGsampledRel.getmydata().findInBoolRel(parent).add(mat[i], sampledVal);
+//                            }
+//                        }
+//                    }
+//                }
+    }
 
-        // take only the "edge" relation
-        // this can be later changed to a more general approach
-        // find the boolean relations that should represent edges
-        Vector<BoolRel> boolrel = sampledRel.getBoolBinaryRelations();
-        ArrayList<ArrayList<Integer>> edge_index = null;
-        for (BoolRel element : boolrel) {
-            OneBoolRelData edgeinst = (OneBoolRelData) sampledRel.getmydata().find(element);
-            Type[] argType = element.getTypes();
-            int[] minValue = findStartNode(argType, sampledRel);
-            TreeSet<int[]> edges_list = edgeinst.allTrue();
-            edge_index = createEdgeArray(edges_list, minValue);
+    public double[] evalSample_gnn(CPMGnn cpmGnn, RelStruc A, Hashtable<String, PFNetworkNode> atomhasht, OneStrucData inst) {
+        if (threadSharedInterp.get() == null)
+            throw new NullPointerException("GnnPy object null!");
+        if (!(cpmGnn instanceof CatGnnHetero))
+            throw new RuntimeException("CPMGnn must be CatGnnHetero");
+        CatGnnHetero cpmHetero = (CatGnnHetero) cpmGnn;
+
+        if (GGxDict.isEmpty()) {
+            GGxDict = initXdict(cpmHetero, GGNodesDict, GGsampledRel);
+            updateInputDictForSample(GGxDict, GGNodesDict, cpmHetero, atomhasht);
+        }
+        if (GGedgeDict.isEmpty()) {
+            GGedgeDict = initEdgesDict(GGboolRel, GGsampledRel);
+            updateEdgeDictForSampling(GGedgeDict, cpmHetero, atomhasht);
         }
 
-//        String x = this.stringifyGnnFeatures(num_features, sampledRel, cpmGnn);
-        double[][] x = this.nodeToEncoding(num_features, sampledRel, cpmGnn);
-//        double[] res_py =  this.inferModelNodeDouble(Integer.parseInt(cpmGnn.getArgument()), x, edge_index, cpmGnn.getIdGnn(), "");
-        double[] res_py = null;
-        double[] res = new double[res_py.length];
-        for (int i = 0; i < res_py.length; i++) {
-            res[i] = res_py[i];
-        }
-//        return res;
-        try {
-            throw new UnsupportedOperationException(" still missing implementation");
-        } catch (UnsupportedOperationException e) {
-            throw new RuntimeException(e);
-        }
+        double[] res = null;
+        if (Objects.equals(cpmHetero.getGnn_inference(), "node"))
+            res = inferModelHetero(Integer.parseInt(cpmGnn.getArgument()), GGxDict, GGedgeDict, cpmGnn.getIdGnn());
+        else if (Objects.equals(cpmHetero.getGnn_inference(), "graph")) {
+            res = inferModelHetero(-1, GGxDict, GGedgeDict, cpmGnn.getIdGnn());
+        } else
+            throw new IllegalArgumentException("not valid keyword used: " + cpmHetero.getGnn_inference());
+
+        return res;
     }
 
     private void printPython(Interpreter interpreter, String var) {

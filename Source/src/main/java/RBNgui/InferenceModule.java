@@ -24,26 +24,6 @@
 
 package RBNgui;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.awt.Insets;
-import java.awt.MediaTracker;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ChangeEvent;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -53,26 +33,7 @@ import RBNpackage.*;
 
 import java.util.*;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JProgressBar;
-import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.ListSelectionModel;
-import javax.swing.border.Border;
 
 import RBNExceptions.RBNCompatibilityException;
 import RBNExceptions.RBNCyclicException;
@@ -84,14 +45,10 @@ import RBNLearning.RelData;
 import RBNLearning.RelDataForOneInput;
 import RBNinference.BayesConstructor;
 import RBNinference.MapThread;
-import RBNinference.MapVals;
 import RBNinference.PFNetwork;
-import RBNinference.SampleProbs;
 import RBNinference.SampleThread;
 import RBNutilities.rbnutilities;
 import edu.ucla.belief.ace.Control;
-import edu.ucla.belief.ace.SettingsPanel;
-import edu.ucla.belief.ui.primula.SamiamManager;
 
 public class InferenceModule implements GradientGraphOptions {
 
@@ -329,7 +286,7 @@ public class InferenceModule implements GradientGraphOptions {
 	List<MapThread> threads;
 	int num_threads;
 	// set the Map Seach Algorithm used during map inference
-	protected int mapSeachAlg; // 0 standard, 1 greedy
+	protected int mapSearchAlg; // 0 standard, 1 greedy
 	// the number of iteration for the greedy search algorithm
 	private int numIterGreedyMap;
 
@@ -354,7 +311,7 @@ public class InferenceModule implements GradientGraphOptions {
 		for (int i=0;i<samplelogmode.length;i++)
 			samplelogmode[i]=false;
 
-		numchains = 3;
+		numchains = 0;
 		windowsize = 3;
 		numrestarts = 1;
 		
@@ -411,7 +368,7 @@ public class InferenceModule implements GradientGraphOptions {
 		catch (RBNInconsistentEvidenceException ex){System.out.println("Inconsistent Evidence");}
 		catch (IOException ex){System.out.println(ex.toString());}
 
-		sampthr = new SampleThread(inferenceModuleGUI,
+		sampthr = new SampleThread(this,
 				pfn,
 				this.queryatoms,
 				samplelogmode,
@@ -446,9 +403,7 @@ public class InferenceModule implements GradientGraphOptions {
             }
             catch (java.io.IOException ex){System.err.println(ex);};
         }
-//        infoMessage.setText(" Stop Sampling ");
         pausemcmc = false;
-//        startSampling.setEnabled( true );
     }
 
     public SampleThread getSampthr() {
@@ -486,16 +441,12 @@ public class InferenceModule implements GradientGraphOptions {
                         queryatoms,
                         mode,
                         true);
-				((GradientGraphO) gg).setMapSearchAlg(mapSeachAlg);
+				((GradientGraphO) gg).setNumChains(numchains);
+				((GradientGraphO) gg).setWindowSize(windowsize);
+				((GradientGraphO) gg).setMapSearchAlg(mapSearchAlg);
 				((GradientGraphO) gg).load_gnn_settings(myprimula.getLoadGnnSet());
                 mapthr = new MapThread(this, myprimula, (GradientGraphO) gg);
                 // mapthr = new MapThread(this,myprimula,(GradientGraphO)gg); or this?
-                if (mapthr.isGnnIntegration()) {
-                    mapthr.setPythonHome(this.myprimula.getPythonHome());
-                    mapthr.setScriptPath(this.myprimula.getScriptPath());
-                    mapthr.setScriptName(this.myprimula.getScriptName());
-//                    ((GradientGraphO) gg).setGnnPy(mapthr.getGnnPy());
-                }
                 mapthr.start();
                 threads.add(mapthr);
             }
@@ -1207,6 +1158,7 @@ public class InferenceModule implements GradientGraphOptions {
 	public void setWindowSize(Integer gr){
 		windowsize = gr;
 	}
+	public void setNumChains(int ch){ numchains = ch; }
 
 	public void setVerbose(boolean v){
 		ggverbose = v;
@@ -1275,8 +1227,6 @@ public class InferenceModule implements GradientGraphOptions {
 	public boolean aca(){
 		return false;
 	}
-
-	
 	
 	public int getNumChains(){
 		return numchains;
@@ -1442,8 +1392,8 @@ public class InferenceModule implements GradientGraphOptions {
 		updateInstantiationList();
 	}
 
-	public void setMapSeachAlg(int mapSeachAlg) {
-		this.mapSeachAlg = mapSeachAlg;
+	public void setMapSearchAlg(int mapSearchAlg) {
+		this.mapSearchAlg = mapSearchAlg;
 	}
 
 	public int getNumIterGreedyMap() {
@@ -1460,5 +1410,21 @@ public class InferenceModule implements GradientGraphOptions {
 
 	public void setInferenceModuleGUI(InferenceModuleGUI inferenceModuleGUI) {
 		this.inferenceModuleGUI = inferenceModuleGUI;
+	}
+
+	public void addQueryAtom(Rel rel, GroundAtomList atstoadd, Integer idx) {
+		idx=relIndex.size();
+		relIndex.put(rel.name(), (Integer)idx);
+		relList.add(rel);
+		queryatoms.put(rel, atstoadd);
+		queryModels.add(new QueryTableModel());
+		queryModels.elementAt(idx).addQuery(atstoadd);
+		myprimula.queryatoms.add(atstoadd);
+	}
+	public void deleteQueryAtoms() {
+		queryModels=new Vector<QueryTableModel>();
+		queryatoms = new Hashtable<Rel, GroundAtomList>();
+		relList = new Vector<Rel>();
+		relIndex = new Hashtable<String,Integer>();
 	}
 }

@@ -34,4 +34,6 @@ public interface CPMGnn {
     ArrayList<ArrayList<Rel>> getInput_attr();
 
     ArrayList<Rel> getEdge_attr();
+
+    int getNumLayers();
 }

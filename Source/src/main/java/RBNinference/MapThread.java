@@ -1,5 +1,8 @@
 package RBNinference;
 
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 
 import RBNExceptions.RBNNaNException;
@@ -24,10 +27,6 @@ public class MapThread extends GGThread {
     private final boolean gnnIntegration;
 	private Hashtable<Rel,int[]> bestMapVals;
 	private double[] bestLikelihood;
-    private String modelPath;
-    private String scriptPath;
-    private String scriptName;
-    private String pythonHome;
 
     public boolean isSampling;
 	public MapThread(InferenceModule infmodule,
@@ -48,7 +47,7 @@ public class MapThread extends GGThread {
         this.isSampling = true;
         if (this.gnnIntegration) {
             try {
-                this.gnnPy = new GnnPy(this.scriptPath, this.scriptName, this.pythonHome);
+                this.gnnPy = new GnnPy(myprimula, gg);
                 gg.setGnnPy(this.gnnPy);
 				gg.load_gnn_settings(myprimula.getLoadGnnSet());
             } catch (IOException e) {
@@ -64,11 +63,12 @@ public class MapThread extends GGThread {
 		 */
 		
 		if (gg.parameters().size() > 0){
-			if (myprimula.getPrimulaGUI() != null)
+			if (myprimula.getPrimulaGUI() != null) {
 				myLearnModule = myprimula.getPrimulaGUI().openLearnModule(true);
-			myLearnModule.disableDataTab();
-			myLearnModule.setParameters(gg.parameters());
-			gg.setLearnModule(myLearnModule);
+				myLearnModule.disableDataTab();
+				myLearnModule.setParameters(gg.parameters());
+				gg.setLearnModule(myLearnModule);
+			}
 		}
 
 		gg.setNumIterGreedyMap(myinfmodule.getNumIterGreedyMap());
@@ -82,73 +82,75 @@ public class MapThread extends GGThread {
 		int restarts =1;
 		double oldll=Double.NEGATIVE_INFINITY;
 		double newll=0;
-
-		while (running && ((maxrestarts == -1) || (restarts <= maxrestarts))){
-			try {
-                System.out.println("Current restart: " + restarts);
-				newll = gg.mapInference(this);
-				if (!Double.isNaN(newll)) {
-					if (newll>oldll) {
-						oldll = newll;
-						newmapvals = gg.getMapVals();
-						bestMapVals = newmapvals;
-						bestLikelihood = new double[]{newll};
-						mapprobs.setMVs(newmapvals);
-						mapprobs.setLL(String.valueOf(oldll));
-						if (gg.parameters().size() > 0)
-							myLearnModule.setParameterValues(gg.getParameters());
-						if (gnnPy != null) {
-							xDict = gnnPy.getCurrentXdict();
-							edgeDict = gnnPy.getCurrentEdgeDict();
+		PrintWriter writer = null;
+		try {
+			writer = new PrintWriter("final-graphs.txt", "UTF-8");
+			while (running && ((maxrestarts == -1) || (restarts <= maxrestarts))) {
+				try {
+					System.out.println("Current restart: " + restarts);
+					newll = gg.mapInference(this);
+					if (!Double.isNaN(newll)) {
+						if (newll > oldll) {
+							oldll = newll;
+							newmapvals = gg.getMapVals();
+							bestMapVals = newmapvals;
+							bestLikelihood = new double[]{newll};
+							mapprobs.setMVs(newmapvals);
+							mapprobs.setLL(String.valueOf(oldll));
+							if (gg.parameters().size() > 0)
+								myLearnModule.setParameterValues(gg.getParameters());
+							if (gnnPy != null) {
+								xDict = gnnPy.getCurrentXdict();
+								edgeDict = gnnPy.getCurrentEdgeDict();
+							}
 						}
+					} else {
+						System.out.println("MAP search aborted");
 					}
-				} else {
-					System.out.println("MAP search aborted");
+				} catch (RBNNaNException e) {
+					System.out.println(e);
+					System.out.println("Restart aborted");
 				}
+				mapprobs.setRestarts(restarts);
+				mapprobs.notifyObservers();
+
+				writer.println("Restart: " + restarts);
+				for (Rel key : bestMapVals.keySet()) {
+					int node = 0;
+					writer.println(key.name());
+					for (int val : bestMapVals.get(key)) {
+						writer.println(node + " : " + val);
+						node++;
+					}
+				}
+				restarts++;
 			}
-			catch (RBNNaNException e) 
-			{
-				System.out.println(e);
-				System.out.println("Restart aborted");
-			}
-			mapprobs.setRestarts(restarts);
-			mapprobs.notifyObservers();
-			restarts++;
+			writer.close();
+		} catch (FileNotFoundException e) {
+			throw new RuntimeException(e);
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException(e);
 		}
 
 		System.out.println("Best log-likelihood found: " + oldll);
 
 		// path.pkl
 //		String path = "/Users/lz50rg/Dev/football/res.pkl";
-//		if (gnnPy != null) {
-//			System.out.println("Exported");
+		String path = "/Users/lz50rg/Dev/water-hawqs/map-results.pkl";
+		if (gnnPy != null) {
+			gnnPy.savePickleHetero(xDict, edgeDict, path);
 //			gnnPy.savePickleGraph(xDict, edgeDict, path);
-//		}
+		}
 
         if (this.gnnIntegration)
 			this.gnnPy.closeInterpreter();
 
+		this.gnnPy = null;
         this.isSampling = false;
     }
 
 	public void setRunning(boolean r){
 		this.running = r;
-	}
-
-	public void setModelPath(String modelPath) {
-		this.modelPath = modelPath;
-	}
-
-	public void setScriptPath(String scriptPath) {
-		this.scriptPath = scriptPath;
-	}
-
-	public void setScriptName(String scriptName) {
-		this.scriptName = scriptName;
-	}
-
-	public void setPythonHome(String pythonHome) {
-		this.pythonHome = pythonHome;
 	}
 
 	public boolean isGnnIntegration() {

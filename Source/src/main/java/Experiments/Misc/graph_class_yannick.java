@@ -197,7 +197,9 @@ public class graph_class_yannick {
             im.toggleAtom(tmp_query, 0);
             // perform map inference
             im.setNumRestarts(1);
-            im.setMapSeachAlg(2);
+            im.setMapSearchAlg(2);
+            im.setNumChains(0);
+            im.setWindowSize(0);
 
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();

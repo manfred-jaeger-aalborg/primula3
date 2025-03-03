@@ -1,4 +1,5 @@
 from gcn_model_def import *
+from gcn_model_def import HeteroGraph
 
 # this function will be called by Primula with: model, x and edge_index, **kwargs
 # the model needs to output a probability for each node! (if not -> out = torch.sigmoid(out))
@@ -22,7 +23,7 @@ def infer_model_graph(model, x, edge_index, **kwargs):
 
 def set_model(model_class, weights_path, **kwargs):
     model = model_class(**kwargs).to("cpu")
-    model.load_state_dict(torch.load(weights_path, map_location="cpu", weights_only=True)) # find out why False with water
+    model.load_state_dict(torch.load(weights_path, map_location="cpu", weights_only=False)) # find out why False with water
     model.eval()
     return model
 
@@ -30,8 +31,7 @@ def set_model(model_class, weights_path, **kwargs):
 def create_models_info(base_path, models_definitions):
     models_info = {}
     for model_id, (model_class, model_name, parameters) in models_definitions.items():
-        # raise KeyError(f"PROVA {base_path}{model_name}")
-        weights_path = f"{base_path}{model_name}.pt" ## .pt for the others!! only water pth
+        weights_path = f"{base_path}{model_name}.pt"
         models_info[model_id] = (model_class, weights_path, parameters)
     return models_info
 
@@ -50,11 +50,6 @@ models_info = create_models_info(base_path, models_definitions)
 def set_vars(setd):
     global base_path, sdataset, nfeat, nlayers, nclass, nhid, models_info, models_definitions
     base_path = setd['base_path']
-#     models_definitions = {
-#         f"GCN{setd["sdataset"]}{i}": (GCN_graph, f"GCN_{setd["sdataset"]}_{i}", {
-#             "nfeat": setd["nfeat"], "nlayers": setd["nlayers"], "nhid": setd["nhid"], "nclass": setd["nclass"], "dropout": 0.5, "primula": True
-#         }) for i in range(10)
-#     }
     ##################### REAL DATASETS ###################################
     if setd['model'] == 'GCN' and setd['exp'] == 'realDataset':
         models_definitions = {
@@ -100,15 +95,25 @@ def set_vars(setd):
                             "scale_init": 0.5, "deg_intercept_init": 0.5, "use_bn": False, "use_ln": False, "generated": False, "pre_feature": False, "primula": True }
                         )
             }
+
+    if setd['model'] == 'GGCN_raf' and setd['noisy']:
+            models_definitions = {
+                        f"GGCN_raf{setd['sdataset']}": (
+                            GGCN_raf, f"{setd['model']}_{setd['N']}_{setd['J']}_{setd['Jb']}_{setd['temp']}_noisy_{setd['iter']}", {
+                            "nfeat": setd['nfeat'], "nlayers": setd['nlayers'], "nhidden": setd['nhid'], "nclass": setd['nclass'], "dropout": 0.5,
+                            "decay_rate": 0.9, "exponent": 3.0, "use_degree": True, "use_sign": True, "use_decay": True, "use_sparse": False,
+                            "scale_init": 0.5, "deg_intercept_init": 0.5, "use_bn": False, "use_ln": False, "generated": False, "pre_feature": False, "primula": True }
+                        )
+            }
     ##################### ISING/ ###################################
 
     ##################### POLLUTION ###################################
     if setd['model'] == 'riverGNN':
-        models_definitions["riverGNN"] = (
-            HeteroGraph, "model", {
-                "in_sub": 2, "in_hru_agr": 5, "in_hru_urb": 10, "hidden_dims": 32, "out_dims": 3, "num_layers": 4
-            }
-        )
+        models_definitions = {
+            f"HeteroGraph{setd['sdataset']}": (
+                HeteroGraph, "model_small", { "in_sub": 2, "in_hru_agr": 5, "in_hru_urb": 10, "hidden_dims": 8, "out_dims": 3, "num_layers": 2 }
+            )
+        }
     ##################### POLLUTION/ ###################################
 
     models_info = create_models_info(base_path, models_definitions)
