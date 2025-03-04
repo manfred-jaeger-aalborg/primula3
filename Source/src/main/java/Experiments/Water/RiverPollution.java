@@ -44,6 +44,9 @@ public class RiverPollution {
     }
 
     public static void main(String[] args) {
+        int expNum = Integer.parseInt(args[0]);
+        double constStrength = Double.parseDouble(args[1]);
+
         Primula primula = new Primula();
         primula.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
         primula.setScriptPath("/Users/lz50rg/Dev/primula-workspace/primula3/Source/python");
@@ -132,7 +135,9 @@ public class RiverPollution {
         manual_rbn.insertPRel(gnn_attr, 1);
         manual_rbn.insertPRel(riverrbn[0], 2);
         manual_rbn.insertPRel(riverrbn[1], 3);
-        manual_rbn.insertPRel(riverrbn[2], 4);
+        RBNPreldef const0 = riverrbn[2];
+        ((ProbFormConvComb) const0.cpmod()).f3().setCvals("", constStrength);
+        manual_rbn.insertPRel(const0, 4);
 
 //        RBN file_rbn = new RBN(new File("/Users/lz50rg/Dev/water-hawqs/water_rbn.rbn"), primula.getSignature());
 //        RBNPreldef[] riverrbn = file_rbn.prelements();
@@ -148,33 +153,8 @@ public class RiverPollution {
         CatRel tmp_query = new CatRel("LandUse", 1, typeStringToArray("hru_agr", 1), valStringToArray(val_name));
         tmp_query.setInout(Rel.PROBABILISTIC);
 
-//        BayesConstructor constructor = new BayesConstructor(
-//                primula,
-//                primula.getInstantiation(), // onestructdata
-//                new GroundAtomList(), // groundatom list (empty)
-//                "river.net"); // something.net
-//        try {
-//            constructor.constructCPTNetwork(
-//                    1,
-//                    0,
-//                    2,
-//                    1,
-//                    0,
-//                    3);
-//        } catch (RBNCompatibilityException e) {
-//            throw new RuntimeException(e);
-//        } catch (RBNCyclicException e) {
-//            throw new RuntimeException(e);
-//        } catch (RBNIllegalArgumentException e) {
-//            throw new RuntimeException(e);
-//        }
-
         try {
             InferenceModule im = primula.createInferenceModule();
-
-            // do not query for already instantiated values (in this case if a node is OTHER)
-            OneStrucData inst = primula.getInstantiation();
-            Vector<OneCatRelData> catInst = inst.getAllonecatdata();
 
             RelStruc input_struct = primula.getRels();
             int[][] mat = input_struct.allTypedTuples(tmp_query.getTypes());
@@ -207,14 +187,14 @@ public class RiverPollution {
                 values_count.put(crops.get(i), 0);
             }
 
-//            PrintWriter writer = new PrintWriter("final-graph.txt", "UTF-8");
+            PrintWriter writer = new PrintWriter("final_graph_" + expNum + ".txt", "UTF-8");
             System.out.println("\nMAP INFERENCE RESULTS:\n");
             for (int i = 0; i < gal.size(); i++) {
-//                writer.println(gal.atomAt(i).args()[0] + " : " + res[i]);
+                writer.println(gal.atomAt(i).args()[0] + " : " + res[i]);
                 System.out.println(gal.atomAt(i).rel().toString() + "(" + gal.atomAt(i).args()[0] + "): " + res[i]);
                 values_count.put(crops.get(res[i]), values_count.get(crops.get(res[i]))+1);
             }
-//            writer.close();
+
 
             System.out.println("Final GG logLikelihood: " + GG.currentLogLikelihood());
 
@@ -263,18 +243,19 @@ public class RiverPollution {
             im.getSampthr().join();
             SampleProbs finalSprobs = im.getSampthr().getSprobs();
             System.out.println(Arrays.deepToString(finalSprobs.getProbs(queryRel)));
-
+            writer.println("constr: " + Arrays.deepToString(finalSprobs.getProbs(queryRel)));
+            writer.close();
             System.exit( 0 );
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } catch (RBNIllegalArgumentException e) {
             throw new RuntimeException(e);
         }
-//        catch (FileNotFoundException e) {
-//            throw new RuntimeException(e);
-//        } catch (UnsupportedEncodingException e) {
-//            throw new RuntimeException(e);
-//        }
+        catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
 
