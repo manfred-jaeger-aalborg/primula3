@@ -56,7 +56,7 @@ public class RiverPollution {
         primula.setLoadGnnSet(load_gnn_set);
 
 //        File srsfile = new File("/Users/lz50rg/Dev/water-hawqs/src/test.rdef");
-        File srsfile = new File("/Users/lz50rg/Dev/water-hawqs/river_test.rdef");
+        File srsfile = new File("/Users/lz50rg/Dev/water-hawqs/src/water-network.rdef");
         primula.loadSparseRelFile(srsfile);
 
         String val_name = "CORN,COSY,PAST,SOYB";
@@ -127,11 +127,12 @@ public class RiverPollution {
 
         RBN file_rbn = new RBN(new File("/Users/lz50rg/Dev/water-hawqs/water_count_linear.rbn"), primula.getSignature());
         RBNPreldef[] riverrbn = file_rbn.prelements();
-        RBN manual_rbn = new RBN(3, 0);
+        RBN manual_rbn = new RBN(5, 0);
         manual_rbn.insertPRel(gnn_rbn, 0);
         manual_rbn.insertPRel(gnn_attr, 1);
         manual_rbn.insertPRel(riverrbn[0], 2);
-//        manual_rbn.insertPRel(riverrbn[1], 3);
+        manual_rbn.insertPRel(riverrbn[1], 3);
+        manual_rbn.insertPRel(riverrbn[2], 4);
 
 //        RBN file_rbn = new RBN(new File("/Users/lz50rg/Dev/water-hawqs/water_rbn.rbn"), primula.getSignature());
 //        RBNPreldef[] riverrbn = file_rbn.prelements();
@@ -183,11 +184,11 @@ public class RiverPollution {
                     gal.add(tmp_query, new int[]{mat[i][0]});
             }
             im.addQueryAtoms(tmp_query, gal);
-            im.setMapSearchAlg(1);
+            im.setMapSearchAlg(3);
             im.setNumIterGreedyMap(150);
             im.setNumRestarts(1);
-            im.setWindowSize(100);
-            im.setNumChains(5);
+            im.setWindowSize(50);
+            im.setNumChains(1);
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();
 

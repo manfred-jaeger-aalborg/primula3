@@ -733,15 +733,13 @@ public class GradientGraphO extends GradientGraph{
 		}	
 	}
 
-	public void resetValues(TreeSet<GGCPMNode> parents, Integer sno, boolean valueonly){
+	public void resetValues(TreeSet<GGNode> ancestors, Integer sno, boolean valueonly){
 		llnode.resetValue(sno);
 		if (!valueonly)
 			llnode.resetGradient(sno);
 
-		for (GGCPMNode parent: parents) {
-			parent.resetValue(sno);
-			TreeSet<GGNode> ancestors = parent.ancestors();
-			for (GGNode ancestor: ancestors) {
+		for (GGNode ancestor: ancestors) {
+			if (ancestor instanceof GGCPMNode) {
 				ancestor.resetValue(sno);
 				if (!valueonly)
 					ancestor.resetGradient(sno);
@@ -785,7 +783,7 @@ public class GradientGraphO extends GradientGraph{
 //			}
 
 			/* First instantiate the Max nodes */
-			for (GGAtomMaxNode mxnode: maxind_as_ts()) {
+			for (GGAtomMaxNode mxnode: maxind_as_list()) {
 				mxnode.setRandomInst();
 			}
 			/* Now find initial values for the k Markov chains */
@@ -915,7 +913,7 @@ public class GradientGraphO extends GradientGraph{
 	/**
 	 * gibbSample but only on the atoms that are affected by a specific atom
 	 */
-	public void gibbsSample(Thread mythread, TreeSet<GGCPMNode> parents){
+	public void gibbsSample(Thread mythread, TreeSet<GGNode> ancestors){
 		double[][] sd_scores; // 'scores' of candidate evaluates as small doubles
 		double[] sampleprobs;
 		int sampledval;
@@ -933,15 +931,16 @@ public class GradientGraphO extends GradientGraph{
 		}
 
 		TreeSet<GGAtomSumNode> sumNodes = new TreeSet<>();
-		for (GGCPMNode parent: parents) {
-			for (GGAtomSumNode sumnode: parent.getSumIndicators()) sumNodes.add(sumnode);
+		for (GGNode ancestor: ancestors) {
+			if (ancestor instanceof GGCPMNode)
+				for (GGAtomSumNode sumnode: ((GGCPMNode)ancestor).getSumIndicators()) sumNodes.add(sumnode);
 		}
 
 		GGAtomSumNode ggin;
 		for (int k=0;k<numchains && (mythread == null || mythread.isAlive()) ;k++){
 			int sno=k*windowsize+windowindex; // index for re-sampling
 			// First reset the values for the current sample number at all nodes:
-			resetValues(parents, sno,true);
+			resetValues(ancestors, sno,true);
 			// Initialize for the sumindicators the new sample value with the previous one;
 			// This enables a uniform access to the current sample value of all sumindicators,
 			// regardless whether they already have been re-sampled in this round of Gibbs sampling
@@ -1214,7 +1213,7 @@ public class GradientGraphO extends GradientGraph{
 			}
 
 			if (sumindicators.size() > 0)
-				for (int j=0; j<windowsize; j++) gibbsSample(null, batchParents);
+				for (int j=0; j<windowsize; j++) gibbsSample(null, null);
 
 			for (GGAtomMaxNode node: batch) node.reEvaluateUpstream(null);
 			newll = SmallDouble.log(llnode.evaluate(null,batchUGAS,true,false,null));
@@ -1326,9 +1325,9 @@ public class GradientGraphO extends GradientGraph{
 		return currentLogLikelihood();
 	}
 
-	public double mapSearchSampling(GGThread mythread, TreeSet<GGAtomMaxNode> flipcandidates) throws RBNNaNException {
+	public double mapSearchSampling(GGThread mythread, ArrayList<GGAtomMaxNode> flipcandidates) throws RBNNaNException {
 		// Use an ArrayList to hold scored atoms
-		TreeSet<GGAtomMaxNode> scored_atoms = new TreeSet<>(new GGAtomMaxNode_Comparator());
+		List<GGAtomMaxNode> scored_atoms = new ArrayList<>();
 		List<GGAtomMaxNode> rescoreList = new ArrayList<>();
 		List<GGAtomMaxNode> topAtoms = new ArrayList<>();
 		List<GGAtomMaxNode> tabuList = new ArrayList<>();
@@ -1337,6 +1336,7 @@ public class GradientGraphO extends GradientGraph{
 			mxnode.setScore(mythread);
 			scored_atoms.add(mxnode);
 		}
+		Collections.sort(scored_atoms, new GGAtomMaxNode_Comparator());
 
 		if (debugPrint) {
 			System.out.println("Flip scores");
@@ -1351,10 +1351,10 @@ public class GradientGraphO extends GradientGraph{
 		int num_flipped = 0;
 		num_iter = num_flipped;
 		GGAtomMaxNode flipnext;
-		int rescoreWhen = 10;
+		int rescoreWhen = 20;
 		int counterRescore = 0;
-		int tabuSize = 0;
-		int max_iter = 3500;
+		int tabuSize = 30;
+		int max_iter = 1500;
 		Iterator<GGAtomMaxNode> it = scored_atoms.iterator();
 		while (it.hasNext() && num_flipped<max_iter) {
 			// Always remove the first element (best candidate)
@@ -1372,22 +1372,13 @@ public class GradientGraphO extends GradientGraph{
 						mxnode.setScore(mythread);
 						scored_atoms.add(mxnode);
 					}
+					Collections.sort(scored_atoms, new GGAtomMaxNode_Comparator());
 
 					for (int j = 0; j < windowsize; j++)
 						gibbsSample(mythread);
 
-//					double newll = SmallDouble.log(llnode.evaluate(null, null, true, false, null));
-//					System.out.println(newll);
-					// stop if there is not an improvement to the likelihood of the llnode
-//					improvementThreshold = (prevLikelihood/100.0)*perc_inc;
-//					if (newll - prevLikelihood < improvementThreshold) {
-//						System.out.println("Stop criteria met: Likelihood improvement; terminating search.");
-//						break;
-//					} else
-//						prevLikelihood = newll;
-
 					// check if still the best atom is with negative score
-					if (scored_atoms.first().getScore() <= 0) {
+					if (scored_atoms.get(0).getScore() <= 0) {
 						if (num_flipped == 0 && debugPrint)
 							System.out.println("Ineffective search, no atoms flipped!");
 						else if (num_flipped > 0 && debugPrint)
@@ -1400,7 +1391,7 @@ public class GradientGraphO extends GradientGraph{
 					it = scored_atoms.iterator();
 					flipnext = it.next();
 					rescoreList = new ArrayList<>();
-					tabuList = new ArrayList<>();
+//					tabuList = new ArrayList<>();
 					counterRescore = 0;
 				}
 				if (debugPrint) {
@@ -1433,23 +1424,23 @@ public class GradientGraphO extends GradientGraph{
 					}
 
 					// fin all the nodes that are influenced by the fipped atoms
-					TreeSet<GGAtomMaxNode> update_us = new TreeSet<GGAtomMaxNode>();
+					ArrayList<GGAtomMaxNode> update_us = new ArrayList<>();
 					for (GGAtomMaxNode node: topAtoms) {
 						update_us.add(node);
-						for (GGCPMNode uga : flipnext.getAllugas()) {
-							for (GGAtomMaxNode mx : uga.getMaxIndicators()) {
+						for (GGCPMNode uga : node.getAllugas()) {
+							for (GGAtomMaxNode mx : uga.getMaxIndicators())
 								if (!update_us.contains(mx))
 									update_us.add(mx);
-							}
 						}
 					}
 					System.out.println("re-scoring " + update_us.size() + " atoms");
-					// Update scores and reinsert them
-					for (GGAtomMaxNode mx : update_us) {
-						scored_atoms.remove(mx);
-						mx.setScore(mythread);
-						scored_atoms.add(mx);
+
+					// Update scores
+					for (int i = 0; i < scored_atoms.size(); i++) {
+						if (update_us.contains(scored_atoms.get(i)))
+							scored_atoms.get(i).setScore(mythread);
 					}
+					Collections.sort(scored_atoms, new GGAtomMaxNode_Comparator());
 
 					topAtoms = new ArrayList<>();
 					it = scored_atoms.iterator();
@@ -1699,7 +1690,8 @@ public double mapInference(GGThread mythread)
 				terminate = true;
 		} else if (mapSearchAlg == 3) {
 			System.out.println("MAP search 3...");
-			score = mapSearchSampling(mythread, maxind_as_ts());
+			score = mapSearchSampling(mythread, maxind_as_list());
+			terminate = true;
 		} else if (mapSearchAlg == 4) {
 			System.out.println("MAP search 4...");
 			score = mapSearchBatch(mythread, maxind_as_ts());
@@ -2845,6 +2837,18 @@ private TreeSet<GGAtomMaxNode> maxind_as_ts(){
 
 	private Vector<GGAtomMaxNode> maxind_as_vec() {
 		Vector<GGAtomMaxNode> result = new Vector<>();
+		for (Rel r : maxindicators.keySet()) {
+			for (GGAtomMaxNode mn : maxindicators.get(r)) {
+				if (mn.getmapInstVal() == -1) {
+					result.add(mn);
+				}
+			}
+		}
+		return result;
+	}
+
+	private ArrayList<GGAtomMaxNode> maxind_as_list() {
+		ArrayList<GGAtomMaxNode> result = new ArrayList<>();
 		for (Rel r : maxindicators.keySet()) {
 			for (GGAtomMaxNode mn : maxindicators.get(r)) {
 				if (mn.getmapInstVal() == -1) {

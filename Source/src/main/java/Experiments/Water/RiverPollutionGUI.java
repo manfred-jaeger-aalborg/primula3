@@ -106,7 +106,7 @@ public class RiverPollutionGUI {
                 new String[]{"v"},
                 new CatGnnHetero("v",
                         "HeteroGraphpollution",
-                        -1,
+                        1,
                         3,
                         attrs_rels,
                         edge_attr,
@@ -128,11 +128,12 @@ public class RiverPollutionGUI {
 
         RBN file_rbn = new RBN(new File("/Users/lz50rg/Dev/water-hawqs/water_count_linear.rbn"), primula.getSignature());
         RBNPreldef[] riverrbn = file_rbn.prelements();
-        RBN manual_rbn = new RBN(3, 0);
+        RBN manual_rbn = new RBN(5, 0);
         manual_rbn.insertPRel(gnn_rbn, 0);
         manual_rbn.insertPRel(gnn_attr, 1);
         manual_rbn.insertPRel(riverrbn[0], 2);
-//        manual_rbn.insertPRel(riverrbn[1], 3);
+        manual_rbn.insertPRel(riverrbn[1], 3);
+        manual_rbn.insertPRel(riverrbn[2], 4);
 
 //        RBN file_rbn = new RBN(new File("/Users/lz50rg/Dev/water-hawqs/water_rbn.rbn"), primula.getSignature());
 //        RBNPreldef[] riverrbn = file_rbn.prelements();

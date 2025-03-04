@@ -155,12 +155,11 @@ private int highvalue;
 		for (int v=0; v< (int)this.myatom().rel().numvals(); v++) {
 			if (v==ci) {
 				fs=0.0;
-			}
-			else {
+			} else {
 				this.setCurrentInst(v);
 				// sample again the nodes after flipping.
 				if (thisgg.sumindicators.size() > 0)
-					for (int j=0; j<thisgg.windowsize; j++) thisgg.gibbsSample(mythread, this.parents());
+					for (int j=0; j<thisgg.windowsize; j++) thisgg.gibbsSample(mythread, this.ancestors());
 					// for (int j=0; j<thisgg.windowsize; j++) thisgg.gibbsSample(mythread); run this for the gibb sampling on all the sumnodes
 				reEvaluateUpstream(null);
 				newll = SmallDouble.log(thisgg.llnode.evaluate(null,allugas,true,false,null));

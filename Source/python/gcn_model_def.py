@@ -305,10 +305,10 @@ class HeteroGraph(nn.Module):
             else:
                 conv_dict = {
                     ('sub', 'to', 'sub'): SAGEConv(self.out_dim_sub, hidden_dims),
-#                     ('hru_agr', 'to', 'sub'): SAGEConv((in_hru_agr, self.out_dim_sub), hidden_dims, aggr=sage_aggr),
-#                     ('sub', 'to', 'hru_agr'): SAGEConv((self.out_dim_sub, in_hru_agr), hidden_dims),
-#                     ('hru_urb', 'to', 'sub'): SAGEConv((in_hru_urb, self.out_dim_sub), hidden_dims, aggr=sage_aggr),
-#                     ('sub', 'to', 'hru_urb'): SAGEConv((self.out_dim_sub, in_hru_urb), hidden_dims)
+                    ('hru_agr', 'to', 'sub'): SAGEConv((in_hru_agr, self.out_dim_sub), hidden_dims, aggr=sage_aggr),
+                    ('sub', 'to', 'hru_agr'): SAGEConv((self.out_dim_sub, in_hru_agr), hidden_dims),
+                    ('hru_urb', 'to', 'sub'): SAGEConv((in_hru_urb, self.out_dim_sub), hidden_dims, aggr=sage_aggr),
+                    ('sub', 'to', 'hru_urb'): SAGEConv((self.out_dim_sub, in_hru_urb), hidden_dims)
                 }
 
             self.layers.append(HeteroConv(conv_dict, aggr=self.heteroAggr))
@@ -329,8 +329,8 @@ class HeteroGraph(nn.Module):
             x_dict['sub'] = self.dropout(x_dict['sub'])
 
             # Reapply the original features for non-'sub' nodes (as skip conn)
-#             x_dict['hru_agr'] = skip_hru_agr
-#             x_dict['hru_urb'] = skip_hru_urb
+            x_dict['hru_agr'] = skip_hru_agr
+            x_dict['hru_urb'] = skip_hru_urb
 
         out = self.final_lin(x_dict['sub'])
         return F.softmax(out, dim=1)
