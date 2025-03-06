@@ -142,7 +142,8 @@ private int highvalue;
 //	}
 //	
 
-	public void setScore(Thread mythread) {
+	// maxSample the size of the window size (needed also for the evaluation), if set to 0, evaluate all the window size
+	public void setScore(Thread mythread, int maxSample) {
 		if (this.flipscores == null) { // First time we do MAP inference on this node
 			flipscores = new double[(int)this.myatom().rel().numvals()];
 		}
@@ -157,7 +158,6 @@ private int highvalue;
 				fs=0.0;
 			} else {
 				this.setCurrentInst(v);
-				int maxSample = 30; // the size of the window size (needed also for the evaluation)
 				// sample again the nodes after flipping.
 				if (thisgg.sumindicators.size() > 0)
 					for (int j=0; j<maxSample; j++) thisgg.gibbsSample(mythread, this.ancestors());
