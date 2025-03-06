@@ -896,7 +896,7 @@ public class GradientGraphO extends GradientGraph{
 				for (int v=0;v<nvals;v++) {
 					gast.setSampleVal(sno, v);
 					gast.reEvaluateUpstream(sno);
-					sd_scores[v]=llnode.evaluate(sno, gast.allugas, false, false, null);
+					sd_scores[v]=llnode.evaluate(sno,0, gast.allugas, false, false, null);
 				}
 				sampleprobs=SmallDouble.toProbabilityArray(sd_scores);
 
@@ -960,7 +960,7 @@ public class GradientGraphO extends GradientGraph{
 				for (int v=0;v<nvals;v++) {
 					gast.setSampleVal(sno, v);
 					gast.reEvaluateUpstream(sno);
-					sd_scores[v]=llnode.evaluate(sno, gast.allugas, false, false, null);
+					sd_scores[v]=llnode.evaluate(sno,0, gast.allugas, false, false, null);
 				}
 				sampleprobs=SmallDouble.toProbabilityArray(sd_scores);
 
@@ -1197,7 +1197,7 @@ public class GradientGraphO extends GradientGraph{
 		Vector<GGCPMNode> batchUGAS = new Vector<>();
 		for (GGAtomMaxNode node: batch) batchUGAS.addAll(node.getAllugas());
 
-		double oldll = SmallDouble.log(llnode.evaluate(null,batchUGAS,true,false,null));
+		double oldll = SmallDouble.log(llnode.evaluate(null,0,batchUGAS,true,false,null));
 		double newll,fs;
 		double highscore = Double.NEGATIVE_INFINITY;
 		int highvalue = 0;
@@ -1216,7 +1216,7 @@ public class GradientGraphO extends GradientGraph{
 				for (int j=0; j<windowsize; j++) gibbsSample(null, null);
 
 			for (GGAtomMaxNode node: batch) node.reEvaluateUpstream(null);
-			newll = SmallDouble.log(llnode.evaluate(null,batchUGAS,true,false,null));
+			newll = SmallDouble.log(llnode.evaluate(null,0,batchUGAS,true,false,null));
 			fs=newll-oldll;
 			if (fs>highscore) {
 				highscore = fs;
@@ -1321,7 +1321,7 @@ public class GradientGraphO extends GradientGraph{
 			}
 		}
 
-		llnode.evaluate(null,null,false,true,null);
+		llnode.evaluate(null,0,null,false,true,null);
 		return currentLogLikelihood();
 	}
 
@@ -1330,7 +1330,6 @@ public class GradientGraphO extends GradientGraph{
 		List<GGAtomMaxNode> scored_atoms = new ArrayList<>();
 		List<GGAtomMaxNode> rescoreList = new ArrayList<>();
 		List<GGAtomMaxNode> topAtoms = new ArrayList<>();
-		List<GGAtomMaxNode> tabuList = new ArrayList<>();
 
 		for (GGAtomMaxNode mxnode : flipcandidates) {
 			mxnode.setScore(mythread);
@@ -1345,55 +1344,30 @@ public class GradientGraphO extends GradientGraph{
 
 		double prevLikelihood = 0; // SmallDouble.log(llnode.evaluate(null, null,true,false,null));
 		double perc_inc = 1.0;
-		double improvementThreshold = (prevLikelihood/100.0)*perc_inc; // not used for nows
+		double improvementThreshold = (prevLikelihood / 100.0) * perc_inc; // not used for nows
 
 		int initialSize = flipcandidates.size();
 		int num_flipped = 0;
 		num_iter = num_flipped;
 		GGAtomMaxNode flipnext;
-		int rescoreWhen = 20;
+		int rescoreWhen = 10;
 		int counterRescore = 0;
-		int tabuSize = 30;
 		int max_iter = 1500;
+		int max_noimprovements = 5;
+		boolean terminate = false;
+		boolean rescore_early = false; // rescore after fewer than rescoreWhen many flips, because there are not enough atoms with positive score in scored_atoms
+		double currentlikelihood;
+		double bestlikelihood = Double.NEGATIVE_INFINITY;
+		int noimprovements = 0;
+
 		Iterator<GGAtomMaxNode> it = scored_atoms.iterator();
-		while (it.hasNext() && num_flipped<max_iter) {
+		while (it.hasNext() && num_flipped < max_iter && !terminate) {
 			// Always remove the first element (best candidate)
 			flipnext = it.next();
 
-			if (!tabuList.contains(flipnext)) {
+			if (flipnext.getScore()>0) {
 				topAtoms.add(flipnext);
-				tabuList.add(flipnext);
-				if (flipnext.getScore() <= 0) {
-					// before returning try to score all again all the atoms...
-					System.out.println("Recomputing score for all atoms ...");
 
-					for (GGAtomMaxNode mxnode : flipcandidates) {
-						scored_atoms.remove(mxnode);
-						mxnode.setScore(mythread);
-						scored_atoms.add(mxnode);
-					}
-					Collections.sort(scored_atoms, new GGAtomMaxNode_Comparator());
-
-					for (int j = 0; j < windowsize; j++)
-						gibbsSample(mythread);
-
-					// check if still the best atom is with negative score
-					if (scored_atoms.get(0).getScore() <= 0) {
-						if (num_flipped == 0 && debugPrint)
-							System.out.println("Ineffective search, no atoms flipped!");
-						else if (num_flipped > 0 && debugPrint)
-							System.out.println("Flipped " + num_flipped + " atoms");
-						break;
-					} else {
-						if (debugPrint)
-							System.out.println("Continue ...");
-					}
-					it = scored_atoms.iterator();
-					flipnext = it.next();
-					rescoreList = new ArrayList<>();
-//					tabuList = new ArrayList<>();
-					counterRescore = 0;
-				}
 				if (debugPrint) {
 					System.out.println("Flipping: " + flipnext.getMyatom() + " to " + flipnext.getHighvalue() + " with score " + flipnext.getScore());
 					System.out.println("num flipped: " + num_flipped);
@@ -1404,28 +1378,42 @@ public class GradientGraphO extends GradientGraph{
 
 				num_flipped++;
 				counterRescore++;
-
-				if (counterRescore == rescoreWhen) {
-					num_iter++;
-					// Recompute scores for the best atoms
-					if (debugPrint)
-						System.out.println("Computing score for flipped atoms ...");
+			}
+			else rescore_early = true;
+			if (rescore_early || counterRescore == rescoreWhen) {
+				num_iter++;
+				// Recompute scores for the best atoms
+				if (debugPrint)
+					System.out.println("Computing score for flipped atoms ...");
 
 //					llnode.evaluate(null, null, true, false, null);
-					for (GGAtomMaxNode atom : rescoreList)
-						atom.reEvaluateUpstream(null);
-					rescoreList = new ArrayList<>();
+				for (GGAtomMaxNode atom : rescoreList)
+					atom.reEvaluateUpstream(null);
+				rescoreList = new ArrayList<>();
 
-					for (int j = 0; j < windowsize; j++)
-						gibbsSample(mythread);
-					if (windowsize > 0 && myggoptions.ggverbose()) {
-						System.out.println("New sampled values:");
-						showSumAtomsVals();
-					}
+				for (int j = 0; j < windowsize; j++)
+					gibbsSample(mythread);
+				if (windowsize > 0 && myggoptions.ggverbose()) {
+					System.out.println("New sampled values:");
+					showSumAtomsVals();
+				}
 
+				currentlikelihood = currentLogLikelihood();
+
+				if (currentlikelihood < bestlikelihood){
+					noimprovements++;
+				}
+				else {
+					bestlikelihood = currentlikelihood;
+					noimprovements = 0;
+				}
+				if (noimprovements==max_noimprovements)
+					terminate = true;
+				System.out.println("Current Likelihood:" + currentlikelihood +  "  noimprovements:" + noimprovements);
+				if (!terminate) {
 					// fin all the nodes that are influenced by the fipped atoms
 					ArrayList<GGAtomMaxNode> update_us = new ArrayList<>();
-					for (GGAtomMaxNode node: topAtoms) {
+					for (GGAtomMaxNode node : topAtoms) {
 						update_us.add(node);
 						for (GGCPMNode uga : node.getAllugas()) {
 							for (GGAtomMaxNode mx : uga.getMaxIndicators())
@@ -1441,6 +1429,8 @@ public class GradientGraphO extends GradientGraph{
 							scored_atoms.get(i).setScore(mythread);
 					}
 					Collections.sort(scored_atoms, new GGAtomMaxNode_Comparator());
+					if (scored_atoms.get(0).getScore() <= 0)
+						terminate = true;
 
 					topAtoms = new ArrayList<>();
 					it = scored_atoms.iterator();
@@ -1451,14 +1441,11 @@ public class GradientGraphO extends GradientGraph{
 						showMaxAtomFlipScoresBestK(scored_atoms, 10);
 					}
 				}
-			} else
-				System.out.println("atom " + flipnext.getMyatom() + " in tabu list");
-
-			if (tabuList.size() > tabuSize)
-				tabuList.remove(0);
-
-			assert scored_atoms.size() == initialSize;
+			}
 		}
+
+		assert scored_atoms.size() == initialSize;
+
 		System.out.println("number flipped: " + num_flipped);
 		return currentLogLikelihood();
 	}
@@ -1508,7 +1495,7 @@ public class GradientGraphO extends GradientGraph{
 
 		Vector<GGCPMNode> ugas = flipnext.getAllugas();
 		double[] oldvalues = new double[ugas.size()];
-		double oldll = SmallDouble.log(llnode.evaluate(null, ugas,true,false,null));
+		double oldll = SmallDouble.log(llnode.evaluate(null,0, ugas,true,false,null));
 		if (debugPrint) {
 			System.out.println(depthS + "Old UGAS");
 			System.out.print(depthS);
@@ -1538,7 +1525,7 @@ public class GradientGraphO extends GradientGraph{
 		flipnext.reEvaluateUpstream(null);
 
 		double[] newvalues = new double[ugas.size()];
-		double newll = SmallDouble.log(llnode.evaluate(null, ugas,true,false,null));
+		double newll = SmallDouble.log(llnode.evaluate(null,0, ugas,true,false,null));
 		currentllratio = currentllratio*oldll/newll;
 		if (debugPrint) {
 			System.out.println(depthS + "New UGAS");
@@ -1633,27 +1620,26 @@ public class GradientGraphO extends GradientGraph{
 		System.out.print("\rProgress: " + progressBar.toString() + " " + percentageText + " (" + current + "/" + total + ") - current log-ll: " + curll);
 	}
 
-public double mapInference(GGThread mythread)
-		throws RBNNaNException{
-	boolean terminate = false;
-	double score = 0;
-	double oldll =0;
-	int itcount = 0;
-	Boolean gotinit = initIndicators(mythread);
-	if (!gotinit) {
-		System.out.println("No successful initialization of max/sum indicators");
-		return Double.NaN;
-	}
-	//		this.showAllNodes(6, myPrimula.getRels());
-	if (myggoptions.ggverbose()) {
-		if (debugPrint) {
-			System.out.println("Initial max values:");
-			showMaxAtomsVals();
+	public double mapInference(GGThread mythread) throws RBNNaNException{
+		boolean terminate = false;
+		double score = 0;
+		double oldll = 0;
+		int itcount = 0;
+		Boolean gotinit = initIndicators(mythread);
+		if (!gotinit) {
+			System.out.println("No successful initialization of max/sum indicators");
+			return Double.NaN;
 		}
-		if (this.numchains>0) {
-			System.out.println("Initial sampled values:");
-			showSumAtomsVals();
-		}
+		//		this.showAllNodes(6, myPrimula.getRels());
+		if (myggoptions.ggverbose()) {
+			if (debugPrint) {
+				System.out.println("Initial max values:");
+				showMaxAtomsVals();
+			}
+			if (this.numchains>0) {
+				System.out.println("Initial sampled values:");
+				showSumAtomsVals();
+			}
 	}
 
 	MyCount myCount = new MyCount();
@@ -1761,39 +1747,47 @@ public double mapInference(GGThread mythread)
 //}
 
 
-public void showMaxAtomsVals() {
-	for (Rel r: maxindicators.keySet()) {
-		for (GGAtomMaxNode nextgimn: maxindicators.get(r))
-			System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst());
+	public void showMaxAtomsVals() {
+		for (Rel r: maxindicators.keySet()) {
+			for (GGAtomMaxNode nextgimn: maxindicators.get(r))
+				System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst());
+		}
 	}
-}
 
-public void showMaxAtomFlipScores(PriorityQueue<GGAtomMaxNode> scored_atoms) {
-	Iterator<GGAtomMaxNode> it = scored_atoms.iterator();
-	while (it.hasNext()) {
-		GGAtomMaxNode el = it.next();
-		System.out.println(el.getMyatom() + ": " + el.getScore());
+	public void showMaxAtomFlipScores(TreeSet<GGAtomMaxNode> scored_atoms) {
+		Iterator<GGAtomMaxNode> it = scored_atoms.iterator();
+		while (it.hasNext()) {
+			GGAtomMaxNode el = it.next();
+			System.out.println(el.getMyatom() + ": " + el.getScore());
+		}
 	}
-}
 
-public void showMaxAtomFlipScoresBestK(PriorityQueue<GGAtomMaxNode> scored_atoms, int k) {
-	Iterator<GGAtomMaxNode> it = scored_atoms.iterator();
-	System.out.println("Best " + k + " atoms:");
-	while (it.hasNext()) {
-		GGAtomMaxNode el = it.next();
-		System.out.println(el.getMyatom() + ": " + el.getScore());
-		k--;
-		if (k == 0)
-			break;
+	public void showMaxAtomFlipScores(PriorityQueue<GGAtomMaxNode> scored_atoms) {
+		Iterator<GGAtomMaxNode> it = scored_atoms.iterator();
+		while (it.hasNext()) {
+			GGAtomMaxNode el = it.next();
+			System.out.println(el.getMyatom() + ": " + el.getScore());
+		}
 	}
-}
+
+	public void showMaxAtomFlipScoresBestK(PriorityQueue<GGAtomMaxNode> scored_atoms, int k) {
+		Iterator<GGAtomMaxNode> it = scored_atoms.iterator();
+		System.out.println("Best " + k + " atoms:");
+		while (it.hasNext()) {
+			GGAtomMaxNode el = it.next();
+			System.out.println(el.getMyatom() + ": " + el.getScore());
+			k--;
+			if (k == 0)
+				break;
+		}
+	}
 
 	public void showMaxAtomFlipScoresBestK(List<GGAtomMaxNode> scored_atoms, int k) {
 		Iterator<GGAtomMaxNode> it = scored_atoms.iterator();
 		System.out.println("Best " + k + " atoms:");
 		while (it.hasNext()) {
 			GGAtomMaxNode el = it.next();
-			System.out.println(el.getMyatom() + ": " + el.getScore());
+			System.out.println(el.getMyatom() + ": from " + el.getCurrentInst() + " to " + el.getHighvalue() + " with score " + el.getScore());
 			k--;
 			if (k == 0)
 				break;
@@ -1805,38 +1799,70 @@ public void showMaxAtomFlipScoresBestK(PriorityQueue<GGAtomMaxNode> scored_atoms
 		System.out.println("Best " + k + " atoms:");
 		while (it.hasNext()) {
 			GGAtomMaxNode el = it.next();
-			System.out.println(el.getMyatom() + ": " + el.getScore());
+			System.out.println(el.getMyatom() + ": from " + el.getCurrentInst() + " to " + el.getHighvalue() + " with score " + el.getScore());
 			k--;
 			if (k == 0)
 				break;
 		}
 	}
 
-public void showSumAtomsVals() {
-	for (GGAtomSumNode sn: sumindicators) {
-		System.out.println(sn.getMyatom() + ": " + rbnutilities.arrayToString(sn.getSampledVals()));	
+	public void showSumAtomsVals(){
+		showSumAtomsVals(0);
 	}
-}
 
-public void showAllNodes(int verbose,RelStruc A){
-	if (verbose >0){
-		System.out.println("**** Node " + llnode.name());
-			System.out.println("**** Log likelihood: " + llnode.loglikelihood());
-		System.out.println();
+	public void showSumAtomsVals(int indent) {
+		for (GGAtomSumNode sn: sumindicators) {
+	//		for (int i = 0; i < indent; i++) {
+	//			System.out.print("\t");
+	//		}
+			int[] sampledvals = sn.getSampledVals();
+	//		System.out.println(sn.getMyatom() + ": " + rbnutilities.arrayToString(sampledvals));
+			int nonzerocount = 0;
+			for (int i = 0; i < sampledvals.length; i++) {
+				if (sampledvals[i] != 0)
+					nonzerocount++;
+			}
+			for (int i = 0; i < indent+1; i++) {
+				System.out.print("\t");
+			}
+			System.out.println(sn.getMyatom() + ": #nonzeros: " + nonzerocount);
+		}
 	}
-	if (verbose >5){
+
+	public void showAllNodes(int verbose,RelStruc A){
+		if (verbose >0){
+			System.out.println("**** Node " + llnode.name());
+				System.out.println("**** Log likelihood: " + llnode.loglikelihood());
+			System.out.println();
+		}
+		if (verbose >5){
+			GGNode nextggn;
+			for (Enumeration<String> e = allNodes.keys();e.hasMoreElements();){
+				String nextkey = e.nextElement();
+				nextggn = (GGNode)allNodes.get(nextkey);
+				System.out.println("**** Node " + "   " + nextggn.identifier()+ "   "  +nextggn.getClass().getName() + '\n' + nextkey + "   " );
+				if (nextggn instanceof GGCPMNode) {
+					System.out.print("Parents: ");
+					((GGCPMNode)nextggn).printParents();
+				}
+				System.out.println();
+				System.out.print("Children: ");
+				nextggn.printChildren();
+
+				if 	(nextggn instanceof GGAtomNode)
+					((GGAtomNode)nextggn).printAllUgas();
+				System.out.println();
+				//				}
+			}
+		}
+	}
+
+	public void showAllNodes2(RelStruc A) {
 		GGNode nextggn;
 		for (Enumeration<String> e = allNodes.keys();e.hasMoreElements();){
 			String nextkey = e.nextElement();
 			nextggn = (GGNode)allNodes.get(nextkey);
-			System.out.println("**** Node " + "   " + nextggn.identifier()+ "   "  +nextggn.getClass().getName() + '\n' + nextkey + "   " );
-			if (nextggn instanceof GGCPMNode) {
-				System.out.print("Parents: ");
-				((GGCPMNode)nextggn).printParents();
-			}
-			System.out.println();
-			System.out.print("Children: ");
-			nextggn.printChildren();
+			System.out.println("**** Node" + " " + nextggn.identifier()+ "   "  +nextggn.getClass().getName() + '\n' + nextkey);
 
 			if 	(nextggn instanceof GGAtomNode)
 				((GGAtomNode)nextggn).printAllUgas();
@@ -1844,21 +1870,6 @@ public void showAllNodes(int verbose,RelStruc A){
 			//				}
 		}
 	}
-}
-
-public void showAllNodes2(RelStruc A) {
-	GGNode nextggn;
-	for (Enumeration<String> e = allNodes.keys();e.hasMoreElements();){
-		String nextkey = e.nextElement();
-		nextggn = (GGNode)allNodes.get(nextkey);
-		System.out.println("**** Node" + " " + nextggn.identifier()+ "   "  +nextggn.getClass().getName() + '\n' + nextkey);
-
-		if 	(nextggn instanceof GGAtomNode)
-			((GGAtomNode)nextggn).printAllUgas();
-		System.out.println();
-		//				}
-	}
-}
 
 
 
@@ -2905,4 +2916,6 @@ public void setGnnPy(GnnPy gnnPy) {
 
 	public void setNumChains(int numChains) { numchains = numChains; }
 	public void setWindowSize(int ws) { windowsize = ws; }
+
+	public int getWindowIndex() { return windowindex; }
 }

@@ -173,7 +173,7 @@ public  class GGLikelihoodNode extends GGNode{
 	//	}
 	//	
 	public double[] evaluate(Integer sno) {
-		return evaluate(sno,children,false,true,null);
+		return evaluate(sno,0, children,false,true,null);
 	}
 
 	/** Computes the likelihood 
@@ -197,8 +197,12 @@ public  class GGLikelihoodNode extends GGNode{
 	 * 
 	 * In the case incremental = true and update = false the local likelihood of batchelements is returned, and 
 	 * no change to small_likelihoods_for_samples takes place
+	 *
+	 * smallSample: if it is not 0, the evaluation of the sampled value will be only on the dimension of smallSample for all the chains
+	 * it should represent the size of the window for the prior "window-reduced" gibb sampling
 	 */
-	public double[] evaluate(Integer sno, 
+	public double[] evaluate(Integer sno,
+			int smallSample,
 			Vector<GGCPMNode> batchelements,
 			boolean incremental,
 			boolean updatelik,
@@ -211,28 +215,51 @@ public  class GGLikelihoodNode extends GGNode{
 		if (this.depends_on_sample && sno!=null)
 			idx = sno;
 
-
 		/*
 		 * First the case where all samples have to be evaluated
 		 */
 		if (this.depends_on_sample && sno==null) {
 
-			double[] small_likelihood_sum = new double[2]; 
-
-			for (int i=0;i<thisgg.windowsize*thisgg.numchains;i++) 
-				small_likelihood_sum=SmallDouble.add(small_likelihood_sum, 
-						evaluate(i,batchelements,incremental,updatelik,oldsmallls));
-
-			small_likelihood_sum = SmallDouble.divide(small_likelihood_sum, thisgg.windowsize*thisgg.numchains );
+			double[] small_likelihood_sum = new double[2];
+			if (smallSample == 0) {
+				for (int i = 0; i < thisgg.windowsize * thisgg.numchains; i++)
+					small_likelihood_sum = SmallDouble.add(small_likelihood_sum, evaluate(i, 0, batchelements, incremental, updatelik, oldsmallls));
+				small_likelihood_sum = SmallDouble.divide(small_likelihood_sum, thisgg.windowsize * thisgg.numchains);
+			} else {
+				int i = thisgg.getWindowIndex()-smallSample;
+				if (i<0) i = thisgg.windowsize-i;
+				while (i < thisgg.windowsize*thisgg.numchains) {
+					for (int c = 0; c < thisgg.numchains; c++) {
+						for (int index=i; index < thisgg.getWindowIndex(); index++)
+							small_likelihood_sum = SmallDouble.add(small_likelihood_sum, evaluate(index, smallSample, batchelements, incremental, updatelik, oldsmallls));
+						i+=thisgg.windowsize;
+					}
+				}
+				small_likelihood_sum = SmallDouble.divide(small_likelihood_sum, smallSample*thisgg.numchains);
+			}
 
 			if (updatelik) {
 				if (incremental) {
 					double[] oldlsum = new double[2];
-					for (int i=0;i<thisgg.windowsize*thisgg.numchains;i++) 
-						oldlsum = SmallDouble.add(oldlsum,oldsmallls[i]);
-					oldlsum = SmallDouble.divide(oldlsum, thisgg.windowsize*thisgg.numchains );
+					if (smallSample == 0) {
+						for (int i = 0; i < thisgg.windowsize * thisgg.numchains; i++)
+							oldlsum = SmallDouble.add(oldlsum, oldsmallls[i]);
+						oldlsum = SmallDouble.divide(oldlsum, thisgg.windowsize * thisgg.numchains);
+					} else {
+						int i = thisgg.getWindowIndex()-smallSample;
+						if (i<0) i = thisgg.windowsize-i;
+						while (i < thisgg.windowsize*thisgg.numchains) {
+							for (int c = 0; c < thisgg.numchains; c++) {
+								for (int index=i; index < thisgg.getWindowIndex(); index++)
+									oldlsum = SmallDouble.add(oldlsum, oldsmallls[index]);
+								i+=thisgg.windowsize;
+							}
+						}
+						oldlsum = SmallDouble.divide(oldlsum, smallSample*thisgg.numchains);
+					}
 					double[] ratio = SmallDouble.divide(small_likelihood_sum, oldlsum);
-					small_likelihood = SmallDouble.multiply(small_likelihood, ratio);}
+					small_likelihood = SmallDouble.multiply(small_likelihood, ratio);
+				}
 				else
 					small_likelihood=small_likelihood_sum.clone();
 			}
@@ -413,10 +440,10 @@ public  class GGLikelihoodNode extends GGNode{
 		}
 
 		if (this.depends_on_sample && !is_evaluated_for_samples[sno]){
-			this.evaluate(sno,batchelements,false,false,null); // TODO: incremental version of evaluateSmallGrad ?
+			this.evaluate(sno,0,batchelements,false,false,null); // TODO: incremental version of evaluateSmallGrad ?
 		}
 		if (!this.depends_on_sample && !is_evaluated_for_samples[0]){
-			this.evaluate(sno,batchelements,false,false,null);
+			this.evaluate(sno,0,batchelements,false,false,null);
 		}
 
 		double[][] result = new double[thisgg.numberOfParameters()][2];

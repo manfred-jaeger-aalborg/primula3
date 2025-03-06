@@ -44,8 +44,11 @@ public class RiverPollution {
     }
 
     public static void main(String[] args) {
-        int expNum = Integer.parseInt(args[0]);
-        double constStrength = Double.parseDouble(args[1]);
+//        int expNum = Integer.parseInt(args[0]);
+//        double constStrength = Double.parseDouble(args[1]);
+
+        int expNum = 6;
+        double constStrength = 0.05;
 
         Primula primula = new Primula();
         primula.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
@@ -134,8 +137,8 @@ public class RiverPollution {
         manual_rbn.insertPRel(gnn_rbn, 0);
         manual_rbn.insertPRel(gnn_attr, 1);
         manual_rbn.insertPRel(riverrbn[0], 2);
-        manual_rbn.insertPRel(riverrbn[1], 3);
-        RBNPreldef const0 = riverrbn[2];
+        manual_rbn.insertPRel(riverrbn[2], 3);
+        RBNPreldef const0 = riverrbn[1];
         ((ProbFormConvComb) const0.cpmod()).f3().setCvals("", constStrength);
         manual_rbn.insertPRel(const0, 4);
 
@@ -167,8 +170,8 @@ public class RiverPollution {
             im.setMapSearchAlg(3);
             im.setNumIterGreedyMap(150);
             im.setNumRestarts(1);
-            im.setWindowSize(50);
-            im.setNumChains(1);
+            im.setWindowSize(100);
+            im.setNumChains(4);
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();
 
@@ -188,6 +191,7 @@ public class RiverPollution {
             }
 
             PrintWriter writer = new PrintWriter("final_graph_" + expNum + ".txt", "UTF-8");
+            writer.println("constr: " + constStrength);
             System.out.println("\nMAP INFERENCE RESULTS:\n");
             for (int i = 0; i < gal.size(); i++) {
                 writer.println(gal.atomAt(i).args()[0] + " : " + res[i]);

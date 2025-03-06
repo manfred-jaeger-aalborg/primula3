@@ -147,7 +147,7 @@ private int highvalue;
 			flipscores = new double[(int)this.myatom().rel().numvals()];
 		}
 
-		double oldll = SmallDouble.log(thisgg.llnode.evaluate(null, allugas, true, false, null));
+		double oldll = SmallDouble.log(thisgg.llnode.evaluate(null,0, allugas, true, false, null));
 		double newll,fs;
 		highscore = Double.NEGATIVE_INFINITY;
 		highvalue = 0;
@@ -157,12 +157,13 @@ private int highvalue;
 				fs=0.0;
 			} else {
 				this.setCurrentInst(v);
+				int maxSample = 30; // the size of the window size (needed also for the evaluation)
 				// sample again the nodes after flipping.
 				if (thisgg.sumindicators.size() > 0)
-					for (int j=0; j<thisgg.windowsize; j++) thisgg.gibbsSample(mythread, this.ancestors());
+					for (int j=0; j<maxSample; j++) thisgg.gibbsSample(mythread, this.ancestors());
 					// for (int j=0; j<thisgg.windowsize; j++) thisgg.gibbsSample(mythread); run this for the gibb sampling on all the sumnodes
 				reEvaluateUpstream(null);
-				newll = SmallDouble.log(thisgg.llnode.evaluate(null,allugas,true,false,null));
+				newll = SmallDouble.log(thisgg.llnode.evaluate(null, maxSample, allugas,true,false,null));
 				fs=newll-oldll;
 				if (fs>highscore) {
 					highscore = fs;
@@ -173,6 +174,8 @@ private int highvalue;
 		}
 		// Reset to original configuration
 		this.setCurrentInst(ci);
+		if (thisgg.sumindicators.size() > 0)
+			for (int j=0; j<thisgg.windowsize; j++) thisgg.gibbsSample(mythread, this.ancestors());
 		reEvaluateUpstream(null);
 	}
 	
