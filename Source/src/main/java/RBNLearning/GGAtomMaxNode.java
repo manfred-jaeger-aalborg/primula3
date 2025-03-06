@@ -159,8 +159,12 @@ private int highvalue;
 			} else {
 				this.setCurrentInst(v);
 				// sample again the nodes after flipping.
-				if (thisgg.sumindicators.size() > 0)
-					for (int j=0; j<maxSample; j++) thisgg.gibbsSample(mythread, this.ancestors());
+				if (thisgg.sumindicators.size() > 0) {
+					if (maxSample!=0)
+						for (int j = 0; j < maxSample; j++) thisgg.gibbsSample(mythread, this.ancestors());
+					else
+						for (int j = 0; j < thisgg.windowsize; j++) thisgg.gibbsSample(mythread, this.ancestors());
+				}
 					// for (int j=0; j<thisgg.windowsize; j++) thisgg.gibbsSample(mythread); run this for the gibb sampling on all the sumnodes
 				reEvaluateUpstream(null);
 				newll = SmallDouble.log(thisgg.llnode.evaluate(null, maxSample, allugas,true,false,null));
