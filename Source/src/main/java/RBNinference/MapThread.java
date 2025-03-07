@@ -1,19 +1,12 @@
 package RBNinference;
 
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.util.*;
 
 import RBNExceptions.RBNNaNException;
 import RBNLearning.*;
-import RBNgui.PrimulaGUI;
+import RBNgui.*;
 import RBNpackage.*;
-import RBNgui.InferenceModule;
-import RBNgui.LearnModule;
-import RBNgui.Primula;
-
-import java.io.IOException;
 
 public class MapThread extends GGThread {
 	
@@ -114,15 +107,22 @@ public class MapThread extends GGThread {
 				mapprobs.setRestarts(restarts);
 				mapprobs.notifyObservers();
 
+				// save results for current restarts
 				writer.println("Restart: " + restarts);
+				OneStrucData result = new OneStrucData();
+				result.setParentRelStruc(myprimula.getRels());
+				OneStrucData onsd = new OneStrucData(myprimula.getInstantiation());
 				for (Rel key : bestMapVals.keySet()) {
-					int node = 0;
+					GroundAtomList gal = gg.mapatoms(key);
 					writer.println(key.name());
-					for (int val : bestMapVals.get(key)) {
-						writer.println(node + " : " + val);
-						node++;
+					for (int i = 0; i < gal.size(); i++) {
+						writer.println(gal.atomAt(i).args()[0] + " : " + bestMapVals.get(key)[i]);
+						result.add(gal.atomAt(i), bestMapVals.get(key)[i], "?");
 					}
 				}
+				onsd.add(result);
+				onsd.saveToRDEF(new File("/Users/lz50rg/Dev/primula-workspace/primula3/Source/final_restart_" + restarts + ".rdef"), myprimula.getRels());
+
 				restarts++;
 			}
 			writer.close();
