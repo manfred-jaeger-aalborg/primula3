@@ -111,7 +111,7 @@ def set_vars(setd):
     if setd['model'] == 'riverGNN':
         models_definitions = {
             f"HeteroGraph{setd['sdataset']}": (
-                HeteroGraph, "model_l2_bn", { "in_sub": 2, "in_hru_agr": 5, "in_hru_urb": 10, "hidden_dims": 20, "out_dims": 3, "num_layers": 2, "batch_norm":True }
+                HeteroGraph, "model_l21e3_bn", { "in_sub": 2, "in_hru_agr": 5, "in_hru_urb": 10, "hidden_dims": 20, "out_dims": 3, "num_layers": 2, "batch_norm":True }
             )
         }
     ##################### POLLUTION/ ###################################

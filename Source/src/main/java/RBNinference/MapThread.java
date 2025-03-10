@@ -75,72 +75,67 @@ public class MapThread extends GGThread {
 		int restarts =1;
 		double oldll=Double.NEGATIVE_INFINITY;
 		double newll=0;
-		PrintWriter writer = null;
-		try {
-			writer = new PrintWriter("final-graphs.txt", "UTF-8");
-			while (running && ((maxrestarts == -1) || (restarts <= maxrestarts))) {
-				try {
-					System.out.println("Current restart: " + restarts);
-					newll = gg.mapInference(this);
-					if (!Double.isNaN(newll)) {
-						if (newll > oldll) {
-							oldll = newll;
-							newmapvals = gg.getMapVals();
-							bestMapVals = newmapvals;
-							bestLikelihood = new double[]{newll};
-							mapprobs.setMVs(newmapvals);
-							mapprobs.setLL(String.valueOf(oldll));
-							if (gg.parameters().size() > 0)
-								myLearnModule.setParameterValues(gg.getParameters());
-							if (gnnPy != null) {
-								xDict = gnnPy.getCurrentXdict();
-								edgeDict = gnnPy.getCurrentEdgeDict();
-							}
+		while (running && ((maxrestarts == -1) || (restarts <= maxrestarts))) {
+			PrintWriter writer = null;
+			try {
+				writer = new PrintWriter("/Users/lz50rg/Dev/water-hawqs/results/txt_graph_" + Experiments.Water.RiverPollution.EXPNUM + "_" + restarts + ".txt", "UTF-8");
+				newll = gg.mapInference(this);
+				writer.println("Restart: " + restarts);
+				writer.println("logll" + newll);
+				if (!Double.isNaN(newll)) {
+					if (newll > oldll) {
+						oldll = newll;
+						newmapvals = gg.getMapVals();
+						bestMapVals = newmapvals;
+						bestLikelihood = new double[]{newll};
+						mapprobs.setMVs(newmapvals);
+						mapprobs.setLL(String.valueOf(oldll));
+						if (gg.parameters().size() > 0)
+							myLearnModule.setParameterValues(gg.getParameters());
+						if (gnnPy != null) {
+							xDict = gnnPy.getCurrentXdict();
+							edgeDict = gnnPy.getCurrentEdgeDict();
 						}
-					} else {
-						System.out.println("MAP search aborted");
 					}
-				} catch (RBNNaNException e) {
-					System.out.println(e);
-					System.out.println("Restart aborted");
-				}
+				} else
+					System.out.println("MAP search aborted");
+
 				mapprobs.setRestarts(restarts);
 				mapprobs.notifyObservers();
 
-				// save results for current restarts
-				writer.println("Restart: " + restarts);
 				OneStrucData result = new OneStrucData();
 				result.setParentRelStruc(myprimula.getRels());
 				OneStrucData onsd = new OneStrucData(myprimula.getInstantiation());
 				for (Rel key : bestMapVals.keySet()) {
 					GroundAtomList gal = gg.mapatoms(key);
-					writer.println(key.name());
 					for (int i = 0; i < gal.size(); i++) {
 						writer.println(gal.atomAt(i).args()[0] + " : " + bestMapVals.get(key)[i]);
 						result.add(gal.atomAt(i), bestMapVals.get(key)[i], "?");
 					}
 				}
 				onsd.add(result);
-				onsd.saveToRDEF(new File("/Users/lz50rg/Dev/primula-workspace/primula3/Source/final_restart_" + restarts + ".rdef"), myprimula.getRels());
-
+				onsd.saveToRDEF(new File("/Users/lz50rg/Dev/water-hawqs/results/redef_graph_" + Experiments.Water.RiverPollution.EXPNUM + "_" + restarts + ".rdef"), myprimula.getRels());
+				writer.close();
 				restarts++;
+			} catch (RBNNaNException e) {
+				System.out.println(e);
+				System.out.println("Restart aborted");
+			} catch (FileNotFoundException e) {
+				throw new RuntimeException(e);
+			} catch (UnsupportedEncodingException e) {
+				throw new RuntimeException(e);
 			}
-			writer.close();
-		} catch (FileNotFoundException e) {
-			throw new RuntimeException(e);
-		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException(e);
 		}
 
 		System.out.println("Best log-likelihood found: " + oldll);
 
 		// path.pkl
 //		String path = "/Users/lz50rg/Dev/football/res.pkl";
-		String path = "/Users/lz50rg/Dev/water-hawqs/map-results.pkl";
-		if (gnnPy != null) {
-			gnnPy.savePickleHetero(xDict, edgeDict, path);
-//			gnnPy.savePickleGraph(xDict, edgeDict, path);
-		}
+//		String path = "/Users/lz50rg/Dev/water-hawqs/map-results.pkl";
+//		if (gnnPy != null) {
+//			gnnPy.savePickleHetero(xDict, edgeDict, path);
+////			gnnPy.savePickleGraph(xDict, edgeDict, path);
+//		}
 
         if (this.gnnIntegration)
 			this.gnnPy.closeInterpreter();

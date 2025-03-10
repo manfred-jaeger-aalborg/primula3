@@ -153,7 +153,13 @@ private int highvalue;
 		highscore = Double.NEGATIVE_INFINITY;
 		highvalue = 0;
 		int ci = this.currentInst; // Remember the current value
-		for (int v=0; v< (int)this.myatom().rel().numvals(); v++) {
+
+		// Random permutation of the possible values
+		List<Integer> values = new ArrayList<Integer>();
+		for (int i = 0; i < (int)this.myatom().rel().numvals(); i++) values.add(i);
+		java.util.Collections.shuffle(values);
+
+		for (Integer v: values) {
 			if (v==ci) {
 				fs=0.0;
 			} else {

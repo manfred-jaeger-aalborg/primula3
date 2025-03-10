@@ -55,7 +55,7 @@ public class RiverPollutionGUI {
         primula.setLoadGnnSet(load_gnn_set);
 
 //        File srsfile = new File("/Users/lz50rg/Dev/water-hawqs/test_small_new.rdef");
-        File srsfile = new File("/Users/lz50rg/Dev/water-hawqs/src/test.rdef");
+        File srsfile = new File("/Users/lz50rg/Dev/water-hawqs/results/results_3/redef_graph_1_1.rdef");
         primula.loadSparseRelFile(srsfile);
 
         String val_name = "CORN,COSY,PAST,SOYB";
@@ -126,14 +126,12 @@ public class RiverPollutionGUI {
                 new CatModelSoftMax(softmax)
         );
 
-        RBN file_rbn = new RBN(new File("/Users/lz50rg/Dev/water-hawqs/water_count_linear.rbn"), primula.getSignature());
+        RBN file_rbn = new RBN(new File("/Users/lz50rg/Dev/water-hawqs/water_count_sub_mcmc.rbn"), primula.getSignature());
         RBNPreldef[] riverrbn = file_rbn.prelements();
-        RBN manual_rbn = new RBN(5, 0);
+        RBN manual_rbn = new RBN(3, 0);
         manual_rbn.insertPRel(gnn_rbn, 0);
         manual_rbn.insertPRel(gnn_attr, 1);
         manual_rbn.insertPRel(riverrbn[0], 2);
-        manual_rbn.insertPRel(riverrbn[1], 3);
-        manual_rbn.insertPRel(riverrbn[2], 4);
 
 //        RBN file_rbn = new RBN(new File("/Users/lz50rg/Dev/water-hawqs/water_rbn.rbn"), primula.getSignature());
 //        RBNPreldef[] riverrbn = file_rbn.prelements();

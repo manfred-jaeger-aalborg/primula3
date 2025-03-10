@@ -183,16 +183,6 @@ public class GnnPy {
             if (interpreter != null) {
                 interpreter.set("gnn_set_dict", sett);
                 interpreter.exec("dat = intt.set_vars(gnn_set_dict)");
-
-//                StringWriter output = new StringWriter();
-//                interpreter.set("output", output);
-//                interpreter.eval("import sys");
-//                interpreter.eval("sys.stdout = output");
-//
-//                interpreter.eval("print(dat)");
-//
-//                System.out.println("Captured output: " + output.toString());
-
             }
         }
     }

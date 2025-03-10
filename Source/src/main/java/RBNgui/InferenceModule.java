@@ -1427,4 +1427,8 @@ public class InferenceModule implements GradientGraphOptions {
 		relList = new Vector<Rel>();
 		relIndex = new Hashtable<String,Integer>();
 	}
+
+	public Primula getPrimula() {
+		return myprimula;
+	}
 }

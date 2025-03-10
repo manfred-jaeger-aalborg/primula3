@@ -63,6 +63,7 @@ public class SampleThread extends Thread{
 	private String scriptName;
 	private String pythonHome;
 	private InferenceModuleGUI infmoduleGUI;
+	private InferenceModule inferenceModule;
 	public SampleThread(InferenceModule infmodule,
 			PFNetwork pfn,
 			Hashtable<Rel,GroundAtomList> queryatoms,
@@ -71,6 +72,7 @@ public class SampleThread extends Thread{
 			BufferedWriter logwriter_param){
 
 		running = true;
+		inferenceModule = infmodule;
 //		this.queryAtomSize = queryatoms.allAtoms().size();
 		this.pfn = pfn;
 		logmode = logmode_param;
@@ -93,6 +95,10 @@ public class SampleThread extends Thread{
 			try {
 				this.gnnPy = new GnnPy(scriptPath, scriptName, pythonHome);
 				pfn.setGnnPy(this.gnnPy);
+
+				this.gnnPy = new GnnPy(inferenceModule.getPrimula());
+				pfn.setGnnPy(this.gnnPy);
+				gnnPy.load_gnn_set(inferenceModule.getPrimula().getLoadGnnSet());
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}

@@ -779,7 +779,7 @@ public class GradientGraphO extends GradientGraph{
 
 		while (!success && !abort){
 //			for (GGAtomMaxNode mxnode: maxind_as_ts()) {
-//				mxnode.setCurrentInst(2);
+//				mxnode.setCurrentInst(0);
 //			}
 
 			/* First instantiate the Max nodes */
@@ -1348,11 +1348,11 @@ public class GradientGraphO extends GradientGraph{
 
 		int initialSize = flipcandidates.size();
 		int num_flipped = 0;
-		num_iter = num_flipped;
+		num_iter = 0;
 		GGAtomMaxNode flipnext;
-		int rescoreWhen = 100;
+		int rescoreWhen = 10;
 		int counterRescore = 0;
-		int max_iter = 3000;
+		int max_iter = 2500;
 		int max_noimprovements = 5;
 		boolean terminate = false;
 		boolean rescore_early = false; // rescore after fewer than rescoreWhen many flips, because there are not enough atoms with positive score in scored_atoms
@@ -1360,10 +1360,19 @@ public class GradientGraphO extends GradientGraph{
 		double bestlikelihood = Double.NEGATIVE_INFINITY;
 		int noimprovements = 0;
 
-		int maxSample = 30;
+		int maxSample = 60;
+		Hashtable<Rel,int[]> bestMapVals = new Hashtable<>();
+
 
 		Iterator<GGAtomMaxNode> it = scored_atoms.iterator();
 		while (it.hasNext() && num_flipped < max_iter && !terminate) {
+			if (num_iter < 2)
+				rescoreWhen = 300;
+			else if (num_iter >= 2 && num_iter <=4)
+				rescoreWhen = 30;
+			else
+				rescoreWhen = 10;
+
 			// Always remove the first element (best candidate)
 			flipnext = it.next();
 
@@ -1404,17 +1413,19 @@ public class GradientGraphO extends GradientGraph{
 
 				if (currentlikelihood < bestlikelihood){
 					noimprovements++;
-				}
-				else {
+				} else {
 					bestlikelihood = currentlikelihood;
+					bestMapVals = this.getMapVals();
 					noimprovements = 0;
 				}
-				if (noimprovements==max_noimprovements)
+				if (noimprovements==max_noimprovements) {
+					System.out.println("Stopping for no improvement");
 					terminate = true;
-				System.out.println("Current Likelihood:" + currentlikelihood +  "  noimprovements:" + noimprovements);
+				}
+				System.out.println("Current Likelihood: " + currentlikelihood +  " noimprovements: " + noimprovements);
 				if (!terminate) {
 					// fin all the nodes that are influenced by the fipped atoms
-					ArrayList<GGAtomMaxNode> update_us = new ArrayList<>();
+					HashSet<GGAtomMaxNode> update_us = new HashSet<>();
 					for (GGAtomMaxNode node : topAtoms) {
 						update_us.add(node);
 						for (GGCPMNode uga : node.getAllugas()) {
@@ -1446,7 +1457,18 @@ public class GradientGraphO extends GradientGraph{
 			}
 		}
 
-		assert scored_atoms.size() == initialSize;
+		// set to the best map vals
+		if (!bestMapVals.isEmpty()) {
+			System.out.println("set to best likelihood: " + bestlikelihood);
+			for (Rel r : mapatoms.keySet()) {
+				int[] rvals = bestMapVals.get(r);
+				int idx = 0;
+				for (GGAtomMaxNode mnode : maxindicators.get(r)) {
+					mnode.setCurrentInst(rvals[idx]);
+					idx++;
+				}
+			}
+		}
 
 		System.out.println("number flipped: " + num_flipped);
 		return currentLogLikelihood();
