@@ -1360,9 +1360,8 @@ public class GradientGraphO extends GradientGraph{
 		double bestlikelihood = Double.NEGATIVE_INFINITY;
 		int noimprovements = 0;
 
-		int maxSample = 60;
+		int maxSample = 40;
 		Hashtable<Rel,int[]> bestMapVals = new Hashtable<>();
-
 
 		Iterator<GGAtomMaxNode> it = scored_atoms.iterator();
 		while (it.hasNext() && num_flipped < max_iter && !terminate) {
@@ -1475,10 +1474,10 @@ public class GradientGraphO extends GradientGraph{
 	}
 
 	public double mapSearchRecursiveWrap(GGThread mythread, Vector<GGAtomMaxNode> flipcandidates, int maxDepth, MyCount count) {
-		return mapSearchRecursive(mythread, new Vector<GGAtomMaxNode>(), flipcandidates, 1, 0, maxDepth, count);
+		return mapSearchRecursive(mythread, new TreeSet<GGAtomMaxNode>(new GGAtomMaxNode_Comparator()), flipcandidates, 1, 0, maxDepth, count);
 	}
 
-	public double mapSearchRecursive(GGThread mythread, Vector<GGAtomMaxNode> alreadyflipped, Vector<GGAtomMaxNode> flipcandidates, double currentllratio, int depth, int maxDepth, MyCount count) {
+	public double mapSearchRecursive(GGThread mythread, TreeSet<GGAtomMaxNode> alreadyflipped, Vector<GGAtomMaxNode> flipcandidates, double currentllratio, int depth, int maxDepth, MyCount count) {
 		if (depth == maxDepth) {
 			if (debugPrint)
 				System.out.println("Max depth reached, return");

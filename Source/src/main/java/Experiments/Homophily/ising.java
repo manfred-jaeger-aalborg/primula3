@@ -42,8 +42,8 @@ public class ising {
 
     public static void main(String[] args) {
         String N = "32";
-        String J = "-0.3";
-        String Jb = "-0.2";
+        String J = "-0.4";
+        String Jb = "0.1";
         String temp = "0.4";
         Boolean node_const= true;
         String expName = "HP_3";
@@ -56,8 +56,9 @@ public class ising {
         Map<String, Object> load_gnn_set = new HashMap<>();
         load_gnn_set.put("sdataset", "ising");
         load_gnn_set.put("base_path", "/Users/lz50rg/Dev/homophily/experiments/ising/trained/");
-        load_gnn_set.put("model", "GGCN_raf");
-//        load_gnn_set.put("model", "GraphNet");
+//        load_gnn_set.put("model", "GGCN_raf");
+        load_gnn_set.put("model", "GraphNet");
+//        load_gnn_set.put("model", "MLP");
         load_gnn_set.put("nfeat", 1);
         load_gnn_set.put("nlayers", 2);
         load_gnn_set.put("nclass", 2);
@@ -168,7 +169,7 @@ public class ising {
             im.addQueryAtoms(tmp_query, gal);
 
             // perform map inference
-            im.setNumRestarts(1);
+            im.setNumRestarts(3);
             im.setNumChains(0);
             im.setWindowSize(0);
             im.setMapSearchAlg(2);

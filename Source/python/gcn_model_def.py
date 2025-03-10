@@ -365,3 +365,40 @@ class GCN_graph(nn.Module):
                 return F.log_softmax(x, dim=1)
             else:
                 return F.softmax(x, dim=1)
+
+class MLP(nn.Module):
+    def __init__(self, nfeat, nlayers, nhidden, nclass, dropout, use_res, primula=True):
+        super(MLP, self).__init__()
+        self.fcs = nn.ModuleList()
+        self.fcs.append(nn.Linear(nfeat, nhidden))
+        self.fcs.append(nn.Linear(nhidden, nclass))
+        self.act_fn = F.elu
+        self.convs = nn.ModuleList()
+        self.primula=primula
+
+        for _ in range(nlayers-2):
+            self.convs.append(nn.Linear(nhidden, nhidden))
+        self.dropout = dropout
+        self.use_res = use_res
+        # self.norm = nn.BatchNorm1d(nhidden)
+        # self.norm = nn.LayerNorm(nhidden)
+    def forward(self, x, adj):
+        x = F.dropout(x, self.dropout, training=self.training)
+        layer_inner = self.act_fn(self.fcs[0](x))
+        if self.use_res:
+            previous = layer_inner
+        for i,con in enumerate(self.convs):
+            layer_inner = F.dropout(layer_inner, self.dropout, training=self.training)
+            if (i!=0) & self.use_res:
+                previous = layer_inner + previous
+                # previous = self.norm(previous)
+                layer_inner = con(previous)
+            else:
+                layer_inner = con(layer_inner)
+            layer_inner = self.act_fn(layer_inner)
+        layer_inner = F.dropout(layer_inner, self.dropout, training=self.training)
+        layer_inner = self.fcs[-1](layer_inner)
+        if not self.primula:
+            return F.log_softmax(layer_inner, dim=1)
+        else:
+            return F.softmax(layer_inner, dim=1)

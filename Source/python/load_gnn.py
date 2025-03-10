@@ -105,6 +105,22 @@ def set_vars(setd):
                             "scale_init": 0.5, "deg_intercept_init": 0.5, "use_bn": False, "use_ln": False, "generated": False, "pre_feature": False, "primula": True }
                         )
             }
+
+    if setd['model'] == 'MLP' and not setd['noisy']:
+            models_definitions = {
+                        f"MLP{setd['sdataset']}": (
+                            MLP, f"{setd['model']}_{setd['N']}_{setd['J']}_{setd['Jb']}_{setd['temp']}_{setd['iter']}", {
+                            "nfeat": 1, "nlayers":2, "nhidden": 32, "nclass": 2, "dropout": 0.5, "use_res": True, "primula": True}
+                        )
+            }
+
+    if setd['model'] == 'MLP' and setd['noisy']:
+            models_definitions = {
+                        f"MLP{setd['sdataset']}": (
+                            GGCN_raf, f"{setd['model']}_{setd['N']}_{setd['J']}_{setd['Jb']}_{setd['temp']}_noisy_{setd['iter']}", {
+                            "nfeat": 1, "nlayers":2, "nhidden": 32, "nclass": 2, "dropout": 0.5, "use_res": True, "primula": True}
+                        )
+            }
     ##################### ISING/ ###################################
 
     ##################### POLLUTION ###################################

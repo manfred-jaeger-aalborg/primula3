@@ -227,11 +227,16 @@ public  class GGLikelihoodNode extends GGNode{
 				small_likelihood_sum = SmallDouble.divide(small_likelihood_sum, thisgg.windowsize * thisgg.numchains);
 			} else {
 				int i = thisgg.getWindowIndex()-smallSample;
-				if (i<0) i = thisgg.windowsize-i;
+				if (i<0) i = thisgg.windowsize+i;
+				int index=i;
 				while (i < thisgg.windowsize*thisgg.numchains) {
-					for (int c = 0; c < thisgg.numchains; c++) {
-						for (int index=i; index < thisgg.getWindowIndex(); index++)
+					for (int c = 1; c <= thisgg.numchains; c++) {
+						index = i;
+						for (int j=0;j < smallSample; j++) {
+							if (index == thisgg.windowsize*c) index = thisgg.windowsize*(c-1);
 							small_likelihood_sum = SmallDouble.add(small_likelihood_sum, evaluate(index, smallSample, batchelements, incremental, updatelik, oldsmallls));
+							index++;
+						}
 						i+=thisgg.windowsize;
 					}
 				}
@@ -247,11 +252,16 @@ public  class GGLikelihoodNode extends GGNode{
 						oldlsum = SmallDouble.divide(oldlsum, thisgg.windowsize * thisgg.numchains);
 					} else {
 						int i = thisgg.getWindowIndex()-smallSample;
-						if (i<0) i = thisgg.windowsize-i;
+						if (i<0) i = thisgg.windowsize+i;
+						int index=i;
 						while (i < thisgg.windowsize*thisgg.numchains) {
-							for (int c = 0; c < thisgg.numchains; c++) {
-								for (int index=i; index < thisgg.getWindowIndex(); index++)
+							for (int c = 1; c <= thisgg.numchains; c++) {
+								index = i;
+								for (int j=0;j < smallSample; j++) {
+									if (index == thisgg.windowsize*c) index = thisgg.windowsize*(c-1);
 									oldlsum = SmallDouble.add(oldlsum, oldsmallls[index]);
+									index++;
+								}
 								i+=thisgg.windowsize;
 							}
 						}
