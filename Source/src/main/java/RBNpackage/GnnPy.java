@@ -9,18 +9,13 @@ import RBNinference.PFNetworkNode;
 import jep.*;
 import jep.python.PyObject;
 
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.StringWriter;
 
 public class GnnPy {
-
     // We assume that the forward method for the gnn have always firm like this: forward(self, x, edge_index, ...)
     // x and edge_index are necessary, others arguments like batch can be set as None
-    private final String INFER_NODE = "infer_model_nodes"; // default function name to call in python
-    private final String INFER_GRAPH = "infer_model_graph";
+    private final String INFER_GNN = "forward"; // default function name to call in python
     private String scriptPath;
     private String scriptName;
     private String pythonHome;
@@ -127,14 +122,63 @@ public class GnnPy {
         }));
     }
 
+    public GnnPy(String weightPath) {
+        this.scriptPath = weightPath;
+        this.scriptName = "config_torch.py";
+        this.gnnModelsId = new ArrayList<>();
+        this.numClass = -1;
+        this.dimOut = -1;
+        currentXdict = new Hashtable<>();
+        currentEdgeDict = new Hashtable<>();
+        GGNodesDict = new Hashtable<>();
+        GGedgeDict = new Hashtable<>();
+        xDict = new Hashtable<>();
+        edgeDict = new Hashtable<>();
+        changedUpdate = false;
+        sharedInterpreter = null;
+        // pip install jep in a miniconda env (torch)
+        try {
+            initializeJep();
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                handleShutdown();
+            }));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public GnnPy() {
         System.out.println("empty gnnpy");
+    }
+
+    private String detectPythonExecutable() {
+        try {
+            String pythonHome = System.getenv("PYTHON_PRIMULA");
+            if (pythonHome != null && !pythonHome.isEmpty()) {
+                String pythonPath = pythonHome + File.separator + "bin" + File.separator + "python";
+                File pythonFile = new File(pythonPath);
+                if (pythonFile.exists() && pythonFile.canExecute()) {
+                    this.pythonHome = pythonPath;
+                    return pythonPath;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Unexpected error while detecting Python executable: " + e.getMessage());
+            e.printStackTrace();
+        }
+        // Python is not found
+        return null;
     }
 
     public String loadjep(String pythonHome) throws IOException {
         // taken from https://gist.github.com/vwxyzjn/c054bae6dfa6f80e6c663df70347e238
         // automatically find the library path in the python home it is installed
-        Process p = Runtime.getRuntime().exec(pythonHome + " python/get_jep_path.py");
+        String pythonExecutable = detectPythonExecutable();
+        if (pythonExecutable == null || pythonExecutable.isEmpty()) {
+            throw new IOException("Python executable not found. Please set the PYTHON_PRIMULA environment variable or ensure Python is installed and accessible.");
+        }
+        System.out.println(pythonExecutable + " python/get_jep_path.py");
+        Process p = Runtime.getRuntime().exec(pythonExecutable + " python/get_jep_path.py");
         BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
         return in.readLine();
     }
@@ -157,7 +201,8 @@ public class GnnPy {
         interpreter.exec("import numpy as np");
         interpreter.exec("from torch_geometric.data import Data, HeteroData");
         interpreter.exec("sys.path.append('" + this.scriptPath + "')");
-        interpreter.exec("import " + this.scriptName + " as intt");
+        interpreter.exec("from config_torch import use_model");
+//        interpreter.exec("import " + this.scriptName + " as intt");
         System.out.println("Setting up interpreter for thread: " + Thread.currentThread().getName());
         threadSharedInterp.set(interpreter);
     }
@@ -249,10 +294,8 @@ public class GnnPy {
             else
                 threadSharedInterp.get().exec("ei = torch.empty((2, 0), dtype=torch.long)");
 
-            if (node == -1)
-                threadSharedInterp.get().eval("out = intt." + this.INFER_GRAPH + "(" + idGnn + ", xi, ei)");
-            else
-                threadSharedInterp.get().eval("out = intt." + this.INFER_NODE + "(" + idGnn + ", xi, ei)");
+            threadSharedInterp.get().eval("out = intt." + this.INFER_GNN + "(" + idGnn + ", xi, ei)");
+
             threadSharedInterp.get().exec("out_size = len(out.shape)");
 
             if (this.numClass == -1) {
@@ -320,10 +363,7 @@ public class GnnPy {
                             "        data_h[n_key[0], 'to', n_key[1]].edge_index = torch.empty((2, 0), dtype=torch.long)\n"
             );
 
-            if (node == -1)
-                threadSharedInterp.get().exec("out = intt." + this.INFER_GRAPH + "(" + idGnn + ", data_h.x_dict, data_h.edge_index_dict)");
-            else
-                threadSharedInterp.get().exec("out = intt." + this.INFER_NODE + "(" + idGnn + ", data_h.x_dict, data_h.edge_index_dict)");
+            threadSharedInterp.get().exec("out = intt." + this.INFER_GNN + "(" + idGnn + ", data_h.x_dict, data_h.edge_index_dict)");
 
             threadSharedInterp.get().exec("out_size = len(out.shape)");
 
@@ -426,7 +466,7 @@ public class GnnPy {
         OneStrucData data = finalre.getmydata();
         int num_columns = 0;
         // create the feature matrix with the attributes that have arity = 1
-        if (cpmGnn instanceof CatGnn) {
+        if (cpmGnn instanceof CatGnnOld) {
             for (int i = 0; i < cpmGnn.getGnnattr().length; i++) {
                 Rel a = cpmGnn.getGnnattr()[i];
                 System.out.println(a);
@@ -436,8 +476,8 @@ public class GnnPy {
                     num_columns++;
                 }
             }
-        } else if (cpmGnn instanceof  CatGnnHetero) {
-            for (int i = 0; i < ((CatGnnHetero) cpmGnn).getInput_attr().size(); i++) {
+        } else if (cpmGnn instanceof CatGnn) {
+            for (int i = 0; i < ((CatGnn) cpmGnn).getInput_attr().size(); i++) {
                 if (cpmGnn.getGnnattr()[i].arity == 1) {
                     num_columns++;
                 }
@@ -492,13 +532,13 @@ public class GnnPy {
     public Object[] evaluate_gnn(RelStruc A, OneStrucData inst, CPMGnn cpmGnn, boolean valonly) {
         if (threadSharedInterp.get() == null)
             throw new NullPointerException("GnnPy object null!");
-        if (!(cpmGnn instanceof CatGnn))
+        if (!(cpmGnn instanceof CatGnnOld))
             throw new RuntimeException("CPMGnn must be CatGnn");
 
         Object[] result = new Object[2];
-        CatGnn catGnn = (CatGnn) cpmGnn;
+        CatGnnOld catGnn = (CatGnnOld) cpmGnn;
         double value;
-        result[0] = new double[((CatGnn) cpmGnn).numvals()];
+        result[0] = new double[((CatGnnOld) cpmGnn).numvals()];
 
         // only val no gradient computed
         if (valonly) {
@@ -587,13 +627,13 @@ public class GnnPy {
     public Object[] evaluate_gnnHetero(RelStruc A, OneStrucData inst, CPMGnn cpmGnn, boolean valonly) {
         if (threadSharedInterp.get() == null)
             throw new NullPointerException("GnnPy object null!");
-        if (!(cpmGnn instanceof CatGnnHetero))
+        if (!(cpmGnn instanceof CatGnn))
             throw new RuntimeException("CPMGnn must be CatGnnHetero");
 
         Object[] result = new Object[2];
-        CatGnnHetero cpmHetero = (CatGnnHetero) cpmGnn;
+        CatGnn cpmHetero = (CatGnn) cpmGnn;
         double value;
-        result[0] = new double[((CatGnnHetero) cpmGnn).numvals()];
+        result[0] = new double[((CatGnn) cpmGnn).numvals()];
 
         // only val no gradient computed
         if (valonly) {
@@ -665,9 +705,9 @@ public class GnnPy {
     public double[] GGevaluate_gnn(RelStruc A, GradientGraphO gg, CPMGnn cpmGnn, GGCPMNode ggcpmGnn) {
         if (threadSharedInterp.get() == null)
             throw new NullPointerException("GnnPy object null in GGevaluate_gnn ...");
-        if (!(cpmGnn instanceof CatGnn))
+        if (!(cpmGnn instanceof CatGnnOld))
             throw new RuntimeException("CPMGnn must be CatGnn in GGevaluate_gnn ...");
-        CatGnn cpm = (CatGnn) cpmGnn;
+        CatGnnOld cpm = (CatGnnOld) cpmGnn;
 
         if (GGxDict.isEmpty()) {
             GGxDict = initXdict(cpm, GGNodesDict, GGsampledRel);
@@ -1024,9 +1064,9 @@ public class GnnPy {
     public double[] GGevaluate_gnnHetero(RelStruc A, GradientGraphO gg, CPMGnn cpmGnn, GGCPMNode ggcpmGnn) {
         if (threadSharedInterp.get() == null)
             throw new NullPointerException("GnnPy object null!");
-        if (!(cpmGnn instanceof CatGnnHetero))
+        if (!(cpmGnn instanceof CatGnn))
             throw new RuntimeException("CPMGnn must be CatGnnHetero");
-        CatGnnHetero cpmHetero = (CatGnnHetero) cpmGnn;
+        CatGnn cpmHetero = (CatGnn) cpmGnn;
 
         if (GGxDict.isEmpty()) {
             GGxDict = initXdict(cpmHetero, GGNodesDict, GGsampledRel);
@@ -1124,7 +1164,7 @@ public class GnnPy {
             GGsampledRel.getmydata().add(inst.copy());
         }
 
-        if (cpmGnn instanceof CatGnnHetero || cpmGnn instanceof CatGnn) {
+        if (cpmGnn instanceof CatGnn || cpmGnn instanceof CatGnnOld) {
             GGNodesDict = constructNodesDict(cpmGnn, A);
             GGxDict = new HashMap<>();
             GGedgeDict = new HashMap<>();
@@ -1238,9 +1278,9 @@ public class GnnPy {
     public double[] evalSample_gnn(CPMGnn cpmGnn, RelStruc A, Hashtable<String, PFNetworkNode> atomhasht, OneStrucData inst) {
         if (threadSharedInterp.get() == null)
             throw new NullPointerException("GnnPy object null!");
-        if (!(cpmGnn instanceof CatGnnHetero))
+        if (!(cpmGnn instanceof CatGnn))
             throw new RuntimeException("CPMGnn must be CatGnnHetero");
-        CatGnnHetero cpmHetero = (CatGnnHetero) cpmGnn;
+        CatGnn cpmHetero = (CatGnn) cpmGnn;
 
         if (GGxDict.isEmpty()) {
             GGxDict = initXdict(cpmHetero, GGNodesDict, GGsampledRel);

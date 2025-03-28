@@ -85,7 +85,7 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
 //                    System.out.println(pfargs[i].toString() + " non prob - skipped");
                 }
             }
-        } else if (this.cpm instanceof CatGnnHetero || this.cpm instanceof CatGnn) {
+        } else if (this.cpm instanceof CatGnn || this.cpm instanceof CatGnnOld) {
             for (ArrayList<Rel> pfargs: ((CPMGnn) this.cpm).getInput_attr()) {
                 for (Rel pfargRel: pfargs) {
                     if (!pfargRel.ispredefined()) { // do not add predefined values
@@ -231,13 +231,13 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
             return this.values_for_samples[0];
 
         double[] result = null;
-        if (cpm instanceof CatGnnHetero)
+        if (cpm instanceof CatGnn)
             result = gnnPy.GGevaluate_gnnHetero(A, thisgg, (CPMGnn) cpm, this);
         else
             result = gnnPy.GGevaluate_gnn(A, thisgg, (CPMGnn) cpm, this);
 
         if (this.depends_on_sample) {
-            if (cpm instanceof CatGnnHetero)
+            if (cpm instanceof CatGnn)
                 values_for_samples[sno] = result;
             is_evaluated_for_samples[sno] = true;
         } else {
@@ -255,7 +255,7 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
 
     @Override
     public boolean isBoolean() {
-        return !(cpm instanceof CatGnn || cpm instanceof CatGnnHetero);
+        return !(cpm instanceof CatGnnOld || cpm instanceof CatGnn);
     } // for now, we return true if is not CatGnn
 
     @Override

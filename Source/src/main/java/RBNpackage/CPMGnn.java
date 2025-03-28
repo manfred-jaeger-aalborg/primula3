@@ -11,11 +11,7 @@ public interface CPMGnn {
 
     void setEdge_name(String edge_name);
 
-    void setEdge_direction(String edge_direction);
-
     String getEdge_name();
-
-    String getEdge_direction();
 
     Rel[] getGnnattr();
 

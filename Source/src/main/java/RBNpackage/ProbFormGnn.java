@@ -36,7 +36,6 @@ public class ProbFormGnn extends ProbForm implements CPMGnn {
     private int numLayers;
     public ProbFormGnn(String argument, String idGnn, Rel[] attr, String edge_name, String edge_direction, boolean oneHotEncoding) {
         this.setEdge_name(edge_name);
-        this.setEdge_direction(edge_direction);
 
         this.argument = argument;
         this.idGnn = idGnn;
@@ -46,7 +45,6 @@ public class ProbFormGnn extends ProbForm implements CPMGnn {
 
     public ProbFormGnn(String argument, String idGnn, Rel[] attr, String edge_name, String edge_direction, String gnn_inference, boolean oneHotEncoding) {
         this.setEdge_name(edge_name);
-        this.setEdge_direction(edge_direction);
 
         this.argument = argument;
         this.idGnn = idGnn;
@@ -245,18 +243,8 @@ public class ProbFormGnn extends ProbForm implements CPMGnn {
     }
 
     @Override
-    public void setEdge_direction(String edge_direction) {
-        this.edge_direction = edge_direction;
-    }
-
-    @Override
     public String getEdge_name() {
         return edge_name;
-    }
-
-    @Override
-    public String getEdge_direction() {
-        return edge_direction;
     }
 
     @Override
