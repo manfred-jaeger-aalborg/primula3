@@ -8,9 +8,6 @@ import RBNpackage.*;
 import RBNutilities.rbnutilities;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.util.*;
 
 public class RiverPollution {
@@ -47,14 +44,15 @@ public class RiverPollution {
     public static void main(String[] args) {
 
 //        String expNum = args[0];
-//        String restart = args[1];
+//        double constStrength = Double.parseDouble(args[1]);
 //        EXPNUM = Integer.parseInt(expNum);
-//        System.out.println("exp: " + expNum + " restart: " + restart);
+
         int expNum = 18;
         int restart = 1;
-        double constStrength = 0.0001;
+        double constStrength = 0.5;
         EXPNUM = expNum;
 
+        System.out.println("exp: " + expNum + " constr: " + constStrength);
         Primula primula = new Primula();
         primula.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
         primula.setScriptPath("/Users/lz50rg/Dev/primula-workspace/primula3/Source/python");
@@ -66,8 +64,7 @@ public class RiverPollution {
         load_gnn_set.put("base_path", "/Users/lz50rg/Dev/water-hawqs/models/");
         primula.setLoadGnnSet(load_gnn_set);
 
-//        File srsfile = new File("/Users/lz50rg/Dev/water-hawqs/src/test.rdef");
-        File srsfile = new File("/Users/lz50rg/Dev/water-hawqs/src/test.rdef");
+        File srsfile = new File("/Users/lz50rg/Dev/water-hawqs/src/water-network-const.rdef");
         primula.loadSparseRelFile(srsfile);
 
         String val_name = "CORN,COSY,PAST,SOYB";
@@ -114,7 +111,7 @@ public class RiverPollution {
         RBNPreldef gnn_rbn = new  RBNPreldef(
                 new CatRel("Pollution", 1, typeStringToArray("sub",1), valStringToArray("LOW,MED,HIG")),
                 new String[]{"v"},
-                new CatGnnHetero("v",
+                new CatGnn("v",
                         "HeteroGraphpollution",
                         2,
                         3,
@@ -180,6 +177,7 @@ public class RiverPollution {
 
         try {
             InferenceModule im = primula.createInferenceModule();
+            final long start = System.currentTimeMillis();
 
             RelStruc input_struct = primula.getRels();
             int[][] mat = input_struct.allTypedTuples(tmp_query.getTypes());
@@ -191,7 +189,7 @@ public class RiverPollution {
             im.addQueryAtoms(tmp_query, gal);
             im.setMapSearchAlg(3);
             im.setNumIterGreedyMap(150);
-            im.setNumRestarts(5);
+            im.setNumRestarts(1);
             im.setWindowSize(100);
             im.setNumChains(4);
             GradientGraph GG = im.startMapThread();
@@ -223,6 +221,9 @@ public class RiverPollution {
 
 
             System.out.println("Final GG logLikelihood: " + GG.currentLogLikelihood());
+
+            long end = System.currentTimeMillis();
+            System.out.println("time: " + (float)((end - start)));
 
             System.out.println(values_count);
 

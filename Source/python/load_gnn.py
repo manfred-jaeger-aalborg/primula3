@@ -5,7 +5,7 @@ from gcn_model_def import HeteroGraph
 # the model needs to output a probability for each node! (if not -> out = torch.sigmoid(out))
 # the idea should be that everyone define the function for the specific model: TODO maybe using python decorator?
 # right now the naive solution is to just rewrite the function every time it is necessary
-def infer_model_nodes(model, x, edge_index, **kwargs):
+def forward(model, x, edge_index, **kwargs):
     model.eval()
     if model is not None:
         out = model(x, edge_index)
@@ -14,12 +14,6 @@ def infer_model_nodes(model, x, edge_index, **kwargs):
         print("Model is None!")
     return None
 
-def infer_model_graph(model, x, edge_index, **kwargs):
-    model.eval()
-    if model is not None:
-        out = model(x, edge_index)
-        return out
-    return None
 
 def set_model(model_class, weights_path, **kwargs):
     model = model_class(**kwargs).to("cpu")
@@ -73,7 +67,7 @@ def set_vars(setd):
     if setd['model'] == 'GraphNet' and not setd['noisy']:
         models_definitions = {
                     f"GraphNet{setd['sdataset']}": (
-                        GCN_graph, f"{setd['model']}_{setd['N']}_{setd['J']}_{setd['Jb']}_{setd['temp']}_{setd['iter']}", {
+                        GCN_graph, f"{setd['model']}_{setd['N']}_{setd['J']}_{setd['Jb']}_{setd['temp']}_{setd['iter']}_{setd['r']}", {
                         "nfeat": setd['nfeat'], "nlayers": setd['nlayers'], "nhid": setd['nhid'], "nclass": setd['nclass'], "dropout": 0.3, "primula": True}
                     )
         }
@@ -81,7 +75,7 @@ def set_vars(setd):
     if setd['model'] == 'GraphNet' and setd['noisy']:
         models_definitions = {
                     f"GraphNet{setd['sdataset']}": (
-                        GCN_graph, f"{setd['model']}_{setd['N']}_{setd['J']}_{setd['Jb']}_{setd['temp']}_noisy_{setd['iter']}", {
+                        GCN_graph, f"{setd['model']}_{setd['N']}_{setd['J']}_{setd['Jb']}_{setd['temp']}_noisy_{setd['iter']}_{setd['r']}", {
                         "nfeat": setd['nfeat'], "nlayers": setd['nlayers'], "nhid": setd['nhid'], "nclass": setd['nclass'], "dropout": 0.3, "primula": True}
                     )
         }
@@ -89,7 +83,7 @@ def set_vars(setd):
     if setd['model'] == 'GGCN_raf' and not setd['noisy']:
             models_definitions = {
                         f"GGCN_raf{setd['sdataset']}": (
-                            GGCN_raf, f"{setd['model']}_{setd['N']}_{setd['J']}_{setd['Jb']}_{setd['temp']}_{setd['iter']}", {
+                            GGCN_raf, f"{setd['model']}_{setd['N']}_{setd['J']}_{setd['Jb']}_{setd['temp']}_{setd['iter']}_{setd['r']}", {
                             "nfeat": setd['nfeat'], "nlayers": setd['nlayers'], "nhidden": setd['nhid'], "nclass": setd['nclass'], "dropout": 0.5,
                             "decay_rate": 0.9, "exponent": 3.0, "use_degree": True, "use_sign": True, "use_decay": True, "use_sparse": False,
                             "scale_init": 0.5, "deg_intercept_init": 0.5, "use_bn": False, "use_ln": False, "generated": False, "pre_feature": False, "primula": True }
@@ -99,7 +93,7 @@ def set_vars(setd):
     if setd['model'] == 'GGCN_raf' and setd['noisy']:
             models_definitions = {
                         f"GGCN_raf{setd['sdataset']}": (
-                            GGCN_raf, f"{setd['model']}_{setd['N']}_{setd['J']}_{setd['Jb']}_{setd['temp']}_noisy_{setd['iter']}", {
+                            GGCN_raf, f"{setd['model']}_{setd['N']}_{setd['J']}_{setd['Jb']}_{setd['temp']}_noisy_{setd['iter']}_{setd['r']}", {
                             "nfeat": setd['nfeat'], "nlayers": setd['nlayers'], "nhidden": setd['nhid'], "nclass": setd['nclass'], "dropout": 0.5,
                             "decay_rate": 0.9, "exponent": 3.0, "use_degree": True, "use_sign": True, "use_decay": True, "use_sparse": False,
                             "scale_init": 0.5, "deg_intercept_init": 0.5, "use_bn": False, "use_ln": False, "generated": False, "pre_feature": False, "primula": True }
@@ -109,7 +103,7 @@ def set_vars(setd):
     if setd['model'] == 'MLP' and not setd['noisy']:
             models_definitions = {
                         f"MLP{setd['sdataset']}": (
-                            MLP, f"{setd['model']}_{setd['N']}_{setd['J']}_{setd['Jb']}_{setd['temp']}_{setd['iter']}", {
+                            MLP, f"{setd['model']}_{setd['N']}_{setd['J']}_{setd['Jb']}_{setd['temp']}_{setd['iter']}_{setd['r']}", {
                             "nfeat": 1, "nlayers":2, "nhidden": 32, "nclass": 2, "dropout": 0.5, "use_res": True, "primula": True}
                         )
             }
@@ -117,7 +111,7 @@ def set_vars(setd):
     if setd['model'] == 'MLP' and setd['noisy']:
             models_definitions = {
                         f"MLP{setd['sdataset']}": (
-                            GGCN_raf, f"{setd['model']}_{setd['N']}_{setd['J']}_{setd['Jb']}_{setd['temp']}_noisy_{setd['iter']}", {
+                            GGCN_raf, f"{setd['model']}_{setd['N']}_{setd['J']}_{setd['Jb']}_{setd['temp']}_noisy_{setd['iter']}_{setd['r']}", {
                             "nfeat": 1, "nlayers":2, "nhidden": 32, "nclass": 2, "dropout": 0.5, "use_res": True, "primula": True}
                         )
             }

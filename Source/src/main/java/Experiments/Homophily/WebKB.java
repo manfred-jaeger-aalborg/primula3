@@ -92,7 +92,7 @@ public class WebKB {
         RBNPreldef gnn_rbn = new RBNPreldef(
                 new CatRel("CAT", 1, typeStringToArray("node", 1), valStringToArray("A,B,C,D,E")),
                 new String[]{"v"},
-                new CatGnn("v",
+                new CatGnnOld("v",
                         modelName + datasetName + index,
                         true,
                         5,
