@@ -1225,7 +1225,7 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
         }
         PrimulaGUI win = new PrimulaGUI(new Primula());
 //		SamiamManager.centerWindow( win );
-        win.loadDefaults();
+//win.loadDefaults();
 		win.show();
 
 
