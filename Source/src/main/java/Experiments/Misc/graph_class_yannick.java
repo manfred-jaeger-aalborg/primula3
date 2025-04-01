@@ -129,7 +129,7 @@ public class graph_class_yannick {
         RBNPreldef gnn_rbn = new  RBNPreldef(
             new CatRel("output", 0, typeStringToArray("",0), valStringToArray("T,F")),
             new String[0],
-            new CatGnn("",
+            new CatGnnOld("",
                 "GCNgraph",
                 true,
                 2,

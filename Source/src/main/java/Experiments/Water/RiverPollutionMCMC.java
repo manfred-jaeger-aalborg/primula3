@@ -1,16 +1,16 @@
 package Experiments.Water;
 
-import RBNExceptions.RBNIllegalArgumentException;
-import RBNLearning.GradientGraph;
 import RBNgui.InferenceModule;
 import RBNgui.Primula;
+import RBNinference.SampleProbs;
 import RBNpackage.*;
 import RBNutilities.rbnutilities;
 
-import java.io.File;
+import java.io.*;
 import java.util.*;
 
-public class RiverPollutionMAP {
+public class RiverPollutionMCMC {
+    public static int EXPNUM = 0;
 
     // functions copied from RDEFReader.java
     private static Type[] typeStringToArray(String ts, int arity){
@@ -41,6 +41,18 @@ public class RiverPollutionMAP {
     }
 
     public static void main(String[] args) {
+
+        String expNum = args[0];
+        String restart = args[1];
+        String basePath = args[2];
+        EXPNUM = Integer.parseInt(expNum);
+        System.out.println("exp: " + expNum + " restart: " + restart);
+//        int expNum = 18;
+//        int restart = 1;
+//        EXPNUM = expNum;
+
+        double constStrength = 0.3;
+
         Primula primula = new Primula();
         primula.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
         primula.setScriptPath("/Users/lz50rg/Dev/primula-workspace/primula3/Source/python");
@@ -52,8 +64,7 @@ public class RiverPollutionMAP {
         load_gnn_set.put("base_path", "/Users/lz50rg/Dev/water-hawqs/models/");
         primula.setLoadGnnSet(load_gnn_set);
 
-//        File srsfile = new File("/Users/lz50rg/Dev/water-hawqs/src/test.rdef");
-        File srsfile = new File("/Users/lz50rg/Dev/water-hawqs/river_test_const.rdef");
+        File srsfile = new File(basePath + "redef_graph_" + expNum + "_" + restart + ".rdef");
         primula.loadSparseRelFile(srsfile);
 
         String val_name = "CORN,COSY,PAST,SOYB";
@@ -122,100 +133,59 @@ public class RiverPollutionMAP {
                 new CatModelSoftMax(softmax)
         );
 
-        RBN file_rbn = new RBN(new File("/Users/lz50rg/Dev/water-hawqs/water_count_sub.rbn"), primula.getSignature());
+        RBN file_rbn = new RBN(new File("/Users/lz50rg/Dev/water-hawqs/water_count_sub_mcmc.rbn"), primula.getSignature());
         RBNPreldef[] riverrbn = file_rbn.prelements();
         RBN manual_rbn = new RBN(3, 0);
         manual_rbn.insertPRel(gnn_rbn, 0);
         manual_rbn.insertPRel(gnn_attr, 1);
         manual_rbn.insertPRel(riverrbn[0], 2);
 
-//        manual_rbn.insertPRel(riverrbn[1], 3);
-
-//        RBN file_rbn = new RBN(new File("/Users/lz50rg/Dev/water-hawqs/water_rbn.rbn"), primula.getSignature());
-//        RBNPreldef[] riverrbn = file_rbn.prelements();
-//        RBN manual_rbn = new RBN(3, 0);
-//        for (int i = 0; i < 3; i++) {
-//            manual_rbn.insertPRel(riverrbn[i], i);
-//        }
-
         primula.setRbn(manual_rbn);
         primula.getInstantiation().init(manual_rbn);
         primula.setRbnparameters(manual_rbn.parameters());
 
-        Vector<GroundAtomList> gal_vec = new Vector<>();
-        RelStruc input_struct = primula.getRels();
-        CatRel tmp_query = new CatRel("LandUse", 1, typeStringToArray("hru_agr", 1), valStringToArray(val_name));
-        CatRel pollRel = new CatRel("Pollution", 1, typeStringToArray("sub",1), valStringToArray("LOW,MED,HIG"));
-        tmp_query.setInout(Rel.PROBABILISTIC);
-        pollRel.setInout(Rel.PROBABILISTIC);
-
-
         try {
             InferenceModule im = primula.createInferenceModule();
+            BoolRel queryRel = new BoolRel("constr", 0);
 
-            int[][] mat = input_struct.allTypedTuples(tmp_query.getTypes());
-            gal_vec.add(new GroundAtomList());
-            for (int[] ints: mat) gal_vec.get(0).add(tmp_query, ints);
-            im.addQueryAtoms(tmp_query, gal_vec.get(0));
-
-            mat = input_struct.allTypedTuples(pollRel.getTypes());
-            gal_vec.add(new GroundAtomList());
-            for (int[] ints: mat) gal_vec.get(1).add(pollRel, ints);
-            im.addQueryAtoms(pollRel, gal_vec.get(1));
-
-//            im.toggleAtom(tmp_query, 0);
-            im.setMapSearchAlg(3);
-            im.setNumIterGreedyMap(4000);
-            im.setNumRestarts(1);
-            im.setWindowSize(100);
-            im.setNumChains(0);
-            GradientGraph GG = im.startMapThread();
-            im.getMapthr().join();
-
-            Hashtable<Rel, int[]> bestMapVals = im.getMapthr().getBestMapVals();
-
-            String[] vals = new String[]{val_name};
-            int[] res = bestMapVals.get(tmp_query);
-            ArrayList<ArrayList<Integer>> pred_res = new ArrayList<>(vals.length);
-            for (int i = 0; i < vals.length; i++)
-                pred_res.add(new ArrayList<>());
-
-            // count how many crops type has been assigned
-            Map<String, Integer> values_count = new HashMap<>();
-            List<String> crops = Arrays.asList(val_name.split(","));
-            for (int i = 0; i < 4; i++) {
-                values_count.put(crops.get(i), 0);
+            GroundAtomList queryGround = new GroundAtomList();
+            if (queryRel.getArity()==0) {
+                queryGround.add(new GroundAtom(queryRel,new int[0]));
             }
+            im.addQueryAtom(queryRel, queryGround, 0);
 
-//            PrintWriter writer = new PrintWriter("final-graph.txt", "UTF-8");
-            System.out.println("\nMAP INFERENCE RESULTS:\n");
-            for (GroundAtomList gal: gal_vec) {
-                for (int i = 0; i < gal.size(); i++) {
-                    System.out.println(gal.atomAt(i).rel + Arrays.toString(gal.atomAt(i).args) + ": " + bestMapVals.get(gal.atomAt(i).rel)[i]);
-                    if (gal.atomAt(i).relname().equals("LandUse"))
-                        values_count.put(crops.get(res[i]), values_count.get(crops.get(res[i]))+1);
+            im.startSampleThread();
+            System.out.println("Start sampling...");
+
+            double size = 0;
+            double oldsize = -1;
+            System.out.println("Sampling ...");
+            while (size < 30000) {
+                size = im.getSamThr().getNumsamp();
+                if (oldsize != size) {
+                    oldsize = size;
+                    if (size % 10000 == 0)
+                        System.out.println("Sample size: " + size);
                 }
             }
-//            writer.close();
 
-            System.out.println("Final GG logLikelihood: " + GG.currentLogLikelihood());
+            im.stopSampleThread();
+            im.getSampthr().join();
+            SampleProbs finalSprobs = im.getSampthr().getSprobs();
+            System.out.println(Arrays.deepToString(finalSprobs.getProbs(queryRel)));
 
-            System.out.println(values_count);
-
-            // Save values
-
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(basePath + "txt_graph_" + expNum + "_" + restart +".txt", true))) {
+                writer.newLine();
+                writer.write(Arrays.deepToString(finalSprobs.getProbs(queryRel)));
+                System.out.println("Line appended successfully!");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
             System.exit( 0 );
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
-        } catch (RBNIllegalArgumentException e) {
-            throw new RuntimeException(e);
         }
-//        catch (FileNotFoundException e) {
-//            throw new RuntimeException(e);
-//        } catch (UnsupportedEncodingException e) {
-//            throw new RuntimeException(e);
-//        }
     }
 }
 

@@ -1,8 +1,5 @@
 package Experiments.Water;
 
-import RBNExceptions.RBNIllegalArgumentException;
-import RBNLearning.GradientGraph;
-import RBNgui.InferenceModule;
 import RBNgui.Primula;
 import RBNgui.PrimulaGUI;
 import RBNpackage.*;
@@ -104,7 +101,7 @@ public class RiverPollutionGUI {
         RBNPreldef gnn_rbn = new  RBNPreldef(
                 new CatRel("Pollution", 1, typeStringToArray("sub",1), valStringToArray("LOW,MED,HIG")),
                 new String[]{"v"},
-                new CatGnnHetero("v",
+                new CatGnn("v",
                         "HeteroGraphpollution",
                         1,
                         3,

@@ -42,11 +42,23 @@ public class ising {
 
     public static void main(String[] args) {
         String N = "32";
-        String J = "-0.4";
-        String Jb = "0.1";
+        String J = "0.5";
+        String Jb = "0.0";
         String temp = "0.4";
         Boolean node_const= true;
-        String expName = "HP_3";
+        String expName = "HP_noisy";
+        String model = "GGCN_raf";
+        String r = "0";
+
+//        J = args[0];
+//        Jb = args[1];
+//        expName = args[2];
+//        model = args[3];
+//        r = args[4];
+
+        System.out.println("**************************");
+        System.out.println(J + " " + Jb + " " + expName + " " + model);
+        System.out.println("**************************");
 
         Primula primula = new Primula();
         primula.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
@@ -57,17 +69,24 @@ public class ising {
         load_gnn_set.put("sdataset", "ising");
         load_gnn_set.put("base_path", "/Users/lz50rg/Dev/homophily/experiments/ising/trained/");
 //        load_gnn_set.put("model", "GGCN_raf");
-        load_gnn_set.put("model", "GraphNet");
+//        load_gnn_set.put("model", "GraphNet");
 //        load_gnn_set.put("model", "MLP");
+        load_gnn_set.put("model", model);
         load_gnn_set.put("nfeat", 1);
         load_gnn_set.put("nlayers", 2);
         load_gnn_set.put("nclass", 2);
-        load_gnn_set.put("nhid", 16);
+
+        if (model.equals("MLP"))
+            load_gnn_set.put("nhid", 32);
+        else
+            load_gnn_set.put("nhid", 16);
+
         load_gnn_set.put("N", Integer.valueOf(N));
         load_gnn_set.put("J", Double.valueOf(J));
         load_gnn_set.put("Jb", Double.valueOf(Jb));
         load_gnn_set.put("temp", Double.valueOf(temp));
         load_gnn_set.put("iter", 4);
+        load_gnn_set.put("r", r);
         load_gnn_set.put("noisy", false);
 
         primula.setLoadGnnSet(load_gnn_set);
@@ -104,7 +123,7 @@ public class ising {
                 new String[]{"v"},
                 new CatGnn("v",
                         load_gnn_set.get("model")+"ising",
-                        true,
+                        -1,
                         2,
                         attrs_rels,
                         edge_attr,
@@ -151,6 +170,8 @@ public class ising {
 //        }
 
         try {
+            final long start = System.currentTimeMillis();
+
             InferenceModule im = primula.createInferenceModule();
 
             // retrieve the data to query
@@ -169,7 +190,7 @@ public class ising {
             im.addQueryAtoms(tmp_query, gal);
 
             // perform map inference
-            im.setNumRestarts(3);
+            im.setNumRestarts(1);
             im.setNumChains(0);
             im.setWindowSize(0);
             im.setMapSearchAlg(2);
@@ -232,6 +253,9 @@ public class ising {
             double accuracy = (double) correctPredictions / totalPredictions;
             System.out.println("Accuracy: " + accuracy);
 
+            long end = System.currentTimeMillis();
+            System.out.println("time: " + (float)((end - start)));
+
             String pred_node_path = null;
             if (node_const)
                 pred_node_path = "/Users/lz50rg/Dev/homophily/experiments/ising/pred_labels/pred_labels_" + load_gnn_set.get("model") + "_" + N + "_" + J + "_" + Jb + "_" + temp + "_nodeconst_" + expName + ".txt";
@@ -253,6 +277,14 @@ public class ising {
                         }
                     }
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter("/Users/lz50rg/Dev/homophily/experiments/ising/ising_results.txt", true))) {
+                writer.newLine();
+                writer.write(J + " " + Jb + " " + expName + " " + model + " r" + r + "\n");
+                writer.write("Accuracy: " + accuracy + "\n");
             } catch (IOException e) {
                 e.printStackTrace();
             }
