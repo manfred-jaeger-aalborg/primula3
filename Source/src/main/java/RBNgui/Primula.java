@@ -1890,8 +1890,8 @@ public class Primula extends JFrame implements PrimulaUIInt, ActionListener, Ite
 //		String rbninputfilestring = "/home/jaeger/B/Primula/Examples/SWF/swf_nodefeat.rbn";
 //		String rstinputfilestring = "/home/jaeger/B/Primula/Examples/SWF/swf_coordinates_nodefeat.rdef";
 
-		String rbninputfilestring = "/home/jaeger/B/Primula/Examples/HAWQS/Debug/water_rbn.rbn";
-		String rstinputfilestring = "/home/jaeger/B/Primula/Examples/HAWQS/river_domain.rdef";
+		String rbninputfilestring = "/home/jaeger/B/Primula/Examples/Mendel/mendel.rbn";
+		String rstinputfilestring = "/home/jaeger/B/Primula/Examples/Mendel/mendel_s.rdef";
 	
 //		String rbninputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Categorical/onecat_param.rbn";	
 //		String rstinputfilestring = "/home/jaeger/B/Primula-Develop/New/Primula-beta/Primula3/Examples/Categorical/onecat_sample.rdef";

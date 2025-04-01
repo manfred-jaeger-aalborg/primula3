@@ -898,7 +898,6 @@ public class BayesConstructor extends java.lang.Object {
 		}
 		
 		for (Enumeration<BNNode> e=groundatomhasht.elements();e.hasMoreElements();){
-			System.out.print(".");
 			currentnode = (ComplexBNGroundAtomNode)e.nextElement();
 			parvec = (Vector<GroundAtom>)parentvecs.elementAt(nodeindex);
 			nodeindex++;
@@ -2346,6 +2345,7 @@ public class BayesConstructor extends java.lang.Object {
 	}
 	System.out.println();
     }*/
+
 
 	/** Subroutine of balanceLevels */
 	private void addToLevel(SimpleBNNode bnn,ArrayList[] levels){

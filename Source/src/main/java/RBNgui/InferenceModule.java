@@ -293,17 +293,17 @@ ActionListener, MouseListener, Control.ACEControlListener, GradientGraphOptions,
 	 */
 
 
-	ImageIcon toggleicon = new ImageIcon("src/main/java/Icons/toggle.png");
+	ImageIcon toggleicon = new ImageIcon("Source/src/main/java/Icons/toggle.png");
 	private JButton  toggleTruthButton  		= new JButton(toggleicon);
 	
-	ImageIcon cwaicon = new ImageIcon("src/main/java/Icons/cwa.png");
+	ImageIcon cwaicon = new ImageIcon("Source/src/main/java/Icons/cwa.png");
 	private JButton cwaButton = new JButton(cwaicon);
 	
 	
-	ImageIcon deleteicon = new ImageIcon("src/main/java/Icons/delete.png");
+	ImageIcon deleteicon = new ImageIcon("Source/src/main/java/Icons/delete.png");
 	private JButton delInstButton      		= new JButton(deleteicon);
 	
-	ImageIcon clearicon = new ImageIcon("src/main/java/Icons/clear.png");
+	ImageIcon clearicon = new ImageIcon("Source/src/main/java/Icons/clear.png");
 	private JButton delAllInstButton   		= new JButton(clearicon);
 	
 //	ImageIcon saveicon = new ImageIcon("./Icons/save.png");
