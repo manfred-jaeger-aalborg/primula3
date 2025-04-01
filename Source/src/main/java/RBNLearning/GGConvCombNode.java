@@ -126,9 +126,9 @@ public class GGConvCombNode extends GGCPMNode{
 				this.evaluate(i);
 			return null;
 		}			
-		if (this.depends_on_sample && is_evaluated_for_samples[sno]) 
+		if (this.depends_on_sample && is_evaluated_val_for_samples[sno])
 				return this.values_for_samples[sno];
-		if (!this.depends_on_sample && is_evaluated_for_samples[0])
+		if (!this.depends_on_sample && is_evaluated_val_for_samples[0])
 			return this.values_for_samples[0];
 
 		
@@ -169,11 +169,11 @@ public class GGConvCombNode extends GGCPMNode{
 
 		if (this.depends_on_sample) {
 			values_for_samples[sno] = result;
-			is_evaluated_for_samples[sno]=true;
+			is_evaluated_val_for_samples[sno]=true;
 		}
 		else {
 			values_for_samples[0] = result;
-			is_evaluated_for_samples[0]=true;
+			is_evaluated_val_for_samples[0]=true;
 		}
 		
 		return result;
@@ -236,7 +236,7 @@ public class GGConvCombNode extends GGCPMNode{
 //		}
 //	}
 
-	public TreeMap<String,double[]> evaluateGradient(Integer sno)
+	public Gradient evaluateGradient(Integer sno)
 	throws RBNNaNException
 	{
 //		String label="";
@@ -252,20 +252,20 @@ public class GGConvCombNode extends GGCPMNode{
 				this.evaluateGradient(i);
 			return null;
 		}
-		
+
 		int idx=0;
 		if (this.depends_on_sample)
 			idx=sno;
-		
-		TreeMap<String,double[]> g = gradient_for_samples.get(sno);
-		if (g!=null)
-			return g;
-		
-		TreeMap<String,double[]> result = null;	
-		
+
+		if (is_evaluated_grad_for_samples[idx])
+			return  gradient_for_samples.get(idx);
+
+
+		Gradient result = gradient_for_samples.get(idx);
+		result.reset();
 
 		double[] childvals=new double[3];
-		Vector<TreeMap<String,double[]>> childgradients = new Vector<TreeMap<String,double[]>>();
+		Vector<Gradient> childgradients = new Vector<Gradient>();
 		for (int i=0;i<3;i++) {
 			if (children.elementAt(i)!=null) {
 				childvals[i]=children.elementAt(i).evaluate(idx)[0];
@@ -273,31 +273,27 @@ public class GGConvCombNode extends GGCPMNode{
 			}
 			else {
 				childvals[i]=evalOfSubPFs[i];
-				childgradients.add(new TreeMap<String,double[]>());
+				childgradients.add(thisgg.zerograd);
 			}
 		}
-		
-		
 
 
 		for (String param: this.myparameters) {
 			double partderiv = 0;
 			/* F0'F1: */
-			partderiv += childgradients.elementAt(0).get(param)[0]*childvals[1];
+			partderiv += childgradients.elementAt(0).get_part_deriv(param)[0]*childvals[1];
 			/* +F0F1': */
-			partderiv +=childvals[0]*childgradients.elementAt(1).get(param)[0];
+			partderiv +=childvals[0]*childgradients.elementAt(1).get_part_deriv(param)[0];
 			/* -F0'F2: */
-			partderiv -=childgradients.elementAt(0).get(param)[0]*childvals[2];
+			partderiv -=childgradients.elementAt(0).get_part_deriv(param)[0]*childvals[2];
 			/* -F0F2': */
-			partderiv -=childvals[0]*childgradients.elementAt(2).get(param)[0];
+			partderiv -=childvals[0]*childgradients.elementAt(2).get_part_deriv(param)[0];
 			/* +F2' */
-			partderiv +=childgradients.elementAt(2).get(param)[0];
+			partderiv +=childgradients.elementAt(2).get_part_deriv(param)[0];
 
-			result.put(param, new double[] {partderiv});
+			result.set_part_deriv(param, new double[] {partderiv});
 		}
 
-		gradient_for_samples.remove(idx);
-		gradient_for_samples.add(idx,result);
 
 		return result;
 	}

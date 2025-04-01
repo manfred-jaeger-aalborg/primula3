@@ -246,6 +246,7 @@ public class LearnThread extends GGThread {
 					case LearnModule.AscentAdam:
 						results = doOneRestartStochGrad(A,parameternumrels,parameters,minmaxbounds,
 								rest==0,myLearnModule.getUseGGs(),profiler);
+						System.gc();
 						break;
 //					case LearnModule.AscentBlock:
 //						results = doOneRestartBlock(A,parameternumrels,parameters,paramblocks,rest==0);
@@ -277,10 +278,13 @@ public class LearnThread extends GGThread {
 			profiler.addTime(Profiler.TIME_STOCH_GRAD, System.currentTimeMillis()-timestart);
 			
 			System.out.println(profiler.showTimers());
+
 //			System.out.println("# Time per mini batch: " + 
 //			profiler.getTime(Profiler.TIME_STOCH_GRAD)/(profiler.getTime(Profiler.NUM_EPOCHS)*databatches.length));
 			
-		} //	if (databatches != null)	
+		} //	if (databatches != null)
+		System.out.println("# ***** END **********");
+		return;
 	}
 
 
@@ -359,6 +363,7 @@ public class LearnThread extends GGThread {
 		long startiterations = System.currentTimeMillis();
 		
 		while (!terminate && !isstopped()){
+//			System.gc();
 			itcount++;
 			switch (myLearnModule.threadascentstrategy()){
 			case LearnModule.AscentStochHeur1:
@@ -378,8 +383,10 @@ public class LearnThread extends GGThread {
 						if (isfirstloop) {
 							gg = buildGGO(parameters,minmaxbounds,
 									isfirstrestart && isfirstloop,databatches[i]);
-
+							System.out.println("done build GG");
 							gg.evaluateLikelihoodAndPartDerivs(false);
+							System.out.println("done evaluate GG");
+
 							allggs[i]=gg;
 						}
 						else {
