@@ -15,4 +15,12 @@ public class Pair<K, V> {
     public V getSecond() {
         return value;
     }
+
+    @Override
+    public String toString() {
+        return "Pair{" +
+                "key=" + key.toString() +
+                ", value=" + value.toString() +
+                '}';
+    }
 }

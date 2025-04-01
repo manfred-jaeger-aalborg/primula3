@@ -1,5 +1,7 @@
 package RBNpackage;
 
+import PyManager.GnnPy;
+import PyManager.TorchModelWrapper;
 import RBNExceptions.RBNCompatibilityException;
 import RBNExceptions.RBNIllegalArgumentException;
 import RBNLearning.Profiler;
@@ -37,8 +39,8 @@ public class CatGnn extends CPModel implements CPMGnn {
     private boolean oneHotEncoding;
     private GnnPy gnnPy;
     // each gnn will have an id that identify the model
-    private String idGnn;
-    String weightPath;
+    private String gnnId;
+    String configModelPath;
     Map<String, Object> gnnParams;
     ArrayList<Pair<BoolRel, ArrayList<Rel>>> gnnInputs;
 
@@ -49,9 +51,11 @@ public class CatGnn extends CPModel implements CPMGnn {
     // this variable is used to set the inference for node or graph classification. Keyword: "node" or "graph"
     private String gnn_inference;
     private int numLayers;
-    public CatGnn(String argument, String idGnn, int numLayers, int numvals, ArrayList input_attr, ArrayList edge_attr, String gnn_inference, boolean oneHotEncoding) {
+    private TorchModelWrapper torchModel;
+
+    public CatGnn(String argument, String gnnId, int numLayers, int numvals, ArrayList input_attr, ArrayList edge_attr, String gnn_inference, boolean oneHotEncoding) {
         this.argument = argument;
-        this.idGnn = idGnn;
+        this.gnnId = gnnId;
         this.categorical = true; // TODO: handle this with counting vals
         this.numvals = numvals;
         this.numLayers = numLayers;
@@ -62,17 +66,23 @@ public class CatGnn extends CPModel implements CPMGnn {
         if (this.gnnPy == null)
             savedData = false;
     }
-    public CatGnn(String weightPath, int numVals, int numLayers, ArrayList<Pair<BoolRel, ArrayList<Rel>>> inputs) {
-        this.argument = "v";
+    public CatGnn(String moduleName, String configModelPath, Vector<String> freeVals, int numVals, ArrayList<Pair<BoolRel, ArrayList<Rel>>> inputs) {
+        this.gnnId = moduleName;
+        this.argument = "";
+        if (!freeVals.isEmpty())
+            this.argument = freeVals.get(0);
+
         this.categorical = true ? inputs.size() > 1 : false;
-        this.weightPath = weightPath;
+        this.configModelPath = configModelPath;
         this.numvals = numVals;
-        this.numLayers = numLayers;
         this.gnnInputs = inputs;
 
         this.oneHotEncoding = oneHotEncoding; // this for now it is always true, keep this as default and remove it??
         this.gnn_inference = gnn_inference; // this can be inferred by looking at the RBN arguments, no arguments means graph classification
-        if (this.gnnPy == null)
+
+        this.gnnPy = new GnnPy(this, moduleName, configModelPath);
+
+        if (this.gnnPy == null) // TODO REDO THIS SAVE DATA!!
             savedData = false;
     }
     public CatGnn(String argument, GnnPy gnnpy) {
@@ -82,22 +92,18 @@ public class CatGnn extends CPModel implements CPMGnn {
 
     @Override
     public String asString(int syntax, int depth, RelStruc A, boolean paramsAsValue, boolean usealias) {
-        String out = "GNN("+this.argument+"\n";
-        for (int i = 0; i < this.input_attr.size(); i++) {
-            out += "\t";
-            for (int j = 0; j < this.input_attr.get(i).size(); j++) {
-                out += this.input_attr.get(i).get(j).toString();
-                if (j != this.input_attr.get(i).size()-1)
-                    out += ",";
-            }
-            out += "|";
-            out += this.edge_attr.get(i);
-
-            if (i != this.input_attr.size()-1)
-                out += ",\n";
-        }
-        out += "\n)";
-        return out;
+        StringBuilder sb = new StringBuilder();
+        sb.append("GNN("+this.argument+")=");
+        sb.append("[");
+        sb.append(gnnPy.getTorchModel().toString()+", ");
+        if (gnnInputs != null && !gnnInputs.isEmpty()) {
+            for (Pair<BoolRel, ArrayList<Rel>> pair : gnnInputs)
+                sb.append(pair.toString()).append(", ");
+            sb.setLength(sb.length() - 2);
+        } else
+            sb.append("null");
+        sb.append("]");
+        return sb.toString();
     }
 
     @Override
@@ -152,7 +158,33 @@ public class CatGnn extends CPModel implements CPMGnn {
     public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone) throws RBNCompatibilityException {
 //        System.out.println("makeParentVec code 2");
         // use parentRels to obtain the parents and see thorugh the arguments which is one that is not ground and add to result
+
         Vector<GroundAtom> result = new Vector<GroundAtom>();
+        for (Pair<BoolRel, ArrayList<Rel>> pair : getGnnInputs()) {
+            ArrayList<Rel> pfargs = pair.getSecond();
+            for (Rel pfargRel : pfargs) {
+                if (!pfargRel.ispredefined()) {
+                    try {
+                        int[][] mat = A.allTypedTuples(pfargRel.getTypes());
+                        for (int k = 0; k < mat.length; k++) {
+                            // we add as children only atoms that are influenced up to a max layer
+                            Set<Integer> allReached = null;
+                            if (gnnPy.getTorchModel().getNumLayers() > 0)
+                                allReached = rbnutilities.getNodesInDepth(A, gnnPy.getTorchModel().getNumLayers(), mat[k][0], this);
+
+//                            if (gnnPy.getTorchModel().getNumLayers() > 0 && allReached != null && allReached.contains(Integer.parseInt(this.getArgument()))) {
+//                                result.add(new GroundAtom(, mat[k]));
+//                            }
+                        }
+                    } catch (RBNIllegalArgumentException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        }
+
+        System.out.println(result);
+
         for (Rel parent : this.parentRels()) {
             // return all tuples within a certain type
             try {
@@ -192,11 +224,10 @@ public class CatGnn extends CPModel implements CPMGnn {
         return this;
     }
 
-    // we cannot substitute this in smaller prob formula -> return the same object
     @Override
     public CPModel substitute(String[] vars, int[] args) {
 //        System.out.println("substitute code 1");
-        CatGnn result = new CatGnn(this.argument, this.idGnn, this.numLayers, this.numvals, this.input_attr, this.edge_attr, this.gnn_inference, this.oneHotEncoding);
+        CatGnn result = this;
         if (vars.length == 0)
             result.argument = Arrays.toString(new String[0]);
         else
@@ -242,12 +273,15 @@ public class CatGnn extends CPModel implements CPMGnn {
         // this checks if processed makes sense here
         assert !processed.isEmpty();
         TreeSet<Rel> parent = new TreeSet<>();
-        for (Rel rel: this.getGnnattr())
-            if (rel.isprobabilistic())
-                parent.add(rel);
-        for (Rel rel: this.getEdge_attr())
-            if (rel.isprobabilistic())
-                parent.add(rel);
+        for (Pair<BoolRel, ArrayList<Rel>> pair : gnnInputs) {
+            if (pair.getFirst().isprobabilistic())
+                parent.add(pair.getFirst());
+            ArrayList<Rel> relList = pair.getSecond();
+            for (Rel rel : relList) {
+                if (rel.isprobabilistic())
+                    parent.add(rel);
+            }
+        }
         return parent;
     }
 
@@ -290,6 +324,11 @@ public class CatGnn extends CPModel implements CPMGnn {
         return input_attr;
     }
 
+    @Override
+    public ArrayList<Pair<BoolRel, ArrayList<Rel>>> getGnnInputs() {
+        return this.gnnInputs;
+    }
+
     public ArrayList<Rel> getEdge_attr() {
         return edge_attr;
     }
@@ -300,8 +339,8 @@ public class CatGnn extends CPModel implements CPMGnn {
     }
 
     @Override
-    public String getIdGnn() {
-        return idGnn;
+    public String getGnnId() {
+        return gnnId;
     }
 
     @Override
@@ -321,4 +360,11 @@ public class CatGnn extends CPModel implements CPMGnn {
     public int getNumLayers() {
         return numLayers;
     }
+
+    public void setNumLayers(int l) { this.numLayers = l; }
+
+    public String getConfigModelPath() { return configModelPath; }
+
+    public TorchModelWrapper getTorchModel() { return torchModel; }
+    public void setTorchModel(TorchModelWrapper torchModel) { this.torchModel = torchModel; }
 }

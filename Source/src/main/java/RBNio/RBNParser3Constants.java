@@ -13,35 +13,49 @@ public interface RBNParser3Constants {
   /** RegularExpression Id. */
   int EOLtoken = 3;
   /** RegularExpression Id. */
-  int EOL = 27;
+  int EOL = 28;
   /** RegularExpression Id. */
-  int CombinationFunction = 28;
+  int CombinationFunction = 29;
   /** RegularExpression Id. */
-  int WIFWIF = 29;
+  int WIFWIF = 30;
   /** RegularExpression Id. */
-  int WIFTHEN = 30;
+  int WIFTHEN = 31;
   /** RegularExpression Id. */
-  int WIFELSE = 31;
+  int WIFELSE = 32;
   /** RegularExpression Id. */
-  int COMBCOMB = 32;
+  int COMBCOMB = 33;
   /** RegularExpression Id. */
-  int COMBWITH = 33;
+  int COMBWITH = 34;
   /** RegularExpression Id. */
-  int COMBFORALL = 34;
+  int COMBFORALL = 35;
   /** RegularExpression Id. */
-  int COMBWHERE = 35;
+  int COMBWHERE = 36;
   /** RegularExpression Id. */
-  int SOFTMAX = 36;
+  int SOFTMAX = 37;
   /** RegularExpression Id. */
-  int MULT = 37;
+  int COMPUTEWITHTORCH = 38;
   /** RegularExpression Id. */
-  int PLUS = 38;
+  int UsingRels = 39;
   /** RegularExpression Id. */
-  int Digits = 39;
+  int FORNUMLAYERS = 40;
   /** RegularExpression Id. */
-  int Constant = 40;
+  int WITHEDGE = 41;
   /** RegularExpression Id. */
-  int Name = 41;
+  int ForFreeVars = 42;
+  /** RegularExpression Id. */
+  int WithNumValues = 43;
+  /** RegularExpression Id. */
+  int Name = 44;
+  /** RegularExpression Id. */
+  int Path = 45;
+  /** RegularExpression Id. */
+  int MULT = 46;
+  /** RegularExpression Id. */
+  int PLUS = 47;
+  /** RegularExpression Id. */
+  int Digits = 48;
+  /** RegularExpression Id. */
+  int Constant = 49;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -77,6 +91,7 @@ public interface RBNParser3Constants {
     "\"true\"",
     "\"false\"",
     "\"~\"",
+    "\"WITHEDGE\"",
     "<EOL>",
     "<CombinationFunction>",
     "<WIFWIF>",
@@ -87,11 +102,18 @@ public interface RBNParser3Constants {
     "<COMBFORALL>",
     "<COMBWHERE>",
     "<SOFTMAX>",
+    "<COMPUTEWITHTORCH>",
+    "<UsingRels>",
+    "<FORNUMLAYERS>",
+    "<WITHEDGE>",
+    "<ForFreeVars>",
+    "<WithNumValues>",
+    "<Name>",
+    "<Path>",
     "\"*\"",
     "\"+\"",
     "<Digits>",
     "<Constant>",
-    "<Name>",
   };
 
 }

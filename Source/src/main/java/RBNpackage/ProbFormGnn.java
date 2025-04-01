@@ -1,9 +1,11 @@
 package RBNpackage;
 
+import PyManager.GnnPy;
 import RBNExceptions.RBNCompatibilityException;
 import RBNExceptions.RBNIllegalArgumentException;
 import RBNLearning.Profiler;
 import RBNinference.PFNetworkNode;
+import RBNutilities.Pair;
 import RBNutilities.rbnutilities;
 
 import java.util.*;
@@ -216,6 +218,11 @@ public class ProbFormGnn extends ProbForm implements CPMGnn {
     public ArrayList<Rel> getEdge_attr() { return null; }
 
     @Override
+    public ArrayList<Pair<BoolRel, ArrayList<Rel>>> getGnnInputs() {
+        return null;
+    }
+
+    @Override
     public TreeSet<Rel> parentRels(TreeSet<String> processed) {
         System.out.println("parentRels code 2");
         TreeSet<Rel> result = new TreeSet<Rel>();
@@ -258,7 +265,7 @@ public class ProbFormGnn extends ProbForm implements CPMGnn {
     }
 
     @Override
-    public String getIdGnn() {
+    public String getGnnId() {
         return idGnn;
     }
 

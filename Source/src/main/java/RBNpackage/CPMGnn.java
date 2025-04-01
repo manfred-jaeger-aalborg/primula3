@@ -1,5 +1,8 @@
 package RBNpackage;
 
+import PyManager.GnnPy;
+import RBNutilities.Pair;
+
 import java.util.ArrayList;
 import java.util.TreeSet;
 
@@ -17,7 +20,7 @@ public interface CPMGnn {
 
     String getArgument();
 
-    String getIdGnn();
+    String getGnnId();
 
     boolean isOneHotEncoding();
 
@@ -30,6 +33,8 @@ public interface CPMGnn {
     ArrayList<ArrayList<Rel>> getInput_attr();
 
     ArrayList<Rel> getEdge_attr();
+
+    ArrayList<Pair<BoolRel, ArrayList<Rel>>> getGnnInputs();
 
     int getNumLayers();
 }

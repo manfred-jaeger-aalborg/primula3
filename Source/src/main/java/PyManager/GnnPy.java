@@ -1,11 +1,13 @@
 /**
  * This class should be used as an interface between PyTorch models and Java
  */
-package RBNpackage;
+package PyManager;
 import RBNExceptions.RBNIllegalArgumentException;
 import RBNLearning.*;
 import RBNgui.Primula;
 import RBNinference.PFNetworkNode;
+import RBNpackage.*;
+import RBNutilities.Pair;
 import jep.*;
 import jep.python.PyObject;
 
@@ -14,19 +16,14 @@ import java.util.*;
 
 public class GnnPy {
     // We assume that the forward method for the gnn have always firm like this: forward(self, x, edge_index, ...)
-    // x and edge_index are necessary, others arguments like batch can be set as None
+    // x and edge_index are necessary, ot
+    // hers arguments like batch can be set as None
     private final String INFER_GNN = "forward"; // default function name to call in python
     private String scriptPath;
-    private String scriptName;
+    private String moduleName;
     private String pythonHome;
     private SharedInterpreter sharedInterpreter;
     private static ThreadLocal<SharedInterpreter> threadSharedInterp = new ThreadLocal<>();
-
-    // those 4 next vairables are used to save the current query
-    private String currentXString;
-    private double[][] currentX;
-    private ArrayList<ArrayList<Integer>> currentEdgeIndex;
-    private String currentMethod;
     private double[][] currentResult;
     private Map<String, double[][]> currentXdict;
     private Map<String, ArrayList<ArrayList<Integer>>> currentEdgeDict;
@@ -47,9 +44,13 @@ public class GnnPy {
     private boolean changedUpdate;
     private Primula myprimula;
     private GradientGraphO mygg;
+    private TorchModelWrapper torchModel;
+    Map<String, Object> torchModels;
+    private CatGnn currentCatGnn;
+    private boolean savedData;
     public GnnPy(String scriptPath, String scriptName, String pythonHome) throws IOException {
         this.scriptPath = scriptPath;
-        this.scriptName = scriptName;
+        this.moduleName = scriptName;
         this.pythonHome = pythonHome;
         this.gnnModelsId = new ArrayList<>();
         this.numClass = -1;
@@ -63,17 +64,17 @@ public class GnnPy {
         changedUpdate = false;
         sharedInterpreter = null;
         // pip install jep in a miniconda env (torch)
-        initializeJep();
+//        initializeJep();
 //        sharedInterpreter = threadSharedInterp.get();
 //        sharedInterpreter.exec("data = HeteroData()");
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            handleShutdown();
-        }));
+//        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+//            handleShutdown();
+//        }));
     }
 
     public GnnPy(Primula primula) throws IOException {
         this.scriptPath = primula.getScriptPath();
-        this.scriptName = primula.getScriptName();
+        this.moduleName = primula.getScriptName();
         this.pythonHome = primula.getPythonHome();
         myprimula = primula;
         this.gnnModelsId = new ArrayList<>();
@@ -88,17 +89,17 @@ public class GnnPy {
         changedUpdate = false;
         sharedInterpreter = null;
         // pip install jep in a miniconda env (torch)
-        initializeJep();
+//        initializeJep();
 //        sharedInterpreter = threadSharedInterp.get();
 //        sharedInterpreter.exec("data = HeteroData()");
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            handleShutdown();
-        }));
+//        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+//            handleShutdown();
+//        }));
     }
 
     public GnnPy(Primula primula, GradientGraphO gg) throws IOException {
         this.scriptPath = primula.getScriptPath();
-        this.scriptName = primula.getScriptName();
+        this.moduleName = primula.getScriptName();
         this.pythonHome = primula.getPythonHome();
         myprimula = primula;
         mygg = gg;
@@ -114,20 +115,22 @@ public class GnnPy {
         changedUpdate = false;
         sharedInterpreter = null;
         // pip install jep in a miniconda env (torch)
-        initializeJep();
+//        initializeJep();
 //        sharedInterpreter = threadSharedInterp.get();
 //        sharedInterpreter.exec("data = HeteroData()");
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            handleShutdown();
-        }));
+//        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+//            handleShutdown();
+//        }));
     }
 
-    public GnnPy(String weightPath) {
-        this.scriptPath = weightPath;
-        this.scriptName = "config_torch.py";
-        this.gnnModelsId = new ArrayList<>();
-        this.numClass = -1;
-        this.dimOut = -1;
+    public GnnPy(CatGnn catGnn, String modulename, String configModelPath) {
+        scriptPath = configModelPath;
+        moduleName = modulename;
+        currentCatGnn = catGnn;
+
+        gnnModelsId = new ArrayList<>();
+        numClass = -1;
+        dimOut = -1;
         currentXdict = new Hashtable<>();
         currentEdgeDict = new Hashtable<>();
         GGNodesDict = new Hashtable<>();
@@ -136,91 +139,40 @@ public class GnnPy {
         edgeDict = new Hashtable<>();
         changedUpdate = false;
         sharedInterpreter = null;
-        // pip install jep in a miniconda env (torch)
+        savedData = false;
         try {
-            initializeJep();
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                handleShutdown();
-            }));
+            JepManager.initializeJep();
+            JepManager.addShutdownHook();
+            torchModel = loadTorchModel(JepManager.getInterpreter(true), catGnn, configModelPath);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public GnnPy() {
-        System.out.println("empty gnnpy");
-    }
-
-    private String detectPythonExecutable() {
-        try {
-            String pythonHome = System.getenv("PYTHON_PRIMULA");
-            if (pythonHome != null && !pythonHome.isEmpty()) {
-                String pythonPath = pythonHome + File.separator + "bin" + File.separator + "python";
-                File pythonFile = new File(pythonPath);
-                if (pythonFile.exists() && pythonFile.canExecute()) {
-                    this.pythonHome = pythonPath;
-                    return pythonPath;
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Unexpected error while detecting Python executable: " + e.getMessage());
-            e.printStackTrace();
-        }
-        // Python is not found
-        return null;
-    }
-
-    public String loadjep(String pythonHome) throws IOException {
-        // taken from https://gist.github.com/vwxyzjn/c054bae6dfa6f80e6c663df70347e238
-        // automatically find the library path in the python home it is installed
-        String pythonExecutable = detectPythonExecutable();
-        if (pythonExecutable == null || pythonExecutable.isEmpty()) {
-            throw new IOException("Python executable not found. Please set the PYTHON_PRIMULA environment variable or ensure Python is installed and accessible.");
-        }
-        System.out.println(pythonExecutable + " python/get_jep_path.py");
-        Process p = Runtime.getRuntime().exec(pythonExecutable + " python/get_jep_path.py");
-        BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        return in.readLine();
-    }
-
-    public void initializeJep()  throws IOException {
-        if (threadSharedInterp.get() == null) {
-            try {
-                MainInterpreter.setJepLibraryPath(loadjep(this.pythonHome));
-            } catch (IllegalStateException e) {
-                System.out.println("Error in loading the JepLibraryPath: " + e);
-            }
-            initializePythonScript();
-        }
-    }
-
-    private void initializePythonScript() {
-        SharedInterpreter interpreter = new SharedInterpreter();
-        interpreter.exec("import sys");
-        interpreter.exec("import torch");
-        interpreter.exec("import numpy as np");
-        interpreter.exec("from torch_geometric.data import Data, HeteroData");
-        interpreter.exec("sys.path.append('" + this.scriptPath + "')");
-        interpreter.exec("from config_torch import use_model");
-//        interpreter.exec("import " + this.scriptName + " as intt");
-        System.out.println("Setting up interpreter for thread: " + Thread.currentThread().getName());
-        threadSharedInterp.set(interpreter);
-    }
-
-    public void closeInterpreter() {
-        SharedInterpreter interpreter = threadSharedInterp.get();
-        if (interpreter != null) {
-            interpreter.exec("import gc; gc.collect()");
-            interpreter.close();
-            threadSharedInterp.remove();
-            System.out.println("Interpreter closed for thread: " + Thread.currentThread().getName());
-        }
-    }
-
-    private void handleShutdown() {
-        System.out.println("Shutdown hook triggered! Closing interpreter for thread: " + Thread.currentThread().getName());
-        closeInterpreter();
-    }
+//    public GnnPy() {
+////        this.scriptName = "config_torch.py";
+////        this.gnnModelsId = new ArrayList<>();
+//        this.numClass = -1;
+//        this.dimOut = -1;
+//        currentXdict = new Hashtable<>();
+//        currentEdgeDict = new Hashtable<>();
+//        GGNodesDict = new Hashtable<>();
+//        GGedgeDict = new Hashtable<>();
+//        xDict = new Hashtable<>();
+//        edgeDict = new Hashtable<>();
+//        changedUpdate = false;
+//        sharedInterpreter = null;
+//        this.torchModels = new HashMap<>();
+//        // pip install jep in a miniconda env (torch)
+//        try {
+//            initializeJep();
+//            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+//                handleShutdown();
+//            }));
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
 
     public void load_gnn_set(Map<String, Object> sett) {
         if (!sett.isEmpty()) {
@@ -232,38 +184,45 @@ public class GnnPy {
         }
     }
 
+    public TorchModelWrapper loadTorchModel(SharedInterpreter interp, CatGnn catGnn, String configFile) {
+        try {
+            String modelName = "py_model_" + catGnn.getGnnId();
+            interp.exec("sys.path.append('" + configFile + "')");
+            interp.exec("import " + catGnn.getGnnId() + " as " + catGnn.getGnnId() + "_module");
+            interp.exec(modelName + ", n_layers = " + catGnn.getGnnId() + "_module.load_model()");
+            Number num_layer = (Number) interp.getValue("n_layers");
+            interp.exec("model_class_name = type(" + modelName + ").__name__");
+            String modelClassName = interp.getValue("model_class_name").toString();
+
+            int layers = (num_layer != null) ? num_layer.intValue() : -1;
+            return new TorchModelWrapper(modelName, layers, modelClassName, interp);
+        } catch (RuntimeException e) {
+            System.err.println("Error loading torch model: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     /**
      * Checks if the model is already instantiated
      * Each gnn is associated with an id
      * @param id of the model
      */
     private void createModelIfNull(String id) {
+        threadSharedInterp.get().exec("from config_torch import load_model");
+        threadSharedInterp.get().exec(id + ", mod_layers = load_model(" + id + ")");
+        threadSharedInterp.get().exec("models_primua[(\"" + id + "\", mod_layers)]");
+
         if (this.gnnModelsId != null) {
             if (!this.gnnModelsId.contains(id)) {
-                threadSharedInterp.get().exec(id + " = intt.use_model(\"" + id + "\")");
+                threadSharedInterp.get().exec(id + " = use_model(\"" + id + "\")");
                 this.gnnModelsId.add(id);
             }
         } else {
             this.gnnModelsId = new ArrayList<>();
-            threadSharedInterp.get().exec(id + " = intt.use_model(\"" + id + "\")");
+            threadSharedInterp.get().exec(id + " = use_model(\"" + id + "\")");
             this.gnnModelsId.add(id);
         }
-    }
-
-    public static double[][] convertTo2D(float[] inputArray, int rows, int cols) {
-        if (inputArray.length != rows * cols) {
-            throw new IllegalArgumentException("The length of the input array does not match the provided dimensions.");
-        }
-
-        double[][] outputArray = new double[rows][cols];
-
-        for (int i = 0; i < inputArray.length; i++) {
-            int row = i / cols;
-            int col = i % cols;
-            outputArray[row][col] = (double) inputArray[i];
-        }
-
-        return outputArray;
     }
 
     // if node is set to -1, we perform graph classification (arity 0)
@@ -317,7 +276,7 @@ public class GnnPy {
                 threadSharedInterp.get().exec("out = out.detach().numpy()");
                 NDArray ndArray = (NDArray) threadSharedInterp.get().getValue("out");
                 float[] tarr = (float[]) ndArray.getData();
-                currentResult = convertTo2D(tarr, ndArray.getDimensions()[0], ndArray.getDimensions()[1]);
+                currentResult = PyUtils.convertTo2D(tarr, ndArray.getDimensions()[0], ndArray.getDimensions()[1]);
                 if (currentNode < 0 || currentNode >= currentResult.length)
                     throw new IndexOutOfBoundsException("Index out of bounds for node " + currentNode);
                 return currentResult[currentNode];
@@ -330,11 +289,11 @@ public class GnnPy {
     }
 
     public double[] inferModelHetero(int node, Map<String, double[][]> x_dict, Map<String, ArrayList<ArrayList<Integer>>> edge_dict, String idGnn) {
-        assert threadSharedInterp.get() != null;
-        this.createModelIfNull(idGnn);
-        int currentNode = 0;
-        if (node != -1)
-            currentNode = node;
+        SharedInterpreter interpreter = JepManager.getInterpreter(true);
+        if (torchModel.getModelInterpreter() != interpreter)
+            torchModel = loadTorchModel(interpreter, currentCatGnn, scriptPath); // update the model if they differ with interpreters
+        int currentNode = (node != -1) ? node : 0;
+
         try {
             // check if there is already computed the results for the specific node in the result matrix,
             // otherwise compute for all nodes with one forward propagation
@@ -346,47 +305,8 @@ public class GnnPy {
             lastId = idGnn;
             changedUpdate = false;
 
-            threadSharedInterp.get().set("java_map_x", currentXdict);
-            threadSharedInterp.get().set("java_map_edge", currentEdgeDict);
-
-            threadSharedInterp.get().exec(
-                         "data_h = HeteroData()\n" +
-
-                            "for key, value in java_map_x.items():\n" +
-                            "    data_h[key].x = torch.as_tensor(value, dtype=torch.float32)\n" +
-
-                            "for key, value in java_map_edge.items():\n" +
-                            "    n_key = key.split('_to_')\n" + // here the key must have the form type_to_type
-                            "    if len(value) > 0:\n" +
-                            "        data_h[n_key[0], 'to', n_key[1]].edge_index = torch.as_tensor(value, dtype=torch.long)\n" +
-                            "    else:\n" +
-                            "        data_h[n_key[0], 'to', n_key[1]].edge_index = torch.empty((2, 0), dtype=torch.long)\n"
-            );
-
-            threadSharedInterp.get().exec("out = intt." + this.INFER_GNN + "(" + idGnn + ", data_h.x_dict, data_h.edge_index_dict)");
-
-            threadSharedInterp.get().exec("out_size = len(out.shape)");
-
-            if (this.numClass == -1) {
-                threadSharedInterp.get().exec("class_num = out.shape[1] if out_size == 2 else 1");
-                long nc = (Long) threadSharedInterp.get().getValue("class_num");
-                this.numClass = (int) nc;
-            }
-
-
-            this.dimOut = (Long) threadSharedInterp.get().getValue("out_size");
-            if (dimOut == 1) {
-                System.out.println("not implemented");
-            } else if (dimOut == 2) {
-                threadSharedInterp.get().exec("out = out.detach().numpy()");
-                NDArray ndArray = (NDArray) threadSharedInterp.get().getValue("out");
-                float[] tarr = (float[]) ndArray.getData();
-                currentResult = convertTo2D(tarr, ndArray.getDimensions()[0], ndArray.getDimensions()[1]);
-                if (currentNode < 0 || currentNode >= currentResult.length)
-                    throw new IndexOutOfBoundsException("Index out of bounds for node " + currentNode);
-                return currentResult[currentNode];
-            }
-            return null;
+            currentResult = torchModel.forward(interpreter, currentXdict, currentEdgeDict);
+            return currentResult[currentNode];
         } catch (JepException e) {
             System.err.println("Failed to execute inference: " + e);
             return null;
@@ -470,14 +390,14 @@ public class GnnPy {
             for (int i = 0; i < cpmGnn.getGnnattr().length; i++) {
                 Rel a = cpmGnn.getGnnattr()[i];
                 System.out.println(a);
-                if (cpmGnn.getGnnattr()[i].arity == 1 && cpmGnn.getGnnattr()[i].valtype == 3) { // categorical
+                if (cpmGnn.getGnnattr()[i].arity == 1 && cpmGnn.getGnnattr()[i].valtype() == 3) { // categorical
                     num_columns+=cpmGnn.getGnnattr()[i].numvals();
-                } else if (cpmGnn.getGnnattr()[i].arity == 1 && cpmGnn.getGnnattr()[i].valtype == 2) { // numeric
+                } else if (cpmGnn.getGnnattr()[i].arity == 1 && cpmGnn.getGnnattr()[i].valtype() == 2) { // numeric
                     num_columns++;
                 }
             }
         } else if (cpmGnn instanceof CatGnn) {
-            for (int i = 0; i < ((CatGnn) cpmGnn).getInput_attr().size(); i++) {
+            for (int i = 0; i < cpmGnn.getGnnInputs().size(); i++) {
                 if (cpmGnn.getGnnattr()[i].arity == 1) {
                     num_columns++;
                 }
@@ -566,9 +486,9 @@ public class GnnPy {
                 }
 
                 if (cpmGnn.getGnn_inference().equals("node"))
-                    result[0] = inferModel(Integer.parseInt(cpmGnn.getArgument()), xDict, edgeDict, cpmGnn.getIdGnn());
+                    result[0] = inferModel(Integer.parseInt(cpmGnn.getArgument()), xDict, edgeDict, cpmGnn.getGnnId());
                 if (cpmGnn.getGnn_inference().equals("graph"))
-                    result[0] = inferModel(-1, xDict, edgeDict, cpmGnn.getIdGnn());
+                    result[0] = inferModel(-1, xDict, edgeDict, cpmGnn.getGnnId());
                 return result;
             } // else
             try {
@@ -595,9 +515,9 @@ public class GnnPy {
                 Map<String, double[][]> x_dict = inputAttrToDict(cpmGnn, GGNodesDict, sampledRelGobal);
                 Map<String, ArrayList<ArrayList<Integer>>> edge_dict = edgesToDict(GGboolRel, sampledRelGobal);
                 if (cpmGnn.getGnn_inference().equals("node"))
-                    result[0] = inferModel(Integer.parseInt(cpmGnn.getArgument()), x_dict, edge_dict, cpmGnn.getIdGnn());
+                    result[0] = inferModel(Integer.parseInt(cpmGnn.getArgument()), x_dict, edge_dict, cpmGnn.getGnnId());
                 if (cpmGnn.getGnn_inference().equals("graph"))
-                    result[0] = inferModel(-1, x_dict, edge_dict, cpmGnn.getIdGnn());
+                    result[0] = inferModel(-1, x_dict, edge_dict, cpmGnn.getGnnId());
             } catch (RBNIllegalArgumentException e) {
                 throw new RuntimeException(e);
             }
@@ -610,8 +530,8 @@ public class GnnPy {
     public Map<Rel, int[][]> constructNodesDict(CPMGnn cpmGnn, RelStruc A) {
         // Dictionary with the name of the rel as key, and the nodes. (KEY DO NOT DIFFER WITH TYPE)
         Map<Rel, int[][]> nodesDict = new Hashtable<>();
-        for (int i = 0; i < cpmGnn.getInput_attr().size(); i++) {
-            ArrayList<Rel> subList = cpmGnn.getInput_attr().get(i);
+        for (Pair<BoolRel, ArrayList<Rel>> pair : cpmGnn.getGnnInputs()) {
+            ArrayList<Rel> subList = pair.getSecond();
             for (Rel rel : subList) {
                 try {
                     int[][] mat = A.allTypedTuples(rel.getTypes());
@@ -625,7 +545,8 @@ public class GnnPy {
     }
 
     public Object[] evaluate_gnnHetero(RelStruc A, OneStrucData inst, CPMGnn cpmGnn, boolean valonly) {
-        if (threadSharedInterp.get() == null)
+        SharedInterpreter interpreter = JepManager.getInterpreter(true);
+        if (interpreter == null)
             throw new NullPointerException("GnnPy object null!");
         if (!(cpmGnn instanceof CatGnn))
             throw new RuntimeException("CPMGnn must be CatGnnHetero");
@@ -648,7 +569,6 @@ public class GnnPy {
 //            SparseRelStruc sampledRel = new SparseRelStruc(A.getNames(), onsd, A.getCoords(), A.signature());
 //            sampledRel.getmydata().add(inst.copy());
 
-
             TreeSet<Rel> attr_parents = cpmGnn.parentRels();
             if (GGboolRel == null)
                 GGboolRel = sampledRelGobal.getBoolBinaryRelations();
@@ -659,10 +579,11 @@ public class GnnPy {
                 Map<String, double[][]> x_dict = inputAttrToDict(cpmHetero, GGNodesDict, sampledRelGobal);
                 Map<String, ArrayList<ArrayList<Integer>>> edge_dict = edgesToDict(GGboolRel, sampledRelGobal);
 
-                if (cpmGnn.getGnn_inference().equals("node"))
-                    result[0] = inferModelHetero(Integer.parseInt(cpmGnn.getArgument()), x_dict, edge_dict, cpmGnn.getIdGnn());
-                if (cpmGnn.getGnn_inference().equals("graph"))
-                    result[0] = inferModelHetero(-1, x_dict, edge_dict, cpmGnn.getIdGnn());
+                if (cpmGnn.getArgument().equals(""))
+                    result[0] = inferModelHetero(-1, x_dict, edge_dict, cpmGnn.getGnnId()); // graph classification
+                else
+                    result[0] = inferModelHetero(Integer.parseInt(cpmGnn.getArgument()), x_dict, edge_dict, cpmGnn.getGnnId()); // node classification
+
                 return result;
             }
             // else
@@ -689,10 +610,10 @@ public class GnnPy {
                 }
                 Map<String, double[][]> x_dict = inputAttrToDict(cpmHetero, GGNodesDict, sampledRelGobal);
                 Map<String, ArrayList<ArrayList<Integer>>> edge_dict = edgesToDict(GGboolRel, sampledRelGobal);
-                if (cpmGnn.getGnn_inference().equals("node"))
-                    result[0] = inferModelHetero(Integer.parseInt(cpmGnn.getArgument()), x_dict, edge_dict, cpmGnn.getIdGnn());
-                if (cpmGnn.getGnn_inference().equals("graph"))
-                    result[0] = inferModelHetero(-1, x_dict, edge_dict, cpmGnn.getIdGnn());
+                if (cpmGnn.getArgument().equals(""))
+                    result[0] = inferModelHetero(-1, x_dict, edge_dict, cpmGnn.getGnnId());
+                else
+                    result[0] = inferModelHetero(Integer.parseInt(cpmGnn.getArgument()), x_dict, edge_dict, cpmGnn.getGnnId());
             } catch (RBNIllegalArgumentException e) {
                 throw new RuntimeException(e);
             }
@@ -724,10 +645,10 @@ public class GnnPy {
 
         double[] res = null;
         if (Objects.equals(cpm.getGnn_inference(), "node"))
-            res = this.inferModel(Integer.parseInt(cpmGnn.getArgument()), GGxDict, GGedgeDict, cpm.getIdGnn());
+            res = this.inferModel(Integer.parseInt(cpmGnn.getArgument()), GGxDict, GGedgeDict, cpm.getGnnId());
 //            res = inferModelNode(Integer.parseInt(cpmGnn.getArgument()), GGxDict, GGedgeDict, cpmGnn.getIdGnn());
         else if (Objects.equals(cpm.getGnn_inference(), "graph")) {
-            res = this.inferModel(-1, GGxDict, GGedgeDict, cpm.getIdGnn());
+            res = this.inferModel(-1, GGxDict, GGedgeDict, cpm.getGnnId());
         } else
             throw new IllegalArgumentException("not valid keyword used: " + cpm.getGnn_inference());
         return res;
@@ -735,8 +656,8 @@ public class GnnPy {
 
     public Map<String, double[][]> inputAttrToDict(CPMGnn cpmGnn, Map<Rel, int[][]> GGNodesDict, SparseRelStruc sampledRel) {
         Map<String, double[][]> x_dict = new Hashtable<>();
-        for (int i = 0; i < cpmGnn.getInput_attr().size(); i++) {
-            ArrayList<Rel> subList = cpmGnn.getInput_attr().get(i);
+        for (Pair<BoolRel, ArrayList<Rel>> pair : cpmGnn.getGnnInputs()) {
+            ArrayList<Rel> subList = pair.getSecond();
             for (int j = 0; j < subList.size() - 1; j++) {
                 // check if all the types in the subList are the same
                 if (!subList.get(j).getTypes()[0].getName().equals(subList.get(j + 1).getTypes()[0].getName())) {
@@ -754,8 +675,8 @@ public class GnnPy {
     private int[] findStartNode(Type[] argType, SparseRelStruc sampledRel) {
         int[] minValue = new int[2];
         for (int i = 0; i < argType.length; i++) {
-            for (OneBoolRelData ob : sampledRel.getmydata().allonebooldata) {
-                if (ob.rel.name().equals(argType[i].getName())) {
+            for (OneBoolRelData ob : sampledRel.getmydata().getAllonebooldata()) {
+                if (ob.rel().name().equals(argType[i].getName())) {
                     minValue[i] = ob.allTrue().first()[0];
                 }
             }
@@ -837,9 +758,9 @@ public class GnnPy {
                 if (r.valtype() == Rel.NUMERIC) {
                     OneNumRelData num_data = (OneNumRelData) data.find(r);
                     int minValue = -1;
-                    Type typ = num_data.rel.getTypes()[0];
-                    for (OneBoolRelData ob: data.allonebooldata) {
-                        if (ob.rel.name().equals(typ.getName()))
+                    Type typ = num_data.rel().getTypes()[0];
+                    for (OneBoolRelData ob: data.getAllonebooldata()) {
+                        if (ob.rel().name().equals(typ.getName()))
                             minValue = ob.allTrue().first()[0];
                     }
                     for (Vector<int[]> feature : allTrueData) {
@@ -868,8 +789,8 @@ public class GnnPy {
     // in sampledRel there are also the inst values!
     public Map<String, double[][]> initXdict(CPMGnn cpmGnn, Map<Rel, int[][]> GGnumNodesDict, SparseRelStruc sampledRel) {
         Map<String, double[][]> x_dict = new HashMap<>();
-        for (int i = 0; i < cpmGnn.getInput_attr().size(); i++) {
-            ArrayList<Rel> subList = cpmGnn.getInput_attr().get(i);
+        for (Pair<BoolRel, ArrayList<Rel>> pair : cpmGnn.getGnnInputs()) {
+            ArrayList<Rel> subList = pair.getSecond();
             for (int j = 0; j < subList.size() - 1; j++) {
                 // check if all the types in the subList are the same
                 if (!subList.get(j).getTypes()[0].getName().equals(subList.get(j + 1).getTypes()[0].getName())) {
@@ -883,19 +804,20 @@ public class GnnPy {
         return x_dict;
     }
     public void updateInputDict(Map<String, double[][]> input_dict, Rel rel, CPMGnn cpmGnn, Map<Rel, int[][]> GGnumNodesDict, GradientGraphO gg, GGCPMNode ggcpmNode) {
-        Vector<GGCPMNode> childred = ggcpmNode.getChildren(); // is this always will work?
-        for (ArrayList<Rel> subList: cpmGnn.getInput_attr()) {
+        Vector<GGCPMNode> childred = ggcpmNode.getChildren();
+        for (Pair<BoolRel, ArrayList<Rel>> pair : cpmGnn.getGnnInputs()) {
+            ArrayList<Rel> subList = pair.getSecond();
             Rel firstRel = subList.get(0);
-            String key = firstRel.getTypes()[0].getName(); // should have the same type, we take the first
+            String key = firstRel.getTypes()[0].getName();
             int idxFeat = 0;
+            // since they (should) have all the same type, take the first to generate the input matrix
             double[][] inputMatrix = input_dict.get(key);
             for (Rel subRel: subList) {
                 if (rel.equals(subRel)) {
                     int[][] nodes = GGnumNodesDict.get(rel);
-                    int min_node = nodes[0][0];
-                    for (GGCPMNode node: childred) {
+                    int min_node = nodes[0][0]; // the first node should be the first in the array
+                    for (GGCPMNode node : childred) {
                         if (((GGAtomNode) node).myatom().rel().equals(rel)) {
-//                        if (node.getMyatom().equals(rel)) {
                             GGAtomMaxNode maxNode = (GGAtomMaxNode) node;
                             if (maxNode.getmapInstVal() == -1) { // if the value is not in the evidence
                                 int arg = maxNode.myatom().args[0];
@@ -907,15 +829,14 @@ public class GnnPy {
                             }
                         }
                     }
+                    if (subRel instanceof CatRel)
+                        idxFeat += subRel.numvals();
+                    else
+                        idxFeat++;
                 }
-                if (subRel instanceof CatRel)
-                    idxFeat += subRel.numvals();
-                else
-                    idxFeat++;
             }
         }
     }
-
     public void updateInputDict2(Map<String, double[][]> input_dict,  Map<Rel, int[][]> GGnumNodesDict, CPMGnn cpmGnn, GGCPMNode ggcpmNode) {
         Vector<GGCPMNode> children = ggcpmNode.getChildren();
         // collect all the nodes of the GNN
@@ -926,7 +847,8 @@ public class GnnPy {
         }
 
         TreeSet<Rel> parentRels = cpmGnn.parentRels();
-        for (ArrayList<Rel> inputRels: cpmGnn.getInput_attr()) {
+        for (Pair<BoolRel, ArrayList<Rel>> pair : cpmGnn.getGnnInputs()) {
+            ArrayList<Rel> inputRels = pair.getSecond();
             Rel firstRel = inputRels.get(0);
             String key = firstRel.getTypes()[0].getName(); // should have the same type, we take the first
             int idxFeat = 0;
@@ -956,13 +878,17 @@ public class GnnPy {
         }
     }
 
+    /*
+    Set the current inst by changing only the selected value and not overwrite all the feature matrix
+     */
     public void setCurrentInstPy(int currentInst, GGAtomMaxNode currentMaxNode, GGGnnNode parent) {
         if (!GGNodesDict.isEmpty() && !GGxDict.isEmpty() && currentMaxNode.myatom().args.length==1) {
             int nodeToUpdate = currentMaxNode.myatom().args()[0];
             // count the starting position for the feature
             int idxFeat = 0;
             CPMGnn cpmGnn = (CPMGnn) parent.getCpm();
-            for (ArrayList<Rel> inputRels : cpmGnn.getInput_attr()) {
+            for (Pair<BoolRel, ArrayList<Rel>> pair : cpmGnn.getGnnInputs()) {
+                ArrayList<Rel> inputRels = pair.getSecond();
                 Rel firstRel = inputRels.get(0);
                 if (firstRel.equals(currentMaxNode.myatom().rel()))
                     break;
@@ -991,7 +917,8 @@ public class GnnPy {
             // count the starting position for the feature
             Rel edgeRelToUpdate = null;
             CPMGnn cpmGnn = (CPMGnn) parent.getCpm();
-            for (Rel edgeRel : cpmGnn.getEdge_attr()) {
+            for (Pair<BoolRel, ArrayList<Rel>> pair : cpmGnn.getGnnInputs()) {
+                Rel edgeRel = pair.getFirst();
                 if (edgeRel.equals(currentMaxNode.myatom().rel()))
                     edgeRelToUpdate = edgeRel;
             }
@@ -1023,7 +950,8 @@ public class GnnPy {
         // at the moment, edge-features are not implemented/supported
         Vector<GGCPMNode> childred = ggcpmNode.getChildren();
         TreeSet<Rel> parentRels = cpmGnn.parentRels();
-        for (Rel edge: cpmGnn.getEdge_attr()) {
+        for (Pair<BoolRel, ArrayList<Rel>> pair : cpmGnn.getGnnInputs()) {
+            Rel edge = pair.getFirst();
             ArrayList<ArrayList<Integer>> edge_index = edge_dict.get(edge.name());
             if (parentRels.contains(edge)) {
                 for (GGCPMNode node: childred) {
@@ -1061,46 +989,32 @@ public class GnnPy {
             GGedgeDict = new HashMap<>();
     }
 
-    public double[] GGevaluate_gnnHetero(RelStruc A, GradientGraphO gg, CPMGnn cpmGnn, GGCPMNode ggcpmGnn) {
-        if (threadSharedInterp.get() == null)
-            throw new NullPointerException("GnnPy object null!");
-        if (!(cpmGnn instanceof CatGnn))
-            throw new RuntimeException("CPMGnn must be CatGnnHetero");
-        CatGnn cpmHetero = (CatGnn) cpmGnn;
+    public double[] GGevaluate_gnnHetero(RelStruc A, OneStrucData inst, GradientGraphO gg, CPMGnn cpmGnn, GGCPMNode ggcpmGnn) {
+        SharedInterpreter interpreter = JepManager.getInterpreter(true);
+        if (torchModel.getModelInterpreter() != interpreter)
+            torchModel = loadTorchModel(interpreter, currentCatGnn, scriptPath);
+        CatGnn cpm = (CatGnn) cpmGnn;
+
+        if (!savedData) {
+            saveGnnData(cpm, A, inst);
+            savedData = true;
+        }
 
         if (GGxDict.isEmpty()) {
-            GGxDict = initXdict(cpmHetero, GGNodesDict, GGsampledRel);
+            GGxDict = initXdict(cpm, GGNodesDict, GGsampledRel);
             // we need to use the sampled values in the gradient graph structure (maxindicator) and assign them to the rel
             // for GNNs the order of the features need to be respected: the order in input_attr in CatGnn will be used for constructing the vector
-            updateInputDict2(GGxDict, GGNodesDict, cpmHetero, ggcpmGnn);
+            updateInputDict2(GGxDict, GGNodesDict, cpm, ggcpmGnn);
         }
         if (GGedgeDict.isEmpty()) {
             GGedgeDict = initEdgesDict(GGboolRel, GGsampledRel);
-            updateEdgeDict(GGedgeDict, cpmHetero, ggcpmGnn);
+            updateEdgeDict(GGedgeDict, cpm, ggcpmGnn);
         }
 
-        double[] res = null;
-        if (Objects.equals(cpmHetero.getGnn_inference(), "node"))
-            res = inferModelHetero(Integer.parseInt(cpmGnn.getArgument()), GGxDict, GGedgeDict, cpmGnn.getIdGnn());
-        else if (Objects.equals(cpmHetero.getGnn_inference(), "graph")) {
-            res = inferModelHetero(-1, GGxDict, GGedgeDict, cpmGnn.getIdGnn());
-        } else
-            throw new IllegalArgumentException("not valid keyword used: " + cpmHetero.getGnn_inference());
-
-        // normalize
-        if (gg.cooling_fact > 0) {
-            double[] newres = new double[res.length];
-            double sum = 0;
-            double extr = (gg.cooling_fact / (gg.num_iter + gg.cooling_fact));
-//            double extr = 0.1;
-            for (int i = 0; i < res.length; i++)
-                sum += res[i] + extr;
-            for (int i = 0; i < res.length; i++) {
-                newres[i] = res[i] / sum;
-            }
-        }
-
-        return res;
+        if (cpmGnn.getArgument().equals(""))
+            return inferModelHetero(-1, GGxDict, GGedgeDict, cpmGnn.getGnnId());
+        else
+            return inferModelHetero(Integer.parseInt(cpmGnn.getArgument()), GGxDict, GGedgeDict, cpmGnn.getGnnId());
     }
 
     public void savePickleHetero(Map<String, double[][]> xDict, Map<String, ArrayList<ArrayList<Integer>>> edgeDict, String path) {
@@ -1227,9 +1141,10 @@ public class GnnPy {
 
     }
 
-    public void updateInputDictForSample(Map<String, double[][]> input_dict,  Map<Rel, int[][]> GGnumNodesDict, CPMGnn cpmGnn, Hashtable<String, PFNetworkNode> atomhasht) {
+    public void updateInputDictForSampling(Map<String, double[][]> input_dict, Map<Rel, int[][]> GGnumNodesDict, CPMGnn cpmGnn, Hashtable<String, PFNetworkNode> atomhasht) {
         TreeSet<Rel> parentRels = cpmGnn.parentRels();
-        for (ArrayList<Rel> inputRels: cpmGnn.getInput_attr()) {
+        for (Pair<BoolRel, ArrayList<Rel>> pair : cpmGnn.getGnnInputs()) {
+            ArrayList<Rel> inputRels = pair.getSecond();
             Rel firstRel = inputRels.get(0);
             String key = firstRel.getTypes()[0].getName(); // should have the same type, we take the first
             int idxFeat = 0;
@@ -1284,7 +1199,7 @@ public class GnnPy {
 
         if (GGxDict.isEmpty()) {
             GGxDict = initXdict(cpmHetero, GGNodesDict, GGsampledRel);
-            updateInputDictForSample(GGxDict, GGNodesDict, cpmHetero, atomhasht);
+            updateInputDictForSampling(GGxDict, GGNodesDict, cpmHetero, atomhasht);
         }
         if (GGedgeDict.isEmpty()) {
             GGedgeDict = initEdgesDict(GGboolRel, GGsampledRel);
@@ -1293,9 +1208,9 @@ public class GnnPy {
 
         double[] res = null;
         if (Objects.equals(cpmHetero.getGnn_inference(), "node"))
-            res = inferModelHetero(Integer.parseInt(cpmGnn.getArgument()), GGxDict, GGedgeDict, cpmGnn.getIdGnn());
+            res = inferModelHetero(Integer.parseInt(cpmGnn.getArgument()), GGxDict, GGedgeDict, cpmGnn.getGnnId());
         else if (Objects.equals(cpmHetero.getGnn_inference(), "graph")) {
-            res = inferModelHetero(-1, GGxDict, GGedgeDict, cpmGnn.getIdGnn());
+            res = inferModelHetero(-1, GGxDict, GGedgeDict, cpmGnn.getGnnId());
         } else
             throw new IllegalArgumentException("not valid keyword used: " + cpmHetero.getGnn_inference());
 
@@ -1318,6 +1233,10 @@ public class GnnPy {
     public Map<String, ArrayList<ArrayList<Integer>>> getCurrentEdgeDict() {
         return currentEdgeDict;
     }
+
+    public void setGradientGraph(GradientGraphO mygg) { this.mygg = mygg; }
+
+    public TorchModelWrapper getTorchModel() { return torchModel; }
 }
 
 

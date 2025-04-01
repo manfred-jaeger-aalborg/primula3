@@ -1,9 +1,11 @@
 package RBNLearning;
 
+import PyManager.GnnPy;
 import RBNExceptions.RBNCompatibilityException;
 import RBNExceptions.RBNIllegalArgumentException;
 import RBNExceptions.RBNNaNException;
 import RBNpackage.*;
+import RBNutilities.*;
 
 import java.util.*;
 
@@ -86,7 +88,10 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
                 }
             }
         } else if (this.cpm instanceof CatGnn || this.cpm instanceof CatGnnOld) {
-            for (ArrayList<Rel> pfargs: ((CPMGnn) this.cpm).getInput_attr()) {
+            setGnnPy(((CatGnn) cpm).getGnnPy()); // set the same GnnPy from the rel to the ggnode
+            getGnnPy().setGradientGraph(gg); // save also the gradient graph
+            for (Pair<BoolRel, ArrayList<Rel>> pair : ((CPMGnn) this.cpm).getGnnInputs()) {
+                ArrayList<Rel> pfargs = pair.getSecond();
                 for (Rel pfargRel: pfargs) {
                     if (!pfargRel.ispredefined()) { // do not add predefined values
                         xPred = true;
@@ -98,7 +103,7 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
                                 // we add as children only atoms that are influenced up to a max layer
                                 Set<Integer> allReached = null;
                                 if (((CPMGnn) cpm).getNumLayers() > 0)
-                                    allReached = getNodesInDepth(((CPMGnn) cpm).getNumLayers(), mat[k][0], (CPMGnn) cpm);
+                                    allReached = rbnutilities.getNodesInDepth(thisgg.myPrimula.getRels(), ((CPMGnn) cpm).getNumLayers(), mat[k][0], (CPMGnn) cpm);
 
                                 GGCPMNode ggmn = gg.findInAllnodes(atomAsPf, 0, 0, A);
                                 if (ggmn == null) {
@@ -123,7 +128,7 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
                                 if (((CPMGnn) cpm).getNumLayers() > 0 && allReached != null && allReached.contains(Integer.parseInt(((CPMGnn) this.cpm).getArgument())) ) {
                                     this.children.add(ggmn);
                                      ggmn.addToParents(this);
-                                } else if (((CPMGnn) cpm).getNumLayers() < 0){
+                                } else if (((CPMGnn) cpm).getNumLayers() <= 0){
                                     this.children.add(ggmn);
                                     ggmn.addToParents(this);
                                 } else if (allReached == null && ((CPMGnn) cpm).getNumLayers() > 0)
@@ -135,9 +140,8 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
                         }
                     }
                 }
-            }
-            // also for the edges
-            for (Rel edge : ((CPMGnn) this.cpm).getEdge_attr()) {
+                // also for the edges
+                Rel edge = pair.getFirst();
                 if (!edge.ispredefined()) {
                     edgePred = true;
                     try {
@@ -179,46 +183,12 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
         }
     }
 
-    public Set<Integer> getNodesInDepth(int maxDepth, int nodeArg, CPMGnn cpmGnn) {
-        Set<Integer> allReached = new LinkedHashSet<>();
-        Queue<Integer> queue = new LinkedList<>();
-        Map<Integer, Integer> nodeLayer = new HashMap<>();
-        try {
-            queue.add(nodeArg);
-            nodeLayer.put(nodeArg, 0);
-            while (!queue.isEmpty()) {
-                int current = queue.poll();
-                int currentLayer = nodeLayer.get(current);
-
-                if (currentLayer >= maxDepth) {
-                    continue;
-                }
-
-                for (Rel edge : cpmGnn.getEdge_attr()) {
-                    ProbFormBoolAtom temp = new ProbFormBoolAtom(new ProbFormAtom(edge, new String[]{Integer.toString(current), "z"}), true);
-                    int[][] res = thisgg.myPrimula.getRels().allTrue(temp, new String[]{"z"});
-                    for (int[] node : res) {
-                        if (!allReached.contains(node[0])) {
-                            allReached.add(node[0]);
-                            queue.add(node[0]);
-                            nodeLayer.put(node[0], currentLayer + 1);
-                        }
-                    }
-
-                }
-            }
-            return allReached;
-        } catch (RBNCompatibilityException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     @Override
     public double[] evaluate(Integer sno) {
-        if (!savedData) {
-            this.gnnPy.saveGnnData((CPMGnn) cpm, A, inst);
-            savedData = true;
-        }
+//        if (!savedData) {
+//            this.gnnPy.saveGnnData((CPMGnn) cpm, A, inst);
+//            savedData = true;
+//        }
 
         if (this.depends_on_sample && sno==null) {
             for (int i=0;i<thisgg.numchains*thisgg.windowsize;i++)
@@ -232,7 +202,7 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
 
         double[] result = null;
         if (cpm instanceof CatGnn)
-            result = gnnPy.GGevaluate_gnnHetero(A, thisgg, (CPMGnn) cpm, this);
+            result = gnnPy.GGevaluate_gnnHetero(A, inst, thisgg, (CPMGnn) cpm, this);
         else
             result = gnnPy.GGevaluate_gnn(A, thisgg, (CPMGnn) cpm, this);
 

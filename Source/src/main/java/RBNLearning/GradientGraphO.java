@@ -23,9 +23,9 @@
 package RBNLearning;
 
 import java.util.*;
-import java.io.*;
 import java.util.concurrent.TimeUnit;
 
+import PyManager.GnnPy;
 import RBNpackage.*;
 import RBNgui.*;
 import RBNExceptions.*;
@@ -88,6 +88,8 @@ public class GradientGraphO extends GradientGraph{
 	private PrimulaGUI primulaGUI;
 	public int num_iter;
 	public double cooling_fact;
+	private int batchSearchSize;
+	private int sampleSizeScoring;
 
 	// https://stackoverflow.com/questions/4573123/java-updating-text-in-the-command-line-without-a-new-line
 	// for now the function will not be integrated (merging conflicts)
@@ -136,15 +138,15 @@ public class GradientGraphO extends GradientGraph{
 		// During the GG construction, the evaluation can include also parts that need the GNN output.
 		// Jep has to be open and closed in the same thread. For this reason we need an instance og GnnPy.
 		// At the end of the construction, that instance will be closed.
-		GnnPy tempGNN = null;
-		if (this.checkGnnRel(rbn)) {
-			try {
-				tempGNN = new GnnPy(myPrimula);
-				tempGNN.load_gnn_set(myPrimula.getLoadGnnSet());
-			} catch (IOException e) {
-				throw new RuntimeException("It was not possible to initialize GnnPy in GG: " + e);
-			}
-		}
+//		GnnPy tempGNN = null;
+//		if (this.checkGnnRel(rbn)) {
+//			try {
+//				tempGNN = new GnnPy(myPrimula);
+//				tempGNN.load_gnn_set(myPrimula.getLoadGnnSet());
+//			} catch (IOException e) {
+//				throw new RuntimeException("It was not possible to initialize GnnPy in GG: " + e);
+//			}
+//		}
 
 		this.minmaxbounds=mmbds;
 
@@ -349,8 +351,8 @@ public class GradientGraphO extends GradientGraph{
 						// TODO: check correct handling of mapatoms that are also instantiated by the evidence!
 						if (mapatoms == null || mapatoms.get(nextrel)==null || !mapatoms.get(nextrel).contains(nextrel,nexttup)){
 
-							if (groundnextcpm instanceof CPMGnn && ((CPMGnn) groundnextcpm).getGnnPy() == null)
-								((CPMGnn) groundnextcpm).setGnnPy(tempGNN);
+//							if (groundnextcpm instanceof CPMGnn && ((CPMGnn) groundnextcpm).getGnnPy() == null)
+//								((CPMGnn) groundnextcpm).setGnnPy(tempGNN);
 
 							Object pfeval = groundnextcpm.evaluate(A,
 									osd,
@@ -625,10 +627,10 @@ public class GradientGraphO extends GradientGraph{
 		}
 		//showAllNodes(6,null);
 
-		if (tempGNN != null) {
-			tempGNN.closeInterpreter();
-			this.gnnPy = null;
-		}
+//		if (tempGNN != null) {
+//			tempGNN.closeInterpreter();
+//			this.gnnPy = null;
+//		}
 		//		System.out.println("Calls to constructGGPFN:" + profiler.constructGGPFNcalls);
 		//		System.out.println("Found nodes:" + profiler.foundnodes);
 		//		System.out.println("Time 1:" + profiler.time1);
@@ -1330,9 +1332,10 @@ public class GradientGraphO extends GradientGraph{
 		List<GGAtomMaxNode> scored_atoms = new ArrayList<>();
 		List<GGAtomMaxNode> rescoreList = new ArrayList<>();
 		List<GGAtomMaxNode> topAtoms = new ArrayList<>();
+		int maxSample = 0;
 
 		for (GGAtomMaxNode mxnode : flipcandidates) {
-			mxnode.setScore(mythread, 0);
+			mxnode.setScore(mythread, maxSample);
 			scored_atoms.add(mxnode);
 		}
 		Collections.sort(scored_atoms, new GGAtomMaxNode_Comparator());
@@ -1360,7 +1363,6 @@ public class GradientGraphO extends GradientGraph{
 		double bestlikelihood = Double.NEGATIVE_INFINITY;
 		int noimprovements = 0;
 
-		int maxSample = 40;
 		Hashtable<Rel,int[]> bestMapVals = new Hashtable<>();
 
 		Iterator<GGAtomMaxNode> it = scored_atoms.iterator();
@@ -2950,4 +2952,20 @@ public void setGnnPy(GnnPy gnnPy) {
 	public void setWindowSize(int ws) { windowsize = ws; }
 
 	public int getWindowIndex() { return windowindex; }
+
+	public int getBatchSearchSize() {
+		return batchSearchSize;
+	}
+
+	public void setBatchSearchSize(int batchSearchSize) {
+		this.batchSearchSize = batchSearchSize;
+	}
+
+	public int getSampleSizeScoring() {
+		return sampleSizeScoring;
+	}
+
+	public void setSampleSizeScoring(int sampleSizeScoring) {
+		this.sampleSizeScoring = sampleSizeScoring;
+	}
 }

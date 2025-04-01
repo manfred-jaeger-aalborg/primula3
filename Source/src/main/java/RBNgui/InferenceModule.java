@@ -287,6 +287,8 @@ public class InferenceModule implements GradientGraphOptions {
 	int num_threads;
 	// set the Map Seach Algorithm used during map inference
 	protected int mapSearchAlg; // 0 standard, 1 greedy
+	private int batchSearchSize;
+	private int sampleSizeScoring;
 	// the number of iteration for the greedy search algorithm
 	private int numIterGreedyMap;
 
@@ -314,6 +316,8 @@ public class InferenceModule implements GradientGraphOptions {
 		numchains = 0;
 		windowsize = 3;
 		numrestarts = 1;
+		batchSearchSize = 1;
+		sampleSizeScoring = 0;
 		
 		readElementNames();
 		readRBNRelations();
@@ -444,6 +448,8 @@ public class InferenceModule implements GradientGraphOptions {
 				((GradientGraphO) gg).setNumChains(numchains);
 				((GradientGraphO) gg).setWindowSize(windowsize);
 				((GradientGraphO) gg).setMapSearchAlg(mapSearchAlg);
+				((GradientGraphO) gg).setBatchSearchSize(batchSearchSize);
+				((GradientGraphO) gg).setSampleSizeScoring(sampleSizeScoring);
 				((GradientGraphO) gg).load_gnn_settings(myprimula.getLoadGnnSet());
                 mapthr = new MapThread(this, myprimula, (GradientGraphO) gg);
                 // mapthr = new MapThread(this,myprimula,(GradientGraphO)gg); or this?
@@ -1395,6 +1401,13 @@ public class InferenceModule implements GradientGraphOptions {
 	public void setMapSearchAlg(int mapSearchAlg) {
 		this.mapSearchAlg = mapSearchAlg;
 	}
+
+	public int getBatchSearchSize() { return this.batchSearchSize; }
+	public void setBatchSearchSize(int batchSearchSize) { this.batchSearchSize = batchSearchSize; }
+
+	public int getSampleSizeScoring() { return sampleSizeScoring; }
+
+	public void setSampleSizeScoring(int sampleSizeScoring) { this.sampleSizeScoring = sampleSizeScoring; }
 
 	public int getNumIterGreedyMap() {
 		return numIterGreedyMap;

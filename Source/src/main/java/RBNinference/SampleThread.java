@@ -24,14 +24,12 @@
 
 package RBNinference;
 
+import PyManager.GnnPy;
 import RBNpackage.*;
 import RBNgui.*;
 import RBNExceptions.*;
 import RBNutilities.SmallDouble;
-import java.awt.*;
-import java.awt.event.*;
-import javax.swing.*;
-import javax.swing.border.*;
+
 import java.util.*;
 import java.io.*;
 
@@ -146,8 +144,8 @@ public class SampleThread extends Thread{
 
 		}
 		// the interpreter needs to be closed from the same thread
-		if (this.gnnIntegration)
-			this.closeGnnIntepreter();
+//		if (this.gnnIntegration)
+//			this.closeGnnIntepreter();
 		this.gnnPy = null;
 	}
 
@@ -155,9 +153,9 @@ public class SampleThread extends Thread{
 		return numsamp;
 	}
 
-	public void closeGnnIntepreter() {
-		this.gnnPy.closeInterpreter();
-	}
+//	public void closeGnnIntepreter() {
+//		this.gnnPy.closeInterpreter();
+//	}
 	public void setRunning(boolean running){
 		this.running = running;
 	}

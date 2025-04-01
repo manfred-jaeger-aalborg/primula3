@@ -86,7 +86,7 @@ public class CatModelSoftMax extends CPModel {
 		Object[][] evaluatedpfs = new Object[probforms.size()][2];
 		Object[] result = new Object[2];
 		result[0]=new double[probforms.size()];
-		Double nextval;
+		double nextval;
 		double valsum =0;
 
 		for (int i = 0;i<probforms.size();i++) {
@@ -104,20 +104,21 @@ public class CatModelSoftMax extends CPModel {
 					returntype, 
 					valonly, 
 					profiler);
-			nextval = (Double)pfval[0];
+			nextval = (double)pfval[0];
 			evaluatedpfs[i][0]=nextval;
 			evaluatedpfs[i][1]=pfval[1];
-			if (nextval.isNaN()) {
+			if (Double.isNaN(nextval)) {
 				Arrays.fill((double[])result[0],Double.NaN);
 				return result;
 			}
 			valsum+=Math.exp(nextval);
 		}
-		Double[] doubleObjectArray = new Double[((double[])result[0]).length];
-		for (int i = 0;i<probforms.size();i++){
-			doubleObjectArray[i] = (Math.exp((Double)evaluatedpfs[i][0]))/valsum;
+
+		double[] probabilities = (double[]) result[0];
+		for (int i = 0; i < probforms.size(); i++) {
+			probabilities[i] = Math.exp((double) evaluatedpfs[i][0]) / valsum;
 		}
-		result[0] = doubleObjectArray;
+
 		if (valonly)
 			return result;
 		

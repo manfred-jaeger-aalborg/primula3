@@ -1196,8 +1196,14 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
 
     private void loadDefaults() throws RBNIllegalArgumentException {
 
-        String rbninputfilestring = "/Users/lz50rg/Dev/water-hawqs/water_count_linear.rbn";
-        String rstinputfilestring = "/Users/lz50rg/Dev/water-hawqs/src/test.rdef";
+//        String rbninputfilestring = "/Users/lz50rg/Dev/homophily/experiments/rbn_constraints/const_nodeconst_gnn.rbn";
+//        String rstinputfilestring = "/Users/lz50rg/Dev/homophily/experiments/ising/rdef/ising_32_0.5_0_0.4_4_nodeconst.rdef";
+
+        String rbninputfilestring = "/Users/lz50rg/Dev/water-hawqs/water_rbn_const_gnn.rbn";
+        String rstinputfilestring = "/Users/lz50rg/Dev/water-hawqs/test_small_new.rdef";
+
+//        String rbninputfilestring = "/Users/lz50rg/Dev/water-hawqs/water_rbn.rbn";
+//        String rstinputfilestring = "/Users/lz50rg/Dev/water-hawqs/src/test_6.rdef";
 
         primula.srsfile = new File(rstinputfilestring);
         primula.rbnfile = new File(rbninputfilestring);

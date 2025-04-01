@@ -8,6 +8,8 @@
 
 package RBNinference;
 import java.util.*;
+
+import PyManager.GnnPy;
 import RBNpackage.*;
 import RBNExceptions.*;
 import RBNutilities.*;

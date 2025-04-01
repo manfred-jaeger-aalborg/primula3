@@ -253,6 +253,10 @@ public class RBNReader3{
 	protected Rel getAllRel(Rel r){
 		return allrels.get(r.toStringWArity());
 	}
+
+	protected Rel getRelFromSignature(String r){
+		return sig.getRelByName(r);
+	}
 	
 	
 	protected RBNMacro getMacroDef(Rel r){

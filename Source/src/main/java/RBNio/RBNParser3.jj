@@ -1,7 +1,7 @@
 
 
 options {
-      STATIC = false ;
+    STATIC = false ;
     FORCE_LA_CHECK = true;
 	DEBUG_PARSER = false;
 	DEBUG_LOOKAHEAD = false;
@@ -18,6 +18,7 @@ import RBNpackage.*;
 import java.util.*;
 import myio.StringOps;
 import RBNExceptions.*;
+import RBNutilities.Pair;
 
 public class RBNParser3{
 	private int parseno = 1;
@@ -75,7 +76,7 @@ void MacroDefinition()  throws RBNIllegalArgumentException:
 	case 1:
 		reader.addMacroDefined(new RBNMacro(((BoolRel)parsedat.rel()),parsedat.args(),null));
 		break;
-	case 2: 
+	case 2:
 		reader.setMacroPF(parsedat.rel(),parsedprobform);
 	}
 	}
@@ -91,7 +92,7 @@ void ProbRelDefinition()  throws RBNIllegalArgumentException:
 		case 1:
 			reader.addProbRelDefined(new RBNPreldef(parsedat.rel(),parsedat.args(),parsedcpm));
 			break;
-		case 2: 
+		case 2:
 		reader.setProbRelPF(parsedat.rel(),parsedcpm);
 	}
 	}
@@ -100,7 +101,7 @@ void ProbRelDefinition()  throws RBNIllegalArgumentException:
 CPModel CPModel()  throws RBNIllegalArgumentException:
 {CPModel parsedcpm;}
 {// grammar
-    (parsedcpm = CatSoftMax() | parsedcpm = ProbForm())
+    (parsedcpm = CatSoftMax() | parsedcpm = ProbForm() | parsedcpm = CatGnn())
     {return parsedcpm;}
 }
 
@@ -110,18 +111,18 @@ ProbForm ProbForm()  throws RBNIllegalArgumentException:
 {// grammar
 	( LOOKAHEAD(Atom() "=" ) parsedpf= BoolCatEquality()
 	| LOOKAHEAD(<Name> "=" Atom()) parsedpf= BoolCatEquality()
- 	| LOOKAHEAD(Atom()) parsedpf=Atom() 
-	| LOOKAHEAD(ConvCombination()) parsedpf=ConvCombination() 
-	| LOOKAHEAD(CombinationFunc()) parsedpf=CombinationFunc() 
+ 	| LOOKAHEAD(Atom()) parsedpf=Atom()
+	| LOOKAHEAD(ConvCombination()) parsedpf=ConvCombination()
+	| LOOKAHEAD(CombinationFunc()) parsedpf=CombinationFunc()
 	| parsedpf=BoolFormula()
 	| parsedpf=MacroCall()
-	| parsedpf=Constant() 
+	| parsedpf=Constant()
 	)
 	{return parsedpf;}
 }
 
 RBNReader3.ParsedUnTypedAtom  UntypedAtom(boolean ismacro) throws RBNIllegalArgumentException:
-{ 
+{
   Vector<String> args;
   Token tok;
   Rel rel;
@@ -147,7 +148,7 @@ RBNReader3.ParsedTypedAtom TypedAtom(boolean ismacro) throws RBNIllegalArgumentE
 	{arity = args.arity();
 	 return  reader.new ParsedTypedAtom(relname,args,ismacro);
 	}
-	
+
 }
 
 
@@ -166,11 +167,11 @@ Vector<String> ArgList():
  Token tok;
 }
 {// grammar
-	 ( tok = <Name> 
+	 ( tok = <Name>
 		{parsedargs.add(tok.image);}
 	 ("," tok = <Name>
 		{parsedargs.add(tok.image);}
-	 )*  )? 
+	 )*  )?
 	{return parsedargs;}
 }
 
@@ -180,30 +181,30 @@ RBNReader3.ParsedTypedArguments TypedArguments():
 	Token tok;
 	Vector<String> args = new Vector<String>();
 	Vector<Type> types = new Vector<Type>();
-	String typename = null;
+	String typestr = null;
 }
 {// grammar
-	"(" 
-	( (typename = TypeDeclaration())?
-		{ if (typename != null)
-			{types.add(new TypeRel(typename));
-			 typename = null;
+	"("
+	( (typestr = TypeDeclaration())?
+		{ if (typestr != null)
+			{types.add(new TypeRel(typestr));
+			 typestr = null;
 			}
 		  else {types.add(new TypeDomain());}
 		}
 	tok=<Name>
 		{args.add(tok.image);}
-	( "," (typename = TypeDeclaration())?
-		{ if (typename != null)
-			{types.add(new TypeRel(typename));
-			 typename = null;
+	( "," (typestr = TypeDeclaration())?
+		{ if (typestr != null)
+			{types.add(new TypeRel(typestr));
+			 typestr = null;
 			}
 		  else {types.add(new TypeDomain());}
 		}
 	tok=<Name>
 		{args.add(tok.image);}
-	)* 
-	) ? 
+	)*
+	) ?
 	")"
 	{return reader.new ParsedTypedArguments(types,args);}
 }
@@ -252,20 +253,20 @@ ProbForm Atom()  throws RBNIllegalArgumentException:
  ProbFormAtom parsedpfatom;
  RBNReader3.ParsedUnTypedAtom parsedutat;
  Rel parsedrel;
- Rel oldrel;	
+ Rel oldrel;
 }
 {// grammar
 	parsedutat = UntypedAtom(false)
 	{
 	switch(parseno){
-	case 1: 
+	case 1:
 		reader.addAllRel(parsedutat.rel());
 		return null;
 		break;
-	case 2: 
+	case 2:
 	 	parsedrel = parsedutat.rel();
-                // first need to look into reader.probrelsdefined in order 
-		// to ensure that the relation associated with the atom 
+                // first need to look into reader.probrelsdefined in order
+		// to ensure that the relation associated with the atom
 		// is of type probabilistic
          	oldrel = reader.getProbRel(parsedrel);
                 // if the following case triggers, then the relation
@@ -292,11 +293,11 @@ ProbFormConvComb ConvCombination()  throws RBNIllegalArgumentException:
 	| pf = ConvCombinationCherry()
 	)
 	{switch(parseno){
-	case 1: 
+	case 1:
 		return null;
 		break;
 	case 2: return pf;
-	}}	
+	}}
 }
 
 ProbFormConvComb ConvCombinationClassic()  throws RBNIllegalArgumentException:
@@ -305,12 +306,12 @@ ProbFormConvComb ConvCombinationClassic()  throws RBNIllegalArgumentException:
  ProbForm pf3;
 }
 {// grammar
-	"(" pf1 = ProbForm() 
-        ":" pf2 = ProbForm() 
-        "," pf3 = ProbForm() 
+	"(" pf1 = ProbForm()
+        ":" pf2 = ProbForm()
+        "," pf3 = ProbForm()
         ")"
 	{switch(parseno){
-	case 1: 
+	case 1:
 		return null;
 		break;
 	case 2: return new ProbFormConvComb(pf1,pf2,pf3);
@@ -324,9 +325,9 @@ ProbFormConvComb ConvCombinationCherry()  throws RBNIllegalArgumentException:
  ProbForm pf3;
 }
 {// grammar
-	<WIFWIF>  pf1 = ProbForm() <WIFTHEN> pf2 = ProbForm() <WIFELSE> pf3 = ProbForm() 
+	<WIFWIF>  pf1 = ProbForm() <WIFTHEN> pf2 = ProbForm() <WIFELSE> pf3 = ProbForm()
 	{switch(parseno){
-	case 1: 
+	case 1:
 		return null;
 		break;
 	case 2: return new ProbFormConvComb(pf1,pf2,pf3);
@@ -346,11 +347,11 @@ ProbFormCombFunc CombinationFunc()  throws RBNIllegalArgumentException:
 	| LOOKAHEAD(CombinationFuncProd()) pf = CombinationFuncProd()
 	)
 	{switch(parseno){
-	case 1: 
+	case 1:
 		return null;
 		break;
 	case 2: return pf;
-	}}	
+	}}
 }
 
 ProbFormCombFunc CombinationFuncClassic()  throws RBNIllegalArgumentException:
@@ -361,16 +362,16 @@ ProbFormCombFunc CombinationFuncClassic()  throws RBNIllegalArgumentException:
   ProbFormBool cc = new ProbFormBoolConstant(true);
 }
 {// grammar
-	tok = <CombinationFunction> "{" 
-	pflist = ProbFormList() "|" 
-	arglist = ArgList() ":" 
+	tok = <CombinationFunction> "{"
+	pflist = ProbFormList() "|"
+	arglist = ArgList() ":"
 	(cc=BoolFormula())? "}"
-	
+
 	{switch(parseno){
-	case 1: 
+	case 1:
 		return null;
 		break;
-	case 2: 
+	case 2:
 	 pfarr = new ProbForm[pflist.size()];
 	 for (int i=0;i<pfarr.length;i++)
 		pfarr[i]=pflist.elementAt(i);
@@ -390,16 +391,16 @@ ProbFormCombFunc CombinationFuncCherry()  throws RBNIllegalArgumentException:
 	<COMBCOMB>
 	pflist = ProbFormList()
 	<COMBWITH>
-	tok = <CombinationFunction> 
+	tok = <CombinationFunction>
 	<COMBFORALL>
-	arglist = ArgList()  
-	(<COMBWHERE> cc=BoolFormula())? 
-	
+	arglist = ArgList()
+	(<COMBWHERE> cc=BoolFormula())?
+
 	{switch(parseno){
-	case 1: 
+	case 1:
 		return null;
 		break;
-	case 2: 
+	case 2:
 	 pfarr = new ProbForm[pflist.size()];
 	 for (int i=0;i<pfarr.length;i++)
 		pfarr[i]=pflist.elementAt(i);
@@ -407,7 +408,7 @@ ProbFormCombFunc CombinationFuncCherry()  throws RBNIllegalArgumentException:
 	}
 }
 
-ProbFormCombFunc CombinationFuncProd()  throws RBNIllegalArgumentException: 
+ProbFormCombFunc CombinationFuncProd()  throws RBNIllegalArgumentException:
 {Vector<ProbForm> pflist = new Vector<ProbForm>();
 ProbForm nextpf;
 ProbForm[] pfarr;
@@ -422,19 +423,19 @@ ProbForm[] pfarr;
 	)+
 	")"
 	{switch(parseno){
-	case 1: 
+	case 1:
 		return null;
 		break;
-	case 2: 
+	case 2:
 	 pfarr = new ProbForm[pflist.size()];
 	 for (int i=0;i<pfarr.length;i++)
 		pfarr[i]=pflist.elementAt(i);
 	return new ProbFormCombFunc("prod",pfarr,new String[0],new ProbFormBoolConstant(true));}
-	}	
+	}
 }
 
 
-ProbFormCombFunc CombinationFuncSum()  throws RBNIllegalArgumentException: 
+ProbFormCombFunc CombinationFuncSum()  throws RBNIllegalArgumentException:
 {Vector<ProbForm> pflist = new Vector<ProbForm>();
 ProbForm nextpf;
 ProbForm[] pfarr;
@@ -449,15 +450,15 @@ ProbForm[] pfarr;
 	)+
 	")"
 	{switch(parseno){
-	case 1: 
+	case 1:
 		return null;
 		break;
-	case 2: 
+	case 2:
 	 pfarr = new ProbForm[pflist.size()];
 	 for (int i=0;i<pfarr.length;i++)
 		pfarr[i]=pflist.elementAt(i);
 	return new ProbFormCombFunc("sum",pfarr,new String[0],new ProbFormBoolConstant(true));}
-	}	
+	}
 }
 
 
@@ -467,10 +468,10 @@ Vector<ProbForm> ProbFormList()  throws RBNIllegalArgumentException:
 }
 {// grammar
 	( nextpf = ProbForm()
-	  {pflist.add(nextpf);} 
-	("," nextpf = ProbForm() 
-	  {pflist.add(nextpf);} 
-	)*  )? 
+	  {pflist.add(nextpf);}
+	("," nextpf = ProbForm()
+	  {pflist.add(nextpf);}
+	)*  )?
 	{return pflist;}
 }
 
@@ -479,9 +480,9 @@ ProbFormBool BoolFormula()  throws RBNIllegalArgumentException:
 {// grammar
     ( LOOKAHEAD(<Name> "(") pf = BoolAtom()
     | LOOKAHEAD(<Name> "=")  pf = BoolEquality()
-    | pf = BoolNegation() 
-    | LOOKAHEAD( "(" BoolFormula() "&"  )pf = BoolAnd() 
-    | LOOKAHEAD( "(" BoolFormula() "|"  )pf = BoolOr() 
+    | pf = BoolNegation()
+    | LOOKAHEAD( "(" BoolFormula() "&"  )pf = BoolAnd()
+    | LOOKAHEAD( "(" BoolFormula() "|"  )pf = BoolOr()
     | pf = BoolConstant()
     | pf = BoolCatEquality()
     )
@@ -515,7 +516,7 @@ ProbFormBoolAtomEquality BoolCatEquality()  throws RBNIllegalArgumentException:
 {// grammar
 	(tok1=UntypedAtom(false) | tok1=<Name>.image) "=" (tok2=UntypedAtom(false) | tok2=<Name>.image)
 		{switch(parseno){
-	case 1: 
+	case 1:
 		return null;
 		break;
 	case 2:
@@ -541,7 +542,7 @@ ProbFormBool nextpfb;}
 	  "&" 	nextpfb = BoolFormula()
 	   {comps.add(nextpfb);}
 	)+
-	")"	
+	")"
 {return new ProbFormBoolComposite(comps,ProbFormBool.OPERATORAND,true);}
 }
 
@@ -556,7 +557,7 @@ ProbFormBool nextpfb;}
 	  "|" 	nextpfb = BoolFormula()
 	   {comps.add(nextpfb);}
 	)+
-	")"	
+	")"
 {return new ProbFormBoolComposite(comps,ProbFormBool.OPERATOROR,true);}
 }
 
@@ -575,9 +576,9 @@ ProbFormBool BoolNegation()  throws RBNIllegalArgumentException:
 {ProbFormBool pfb;}
 { //grammar
   "~" pfb = BoolFormula()
-  {pfb.toggleSign(); 
+  {pfb.toggleSign();
   return pfb;}
-} 
+}
 
 
 ProbFormMacroCall MacroCall()  throws RBNIllegalArgumentException:
@@ -589,19 +590,19 @@ ProbFormMacroCall MacroCall()  throws RBNIllegalArgumentException:
 	"@" parsedat =  UntypedAtom(true)
 	{
 	// Add the '@' back to the name:
-	parsedat.set_relname("@"+parsedat.rel().name());	
+	parsedat.set_relname("@"+parsedat.rel().name());
 	switch(parseno){
-		case 1: 
+		case 1:
 			return null;
 			break;
-		case 2: 
+		case 2:
 	  		macrodef = reader.getMacroDef(parsedat.rel());
 	  		if (macrodef != null)
 			return new ProbFormMacroCall(macrodef,parsedat.args());
-	  else throw new ParseException("Macro @" + parsedat.rel().name.name + " undefined");	
+	  else throw new ParseException("Macro @" + parsedat.rel().name.name + " undefined");
 		}
 	}
-	
+
 }
 
 CatModelSoftMax CatSoftMax()  throws RBNIllegalArgumentException:
@@ -611,7 +612,7 @@ CatModelSoftMax CatSoftMax()  throws RBNIllegalArgumentException:
 {// grammar
      <SOFTMAX>	pflist = ProbFormList()
      {switch(parseno){
-	case 1: 
+	case 1:
 		return null;
 		break;
 	case 2:
@@ -619,6 +620,87 @@ CatModelSoftMax CatSoftMax()  throws RBNIllegalArgumentException:
 	}
 	}
 }
+
+ArrayList<Rel> AttrList() throws RBNIllegalArgumentException:
+{
+    ArrayList<Rel> attrs = new ArrayList<>();
+    String attr;
+    Token tk;
+    RBNReader3.ParsedTypedAtom parsedat;
+    Rel r;
+}
+{
+    tk = <Name>
+    {
+        r = reader.getRelFromSignature(tk.image);
+        attrs.add(r);
+    }
+    (
+        ","
+        tk = <Name>
+        {
+            r = reader.getRelFromSignature(tk.image);
+            attrs.add(r);
+        }
+    )*
+    { return attrs; }
+}
+
+
+ArrayList<Pair<BoolRel, ArrayList<Rel>>> ForInputList() throws RBNIllegalArgumentException:
+{
+    ArrayList<Pair<BoolRel, ArrayList<Rel>>> inputs = new ArrayList<>();
+    ArrayList<Rel> attrs;
+    RBNReader3.ParsedTypedAtom parsedat;
+    Token tk;
+    Rel r;
+}
+{
+    attrs = AttrList()
+    "WITHEDGE"
+    tk = <Name>
+    {
+        r = reader.getRelFromSignature(tk.image);
+        inputs.add(new Pair(r, attrs));
+    }
+    (
+        "," attrs = AttrList()
+        "WITHEDGE"
+        tk = <Name>
+        {
+            r = reader.getRelFromSignature(tk.image);
+            inputs.add(new Pair(r, attrs));
+        }
+    )*
+    { return inputs; }
+}
+
+CatGnn CatGnn() throws RBNIllegalArgumentException :
+{
+    Token tk;
+    String configPath;
+    String moduleName;
+    Vector<String> freeVals;
+    int numVals = 1;
+    int numLayers = -1;
+    ArrayList<Pair<BoolRel, ArrayList<Rel>>> forInputs;
+}
+{
+    <COMPUTEWITHTORCH>
+    tk = <Name>
+    { moduleName = tk.image; }
+    "["
+      tk = <Path> { configPath = tk.image; System.out.println(configPath);}
+    "]"
+    <WithNumValues>
+    tk = <Constant> { numVals = Integer.parseInt(tk.image); }
+    <ForFreeVars>
+    freeVals = UntypedArguments()
+    <UsingRels>
+    forInputs = ForInputList()
+    { return new CatGnn(moduleName, configPath, freeVals, numVals, forInputs); }
+}
+
 
 TOKEN:{
 	<EOL: "\n" | "\r" | "\r\n">
@@ -629,50 +711,79 @@ TOKEN:{
 	<CombinationFunction: "n-or"|"mean"|"esum"|"invsum"|"l-reg"|"ll-reg"|"sum"|"prod" >
 }
 
-TOKEN:{ 
+TOKEN:{
 	<WIFWIF: "WIF" | "wif" | "Wif" >
 }
 
-TOKEN:{ 
+TOKEN:{
 	<WIFTHEN: "THEN" | "then" | "Then" >
 }
 
-TOKEN:{ 
+TOKEN:{
 	<WIFELSE: "ELSE" | "else" | "Else" >
 }
 
-TOKEN:{ 
+TOKEN:{
 	<COMBCOMB: "COMBINE" | "combine" | "Combine" >
 }
 
-TOKEN:{ 
+TOKEN:{
 	<COMBWITH: "WITH" | "with" | "With" >
 }
 
-TOKEN:{ 
+TOKEN:{
 	<COMBFORALL: "FORALL" | "forall" | "Forall" >
 }
 
-TOKEN:{ 
+TOKEN:{
 	<COMBWHERE: "WHERE" | "where" | "Where" >
 }
 
 
-TOKEN:{ 
+TOKEN:{
 	<SOFTMAX: "SOFTMAX" | "Softmax" | "softmax" >
 }
 
+TOKEN : {
+    <COMPUTEWITHTORCH: "COMPUTEWITHTORCH" | "ComputeWithTorch" | "computewithtorch" >
+}
 
+TOKEN : {
+    <UsingRels: "USINGRELS" | "UsingRels" | "usingrels" >
+}
 
-TOKEN:{ 
+TOKEN : {
+    <FORNUMLAYERS: "FORNUMLAYERS" | "ForNumLayers" | "fornumlayers" >
+}
+
+TOKEN : {
+    <WITHEDGE: "WITHEDGE" | "WithEdge" | "withedge" >
+}
+
+TOKEN : {
+    <ForFreeVars: "FORFREEVARS" | "ForFreeVars" | "forfreevars" >
+}
+
+TOKEN : {
+    <WithNumValues: "WITHNUMVALUES" | "WithNumValues" | "withnumvalues" >
+}
+
+TOKEN : {
+    <Name: ["a"-"z","A"-"Z"] (["a"-"z","A"-"Z","0"-"9","-","_"])* >
+}
+
+TOKEN : {
+    < Path: "/" ( ["a"-"z", "A"-"Z", "0"-"9", "_", "-", ".", "/"] )+ >
+}
+
+TOKEN:{
 	<MULT: "*" >
 }
-TOKEN:{ 
+TOKEN:{
 	<PLUS: "+" >
 }
 
-
-//TOKEN: {<ProbabilityValue: ("0"|"1") ("." (["0"-"9"])*)? 
+//TOKEN: {<ProbabilityValue: ("0"|"1") ("." (["0"-"9"])*)?
 //			   | "." (["0"-"9"])+ >
 //}
 
@@ -684,13 +795,6 @@ TOKEN: {<#Digits: (["0"-"9"])+>
 
 TOKEN: {<Constant:  ("-")?  (<Digits> | "."<Digits> | <Digits> "."<Digits> | <Digits> ".")>
 }
-
-TOKEN:{
-	<Name: ["a"-"z","A"-"Z"] (["a"-"z", "A"-"Z","0"-"9","-", "_" ])* >
-}
-
-
-
 
 // Java functions
 

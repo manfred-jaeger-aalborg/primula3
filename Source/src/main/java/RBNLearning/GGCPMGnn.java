@@ -1,6 +1,6 @@
 package RBNLearning;
 
-import RBNpackage.GnnPy;
+import PyManager.GnnPy;
 
 public interface GGCPMGnn {
 

@@ -67,12 +67,12 @@ public class NodeClass {
 //        String constWeight = args[11];
 
         int ij = 1;
-        String datasetName = "pubmed";
-        int NUM_ATTR = 6;
+        String datasetName = "wisconsin";
+        int NUM_ATTR = 1703;
         String modelName = "GCN";
         int nhidd = 16;
         int nlayers = 2;
-        int NUM_CLASS = 3;
+        int NUM_CLASS = 5;
         double decayRate = 1.0;
         String expName = "realDataset";
         String homType = "homProp";
@@ -138,7 +138,7 @@ public class NodeClass {
         RBNPreldef gnn_rbn = new RBNPreldef(
                 new CatRel("CAT", 1, typeStringToArray("node", 1), valStringToArray(sclass)),
                 new String[]{"v"},
-                new CatGnn("v",
+                new CatGnnOld("v",
                         modelName + datasetName + index,
                         true,
                         NUM_CLASS,
@@ -213,6 +213,8 @@ public class NodeClass {
             // perform map inference
             im.setNumRestarts(15);
             im.setMapSearchAlg(2);
+            im.setWindowSize(0);
+            im.setNumChains(0);
             im.setNumIterGreedyMap(10000);
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();

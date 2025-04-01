@@ -1,9 +1,11 @@
 package RBNpackage;
 
+import PyManager.GnnPy;
 import RBNExceptions.RBNCompatibilityException;
 import RBNExceptions.RBNIllegalArgumentException;
 import RBNLearning.Profiler;
 import RBNinference.PFNetworkNode;
+import RBNutilities.Pair;
 import RBNutilities.rbnutilities;
 
 import java.util.*;
@@ -228,6 +230,11 @@ public class CatGnnOld extends CPModel implements CPMGnn {
     }
 
     @Override
+    public ArrayList<Pair<BoolRel, ArrayList<Rel>>> getGnnInputs() {
+        return null;
+    }
+
+    @Override
     public ArrayList<Rel> getEdge_attr() { return edge_attr; }
 
     @Override
@@ -281,7 +288,7 @@ public class CatGnnOld extends CPModel implements CPMGnn {
     }
 
     @Override
-    public String getIdGnn() {
+    public String getGnnId() {
         return idGnn;
     }
 

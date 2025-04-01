@@ -27,6 +27,7 @@ package RBNpackage;
 import java.io.*;
 import java.util.*;
 
+import PyManager.GnnPy;
 import RBNio.*;
 import RBNutilities.rbnutilities;
 import RBNExceptions.*;
@@ -41,7 +42,7 @@ public class RBN extends java.lang.Object {
 	private RBNElement[] elements; // the concatenation of macroelements and prelements.
 	private RBNPreldef[] prelements;
 	private RBNMacro[] macroelements;
-	
+//	private GnnPy gnnPy;
 	
 	
 	/* The current setting of values for all 
@@ -79,6 +80,18 @@ public class RBN extends java.lang.Object {
 		elements = rbn.elements;
 		prelements = rbn.prelements;
 		macroelements = rbn.macroelements;
+//		gnnPy = null;
+
+		// if an element is CatGnn set the GnnPy object in RBN and link it to all the CatGnn rels
+//		for (RBNElement r: elements) {
+//			if (r.cpmod() instanceof CatGnn) {
+//				CatGnn catGnn = (CatGnn) r.cpmod();
+//				if (this.gnnPy==null) // if null create object
+//					this.gnnPy = new GnnPy();
+//				catGnn.setGnnPy(this.gnnPy);
+//				gnnPy.loadTorchModel(catGnn, r.rel().toString(), catGnn.getConfigModelPath()); // load the model
+//			}
+//		}
 		
 		/* Initialize parameters with 0.5 values*/
 		String[] allparams = this.parameters();

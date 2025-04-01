@@ -4,7 +4,7 @@ import java.util.*;
 import RBNExceptions.RBNCompatibilityException;
 import RBNExceptions.RBNNaNException;
 import RBNpackage.CPModel;
-import RBNpackage.GnnPy;
+import PyManager.GnnPy;
 import RBNpackage.OneStrucData;
 import RBNpackage.RelStruc;
 

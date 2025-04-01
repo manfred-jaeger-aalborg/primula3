@@ -25,6 +25,8 @@ package RBNutilities;
 
 import java.lang.*;
 import java.util.*;
+
+import RBNgui.Primula;
 import RBNpackage.*;
 import RBNExceptions.*;
 import mymath.*;
@@ -1728,5 +1730,40 @@ public class rbnutilities extends java.lang.Object
 				result = i;
 		}
 		return result;
+	}
+
+	public static Set<Integer> getNodesInDepth(RelStruc rels, int maxDepth, int nodeArg, CPMGnn cpmGnn) {
+		Set<Integer> allReached = new LinkedHashSet<>();
+		Queue<Integer> queue = new LinkedList<>();
+		Map<Integer, Integer> nodeLayer = new HashMap<>();
+		try {
+			queue.add(nodeArg);
+			nodeLayer.put(nodeArg, 0);
+			while (!queue.isEmpty()) {
+				int current = queue.poll();
+				int currentLayer = nodeLayer.get(current);
+
+				if (currentLayer >= maxDepth) {
+					continue;
+				}
+
+				for (Pair<BoolRel, ArrayList<Rel>> pair : cpmGnn.getGnnInputs()) {
+					Rel edge = pair.getFirst();
+					ProbFormBoolAtom temp = new ProbFormBoolAtom(new ProbFormAtom(edge, new String[]{Integer.toString(current), "z"}), true);
+					int[][] res = rels.allTrue(temp, new String[]{"z"});
+					for (int[] node : res) {
+						if (!allReached.contains(node[0])) {
+							allReached.add(node[0]);
+							queue.add(node[0]);
+							nodeLayer.put(node[0], currentLayer + 1);
+						}
+					}
+
+				}
+			}
+			return allReached;
+		} catch (RBNCompatibilityException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

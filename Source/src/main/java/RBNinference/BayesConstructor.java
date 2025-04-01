@@ -28,6 +28,7 @@ import java.util.*;
 import java.io.*;
 import javax.swing.JOptionPane;
 
+import PyManager.GnnPy;
 import RBNpackage.*;
 import RBNgui.*;
 import RBNExceptions.*;
@@ -554,14 +555,14 @@ public class BayesConstructor extends java.lang.Object {
 
 			/** ... keith cascio */
 
-			if (this.checkGnnRel(this.rbnarg)) {
-				System.out.println("GNN detected");
-				try {
-					this.gnnPy = new GnnPy(myprimula);
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
-			}
+//			if (this.checkGnnRel(this.rbnarg)) {
+//				System.out.println("GNN detected");
+//				try {
+//					this.gnnPy = new GnnPy(myprimula);
+//				} catch (IOException e) {
+//					throw new RuntimeException(e);
+//				}
+//			}
 
 			/* build a standard Bayesian network over the nodes in groundatomhasht:
 			 * in case of a decompose option, additional (auxiliary)  nodes will be introduced
@@ -840,7 +841,7 @@ public class BayesConstructor extends java.lang.Object {
 						ProbForm.RETURN_ARRAY,
 						true,
 						null);
-				Double[] doubleObjectArray = (Double[]) res[0];
+				double[] doubleObjectArray = (double[]) res[0];
 				double[] doublePrimitiveArray = new double[doubleObjectArray.length];
 				for (int i = 0; i < doubleObjectArray.length; i++) {
 					doublePrimitiveArray[i] = doubleObjectArray[i];

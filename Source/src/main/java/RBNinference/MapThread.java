@@ -3,6 +3,7 @@ package RBNinference;
 import java.io.*;
 import java.util.*;
 
+import PyManager.GnnPy;
 import RBNExceptions.RBNNaNException;
 import RBNLearning.*;
 import RBNgui.*;
@@ -38,16 +39,16 @@ public class MapThread extends GGThread {
 
 	public void run(){
         this.isSampling = true;
-        if (this.gnnIntegration) {
-            try {
-                this.gnnPy = new GnnPy(myprimula, gg);
-                gg.setGnnPy(this.gnnPy);
-				gg.load_gnn_settings(myprimula.getLoadGnnSet());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        } else
-            this.gnnPy = null;
+//        if (this.gnnIntegration) {
+//            try {
+//                this.gnnPy = new GnnPy(myprimula, gg);
+//                gg.setGnnPy(this.gnnPy);
+//				gg.load_gnn_settings(myprimula.getLoadGnnSet());
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
+//        } else
+//            this.gnnPy = null;
 
 		running = true;
 		
@@ -137,8 +138,8 @@ public class MapThread extends GGThread {
 ////			gnnPy.savePickleGraph(xDict, edgeDict, path);
 //		}
 
-        if (this.gnnIntegration)
-			this.gnnPy.closeInterpreter();
+//        if (this.gnnIntegration)
+//			this.gnnPy.closeInterpreter();
 
 		this.gnnPy = null;
         this.isSampling = false;
