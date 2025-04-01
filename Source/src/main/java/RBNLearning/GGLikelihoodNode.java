@@ -448,10 +448,10 @@ public  class GGLikelihoodNode extends GGNode{
 			return small_gradient;
 		}
 
-		if (this.depends_on_sample && !is_evaluated_for_samples[sno]){
+		if (this.depends_on_sample && !is_evaluated_val_for_samples[sno]){
 			this.evaluate(sno,0,batchelements,false,false,null); // TODO: incremental version of evaluateSmallGrad ?
 		}
-		if (!this.depends_on_sample && !is_evaluated_for_samples[0]){
+		if (!this.depends_on_sample && !is_evaluated_val_for_samples[0]){
 			this.evaluate(sno,0,batchelements,false,false,null);
 		}
 
