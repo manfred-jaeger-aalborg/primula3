@@ -77,55 +77,46 @@ public class MapThread extends GGThread {
 		double oldll=Double.NEGATIVE_INFINITY;
 		double newll=0;
 		while (running && ((maxrestarts == -1) || (restarts <= maxrestarts))) {
-			PrintWriter writer = null;
-			try {
-				writer = new PrintWriter("/Users/lz50rg/Dev/water-hawqs/results/txt_graph_" + Experiments.Water.RiverPollution.EXPNUM + "_" + restarts + ".txt", "UTF-8");
-				newll = gg.mapInference(this);
-				writer.println("Restart: " + restarts);
-				writer.println("logll" + newll);
-				if (!Double.isNaN(newll)) {
-					if (newll > oldll) {
-						oldll = newll;
-						newmapvals = gg.getMapVals();
-						bestMapVals = newmapvals;
-						bestLikelihood = new double[]{newll};
-						mapprobs.setMVs(newmapvals);
-						mapprobs.setLL(String.valueOf(oldll));
-						if (gg.parameters().size() > 0)
-							myLearnModule.setParameterValues(gg.getParameters());
-						if (gnnPy != null) {
-							xDict = gnnPy.getCurrentXdict();
-							edgeDict = gnnPy.getCurrentEdgeDict();
-						}
-					}
-				} else
-					System.out.println("MAP search aborted");
-
-				mapprobs.setRestarts(restarts);
-				mapprobs.notifyObservers();
-
-				OneStrucData result = new OneStrucData();
-				result.setParentRelStruc(myprimula.getRels());
-				OneStrucData onsd = new OneStrucData(myprimula.getInstantiation());
-				for (Rel key : bestMapVals.keySet()) {
-					GroundAtomList gal = gg.mapatoms(key);
-					for (int i = 0; i < gal.size(); i++) {
-						writer.println(gal.atomAt(i).args()[0] + " : " + bestMapVals.get(key)[i]);
-						result.add(gal.atomAt(i), bestMapVals.get(key)[i], "?");
+//			PrintWriter writer = null;
+			//				writer = new PrintWriter("/Users/lz50rg/Dev/water-hawqs/results/txt_graph_" + Experiments.Water.RiverPollution.EXPNUM + "_" + restarts + ".txt", "UTF-8");
+//				newll = gg.mapInference(this);
+//				writer.println("Restart: " + restarts);
+//				writer.println("logll" + newll);
+			if (!Double.isNaN(newll)) {
+				if (newll > oldll) {
+					oldll = newll;
+					newmapvals = gg.getMapVals();
+					bestMapVals = newmapvals;
+					bestLikelihood = new double[]{newll};
+					mapprobs.setMVs(newmapvals);
+					mapprobs.setLL(String.valueOf(oldll));
+					if (gg.parameters().size() > 0)
+						myLearnModule.setParameterValues(gg.getParameters());
+					if (gnnPy != null) {
+						xDict = gnnPy.getCurrentXdict();
+						edgeDict = gnnPy.getCurrentEdgeDict();
 					}
 				}
-				onsd.add(result);
-				onsd.saveToRDEF(new File("/Users/lz50rg/Dev/water-hawqs/results/redef_graph_" + Experiments.Water.RiverPollution.EXPNUM + "_" + restarts + ".rdef"), myprimula.getRels());
-				writer.close();
-				restarts++;
-			} catch (RBNNaNException e) {
-				System.out.println(e);
-				System.out.println("Restart aborted");
-			} catch (FileNotFoundException e) {
-				throw new RuntimeException(e);
-			} catch (UnsupportedEncodingException e) {
-				throw new RuntimeException(e);
+			} else
+				System.out.println("MAP search aborted");
+
+			mapprobs.setRestarts(restarts);
+			mapprobs.notifyObservers();
+
+			OneStrucData result = new OneStrucData();
+			result.setParentRelStruc(myprimula.getRels());
+			OneStrucData onsd = new OneStrucData(myprimula.getInstantiation());
+			for (Rel key : bestMapVals.keySet()) {
+				GroundAtomList gal = gg.mapatoms(key);
+				for (int i = 0; i < gal.size(); i++) {
+//					writer.println(gal.atomAt(i).args()[0] + " : " + bestMapVals.get(key)[i]);
+					result.add(gal.atomAt(i), bestMapVals.get(key)[i], "?");
+				}
 			}
+			onsd.add(result);
+//				onsd.saveToRDEF(new File("/Users/lz50rg/Dev/water-hawqs/results/redef_graph_" + Experiments.Water.RiverPollution.EXPNUM + "_" + restarts + ".rdef"), myprimula.getRels());
+//			writer.close();
+			restarts++;
 		}
 
 		System.out.println("Best log-likelihood found: " + oldll);
