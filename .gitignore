@@ -1,0 +1,28 @@
+# Ignore Gradle project-specific cache directory
+/Source/.gradle
+# /Source/gradlew
+# /Source/build.gradle.kts
+# /Source/settings.gradle.kts
+.gitattributes
+
+# Ignore Gradle build output directory
+Source/build/
+Source/out/
+
+# eclipse
+.classpath
+.project
+.settings/
+
+# primula auto-generated files
+primularc.xml
+samiamrc.xml
+
+.vscode
+.idea
+# /Source/src/main/java/Experiments/
+
+.DS_Store
+bin
+
+Source/python/__pycache__/

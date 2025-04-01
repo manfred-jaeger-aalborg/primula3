@@ -1,0 +1,558 @@
+/* OneNumRelData.java 
+ * 
+ * Copyright (C) 2009 Aalborg University
+ *
+ * contact:
+ * jaeger@cs.aau.dk   http://www.cs.aau.dk/~jaeger/Primula.html
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
+
+package RBNpackage;
+
+import java.util.*;
+
+import RBNutilities.*;
+
+import mymath.MyMathOps;
+
+import org.dom4j.Element;
+
+/** 
+ * Instantiation of OneRelData for numeric relations
+ * 
+ * @author jaeger
+ *
+ */
+public class OneNumRelData extends OneRelData{
+
+	/**
+	 * @uml.property  name="rel"
+	 * @uml.associationEnd  
+	 */
+	//NumRel rel;
+	/**
+	 * @uml.property  name="defaultval"
+	 */
+
+	private TreeMap<int[], Double> numAtoms ;
+
+	/*
+	 * Contains for each argument (position) of this relation
+	 * a HashMap that maps node (integer) identifiers to the set of 
+	 * tuples for which a tuple with the given node at the given
+	 * position is in the data.
+	 * 
+	 * Example: this.arity=2,
+	 * Then numAtomsIndex[1].get(3) returns a the tree set of pairs 
+	 * with 3 in the second position.
+	 */
+	private  HashMap<Integer,TreeSet<int[]>>[] numAtomsIndex;
+	
+	/* Stores the minimum minmax[0] and maximum minmax[1] 
+	 * values contained in this relation
+	 */
+	double[] minmax;
+	
+	OneNumRelData()
+	{
+	}
+	
+	public NumRel rel(){
+		return (NumRel)rel;
+	}
+
+	
+	public OneNumRelData(NumRel r, Double v)
+	{	
+//		rel = r;
+//		defaultval = String.valueOf(v);
+		super(r,String.valueOf(v));
+		numAtoms  = new TreeMap<int[], Double>(new IntArrayComparator());
+		numAtomsIndex = (HashMap<Integer,TreeSet<int[]>>[]) new HashMap[r.arity];
+		for (int i=0; i<r.arity; i++) {
+			numAtomsIndex[i]=new HashMap<Integer,TreeSet<int[]>>();
+		}
+		minmax = new double[2];		
+		minmax[0]=Double.NaN;
+		minmax[1]=Double.NaN;
+	}
+
+	public OneNumRelData(NumRel r, String dv)
+	{
+//		rel = r;
+//		defaultval = dv;
+		super(r,dv);
+		numAtoms  = new TreeMap<int[], Double>(new IntArrayComparator());
+		numAtomsIndex = (HashMap<Integer,TreeSet<int[]>>[]) new HashMap[r.arity];
+		for (int i=0; i<r.arity; i++) {
+			numAtomsIndex[i]=new HashMap<Integer,TreeSet<int[]>>();
+		}
+		minmax = new double[2];
+		minmax[0]=Double.NaN;
+		minmax[1]=Double.NaN;
+	}
+
+	public OneNumRelData(NumRel r, String v, TreeMap<int[],Double> ht)
+	{	
+		rel = r;
+		defaultval = v;
+		numAtoms  = ht;
+		numAtomsIndex = (HashMap<Integer,TreeSet<int[]>>[]) new HashMap[r.arity];
+		for (int i=0; i<r.arity; i++) {
+			numAtomsIndex[i]=new HashMap<Integer,TreeSet<int[]>>();
+		}
+		
+		minmax = new double[2];		
+		minmax[0]=Double.NaN;
+		minmax[1]=Double.NaN;
+	}
+	
+	/* Returns 1 if this global relation was not already set to
+	 * tv; 0 else;
+	 */
+
+	//not modified yet...
+
+	public OneNumRelData copy(){
+		OneNumRelData result = new OneNumRelData(this.rel(),this.dv());
+		TreeMap<int[], Double> ht = new TreeMap<int[], Double>(new IntArrayComparator());
+//		for(Enumeration<int[]>  e = numAtoms.keys();e.hasMoreElements();)
+//		{	
+//			int[] key = e.nextElement();
+//			ht.put(key, (Double)numAtoms.get(key));
+//		}
+		for (int[] k: numAtoms.keySet())
+			ht.put(k, (Double)numAtoms.get(k));
+		
+		result.setNumAtoms(ht);
+		result.setMinMax(this.minmax);
+		return result;
+	}
+
+	int setGlobal(Double v){
+		
+		if (rel.arity != 0){
+			throw new RuntimeException("setGlobal applied to relation of arity >0");
+		}
+
+		int[] key = new int[0];
+		if (numAtoms.containsKey(key) && numAtoms.get(key)==v)
+			return 1;
+		
+		numAtoms  = new TreeMap<int[], Double>(new IntArrayComparator());
+		numAtoms.put(key,v);
+		
+		return -1;
+	}
+
+
+	void setNumAtoms(TreeMap<int[], Double> ht){
+		numAtoms = ht;
+		updateMinMax();
+	}
+
+	void setMinMax(double[] mm){
+		minmax[0]=mm[0];
+		minmax[1]=mm[1];
+	}
+	
+	void add(OneNumRelData onrd){
+		if (! this.rel().equals(onrd.rel()))
+			System.out.println("Warning: adding incompatible relation data in OneNumRelData");
+		
+
+//		for (Enumeration<int[]> onrdkeys = onrd.getKeys(); onrdkeys.hasMoreElements();){
+//			int[] k=onrdkeys.nextElement();
+//			numAtoms.put(k, onrd.valueOf(k));
+//			addToIndex(k,numAtomsIndex);
+//		}
+		for (int[] k: onrd.getKeys()) {
+			numAtoms.put(k, onrd.valueOf(k));
+			addToIndex(k,numAtomsIndex);
+		}
+	}
+	
+	void add(int[][] tuples, Double v){
+		for (int i=0;i<tuples.length;i++){
+			add(tuples[i],v);
+		}
+	}
+
+	/* adds tuple; 
+	 * Returns -1 if tuple was already there, otherwise 1
+	 */
+	public int add(int[] tuple, Double v)
+	{
+		if (rel.getArity()==0){
+			return setGlobal(v);
+		}
+
+		if (!numAtoms.containsKey(tuple) ) {
+			numAtoms.put(tuple, v);
+			addToIndex(tuple,numAtomsIndex);
+			updateMinMax(v,true);
+			return 1;
+		}
+		else if(numAtoms.containsKey(tuple) && numAtoms.get(tuple) == v){
+			return 1;
+		}
+		else if(numAtoms.containsKey(tuple) && !(numAtoms.get(tuple) == v)){
+			double oldval = numAtoms.get(tuple);
+			numAtoms.remove(tuple);	
+			updateMinMax(oldval,false);					
+			numAtoms.put(tuple, v);
+			addToIndex(tuple,numAtomsIndex);
+			updateMinMax(v,true);
+			return 1;
+		}
+		return 0;
+	}
+
+
+	/** Returns all the atoms in hashtable as 
+	 * a vector of int[]. Objects are represented by
+	 * their internal index
+	 * 
+	 */
+	public TreeSet<int[]> allTrue(){
+
+		TreeSet<int[]> result = new TreeSet<int[]>(new IntArrayComparator());
+
+		for (int[] k: numAtoms.keySet())
+			result.add(k);
+		return result;
+	}
+	
+	public TreeSet<int[]> allTrue(String[] args){
+		
+		return this.allTrue(args, numAtomsIndex);
+	}
+
+	
+
+	
+	public Vector<String[]> allTrue(RelStruc A){
+		Vector<String[]> result = new Vector<String[]>();
+
+		for (int[] k: numAtoms.keySet())
+			result.add(A.namesAtAsArray(k));
+		return result;
+	}
+	
+
+	
+	public double[] minMax(){
+		return minmax.clone();
+	}
+	
+	private void updateMinMax(){
+		if (numAtoms.size()==0){
+			minmax[0]=Double.NaN;
+			minmax[1]=Double.NaN;
+		}
+		else {
+			minmax[0]=Double.MAX_VALUE;
+			minmax[1]=Double.MIN_VALUE;
+//			for(Enumeration<Double>  e = numAtoms.elements(); e.hasMoreElements();)
+//			{
+//				Double nextval = e.nextElement();
+//				minmax[0]=Math.min(minmax[0], nextval);
+//				minmax[1]=Math.max(minmax[1], nextval);
+//			}
+			for (double v: numAtoms.values()) {
+				minmax[0]=Math.min(minmax[0], v);
+				minmax[1]=Math.max(minmax[1], v);
+			}
+				
+		}
+	}
+
+	private void updateMinMax(double v, boolean addition){
+		if (addition == true){ // value v is added
+			if (!Double.isNaN(minmax[0]))
+				minmax[0]=Math.min(minmax[0], v);
+			else minmax[0]=v;
+			if (!Double.isNaN(minmax[1]))
+				minmax[1]=Math.max(minmax[1], v);
+			else minmax[1]=v;
+		}
+		else // value v is deleted
+			if (minmax[0]==v || minmax[1]== v)
+				updateMinMax();
+	}
+
+	/** Returns all the atoms in hashtable that have values greater than a value v as 
+	 * a vector of int[]. Objects are represented by
+	 * their internal index
+	 * 
+	 */
+	public Vector<int[]> greaterThan(Double v){
+
+		Vector<int[]> result = new Vector<int[]>();
+
+		for (int[] k: numAtoms.keySet()) {
+			if (numAtoms.get(k)>v)
+				result.add(k);
+		}
+		return result;
+
+	}
+	/** Returns all the atoms in hashtable that have lower greater than a value v as 
+	 * a vector of int[]. Objects are represented by
+	 * their internal index
+	 * 
+	 */
+	public Vector<int[]> lowerThan(Double v){
+
+		Vector<int[]> result = new Vector<int[]>();
+
+		for (int[] k: numAtoms.keySet()) {
+			if (numAtoms.get(k)<v)
+				result.add(k);
+		}
+		return result;
+	}
+
+	/** Returns all the atoms in hashtable that have values equal to a value v as 
+	 * a vector of int[]. Objects are represented by
+	 * their internal index
+	 * 
+	 */	
+	public Vector<int[]> equals(Double v){
+
+		Vector<int[]> result = new Vector<int[]>();
+
+		for (int[] k: numAtoms.keySet()) {
+			if (numAtoms.get(k)==v)
+				result.add(k);
+		}
+		return result;
+	}
+	public int numOfNumAtoms(){
+		return numAtoms.size();
+	}
+
+	/*
+	 * Returns all the atoms for which numAtoms contains
+	 * no value. d is the domainsize, i.e.
+	 * the maximal index of an object to be considered.
+	 */	 
+
+	public Vector<int[]>  allUnInstantiated(int d){
+
+		Vector<int[]>  result = new Vector<int[]> ();
+		int[] nextatom;
+		for (int i=0;i< MyMathOps.intPow(d,rel.getArity());i++){
+			nextatom = rbnutilities.indexToTuple(i,rel.getArity(),d);
+			if (!numAtoms.containsKey(nextatom) )
+				result.add(nextatom);
+		}
+		return result;
+	}
+
+
+
+	/** Delete all atoms containing a 
+	 * @param a
+	 */
+	public void delete(int a){
+		this.delete(a,numAtomsIndex, numAtoms);
+	}
+
+	public void delete(int[] tuple)
+	{
+		
+		if(numAtoms.containsKey(tuple)){
+			double value = numAtoms.get(tuple);
+			numAtoms.remove(tuple);
+			updateMinMax(value,false);
+		}
+	}
+
+
+	public void delete(int[][] tuples)
+	{
+		for (int i=0;i<tuples.length;i++){
+			delete(tuples[i]);
+		}
+
+	}
+
+
+	public String printAsString(RelStruc A, String pref){
+		/* pref is a string prefixed to every result line
+		 * used for example to prefix the gnuplot comment symbol
+		 * when result is written into a logfile used for plotting
+		 */
+		String result = "";
+
+		for (int [] k: numAtoms.keySet()) {
+			result = result + pref +  rel.name.name
+					+ A.namesAt(k)+ numAtoms.get(k)
+					+ '\n';
+		}
+		return result;
+	}
+
+	int truthValueOf(int[] tuple)
+	{
+		if (rel.arity ==0){
+			if (numAtoms.size() > 0){
+				return 1;
+			}
+			else{
+				return -1;
+			}
+		}
+		else {
+			int result = -1;
+			
+			if (numAtoms.containsKey(tuple)) result = 1;
+			if (result == -1 && defaultval.equals(0.0)){
+				result =0;
+			}
+			return result;
+		}
+	}
+
+	public double valueOf(int[] key){
+		if (numAtoms.containsKey(key))
+			return numAtoms.get(key);
+		else {
+			if (defaultval != "?")
+				return Double.valueOf(defaultval);
+		}
+
+		return Double.NaN;
+
+	}
+
+	
+	public boolean isEmpty(){
+		if (numAtoms.size()>0 ) return false;
+		else return true;
+	}
+
+	/**Returns the binary tuples from the specified node to some other node
+	 *This method is usable ONLY with binary relations
+	 */
+	public Vector<int[]> getBinDirs(int node){
+		return getBinDirs(node,numAtomsIndex);
+	}
+
+	public void addRelData(Element el, RelStruc struc){
+
+		for (int[] k: numAtoms.keySet()) {
+			Double value = numAtoms.get(k);
+			Element dl = el.addElement("d");
+			dl.addAttribute("rel", rel.name.name);
+			dl.addAttribute("args", struc.namesAt(k));
+			dl.addAttribute("val", value.toString());
+		}
+	}
+
+
+	//shared
+	/**
+	 * Replaces all arguments b of numAtoms 
+	 * by b-1 if b>a (needed after the deletion of node with index a from
+	 * the underlying SparseRelStruc)
+	 * @param a
+	 */
+	public void shiftArgs(int a){
+		//int[] currtuple;
+		int[] oldcurrtuple;
+		Vector<int[]> tuplesforremoval = new Vector<int[]>();
+		Vector<int[]> tuplesforinsertion = new Vector<int[]>();
+		Vector<Double> valuesforinsertion = new Vector<Double>();
+		
+		if (rel.arity != 0){
+			for (int[] currtuple: numAtoms.keySet()) {
+				Double value = numAtoms.get(currtuple);
+
+				oldcurrtuple = (int[])currtuple.clone();
+				rbnutilities.arrayShiftArgs(currtuple,a);
+				if(rbnutilities.arrayCompare(oldcurrtuple, currtuple) !=0){
+					tuplesforremoval.add(oldcurrtuple);
+					tuplesforinsertion.add(currtuple);	
+					valuesforinsertion.add(value);
+				}
+			}
+			for(int i=0;i <tuplesforremoval.size();i++ ){
+				numAtoms.remove(tuplesforremoval.elementAt(i));
+				removeFromIndex(tuplesforremoval.elementAt(i), numAtomsIndex); 
+			}
+			for(int i=0;i <tuplesforinsertion.size();i++ ){
+				numAtoms.put(tuplesforinsertion.elementAt(i), valuesforinsertion.elementAt(i));
+				addToIndex(tuplesforinsertion.elementAt(i), numAtomsIndex); 
+			}
+		}
+	}
+	
+	public Set<int[]> getKeys(){
+		return numAtoms.keySet();
+	}
+	
+
+	
+	/* Resets values of all atoms in numAtoms to random values */
+	public void setRandom(double scale){
+		TreeMap<int[], Double> newht = new TreeMap<int[],Double>(new IntArrayComparator());
+
+
+		for (int[] k: numAtoms.keySet()) {
+			newht.put(k, randomGenerators.getRandom(((NumRel)rel).minval(),((NumRel)rel).maxval(),scale));
+		}
+		setNumAtoms(newht);
+	}
+	
+	/* Resets value for the atom with key args to random value */
+	public void setRandom(int[] args, double scale){
+		numAtoms.remove(args);
+		numAtoms.put(args,randomGenerators.getRandom(((NumRel)rel).minval(),((NumRel)rel).maxval(),scale) );
+	}
+	
+	
+	 public OneNumRelData[] randomSplit(int numfolds, RelStruc rs){
+		 OneNumRelData[] result = new OneNumRelData[numfolds];
+		 
+		 /* Could not construct an array of TreeSet<int[]> ! 
+		  * Therefore vector, even though length is known to
+		  * be numfolds
+		  */
+		 Vector<TreeMap<int[],Double>> numats = new Vector<TreeMap<int[],Double>>();	
+		 for (int i=0;i<numfolds;i++)
+			 numats.add(new TreeMap<int[],Double>(new IntArrayComparator()));
+		 
+		 for (int[] k: numAtoms.keySet())
+			 numats.elementAt(randomGenerators.randInt(0, numfolds-1)).put(k,numAtoms.get(k));
+
+		 for (int i=0;i<numfolds;i++){
+			 result[i] = new OneNumRelData((NumRel)this.rel,this.dv(),numats.elementAt(i));
+		 }
+
+		 return result;
+	 }
+
+
+
+	 public void print(){
+		 System.out.println("Relation: " + rel.name());
+
+		 for (int[] k: numAtoms.keySet())
+			 System.out.println("key " + k + " value: " + numAtoms.get(k));
+	 }
+}
