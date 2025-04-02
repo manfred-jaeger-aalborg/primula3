@@ -166,7 +166,7 @@ public class SettingsMAP extends JFrame implements ActionListener, ItemListener,
 		if (icon.getImageLoadStatus() == MediaTracker.COMPLETE)
 			this.setIconImage(icon.getImage());
 		this.setTitle("MAP Settings");
-		this.setSize(350, 500);
+		this.setSize(550, 700);
 		this.setVisible(true);
 	}
 

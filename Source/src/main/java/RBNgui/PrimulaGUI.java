@@ -169,7 +169,7 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
      * @uml.property  name="rbnfilename"
      * @uml.associationEnd  multiplicity="(1 1)"
      */
-    private JTextField rbnfilename        = new JTextField(15);
+    JTextField rbnfilename        = new JTextField(15);
     /**
      * @uml.property  name="bnoutfilename"
      * @uml.associationEnd  multiplicity="(1 1)"
@@ -806,7 +806,7 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
                     datasrcfilename.setText("");
                     Rel.resetTheColorCounters();
                     primula.loadSparseRelFile(primula.rdeffile);
-                    datasrcfilename.setText(primula.srsfile.getName());
+                    datasrcfilename.setText(primula.rdeffile.getName());
 
                     if(primula.isEvModuleOpen)
                         evidenceModuleGUI.newElementNames();
@@ -831,15 +831,8 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
             int value = relmodelFileChooser.showDialog(this, "Load");
             if (value == JFileChooser.APPROVE_OPTION) {
                 File selectedFile = relmodelFileChooser.getSelectedFile();
-                if (myFilterRBN.accept(selectedFile)) {
-                    if (primula.instasosd.isEmpty() && primula.queryatoms.isEmpty()) {
-                        rbnfilename.setText(primula.rbnfile.getName());
-                        Rel.resetTheColorCounters();
-                        if (primula.isEvModuleOpen)
-                            evidenceModuleGUI.updateRBNRelations();
-                    }
+                if (myFilterRBN.accept(selectedFile))
                     primula.loadRBNFunction(selectedFile);
-                }
                 else if (myFilterMLN.accept(selectedFile)){
                     File mlnFile = selectedFile;
                     relmodelFileChooser.resetChoosableFileFilters();
@@ -1225,7 +1218,7 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
         }
         PrimulaGUI win = new PrimulaGUI(new Primula());
 //		SamiamManager.centerWindow( win );
-        win.loadDefaults();
+//        win.loadDefaults();
 		win.show();
 
 

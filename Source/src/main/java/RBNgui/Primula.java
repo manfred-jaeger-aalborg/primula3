@@ -357,8 +357,36 @@ public class Primula {
 
 	//loads the rbn file
 	public void loadRBNFunction(File input_file){
-		rbn = new RBN(input_file, this.sig);
-		rbnfile = input_file;
+		if(instasosd.isEmpty() && queryatoms.isEmpty()){
+			rbn = new RBN(input_file, this.sig);
+			rbnfile = input_file;
+			if (getPrimulaGUI() != null)
+				getPrimulaGUI().rbnfilename.setText(rbnfile.getName());
+			Rel.resetTheColorCounters();
+			if(isEvModuleOpen)
+				evidenceModule.getInferenceModuleGUI().updateRBNRelations();
+		}
+		else{
+			try{
+				rbn = new RBN(input_file, this.sig);
+				rbnfile = input_file;
+				if (getPrimulaGUI() != null)
+					getPrimulaGUI().rbnfilename.setText(rbnfile.getPath());
+			}catch (Exception ex){
+				rbn = null;
+				rbnfile = null;
+				if (getPrimulaGUI() != null) {
+					getPrimulaGUI().rbnfilename.setText("");
+					getPrimulaGUI().showMessage(ex.toString());
+				}
+			}
+			if(isEvModuleOpen)
+				evidenceModule.getInferenceModuleGUI().updateRBNRelations();
+		}
+
+
+//		rbn = new RBN(input_file, this.sig);
+//		rbnfile = input_file;
 		instasosd.init(rbn);
 		/* extract rbn parameters */
 		this.rbnparameters = rbn.parameters();

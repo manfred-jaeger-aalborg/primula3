@@ -18,7 +18,7 @@ public class MapThread extends GGThread {
 	MapVals mapprobs;
 	boolean running;
     private GnnPy gnnPy;
-    private final boolean gnnIntegration;
+//    private final boolean gnnIntegration;
 	private Hashtable<Rel,int[]> bestMapVals;
 	private double[] bestLikelihood;
 
@@ -33,7 +33,7 @@ public class MapThread extends GGThread {
 		if (infmodule.getInferenceModuleGUI() != null)
 			mapprobs.addObserver(infmodule.getInferenceModuleGUI());
 
-        this.gnnIntegration = this.checkGnnRel(this.myprimula.getRBN());
+//        this.gnnIntegration = this.checkGnnRel(this.myprimula.getRBN());
         this.isSampling = false;
 	}
 
@@ -79,44 +79,46 @@ public class MapThread extends GGThread {
 		while (running && ((maxrestarts == -1) || (restarts <= maxrestarts))) {
 //			PrintWriter writer = null;
 			//				writer = new PrintWriter("/Users/lz50rg/Dev/water-hawqs/results/txt_graph_" + Experiments.Water.RiverPollution.EXPNUM + "_" + restarts + ".txt", "UTF-8");
-//				newll = gg.mapInference(this);
-//				writer.println("Restart: " + restarts);
-//				writer.println("logll" + newll);
-			if (!Double.isNaN(newll)) {
-				if (newll > oldll) {
-					oldll = newll;
-					newmapvals = gg.getMapVals();
-					bestMapVals = newmapvals;
-					bestLikelihood = new double[]{newll};
-					mapprobs.setMVs(newmapvals);
-					mapprobs.setLL(String.valueOf(oldll));
-					if (gg.parameters().size() > 0)
-						myLearnModule.setParameterValues(gg.getParameters());
-					if (gnnPy != null) {
-						xDict = gnnPy.getCurrentXdict();
-						edgeDict = gnnPy.getCurrentEdgeDict();
+			try {
+				newll = gg.mapInference(this);
+				if (!Double.isNaN(newll)) {
+					if (newll > oldll) {
+						oldll = newll;
+						newmapvals = gg.getMapVals();
+						bestMapVals = newmapvals;
+						bestLikelihood = new double[]{newll};
+						mapprobs.setMVs(newmapvals);
+						mapprobs.setLL(String.valueOf(oldll));
+						if (gg.parameters().size() > 0)
+							myLearnModule.setParameterValues(gg.getParameters());
+						if (gnnPy != null) {
+							xDict = gnnPy.getCurrentXdict();
+							edgeDict = gnnPy.getCurrentEdgeDict();
+						}
+						mapprobs.setRestarts(restarts);
+						mapprobs.notifyObservers();
+//						writer.println("Restart: " + restarts);
+//						writer.println("logll" + newll);
+						OneStrucData result = new OneStrucData();
+						result.setParentRelStruc(myprimula.getRels());
+						OneStrucData onsd = new OneStrucData(myprimula.getInstantiation());
+						for (Rel key : bestMapVals.keySet()) {
+							GroundAtomList gal = gg.mapatoms(key);
+							for (int i = 0; i < gal.size(); i++) {
+//								writer.println(gal.atomAt(i).args()[0] + " : " + bestMapVals.get(key)[i]);
+								result.add(gal.atomAt(i), bestMapVals.get(key)[i], "?");
+							}
+						}
+						onsd.add(result);
+//				        onsd.saveToRDEF(new File("/Users/lz50rg/Dev/water-hawqs/results/redef_graph_" + Experiments.Water.RiverPollution.EXPNUM + "_" + restarts + ".rdef"), myprimula.getRels());
+//						writer.close();
+						restarts++;
 					}
-				}
-			} else
-				System.out.println("MAP search aborted");
-
-			mapprobs.setRestarts(restarts);
-			mapprobs.notifyObservers();
-
-			OneStrucData result = new OneStrucData();
-			result.setParentRelStruc(myprimula.getRels());
-			OneStrucData onsd = new OneStrucData(myprimula.getInstantiation());
-			for (Rel key : bestMapVals.keySet()) {
-				GroundAtomList gal = gg.mapatoms(key);
-				for (int i = 0; i < gal.size(); i++) {
-//					writer.println(gal.atomAt(i).args()[0] + " : " + bestMapVals.get(key)[i]);
-					result.add(gal.atomAt(i), bestMapVals.get(key)[i], "?");
-				}
+				} else
+					System.out.println("MAP search aborted");
+			} catch (RBNNaNException e) {
+				throw new RuntimeException(e);
 			}
-			onsd.add(result);
-//				onsd.saveToRDEF(new File("/Users/lz50rg/Dev/water-hawqs/results/redef_graph_" + Experiments.Water.RiverPollution.EXPNUM + "_" + restarts + ".rdef"), myprimula.getRels());
-//			writer.close();
-			restarts++;
 		}
 
 		System.out.println("Best log-likelihood found: " + oldll);
@@ -140,9 +142,9 @@ public class MapThread extends GGThread {
 		this.running = r;
 	}
 
-	public boolean isGnnIntegration() {
-		return gnnIntegration;
-	}
+//	public boolean isGnnIntegration() {
+//		return gnnIntegration;
+//	}
 
 	private boolean checkGnnRel(RBN rbn) {
 		for(int i=0; i<rbn.prelements().length; i++) {

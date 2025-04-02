@@ -52,6 +52,7 @@ public class CatGnn extends CPModel implements CPMGnn {
     private String gnn_inference;
     private int numLayers;
     private TorchModelWrapper torchModel;
+    private Vector<String> freeVals;
 
     public CatGnn(String argument, String gnnId, int numLayers, int numvals, ArrayList input_attr, ArrayList edge_attr, String gnn_inference, boolean oneHotEncoding) {
         this.argument = argument;
@@ -66,9 +67,10 @@ public class CatGnn extends CPModel implements CPMGnn {
         if (this.gnnPy == null)
             savedData = false;
     }
-    public CatGnn(String moduleName, String configModelPath, Vector<String> freeVals, int numVals, ArrayList<Pair<BoolRel, ArrayList<Rel>>> inputs) {
+    public CatGnn(String moduleName, String configModelPath, Vector<String> freeVals, int numVals, ArrayList<Pair<BoolRel, ArrayList<Rel>>> inputs, boolean withGnnPy) {
         this.gnnId = moduleName;
         this.argument = "";
+        this.freeVals = freeVals;
         if (!freeVals.isEmpty())
             this.argument = freeVals.get(0);
 
@@ -80,10 +82,11 @@ public class CatGnn extends CPModel implements CPMGnn {
         this.oneHotEncoding = oneHotEncoding; // this for now it is always true, keep this as default and remove it??
         this.gnn_inference = gnn_inference; // this can be inferred by looking at the RBN arguments, no arguments means graph classification
 
-        this.gnnPy = new GnnPy(this, moduleName, configModelPath);
+        if (withGnnPy)
+            this.gnnPy = new GnnPy(this, moduleName, configModelPath);
 
-        if (this.gnnPy == null) // TODO REDO THIS SAVE DATA!!
-            savedData = false;
+//        if (this.gnnPy == null) // TODO REDO THIS SAVE DATA!!
+//            savedData = false;
     }
     public CatGnn(String argument, GnnPy gnnpy) {
         this.argument = argument;
@@ -156,46 +159,41 @@ public class CatGnn extends CPModel implements CPMGnn {
 
     @Override
     public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone) throws RBNCompatibilityException {
-//        System.out.println("makeParentVec code 2");
-        // use parentRels to obtain the parents and see thorugh the arguments which is one that is not ground and add to result
-
         Vector<GroundAtom> result = new Vector<GroundAtom>();
-        for (Pair<BoolRel, ArrayList<Rel>> pair : getGnnInputs()) {
-            ArrayList<Rel> pfargs = pair.getSecond();
-            for (Rel pfargRel : pfargs) {
-                if (!pfargRel.ispredefined()) {
-                    try {
-                        int[][] mat = A.allTypedTuples(pfargRel.getTypes());
-                        for (int k = 0; k < mat.length; k++) {
-                            // we add as children only atoms that are influenced up to a max layer
-                            Set<Integer> allReached = null;
-                            if (gnnPy.getTorchModel().getNumLayers() > 0)
-                                allReached = rbnutilities.getNodesInDepth(A, gnnPy.getTorchModel().getNumLayers(), mat[k][0], this);
+        if (gnnPy.getTorchModel().getNumLayers() > 0) {
+            for (Pair<BoolRel, ArrayList<Rel>> pair : getGnnInputs()) {
+                ArrayList<Rel> pfargs = pair.getSecond();
+                for (Rel pfargRel : pfargs) {
+                    if (!pfargRel.ispredefined()) {
+                        try {
+                            int[][] mat = A.allTypedTuples(pfargRel.getTypes());
+                            for (int k = 0; k < mat.length; k++) {
+                                // we add as children only atoms that are influenced up to a max layer
+                                Set<Integer> allReached = null;
+                                if (gnnPy.getTorchModel().getNumLayers() > 0)
+                                    allReached = rbnutilities.getNodesInDepth(A, gnnPy.getTorchModel().getNumLayers(), mat[k][0], this);
 
-//                            if (gnnPy.getTorchModel().getNumLayers() > 0 && allReached != null && allReached.contains(Integer.parseInt(this.getArgument()))) {
-//                                result.add(new GroundAtom(, mat[k]));
-//                            }
+                                if (gnnPy.getTorchModel().getNumLayers() > 0 && allReached != null && allReached.contains(Integer.parseInt(this.getArgument())))
+                                    result.add(new GroundAtom(pfargRel, mat[k]));
+                            }
+                        } catch (RBNIllegalArgumentException e) {
+                            throw new RuntimeException(e);
                         }
-                    } catch (RBNIllegalArgumentException e) {
-                        throw new RuntimeException(e);
                     }
                 }
             }
-        }
-
-        System.out.println(result);
-
-        for (Rel parent : this.parentRels()) {
-            // return all tuples within a certain type
-            try {
-                int[][] mat = A.allTypedTuples(parent.getTypes());
-                for (int i = 0; i < mat.length; i++) {
-                    if (inst.truthValueOf(parent, mat[i]) == -1) {
-                        result.add(new GroundAtom(parent, mat[i]));
+        } else { // else do not optimize, all elements are parent
+            for (Rel parent : this.parentRels()) {
+                try {
+                    int[][] mat = A.allTypedTuples(parent.getTypes());
+                    for (int i = 0; i < mat.length; i++) {
+                        if (inst.truthValueOf(parent, mat[i]) == -1) {
+                            result.add(new GroundAtom(parent, mat[i]));
+                        }
                     }
+                } catch (RBNIllegalArgumentException e) {
+                    throw new RuntimeException(e);
                 }
-            } catch (RBNIllegalArgumentException e) {
-                throw new RuntimeException(e);
             }
         }
         return result;
@@ -227,11 +225,12 @@ public class CatGnn extends CPModel implements CPMGnn {
     @Override
     public CPModel substitute(String[] vars, int[] args) {
 //        System.out.println("substitute code 1");
-        CatGnn result = this;
+        CatGnn result = new CatGnn(this.gnnId, this.configModelPath, this.freeVals, this.numvals, this.gnnInputs, false);
+        result.setGnnPy(this.getGnnPy());
         if (vars.length == 0)
             result.argument = Arrays.toString(new String[0]);
         else
-            result.argument = rbnutilities.array_substitute(new String[]{argument}, vars, args)[0];
+            result.argument = rbnutilities.array_substitute(vars, new String[]{argument}, args)[0];
 
         if (this.alias != null)
             result.setAlias(this.alias.substitute(vars, args));

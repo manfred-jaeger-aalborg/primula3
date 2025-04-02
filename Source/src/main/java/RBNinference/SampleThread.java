@@ -55,7 +55,7 @@ public class SampleThread extends Thread{
 	// the jep object then will be shared across all the probforms that need it
 	// probably only one jep object can be created at time --> close it when it is not needed anymore
 	private GnnPy gnnPy;
-	private final boolean gnnIntegration;
+	private boolean gnnIntegration;
 	private String modelPath;
 	private String scriptPath;
 	private String scriptName;
@@ -81,7 +81,7 @@ public class SampleThread extends Thread{
 			sprobs.addObserver(infmodule.getInferenceModuleGUI());
 		pause = false;
 //		test = new double[queryAtomSize];
-        this.gnnIntegration = this.pfn.checkGnnRel();
+//        this.gnnIntegration = this.pfn.checkGnnRel();
 	}
 
 	public void run()
@@ -89,21 +89,21 @@ public class SampleThread extends Thread{
 		// if we use the python-java interface we create the object
 		// this variable needs to be defined apriori
 		// the jep object needs to be in the same thread
-		if (this.gnnIntegration) {
-			try {
-				this.gnnPy = new GnnPy(scriptPath, scriptName, pythonHome);
-				pfn.setGnnPy(this.gnnPy);
-
-				this.gnnPy = new GnnPy(inferenceModule.getPrimula());
-				pfn.setGnnPy(this.gnnPy);
-				gnnPy.load_gnn_set(inferenceModule.getPrimula().getLoadGnnSet());
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
-		else {
-			this.gnnPy = null;
-		}
+//		if (this.gnnIntegration) {
+//			try {
+//				this.gnnPy = new GnnPy(scriptPath, scriptName, pythonHome);
+//				pfn.setGnnPy(this.gnnPy);
+//
+//				this.gnnPy = new GnnPy(inferenceModule.getPrimula());
+//				pfn.setGnnPy(this.gnnPy);
+//				gnnPy.load_gnn_set(inferenceModule.getPrimula().getLoadGnnSet());
+//			} catch (IOException e) {
+//				throw new RuntimeException(e);
+//			}
+//		}
+//		else {
+//			this.gnnPy = null;
+//		}
 
 		time = System.currentTimeMillis();
 		while(running){

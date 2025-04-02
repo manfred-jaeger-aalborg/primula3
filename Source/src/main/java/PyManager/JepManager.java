@@ -58,6 +58,9 @@ public class JepManager {
                 if (pythonFile.exists() && pythonFile.canExecute()) {
                     return pythonPath;
                 }
+            } else {
+                System.err.println("Missing variable PYTHON_PRIMULA!");
+                throw new RuntimeException();
             }
         } catch (Exception e) {
             System.err.println("Unexpected error while detecting Python executable: " + e.getMessage());
