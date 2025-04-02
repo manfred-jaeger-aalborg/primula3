@@ -21,8 +21,8 @@ public class GGCatGnnNode extends GGCPMNode implements GGCPMGnn {
     }
 
     @Override
-    public TreeMap<String,double[]> evaluateGradient(Integer sno) throws RBNNaNException {
-        throw new UnsupportedOperationException("Unimplemented method 'evaluatePartDeriv'");
+    public Gradient evaluateGradient(Integer sno) throws RBNNaNException {
+        throw new UnsupportedOperationException("Unimplemented method 'evaluateGradient in GGCATGnnNode'");
     }
 
     // @Override

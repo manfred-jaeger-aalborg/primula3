@@ -101,8 +101,8 @@ public class GGAtomSumNode extends GGAtomNode{
 			return values_for_samples[sno];
 	}
 	
-	public TreeMap<String,double[]> evaluateGradient(Integer sno) throws RBNNaNException {
-		return new TreeMap<String,double[]>();
+	public Gradient evaluateGradient(Integer sno)  {
+		return gradient_for_samples.get(sno);
 	}
 
 	@Override

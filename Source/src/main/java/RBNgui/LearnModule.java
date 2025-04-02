@@ -398,13 +398,13 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 		restarts = 1; /*-1 is for open-ended restarts */
 		subsamples = 100;
 		numblocks = 1;
-		numbatches =2;
+		numbatches =10;
 		splitmode = RelData.SPLIT_BY_DOMAIN;
 		dampingfac =0.99;
-		numchains = 2;
-		windowsize = 2;
+		numchains = 10;
+		windowsize = 20;
 		maxfails = 5;
-		maxiterations = 20;
+		maxiterations = 200;
 		linedistancethresh = 0.0001;
 //		linelikelihoodthresh = 0.001;
 		likelihoodwindow = 5;
@@ -423,7 +423,7 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 		usememoize=true;
 		
 		//selectednumrels = new Vector<String>();
-		type_of_gradient=ProbForm.RETURN_ARRAY;
+		type_of_gradient=ProbForm.RETURN_SPARSE;
 		
 		adagradfade = 0.5;
 		adagradepsilon = 1.0E-10;
@@ -1116,7 +1116,7 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 				parametertable,
 				textnumrestarts,
 				this);
-		lthread.start(); 
+		lthread.start();
 	}
 	
 	public boolean ggverbose() {

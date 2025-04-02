@@ -1300,6 +1300,11 @@ public class InferenceModule implements GradientGraphOptions {
 		return 0;
 	}
 
+	@Override
+	public int getType_of_gradient() {
+		return 0;
+	}
+
 	public boolean learnverbose(){
 		return false;
 	}

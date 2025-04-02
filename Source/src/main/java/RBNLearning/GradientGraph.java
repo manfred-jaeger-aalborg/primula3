@@ -110,6 +110,10 @@ public abstract class GradientGraph{
 	protected CombFuncSum combFuncSum;
 	protected CombFuncProd combFuncProd;
 
+	/* A constant zero gradient that other objects can point to instead of creating their own
+          zero gradients.
+         */
+	public Gradient zerograd;
 
 	GGLikelihoodNode llnode;
 	Vector<GGAtomSumNode> sumindicators; /* All the indicators for atoms to be summed over */
@@ -206,6 +210,11 @@ public abstract class GradientGraph{
 		
 		loglikconstant = 0;
 		confusionconst=new double[4];
+
+		if (myggoptions.getType_of_gradient() == ProbForm.RETURN_ARRAY)
+			zerograd=new Gradient_Array(params);
+		if (myggoptions.getType_of_gradient() == ProbForm.RETURN_SPARSE)
+			zerograd = new Gradient_TreeMap(params);
 	}
 	
 	

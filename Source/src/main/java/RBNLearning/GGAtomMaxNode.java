@@ -227,8 +227,8 @@ private int highvalue;
 		return new double[] {Double.valueOf(currentInst)};
 	}
 
-	public TreeMap<String,double[]> evaluateGradient(Integer sno) throws RBNNaNException {
-		return new TreeMap<String,double[]>();
+	public Gradient evaluateGradient(Integer sno){
+		return gradient_for_samples.get(sno); // This will always be the 'empty' gradient
 	}
 
 	public void addMeToIndicators(GGCPMNode ggpfn){

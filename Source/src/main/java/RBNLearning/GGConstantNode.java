@@ -116,17 +116,22 @@ public class GGConstantNode extends GGCPMNode{
 //		}
 //	}
 
-	public TreeMap<String,double[]> evaluateGradient(Integer sno){
-		TreeMap<String,double[]> result = gradient_for_samples.get(0);
-		
-		if (result !=null)
-			return result; 
+	public Gradient evaluateGradient(Integer idx){
 
-		if (isUnknown){
-			result  = new TreeMap<String,double[]>();
-			result.put(paramname, new double[] {1.0});
-			gradient_for_samples.add(result); //No dependence on samples -- gradient_for_samples will always only contain this one element
-		}
+		if (!isUnknown)
+			return thisgg.zerograd;
+
+		if (is_evaluated_grad_for_samples[idx])
+			return gradient_for_samples.get(idx);
+
+		/* Much redundancy here, because the gradient always is the same
+		 */
+		Gradient result = gradient_for_samples.get(idx);
+		result.reset();
+
+		result.set_part_deriv(paramname, new double[] {1.0});
+
+		is_evaluated_grad_for_samples[idx] = true;
 		return result;
 	}
 

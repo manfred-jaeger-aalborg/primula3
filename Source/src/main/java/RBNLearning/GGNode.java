@@ -23,9 +23,9 @@
 
 package RBNLearning;
 
-import java.util.*;
+import RBNpackage.ProbForm;
 
-import RBNExceptions.*;
+import java.util.*;
 
 public abstract class GGNode implements Comparable<GGNode>{
 
@@ -86,8 +86,13 @@ public abstract class GGNode implements Comparable<GGNode>{
 	 * if this.depends_on_sample == false, then the dimension is
 	 * 1 
 	 */	
-	Boolean[] is_evaluated_for_samples;
-	
+	Boolean[] is_evaluated_val_for_samples;
+
+    /* Same for the evaluation of the gradient
+     */
+	Boolean[] is_evaluated_grad_for_samples;
+
+
 	/* For nodes depending on a sum node: evaluation relative 
 	 * to the the values in the sample with index sno.
 	 * 
@@ -125,7 +130,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 	 */
 
 	//TreeMap<String,Double[]>[] gradient_for_samples;
-	ArrayList<TreeMap<String,double[]>> gradient_for_samples;
+	ArrayList<Gradient> gradient_for_samples;
 
 
 	// The dimension of the output computed by this GGNode. isScalar = true iff outDim=1.
@@ -193,7 +198,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 //		return values_for_samples[sno];
 //	}
 
-	public TreeMap<String,double[]> gradient(Integer sno){
+	public Gradient gradient(Integer sno){
 		return gradient_for_samples.get(sno);
 	}
 
@@ -206,12 +211,12 @@ public abstract class GGNode implements Comparable<GGNode>{
 					resetValue(i);
 			}
 			else {
-				is_evaluated_for_samples[sno]=false;
+				is_evaluated_val_for_samples[sno]=false;
 				values_for_samples[sno] = null;
 			}
 		}
 		else {
-			is_evaluated_for_samples[0]=false;
+			is_evaluated_val_for_samples[0]=false;
 			values_for_samples[0] = null;
 		}
 	}
@@ -228,8 +233,8 @@ public abstract class GGNode implements Comparable<GGNode>{
 			else
 				idx = sno;
 		}
-		gradient_for_samples.remove(idx);
-		gradient_for_samples.add(idx,null);
+		gradient_for_samples.get(idx).reset();
+		is_evaluated_grad_for_samples[idx]=false;
 		
 	}
 
@@ -340,18 +345,24 @@ public abstract class GGNode implements Comparable<GGNode>{
 		else
 			dim =1;
 		values_for_samples = new double[dim][];
-		is_evaluated_for_samples = new Boolean[dim];
+		is_evaluated_val_for_samples = new Boolean[dim];
+		is_evaluated_grad_for_samples = new Boolean[dim];
 		for (int i=0;i<dim;i++) {
 			values_for_samples[i]=null;
-			is_evaluated_for_samples[i]=false; 
+			is_evaluated_val_for_samples[i]=false;
 		}
 		if (!valuesonly) { // Also need gradients
-			gradient_for_samples =  new ArrayList<TreeMap< String,double[]>>();
-			for (int i=0;i<dim;i++) {
-				gradient_for_samples.add(null);
+			gradient_for_samples = new ArrayList<Gradient>();
+
+				for (int i = 0; i < dim; i++) {
+					if (thisgg.myggoptions.getType_of_gradient() == ProbForm.RETURN_ARRAY)
+						gradient_for_samples.add(new Gradient_Array(thisgg.parameters));
+					if (thisgg.myggoptions.getType_of_gradient() == ProbForm.RETURN_SPARSE)
+						gradient_for_samples.add(new Gradient_TreeMap(thisgg.parameters));
+					is_evaluated_grad_for_samples[i] = false;
+				}
 			}
-			
-		}
+
 //		if (this.isScalar)
 //			values_for_samples = new Double[thisgg.numchains*thisgg.windowsize][1];
 //		else

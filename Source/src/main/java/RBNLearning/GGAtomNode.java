@@ -97,8 +97,8 @@ public abstract class GGAtomNode extends GGCPMNode{
 
 
 	
-	public Double[] evaluateGradient(Integer sno,String param){
-		return new Double[] {0.0};
+	public Gradient evaluateGradient(Integer sno){
+		return thisgg.zerograd;
 	}
 
 	public GroundAtom myatom(){

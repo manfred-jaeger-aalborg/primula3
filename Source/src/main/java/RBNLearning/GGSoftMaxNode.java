@@ -24,15 +24,10 @@
 package RBNLearning;
 
 import java.util.*;
-import java.io.*;
 
-import myio.StringOps;
 import RBNpackage.*;
-import RBNgui.*;
 import RBNExceptions.*;
 import RBNutilities.*;
-import RBNinference.*;
-
 
 
 /** In a GGSoftMaxNode the children vector has as many
@@ -134,9 +129,9 @@ public class GGSoftMaxNode extends GGCPMNode{
 				this.evaluate(i);
 			return null;
 		}			
-		if (this.depends_on_sample && is_evaluated_for_samples[sno]) 
+		if (this.depends_on_sample && is_evaluated_val_for_samples[sno])
 				return this.values_for_samples[sno];
-		if (!this.depends_on_sample && is_evaluated_for_samples[0])
+		if (!this.depends_on_sample && is_evaluated_val_for_samples[0])
 			return this.values_for_samples[0];
 
 		
@@ -155,11 +150,11 @@ public class GGSoftMaxNode extends GGCPMNode{
 		
 		if (this.depends_on_sample) {
 			values_for_samples[sno] = result;
-			is_evaluated_for_samples[sno]=true;
+			is_evaluated_val_for_samples[sno]=true;
 		}
 		else {
 			values_for_samples[0] = result;
-			is_evaluated_for_samples[0]=true;
+			is_evaluated_val_for_samples[0]=true;
 		}
 		return result;
 	}
@@ -174,7 +169,7 @@ public class GGSoftMaxNode extends GGCPMNode{
 //		System.out.println("GGSoftMaxNode.evaluateBounds is called but not implemented!");
 //	}
 
-	public TreeMap<String,double[]> evaluateGradient(Integer sno)
+	public Gradient evaluateGradient(Integer sno)
 			throws RBNNaNException
 	{
 
@@ -184,15 +179,15 @@ public class GGSoftMaxNode extends GGCPMNode{
 			return null;
 		}
 
-		int idx =0;
+		int idx=0;
 		if (this.depends_on_sample)
 			idx=sno;
 
-		TreeMap<String,double[]> result = gradient_for_samples.get(idx);
+		if (is_evaluated_grad_for_samples[idx])
+			return  gradient_for_samples.get(idx);
 
-		if (result !=null)
-			return result;
-
+		Gradient result = gradient_for_samples.get(idx);
+		result.reset();
 
 		double[] values = values_for_samples[idx];
 
@@ -202,7 +197,7 @@ public class GGSoftMaxNode extends GGCPMNode{
 			double[][] childpds = new double[children.size()][];
 			for (int i=0;i<children.size();i++) {
 				if (children.elementAt(i)!=null)
-					childpds[i]=children.elementAt(i).evaluateGradient(sno).get(param);
+					childpds[i]=children.elementAt(i).evaluateGradient(sno).get_part_deriv(param);
 			}
 
 			double[] partderiv = new double[this.outDim];
@@ -214,12 +209,8 @@ public class GGSoftMaxNode extends GGCPMNode{
 			for (int i=0;i<this.outDim;i++) {
 				partderiv[i]=values[i]*(childpds[i][0]-derivsum);
 			}
-			result.put(param, partderiv);
+			result.set_part_deriv(param, partderiv);
 		}
-
-
-		gradient_for_samples.remove(idx);
-		gradient_for_samples.add(idx,result);
 
 		//System.out.println("Gradient value (GGConvC): " + result);
 		return result;

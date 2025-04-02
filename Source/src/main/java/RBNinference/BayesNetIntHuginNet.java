@@ -118,7 +118,6 @@ public class BayesNetIntHuginNet implements BayesNetInt {
 
     public void addNode(SimpleBNNode node,int xoffset, int truthval){
         int[] pt = new int[2];
-        System.out.println(node.xcoord + " " + xoffset);
         pt[0] = scalex*node.xcoord + xoffset;
         pt[1] = scaley*(node.level+2);
         addNode(node,pt,truthval);
