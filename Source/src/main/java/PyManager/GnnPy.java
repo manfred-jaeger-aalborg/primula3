@@ -1020,7 +1020,7 @@ public class GnnPy {
             updateEdgeDict(GGedgeDict, cpm, ggcpmGnn);
         }
 
-        if (cpmGnn.getArgument().equals(""))
+        if (cpmGnn.getArgument().equals("[]") || cpmGnn.getArgument().equals(""))
             return inferModelHetero(-1, GGxDict, GGedgeDict, cpmGnn.getGnnId());
         else
             return inferModelHetero(Integer.parseInt(cpmGnn.getArgument()), GGxDict, GGedgeDict, cpmGnn.getGnnId());
