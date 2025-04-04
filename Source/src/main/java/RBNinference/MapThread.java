@@ -4,10 +4,12 @@ import java.io.*;
 import java.util.*;
 
 import PyManager.GnnPy;
+import PyManager.JepManager;
 import RBNExceptions.RBNNaNException;
 import RBNLearning.*;
 import RBNgui.*;
 import RBNpackage.*;
+import jep.SharedInterpreter;
 
 public class MapThread extends GGThread {
 	
@@ -39,17 +41,6 @@ public class MapThread extends GGThread {
 
 	public void run(){
         this.isSampling = true;
-//        if (this.gnnIntegration) {
-//            try {
-//                this.gnnPy = new GnnPy(myprimula, gg);
-//                gg.setGnnPy(this.gnnPy);
-//				gg.load_gnn_settings(myprimula.getLoadGnnSet());
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
-//        } else
-//            this.gnnPy = null;
-
 		running = true;
 		
 		/* Open a LearnModule to monitor parameter values, if
@@ -65,20 +56,15 @@ public class MapThread extends GGThread {
 			}
 		}
 
-		gg.setNumIterGreedyMap(myinfmodule.getNumIterGreedyMap());
-
 		Hashtable<Rel,int[]> newmapvals = new Hashtable<>();
-
-		Map<String, double[][]> xDict = new HashMap<>();
-		Map<String, ArrayList<ArrayList<Integer>>> edgeDict = new HashMap<>();
 		
 		int maxrestarts = myinfmodule.getMAPRestarts();
 		int restarts =1;
 		double oldll=Double.NEGATIVE_INFINITY;
 		double newll=0;
+		OneStrucData onsd = new OneStrucData(myprimula.getInstantiation());
+
 		while (running && ((maxrestarts == -1) || (restarts <= maxrestarts))) {
-//			PrintWriter writer = null;
-			//				writer = new PrintWriter("/Users/lz50rg/Dev/water-hawqs/results/txt_graph_" + Experiments.Water.RiverPollution.EXPNUM + "_" + restarts + ".txt", "UTF-8");
 			try {
 				newll = gg.mapInference(this);
 				if (!Double.isNaN(newll)) {
@@ -91,27 +77,20 @@ public class MapThread extends GGThread {
 						mapprobs.setLL(String.valueOf(oldll));
 						if (gg.parameters().size() > 0)
 							myLearnModule.setParameterValues(gg.getParameters());
-						if (gnnPy != null) {
-							xDict = gnnPy.getCurrentXdict();
-							edgeDict = gnnPy.getCurrentEdgeDict();
-						}
+
 						mapprobs.setRestarts(restarts);
 						mapprobs.notifyObservers();
-//						writer.println("Restart: " + restarts);
-//						writer.println("logll" + newll);
 						OneStrucData result = new OneStrucData();
 						result.setParentRelStruc(myprimula.getRels());
-						OneStrucData onsd = new OneStrucData(myprimula.getInstantiation());
+
 						for (Rel key : bestMapVals.keySet()) {
 							GroundAtomList gal = gg.mapatoms(key);
 							for (int i = 0; i < gal.size(); i++) {
-//								writer.println(gal.atomAt(i).args()[0] + " : " + bestMapVals.get(key)[i]);
 								result.add(gal.atomAt(i), bestMapVals.get(key)[i], "?");
 							}
 						}
+
 						onsd.add(result);
-//				        onsd.saveToRDEF(new File("/Users/lz50rg/Dev/water-hawqs/results/redef_graph_" + Experiments.Water.RiverPollution.EXPNUM + "_" + restarts + ".rdef"), myprimula.getRels());
-//						writer.close();
 						restarts++;
 					}
 				} else
@@ -123,35 +102,88 @@ public class MapThread extends GGThread {
 
 		System.out.println("Best log-likelihood found: " + oldll);
 
-		// path.pkl
-//		String path = "/Users/lz50rg/Dev/football/res.pkl";
-//		String path = "/Users/lz50rg/Dev/water-hawqs/map-results.pkl";
-//		if (gnnPy != null) {
-//			gnnPy.savePickleHetero(xDict, edgeDict, path);
-////			gnnPy.savePickleGraph(xDict, edgeDict, path);
-//		}
+		// save res as pickle
+		String path = "/Users/lz50rg/Dev/football/res.pkl";
+		// createInputs(onsd, path);
 
-//        if (this.gnnIntegration)
-//			this.gnnPy.closeInterpreter();
-
-		this.gnnPy = null;
         this.isSampling = false;
-    }
+	}
 
 	public void setRunning(boolean r){
 		this.running = r;
 	}
 
-//	public boolean isGnnIntegration() {
-//		return gnnIntegration;
-//	}
+	public void createInputs(OneStrucData a, String path) {
+		OneStrucData data = new OneStrucData(myprimula.getRels().getmydata().copy()); // only one copy per time
+		SparseRelStruc sampledRel = new SparseRelStruc(myprimula.getRels().getNames(), data, myprimula.getRels().getCoords(), myprimula.getRels().signature());
+		sampledRel.getmydata().add(a.copy());
 
-	private boolean checkGnnRel(RBN rbn) {
-		for(int i=0; i<rbn.prelements().length; i++) {
-			if (rbn.cpmod_prelements_At(i) instanceof CPMGnn)
-				return true;
+		for(int i=0; i<myprimula.getRBN().prelements().length; i++) {
+			if (myprimula.getRBN().cpmod_prelements_At(i) instanceof CPMGnn) {
+				CatGnn cpm = (CatGnn) myprimula.getRBN().cpmod_prelements_At(i);
+				Map<Rel, int[][]> nodesDict = GnnPy.constructNodesDict(cpm, myprimula.getRels());
+				Map<Integer, Integer> nodeMap = GnnPy.constructNodesDictMap(cpm, myprimula.getRels());
+
+				Vector<BoolRel> boolRels = sampledRel.getBoolBinaryRelations();
+				Map<String, double[][]> x_dict = GnnPy.inputAttrToDict(cpm, nodeMap, nodesDict, sampledRel);
+				Map<String, ArrayList<ArrayList<Integer>>> edge_dict = GnnPy.edgesToDict(boolRels, sampledRel, nodeMap);
+
+				savePickleGraph(x_dict, edge_dict, path);
+			}
 		}
-		return false;
+
+	}
+	public void savePickleHetero(Map<String, double[][]> xDict, Map<String, ArrayList<ArrayList<Integer>>> edgeDict, String path) {
+		SharedInterpreter interpreter = JepManager.getInterpreter(true);
+		interpreter.set("java_map_x", xDict);
+		interpreter.set("java_map_edge", edgeDict);
+
+		interpreter.exec(
+				"import pickle\n" +
+						"data_h = HeteroData()\n" +
+
+						"for key, value in java_map_x.items():\n" +
+						"    data_h[key].x = torch.as_tensor(value, dtype=torch.float32)\n" +
+
+						"for key, value in java_map_edge.items():\n" +
+						"    n_key = key.split('_to_')\n" + // here the key must have the form type_to_type
+						"    if len(value) > 0:\n" +
+						"        data_h[n_key[0], 'to', n_key[1]].edge_index = torch.as_tensor(value, dtype=torch.long)\n" +
+						"    else:\n" +
+						"        data_h[n_key[0], 'to', n_key[1]].edge_index = torch.empty((2, 0), dtype=torch.long)\n" +
+
+						"with open('" + path + "', 'wb') as f:\n" +
+						"    pickle.dump(data_h, f)\n"
+		);
+		System.out.println("Pickle written in: " + path);
+	}
+
+	public void savePickleGraph(Map<String, double[][]> xDict, Map<String, ArrayList<ArrayList<Integer>>> edgeDict, String path) {
+		SharedInterpreter interpreter = JepManager.getInterpreter(true);
+		interpreter.set("java_map_x", xDict);
+		interpreter.set("java_map_edge", edgeDict);
+
+		interpreter.exec(
+				"import pickle\n" +
+					"import torch\n" +
+					"from torch_geometric.data import Data\n" +
+					"data = Data()\n" +
+					"if len(java_map_x) > 0:\n" +
+					"    key = list(java_map_x.keys())[0]\n" +
+					"    data.x = torch.as_tensor(java_map_x[key], dtype=torch.float32)\n" +
+
+					"if len(java_map_edge) > 0:\n" +
+					"    key = list(java_map_edge.keys())[0]\n" +
+					"    value = java_map_edge[key]\n" +
+					"    if value and len(value) > 0 and len(value[0]) > 0:\n" +
+					"        data.edge_index = torch.as_tensor(value, dtype=torch.long)\n" +
+					"    else:\n" +
+					"        data.edge_index = torch.empty((2, 0), dtype=torch.long)\n" +
+					"\n" +
+					"with open('" + path + "', 'wb') as f:\n" +
+					"    pickle.dump(data, f)\n"
+		);
+		System.out.println("Pickle written in: " + path);
 	}
 
 	public void setGg(GradientGraphO gg) {

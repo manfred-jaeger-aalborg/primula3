@@ -351,6 +351,8 @@ public class Primula {
 				myprimulaGUI.showMessage(ex.toString());
 			}
 		}
+		if (getPrimulaGUI() != null)
+			getPrimulaGUI().getDatasrcfilename().setText(srsfile.getName());
 	}
 
 
@@ -361,7 +363,7 @@ public class Primula {
 			rbn = new RBN(input_file, this.sig);
 			rbnfile = input_file;
 			if (getPrimulaGUI() != null)
-				getPrimulaGUI().rbnfilename.setText(rbnfile.getName());
+				getPrimulaGUI().getRbnfilename().setText(rbnfile.getName());
 			Rel.resetTheColorCounters();
 			if(isEvModuleOpen)
 				evidenceModule.getInferenceModuleGUI().updateRBNRelations();
@@ -371,12 +373,12 @@ public class Primula {
 				rbn = new RBN(input_file, this.sig);
 				rbnfile = input_file;
 				if (getPrimulaGUI() != null)
-					getPrimulaGUI().rbnfilename.setText(rbnfile.getPath());
+					getPrimulaGUI().getRbnfilename().setText(rbnfile.getPath());
 			}catch (Exception ex){
 				rbn = null;
 				rbnfile = null;
 				if (getPrimulaGUI() != null) {
-					getPrimulaGUI().rbnfilename.setText("");
+					getPrimulaGUI().getRbnfilename().setText("");
 					getPrimulaGUI().showMessage(ex.toString());
 				}
 			}

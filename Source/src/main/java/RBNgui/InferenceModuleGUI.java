@@ -826,7 +826,7 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
         /** keith cascio 20060511 ... */
         SamiamManager.centerWindow( this );
         /** ... keith cascio */
-        inferenceModuleCore.mapSearchAlg = 3;
+        inferenceModuleCore.mapSearchAlg = 2;
     }
 
     public InferenceModuleGUI(InferenceModule evidenceModule) {

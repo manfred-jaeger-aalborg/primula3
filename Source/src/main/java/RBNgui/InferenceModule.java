@@ -286,7 +286,7 @@ public class InferenceModule implements GradientGraphOptions {
 	List<MapThread> threads;
 	int num_threads;
 	// set the Map Seach Algorithm used during map inference
-	protected int mapSearchAlg; // 0 standard, 1 greedy
+	protected int mapSearchAlg;
 	private int batchSearchSize;
 	private int sampleSizeScoring;
 	// the number of iteration for the greedy search algorithm

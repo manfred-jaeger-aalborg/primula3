@@ -6,6 +6,7 @@ import RBNgui.Bavaria;
 import RBNgui.InferenceModule;
 import RBNgui.Primula;
 import RBNpackage.*;
+import RBNutilities.Pair;
 import RBNutilities.rbnutilities;
 
 import java.io.File;
@@ -70,24 +71,21 @@ public class graph_class_yannick {
         CatRel catRelS =  new CatRel("s", 1, typeStringToArray("node",1), valStringToArray("s1,s2,s3,s4,s5"));
         BoolRel edgeRel = new BoolRel("edge", 2, typeStringToArray("node,node",2));
 
-        ArrayList<ArrayList<Rel>> attrs_rels = new ArrayList<>();
-        attrs_rels.add(
-                new ArrayList<Rel>(
-                        Arrays.asList(
-                                new CatRel("a", 1, typeStringToArray("node",1), valStringToArray("ball,player")),
-                                new CatRel("x", 1, typeStringToArray("node",1), valStringToArray("x1,x2,x3,x4,x5,x6,x7,x8,x9,x10")),
-                                new CatRel("y", 1, typeStringToArray("node",1), valStringToArray("y1,y2,y3,y4,y5,y6,y7,y8")),
-                                new CatRel("d", 1, typeStringToArray("node",1), valStringToArray("d1,d2,d3,d4,d5,d6,d7,d8")),
-                                new CatRel("s", 1, typeStringToArray("node",1), valStringToArray("s1,s2,s3,s4,s5"))
-                        )
+        ArrayList<Rel> attrs_rels = new ArrayList<Rel>(
+                Arrays.asList(
+                        new CatRel("a", 1, typeStringToArray("node",1), valStringToArray("ball,player")),
+                        new CatRel("x", 1, typeStringToArray("node",1), valStringToArray("x1,x2,x3,x4,x5,x6,x7,x8,x9,x10")),
+                        new CatRel("y", 1, typeStringToArray("node",1), valStringToArray("y1,y2,y3,y4,y5,y6,y7,y8")),
+                        new CatRel("d", 1, typeStringToArray("node",1), valStringToArray("d1,d2,d3,d4,d5,d6,d7,d8")),
+                        new CatRel("s", 1, typeStringToArray("node",1), valStringToArray("s1,s2,s3,s4,s5"))
                 )
         );
 
-        attrs_rels.get(0).get(0).setInout(Rel.PREDEFINED);
-        attrs_rels.get(0).get(1).setInout(Rel.PROBABILISTIC);
-        attrs_rels.get(0).get(2).setInout(Rel.PROBABILISTIC);
-        attrs_rels.get(0).get(3).setInout(Rel.PROBABILISTIC);
-        attrs_rels.get(0).get(4).setInout(Rel.PROBABILISTIC);
+        attrs_rels.get(0).setInout(Rel.PREDEFINED);
+        attrs_rels.get(0).setInout(Rel.PROBABILISTIC);
+        attrs_rels.get(0).setInout(Rel.PROBABILISTIC);
+        attrs_rels.get(0).setInout(Rel.PROBABILISTIC);
+        attrs_rels.get(0).setInout(Rel.PROBABILISTIC);
 
 //        new BoolRel("edge", 2, typeStringToArray("node,node",2))
 //        attrs_rels.get(0).get(5).setInout(Rel.PROBABILISTIC);
@@ -96,6 +94,10 @@ public class graph_class_yannick {
         edge_attr.add(edgeRel);
         edge_attr.get(0).setInout(Rel.PROBABILISTIC);
 //        edge_attr.add("edge");
+
+        ArrayList<Pair<BoolRel, ArrayList<Rel>>> inputs = new ArrayList<>();
+        Pair p = new Pair(edgeRel, attrs_rels);
+        inputs.add(p);
 
         Vector<ProbForm> softmaxA = new Vector<>();
         for (int i = 0; i < 2; i++) {
@@ -126,32 +128,26 @@ public class graph_class_yannick {
         RBNPreldef cat_predS = new RBNPreldef(new CatRel("s", 1, typeStringToArray("node",1), valStringToArray("s1,s2,s3,s4,s5")), new String[]{"v"},  new CatModelSoftMax(softmaxS));
         RBNPreldef edge_pred = new RBNPreldef(new BoolRel("edge", 2, typeStringToArray("node,node",2)), new String[]{"v", "w"},  new ProbFormConstant(0.5));
 
-        RBNPreldef gnn_rbn = new  RBNPreldef(
-            new CatRel("output", 0, typeStringToArray("",0), valStringToArray("T,F")),
-            new String[0],
-            new CatGnnOld("",
-                "GCNgraph",
-                true,
-                2,
-                attrs_rels,
-                edge_attr,
-                "graph",
-                true
-            )
-        );
+        Vector<String> freeVars = new Vector<>();
 
-        RBN manual_rbn = new RBN(6, 0);
-        manual_rbn.insertPRel(gnn_rbn,0);
-        manual_rbn.insertPRel(cat_predX,1);
-        manual_rbn.insertPRel(cat_predY,2);
-        manual_rbn.insertPRel(cat_predD,3);
-        manual_rbn.insertPRel(cat_predS,4);
-        manual_rbn.insertPRel(edge_pred, 5);
+//        RBNPreldef gnn_rbn = new  RBNPreldef(
+//            new CatRel("output", 0, typeStringToArray("",0), valStringToArray("T,F")),
+//            new String[0],
+//            new CatGnn("load_model",
+//                    "/Users/lz50rg/Dev/football/overlapping_cat/",
+//                    freeVars,
+//                    2,
+//                    inputs,
+//                    true
+//            )
+//        );
+
+        RBN file_rbn = new RBN(new File("/Users/lz50rg/Dev/football/rbn_file.rbn"), primula.getSignature());
 
         // add the rbn to primula
-        primula.setRbn(manual_rbn);
-        primula.getInstantiation().init(manual_rbn);
-        primula.setRbnparameters(manual_rbn.parameters());
+        primula.setRbn(file_rbn);
+        primula.getInstantiation().init(file_rbn);
+        primula.setRbnparameters(file_rbn.parameters());
 
         // the relation to query
         CatRel tmp_query = new CatRel("output", 0, typeStringToArray("",0), valStringToArray("T,F"));

@@ -1655,7 +1655,7 @@ public class GradientGraphO extends GradientGraph{
 			System.out.println("No successful initialization of max/sum indicators");
 			return Double.NaN;
 		}
-		//		this.showAllNodes(6, myPrimula.getRels());
+
 		if (myggoptions.ggverbose()) {
 			if (debugPrint) {
 				System.out.println("Initial max values:");
@@ -1665,94 +1665,79 @@ public class GradientGraphO extends GradientGraph{
 				System.out.println("Initial sampled values:");
 				showSumAtomsVals();
 			}
-	}
+		}
 
-	MyCount myCount = new MyCount();
-	evaluateLikelihoodAndPartDerivs(true);
-	double curll = currentLogLikelihood();
-//	System.out.println("initial likelihood= " + SmallDouble.toStandardDouble(llnode.likelihood()) + "   " + StringOps.arrayToString(llnode.likelihood(), "(", ")"));
-	System.out.println("initial log-likelihood= " + curll);
-
-	while (!terminate){
-		if (debugPrint)
-			System.out.println("starting from the top ..." + itcount);
-		//		showParameterValues("Current parameters: ");
-		itcount++;
+		MyCount myCount = new MyCount();
 		evaluateLikelihoodAndPartDerivs(true);
-		oldll=currentLogLikelihood();
+		double curll = currentLogLikelihood();
+		System.out.println("initial log-likelihood= " + curll);
 
-		if (debugPrint)
-			System.out.println("log-likelihood= " + oldll);
-
-		if (mapSearchAlg == 0) {
-			System.out.println("MAP search 0..");
-			score = mapSearch(mythread, maxind_as_ts());
-		}
-		else if (mapSearchAlg == 1)
-			score = greedySearch(mythread, maxind_as_ts(), nIterGreedy, 1, 1);
-		else if (mapSearchAlg == 2) {
-			Vector flip = maxind_as_vec();
-			myCount.count = 0;
-			score = mapSearchRecursiveWrap(mythread, flip, 10, myCount);
+		while (!terminate){
+			if (debugPrint)
+				System.out.println("starting from the top ..." + itcount);
+			itcount++;
 			evaluateLikelihoodAndPartDerivs(true);
-			curll = currentLogLikelihood();
-			printProgressBar( myCount.count, flip.size(), curll);
-			if (score <= 1)
+			oldll=currentLogLikelihood();
+
+			if (debugPrint)
+				System.out.println("log-likelihood= " + oldll);
+
+			if (mapSearchAlg == 0) {
+				System.out.println("MAP search 0..");
+				score = mapSearch(mythread, maxind_as_ts());
+			}
+			else if (mapSearchAlg == 1)
+				score = greedySearch(mythread, maxind_as_ts(), nIterGreedy, 1, 1);
+			else if (mapSearchAlg == 2) {
+				Vector flip = maxind_as_vec();
+				myCount.count = 0;
+				score = mapSearchRecursiveWrap(mythread, flip, 10, myCount);
+				evaluateLikelihoodAndPartDerivs(true);
+				curll = currentLogLikelihood();
+				printProgressBar( myCount.count, flip.size(), curll);
+				if (score <= 1)
+					terminate = true;
+			} else if (mapSearchAlg == 3) {
+				System.out.println("MAP search 3...");
+				score = mapSearchSampling(mythread, maxind_as_list());
 				terminate = true;
-		} else if (mapSearchAlg == 3) {
-			System.out.println("MAP search 3...");
-			score = mapSearchSampling(mythread, maxind_as_list());
-			terminate = true;
-		} else if (mapSearchAlg == 4) {
-			System.out.println("MAP search 4...");
-			score = mapSearchBatch(mythread, maxind_as_ts());
-		}
-
-		if (debugPrint && mapSearchAlg != 2)
-			System.out.println("log-likelihood improvement " + oldll/score);
-
-		if (mapSearchAlg != 2 && oldll/score <= 1+myggoptions.getLLikThresh()) {
-			terminate = true;
-		}
-		if (!terminate) {
-			if (mode == LEARNMODE) {
-				if (debugPrint)
-					System.out.print("Learning parameters ...");
-				learnParameters(mythread, GradientGraph.FullLearn, false);
-				if (debugPrint)
-					System.out.println("... done");
 			}
-		}
-	}
 
-	System.out.println();
-	evaluateLikelihoodAndPartDerivs(true);
-	curll = currentLogLikelihood();
-	System.out.println("final log-likelihood= " + curll);
+			if (debugPrint && mapSearchAlg != 2)
+				System.out.println("log-likelihood improvement " + oldll/score);
 
-	for (GGCPMNode nextchild: this.llnode.children) {
-		if (nextchild.getMyatom().equals("constr(0)")) {
-			for (int i = 0; i < numchains; i++) {
-				for (int j = 0; j < windowsize; j++) {
-					System.out.print(nextchild.values_for_samples[i+j][0] + "\t");
+			if (mapSearchAlg != 2 && oldll/score <= 1+myggoptions.getLLikThresh()) {
+				terminate = true;
+			}
+			if (!terminate) {
+				if (mode == LEARNMODE) {
+					if (debugPrint)
+						System.out.print("Learning parameters ...");
+					learnParameters(mythread, GradientGraph.FullLearn, false);
+					if (debugPrint)
+						System.out.println("... done");
 				}
-				System.out.println();
 			}
 		}
+
+		System.out.println();
+		evaluateLikelihoodAndPartDerivs(true);
+		curll = currentLogLikelihood();
+		System.out.println("final log-likelihood= " + curll);
+
+		for (GGCPMNode nextchild: this.llnode.children) {
+			if (nextchild.getMyatom().equals("constr(0)")) {
+				for (int i = 0; i < numchains; i++) {
+					for (int j = 0; j < windowsize; j++) {
+						System.out.print(nextchild.values_for_samples[i+j][0] + "\t");
+					}
+					System.out.println();
+				}
+			}
+		}
+
+		return llnode.loglikelihood();
 	}
-
-	//showParameterValues("Final Parameters: ");
-
-	//		if (debugPrint) {
-	//			System.out.println("Final max values:");
-	//			for (Iterator<GGAtomMaxNode> it = maxindicators.iterator(); it.hasNext(); ) {
-	//				GGAtomMaxNode nextgimn = it.next();
-	//				System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst());
-	//			}
-	//		}
-
-	return llnode.loglikelihood();
-}
 
 //	/** Sets the truthval fields in the ProbFormNodes corresponding
 //	 * to unobserved atoms to the truthvalues in the sno's sample

@@ -169,7 +169,7 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
      * @uml.property  name="rbnfilename"
      * @uml.associationEnd  multiplicity="(1 1)"
      */
-    JTextField rbnfilename        = new JTextField(15);
+    private JTextField rbnfilename        = new JTextField(15);
     /**
      * @uml.property  name="bnoutfilename"
      * @uml.associationEnd  multiplicity="(1 1)"
@@ -1104,6 +1104,14 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
 
     }
 
+    public JTextField getDatasrcfilename() {
+        return datasrcfilename;
+    }
+
+    public JTextField getRbnfilename() {
+        return rbnfilename;
+    }
+
     @Override
     public void keyTyped(KeyEvent e) {
 
@@ -1192,8 +1200,11 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/homophily/experiments/rbn_constraints/const_nodeconst_gnn.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/homophily/experiments/ising/rdef/ising_32_0.5_0_0.4_4_nodeconst.rdef";
 
-        String rbninputfilestring = "/Users/lz50rg/Dev/water-hawqs/water_rbn_const_gnn.rbn";
-        String rstinputfilestring = "/Users/lz50rg/Dev/water-hawqs/test_small_new.rdef";
+//        String rbninputfilestring = "/Users/lz50rg/Dev/water-hawqs/water_rbn_const_gnn.rbn";
+//        String rstinputfilestring = "/Users/lz50rg/Dev/water-hawqs/test_small_new.rdef";
+
+        String rbninputfilestring = "/Users/lz50rg/Dev/football/rbn_file.rbn";
+        String rstinputfilestring = "/Users/lz50rg/Dev/football/overlapping_2024_12_12/2024-12-12_move_to_cat/10-47-26-12a63b46/overlapping.rdef";
 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/water-hawqs/water_rbn.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/water-hawqs/src/test_6.rdef";
@@ -1218,7 +1229,7 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
         }
         PrimulaGUI win = new PrimulaGUI(new Primula());
 //		SamiamManager.centerWindow( win );
-//        win.loadDefaults();
+        win.loadDefaults();
 		win.show();
 
 
