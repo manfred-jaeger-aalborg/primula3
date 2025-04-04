@@ -20,10 +20,14 @@
 %                                                          %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% whether node a already has received the information at some time
+% before t
+
 @oldinfo(a,t) = COMBINE hasinfo(a,tt)
 	        WITH n-or
 		FORALL tt
 		WHERE timeord(tt,t);
+
 
 
 @initinfo([node]a,[time]t) = (initial(t) & source(a));

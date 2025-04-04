@@ -65,4 +65,10 @@ public class InstAtom extends GroundAtom {
     public String val_string() {
     	return this.rel.get_String_val(val);
     }
+
+    public Boolean isBooleanTrue(){
+        if (! (rel instanceof BoolRel) || val==0)
+            return false;
+        return true;
+    }
 }

@@ -12,7 +12,7 @@ import java.io.IOException;
 public class Settings
 {
 	public static final String         STR_ACE_DISPLAY_NAME                  = "ACE";
-	public static final boolean        BOOLEAN_COMPILE_WITH_EVIDENCE_DEFAULT = false;
+	public static final boolean        BOOLEAN_COMPILE_WITH_EVIDENCE_DEFAULT = true;
 	public static final long           LONG_COMPILE_TIMEOUT_MINUTES_DEFAULT  = 60;//1440 minutes/day;
 	public static final EncodingMethod ENCODINGMETHOD_DEFAULT                = EncodingMethod.CHAVIRA_DARWICHE_06;//cd06;
 	public static final DtreeMethod    DTREEMETHOD_DEFAULT                   = DtreeMethod.HYPERGRAPH;//hypergraph;
