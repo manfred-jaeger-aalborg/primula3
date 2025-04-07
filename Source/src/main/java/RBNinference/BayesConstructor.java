@@ -1008,8 +1008,8 @@ public class BayesConstructor extends java.lang.Object {
 		Vector<Vector<GroundAtom>> parentvecs = new Vector<Vector<GroundAtom>>(); // Vector of Vector of ground Atoms
 		Vector<GroundAtom> parvec = null;
 		BNNode newgatn;
-		TreeSet<String> macrosdone = new TreeSet<String>();
 		for (Enumeration<BNNode> e=groundatomhasht.elements();e.hasMoreElements();){
+			TreeSet<String> macrosdone = new TreeSet<String>();
 			switch (evidencemode){
 			case Primula.OPTION_NOT_EVIDENCE_CONDITIONED:{
 				newgatn = e.nextElement();
