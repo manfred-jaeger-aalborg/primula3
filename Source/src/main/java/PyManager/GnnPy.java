@@ -753,10 +753,16 @@ public class GnnPy {
         // find all the rels that each node have, using treemap the entries maintained sorted using the node (key)
         Map<Integer, ArrayList<Rel>> nodeMapRel = new TreeMap<>();
         Map<Rel, OneRelData> relMap = new HashMap<>();
+        Map<Rel, Integer> relIndex = new HashMap<>();
 
+        int startIndex = 0;
         for (Rel r: attributes) {
             Vector<int[]> nodeForRel = data.allTrue(r);
             relMap.put(r, data.find(r));
+
+            // for each feature, see where in the vector it starts
+            relIndex.put(r, startIndex);
+            startIndex += r.numvals();
 
             for (int[] node: nodeForRel) {
                 if (!nodeMapRel.containsKey(node[0])) {
@@ -775,22 +781,19 @@ public class GnnPy {
             for (Rel r: nodeRels) {
                 if (r instanceof CatRel) {
                     OneCatRelData relData = (OneCatRelData) relMap.get(r);
-                    bool_nodes[rowIndex][relData.values.get(new int[]{currentNode}) + idxFeat] = 1;
-                    idxFeat += r.numvals();
+                    bool_nodes[rowIndex][relData.values.get(new int[]{currentNode}) + relIndex.get(r)] = 1;
                 } else {
                     if (r.valtype() == Rel.NUMERIC) {
                         OneNumRelData num_data = (OneNumRelData) relMap.get(r);
-                        bool_nodes[rowIndex][idxFeat] = num_data.valueOf(new int[]{currentNode});
-                        idxFeat++;
+                        bool_nodes[rowIndex][relIndex.get(r)] = num_data.valueOf(new int[]{currentNode});
                     } else {
                         Vector<int[]> featureTrueData = data.allTrue(r);
                         Vector<Vector<int[]>> allTrueData = new Vector<>();
                         allTrueData.add(featureTrueData);
                         for (Vector<int[]> feature : allTrueData) {
                             for (int[] node : feature) {
-                                bool_nodes[rowIndex][idxFeat] = 1;
+                                bool_nodes[rowIndex][relIndex.get(r)] = 1;
                             }
-                            idxFeat++;
                         }
                     }
                 }
@@ -902,29 +905,21 @@ public class GnnPy {
             for (Pair<BoolRel, ArrayList<Rel>> pair : cpmGnn.getGnnInputs()) {
                 idxFeat = 0;
                 ArrayList<Rel> inputRels = pair.getSecond();
+
                 for (Rel r: inputRels) {
-                    if (r.equals(currentMaxNode.myatom().rel()))
-                        break;
-                    idxFeat += r.numvals();
-                }
-
-            }
-
-            // if found, set to zero the current feature vector corresponding to the rel
-            // then, set the value of currentInst
-            if (nodeToUpdate != -1) {
-                if (currentMaxNode.myatom().rel() instanceof CatRel) {
-                    String key = currentMaxNode.myatom().rel().getTypes()[0].getName();
-                    if (currentMaxNode.myatom().rel() instanceof CatRel) {
+                    if (currentMaxNode.myatom().rel() instanceof CatRel && r.equals(currentMaxNode.myatom().rel())) {
+                        String key = currentMaxNode.myatom().rel().getTypes()[0].getName();
                         for (int i = 0; i < currentMaxNode.myatom().rel().numvals(); i++) {
                             GGxDict.get(key)[nodeMap.get(nodeToUpdate)][i + idxFeat] = 0;
                         }
                         GGxDict.get(key)[nodeMap.get(nodeToUpdate)][currentInst + idxFeat] = 1;
+                        changedUpdate = true;
+                    } else if (!(currentMaxNode.myatom().rel() instanceof CatRel) && r.equals(currentMaxNode.myatom().rel())) {
+                        throw new RuntimeException("Relation " + r.name() + " not supported in setCurrentInstPy!");
                     }
+                    idxFeat += r.numvals();
                 }
-                changedUpdate = true;
-            } else
-                throw new RuntimeException("Something went wrong in setCurrentInstPy!");
+            }
         }
         if (!GGedgeDict.isEmpty() && currentMaxNode.myatom().args.length==2) {
             int[] nodesToUpdate = currentMaxNode.myatom().args();
