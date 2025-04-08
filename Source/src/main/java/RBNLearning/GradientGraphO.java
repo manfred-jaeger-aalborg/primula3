@@ -1475,11 +1475,49 @@ public class GradientGraphO extends GradientGraph{
 		return currentLogLikelihood();
 	}
 
-	public double mapSearchRecursiveWrap(GGThread mythread, Vector<GGAtomMaxNode> flipcandidates, int maxDepth, MyCount count) {
-		return mapSearchRecursive(mythread, new TreeSet<GGAtomMaxNode>(new GGAtomMaxNode_Comparator()), flipcandidates, 1, 0, maxDepth, count);
+	private double[] getUgasValues(Vector<GGCPMNode> ugas) {
+		double[] values = new double[ugas.size()];
+		Arrays.fill(values, 0.0);
+		for (int i = 0; i < values.length; i++) {
+			// if we are sampling: the old values are an average using all #windowsize*numchains values
+			if (ugas.get(i).getSumIndicators().size()>0) {
+				for (int j = 0; j < windowsize*numchains; j++) {
+					int childinst = ugas.get(i).instval(j);
+					double[] childval = ugas.get(i).values_for_samples[0];
+					if (!ugas.get(i).isBoolean()) {
+						values[i] += childval[childinst];
+					} else {
+						if (childinst == 1)
+							values[i] += childval[0];
+						else
+							values[i] += 1 - childval[0];
+					}
+				}
+				for (int j = 0; j < values.length; j++)
+					values[i] /= windowsize*numchains;
+			} else {
+				int childinst = ugas.get(i).instval(null);
+				double[] childval = ugas.get(i).values_for_samples[0];
+				if (!ugas.get(i).isBoolean()) {
+					values[i] = childval[childinst];
+				} else {
+					if (childinst == 1)
+						values[i] = childval[0];
+					else
+						values[i] = 1 - childval[0];
+				}
+			}
+			if (debugPrint)
+				System.out.print(ugas.get(i).getMyatom() + " ");
+		}
+		return values;
 	}
 
-	public double mapSearchRecursive(GGThread mythread, TreeSet<GGAtomMaxNode> alreadyflipped, Vector<GGAtomMaxNode> flipcandidates, double currentllratio, int depth, int maxDepth, MyCount count) {
+	public double mapSearchRecursiveWrap(GGThread mythread, Vector<GGAtomMaxNode> flipcandidates, int maxDepth) {
+		return mapSearchRecursive(mythread, new TreeSet<GGAtomMaxNode>(new GGAtomMaxNode_Comparator()), flipcandidates, 1, 0, maxDepth);
+	}
+
+	public double mapSearchRecursive(GGThread mythread, TreeSet<GGAtomMaxNode> alreadyflipped, Vector<GGAtomMaxNode> flipcandidates, double currentllratio, int depth, int maxDepth) {
 		if (depth == maxDepth) {
 			if (debugPrint)
 				System.out.println("Max depth reached, return");
@@ -1496,8 +1534,6 @@ public class GradientGraphO extends GradientGraph{
 
 		for (GGAtomMaxNode mxnode: flipcandidates) {
 			mxnode.setScore(mythread,0);
-			if (mxnode.getScore() <= 0)
-				count.count++;
 			scored_atoms.add(mxnode);
 		}
 
@@ -1519,106 +1555,38 @@ public class GradientGraphO extends GradientGraph{
 		}
 
 		Vector<GGCPMNode> ugas = flipnext.getAllugas();
-		double[] oldvalues = new double[ugas.size()];
-		Arrays.fill(oldvalues, 0.0);
 		double oldll = SmallDouble.log(llnode.evaluate(null,0, ugas,true,false,null));
+		double[] oldvalues = getUgasValues(ugas);
 		if (debugPrint) {
 			System.out.println(depthS + "Old UGAS");
 			System.out.print(depthS);
-		}
-		for (int i = 0; i < oldvalues.length; i++) {
-			// if we are sampling: the old values are an average using all #windowsize*numchains values
-			if (ugas.get(i).getSumIndicators().size()>0) {
-				for (int j = 0; j < windowsize*numchains; j++) {
-					int childinst = ugas.get(i).instval(j);
-					double[] childval = ugas.get(i).values_for_samples[0];
-					if (!ugas.get(i).isBoolean()) {
-						oldvalues[i] += childval[childinst];
-					} else {
-						if (childinst == 1)
-							oldvalues[i] += childval[0];
-						else
-							oldvalues[i] += 1 - childval[0];
-					}
-				}
-				for (int j = 0; j < oldvalues.length; j++)
-					oldvalues[i] /= windowsize*numchains;
-			} else {
-				int childinst = ugas.get(i).instval(null);
-				double[] childval = ugas.get(i).values_for_samples[0];
-				if (!ugas.get(i).isBoolean()) {
-					oldvalues[i] = childval[childinst];
-				} else {
-					if (childinst == 1)
-						oldvalues[i] = childval[0];
-					else
-						oldvalues[i] = 1 - childval[0];
-				}
-			}
-			if (debugPrint)
-				System.out.print(ugas.get(i).getMyatom() + " ");
-		}
-		if (debugPrint) {
 			System.out.println();
 			System.out.println(depthS + Arrays.toString(oldvalues));
 			System.out.println(depthS + "Flipping: " + flipnext.getMyatom() + " to " + flipnext.getHighvalue());
 		}
 
 		int oldValue = flipnext.getCurrentInst();
-		Arrays.fill(oldvalues, 0.0);
 		flipnext.setCurrentInst(flipnext.getHighvalue());
 		flipnext.reEvaluateUpstream(null);
 
-		double[] newvalues = new double[ugas.size()];
 		double newll = SmallDouble.log(llnode.evaluate(null,0, ugas,true,false,null));
+		double[] newvalues = getUgasValues(ugas);
 		currentllratio = currentllratio*oldll/newll;
-		if (debugPrint) {
-			System.out.println(depthS + "New UGAS");
-			System.out.print(depthS);
-		}
-		for (int i = 0; i < newvalues.length; i++) {
-			if (ugas.get(i).getSumIndicators().size()>0) {
-				for (int j = 0; j < windowsize*numchains; j++) {
-					int childinst = ugas.get(i).instval(j);
-					double[] childval = ugas.get(i).values_for_samples[0];
-					if (!ugas.get(i).isBoolean()) {
-						newvalues[i] += childval[childinst];
-					} else {
-						if (childinst == 1)
-							newvalues[i] += childval[0];
-						else
-							newvalues[i] += 1 - childval[0];
-					}
-				}
-				for (int j = 0; j < newvalues.length; j++)
-					newvalues[i] /= windowsize*numchains;
-			} else {
-				int childinst = ugas.get(i).instval(null);
-				double[] childval = ugas.get(i).values_for_samples[0];
-				if (!ugas.get(i).isBoolean()) {
-					newvalues[i] = childval[childinst];
-				} else {
-					if (childinst == 1)
-						newvalues[i] = childval[0];
-					else
-						newvalues[i] = 1 - childval[0];
-				}
-			}
-			if (debugPrint)
-				System.out.print(ugas.get(i).getMyatom() + " ");
-		}
-		if (debugPrint) {
-			System.out.println();
-			System.out.println(depthS + Arrays.toString(newvalues));
-		}
 
 		int worstUgasCount=0;
 		for (int i = 0; i < newvalues.length; i++) {
 			if (newvalues[i]<oldvalues[i])
 				worstUgasCount++;
 		}
-		if (debugPrint)
+
+		if (debugPrint) {
+			System.out.println(depthS + "New UGAS");
+			System.out.print(depthS);
+			System.out.println();
+			System.out.println(depthS + Arrays.toString(newvalues));
 			System.out.println(depthS + "Worst UGAS: " + worstUgasCount + "/" + newvalues.length);
+		}
+
 
 		for (int j=1;j<windowsize;j++){
 			gibbsSample(mythread);
@@ -1648,7 +1616,7 @@ public class GradientGraphO extends GradientGraph{
 			}
 		}
 		GGCPMNode minuga = ugas.elementAt(minind);
-		double recsearch = mapSearchRecursive(mythread, alreadyflipped, minuga.getMaxIndicators(), currentllratio,depth+1, maxDepth, count);
+		double recsearch = mapSearchRecursive(mythread, alreadyflipped, minuga.getMaxIndicators(), currentllratio,depth+1, maxDepth);
 		if (recsearch < 1) {
 			if (debugPrint)
 				System.out.println(depthS + "flipping back " + flipnext.getMyatom() + " to " + oldValue);
@@ -1727,11 +1695,8 @@ public class GradientGraphO extends GradientGraph{
 				score = greedySearch(mythread, maxind_as_ts(), nIterGreedy, 1, 1);
 			else if (mapSearchAlg == 2) {
 				Vector flip = maxind_as_vec();
-				myCount.count = 0;
-				score = mapSearchRecursiveWrap(mythread, flip, 10, myCount);
+				score = mapSearchRecursiveWrap(mythread, flip, 10);
 				evaluateLikelihoodAndPartDerivs(true);
-				curll = currentLogLikelihood();
-//				printProgressBar( myCount.count, flip.size(), curll);
 				if (score <= 1)
 					terminate = true;
 			} else if (mapSearchAlg == 3) {
