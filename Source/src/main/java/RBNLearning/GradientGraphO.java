@@ -1520,21 +1520,40 @@ public class GradientGraphO extends GradientGraph{
 
 		Vector<GGCPMNode> ugas = flipnext.getAllugas();
 		double[] oldvalues = new double[ugas.size()];
+		Arrays.fill(oldvalues, 0.0);
 		double oldll = SmallDouble.log(llnode.evaluate(null,0, ugas,true,false,null));
 		if (debugPrint) {
 			System.out.println(depthS + "Old UGAS");
 			System.out.print(depthS);
 		}
 		for (int i = 0; i < oldvalues.length; i++) {
-			int childinst = ugas.get(i).instval(null);
-			double[] childval = ugas.get(i).values_for_samples[0];
-			if (!ugas.get(i).isBoolean()) {
-				oldvalues[i] = childval[childinst];
+			// if we are sampling: the old values are an average using all #windowsize*numchains values
+			if (ugas.get(i).getSumIndicators().size()>0) {
+				for (int j = 0; j < windowsize*numchains; j++) {
+					int childinst = ugas.get(i).instval(j);
+					double[] childval = ugas.get(i).values_for_samples[0];
+					if (!ugas.get(i).isBoolean()) {
+						oldvalues[i] += childval[childinst];
+					} else {
+						if (childinst == 1)
+							oldvalues[i] += childval[0];
+						else
+							oldvalues[i] += 1 - childval[0];
+					}
+				}
+				for (int j = 0; j < oldvalues.length; j++)
+					oldvalues[i] /= windowsize*numchains;
 			} else {
-				if (childinst==1)
-					oldvalues[i] = childval[0];
-				else
-					oldvalues[i] = 1 - childval[0];
+				int childinst = ugas.get(i).instval(null);
+				double[] childval = ugas.get(i).values_for_samples[0];
+				if (!ugas.get(i).isBoolean()) {
+					oldvalues[i] = childval[childinst];
+				} else {
+					if (childinst == 1)
+						oldvalues[i] = childval[0];
+					else
+						oldvalues[i] = 1 - childval[0];
+				}
 			}
 			if (debugPrint)
 				System.out.print(ugas.get(i).getMyatom() + " ");
@@ -1546,6 +1565,7 @@ public class GradientGraphO extends GradientGraph{
 		}
 
 		int oldValue = flipnext.getCurrentInst();
+		Arrays.fill(oldvalues, 0.0);
 		flipnext.setCurrentInst(flipnext.getHighvalue());
 		flipnext.reEvaluateUpstream(null);
 
@@ -1557,15 +1577,32 @@ public class GradientGraphO extends GradientGraph{
 			System.out.print(depthS);
 		}
 		for (int i = 0; i < newvalues.length; i++) {
-			int childinst = ugas.get(i).instval(null);
-			double[] childval = ugas.get(i).values_for_samples[0];
-			if (!ugas.get(i).isBoolean()) {
-				newvalues[i] = childval[childinst];
+			if (ugas.get(i).getSumIndicators().size()>0) {
+				for (int j = 0; j < windowsize*numchains; j++) {
+					int childinst = ugas.get(i).instval(j);
+					double[] childval = ugas.get(i).values_for_samples[0];
+					if (!ugas.get(i).isBoolean()) {
+						newvalues[i] += childval[childinst];
+					} else {
+						if (childinst == 1)
+							newvalues[i] += childval[0];
+						else
+							newvalues[i] += 1 - childval[0];
+					}
+				}
+				for (int j = 0; j < newvalues.length; j++)
+					newvalues[i] /= windowsize*numchains;
 			} else {
-				if (childinst==1)
-					newvalues[i] = childval[0];
-				else
-					newvalues[i] = 1 - childval[0];
+				int childinst = ugas.get(i).instval(null);
+				double[] childval = ugas.get(i).values_for_samples[0];
+				if (!ugas.get(i).isBoolean()) {
+					newvalues[i] = childval[childinst];
+				} else {
+					if (childinst == 1)
+						newvalues[i] = childval[0];
+					else
+						newvalues[i] = 1 - childval[0];
+				}
 			}
 			if (debugPrint)
 				System.out.print(ugas.get(i).getMyatom() + " ");
@@ -1694,7 +1731,7 @@ public class GradientGraphO extends GradientGraph{
 				score = mapSearchRecursiveWrap(mythread, flip, 10, myCount);
 				evaluateLikelihoodAndPartDerivs(true);
 				curll = currentLogLikelihood();
-				printProgressBar( myCount.count, flip.size(), curll);
+//				printProgressBar( myCount.count, flip.size(), curll);
 				if (score <= 1)
 					terminate = true;
 			} else if (mapSearchAlg == 3) {
