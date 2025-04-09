@@ -90,6 +90,7 @@ public class GradientGraphO extends GradientGraph{
 	public double cooling_fact;
 	private int batchSearchSize;
 	private int sampleSizeScoring;
+	private int lookaheadSearch;
 
 	// https://stackoverflow.com/questions/4573123/java-updating-text-in-the-command-line-without-a-new-line
 	// for now the function will not be integrated (merging conflicts)
@@ -1332,10 +1333,9 @@ public class GradientGraphO extends GradientGraph{
 		List<GGAtomMaxNode> scored_atoms = new ArrayList<>();
 		List<GGAtomMaxNode> rescoreList = new ArrayList<>();
 		List<GGAtomMaxNode> topAtoms = new ArrayList<>();
-		int maxSample = 0;
 
 		for (GGAtomMaxNode mxnode : flipcandidates) {
-			mxnode.setScore(mythread, maxSample);
+			mxnode.setScore(mythread, sampleSizeScoring);
 			scored_atoms.add(mxnode);
 		}
 		Collections.sort(scored_atoms, new GGAtomMaxNode_Comparator());
@@ -1440,7 +1440,7 @@ public class GradientGraphO extends GradientGraph{
 					// Update scores
 					for (int i = 0; i < scored_atoms.size(); i++) {
 						if (update_us.contains(scored_atoms.get(i)))
-							scored_atoms.get(i).setScore(mythread, maxSample);
+							scored_atoms.get(i).setScore(mythread, sampleSizeScoring);
 					}
 					Collections.sort(scored_atoms, new GGAtomMaxNode_Comparator());
 					if (scored_atoms.get(0).getScore() <= 0)
@@ -1533,7 +1533,7 @@ public class GradientGraphO extends GradientGraph{
 		PriorityQueue<GGAtomMaxNode> scored_atoms = new PriorityQueue<GGAtomMaxNode>(new GGAtomMaxNode_Comparator()); // NB. with priority queue only the best is guarantee to be on the top
 
 		for (GGAtomMaxNode mxnode: flipcandidates) {
-			mxnode.setScore(mythread,0);
+			mxnode.setScore(mythread,sampleSizeScoring);
 			scored_atoms.add(mxnode);
 		}
 
@@ -1588,7 +1588,7 @@ public class GradientGraphO extends GradientGraph{
 		}
 
 
-		for (int j=1;j<windowsize;j++){
+		for (int j=0;j<windowsize;j++){
 			gibbsSample(mythread);
 		}
 		if (numchains > 0 && myggoptions.ggverbose()) {
@@ -2954,5 +2954,13 @@ public void setGnnPy(GnnPy gnnPy) {
 
 	public void setSampleSizeScoring(int sampleSizeScoring) {
 		this.sampleSizeScoring = sampleSizeScoring;
+	}
+
+	public int getLookaheadSearch() {
+		return lookaheadSearch;
+	}
+
+	public void setLookaheadSearch(int lookaheadSearch) {
+		this.lookaheadSearch = lookaheadSearch;
 	}
 }
