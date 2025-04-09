@@ -106,52 +106,52 @@ public class PrimulaSystemSnapshot
 			idsAssertedTrueButAbsent.clear();
 			atomsAssertedFalseButPresent.clear();
 			atomsAssertedTrueButAbsent.clear();
-//
-//			Integer integerFalse = new Integer(0);
-//			Integer integerTrue  = new Integer(1);
-//
-//			StringBuilder buffIden = new StringBuilder( 128 );
-//			StringBuilder buffName = new StringBuilder( 128 );
-//			String nameAt;
-//			String id;
-//			for( InstAtom atom : allInstAtoms ){
-//				buffIden.setLength(0);
-//				buffName.setLength(0);
-//				buffIden.append( atom.rel.name.name );
-//				buffName.append( atom.rel.name.name );
-//
-//				buffIden.append( 'I' );
-//				buffName.append( '(' );
-//				if( (atom.args != null) && (atom.args.length > 0) ){
-//					for( int arg : atom.args ){
-//						buffIden.append( nameAt = PrimulaSystemSnapshot.this.rels.nameAt( arg ) );
-//						buffName.append( nameAt );
-//						buffIden.append( 'p' );
-//						buffName.append( ',' );
-//					}
-//					buffIden.setLength( buffIden.length() - 1 );
-//					buffName.setLength( buffName.length() - 1 );
-//				}
-//				buffIden.append( 'I' );
-//				buffName.append( ')' );
-//
-//				atomToId.put(   atom, id = buffIden.toString() );
-//				atomToName.put( atom,      buffName.toString() );
-//				if( atom.truthval ){
-//					if( !validIds.contains( id ) ){
-//						idsAssertedTrueButAbsent.add(   id   );
-//						atomsAssertedTrueButAbsent.add( atom );
-//					}
-//					else ret.put( id, integerTrue );
-//				}
-//				else{
-//					if(  validIds.contains( id ) ){
-//						idsAssertedFalseButPresent.add(   id   );
-//						atomsAssertedFalseButPresent.add( atom );
-//						ret.put( id, integerFalse );
-//					}
-//				}
-//			}
+
+			Integer integerFalse = Integer.valueOf(0);
+			Integer integerTrue  = Integer.valueOf(1);
+
+			StringBuilder buffIden = new StringBuilder( 128 );
+			StringBuilder buffName = new StringBuilder( 128 );
+			String nameAt;
+			String id;
+			for( InstAtom atom : allInstAtoms ){
+				buffIden.setLength(0);
+				buffName.setLength(0);
+				buffIden.append( atom.rel.name.name );
+				buffName.append( atom.rel.name.name );
+
+				buffIden.append( 'I' );
+				buffName.append( '(' );
+				if( (atom.args != null) && (atom.args.length > 0) ){
+					for( int arg : atom.args ){
+						buffIden.append( nameAt = PrimulaSystemSnapshot.this.rels.nameAt( arg ) );
+						buffName.append( nameAt );
+						buffIden.append( 'p' );
+						buffName.append( ',' );
+					}
+					buffIden.setLength( buffIden.length() - 1 );
+					buffName.setLength( buffName.length() - 1 );
+				}
+				buffIden.append( 'I' );
+				buffName.append( ')' );
+
+				atomToId.put(   atom, id = buffIden.toString() );
+				atomToName.put( atom,      buffName.toString() );
+				if( atom.isBooleanTrue() ){
+					if( !validIds.contains( id ) ){
+						idsAssertedTrueButAbsent.add(   id   );
+						atomsAssertedTrueButAbsent.add( atom );
+					}
+					else ret.put( id, integerTrue );
+				}
+				else{
+					if(  validIds.contains( id ) ){
+						idsAssertedFalseButPresent.add(   id   );
+						atomsAssertedFalseButPresent.add( atom );
+						ret.put( id, integerFalse );
+					}
+				}
+			}
 
 			//System.out.println( "\ncurrent bayesian evidence:" );
 			//for( String validated : ret.keySet() ){
@@ -329,8 +329,8 @@ public class PrimulaSystemSnapshot
 				PrimulaSystemSnapshot.this.rels,
 				PrimulaSystemSnapshot.this.inst,
 				PrimulaSystemSnapshot.this.queryatoms,
-				PrimulaSystemSnapshot.this.bnoutfile //,
-				//PrimulaSystemSnapshot.this.primula
+				PrimulaSystemSnapshot.this.bnoutfile,
+				PrimulaSystemSnapshot.this.primula
 				);
 
 			synchronized( RunWriteHuginNet.this ){
@@ -338,7 +338,9 @@ public class PrimulaSystemSnapshot
 			}
 
 			return this.myConstructor.constructCPTNetwork(
-				evidence_mode,
+				//[MJ: 030425]
+					// evidence_mode,
+					PrimulaSystemSnapshot.this.evidencemode,
 				query_mode,
 				PrimulaSystemSnapshot.this.decomposemode,
 				PrimulaSystemSnapshot.this.isolatedzeronodesmode,

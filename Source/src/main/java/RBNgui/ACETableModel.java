@@ -22,21 +22,22 @@
  */
 
 package RBNgui;
-
 import java.util.*;
-import javax.swing.table.*;
-import RBNutilities.*;
 //import RBNpackage.Atom;
+import RBNpackage.Rel;
 import RBNinference.BayesNetIntHuginNet;
 
-public class ACETableModel extends AbstractTableModel{
+public class ACETableModel extends QueryTableModel{
 
 	/**
-	 * @uml.property  name="queryatomdata"
-	 * @uml.associationEnd  multiplicity="(0 -1)" elementType="java.lang.String"
+	 * Contains the
 	 */
-	LinkedList queryatomdata = new LinkedList();
+	String[][] p_data ;
 
+	/**
+	 * @uml.property  name="column"
+	 */
+	private int column;
 	/**
 	 * keith cascio 20060511 ...
 	 * @uml.property  name="acedata"
@@ -45,140 +46,49 @@ public class ACETableModel extends AbstractTableModel{
 	List       acedata = new LinkedList();
 	public static final String STR_EMPTY = "";
 
-	/**
-	 * @uml.property  name="column"
-	 */
-	int column = 2;
-	/**
-	 * @uml.property  name="rownum"
-	 */
-	int rownum = 0;
-	/** ... keith cascio */
-
-	public ACETableModel(){
+	public ACETableModel(QueryTableModel qtm, Rel r){
+		super();
+		rownum=qtm.getRowCount();
+		column = 1+(int)r.numvals(); // first column for query atoms
+		p_data = new String[rownum][(int)r.numvals()];
+		this.setQuery(qtm.getQuery());
+		
 	}
 
 	public int getColumnCount(){
 		return column;
 	}
 
-	public int getRowCount(){
-		return rownum;
-	}
-
 	public Object getValueAt( int row, int col )
 	{
-		switch( col ){
-		case 0:
-			if(      queryatomdata.size() > row )
-				return queryatomdata.get(     row );
-			break;
-		case 1:
-			if(      acedata.size() > row )
-				return acedata.get(     row );
-			break;
-			/** ... keith cascio */
-		default:
-			System.err.println( "column " + col + " out of range" );
-		return STR_EMPTY;
+		if (row < this.getRowCount() && col<column) {
+			if (col==0) // query atom
+				return queryatomdata.get(row);
+			else 
+				return p_data[row][col-1];
 		}
-		System.err.println( "row " + row + " out of range at column " + col );
-		return STR_EMPTY;
-	}
-
-
-
-
-	public void addQuery(String query){
-		rownum++;
-		queryatomdata.add(query);
-		/** keith cascio 20060511 ... */
-		acedata.add(STR_EMPTY);
-		/** ... keith cascio */
-	}
-
-	public void addQuery(LinkedList query){
-		rownum = query.size();
-		queryatomdata = query;
+		else {
+			System.err.println( "row " + row + " or column " + col + " out of range" );
+			return STR_EMPTY;
+		}
 
 	}
 
-
-
-	/** @author keith cascio
-	@since 20060511 */
-	public void addACE(String prob){
-		acedata.add( myio.StringOps.doubleConverter( prob ) );
+	public void setProb(String[] probs, int row) {
+		for (int i=0;i<probs.length;i++) {
+			p_data[row][i]=myio.StringOps.doubleConverter(probs[i]);
+		}
 	}
+
 
 	public void reset(){
-		rownum = 0;
-		queryatomdata = new LinkedList();
+		super.reset();
+		p_data = new String[rownum][column-1];
 	}
 
-
-	public void removeAllQueries(){
-		queryatomdata = new LinkedList();
-		/** keith cascio 20060511 ... */
-		acedata = new LinkedList();
-		/** ... keith cascio */
-		rownum = 0;
-	}
-
-	public void removeQuery(int query){
-		queryatomdata.remove(query);
-		/** keith cascio 20060511 ... */
-		acedata.remove(query);
-		/** ... keith cascio */
-
-		// 	if( query != 0 && probabilitydata.size() >= query ){
-		// 	    probabilitydata.remove(query);
-		// 	}
-		// 	if( query != 0 && minprobabilitydata.size() >= query ){
-		// 	    minprobabilitydata.remove(query);
-		// 	}
-		// 	if( query != 0 && maxprobabilitydata.size() >= query ){
-//		maxprobabilitydata.remove(query);
-//		}
-//		if( query != 0 && vardata.size() >= query ){
-//		vardata.remove(query);
-//		}
-		rownum--;
-	}
-
-	public LinkedList getQuery(){
-		return queryatomdata;
-	}
-
-
-	/** @author keith cascio
-	@since 20060511 */
 	public void resetACE(){
-		if( acedata != null ){
-			int len = acedata.size();
-			for( int i=0; i<len; i++ ){
-				acedata.set( i, "" );
-			}
-			fireTableDataChanged();
-		}
+		this.reset();
 	}
 
-	/** @author keith cascio
-	@since 20060608 */
-	public void updateACE( Map<String,double[]> marginals ){
-		//System.out.println( "QueryTableModel.updateACE( |"+marginals.size()+"| )" );
-		acedata = new ArrayList( queryatomdata.size() );
-		double[] prob;
-		String strAtom, translation, strProb;
-		for( Object atom : queryatomdata ){
-			translation = BayesNetIntHuginNet.makeIDFromDisplayName( strAtom = atom.toString() );
-			//System.out.println( "atom \"" +strAtom+ "\" == \"" + translation + "\"" );
-			prob        = marginals.get( translation );
-			strProb     = (prob == null) ? "0.0" : myio.StringOps.doubleConverter( Double.toString( prob[1] ) );
-			acedata.add( strProb );
-		}
-		fireTableDataChanged();
-	}
-	
 
 }

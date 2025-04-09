@@ -1,5 +1,6 @@
 package RBNgui;
 
+import RBNinference.BayesNetIntHuginNet;
 import RBNinference.MapVals;
 import RBNinference.SampleProbs;
 import RBNpackage.*;
@@ -13,10 +14,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Hashtable;
-import java.util.Observable;
-import java.util.Observer;
-import java.util.Vector;
+import java.util.*;
 
 public class InferenceModuleGUI extends JFrame implements Observer, ActionListener, MouseListener, Control.ACEControlListener, ChangeListener {
 
@@ -24,6 +22,11 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
     Primula myprimula;
 
     PrimulaGUI myprimulaGUI;
+    /**
+     * @uml.property  name="myACEControl"
+     * @uml.associationEnd  multiplicity="(1 1)"
+     */
+    Control                      myACEControl;
 
     private JTabbedPane inferencePane   = new JTabbedPane();
     /**
@@ -1020,20 +1023,20 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
     /** @author keith cascio
      @since 20060511 */
     private void doAceSettings(){
-//        if( myACESettingsPanel == null ) myACESettingsPanel = new SettingsPanel();
-//        myACESettingsPanel.show( (Component)InferenceModule.this, myprimula.getPreferences().getACESettings() );
+        if( myACESettingsPanel == null ) myACESettingsPanel = new SettingsPanel();
+        myACESettingsPanel.show( (Component)InferenceModuleGUI.this, myprimula.getPreferences().getACESettings() );
     }
 
     /** @author keith cascio
      @since 20060511 */
     public Control getACEControl(){
         if( inferenceModuleCore.myACEControl == null ){
-            inferenceModuleCore.myACEControl = new Control( myprimula );
+            inferenceModuleCore.myACEControl = new Control( myprimula,this );
             inferenceModuleCore.myACEControl.setParentComponent( (Component) this );
             inferenceModuleCore.myACEControl.setProgressBar( InferenceModuleGUI.this.getACEProgressBar() );
             inferenceModuleCore.myACEControl.set( myprimula.getPreferences().getACESettings() );
             inferenceModuleCore.myACEControl.addListener( (Control.ACEControlListener) this );
-            //myACEControl.setDataModel( InferenceModule.this.queryModel ); //TODO
+            inferenceModuleCore.myACEControl.setDataModel( inferenceModuleCore.aceModels );
             inferenceModuleCore.myACEControl.setInfoMessage( InferenceModuleGUI.this.infoMessage );
         }
         return inferenceModuleCore.myACEControl;
@@ -1507,6 +1510,37 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
         }
     }
 
+    private void buildACETables() {
+        /* creating mcmcModels
+         * It is required that querytables and queryatomsScrolllists exist and have the
+         * same length as relList
+         */
+        inferenceModuleCore.aceModels=new Vector<ACETableModel>();
+        //Vector<JTable> newquerytables = new Vector<JTable>();
+        for (int i=0;i<querytables.size();i++) {
+
+            Rel r = inferenceModuleCore.relList.elementAt(i);
+            ACETableModel acetm = new ACETableModel(inferenceModuleCore.queryModels.elementAt(i),inferenceModuleCore.relList.elementAt(i));
+
+            inferenceModuleCore.aceModels.add(acetm);
+            JTable qt = querytables.elementAt(i);
+            //newquerytables.add(qt);
+            qt.setModel(acetm);
+            qt.getColumnModel().getColumn(0).setPreferredWidth(250);
+            for (int c=1;c<qt.getColumnCount();c++)
+                qt.getColumnModel().getColumn(c).setPreferredWidth(100);
+            qt.setShowHorizontalLines(false);
+            qt.setPreferredScrollableViewportSize(new Dimension(100+80*(int)r.numvals(), 100));
+            //table header values
+            qt.getColumnModel().getColumn(0).setHeaderValue("Query");
+            for (int j=0;j<r.numvals();j++) {
+                qt.getColumnModel().getColumn(j+1).setHeaderValue(r.get_String_val(j));
+            }
+//			qt.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+//			qt.doLayout();
+        }
+    }
+
     public void stateChanged(ChangeEvent e) {
         if (e.getSource() == inferencePane) {
             switch (inferencePane.getSelectedIndex()) {
@@ -1539,8 +1573,39 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
                     outerQueryPane.updateUI();
                     break;
                 case 5: // ACE tab
+                    buildACETables();
+                    inferenceModuleCore.myACEControl.setDataModel( inferenceModuleCore.aceModels );
+                    queryatomsPanel.updateUI();
+                    outerQueryPane.updateUI();
                     break;
             }
+        }
+    }
+    /** @author keith cascio
+     @since 20060608 */
+    public void updateACE( Map<String,double[]> marginals ){
+        //System.out.println( "QueryTableModel.updateACE( |"+marginals.size()+"| )" );
+        double[] prob;
+        String[] strprob;
+        String strAtom, translation, strProb;
+
+        for (Rel r: inferenceModuleCore.getQueryatoms().keySet()) {
+            ACETableModel acet = inferenceModuleCore.aceModels.elementAt(inferenceModuleCore.relIndex.get(r.name()));
+            LinkedList<String> queryatoms = acet.getQuery();
+            int row=0;
+            for (Iterator it = queryatoms.iterator(); it.hasNext();) {
+                strAtom = (String) it.next();
+                translation = BayesNetIntHuginNet.makeIDFromDisplayName( strAtom );
+                prob        = marginals.get( translation );
+                strprob = new String[prob.length];
+                for (int j = 0; j < prob.length; j++) {
+                    strprob[j]=Double.toString( prob[j] );
+                }
+                acet.setProb(strprob,row);
+                row++;
+            }
+            acet.fireTableDataChanged();
+
         }
     }
 

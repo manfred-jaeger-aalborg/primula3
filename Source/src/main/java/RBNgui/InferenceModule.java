@@ -93,7 +93,7 @@ public class InferenceModule implements GradientGraphOptions {
 
 	protected Vector<MCMCTableModel> mcmcModels = new Vector<MCMCTableModel>();
 
-	private Vector<ACETableModel> aceModels = new Vector<ACETableModel>();
+	protected Vector<ACETableModel> aceModels = new Vector<ACETableModel>();
 
 	/**
 	 * @uml.property  name="myACEControl"

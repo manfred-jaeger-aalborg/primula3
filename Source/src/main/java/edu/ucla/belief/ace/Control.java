@@ -1,5 +1,6 @@
 package edu.ucla.belief.ace;
 
+import RBNgui.InferenceModuleGUI;
 import edu.ucla.belief.ui.primula.*;
 import edu.ucla.belief.ui.primula.Preferences.Key;
 import edu.ucla.belief.ui.primula.PlatformUtilities.Platform;
@@ -51,11 +52,12 @@ public class Control implements Settings.ACESettingsListener
     	if there has been no intervening action.
 
     	@since 20061027
-    	@see   primulaEvidenceChanged() */
+	 **/
     public static final boolean  FLAG_REUSE_COMPILATION  = false;
 
-	public Control( Primula primula ){
+	public Control( Primula primula , InferenceModuleGUI infGUI){
 		myPrimula = primula;
+		myInfModGUI = infGUI;
 	}
 
 	/** @since 20060601 */
@@ -182,7 +184,7 @@ public class Control implements Settings.ACESettingsListener
 	}*/
 
 	/** @since 20060608 */
-	public void setDataModel( ACETableModel dataModel ){
+	public void setDataModel( Vector<ACETableModel> dataModel ){
 		myDataModel = dataModel;
 	}
 
@@ -303,7 +305,10 @@ public class Control implements Settings.ACESettingsListener
 		cancel();
 		if( (myCompilation != null) && (myCompilation.effective.isCompileWithEvidence()) ){
 			if( FLAG_REUSE_COMPILATION && myCompilation.attemptEvidenceChange( myPrimula.getInstantiation() ) ){
-				if( myDataModel != null ) myDataModel.resetACE();
+				if( myDataModel != null ) {
+					for (ACETableModel atm: myDataModel)
+					 	atm.resetACE();
+				}
 			}
 			else clear();
 		}
@@ -1039,19 +1044,20 @@ public class Control implements Settings.ACESettingsListener
 		}
 	};
 
-	private RunAce runCompute = new RunAce( "inference", "performing inference...", "finished inference", new boolean[] { false, false, true }, STR_MSG_ACE_COMPUTE ){
-		public boolean doTask( AceInterfaceForPrimula ace ) throws Throwable{
-			if( Control.this.myCompilation == null ){
-				throw new IllegalStateException( "trying to perform inference, but compilation is null" );
+	private RunAce runCompute = new RunAce( "inference", "performing inference...", "finished inference", new boolean[] { false, false, true }, STR_MSG_ACE_COMPUTE ) {
+		public boolean doTask(AceInterfaceForPrimula ace) throws Throwable {
+			if (Control.this.myCompilation == null) {
+				throw new IllegalStateException("trying to perform inference, but compilation is null");
 			}
 
-			Map<String,double[]> marginals = Control.this.myCompilation.marginals( ace );
-			if( marginals == null ) return false;
+			Map<String, double[]> marginals = Control.this.myCompilation.marginals(ace);
+			if (marginals == null) return false;
 
-			if( myDataModel != null ) myDataModel.updateACE( marginals );
+			myInfModGUI.updateACE(marginals);
 			return true;
 		}
 	};
+
 
 	private ProgressMonitor getProgressMonitor( String message, String note, int max ){
 		ProgressMonitor monitor = new ProgressMonitor( myParentComponent, message, note, 1, max );
@@ -1063,6 +1069,7 @@ public class Control implements Settings.ACESettingsListener
 	}
 
 	private Primula myPrimula;
+	private InferenceModuleGUI myInfModGUI;
 	private PrimulaSystemSnapshot myState;
 	private Component myParentComponent;
 	private JLabel myInfoMessage;
@@ -1079,7 +1086,7 @@ public class Control implements Settings.ACESettingsListener
 	private SoftwareEntity myPackageC2D;
 	private RuntimeSoftwareLocationBrowser myRuntimeSoftwareLocationBrowser;
 	private AceInterfaceForPrimula                   myAceInt;
-	private ACETableModel                myDataModel;
+	private Vector<ACETableModel>                myDataModel;
 	private Action                         myActionCancel;
 	private Action myActionFastForward;
 	private Action myActionCompile;
