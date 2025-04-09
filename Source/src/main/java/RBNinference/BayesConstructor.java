@@ -93,7 +93,13 @@ public class BayesConstructor extends java.lang.Object {
 		this.myprimula = primulaGUI.primula;
 		myprimulaGUI = primulaGUI;
 	}
-	
+
+	public BayesConstructor(RBN r, RelStruc rs, OneStrucData in,
+							GroundAtomList qats, File bnout, Primula primula) {
+		this(r,rs,in,qats,bnout);
+		this.myprimula = primula;
+	}
+
 	public BayesConstructor(RBN r, RelStruc rs, OneStrucData in, GroundAtomList qats) {
 		this( r, rs, in, qats, (File)null );
 	}

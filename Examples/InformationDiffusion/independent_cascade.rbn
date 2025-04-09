@@ -1,10 +1,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %  The independent cascade model for information diffusion %
 %                                                          %
-%  Here we use a version of the model where the            %
-%  propagation probability between a pair of nodes i,j     %
-%  is a constant                                           %
-%                                                          %
+%  The propagation probability from node i to node j       %
+%  is given by the value of the numerical link(i,j)        %
+%  relation                                                %
 %                                                          %
 %  The link(node_1,node_2) relation here is directed, and  %
 %  information can only be propagated in the direction     %

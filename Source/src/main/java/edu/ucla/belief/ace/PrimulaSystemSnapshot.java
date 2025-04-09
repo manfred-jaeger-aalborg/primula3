@@ -329,8 +329,8 @@ public class PrimulaSystemSnapshot
 				PrimulaSystemSnapshot.this.rels,
 				PrimulaSystemSnapshot.this.inst,
 				PrimulaSystemSnapshot.this.queryatoms,
-				PrimulaSystemSnapshot.this.bnoutfile //,
-				//PrimulaSystemSnapshot.this.primula
+				PrimulaSystemSnapshot.this.bnoutfile,
+				PrimulaSystemSnapshot.this.primula
 				);
 
 			synchronized( RunWriteHuginNet.this ){
