@@ -698,7 +698,7 @@ CatGnn CatGnn() throws RBNIllegalArgumentException :
     freeVals = UntypedArguments()
     <UsingRels>
     forInputs = ForInputList()
-    { return new CatGnn(moduleName, configPath, freeVals, numVals, forInputs); }
+    { return new CatGnn(moduleName, configPath, freeVals, numVals, forInputs, true); }
 }
 
 

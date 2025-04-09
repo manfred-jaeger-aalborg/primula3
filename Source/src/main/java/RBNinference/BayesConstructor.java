@@ -805,7 +805,7 @@ public class BayesConstructor extends java.lang.Object {
 
 
 		/* Initialize instasosd as the instantiation that
-		 * assigns false to all atoms in parentatoms
+		 * assigns false to all atoms in parentatoms (or the first value in a categorical atom)
 		 */
 		for (int j=0;j<parentatoms.size();j++){
 			newinst[j]=0;
@@ -918,8 +918,8 @@ public class BayesConstructor extends java.lang.Object {
 			String name = currentnode.name;
 
 			// to construct a Bayes network usign ProgFormGnn
-			if ((cpmodel instanceof CPMGnn) && this.gnnPy != null)
-				((CPMGnn) cpmodel).setGnnPy(this.gnnPy);
+//			if ((cpmodel instanceof CPMGnn) && this.gnnPy != null)
+//				((CPMGnn) cpmodel).setGnnPy(this.gnnPy);
 
 			/* turn complexnode into simplenode
 			 */

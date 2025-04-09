@@ -286,11 +286,12 @@ public class InferenceModule implements GradientGraphOptions {
 	List<MapThread> threads;
 	int num_threads;
 	// set the Map Seach Algorithm used during map inference
-	protected int mapSearchAlg; // 0 standard, 1 greedy
+	protected int mapSearchAlg;
 	private int batchSearchSize;
 	private int sampleSizeScoring;
 	// the number of iteration for the greedy search algorithm
 	private int numIterGreedyMap;
+	private int lookaheadSearch;
 
 	/**
 	 * @uml.property  name="settingssamplingwindowopen"
@@ -314,11 +315,12 @@ public class InferenceModule implements GradientGraphOptions {
 			samplelogmode[i]=false;
 
 		numchains = 0;
-		windowsize = 3;
+		windowsize = 2;
 		numrestarts = 1;
 		batchSearchSize = 1;
 		sampleSizeScoring = 0;
-		
+		lookaheadSearch = 5;
+
 		readElementNames();
 		readRBNRelations();
 
@@ -338,6 +340,7 @@ public class InferenceModule implements GradientGraphOptions {
 
 		this.num_threads = 1;
 		this.numIterGreedyMap = 1;
+		this.mapSearchAlg = 2;
 	}
 
 	public SampleThread startSampleThread(){
@@ -450,6 +453,7 @@ public class InferenceModule implements GradientGraphOptions {
 				((GradientGraphO) gg).setMapSearchAlg(mapSearchAlg);
 				((GradientGraphO) gg).setBatchSearchSize(batchSearchSize);
 				((GradientGraphO) gg).setSampleSizeScoring(sampleSizeScoring);
+				((GradientGraphO) gg).setLookaheadSearch(lookaheadSearch);
 				((GradientGraphO) gg).load_gnn_settings(myprimula.getLoadGnnSet());
                 mapthr = new MapThread(this, myprimula, (GradientGraphO) gg);
                 // mapthr = new MapThread(this,myprimula,(GradientGraphO)gg); or this?
@@ -579,12 +583,13 @@ public class InferenceModule implements GradientGraphOptions {
 			InstAtom temp = (InstAtom)instAtoms.elementAt(i);
 			int[] nodes = temp.args;
 			String names = "(";
-			for(int j=0; j<nodes.length; ++j){
-				if(j+1 < nodes.length){
-					names = names + elementNamesListModel.elementAt(nodes[j]) + ", ";
-				}
-				else{  //last item
-					names = names + elementNamesListModel.elementAt(nodes[j]);
+			if (temp.rel.arity > 0) {
+				for (int j = 0; j < nodes.length; ++j) {
+					if (j + 1 < nodes.length) {
+						names = names + elementNamesListModel.elementAt(nodes[j]) + ", ";
+					} else {  //last item
+						names = names + elementNamesListModel.elementAt(nodes[j]);
+					}
 				}
 			}
 			names = names + ")";
@@ -1416,6 +1421,14 @@ public class InferenceModule implements GradientGraphOptions {
 
 	public int getNumIterGreedyMap() {
 		return numIterGreedyMap;
+	}
+
+	public int getLookaheadSearch() {
+		return lookaheadSearch;
+	}
+
+	public void setLookaheadSearch(int lookaheadSearch) {
+		this.lookaheadSearch = lookaheadSearch;
 	}
 
 	public void setNumIterGreedyMap(int numIterGreedyMap) {

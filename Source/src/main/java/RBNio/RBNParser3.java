@@ -748,7 +748,7 @@ numVals = Integer.parseInt(tk.image);
     freeVals = UntypedArguments();
     jj_consume_token(UsingRels);
     forInputs = ForInputList();
-{if ("" != null) return new CatGnn(moduleName, configPath, freeVals, numVals, forInputs);}
+{if ("" != null) return new CatGnn(moduleName, configPath, freeVals, numVals, forInputs, true);}
     throw new Error("Missing return statement in function");
 }
 

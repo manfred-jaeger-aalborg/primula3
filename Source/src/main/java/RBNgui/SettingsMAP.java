@@ -33,6 +33,7 @@ public class SettingsMAP extends JFrame implements ActionListener, ItemListener,
 	private JLabel linedistancelabel = new JLabel("Distance threshold");
 	private JLabel linelikelihoodlabel = new JLabel("Likelihood threshold (linesearch)");
 	private JLabel maxfailslabel = new JLabel("Max. fails (Sample missing)");
+	private JLabel lookaheadLabel = new JLabel("Lookahead");
 
 	private JTextField samplesizetext = new JTextField(5);
 	private JTextField restartstext = new JTextField(5);
@@ -41,6 +42,7 @@ public class SettingsMAP extends JFrame implements ActionListener, ItemListener,
 	private JTextField linedistancetext = new JTextField(5);
 	private JTextField linelikelihoodtext = new JTextField(5);
 	private JTextField maxfailstext = new JTextField(5);
+	private JTextField lookaheadtext = new JTextField(5);
 
 	private JPanel samplesizepanel = new JPanel(new FlowLayout());
 	private JPanel restartspanel = new JPanel(new FlowLayout());
@@ -49,8 +51,9 @@ public class SettingsMAP extends JFrame implements ActionListener, ItemListener,
 	private JPanel linedistancepanel = new JPanel(new FlowLayout());
 	private JPanel linelikelihoodpanel = new JPanel(new FlowLayout());
 	private JPanel maxfailspanel = new JPanel(new FlowLayout());
+	private JPanel lookaheadpanel = new JPanel(new FlowLayout());
 
-	private JLabel sampleSizeScoringLabel = new JLabel("Sample size scoring (<=#chain*#window)");
+	private JLabel sampleSizeScoringLabel = new JLabel("Size for scoring (<=chain*window)");
 	private JTextField sampleSizeScoringText = new JTextField(5);
 	private JPanel sampleSizeScoringPanel = new JPanel(new FlowLayout());
 
@@ -64,8 +67,8 @@ public class SettingsMAP extends JFrame implements ActionListener, ItemListener,
 
 	private JCheckBox verbosecheckbox = new JCheckBox("Verbose");
 
-	private JRadioButton algorithm1Radio = new JRadioButton("Algorithm 1 (recursive)");
-	private JRadioButton algorithm2Radio = new JRadioButton("Algorithm 2 (for sampling)");
+	private JRadioButton algorithm1Radio = new JRadioButton("Algorithm 1 (with lookahead)");
+	private JRadioButton algorithm2Radio = new JRadioButton("Algorithm 2");
 	private ButtonGroup algorithmGroup = new ButtonGroup();
 	private JPanel algorithmPanel = new JPanel(new FlowLayout());
 
@@ -109,6 +112,9 @@ public class SettingsMAP extends JFrame implements ActionListener, ItemListener,
 		firstBatchSizePanel.add(firstBatchSizeLabel);
 		firstBatchSizePanel.add(firstBatchSizeText);
 
+		lookaheadpanel.add(lookaheadLabel);
+		lookaheadpanel.add(lookaheadtext);
+
 		algorithmGroup.add(algorithm1Radio);
 		algorithmGroup.add(algorithm2Radio);
 		algorithm1Radio.setSelected(true);
@@ -120,6 +126,8 @@ public class SettingsMAP extends JFrame implements ActionListener, ItemListener,
 		generaloptions.add(restartspanel);
 		generaloptions.add(verbosecheckbox);
 		generaloptions.add(algorithmPanel);
+		generaloptions.add(firstBatchSizePanel);
+		generaloptions.add(lookaheadpanel);
 
 		generaloptions.setBorder(BorderFactory.createTitledBorder("General"));
 
@@ -127,7 +135,6 @@ public class SettingsMAP extends JFrame implements ActionListener, ItemListener,
 		incompleteoptions.add(gibbsroundspanel);
 		incompleteoptions.add(maxfailspanel);
 		incompleteoptions.add(sampleSizeScoringPanel);
-		incompleteoptions.add(firstBatchSizePanel);
 		incompleteoptions.setBorder(BorderFactory.createTitledBorder("Gibbs Sampling"));
 
 		terminateoptions.add(maxiterationspanel);
@@ -154,6 +161,9 @@ public class SettingsMAP extends JFrame implements ActionListener, ItemListener,
 		restartstext.setText(""+infmodule.getMAPRestarts());
 		restartstext.addKeyListener(this);
 
+		lookaheadtext.setText(""+infmodule.getLookaheadSearch());
+		lookaheadtext.addKeyListener(this);
+
 		sampleSizeScoringText.setText(""+infmodule.getSampleSizeScoring());
 		sampleSizeScoringText.addKeyListener(this);
 		firstBatchSizeText.setText(""+infmodule.getBatchSearchSize());
@@ -162,11 +172,13 @@ public class SettingsMAP extends JFrame implements ActionListener, ItemListener,
 		verbosecheckbox.setSelected(infmodule.getVerbose());
 		verbosecheckbox.addItemListener(this);
 
+		firstBatchSizeText.setEnabled(false);
+
 		ImageIcon icon = new ImageIcon("small_logo.jpg");
 		if (icon.getImageLoadStatus() == MediaTracker.COMPLETE)
 			this.setIconImage(icon.getImage());
 		this.setTitle("MAP Settings");
-		this.setSize(350, 500);
+		this.setSize(550, 700);
 		this.setVisible(true);
 	}
 
@@ -174,11 +186,15 @@ public class SettingsMAP extends JFrame implements ActionListener, ItemListener,
 		Object source = e.getSource();
 		if(source == algorithm1Radio){
 			infmodule.setMapSearchAlg(2);
+			firstBatchSizeText.setEnabled(false);
 		}
 		else if(source == algorithm2Radio){
 			infmodule.setMapSearchAlg(3);
+			firstBatchSizeText.setEnabled(true);
+			lookaheadtext.setEnabled(false);
 		}
 	}
+
 
 	public void itemStateChanged(ItemEvent e) {
 		Object source = e.getSource();
@@ -244,6 +260,14 @@ public class SettingsMAP extends JFrame implements ActionListener, ItemListener,
 			try{
 				Integer tempint = Integer.valueOf(firstBatchSizeText.getText());
 				infmodule.setBatchSearchSize(tempint.intValue());
+			}
+			catch(NumberFormatException exception){
+			}
+		}
+		else if(source == lookaheadtext){
+			try{
+				Integer tempint = Integer.valueOf(lookaheadtext.getText());
+				infmodule.setLookaheadSearch(tempint.intValue());
 			}
 			catch(NumberFormatException exception){
 			}

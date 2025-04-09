@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "org.primula"
-version = "1.0-SNAPSHOT"
+version = "2.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -31,15 +31,26 @@ java {
 }
 
 application {
-//    mainClass.set("RBNgui.Primula")
+    mainClass.set("RBNgui.PrimulaGUI")
     // applicationDefaultJvmArgs = listOf("-Djava.awt.headless=true")
 //    mainClass.set("Experiments.Homophily.RiverPollutionMCMC")
-    mainClass.set("Experiments.Homophily.Ising")
+//    mainClass.set("Experiments.Homophily.Ising")
 }
 
 tasks.named<JavaExec>("run") {
-    // Disable the default 'run' task to avoid conflict
-    enabled = false
+    enabled = true
+}
+
+tasks.named<Jar>("jar") {
+    manifest {
+        attributes["Main-Class"] = "RBNgui.PrimulaGUI"
+    }
+    // Include runtime dependencies in the JAR.
+    from({
+        configurations.runtimeClasspath.get().filter { it.name.endsWith("jar") }
+                .map { zipTree(it) }
+    })
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 tasks.register("runPollution") {

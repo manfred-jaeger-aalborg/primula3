@@ -90,6 +90,7 @@ public class GradientGraphO extends GradientGraph{
 	public double cooling_fact;
 	private int batchSearchSize;
 	private int sampleSizeScoring;
+	private int lookaheadSearch;
 
 	// https://stackoverflow.com/questions/4573123/java-updating-text-in-the-command-line-without-a-new-line
 	// for now the function will not be integrated (merging conflicts)
@@ -1332,10 +1333,9 @@ public class GradientGraphO extends GradientGraph{
 		List<GGAtomMaxNode> scored_atoms = new ArrayList<>();
 		List<GGAtomMaxNode> rescoreList = new ArrayList<>();
 		List<GGAtomMaxNode> topAtoms = new ArrayList<>();
-		int maxSample = 0;
 
 		for (GGAtomMaxNode mxnode : flipcandidates) {
-			mxnode.setScore(mythread, maxSample);
+			mxnode.setScore(mythread, sampleSizeScoring);
 			scored_atoms.add(mxnode);
 		}
 		Collections.sort(scored_atoms, new GGAtomMaxNode_Comparator());
@@ -1440,7 +1440,7 @@ public class GradientGraphO extends GradientGraph{
 					// Update scores
 					for (int i = 0; i < scored_atoms.size(); i++) {
 						if (update_us.contains(scored_atoms.get(i)))
-							scored_atoms.get(i).setScore(mythread, maxSample);
+							scored_atoms.get(i).setScore(mythread, sampleSizeScoring);
 					}
 					Collections.sort(scored_atoms, new GGAtomMaxNode_Comparator());
 					if (scored_atoms.get(0).getScore() <= 0)
@@ -1475,11 +1475,49 @@ public class GradientGraphO extends GradientGraph{
 		return currentLogLikelihood();
 	}
 
-	public double mapSearchRecursiveWrap(GGThread mythread, Vector<GGAtomMaxNode> flipcandidates, int maxDepth, MyCount count) {
-		return mapSearchRecursive(mythread, new TreeSet<GGAtomMaxNode>(new GGAtomMaxNode_Comparator()), flipcandidates, 1, 0, maxDepth, count);
+	private double[] getUgasValues(Vector<GGCPMNode> ugas) {
+		double[] values = new double[ugas.size()];
+		Arrays.fill(values, 0.0);
+		for (int i = 0; i < values.length; i++) {
+			// if we are sampling: the old values are an average using all #windowsize*numchains values
+			if (ugas.get(i).getSumIndicators().size()>0) {
+				for (int j = 0; j < windowsize*numchains; j++) {
+					int childinst = ugas.get(i).instval(j);
+					double[] childval = ugas.get(i).values_for_samples[0];
+					if (!ugas.get(i).isBoolean()) {
+						values[i] += childval[childinst];
+					} else {
+						if (childinst == 1)
+							values[i] += childval[0];
+						else
+							values[i] += 1 - childval[0];
+					}
+				}
+				for (int j = 0; j < values.length; j++)
+					values[i] /= windowsize*numchains;
+			} else {
+				int childinst = ugas.get(i).instval(null);
+				double[] childval = ugas.get(i).values_for_samples[0];
+				if (!ugas.get(i).isBoolean()) {
+					values[i] = childval[childinst];
+				} else {
+					if (childinst == 1)
+						values[i] = childval[0];
+					else
+						values[i] = 1 - childval[0];
+				}
+			}
+			if (debugPrint)
+				System.out.print(ugas.get(i).getMyatom() + " ");
+		}
+		return values;
 	}
 
-	public double mapSearchRecursive(GGThread mythread, TreeSet<GGAtomMaxNode> alreadyflipped, Vector<GGAtomMaxNode> flipcandidates, double currentllratio, int depth, int maxDepth, MyCount count) {
+	public double mapSearchRecursiveWrap(GGThread mythread, Vector<GGAtomMaxNode> flipcandidates, int maxDepth) {
+		return mapSearchRecursive(mythread, new TreeSet<GGAtomMaxNode>(new GGAtomMaxNode_Comparator()), flipcandidates, 1, 0, maxDepth);
+	}
+
+	public double mapSearchRecursive(GGThread mythread, TreeSet<GGAtomMaxNode> alreadyflipped, Vector<GGAtomMaxNode> flipcandidates, double currentllratio, int depth, int maxDepth) {
 		if (depth == maxDepth) {
 			if (debugPrint)
 				System.out.println("Max depth reached, return");
@@ -1495,9 +1533,7 @@ public class GradientGraphO extends GradientGraph{
 		PriorityQueue<GGAtomMaxNode> scored_atoms = new PriorityQueue<GGAtomMaxNode>(new GGAtomMaxNode_Comparator()); // NB. with priority queue only the best is guarantee to be on the top
 
 		for (GGAtomMaxNode mxnode: flipcandidates) {
-			mxnode.setScore(mythread,0);
-			if (mxnode.getScore() <= 0)
-				count.count++;
+			mxnode.setScore(mythread,sampleSizeScoring);
 			scored_atoms.add(mxnode);
 		}
 
@@ -1519,27 +1555,11 @@ public class GradientGraphO extends GradientGraph{
 		}
 
 		Vector<GGCPMNode> ugas = flipnext.getAllugas();
-		double[] oldvalues = new double[ugas.size()];
 		double oldll = SmallDouble.log(llnode.evaluate(null,0, ugas,true,false,null));
+		double[] oldvalues = getUgasValues(ugas);
 		if (debugPrint) {
 			System.out.println(depthS + "Old UGAS");
 			System.out.print(depthS);
-		}
-		for (int i = 0; i < oldvalues.length; i++) {
-			int childinst = ugas.get(i).instval(null);
-			double[] childval = ugas.get(i).values_for_samples[0];
-			if (!ugas.get(i).isBoolean()) {
-				oldvalues[i] = childval[childinst];
-			} else {
-				if (childinst==1)
-					oldvalues[i] = childval[0];
-				else
-					oldvalues[i] = 1 - childval[0];
-			}
-			if (debugPrint)
-				System.out.print(ugas.get(i).getMyatom() + " ");
-		}
-		if (debugPrint) {
 			System.out.println();
 			System.out.println(depthS + Arrays.toString(oldvalues));
 			System.out.println(depthS + "Flipping: " + flipnext.getMyatom() + " to " + flipnext.getHighvalue());
@@ -1549,41 +1569,26 @@ public class GradientGraphO extends GradientGraph{
 		flipnext.setCurrentInst(flipnext.getHighvalue());
 		flipnext.reEvaluateUpstream(null);
 
-		double[] newvalues = new double[ugas.size()];
 		double newll = SmallDouble.log(llnode.evaluate(null,0, ugas,true,false,null));
+		double[] newvalues = getUgasValues(ugas);
 		currentllratio = currentllratio*oldll/newll;
-		if (debugPrint) {
-			System.out.println(depthS + "New UGAS");
-			System.out.print(depthS);
-		}
-		for (int i = 0; i < newvalues.length; i++) {
-			int childinst = ugas.get(i).instval(null);
-			double[] childval = ugas.get(i).values_for_samples[0];
-			if (!ugas.get(i).isBoolean()) {
-				newvalues[i] = childval[childinst];
-			} else {
-				if (childinst==1)
-					newvalues[i] = childval[0];
-				else
-					newvalues[i] = 1 - childval[0];
-			}
-			if (debugPrint)
-				System.out.print(ugas.get(i).getMyatom() + " ");
-		}
-		if (debugPrint) {
-			System.out.println();
-			System.out.println(depthS + Arrays.toString(newvalues));
-		}
 
 		int worstUgasCount=0;
 		for (int i = 0; i < newvalues.length; i++) {
 			if (newvalues[i]<oldvalues[i])
 				worstUgasCount++;
 		}
-		if (debugPrint)
-			System.out.println(depthS + "Worst UGAS: " + worstUgasCount + "/" + newvalues.length);
 
-		for (int j=1;j<windowsize;j++){
+		if (debugPrint) {
+			System.out.println(depthS + "New UGAS");
+			System.out.print(depthS);
+			System.out.println();
+			System.out.println(depthS + Arrays.toString(newvalues));
+			System.out.println(depthS + "Worst UGAS: " + worstUgasCount + "/" + newvalues.length);
+		}
+
+
+		for (int j=0;j<windowsize;j++){
 			gibbsSample(mythread);
 		}
 		if (numchains > 0 && myggoptions.ggverbose()) {
@@ -1611,7 +1616,7 @@ public class GradientGraphO extends GradientGraph{
 			}
 		}
 		GGCPMNode minuga = ugas.elementAt(minind);
-		double recsearch = mapSearchRecursive(mythread, alreadyflipped, minuga.getMaxIndicators(), currentllratio,depth+1, maxDepth, count);
+		double recsearch = mapSearchRecursive(mythread, alreadyflipped, minuga.getMaxIndicators(), currentllratio,depth+1, maxDepth);
 		if (recsearch < 1) {
 			if (debugPrint)
 				System.out.println(depthS + "flipping back " + flipnext.getMyatom() + " to " + oldValue);
@@ -1655,7 +1660,7 @@ public class GradientGraphO extends GradientGraph{
 			System.out.println("No successful initialization of max/sum indicators");
 			return Double.NaN;
 		}
-		//		this.showAllNodes(6, myPrimula.getRels());
+
 		if (myggoptions.ggverbose()) {
 			if (debugPrint) {
 				System.out.println("Initial max values:");
@@ -1665,94 +1670,76 @@ public class GradientGraphO extends GradientGraph{
 				System.out.println("Initial sampled values:");
 				showSumAtomsVals();
 			}
-	}
+		}
 
-	MyCount myCount = new MyCount();
-	evaluateLikelihoodAndPartDerivs(true);
-	double curll = currentLogLikelihood();
-//	System.out.println("initial likelihood= " + SmallDouble.toStandardDouble(llnode.likelihood()) + "   " + StringOps.arrayToString(llnode.likelihood(), "(", ")"));
-	System.out.println("initial log-likelihood= " + curll);
-
-	while (!terminate){
-		if (debugPrint)
-			System.out.println("starting from the top ..." + itcount);
-		//		showParameterValues("Current parameters: ");
-		itcount++;
+		MyCount myCount = new MyCount();
 		evaluateLikelihoodAndPartDerivs(true);
-		oldll=currentLogLikelihood();
+		double curll = currentLogLikelihood();
+		System.out.println("initial log-likelihood= " + curll);
 
-		if (debugPrint)
-			System.out.println("log-likelihood= " + oldll);
-
-		if (mapSearchAlg == 0) {
-			System.out.println("MAP search 0..");
-			score = mapSearch(mythread, maxind_as_ts());
-		}
-		else if (mapSearchAlg == 1)
-			score = greedySearch(mythread, maxind_as_ts(), nIterGreedy, 1, 1);
-		else if (mapSearchAlg == 2) {
-			Vector flip = maxind_as_vec();
-			myCount.count = 0;
-			score = mapSearchRecursiveWrap(mythread, flip, 10, myCount);
+		while (!terminate){
+			if (debugPrint)
+				System.out.println("starting from the top ..." + itcount);
+			itcount++;
 			evaluateLikelihoodAndPartDerivs(true);
-			curll = currentLogLikelihood();
-			printProgressBar( myCount.count, flip.size(), curll);
-			if (score <= 1)
+			oldll=currentLogLikelihood();
+
+			if (debugPrint)
+				System.out.println("log-likelihood= " + oldll);
+
+			if (mapSearchAlg == 0) {
+				System.out.println("MAP search 0..");
+				score = mapSearch(mythread, maxind_as_ts());
+			}
+			else if (mapSearchAlg == 1)
+				score = greedySearch(mythread, maxind_as_ts(), nIterGreedy, 1, 1);
+			else if (mapSearchAlg == 2) {
+				Vector flip = maxind_as_vec();
+				score = mapSearchRecursiveWrap(mythread, flip, 10);
+				evaluateLikelihoodAndPartDerivs(true);
+				if (score <= 1)
+					terminate = true;
+			} else if (mapSearchAlg == 3) {
+				System.out.println("MAP search 3...");
+				score = mapSearchSampling(mythread, maxind_as_list());
 				terminate = true;
-		} else if (mapSearchAlg == 3) {
-			System.out.println("MAP search 3...");
-			score = mapSearchSampling(mythread, maxind_as_list());
-			terminate = true;
-		} else if (mapSearchAlg == 4) {
-			System.out.println("MAP search 4...");
-			score = mapSearchBatch(mythread, maxind_as_ts());
-		}
-
-		if (debugPrint && mapSearchAlg != 2)
-			System.out.println("log-likelihood improvement " + oldll/score);
-
-		if (mapSearchAlg != 2 && oldll/score <= 1+myggoptions.getLLikThresh()) {
-			terminate = true;
-		}
-		if (!terminate) {
-			if (mode == LEARNMODE) {
-				if (debugPrint)
-					System.out.print("Learning parameters ...");
-				learnParameters(mythread, GradientGraph.FullLearn, false);
-				if (debugPrint)
-					System.out.println("... done");
 			}
-		}
-	}
 
-	System.out.println();
-	evaluateLikelihoodAndPartDerivs(true);
-	curll = currentLogLikelihood();
-	System.out.println("final log-likelihood= " + curll);
+			if (debugPrint && mapSearchAlg != 2)
+				System.out.println("log-likelihood improvement " + oldll/score);
 
-	for (GGCPMNode nextchild: this.llnode.children) {
-		if (nextchild.getMyatom().equals("constr(0)")) {
-			for (int i = 0; i < numchains; i++) {
-				for (int j = 0; j < windowsize; j++) {
-					System.out.print(nextchild.values_for_samples[i+j][0] + "\t");
+			if (mapSearchAlg != 2 && oldll/score <= 1+myggoptions.getLLikThresh()) {
+				terminate = true;
+			}
+			if (!terminate) {
+				if (mode == LEARNMODE) {
+					if (debugPrint)
+						System.out.print("Learning parameters ...");
+					learnParameters(mythread, GradientGraph.FullLearn, false);
+					if (debugPrint)
+						System.out.println("... done");
 				}
-				System.out.println();
 			}
 		}
+
+		System.out.println();
+		evaluateLikelihoodAndPartDerivs(true);
+		curll = currentLogLikelihood();
+		System.out.println("final log-likelihood= " + curll);
+
+		for (GGCPMNode nextchild: this.llnode.children) {
+			if (nextchild.getMyatom().equals("constr(0)")) {
+				for (int i = 0; i < numchains; i++) {
+					for (int j = 0; j < windowsize; j++) {
+						System.out.print(nextchild.values_for_samples[i+j][0] + "\t");
+					}
+					System.out.println();
+				}
+			}
+		}
+
+		return llnode.loglikelihood();
 	}
-
-	//showParameterValues("Final Parameters: ");
-
-	//		if (debugPrint) {
-	//			System.out.println("Final max values:");
-	//			for (Iterator<GGAtomMaxNode> it = maxindicators.iterator(); it.hasNext(); ) {
-	//				GGAtomMaxNode nextgimn = it.next();
-	//				System.out.println(nextgimn.getMyatom() + ": " + nextgimn.getCurrentInst());
-	//			}
-	//		}
-
-	return llnode.loglikelihood();
-}
 
 //	/** Sets the truthval fields in the ProbFormNodes corresponding
 //	 * to unobserved atoms to the truthvalues in the sno's sample
@@ -2967,5 +2954,13 @@ public void setGnnPy(GnnPy gnnPy) {
 
 	public void setSampleSizeScoring(int sampleSizeScoring) {
 		this.sampleSizeScoring = sampleSizeScoring;
+	}
+
+	public int getLookaheadSearch() {
+		return lookaheadSearch;
+	}
+
+	public void setLookaheadSearch(int lookaheadSearch) {
+		this.lookaheadSearch = lookaheadSearch;
 	}
 }
