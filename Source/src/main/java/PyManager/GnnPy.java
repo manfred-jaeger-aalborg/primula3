@@ -496,17 +496,10 @@ public class GnnPy {
                     int[][] mat = A.allTypedTuples(parent.getTypes());
                     // for now, we just check if the attributes values are NaN
                     for (int i = 0; i < mat.length; i++) {
-                        if (parent.ispredefined()) {
+                        if (parent.isprobabilistic()) {
                             value = A.valueOf(parent, mat[i]);
                             if (Double.isNaN(value)) {
                                 result[0] = new Double[]{Double.NaN};
-                                return result;
-                            }
-                        } else if (parent.isprobabilistic()) {
-                            value = inst.valueOf(parent, mat[i]);
-                            if (Double.isNaN(value)) {
-//                                    result[0] = new Double[]{Double.NaN};
-                                Arrays.fill((double[])result[0],Double.NaN);
                                 return result;
                             }
                         }
@@ -573,7 +566,6 @@ public class GnnPy {
             torchModel = loadTorchModel(interpreter, currentCatGnn, scriptPath);
         Object[] result = new Object[2];
         CatGnn cpmHetero = (CatGnn) cpmGnn;
-        double value;
         result[0] = new double[((CatGnn) cpmGnn).numvals()];
 
         // only val no gradient computed
@@ -587,7 +579,6 @@ public class GnnPy {
                 edgeDict = new Hashtable<>();
             }
 
-            TreeSet<Rel> attr_parents = cpmGnn.parentRels();
             if (GGboolRel == null)
                 GGboolRel = sampledRelGobal.getBoolBinaryRelations();
             if (GGNodesDict.isEmpty())
@@ -595,49 +586,12 @@ public class GnnPy {
             if (nodeMap.isEmpty())
                 nodeMap = constructNodesDictMap(cpmHetero, A);
 
-            // if it has no parents we use the current attributes
-            if (attr_parents.isEmpty()) {
-                Map<String, double[][]> x_dict = inputAttrToDict(cpmHetero, nodeMap, GGNodesDict, sampledRelGobal);
-                Map<String, ArrayList<ArrayList<Integer>>> edge_dict = edgesToDict(GGboolRel, sampledRelGobal, nodeMap);
-
-                if (cpmGnn.getArgument().equals(""))
-                    result[0] = inferModelHetero(-1, x_dict, edge_dict, cpmGnn.getGnnId()); // graph classification
-                else
-                    result[0] = inferModelHetero(Integer.parseInt(cpmGnn.getArgument()), x_dict, edge_dict, cpmGnn.getGnnId()); // node classification
-
-                return result;
-            }
-            // else
-            try {
-                for (Rel parent : attr_parents) {
-                    int[][] mat = A.allTypedTuples(parent.getTypes());
-                    // for now, we just check if the attributes values are NaN
-                    for (int i = 0; i < mat.length; i++) {
-                        if (parent.ispredefined()) {
-                            value = A.valueOf(parent, mat[i]);
-                            if (Double.isNaN(value)) {
-                                result[0] = new Double[]{Double.NaN};
-                                return result;
-                            }
-                        } else if (parent.isprobabilistic()) {
-                            value = inst.valueOf(parent, mat[i]);
-                            if (Double.isNaN(value)) {
-//                                    result[0] = new Double[]{Double.NaN};
-                                Arrays.fill((double[])result[0],Double.NaN);
-                                return result;
-                            }
-                        }
-                    }
-                }
-                Map<String, double[][]> x_dict = inputAttrToDict(cpmHetero, nodeMap, GGNodesDict, sampledRelGobal);
-                Map<String, ArrayList<ArrayList<Integer>>> edge_dict = edgesToDict(GGboolRel, sampledRelGobal, nodeMap);
-                if (cpmGnn.getArgument().equals(""))
-                    result[0] = inferModelHetero(-1, x_dict, edge_dict, cpmGnn.getGnnId());
-                else
-                    result[0] = inferModelHetero(Integer.parseInt(cpmGnn.getArgument()), x_dict, edge_dict, cpmGnn.getGnnId());
-            } catch (RBNIllegalArgumentException e) {
-                throw new RuntimeException(e);
-            }
+            Map<String, double[][]> x_dict = inputAttrToDict(cpmHetero, nodeMap, GGNodesDict, sampledRelGobal);
+            Map<String, ArrayList<ArrayList<Integer>>> edge_dict = edgesToDict(GGboolRel, sampledRelGobal, nodeMap);
+            if (cpmGnn.getArgument().equals("[]") || cpmGnn.getArgument().equals(""))
+                result[0] = inferModelHetero(-1, x_dict, edge_dict, cpmGnn.getGnnId());
+            else
+                result[0] = inferModelHetero(Integer.parseInt(cpmGnn.getArgument()), x_dict, edge_dict, cpmGnn.getGnnId());
         } else {
             throw new RuntimeException("GRADIENT IN EVALUATION NOT IMPLEMENTED FOR GNN-RBN!");
         }

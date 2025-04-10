@@ -139,6 +139,13 @@ public class CatGnn extends CPModel implements CPMGnn {
                              Profiler profiler)
             throws RBNCompatibilityException {
 
+        // if the attributes we depend on does not have a value, return NaN
+        if (parentRels().stream().anyMatch(r -> inst.find(r).isEmpty())) {
+            Object[] result = new Object[2];
+            Arrays.fill((double[]) result[0], Double.NaN);
+            return result;
+        }
+
         return gnnPy.evaluate_gnnHetero(A, inst, this, valonly);
     }
 
