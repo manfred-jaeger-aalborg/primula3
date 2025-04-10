@@ -280,16 +280,24 @@ public class GGConvCombNode extends GGCPMNode{
 
 		for (String param: this.myparameters) {
 			double partderiv = 0;
+			double[] partderiv0=childgradients.elementAt(0).get_part_deriv(param);
+			double[] partderiv1=childgradients.elementAt(1).get_part_deriv(param);
+			double[] partderiv2=childgradients.elementAt(2).get_part_deriv(param);
 			/* F0'F1: */
-			partderiv += childgradients.elementAt(0).get_part_deriv(param)[0]*childvals[1];
+			if (partderiv0!=null)
+				partderiv += partderiv0[0]*childvals[1];
 			/* +F0F1': */
-			partderiv +=childvals[0]*childgradients.elementAt(1).get_part_deriv(param)[0];
+			if (partderiv1!=null)
+				partderiv +=childvals[0]*partderiv1[0];
 			/* -F0'F2: */
-			partderiv -=childgradients.elementAt(0).get_part_deriv(param)[0]*childvals[2];
+			if (partderiv0!=null)
+				partderiv -=partderiv0[0]*childvals[2];
 			/* -F0F2': */
-			partderiv -=childvals[0]*childgradients.elementAt(2).get_part_deriv(param)[0];
-			/* +F2' */
-			partderiv +=childgradients.elementAt(2).get_part_deriv(param)[0];
+			if (partderiv2!=null) {
+				partderiv -= childvals[0]*partderiv2[0];
+				/* +F2' */
+				partderiv += partderiv2[0];
+			}
 
 			result.set_part_deriv(param, new double[] {partderiv});
 		}

@@ -2503,7 +2503,7 @@ protected double[] linesearch_wolfe(double[] oldthetas,
  */
 protected double getAlphaBound(double[] direction, double[] oldthetas){
 	double alpha = Double.POSITIVE_INFINITY;
-	for (int i=0;i<minmaxbounds[0].length;i++){
+	for (int i=0;i<minmaxbounds.length;i++){
 		if (direction[i]<0 && minmaxbounds[i][0]!=Double.NEGATIVE_INFINITY)
 			alpha = Math.min(alpha, (minmaxbounds[i][0]-oldthetas[i])/direction[i]);
 		if (direction[i]>0 && minmaxbounds[i][1]!=Double.POSITIVE_INFINITY)
