@@ -7,11 +7,16 @@ Java implementation of Relational Bayesian Networks
 - to get started: download an .rbn and an .rdef file from one of the directories under Examples/, and follow 
   the instructions in the .pdf document for that example. 
 
+### Requirements
 
-### PyTorch Integration Setup
+Before running or compiling Primula, please ensure that the following prerequisites are met:
 
-Primula integrates with PyTorch via JEP, which allows embedding CPython within the JVM.
-To set up the PyTorch integration:
+- Java Development Kit (JDK) 17
+- Python Environment (for PyTorch Geometric Integration)
+
+### PyTorch Geometric Integration Setup
+
+Primula integrates with PyTorch via JEP, which allows embedding CPython within the JVM. Make sure that your Python environment has [PyTorch Geometric](pytorch-geometric.readthedocs.io/en/latest/install/installation.html) installed.
 
 Install JEP in your Python environment:
    
@@ -40,4 +45,6 @@ To compile Primula:
    ```bash
    ./gradlew jar
    ```
+(gradlew.bat on Windows)
+
 The resulting Primula JAR file will be generated in the JAR folder.
