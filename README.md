@@ -3,9 +3,13 @@ Java implementation of Relational Bayesian Networks
 
 ### To run the software:
 
-- download the .jar file from the JAR directory
-- to get started: download an .rbn and an .rdef file from one of the directories under Examples/, and follow 
-  the instructions in the .pdf document for that example. 
+- Download the primula.jar file from the JAR directory
+- To get started: download an .rbn and an .rdef file from one of the directories under Examples/, and follow 
+  the instructions in the .pdf document for that example
+- You can run the .jar file with the following command:
+```bash
+  java -jar primula.jar
+```
 
 ### Requirements
 
