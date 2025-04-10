@@ -44,6 +44,7 @@ tasks.named<Jar>("jar") {
     manifest {
         attributes["Main-Class"] = "RBNgui.PrimulaGUI"
     }
+    archiveFileName.set("primula.jar")
     // Include runtime dependencies in the JAR.
     from({
         configurations.runtimeClasspath.get().filter { it.name.endsWith("jar") }
