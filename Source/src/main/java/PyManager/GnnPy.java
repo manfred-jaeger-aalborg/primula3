@@ -142,13 +142,9 @@ public class GnnPy {
         sharedInterpreter = null;
         savedData = false;
         nodeMap = new HashMap<>();
-        try {
-            JepManager.initializeJep();
-            JepManager.addShutdownHook();
-            torchModel = loadTorchModel(JepManager.getInterpreter(true), catGnn, configModelPath);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        //            JepManager.initializeJep();
+        JepManager.addShutdownHook();
+        torchModel = loadTorchModel(JepManager.getInterpreter(true), catGnn, configModelPath);
     }
 
 //    public GnnPy() {

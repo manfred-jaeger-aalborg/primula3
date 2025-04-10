@@ -3,11 +3,7 @@ package PyManager;
 import RBNpackage.CatGnn;
 import jep.MainInterpreter;
 import jep.SharedInterpreter;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 
 public class JepManager {
     // Thread-local to ensure each thread gets its own interpreter

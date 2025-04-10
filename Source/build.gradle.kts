@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "org.primula"
-version = "2.0-SNAPSHOT"
+version = "PRIMULA"
 
 repositories {
     mavenCentral()
@@ -19,7 +19,6 @@ dependencies {
     implementation("org.dom4j:dom4j:2.1.3")
     implementation("black.ninia:jep:4.2.2")
     //implementation(kotlin("script-runtime"))
-
 }
 
 java {
@@ -51,6 +50,7 @@ tasks.named<Jar>("jar") {
                 .map { zipTree(it) }
     })
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    destinationDirectory.set(file("../JAR"))
 }
 
 tasks.register("runPollution") {
