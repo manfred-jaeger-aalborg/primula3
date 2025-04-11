@@ -142,6 +142,7 @@ public class CatGnn extends CPModel implements CPMGnn {
         // if the attributes we depend on does not have a value, return NaN
         if (parentRels().stream().anyMatch(r -> inst.find(r).isEmpty())) {
             Object[] result = new Object[2];
+            result[0] = new double[this.numvals()];
             Arrays.fill((double[]) result[0], Double.NaN);
             return result;
         }

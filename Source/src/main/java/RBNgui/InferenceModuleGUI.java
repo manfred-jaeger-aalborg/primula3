@@ -1494,11 +1494,11 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
             JTable qt = querytables.elementAt(i);
             //newquerytables.add(qt);
             qt.setModel(mcmctm);
-            qt.getColumnModel().getColumn(0).setPreferredWidth(250);
+            qt.getColumnModel().getColumn(0).setPreferredWidth(300);
             for (int c=1;c<qt.getColumnCount();c++)
-                qt.getColumnModel().getColumn(c).setPreferredWidth(100);
+                qt.getColumnModel().getColumn(c).setPreferredWidth(200);
             qt.setShowHorizontalLines(false);
-            qt.setPreferredScrollableViewportSize(new Dimension(100+80*(int)r.numvals(), 100));
+            qt.setPreferredScrollableViewportSize(new Dimension(200+80*(int)r.numvals(), 100));
             //table header values
             qt.getColumnModel().getColumn(0).setHeaderValue("Query");
             for (int j=0;j<r.numvals();j++) {
