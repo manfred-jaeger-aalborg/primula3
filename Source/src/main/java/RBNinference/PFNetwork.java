@@ -568,8 +568,6 @@ public class PFNetwork{
 		 */
 		for (int i=0;i<allnodes.size();i++){
 			((PFNetworkNode)allnodes.elementAt(i)).initializeForNextSample();
-			if (((PFNetworkNode)allnodes.elementAt(i)).cpmodel() instanceof CPMGnn && ((PFNetworkNode)allnodes.elementAt(i)).getGnnPy() == null)
-				((PFNetworkNode)allnodes.elementAt(i)).setGnnPy(this.gnnPy);
 		}
 		
 		Hashtable<String,double[]> evaluated = new Hashtable<String,double[]>();

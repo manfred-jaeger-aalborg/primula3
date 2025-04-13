@@ -51,8 +51,7 @@ public class Sampler{
 	
 	public void makeSampleStruc(PrimulaGUI prGUI){
 		myPrimula = prGUI.primula;
-		myPrimulaGUI = prGUI;
-		BayesConstructor bcons = new BayesConstructor(myPrimulaGUI, new OneStrucData(), new GroundAtomList());
+		BayesConstructor bcons = new BayesConstructor(prGUI, new OneStrucData(), new GroundAtomList());
 		try{
 			pfnetw = bcons.constructPFNetwork(Primula.OPTION_NOT_EVIDENCE_CONDITIONED,
 					Primula.OPTION_NOT_QUERY_SPECIFIC,
