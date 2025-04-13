@@ -381,11 +381,6 @@ public class InferenceModule implements GradientGraphOptions {
 				samplelogmode,
 				logwriter);
 
-		if (sampthr.isGnnIntegration()) {
-			sampthr.setPythonHome(this.myprimula.getPythonHome());
-			sampthr.setScriptPath(this.myprimula.getScriptPath());
-			sampthr.setScriptName(this.myprimula.getScriptName());
-		}
 		sampthr.start();
 		return sampthr;
 	}

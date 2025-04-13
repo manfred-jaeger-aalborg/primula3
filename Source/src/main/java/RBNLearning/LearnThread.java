@@ -761,7 +761,7 @@ public class LearnThread extends GGThread {
 									pval = 1- (double)lg[0];
 							}
 							if (nextrel instanceof CatRel) {
-								pval = ((Double[])lg[0])[val];
+								pval = ((double[])lg[0])[val];
 							}
 
 							result[0][0]+=Math.log(pval);

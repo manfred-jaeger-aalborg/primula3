@@ -343,8 +343,8 @@ public class GradientGraphO extends GradientGraph{
 						groundnextcpm = nextcpm.substitute(vars,nexttup);
 						atomstring = nextrel.name()+StringOps.arrayToString((int[])inrel.elementAt(k),"(",")");
 						//							System.out.print("\r\t\t\tcurrent atom: " + atomstring);
-						if (debugPrint)
-							printProgress(startTimeProg, inrel.size(), k+1); // we keep deatciate for now
+//						if (debugPrint)
+//							printProgress(startTimeProg, inrel.size(), k+1); // we keep deatciate for now
 
 						/* check whether this atom has already been included as an upper ground atom node because
 						 * it is a map atom
