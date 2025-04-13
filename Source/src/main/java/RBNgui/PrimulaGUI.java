@@ -1200,8 +1200,10 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/homophily/experiments/rbn_constraints/const_nodeconst_gnn.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/homophily/experiments/ising/rdef/ising_32_0.5_0_0.4_4_nodeconst.rdef";
 
-        String rbninputfilestring = "/Users/lz50rg/Dev/water-hawqs/water_rbn_const_gnn.rbn";
-        String rstinputfilestring = "/Users/lz50rg/Dev/water-hawqs/test_small_new.rdef";
+
+        String rbninputfilestring = "/home/jaeger/B/Primula/Examples/HAWQS/water_rbn_2.rbn";
+        String rstinputfilestring = "/home/jaeger/B/Primula/Examples/HAWQS/river_with_data_train.rdef";
+
 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/football/rbn_file.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/football/overlapping_2024_12_12/2024-12-12_move_to_cat/10-47-26-12a63b46/overlapping.rdef";
@@ -1229,7 +1231,7 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
         }
         PrimulaGUI win = new PrimulaGUI(new Primula());
 //		SamiamManager.centerWindow( win );
-//        win.loadDefaults();
+        win.loadDefaults();
 		win.show();
 
 

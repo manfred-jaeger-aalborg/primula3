@@ -523,9 +523,11 @@ public class GGCombFuncNode extends GGCPMNode{
 		
 		for (String param: this.myparameters) {
 			double partderiv = 0;
-			for (int i=0;i<children.size();i++)
-				partderiv = partderiv + children.elementAt(i).evaluateGradient(idx).get_part_deriv(param)[0];
-
+			for (int i=0;i<children.size();i++) {
+				double[] childderiv = children.elementAt(i).evaluateGradient(idx).get_part_deriv(param);
+				if (childderiv != null)
+					partderiv = partderiv + childderiv[0];
+			}
         	result.set_part_deriv(param, new double[] {partderiv});
 		}
 

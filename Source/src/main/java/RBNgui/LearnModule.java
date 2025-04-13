@@ -399,7 +399,7 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 		subsamples = 100;
 		numblocks = 1;
 		numbatches =10;
-		splitmode = RelData.SPLIT_BY_DOMAIN;
+		splitmode = RelData.SPLIT_ACROSS_DOMAINS;
 		dampingfac =0.99;
 		numchains = 10;
 		windowsize = 20;
@@ -419,7 +419,7 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 		numrelsfromfile = false;
 		aca = false;
 		readNumRels();
-		useggs=true;
+		useggs=false;
 		usememoize=true;
 		
 		//selectednumrels = new Vector<String>();

@@ -203,11 +203,13 @@ public class GGSoftMaxNode extends GGCPMNode{
 			double[] partderiv = new double[this.outDim];
 			double derivsum = 0;
 			for (int i=0;i<this.outDim();i++) {
-				derivsum+=values[i]*childpds[i][0];
+				if (childpds[i]!=null)
+					derivsum+=values[i]*childpds[i][0];
 			}
 
 			for (int i=0;i<this.outDim;i++) {
-				partderiv[i]=values[i]*(childpds[i][0]-derivsum);
+				if (childpds[i]!=null)
+					partderiv[i]=values[i]*(childpds[i][0]-derivsum);
 			}
 			result.set_part_deriv(param, partderiv);
 		}
