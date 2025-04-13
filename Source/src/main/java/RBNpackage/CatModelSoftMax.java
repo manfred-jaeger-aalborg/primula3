@@ -3,6 +3,9 @@ package RBNpackage;
 import java.util.*;
 
 import RBNExceptions.RBNCompatibilityException;
+import RBNLearning.Gradient;
+import RBNLearning.Gradient_Array;
+import RBNLearning.Gradient_TreeMap;
 import RBNLearning.Profiler;
 import RBNinference.PFNetworkNode;
 import RBNutilities.rbnutilities;
@@ -119,31 +122,43 @@ public class CatModelSoftMax extends CPModel {
 			probabilities[i] = Math.exp((double) evaluatedpfs[i][0]) / valsum;
 		}
 
-		if (valonly)
-			return result;
-		
-		// Computing the gradient
-		double derivsum =0;
-		for (int k =0;k<params.size();k++) {
-			for (int i=0;i<probforms.size();i++) {
-				derivsum+=Math.exp((double)(evaluatedpfs[i][0]))*((double[])evaluatedpfs[i][1])[k];
+		if (!valonly) {
+			result[1] = null;
+			if (returntype == ProbForm.RETURN_ARRAY)
+				result[1] = new Gradient_Array(params);
+			else
+				result[1] = new Gradient_TreeMap(params);
+
+			// Computing the gradient
+
+			double derivsum = 0;
+
+			for (String par : params.keySet()) {
+				derivsum = 0;
+				for (int i = 0; i < probforms.size(); i++) {
+					double deriv_ik = ((Gradient) evaluatedpfs[i][1]).get_part_deriv(par)[0];
+					derivsum += Math.exp((double) (evaluatedpfs[i][0])) * deriv_ik;
+				}
+
+				Gradient grad= (Gradient)evaluatedpfs[gradindx][1];
+				double pd=Math.exp(((double) evaluatedpfs[gradindx][0]))
+						* (grad.get_part_deriv(par)[0]* valsum - derivsum) / Math.pow(valsum, 2);
+				((Gradient)result[1]).set_part_deriv(par,new double[] {pd});
 			}
-		}
-		
-		if (returntype == ProbForm.RETURN_ARRAY) {
-			result[1]=new double[params.size()];
-			for (int k =0;k<params.size();k++) {
-				((double[])result[1])[k]=Math.exp(((double)evaluatedpfs[gradindx][0]))
-						*(((double[])evaluatedpfs[gradindx][1])[k]*valsum-derivsum)/Math.pow(valsum,2);
-			}
-		}
-		else { // returntype ProbForm.RETURN_SPARSE
-			result[1]=new Hashtable<String,Double>();
-			for (String nextpar: ((Hashtable<String,Double>)evaluatedpfs[gradindx][1]).keySet()) {
-				((Hashtable<String,Double>)result[1]).put(nextpar,
-						Math.exp(((double)evaluatedpfs[gradindx][0]))
-						*(((double[])evaluatedpfs[gradindx][1])[params.get(nextpar)]*valsum-derivsum)/Math.pow(valsum,2));
-			}
+//			if (returntype == ProbForm.RETURN_ARRAY) {
+//				result[1] = new double[params.size()];
+//				for (int k = 0; k < params.size(); k++) {
+//					((double[]) result[1])[k] = Math.exp(((double) evaluatedpfs[gradindx][0]))
+//							* (((double[]) evaluatedpfs[gradindx][1])[k] * valsum - derivsum) / Math.pow(valsum, 2);
+//				}
+//			} else { // returntype ProbForm.RETURN_SPARSE
+//				result[1] = new Hashtable<String, Double>();
+//				for (String nextpar : ((Hashtable<String, Double>) evaluatedpfs[gradindx][1]).keySet()) {
+//					((Hashtable<String, Double>) result[1]).put(nextpar,
+//							Math.exp(((double) evaluatedpfs[gradindx][0]))
+//									* (((double[]) evaluatedpfs[gradindx][1])[params.get(nextpar)] * valsum - derivsum) / Math.pow(valsum, 2));
+//				}
+//			}
 		}
 		return result;
 	}

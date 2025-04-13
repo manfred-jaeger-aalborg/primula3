@@ -121,17 +121,18 @@ public class GGConstantNode extends GGCPMNode{
 		if (!isUnknown)
 			return thisgg.zerograd;
 
-		if (is_evaluated_grad_for_samples[idx])
-			return gradient_for_samples.get(idx);
+		/* Constant nodes never depend on samples */
+		if (is_evaluated_grad_for_samples[0])
+			return gradient_for_samples.get(0);
 
 		/* Much redundancy here, because the gradient always is the same
 		 */
-		Gradient result = gradient_for_samples.get(idx);
+		Gradient result = gradient_for_samples.get(0);
 		result.reset();
 
 		result.set_part_deriv(paramname, new double[] {1.0});
 
-		is_evaluated_grad_for_samples[idx] = true;
+		is_evaluated_grad_for_samples[0] = true;
 		return result;
 	}
 

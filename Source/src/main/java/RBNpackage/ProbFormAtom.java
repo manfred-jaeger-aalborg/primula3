@@ -429,16 +429,23 @@ public  class ProbFormAtom extends ProbForm {
 				result[0] = Double.NaN;	
 
 			if (!valonly) {
-				if (returntype==ProbForm.RETURN_ARRAY) {
-					result[1]=new double[params.size()];
-					if (i!=null)
-						((double[])result[1])[i] = 1.0;
-				}
-				else {
-					result[1]=new Hashtable<String,Double>();
-					if (i!= null)
-						((Hashtable<String,Double>)result[1]).put(thisstr, 1.0);
-				}
+				result[1]=null;
+				if (returntype == ProbForm.RETURN_ARRAY)
+					result[1]=new Gradient_Array(params);
+				else
+					result[1]= new Gradient_TreeMap(params);
+				if (i!=null)
+					((Gradient)result[1]).set_part_deriv(thisstr,new double[] {1.0});
+//				if (returntype==ProbForm.RETURN_ARRAY) {
+//					result[1]=new double[params.size()];
+//					if (i!=null)
+//						((double[])result[1])[i] = 1.0;
+//				}
+//				else {
+//					result[1]=new Hashtable<String,Double>();
+//					if (i!= null)
+//						((Hashtable<String,Double>)result[1]).put(thisstr, 1.0);
+//				}
 			}
 		} // else if (relation.ispredefined())
 		

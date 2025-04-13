@@ -1201,8 +1201,10 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
 //        String rstinputfilestring = "/Users/lz50rg/Dev/homophily/experiments/ising/rdef/ising_32_0.5_0_0.4_4_nodeconst.rdef";
 
 
-        String rbninputfilestring = "/home/jaeger/B/Primula/Examples/HAWQS/water_rbn_2.rbn";
-        String rstinputfilestring = "/home/jaeger/B/Primula/Examples/HAWQS/river_with_data_train.rdef";
+//        String rbninputfilestring = "/home/jaeger/B/Primula/Examples/HAWQS/water_rbn_2.rbn";
+//        String rstinputfilestring = "/home/jaeger/B/Primula/Examples/HAWQS/river_with_data_train.rdef";
+      String rbninputfilestring = "/home/jaeger/B/Primula/Examples/Categorical/onecat_param.rbn";
+      String rstinputfilestring = "/home/jaeger/B/Primula/Examples/Categorical/onecat_sample_n1000.rdef";
 
 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/football/rbn_file.rbn";

@@ -436,8 +436,9 @@ public class LearnThread extends GGThread {
 						batchobj= lossgrad[0][0];
 					}
 					epochobj+=batchobj;
-					
-					
+
+					System.out.println("pars: " + rbnutilities.arrayToString(oldparamvals));
+					System.out.println("gradient: " + rbnutilities.arrayToString(gradient));
 					
 					firstmomentest = rbnutilities.arrayAdd(
 							rbnutilities.arrayScalMult(firstmomentest, beta1), 
@@ -711,7 +712,7 @@ public class LearnThread extends GGThread {
 
 		Object[] lg;
 		double pval =0;
-		Object grad = null;
+		Gradient grad = null;
 		OneStrucData osd;
 		
 		for (int inputcaseno=0; inputcaseno<data.size(); inputcaseno++){
@@ -768,25 +769,32 @@ public class LearnThread extends GGThread {
 
 
 							if (!lossonly) {
-								grad = lg[1];
+								grad = (Gradient)lg[1];
 								double pdp; // partial derivative for parameter p
-								if (myLearnModule.getType_of_gradient()== ProbForm.RETURN_ARRAY) {
-									for (int ii=0; ii<parameters.size(); ii++) {
-										pdp = ((double[])grad)[ii];
-										if (nextrel instanceof BoolRel && val==0)
-											pdp*=-1;
-										result[1][ii]+=pdp/pval;
-									}
+								for (String par: parameters.keySet()){
+									pdp=grad.get_part_deriv(par)[0];
+									if (nextrel instanceof BoolRel && val==0)
+										pdp*=-1;
+									int ii = parameters.get(par);
+									result[1][ii]+=pdp/pval;
 								}
-								else { //ProbForm.RETURN_SPARSE
-									for (String par: ((Hashtable<String,Double>)grad).keySet()){
-										pdp = ((Hashtable<String,Double>)grad).get(par);
-										if (nextrel instanceof BoolRel && val==0)
-											pdp*=-1;
-										int ii = parameters.get(par);
-										result[1][ii]+=pdp/pval;
-									} //for par: 
-								} //ProbForm.RETURN_SPARSE
+//								if (myLearnModule.getType_of_gradient()== ProbForm.RETURN_ARRAY) {
+//									for (int ii=0; ii<parameters.size(); ii++) {
+//										pdp = ((double[])grad)[ii];
+//										if (nextrel instanceof BoolRel && val==0)
+//											pdp*=-1;
+//										result[1][ii]+=pdp/pval;
+//									}
+//								}
+//								else { //ProbForm.RETURN_SPARSE
+//									for (String par: ((Hashtable<String,Double>)grad).keySet()){
+//										pdp = ((Hashtable<String,Double>)grad).get(par);
+//										if (nextrel instanceof BoolRel && val==0)
+//											pdp*=-1;
+//										int ii = parameters.get(par);
+//										result[1][ii]+=pdp/pval;
+//									} //for par:
+//								} //ProbForm.RETURN_SPARSE
 							} // if (!lossonly)
 					} // for (int[] tuple: inrel) {
 				} // for (int i=0; i<rbn.NumPFs(); i++){

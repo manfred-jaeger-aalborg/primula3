@@ -1,6 +1,8 @@
 package RBNpackage;
 
 import RBNExceptions.RBNCompatibilityException;
+import RBNLearning.Gradient_Array;
+import RBNLearning.Gradient_TreeMap;
 import RBNLearning.Profiler;
 import RBNinference.PFNetworkNode;
 import RBNutilities.rbnutilities;
@@ -142,8 +144,8 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
 
         if (!valonly) {
         	if (returntype == ProbForm.RETURN_SPARSE)
-        		result[1] = new Hashtable<String,Double>();
-        	else result[1] = new double[params.size()];
+                result[1] = new Gradient_Array(params);
+        	else result[1] = new Gradient_TreeMap(params);
         }
 
         RBNpackage.ProbFormBoolAtomEquality thissubstituted = (RBNpackage.ProbFormBoolAtomEquality)this.substitute(vars,tuple);

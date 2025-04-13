@@ -21,9 +21,16 @@ public class Gradient_Array extends Gradient{
         gradient[parameter_to_idx.get(param)] = value;
     }
 
+    public void set_part_deriv(int idx, double[] value) {
+        gradient[idx] = value;
+    }
+
     @Override
     public double[] get_part_deriv(String param) {
-        return gradient[parameter_to_idx.get(param)];
+        int idx = parameter_to_idx.get(param);
+        if (gradient[idx] == null)
+            return new double[]{0.0};
+        return gradient[idx];
     }
 
     @Override

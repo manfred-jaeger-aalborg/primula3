@@ -30,7 +30,7 @@ import RBNExceptions.*;
 import RBNutilities.*;
 import RBNgui.Primula;
 import RBNinference.PFNetworkNode;
-import RBNLearning.Profiler;
+import RBNLearning.*;
 
 
 public class ProbFormConvComb extends ProbForm {
@@ -317,43 +317,61 @@ public class ProbFormConvComb extends ProbForm {
 
 	/* The derivatives */
 	if (!valonly) {
-		if (returntype == ProbForm.RETURN_ARRAY) {
-			result[1]=new double[params.size()];
-			double[] r1g = (double[])r1[1];
-			double[] r2g = (double[])r2[1];
-			double[] r3g = (double[])r3[1];
-			for (int i=0;i<params.size();i++) {
-				((double[])result[1])[i]=r1g[i]*r2v+r1v*r2g[i]+(1-r1v)*r3g[i]-r1g[i]*r3v;
-			}
+		Gradient r1g = (Gradient)r1[1];
+		Gradient r2g = (Gradient)r2[1];
+		Gradient r3g = (Gradient)r3[1];
+
+		result[1]=null;
+		if (returntype == ProbForm.RETURN_ARRAY)
+			result[1]=new Gradient_Array(params);
+		else
+			result[1]= new Gradient_TreeMap(params);
+
+		for (String par: params.keySet()) {
+			double pd1=r1g.get_part_deriv(par)[0];
+			double pd2=r2g.get_part_deriv(par)[0];
+			double pd3=r3g.get_part_deriv(par)[0];
+
+
+			((Gradient)result[1]).set_part_deriv(par, new double[] {pd1*r2v+r1v*pd2+(1-r1v)*pd3-pd1*r3v});
 		}
-		else {
-			result[1]=new Hashtable<String,Double>();
-			Hashtable<String,Double> r1g = (Hashtable<String,Double>)r1[1];
-			Hashtable<String,Double> r2g = (Hashtable<String,Double>)r2[1];
-			Hashtable<String,Double> r3g = (Hashtable<String,Double>)r3[1];
-
-
-
-			TreeSet<String> allkeys = new TreeSet<String>(r1g.keySet());
-			allkeys.addAll(r2g.keySet());
-			allkeys.addAll(r3g.keySet());
-
-			for (String p: allkeys) {
-				Double r1gp = r1g.get(p);
-				Double r2gp = r2g.get(p);
-				Double r3gp = r3g.get(p);
-
-				if (r1gp == null)
-					r1gp = 0.0;
-				if (r2gp == null)
-					r2gp = 0.0;
-				if (r3gp == null)
-					r3gp = 0.0;
-
-				double gp=r1gp*r2v+r1v*r2gp+(1-r1v)*r3gp-r1gp*r3v;
-				((Hashtable<String,Double>)result[1]).put(p,gp);
-			}
-		}
+//		if (returntype == ProbForm.RETURN_ARRAY) {
+//			result[1]=new double[params.size()];
+//			double[] r1g = (double[])r1[1];
+//			double[] r2g = (double[])r2[1];
+//			double[] r3g = (double[])r3[1];
+//			for (int i=0;i<params.size();i++) {
+//				((double[])result[1])[i]=r1g[i]*r2v+r1v*r2g[i]+(1-r1v)*r3g[i]-r1g[i]*r3v;
+//			}
+//		}
+//		else {
+//			result[1]=new Hashtable<String,Double>();
+//			Hashtable<String,Double> r1g = (Hashtable<String,Double>)r1[1];
+//			Hashtable<String,Double> r2g = (Hashtable<String,Double>)r2[1];
+//			Hashtable<String,Double> r3g = (Hashtable<String,Double>)r3[1];
+//
+//
+//
+//			TreeSet<String> allkeys = new TreeSet<String>(r1g.keySet());
+//			allkeys.addAll(r2g.keySet());
+//			allkeys.addAll(r3g.keySet());
+//
+//			for (String p: allkeys) {
+//				Double r1gp = r1g.get(p);
+//				Double r2gp = r2g.get(p);
+//				Double r3gp = r3g.get(p);
+//
+//				if (r1gp == null)
+//					r1gp = 0.0;
+//				if (r2gp == null)
+//					r2gp = 0.0;
+//				if (r3gp == null)
+//					r3gp = 0.0;
+//
+//				double gp=r1gp*r2v+r1v*r2gp+(1-r1v)*r3gp-r1gp*r3v;
+//				((Hashtable<String,Double>)result[1]).put(p,gp);
+//			}
+//		}
 	}
 	if (evaluated != null) {
 		//System.out.println("ProbFormConvComb: adding to evaluated: " + key + " = " + result[0] );

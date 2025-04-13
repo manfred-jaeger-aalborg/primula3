@@ -26,6 +26,9 @@ package RBNpackage;
 
 import java.util.*;
 import RBNExceptions.*;
+import RBNLearning.Gradient;
+import RBNLearning.Gradient_Array;
+import RBNLearning.Gradient_TreeMap;
 import RBNgui.Primula;
 import RBNinference.PFNetworkNode;
 import RBNutilities.*;
@@ -463,48 +466,60 @@ public class ProbFormCombFunc extends ProbForm{
 		if (profile)
 			profiler.addTime(Profiler.TIME_EVALCOMBFUNC, System.currentTimeMillis() - beforeeval);
 		if (!valonly) {
-			if (returntype == ProbForm.RETURN_ARRAY) {
-				long timebeforearraycreate = System.currentTimeMillis();
-				result[1]=new double[params.size()];
-				for (int k=0; k<params.size();k++) {
-					double[] derivs = new double[combargs.size()];
-					i =0;
-					for (Object[] d: combargs) {
-						derivs[i]= ((double[])d[1])[k];
-						i++;
-					}
-					((double[])result[1])[k]=mycomb.evaluateGrad(vals, derivs);
-				}
-				if (profile)
-					profiler.addTime(Profiler.TIME_ARRAYCREATE,System.currentTimeMillis()-timebeforearraycreate);
-			}
-			else {
-				long timebeforehashcreate = System.currentTimeMillis();
-				result[1]=new Hashtable<String,Double>();
-				TreeSet<String> donekeys = new TreeSet<String>();
+			result[1]=null;
+			if (returntype == ProbForm.RETURN_ARRAY)
+				result[1]=new Gradient_Array(params);
+			else
+				result[1]= new Gradient_TreeMap(params);
+			for (String par: params.keySet()) {
+				double[] derivs = new double[combargs.size()];
 				for (int j=0; j<combargs.size(); j++) {
-					for (String p: ((Hashtable<String,Double>)combargs.elementAt(j)[1]).keySet()) 
-					{
-						if (!donekeys.contains(p)) {
-							double[] derivs = new double[combargs.size()];
-							/* The elements in combargs.elementAt(0),...,combargs.elementAt(j-1) had a 
-							 * 0 derivative for parameter p */
-							for (int h=j; h<combargs.size(); h++) {
-								Double di = ((Hashtable<String,Double>)combargs.elementAt(h)[1]).get(p);
-								if (di==null)
-									derivs[h]=0.0;
-								else
-									derivs[h]=di;
-							}
-							donekeys.add(p);
-							((Hashtable<String,Double>)result[1]).put(p,mycomb.evaluateGrad(vals, derivs));
-						}
-					}
-					
+					derivs[j]=((Gradient)combargs.get(j)[1]).get_part_deriv(par)[0];
 				}
-				if (profile)
-					profiler.addTime(Profiler.TIME_HASHCREATE, System.currentTimeMillis()-timebeforehashcreate);
-			}// not (returntype == ProbForm.RETURN_ARRAY)
+				((Gradient)result[1]).set_part_deriv(par,new double[] {mycomb.evaluateGrad(vals, derivs)});
+			}
+//			if (returntype == ProbForm.RETURN_ARRAY) {
+//				long timebeforearraycreate = System.currentTimeMillis();
+//				result[1]=new double[params.size()];
+//				for (int k=0; k<params.size();k++) {
+//					double[] derivs = new double[combargs.size()];
+//					i =0;
+//					for (Object[] d: combargs) {
+//						derivs[i]= ((double[])d[1])[k];
+//						i++;
+//					}
+//					((double[])result[1])[k]=mycomb.evaluateGrad(vals, derivs);
+//				}
+//				if (profile)
+//					profiler.addTime(Profiler.TIME_ARRAYCREATE,System.currentTimeMillis()-timebeforearraycreate);
+//			}
+//			else {
+//				long timebeforehashcreate = System.currentTimeMillis();
+//				result[1]=new Hashtable<String,Double>();
+//				TreeSet<String> donekeys = new TreeSet<String>();
+//				for (int j=0; j<combargs.size(); j++) {
+//					for (String p: ((Hashtable<String,Double>)combargs.elementAt(j)[1]).keySet())
+//					{
+//						if (!donekeys.contains(p)) {
+//							double[] derivs = new double[combargs.size()];
+//							/* The elements in combargs.elementAt(0),...,combargs.elementAt(j-1) had a
+//							 * 0 derivative for parameter p */
+//							for (int h=j; h<combargs.size(); h++) {
+//								Double di = ((Hashtable<String,Double>)combargs.elementAt(h)[1]).get(p);
+//								if (di==null)
+//									derivs[h]=0.0;
+//								else
+//									derivs[h]=di;
+//							}
+//							donekeys.add(p);
+//							((Hashtable<String,Double>)result[1]).put(p,mycomb.evaluateGrad(vals, derivs));
+//						}
+//					}
+//
+//				}
+//				if (profile)
+//					profiler.addTime(Profiler.TIME_HASHCREATE, System.currentTimeMillis()-timebeforehashcreate);
+//			}// not (returntype == ProbForm.RETURN_ARRAY)
 
 		} // if (!valonly) {
 		if (evaluated != null) {

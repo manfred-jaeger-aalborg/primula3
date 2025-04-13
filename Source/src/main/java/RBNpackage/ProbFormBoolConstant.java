@@ -67,15 +67,17 @@ public class ProbFormBoolConstant extends ProbFormBool {
 //			System.out.println("Warning: trying to evaluate gradient for Boolean ProbForm" + this.makeKey(A));
 		
 		Object[] result = new Object[2];
-		
-		if (returntype == ProbForm.RETURN_SPARSE)
-			result[1] = new Hashtable<String,Double>();
-		else result[1] = new double[0];
-		
 		if (sign)
 			result[0] =1.0;
 		else
 			result[0] =0.0;
+
+		if (!valonly) {
+			if (returntype == ProbForm.RETURN_SPARSE)
+				result[1] = new Gradient_TreeMap(params);
+			else result[1] = new Gradient_Array(params);
+		}
+
 		return result;
 	}
 	

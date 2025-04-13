@@ -21,13 +21,11 @@ public class Gradient_TreeMap extends Gradient{
 
     @Override
     public double[] get_part_deriv(String param) {
-     //   System.out.print("get" + param  + "size: " + gradient.size());
- //       double[] result = gradient.get(param);
-//        if(param.equals("us2(s796)") && gradient.size()==7){
-//            System.out.println("stop");
-//        }
- //       System.out.println("   ... " + result);
-        return gradient.get(param);
+        double[] result = gradient.get(param);
+        if(result==null)
+            return new double[1];
+        else
+            return result;
     }
 
     @Override

@@ -30,6 +30,8 @@ public abstract class Gradient {
     }
 
     public abstract void set_part_deriv(String param, double[] value);
+//    public abstract void set_part_deriv(int idx, double[] value);
+
     public abstract double[] get_part_deriv(String param);
     public abstract double[] get_part_deriv(int indx);
 
