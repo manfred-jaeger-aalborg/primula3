@@ -85,7 +85,7 @@ public class ProbFormBoolEquality extends ProbFormBool {
 		Object[] result = new Object[2];
 		
 		if (returntype == ProbForm.RETURN_SPARSE)
-			result[1] = new Hashtable<String,Double>();
+			result[1] = new Gradient_TreeMap(params);
 		else result[1] = new double[params.size()];
 		
 		ProbFormBoolEquality thissubstituted = (ProbFormBoolEquality)this.substitute(vars,tuple);

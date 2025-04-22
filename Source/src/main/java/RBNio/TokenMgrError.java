@@ -3,7 +3,6 @@
 package RBNio;
 
 /** Token Manager Error. */
-@SuppressWarnings("all") 
 public class TokenMgrError extends Error
 {
 
@@ -107,7 +106,7 @@ public class TokenMgrError extends Error
     return("Lexical error at line " + //
           errorLine + ", column " + //
           errorColumn + ".  Encountered: " + //
-          (EOFSeen ? "<EOF>" : ("'" + addEscapes(String.valueOf((char) curChar)) + "' (" + curChar + "),")) + //
+          (EOFSeen ? "<EOF>" : ("'" + addEscapes(String.valueOf(curChar)) + "' (" + curChar + "),")) + //
           (errorAfter == null || errorAfter.length() == 0 ? "" : " after prefix \"" + addEscapes(errorAfter) + "\"")) + //
           (lexState == 0 ? "" : " (in lexical state " + lexState + ")");
   }
@@ -145,4 +144,4 @@ public class TokenMgrError extends Error
     this(LexicalErr(EOFSeen, lexState, errorLine, errorColumn, errorAfter, curChar), reason);
   }
 }
-/* JavaCC - OriginalChecksum=58c683f0890ea65e5e05b0b8087bb7b8 (do not edit this line) */
+/* JavaCC - OriginalChecksum=ddb89a735399b5985cf5efdc71be4afe (do not edit this line) */

@@ -53,9 +53,11 @@ public interface RBNParser3Constants {
   /** RegularExpression Id. */
   int PLUS = 47;
   /** RegularExpression Id. */
-  int Digits = 48;
+  int MINUS = 48;
   /** RegularExpression Id. */
-  int Constant = 49;
+  int Digits = 49;
+  /** RegularExpression Id. */
+  int NonNegNumber = 50;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -112,8 +114,9 @@ public interface RBNParser3Constants {
     "<Path>",
     "\"*\"",
     "\"+\"",
+    "\"-\"",
     "<Digits>",
-    "<Constant>",
+    "<NonNegNumber>",
   };
 
 }

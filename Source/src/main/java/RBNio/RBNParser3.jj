@@ -230,10 +230,13 @@ ProbFormConstant NumericConstant():
  Token tok;
 }
 {// grammar
-	tok = <Constant>
-	{parsedpfconst = new ProbFormConstant(Double.parseDouble(tok.image));
-	 return parsedpfconst;
-	}
+	(tok = <NonNegNumber>
+	{parsedpfconst = new ProbFormConstant(Double.parseDouble(tok.image));}
+	|
+	<MINUS> tok = <NonNegNumber>
+	{parsedpfconst = new ProbFormConstant(-Double.parseDouble(tok.image));}
+	)
+	 {return parsedpfconst;}
 }
 
 ProbFormConstant  Parameter():
@@ -383,7 +386,7 @@ ProbFormCombFunc CombinationFuncClassic()  throws RBNIllegalArgumentException:
 ProbFormCombFunc CombinationFuncCherry()  throws RBNIllegalArgumentException:
 { Token tok;
   Vector<ProbForm> pflist;
-  Vector<String> arglist;
+  Vector<String> arglist = new Vector<String>();
   ProbForm[] pfarr;
   ProbFormBool cc = new ProbFormBoolConstant(true);
 }
@@ -392,9 +395,9 @@ ProbFormCombFunc CombinationFuncCherry()  throws RBNIllegalArgumentException:
 	pflist = ProbFormList()
 	<COMBWITH>
 	tok = <CombinationFunction>
-	<COMBFORALL>
+	(<COMBFORALL>
 	arglist = ArgList()
-	(<COMBWHERE> cc=BoolFormula())?
+	<COMBWHERE> cc=BoolFormula())?
 
 	{switch(parseno){
 	case 1:
@@ -445,8 +448,18 @@ ProbForm[] pfarr;
 	nextpf = ProbForm()
 	{pflist.add(nextpf);}
 	(
-	  <PLUS> nextpf = ProbForm()
-	   {pflist.add(nextpf);}
+
+	  (<PLUS> nextpf = ProbForm(){
+        pflist.add(nextpf);}
+	   |
+	   <MINUS> nextpf = ProbForm()
+       	   {
+            ProbForm[] pfl = new ProbForm[2];
+       	   pfl[0]=new ProbFormConstant(-1);
+       	   pfl[1]=nextpf;
+       	   pflist.add(new ProbFormCombFunc("prod",pfl,new String[0],new ProbFormBoolConstant(true)));
+       	   }
+       	)
 	)+
 	")"
 	{switch(parseno){
@@ -693,7 +706,7 @@ CatGnn CatGnn() throws RBNIllegalArgumentException :
       tk = <Path> { configPath = tk.image; System.out.println(configPath);}
     "]"
     <WithNumValues>
-    tk = <Constant> { numVals = Integer.parseInt(tk.image); }
+    tk = <NonNegNumber> { numVals = Integer.parseInt(tk.image); }
     <ForFreeVars>
     freeVals = UntypedArguments()
     <UsingRels>
@@ -783,6 +796,9 @@ TOKEN:{
 	<PLUS: "+" >
 }
 
+TOKEN:{
+	<MINUS: "-" >
+}
 //TOKEN: {<ProbabilityValue: ("0"|"1") ("." (["0"-"9"])*)?
 //			   | "." (["0"-"9"])+ >
 //}
@@ -790,11 +806,11 @@ TOKEN:{
 TOKEN: {<#Digits: (["0"-"9"])+>
 } 
 
-//TOKEN: {<#NonNegNumber: <Digits> | "."<Digits> | <Digits> "."<Digits> | <Digits> ".">
-//}
-
-TOKEN: {<Constant:  ("-")?  (<Digits> | "."<Digits> | <Digits> "."<Digits> | <Digits> ".")>
+TOKEN: {<NonNegNumber: <Digits> | "."<Digits> | <Digits> "."<Digits> | <Digits> ".">
 }
+
+//TOKEN: {<Constant:  (<MINUS>)?  (<Digits> | "."<Digits> | <Digits> "."<Digits> | <Digits> ".")>
+//}
 
 // Java functions
 
