@@ -688,6 +688,13 @@ ArrayList<Pair<BoolRel, ArrayList<Rel>>> ForInputList() throws RBNIllegalArgumen
     { return inputs; }
 }
 
+String PathDec():
+{Token tok;}
+{
+	"[" tok = <Path> "]"
+	{return tok.image;}
+}
+
 CatGnn CatGnn() throws RBNIllegalArgumentException :
 {
     Token tk;
@@ -702,9 +709,7 @@ CatGnn CatGnn() throws RBNIllegalArgumentException :
     <COMPUTEWITHTORCH>
     tk = <Name>
     { moduleName = tk.image; }
-    "["
-      tk = <Path> { configPath = tk.image; System.out.println(configPath);}
-    "]"
+    configPath = PathDec()
     <WithNumValues>
     tk = <NonNegNumber> { numVals = Integer.parseInt(tk.image); }
     <ForFreeVars>
@@ -785,9 +790,22 @@ TOKEN : {
     <Name: ["a"-"z","A"-"Z"] (["a"-"z","A"-"Z","0"-"9","-","_"])* >
 }
 
+//TOKEN : {
+//    < Path: "/" ( ["a"-"z", "A"-"Z", "0"-"9", "_", "-", ".", "/"] )+ >
+//}
+
 TOKEN : {
-    < Path: "/" ( ["a"-"z", "A"-"Z", "0"-"9", "_", "-", ".", "/"] )+ >
+    /* Windows: e.g. C:\dir\file.ext
+       or   Unix:   /home/user/file.ext
+       (no spaces or brackets allowed inside) */
+    < Path:
+      (
+         ( ["A"-"Z","a"-"z"] ":" ( ["\\","/","a"-"z","A"-"Z","0"-"9",".","_","-"] )+ )
+       | ( "/" (~[" ", "\t", "\r", "\n", "[", "]"])+ )
+      )
+    >
 }
+
 
 TOKEN:{
 	<MULT: "*" >
