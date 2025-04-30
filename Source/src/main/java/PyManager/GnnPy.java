@@ -124,9 +124,8 @@ public class GnnPy {
 //        }));
     }
 
-    public GnnPy(CatGnn catGnn, String modulename, String configModelPath) {
+    public GnnPy(CatGnn catGnn, String configModelPath) {
         scriptPath = configModelPath;
-        moduleName = modulename;
         currentCatGnn = catGnn;
 
         gnnModelsId = new ArrayList<>();
