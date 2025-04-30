@@ -707,8 +707,6 @@ CatGnn CatGnn() throws RBNIllegalArgumentException :
 }
 {
     <COMPUTEWITHTORCH>
-    tk = <Name>
-    { moduleName = tk.image; }
     configPath = PathDec()
     <WithNumValues>
     tk = <NonNegNumber> { numVals = Integer.parseInt(tk.image); }
@@ -716,7 +714,7 @@ CatGnn CatGnn() throws RBNIllegalArgumentException :
     freeVals = UntypedArguments()
     <UsingRels>
     forInputs = ForInputList()
-    { return new CatGnn(moduleName, configPath, freeVals, numVals, forInputs, true); }
+    { return new CatGnn(configPath, freeVals, numVals, forInputs, true); }
 }
 
 

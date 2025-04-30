@@ -763,8 +763,6 @@ r = reader.getRelFromSignature(tk.image);
     int numLayers = -1;
     ArrayList<Pair<BoolRel, ArrayList<Rel>>> forInputs;
     jj_consume_token(COMPUTEWITHTORCH);
-    tk = jj_consume_token(Name);
-moduleName = tk.image;
     configPath = PathDec();
     jj_consume_token(WithNumValues);
     tk = jj_consume_token(NonNegNumber);
@@ -773,7 +771,7 @@ numVals = Integer.parseInt(tk.image);
     freeVals = UntypedArguments();
     jj_consume_token(UsingRels);
     forInputs = ForInputList();
-{if ("" != null) return new CatGnn(moduleName, configPath, freeVals, numVals, forInputs, true);}
+{if ("" != null) return new CatGnn(configPath, freeVals, numVals, forInputs, true);}
     throw new Error("Missing return statement in function");
 }
 
@@ -1439,7 +1437,6 @@ parseno = pn;
   private boolean jj_3R_CatGnn_709_5_15()
  {
     if (jj_scan_token(COMPUTEWITHTORCH)) return true;
-    if (jj_scan_token(Name)) return true;
     if (jj_3R_PathDec_694_9_44()) return true;
     return false;
   }
@@ -1515,6 +1512,7 @@ parseno = pn;
   private boolean jj_3R_PathDec_694_9_44()
  {
     if (jj_scan_token(15)) return true;
+    if (jj_scan_token(Path)) return true;
     return false;
   }
 

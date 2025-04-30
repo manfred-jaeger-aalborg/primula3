@@ -319,7 +319,7 @@ public class InferenceModule implements GradientGraphOptions {
 		numrestarts = 1;
 		batchSearchSize = 1;
 		sampleSizeScoring = 0;
-		lookaheadSearch = 5;
+		lookaheadSearch = 3;
 
 		readElementNames();
 		readRBNRelations();

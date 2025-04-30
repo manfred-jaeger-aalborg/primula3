@@ -373,7 +373,7 @@ public class Primula {
 				rbn = new RBN(input_file, this.sig);
 				rbnfile = input_file;
 				if (getPrimulaGUI() != null)
-					getPrimulaGUI().getRbnfilename().setText(rbnfile.getPath());
+					getPrimulaGUI().getRbnfilename().setText(rbnfile.getName());
 			}catch (Exception ex){
 				rbn = null;
 				rbnfile = null;

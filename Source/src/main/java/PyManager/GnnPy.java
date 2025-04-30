@@ -547,8 +547,10 @@ public class GnnPy {
                 try {
                     int[][] mat = A.allTypedTuples(rel.getTypes());
                     for (int[] node: mat) {
-                        nodesMap.put(node[0], nodeIdx);
-                        nodeIdx++;
+                        if (node.length > 0) {
+                            nodesMap.put(node[0], nodeIdx);
+                            nodeIdx++;
+                        }
                     }
                 } catch (RBNIllegalArgumentException e) {
                     throw new RuntimeException("Error in saveGnnData for features creation: " + e);
