@@ -249,8 +249,8 @@ public class Primula {
 	 * @uml.property  name="myFlagSystemExitEnabled"
 	 */
 	boolean myFlagSystemExitEnabled = true;
-	//	public static final String STR_FILENAME_LOGO = "src/main/java/Icons/small_logo.jpg";
-	public static final String STR_FILENAME_LOGO = "small_logo.jpg";
+	public static final String STR_FILENAME_LOGO = "src/main/java/Icons/small_logo.jpg";
+	//public static final String STR_FILENAME_LOGO = "small_logo.jpg";
 	/**
 	 * @uml.property  name="myPreferences"
 	 * @uml.associationEnd  multiplicity="(1 1)"
