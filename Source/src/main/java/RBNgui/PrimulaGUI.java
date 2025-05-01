@@ -612,6 +612,7 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
         );
 
         this.init();
+        this.setVisible(true);
     }
 
     /**
@@ -621,10 +622,11 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
     private void init()
     {
         //ImageIcon icon = new ImageIcon("small_logo.jpg");
-        ImageIcon icon = new ImageIcon( Primula.STR_FILENAME_LOGO );
+        ImageIcon icon = new ImageIcon(getClass().getResource("/small_logo.jpg"));
 
         if( icon.getImageLoadStatus() == MediaTracker.COMPLETE ){//image ok
             this.setIconImage(icon.getImage());
+            java.awt.Taskbar.getTaskbar().setIconImage(icon.getImage());
         }
         this.setTitle("Primula");
         this.pack();
@@ -1200,11 +1202,6 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/homophily/experiments/rbn_constraints/const_nodeconst_gnn.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/homophily/experiments/ising/rdef/ising_32_0.5_0_0.4_4_nodeconst.rdef";
-
-
-        String rbninputfilestring = "/home/jaeger/B/Primula/primula3/Examples/InformationDiffusion/independent_cascade.rbn";
-        String rstinputfilestring = "/home/jaeger/B/Primula/primula3/Examples/InformationDiffusion/zachary_fragment.rdef";
-
 
 //      String rbninputfilestring = "/home/jaeger/B/Primula/Examples/HAWQS/water_rbn_parseminus.rbn";
 //      String rstinputfilestring = "/home/jaeger/B/Primula/Examples/HAWQS/river_with_data_train.rdef";
