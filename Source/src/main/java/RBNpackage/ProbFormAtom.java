@@ -414,7 +414,7 @@ public  class ProbFormAtom extends ProbForm {
 				if (returntype==ProbForm.RETURN_ARRAY) 
 					result[1]=new double[params.size()];
 				else 
-					result[1]=new Hashtable<String,Double>();
+					result[1]=new Gradient_Array(params);
 			}
 		}
 		else if (relation.ispredefined()) {		

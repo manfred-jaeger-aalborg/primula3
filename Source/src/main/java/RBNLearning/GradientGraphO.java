@@ -331,9 +331,9 @@ public class GradientGraphO extends GradientGraph{
 					long startTimeProg = System.currentTimeMillis();
 
 					inrel=osd.allInstantiated(nextrel);
-					if (debugPrint) {
-						System.out.println("next rel: " + nextrel.name());
-						System.out.println();}
+//					if (debugPrint) {
+//						System.out.println("next rel: " + nextrel.name());
+//						System.out.println();}
 					for (int k=0;k<inrel.size();k++){
 						nexttup = (int[])inrel.elementAt(k);
 						int instvalue = (int)osd.valueOf(nextrel,nexttup); // A bit complicated; should directly get

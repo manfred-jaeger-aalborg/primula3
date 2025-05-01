@@ -1219,6 +1219,7 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
                         // re-init for next tuple construction
                         inferenceModuleCore.element_tuple = new int[selected_rel.getArity()];
                         addedTuples = "";
+                        el_pos=0;
                     }
 
                 }

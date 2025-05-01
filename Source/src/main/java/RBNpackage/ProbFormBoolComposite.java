@@ -118,7 +118,7 @@ public class ProbFormBoolComposite extends ProbFormBool {
 
 		if (!valonly) {
 			if (returntype == ProbForm.RETURN_SPARSE)
-				result[1] = new Hashtable<String, Double>();
+				result[1] = new Gradient_Array(params);
 			else result[1] = new double[params.size()];
 		}
 
@@ -176,6 +176,7 @@ public class ProbFormBoolComposite extends ProbFormBool {
 			result[0]=1;
 			for (int i=0;i<components.length;i++)
 				result[0] = result[0]*components[i].evalSample(A, atomhasht, inst, evaluated, timers)[0];
+			break;
 		case ProbFormBool.OPERATOROR:
 			result[0]=0;
 			for (int i=0;i<components.length;i++)
