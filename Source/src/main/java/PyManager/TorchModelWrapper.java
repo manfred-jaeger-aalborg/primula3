@@ -37,7 +37,7 @@ public class TorchModelWrapper {
                 String keyX = xDict.entrySet().iterator().next().getKey(); // in this case the dictionary should have only one key
                 interpreter.exec("xi = torch.as_tensor(java_map_x['" + keyX + "'], dtype=torch.float32)"); // TODO maybe this key can be more general (like take just the first element in the dict)
                 if (!edgeDict.isEmpty())
-                    interpreter.exec("ei = torch.as_tensor(java_map_edge['edge'], dtype=torch.long)");
+                    interpreter.exec("ei = torch.as_tensor(java_map_edge['" + keyX + "'], dtype=torch.long)");
                 else
                     interpreter.exec("ei = torch.empty((2, 0), dtype=torch.long)");
                 interpreter.exec(modelName + ".eval()");

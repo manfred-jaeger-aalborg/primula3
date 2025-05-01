@@ -9,6 +9,7 @@ import RBNinference.PFNetworkNode;
 import RBNutilities.Pair;
 import RBNutilities.rbnutilities;
 
+import java.io.File;
 import java.util.*;
 
 /**
@@ -67,15 +68,22 @@ public class CatGnn extends CPModel implements CPMGnn {
         if (this.gnnPy == null)
             savedData = false;
     }
-    public CatGnn(String moduleName, String configModelPath, Vector<String> freeVals, int numVals, ArrayList<Pair<BoolRel, ArrayList<Rel>>> inputs, boolean withGnnPy) {
-        this.gnnId = moduleName;
+    public CatGnn(String configModelPath, Vector<String> freeVals, int numVals, ArrayList<Pair<BoolRel, ArrayList<Rel>>> inputs, boolean withGnnPy) {
+        File f = new File(configModelPath);
+        // get file name without extension
+        int lastIndexOfDot = f.getName().lastIndexOf('.');
+        if (lastIndexOfDot == -1)
+            this.gnnId = f.getName(); // No extension found
+        else
+            this.gnnId = f.getName().substring(0, lastIndexOfDot);
+
         this.argument = "";
         this.freeVals = freeVals;
         if (!freeVals.isEmpty())
             this.argument = freeVals.get(0);
 
         this.categorical = true ? inputs.size() > 1 : false;
-        this.configModelPath = configModelPath;
+        this.configModelPath = f.getParent();
         this.numvals = numVals;
         this.gnnInputs = inputs;
 
@@ -83,7 +91,7 @@ public class CatGnn extends CPModel implements CPMGnn {
         this.gnn_inference = gnn_inference; // this can be inferred by looking at the RBN arguments, no arguments means graph classification
 
         if (withGnnPy)
-            this.gnnPy = new GnnPy(this, moduleName, configModelPath);
+            this.gnnPy = new GnnPy(this, f.getParent());
 
 //        if (this.gnnPy == null) // TODO REDO THIS SAVE DATA!!
 //            savedData = false;
@@ -233,7 +241,7 @@ public class CatGnn extends CPModel implements CPMGnn {
     @Override
     public CPModel substitute(String[] vars, int[] args) {
 //        System.out.println("substitute code 1");
-        CatGnn result = new CatGnn(this.gnnId, this.configModelPath, this.freeVals, this.numvals, this.gnnInputs, false);
+        CatGnn result = new CatGnn(this.configModelPath, this.freeVals, this.numvals, this.gnnInputs, false);
         result.setGnnPy(this.getGnnPy());
         if (vars.length == 0)
             result.argument = Arrays.toString(new String[0]);

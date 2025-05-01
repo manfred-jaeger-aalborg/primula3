@@ -1695,7 +1695,7 @@ public class GradientGraphO extends GradientGraph{
 				score = greedySearch(mythread, maxind_as_ts(), nIterGreedy, 1, 1);
 			else if (mapSearchAlg == 2) {
 				Vector flip = maxind_as_vec();
-				score = mapSearchRecursiveWrap(mythread, flip, 10);
+				score = mapSearchRecursiveWrap(mythread, flip, this.lookaheadSearch);
 				evaluateLikelihoodAndPartDerivs(true);
 				if (score <= 1)
 					terminate = true;

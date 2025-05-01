@@ -124,9 +124,8 @@ public class GnnPy {
 //        }));
     }
 
-    public GnnPy(CatGnn catGnn, String modulename, String configModelPath) {
+    public GnnPy(CatGnn catGnn, String configModelPath) {
         scriptPath = configModelPath;
-        moduleName = modulename;
         currentCatGnn = catGnn;
 
         gnnModelsId = new ArrayList<>();
@@ -548,8 +547,10 @@ public class GnnPy {
                 try {
                     int[][] mat = A.allTypedTuples(rel.getTypes());
                     for (int[] node: mat) {
-                        nodesMap.put(node[0], nodeIdx);
-                        nodeIdx++;
+                        if (node.length > 0) {
+                            nodesMap.put(node[0], nodeIdx);
+                            nodeIdx++;
+                        }
                     }
                 } catch (RBNIllegalArgumentException e) {
                     throw new RuntimeException("Error in saveGnnData for features creation: " + e);
