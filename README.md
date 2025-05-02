@@ -11,35 +11,14 @@ Java implementation of Relational Bayesian Networks
   java -jar primula.jar
 ```
 
-### Requirements
+For integration with PyTorch Geometric, see the separate documentation in Examples/WaterManagement
 
-Before running or compiling Primula, please ensure that the following prerequisites are met:
 
-- Java Development Kit (JDK) 17
-- Python Environment (for PyTorch Geometric Integration)
 
-### PyTorch Geometric Integration Setup
+### Compiling Primula from Source
 
-Primula integrates with PyTorch via JEP, which allows embedding CPython within the JVM. Make sure that your Python environment has [PyTorch Geometric](pytorch-geometric.readthedocs.io/en/latest/install/installation.html) installed.
+ **Gradle** can be used to compile Primula and manage external dependencies such as **Dom4J** and **JEP**.  
 
-Install JEP in your Python environment:
-   
-  ```bash
-    pip install jep
-  ```
-  
-Set the PYTHONHOME environment variable to the path of your Python interpreter
-(the same one where JEP and PyTorch are installed). For example:
-  
-  ```bash
-    export PYTHONHOME=/path/to/your/python
-  ```
-
-Ensure that your Python environment has both PyTorch and JEP installed for seamless integration.
-
-### Compile Primula
-
-Primula uses **Gradle** to compile the project and manage external dependencies such as **Dom4J** and **JEP**.  
 To compile Primula:
 
 1. Download the repository
