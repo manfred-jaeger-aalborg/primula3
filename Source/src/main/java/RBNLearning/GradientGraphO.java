@@ -1334,6 +1334,7 @@ public class GradientGraphO extends GradientGraph{
 		List<GGAtomMaxNode> rescoreList = new ArrayList<>();
 		List<GGAtomMaxNode> topAtoms = new ArrayList<>();
 
+		System.out.println("Scoring flipcandidates...");
 		for (GGAtomMaxNode mxnode : flipcandidates) {
 			mxnode.setScore(mythread, sampleSizeScoring);
 			scored_atoms.add(mxnode);
@@ -1365,14 +1366,13 @@ public class GradientGraphO extends GradientGraph{
 
 		Hashtable<Rel,int[]> bestMapVals = new Hashtable<>();
 
-		Iterator<GGAtomMaxNode> it = scored_atoms.iterator();
-		while (it.hasNext() && num_flipped < max_iter && !terminate) {
+		Iterator<GGAtomMaxNode> it = scored_atoms.iterator();while (it.hasNext() && num_flipped < max_iter && !terminate) {
 			if (num_iter < 2)
-				rescoreWhen = 300;
+				rescoreWhen = flipcandidates.size()/2;
 			else if (num_iter >= 2 && num_iter <=4)
-				rescoreWhen = 30;
+				rescoreWhen = (int) Math.ceil(flipcandidates.size()*0.3);
 			else
-				rescoreWhen = 10;
+				rescoreWhen = (int) Math.ceil(flipcandidates.size()*0.1);;
 
 			// Always remove the first element (best candidate)
 			flipnext = it.next();
@@ -1392,24 +1392,26 @@ public class GradientGraphO extends GradientGraph{
 				counterRescore++;
 			}
 			else rescore_early = true;
+
 			if (rescore_early || counterRescore == rescoreWhen) {
 				num_iter++;
 				// Recompute scores for the best atoms
 				if (debugPrint)
 					System.out.println("Computing score for flipped atoms ...");
 
-//					llnode.evaluate(null, null, true, false, null);
 				for (GGAtomMaxNode atom : rescoreList)
 					atom.reEvaluateUpstream(null);
 				rescoreList = new ArrayList<>();
 
-				for (int j = 0; j < windowsize; j++)
-					gibbsSample(mythread);
-				if (windowsize > 0 && myggoptions.ggverbose()) {
-					System.out.println("New sampled values:");
-					showSumAtomsVals();
+				if (numchains > 0) {
+					for (int j = 0; j < windowsize; j++)
+						gibbsSample(mythread);
+					if (myggoptions.ggverbose()) {
+						System.out.println("New sampled values:");
+						showSumAtomsVals();
+					}
 				}
-
+				evaluateLikelihoodAndPartDerivs(true);
 				currentlikelihood = currentLogLikelihood();
 
 				if (currentlikelihood < bestlikelihood){
@@ -1700,7 +1702,6 @@ public class GradientGraphO extends GradientGraph{
 				if (score <= 1)
 					terminate = true;
 			} else if (mapSearchAlg == 3) {
-				System.out.println("MAP search 3...");
 				score = mapSearchSampling(mythread, maxind_as_list());
 				terminate = true;
 			}
