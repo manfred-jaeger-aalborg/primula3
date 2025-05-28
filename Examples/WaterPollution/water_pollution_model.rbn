@@ -1,0 +1,9 @@
+LandUse([agr]a) = SOFTMAX 1,1,1,1;
+
+Pollution([sub]s) = COMPUTEWITHTORCH [ /Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/config_model.py ]
+                    WithNumValues 3
+                    ForFreeVars (s)
+                    UsingRels
+                        LandUse,AreaAgr WITHEDGE hru_agr_to_sub,
+                        LandUseUrb,AreaUrb WITHEDGE hru_urb_to_sub,
+                        SubType WITHEDGE sub_to_sub;
