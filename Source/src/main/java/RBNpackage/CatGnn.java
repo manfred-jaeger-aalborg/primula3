@@ -82,7 +82,8 @@ public class CatGnn extends CPModel implements CPMGnn {
         if (!freeVals.isEmpty())
             this.argument = freeVals.get(0);
 
-        this.categorical = true ? inputs.size() > 1 : false;
+//        this.categorical = true ? inputs.size() > 1 : false;
+        this.categorical = true;
         this.configModelPath = f.getParent();
         this.numvals = numVals;
         this.gnnInputs = inputs;
