@@ -49,6 +49,7 @@ public class GnnPy {
     Map<String, Object> torchModels;
     private CatGnn currentCatGnn;
     private boolean savedData;
+    private OneStrucData oldInst;
     public GnnPy(String scriptPath, String scriptName, String pythonHome) throws IOException {
         this.scriptPath = scriptPath;
         this.moduleName = scriptName;
@@ -571,7 +572,7 @@ public class GnnPy {
 
         // only val no gradient computed
         if (valonly) {
-            if (sampledRelGobal == null) { // for faster computation, we assume that during the GG creation there is ONLY 1 observation!
+            if (oldInst == null || inst.containsAll(oldInst)) { // if the inst is different from the prior inst used, reconstruct
                 OneStrucData onsd = new OneStrucData(A.getmydata().copy()); // maybe avoid using copy...
                 sampledRelGobal = new SparseRelStruc(A.getNames(), onsd, A.getCoords(), A.signature());
                 sampledRelGobal.getmydata().add(inst.copy());
@@ -596,6 +597,7 @@ public class GnnPy {
         } else {
             throw new RuntimeException("GRADIENT IN EVALUATION NOT IMPLEMENTED FOR GNN-RBN!");
         }
+        oldInst = inst;
         return result;
     }
 
