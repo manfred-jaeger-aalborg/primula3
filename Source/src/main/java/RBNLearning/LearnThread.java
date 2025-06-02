@@ -431,7 +431,6 @@ public class LearnThread extends GGThread {
 								false,
 								profiler);
 
-						
 						gradient = lossgrad[1];
 						batchobj= lossgrad[0][0];
 					}

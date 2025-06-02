@@ -459,13 +459,13 @@ public class GnnPy {
 
         // only val no gradient computed
         if (valonly) {
-            if (sampledRelGobal == null) { // for faster computation, we assume that during the GG creation there is ONLY 1 observation!
+            //if (sampledRelGobal == null) { // for faster computation, we assume that during the GG creation there is ONLY 1 observation!
                 OneStrucData onsd = new OneStrucData(A.getmydata().copy()); // maybe i can avoid using the copy...
                 sampledRelGobal = new SparseRelStruc(A.getNames(), onsd, A.getCoords(), A.signature());
                 sampledRelGobal.getmydata().add(inst.copy());
                 xDict = new Hashtable<>();
                 edgeDict = new Hashtable<>();
-            }
+            //}
 
             TreeSet<Rel> attr_parents = cpmGnn.parentRels();
             if (GGboolRel == null)

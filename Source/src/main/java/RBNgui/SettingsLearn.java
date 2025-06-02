@@ -559,9 +559,10 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 		tabbedPaneTop.add("General",generaloptions);
 		tabbedPaneTop.add("Gradient Ascent",ascentoptions);
 		tabbedPaneTop.add("Incomplete Data",incompleteoptions);
-		
-		ascentoptionstabs.add("Batch",batchoptions);
+
 		ascentoptionstabs.add("Adam",adamoptions);
+		ascentoptionstabs.add("Batch",batchoptions);
+
 
 		Container contentPane = this.getContentPane();
 		contentPane.setLayout(new BoxLayout(contentPane,BoxLayout.Y_AXIS));

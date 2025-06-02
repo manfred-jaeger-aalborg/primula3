@@ -1,6 +1,7 @@
 package RBNLearning;
 
 import java.util.Hashtable;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.Vector;
 
@@ -41,6 +42,10 @@ public class Gradient_TreeMap extends Gradient{
             result.add(new IdxPD(parameter_to_idx.get(key),gradient.get(key) ));
         }
         return result;
+    }
+
+    public Set<String> keySet() {
+        return gradient.keySet();
     }
 
     @Override

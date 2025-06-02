@@ -2075,9 +2075,10 @@ protected double[] thetasearch(double[] currenttheta,
 		evaluateLikelihoodAndPartDerivs(true);
 
 		if (verbose) {
+			double stepsize = rbnutilities.euclidDist(oldthetas, currenttheta);
 			long tick = System.currentTimeMillis()-timestart;
 			System.out.print(""+ itcounter + '\t' + " " + tick +  '\t'+ gtimesd + '\t'
-					+ rbnutilities.euclidDist(oldthetas, currenttheta) +'\t'
+					+ stepsize +'\t'
 					+ llnode.loglikelihood());
 		}
 

@@ -467,16 +467,24 @@ public class ProbFormCombFunc extends ProbForm{
 			profiler.addTime(Profiler.TIME_EVALCOMBFUNC, System.currentTimeMillis() - beforeeval);
 		if (!valonly) {
 			result[1]=null;
-			if (returntype == ProbForm.RETURN_ARRAY)
-				result[1]=new Gradient_Array(params);
-			else
-				result[1]= new Gradient_TreeMap(params);
-			for (String par: params.keySet()) {
-				double[] derivs = new double[combargs.size()];
-				for (int j=0; j<combargs.size(); j++) {
-					derivs[j]=((Gradient)combargs.get(j)[1]).get_part_deriv(par)[0];
+			Set<String> parameters_to_iterate = null;
+			if (returntype == ProbForm.RETURN_ARRAY) {
+				result[1] = new Gradient_Array(params);
+				parameters_to_iterate = params.keySet();
+			}
+			else{
+					result[1] = new Gradient_TreeMap(params);
+					// Collect set of relevant parameters
+					parameters_to_iterate = new TreeSet<String>();
+					for (int j = 0; j < combargs.size(); j++)
+						parameters_to_iterate.addAll(((Gradient_TreeMap)combargs.get(j)[1]).keySet());
 				}
-				((Gradient)result[1]).set_part_deriv(par,new double[] {mycomb.evaluateGrad(vals, derivs)});
+			for (String par : parameters_to_iterate) {
+				double[] derivs = new double[combargs.size()];
+				for (int j = 0; j < combargs.size(); j++) {
+					derivs[j] = ((Gradient) combargs.get(j)[1]).get_part_deriv(par)[0];
+				}
+				((Gradient) result[1]).set_part_deriv(par, new double[]{mycomb.evaluateGrad(vals, derivs)});
 			}
 //			if (returntype == ProbForm.RETURN_ARRAY) {
 //				long timebeforearraycreate = System.currentTimeMillis();
