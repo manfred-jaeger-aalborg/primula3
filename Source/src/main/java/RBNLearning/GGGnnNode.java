@@ -1,6 +1,7 @@
 package RBNLearning;
 
 import PyManager.GnnPy;
+import PyManager.TorchInputSpecs;
 import RBNExceptions.RBNCompatibilityException;
 import RBNExceptions.RBNIllegalArgumentException;
 import RBNExceptions.RBNNaNException;
@@ -49,8 +50,8 @@ public class GGGnnNode extends GGCPMNode {
         if (this.cpm instanceof CatGnn) {
             setGnnPy(((CatGnn) cpm).getGnnPy()); // set the same GnnPy from the rel to the ggnode
             getGnnPy().setGradientGraph(gg); // save also the gradient graph
-            for (Pair<BoolRel, ArrayList<Rel>> pair : ((CatGnn) this.cpm).getGnnInputs()) {
-                ArrayList<Rel> pfargs = pair.getSecond();
+            for (TorchInputSpecs pair : ((CatGnn) this.cpm).getGnnInputs()) {
+                ArrayList<Rel> pfargs = (ArrayList<Rel>) pair.getFeatures();
                 for (Rel pfargRel: pfargs) {
                     if (!pfargRel.ispredefined()) { // do not add predefined values
                         xPred = true;
@@ -100,7 +101,7 @@ public class GGGnnNode extends GGCPMNode {
                     }
                 }
                 // also for the edges
-                Rel edge = pair.getFirst();
+                Rel edge = pair.getEdgeRelation();
                 if (!edge.ispredefined()) {
                     edgePred = true;
                     try {

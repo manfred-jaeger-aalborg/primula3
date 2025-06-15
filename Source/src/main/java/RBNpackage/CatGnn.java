@@ -1,12 +1,13 @@
 package RBNpackage;
 
 import PyManager.GnnPy;
+import PyManager.TorchInputRels;
+import PyManager.TorchInputSpecs;
 import PyManager.TorchModelWrapper;
 import RBNExceptions.RBNCompatibilityException;
 import RBNExceptions.RBNIllegalArgumentException;
 import RBNLearning.Profiler;
 import RBNinference.PFNetworkNode;
-import RBNutilities.Pair;
 import RBNutilities.rbnutilities;
 
 import java.io.File;
@@ -24,7 +25,8 @@ public class CatGnn extends CPModel {
     // each gnn will have an id that identify the model
     private String gnnId;
     String configModelPath;
-    ArrayList<Pair<BoolRel, ArrayList<Rel>>> gnnInputs;
+    List<TorchInputSpecs> gnnInputs;
+    List<TorchInputRels> gnnCombinedClauses;
 
     // if is set to true, means that the GNN is for categorical output, if false is boolean
     private boolean categorical;
@@ -49,7 +51,7 @@ public class CatGnn extends CPModel {
         if (this.gnnPy == null)
             savedData = false;
     }
-    public CatGnn(String configModelPath, Vector<String> freeVals, int numVals, ArrayList<Pair<BoolRel, ArrayList<Rel>>> inputs, boolean withGnnPy) {
+    public CatGnn(String configModelPath, Vector<String> freeVals, int numVals, List<TorchInputSpecs> inputs, List<TorchInputRels> combinedClauses, boolean withGnnPy) {
         File f = new File(configModelPath);
         // get file name without extension
         int lastIndexOfDot = f.getName().lastIndexOf('.');
@@ -68,6 +70,7 @@ public class CatGnn extends CPModel {
         this.configModelPath = f.getParent();
         this.numvals = numVals;
         this.gnnInputs = inputs;
+        this.gnnCombinedClauses = combinedClauses;
 
         this.oneHotEncoding = oneHotEncoding; // this for now it is always true, keep this as default and remove it??
         this.gnn_inference = gnn_inference; // this can be inferred by looking at the RBN arguments, no arguments means graph classification
@@ -90,7 +93,7 @@ public class CatGnn extends CPModel {
         sb.append("[");
         sb.append(gnnPy.getTorchModel().toString()+", ");
         if (gnnInputs != null && !gnnInputs.isEmpty()) {
-            for (Pair<BoolRel, ArrayList<Rel>> pair : gnnInputs)
+            for (TorchInputSpecs pair : gnnInputs)
                 sb.append(pair.toString()).append(", ");
             sb.setLength(sb.length() - 2);
         } else
@@ -159,8 +162,8 @@ public class CatGnn extends CPModel {
     public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone) throws RBNCompatibilityException {
         Vector<GroundAtom> result = new Vector<GroundAtom>();
         if (gnnPy.getTorchModel().getNumLayers() > 0) {
-            for (Pair<BoolRel, ArrayList<Rel>> pair : getGnnInputs()) {
-                ArrayList<Rel> pfargs = pair.getSecond();
+            for (TorchInputSpecs pair : getGnnInputs()) {
+                ArrayList<Rel> pfargs = (ArrayList<Rel>) pair.getFeatures();
                 for (Rel pfargRel : pfargs) {
                     if (!pfargRel.ispredefined()) {
                         try {
@@ -223,7 +226,7 @@ public class CatGnn extends CPModel {
     @Override
     public CPModel substitute(String[] vars, int[] args) {
 //        System.out.println("substitute code 1");
-        CatGnn result = new CatGnn(this.configModelPath, this.freeVals, this.numvals, this.gnnInputs, false);
+        CatGnn result = new CatGnn(this.configModelPath, this.freeVals, this.numvals, this.gnnInputs, this.gnnCombinedClauses, false);
         result.setGnnPy(this.getGnnPy());
         if (vars.length == 0)
             result.argument = Arrays.toString(new String[0]);
@@ -251,10 +254,10 @@ public class CatGnn extends CPModel {
     public TreeSet<Rel> parentRels() {
 //        System.out.println("parentRels code 1");
         TreeSet<Rel> parent = new TreeSet<>();
-        for (Pair<BoolRel, ArrayList<Rel>> pair : gnnInputs) {
-            if (pair.getFirst().isprobabilistic())
-                parent.add(pair.getFirst());
-            ArrayList<Rel> relList = pair.getSecond();
+        for (TorchInputSpecs pair : gnnInputs) {
+            if (pair.getEdgeRelation().isprobabilistic())
+                parent.add(pair.getEdgeRelation());
+            ArrayList<Rel> relList = (ArrayList<Rel>) pair.getFeatures();
             for (Rel rel : relList) {
                 if (rel.isprobabilistic())
                     parent.add(rel);
@@ -270,10 +273,10 @@ public class CatGnn extends CPModel {
         // this checks if processed makes sense here
         assert !processed.isEmpty();
         TreeSet<Rel> parent = new TreeSet<>();
-        for (Pair<BoolRel, ArrayList<Rel>> pair : gnnInputs) {
-            if (pair.getFirst().isprobabilistic())
-                parent.add(pair.getFirst());
-            ArrayList<Rel> relList = pair.getSecond();
+        for (TorchInputSpecs pair : gnnInputs) {
+            if (pair.getEdgeRelation().isprobabilistic())
+                parent.add(pair.getEdgeRelation());
+            ArrayList<Rel> relList = (ArrayList<Rel>) pair.getFeatures();
             for (Rel rel : relList) {
                 if (rel.isprobabilistic())
                     parent.add(rel);
@@ -317,7 +320,7 @@ public class CatGnn extends CPModel {
         return input_attr;
     }
 
-    public ArrayList<Pair<BoolRel, ArrayList<Rel>>> getGnnInputs() {
+    public List<TorchInputSpecs> getGnnInputs() {
         return this.gnnInputs;
     }
 
