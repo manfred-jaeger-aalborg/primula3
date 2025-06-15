@@ -218,7 +218,6 @@ public class GnnPy {
                 OneStrucData onsd = new OneStrucData(A.getmydata().copy()); // maybe avoid using copy...
                 sampledRelGobal = new SparseRelStruc(A.getNames(), onsd, A.getCoords(), A.signature());
                 sampledRelGobal.getmydata().add(inst.copy());
-                System.out.println(nodeMap);
             }
 
             if (GGboolRel == null)
