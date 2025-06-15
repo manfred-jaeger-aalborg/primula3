@@ -12,25 +12,7 @@ import RBNutilities.rbnutilities;
 import java.io.File;
 import java.util.*;
 
-/**
- * alpha(a) = COMPUTE WITH
- *      <gnn> {path/of/the/weights}
- * FOR INPUTS
- *      # default could be:
- *      <list of attributes>
- *      # where <list of attributes> is (<list of attributes> , <edge Default>)
- *
- *      (<list of attributes X> , <edge X>), (<list of attributes Y> , <edge Y>)
- * FORALL b
- *      # default:
- *      WITH edge(a, b) <> WITH edge(b, a) <> WITH edge(a, b) || WITH edge(b, a)
- *
- *      WITH edge X(a, b), WITH edge Y(a, b)
- */
-
-
-
-public class CatGnn extends CPModel implements CPMGnn {
+public class CatGnn extends CPModel {
     // the order of attributes need to be respected! this order will be used for the gnn encoding
     private ArrayList<ArrayList<Rel>> input_attr;
     private ArrayList edge_attr;
@@ -42,7 +24,6 @@ public class CatGnn extends CPModel implements CPMGnn {
     // each gnn will have an id that identify the model
     private String gnnId;
     String configModelPath;
-    Map<String, Object> gnnParams;
     ArrayList<Pair<BoolRel, ArrayList<Rel>>> gnnInputs;
 
     // if is set to true, means that the GNN is for categorical output, if false is boolean
@@ -162,7 +143,7 @@ public class CatGnn extends CPModel implements CPMGnn {
     @Override
     public double[] evalSample(RelStruc A, Hashtable<String, PFNetworkNode> atomhasht, OneStrucData inst, Hashtable<String,double[]> evaluated, long[] timers) throws RBNCompatibilityException {
         if (!savedData) {
-            this.gnnPy.saveGnnData((CPMGnn) this, A, inst);
+            this.gnnPy.saveGnnData((CatGnn) this, A, inst);
             savedData = true;
         }
         return gnnPy.evalSample_gnn(this, A, atomhasht, inst);
@@ -306,26 +287,22 @@ public class CatGnn extends CPModel implements CPMGnn {
         return numvals;
     }
 
-    @Override
     public GnnPy getGnnPy() {
         return gnnPy;
     }
-    @Override
+
     public void setGnnPy(GnnPy gnnPy) {
         this.gnnPy = gnnPy;
     }
 
-    @Override
     public void setEdge_name(String edge_name) {
 
     }
 
-    @Override
     public String getEdge_name() {
         return null;
     }
 
-    @Override
     public Rel[] getGnnattr() {
         List<Rel> rels = new ArrayList<>();
         for (ArrayList<Rel> attr_list: input_attr) {
@@ -340,7 +317,6 @@ public class CatGnn extends CPModel implements CPMGnn {
         return input_attr;
     }
 
-    @Override
     public ArrayList<Pair<BoolRel, ArrayList<Rel>>> getGnnInputs() {
         return this.gnnInputs;
     }
@@ -349,30 +325,24 @@ public class CatGnn extends CPModel implements CPMGnn {
         return edge_attr;
     }
 
-    @Override
     public String getArgument() {
         return argument;
     }
 
-    @Override
     public String getGnnId() {
         return gnnId;
     }
 
-    @Override
     public boolean isOneHotEncoding() {
         return oneHotEncoding;
     }
 
-    @Override
     public String getGnn_inference() {
         return gnn_inference;
     }
 
-    @Override
     public boolean isBoolean() { return !categorical; }
 
-    @Override
     public int getNumLayers() {
         return numLayers;
     }

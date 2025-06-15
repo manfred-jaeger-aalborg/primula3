@@ -1732,7 +1732,7 @@ public class rbnutilities extends java.lang.Object
 		return result;
 	}
 
-	public static Set<Integer> getNodesInDepth(RelStruc rels, int maxDepth, int nodeArg, CPMGnn cpmGnn) {
+	public static Set<Integer> getNodesInDepth(RelStruc rels, int maxDepth, int nodeArg, CatGnn cpmGnn) {
 		Set<Integer> allReached = new LinkedHashSet<>();
 		Queue<Integer> queue = new LinkedList<>();
 		Map<Integer, Integer> nodeLayer = new HashMap<>();

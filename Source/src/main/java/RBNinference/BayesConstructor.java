@@ -729,7 +729,7 @@ public class BayesConstructor extends java.lang.Object {
 
 	private boolean checkGnnRel(RBN rbn) {
 		for(int i=0; i<rbn.prelements().length; i++) {
-			if (rbn.cpmod_prelements_At(i) instanceof CPMGnn)
+			if (rbn.cpmod_prelements_At(i) instanceof CatGnn)
 				return true;
 		}
 		return false;
@@ -773,7 +773,7 @@ public class BayesConstructor extends java.lang.Object {
 	public static Object[] makeCPT(CPModel cpmodel,RelStruc A,OneStrucData inst,Vector<GroundAtom> parentatoms)
 	throws RBNCompatibilityException
 	{
-		boolean iscatmodel = (cpmodel instanceof CatModelSoftMax || (cpmodel instanceof CPMGnn && !((CPMGnn) cpmodel).isBoolean()));
+		boolean iscatmodel = (cpmodel instanceof CatModelSoftMax || (cpmodel instanceof CatGnn && !((CatGnn) cpmodel).isBoolean()));
 		boolean isboolmodel = !iscatmodel;
 
 		int[] numparvals = new int[parentatoms.size()];

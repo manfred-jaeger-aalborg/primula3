@@ -1218,14 +1218,14 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/water-hawqs/water_rbn.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/water-hawqs/test_small_new.rdef";
 
-//        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_pollution_model.rbn";
-//        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/simple_subbasin.rdef";
+        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_pollution_model.rbn";
+        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/simple_subbasin.rdef";
 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_pollution-gibbs.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_network_gibbs.rdef";
 
-//        primula.srsfile = new File(rstinputfilestring);
-//        primula.rbnfile = new File(rbninputfilestring);
+        primula.srsfile = new File(rstinputfilestring);
+        primula.rbnfile = new File(rbninputfilestring);
 
         primula.loadSparseRelFile(primula.srsfile);
         primula.loadRBNFunction(primula.rbnfile);
@@ -1244,7 +1244,7 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
         }
         PrimulaGUI win = new PrimulaGUI(new Primula());
 //		SamiamManager.centerWindow( win );
-//        win.loadDefaults();
+        win.loadDefaults();
 		win.show();
     }
 }

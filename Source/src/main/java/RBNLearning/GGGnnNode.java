@@ -12,7 +12,7 @@ import java.util.*;
 // many of the object are static since GNN needs to have the whole graph as input,
 // and it does not make sense to have separate data for the same thing
 // if we remove the static keyword we will reach the heap memory limit easily with bigger graphs
-public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
+public class GGGnnNode extends GGCPMNode {
     private CPModel cpm;
     private RelStruc A;
     private OneStrucData inst;
@@ -46,51 +46,10 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
         if (this.gnnPy == null)
             savedData = false;
         xPred = false; edgePred = false;
-        if (this.cpm instanceof ProbFormGnn) {
-            Rel[] pfargs = ((CPMGnn) this.cpm).getGnnattr();
-            for (int i = 0; i < pfargs.length; i++) {
-                if (!pfargs[i].ispredefined()) { // do not add predefined values
-                    try {
-                        int[][] mat = A.allTypedTuples(pfargs[i].getTypes());
-                        for (int j = 0; j < mat.length; j++) {
-                            ProbFormAtom atomAsPf = new ProbFormAtom(pfargs[i], mat[j]);
-                            GGCPMNode ggmn = gg.findInAllnodes(atomAsPf, 0, 0, A);
-                            if (ggmn == null) {
-                                ggmn = GGCPMNode.constructGGPFN(
-                                        gg,
-                                        atomAsPf,
-                                        allnodes,
-                                        A,
-                                        I,
-                                        inputcaseno,
-                                        observcaseno,
-                                        parameters,
-                                        false,
-                                        false,
-                                        "",
-                                        mapatoms,
-                                        evaluated);
-                                allnodes.put(gg.makeKey(atomAsPf, 0, 0, A), ggmn);
-                                //            fnode.setInstvalToIndicator();
-                                //            ggmn.setUGA(fnode);
-                                this.children.add(ggmn);
-                                ggmn.addToParents(this);
-                            }
-                            this.children.add(ggmn);
-                            ggmn.addToParents(this);
-                        }
-
-                    } catch (RBNIllegalArgumentException e) {
-                        throw new RuntimeException(e);
-                    }
-                } else {
-//                    System.out.println(pfargs[i].toString() + " non prob - skipped");
-                }
-            }
-        } else if (this.cpm instanceof CatGnn || this.cpm instanceof CatGnnOld) {
+        if (this.cpm instanceof CatGnn) {
             setGnnPy(((CatGnn) cpm).getGnnPy()); // set the same GnnPy from the rel to the ggnode
             getGnnPy().setGradientGraph(gg); // save also the gradient graph
-            for (Pair<BoolRel, ArrayList<Rel>> pair : ((CPMGnn) this.cpm).getGnnInputs()) {
+            for (Pair<BoolRel, ArrayList<Rel>> pair : ((CatGnn) this.cpm).getGnnInputs()) {
                 ArrayList<Rel> pfargs = pair.getSecond();
                 for (Rel pfargRel: pfargs) {
                     if (!pfargRel.ispredefined()) { // do not add predefined values
@@ -102,8 +61,8 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
 
                                 // we add as children only atoms that are influenced up to a max layer
                                 Set<Integer> allReached = null;
-                                if (((CPMGnn) cpm).getNumLayers() > 0)
-                                    allReached = rbnutilities.getNodesInDepth(thisgg.myPrimula.getRels(), ((CPMGnn) cpm).getNumLayers(), mat[k][0], (CPMGnn) cpm);
+                                if (((CatGnn) cpm).getNumLayers() > 0)
+                                    allReached = rbnutilities.getNodesInDepth(thisgg.myPrimula.getRels(), ((CatGnn) cpm).getNumLayers(), mat[k][0], (CatGnn) cpm);
 
                                 GGCPMNode ggmn = gg.findInAllnodes(atomAsPf, 0, 0, A);
                                 if (ggmn == null) {
@@ -125,13 +84,13 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
                                     this.children.add(ggmn);
                                     ggmn.addToParents(this);
                                 }
-                                if (((CPMGnn) cpm).getNumLayers() > 0 && allReached != null && allReached.contains(Integer.parseInt(((CPMGnn) this.cpm).getArgument())) ) {
+                                if (((CatGnn) cpm).getNumLayers() > 0 && allReached != null && allReached.contains(Integer.parseInt(((CatGnn) this.cpm).getArgument())) ) {
                                     this.children.add(ggmn);
                                      ggmn.addToParents(this);
-                                } else if (((CPMGnn) cpm).getNumLayers() <= 0){
+                                } else if (((CatGnn) cpm).getNumLayers() <= 0){
                                     this.children.add(ggmn);
                                     ggmn.addToParents(this);
-                                } else if (allReached == null && ((CPMGnn) cpm).getNumLayers() > 0)
+                                } else if (allReached == null && ((CatGnn) cpm).getNumLayers() > 0)
                                     throw new RuntimeException("Something bad happened in the construction of GGGnnNode");
                             }
 
@@ -202,9 +161,8 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
 
         double[] result = null;
         if (cpm instanceof CatGnn)
-            result = gnnPy.GGevaluate_gnnHetero(A, inst, thisgg, (CPMGnn) cpm, this);
-        else
-            result = gnnPy.GGevaluate_gnn(A, thisgg, (CPMGnn) cpm, this);
+            result = gnnPy.GGevaluate_gnnHetero(A, inst, thisgg, (CatGnn) cpm, this);
+
 
         if (this.depends_on_sample) {
             if (cpm instanceof CatGnn)
@@ -225,10 +183,10 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
 
     @Override
     public boolean isBoolean() {
-        return !(cpm instanceof CatGnnOld || cpm instanceof CatGnn);
+        return !(cpm instanceof CatGnn);
     } // for now, we return true if is not CatGnn
 
-    @Override
+
     public GnnPy getGnnPy() {
         return this.gnnPy;
     }
@@ -241,7 +199,6 @@ public class GGGnnNode extends GGCPMNode implements GGCPMGnn {
 //    public void setValue(Double[] value) {
 //        this.value = value;
 //    }
-
 
     public CPModel getCpm() {
         return cpm;
