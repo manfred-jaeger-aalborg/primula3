@@ -2,34 +2,19 @@ package RBNLearning;
 
 import PyManager.GnnPy;
 import PyManager.TorchInputRels;
-import PyManager.TorchInputSpecs;
 import RBNExceptions.RBNCompatibilityException;
-import RBNExceptions.RBNIllegalArgumentException;
 import RBNExceptions.RBNNaNException;
 import RBNpackage.*;
 import RBNutilities.*;
 
 import java.util.*;
 
-// many of the object are static since GNN needs to have the whole graph as input,
-// and it does not make sense to have separate data for the same thing
-// if we remove the static keyword we will reach the heap memory limit easily with bigger graphs
 public class GGGnnNode extends GGCPMNode {
     private CPModel cpm;
     private RelStruc A;
     private OneStrucData inst;
     private GnnPy gnnPy;
-    private boolean oneHotEncoding;
-    static private OneStrucData onsd;
-    static private SparseRelStruc sampledRel;
-    private TreeSet<Rel> attr_parents;
-    static private String x;
-    static private int num_nodes = -1;
-    static private Vector<BoolRel> boolrel;
-    static private String edge_index;
-    private static boolean xPred;
-    private static boolean edgePred; // true if the edges are predefined --> avoid to reconstruct again in evaluate
-    private static boolean savedData = false;
+
     public GGGnnNode(GradientGraphO gg,
                      CPModel cpm,
                      Hashtable allnodes,
@@ -45,9 +30,7 @@ public class GGGnnNode extends GGCPMNode {
         this.cpm = cpm;
         this.A = A;
         this.inst = I;
-        if (this.gnnPy == null)
-            savedData = false;
-        xPred = false; edgePred = false;
+
         if (this.cpm instanceof CatGnn) {
             setGnnPy(((CatGnn) cpm).getGnnPy()); // set the same GnnPy from the rel to the ggnode
             getGnnPy().setGradientGraph(gg); // save also the gradient graph
@@ -95,16 +78,10 @@ public class GGGnnNode extends GGCPMNode {
         } else {
             System.out.println("GGGnnNode cannot accept " + this.cpm.toString() + " as valid pf");
         }
-        System.out.println(children);
     }
 
     @Override
     public double[] evaluate(Integer sno) {
-//        if (!savedData) {
-//            this.gnnPy.saveGnnData((CPMGnn) cpm, A, inst);
-//            savedData = true;
-//        }
-
         if (this.depends_on_sample && sno==null) {
             for (int i=0;i<thisgg.numchains*thisgg.windowsize;i++)
                 this.evaluate(i);
@@ -151,23 +128,9 @@ public class GGGnnNode extends GGCPMNode {
         this.gnnPy = gnnPy;
     }
 
-//    @Override
-//    public void setValue(Double[] value) {
-//        this.value = value;
-//    }
-
     public CPModel getCpm() {
         return cpm;
     }
-
-    public boolean isXPred() {
-        return xPred;
-    }
-
-    public boolean isEdgePred() {
-        return edgePred;
-    }
-
 
     public int outDim() {
     	System.out.println("outDim still needs to be implemented for GGGnnNode");
