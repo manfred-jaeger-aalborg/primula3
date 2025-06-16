@@ -806,7 +806,6 @@ numVals = Integer.parseInt(tk1.image);
     label_11:
     while (true) {
       jj_consume_token(ATTR);
-      tk1 = jj_consume_token(Name);
       jj_consume_token(19);
       jj_consume_token(X);
       jj_consume_token(19);
@@ -814,9 +813,8 @@ numVals = Integer.parseInt(tk1.image);
       jj_consume_token(EDGE);
       jj_consume_token(19);
       tk2 = jj_consume_token(Name);
-attrRel = reader.getRelFromSignature(tk1.image);
-            edgeRel = (BoolRel) reader.getRelFromSignature(tk2.image);
-            TorchInputSpecs tis = new TorchInputSpecs(attrRel, attrs, edgeRel);
+edgeRel = (BoolRel) reader.getRelFromSignature(tk2.image);
+            TorchInputSpecs tis = new TorchInputSpecs(attrs, edgeRel);
             forInputs.add(tis);
       if (jj_2_59(3)) {
         ;
@@ -1359,8 +1357,8 @@ parseno = pn;
   private boolean jj_3_59()
  {
     if (jj_scan_token(ATTR)) return true;
-    if (jj_scan_token(Name)) return true;
     if (jj_scan_token(19)) return true;
+    if (jj_scan_token(X)) return true;
     return false;
   }
 
@@ -2165,13 +2163,6 @@ parseno = pn;
     return false;
   }
 
-  private boolean jj_3_60()
- {
-    if (jj_scan_token(14)) return true;
-    if (jj_3R_CombinationTorchRels_708_9_39()) return true;
-    return false;
-  }
-
   private boolean jj_3_20()
  {
     Token xsp;
@@ -2189,6 +2180,13 @@ parseno = pn;
  {
     if (jj_scan_token(21)) return true;
     if (jj_3R_BoolFormula_495_5_21()) return true;
+    return false;
+  }
+
+  private boolean jj_3_60()
+ {
+    if (jj_scan_token(14)) return true;
+    if (jj_3R_CombinationTorchRels_708_9_39()) return true;
     return false;
   }
 

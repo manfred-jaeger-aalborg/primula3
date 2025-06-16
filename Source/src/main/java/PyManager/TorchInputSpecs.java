@@ -7,29 +7,19 @@ import java.util.*;
 
 public class TorchInputSpecs {
 
-    Rel name;
     List<Rel> features;
     BoolRel edgeRelation;
 
-    public TorchInputSpecs(Rel name, List<Rel> features, BoolRel edgeRelation) {
-        this.name = name;
+    public TorchInputSpecs(List<Rel> features, BoolRel edgeRelation) {
         this.features = features;
         this.edgeRelation = edgeRelation;
     }
 
     @Override
     public String toString() {
-        return "NODE " + name.toString() + ":\n" +
+        return "NODE " + ":\n" +
                 "  FEATURE: " + String.join(", ", features.toString()) + "\n" +
                 "  EDGE: " + edgeRelation.toString();
-    }
-
-    public Rel getName() {
-        return name;
-    }
-
-    public void setName(Rel name) {
-        this.name = name;
     }
 
     public List<Rel> getFeatures() {

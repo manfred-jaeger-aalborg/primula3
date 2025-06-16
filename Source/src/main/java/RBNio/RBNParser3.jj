@@ -747,14 +747,13 @@ CatGnn CatGnn() throws RBNIllegalArgumentException :
     <ForFreeVars>
     freeVals = UntypedArguments()
     (
-        <ATTR> tk1 = <Name> ":"
+        <ATTR> ":"
         <X> ":" attrs = AttrList()
         <EDGE> ":" tk2 = <Name>
         // TODO add edge attributes
         {
-            attrRel = reader.getRelFromSignature(tk1.image);
             edgeRel = (BoolRel) reader.getRelFromSignature(tk2.image);
-            TorchInputSpecs tis = new TorchInputSpecs(attrRel, attrs, edgeRel);
+            TorchInputSpecs tis = new TorchInputSpecs(attrs, edgeRel);
             forInputs.add(tis);
         }
     )+
