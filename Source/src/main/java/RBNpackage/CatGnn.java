@@ -161,40 +161,17 @@ public class CatGnn extends CPModel {
 
     @Override
     public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone) throws RBNCompatibilityException {
-        Vector<GroundAtom> result = new Vector<GroundAtom>();
-        if (gnnPy.getTorchModel().getNumLayers() > 0) {
-            for (TorchInputSpecs pair : getGnnInputs()) {
-                ArrayList<Rel> pfargs = (ArrayList<Rel>) pair.getFeatures();
-                for (Rel pfargRel : pfargs) {
-                    if (!pfargRel.ispredefined()) {
-                        try {
-                            int[][] mat = A.allTypedTuples(pfargRel.getTypes());
-                            for (int k = 0; k < mat.length; k++) {
-                                // we add as children only atoms that are influenced up to a max layer
-                                Set<Integer> allReached = null;
-                                if (gnnPy.getTorchModel().getNumLayers() > 0)
-                                    allReached = rbnutilities.getNodesInDepth(A, gnnPy.getTorchModel().getNumLayers(), mat[k][0], this);
+        Vector result = new Vector();
+        for (TorchInputRels inps: gnnGroundCombinedClauses) {
 
-                                if (gnnPy.getTorchModel().getNumLayers() > 0 && allReached != null && allReached.contains(Integer.parseInt(this.getArgument())))
-                                    result.add(new GroundAtom(pfargRel, mat[k]));
-                            }
-                        } catch (RBNIllegalArgumentException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                }
-            }
-        } else { // else do not optimize, all elements are parent
-            for (Rel parent : this.parentRels()) {
-                try {
-                    int[][] mat = A.allTypedTuples(parent.getTypes());
-                    for (int i = 0; i < mat.length; i++) {
-                        if (inst.truthValueOf(parent, mat[i]) == -1) {
-                            result.add(new GroundAtom(parent, mat[i]));
-                        }
-                    }
-                } catch (RBNIllegalArgumentException e) {
-                    throw new RuntimeException(e);
+            ProbForm nextprobform;
+
+            int[][] subslist = A.allTrue(inps.getCconstr(), inps.getQuantvars());
+
+            for (int i = 0; i < inps.getPfargs().length; i++) {
+                for (int j = 0; j < subslist.length; j++) {
+                    nextprobform = inps.getPfargs()[i].substitute(inps.getQuantvars(), subslist[j]);
+                    result = rbnutilities.combineAtomVecs(result, nextprobform.makeParentVec(A, inst, macrosdone));
                 }
             }
         }
