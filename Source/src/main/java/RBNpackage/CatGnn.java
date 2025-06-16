@@ -27,6 +27,7 @@ public class CatGnn extends CPModel {
     String configModelPath;
     List<TorchInputSpecs> gnnInputs;
     List<TorchInputRels> gnnCombinedClauses;
+    List<TorchInputRels> gnnGroundCombinedClauses;
 
     // if is set to true, means that the GNN is for categorical output, if false is boolean
     private boolean categorical;
@@ -132,7 +133,7 @@ public class CatGnn extends CPModel {
                              Profiler profiler)
             throws RBNCompatibilityException {
 
-        // if the attributes we depend on does not have a value, return NaN
+        // if the attributes we depend on do not have a value, return NaN
         if (parentRels().stream().anyMatch(r -> inst.find(r).isEmpty())) {
             Object[] result = new Object[2];
             result[0] = new double[this.numvals()];
@@ -225,9 +226,16 @@ public class CatGnn extends CPModel {
 
     @Override
     public CPModel substitute(String[] vars, int[] args) {
-//        System.out.println("substitute code 1");
+        List<TorchInputRels> newgnnInputs = new ArrayList<>();
+        for (TorchInputRels torchInput: gnnCombinedClauses) {
+            TorchInputRels newnewInput = torchInput.substitute(vars, args);
+            newgnnInputs.add(newnewInput);
+        }
+
         CatGnn result = new CatGnn(this.configModelPath, this.freeVals, this.numvals, this.gnnInputs, this.gnnCombinedClauses, false);
+        result.gnnGroundCombinedClauses = newgnnInputs;
         result.setGnnPy(this.getGnnPy());
+
         if (vars.length == 0)
             result.argument = Arrays.toString(new String[0]);
         else
@@ -253,36 +261,45 @@ public class CatGnn extends CPModel {
     @Override
     public TreeSet<Rel> parentRels() {
 //        System.out.println("parentRels code 1");
-        TreeSet<Rel> parent = new TreeSet<>();
-        for (TorchInputSpecs pair : gnnInputs) {
-            if (pair.getEdgeRelation().isprobabilistic())
-                parent.add(pair.getEdgeRelation());
-            ArrayList<Rel> relList = (ArrayList<Rel>) pair.getFeatures();
-            for (Rel rel : relList) {
-                if (rel.isprobabilistic())
-                    parent.add(rel);
-            }
+//        TreeSet<Rel> parent = new TreeSet<>();
+//        for (TorchInputSpecs pair : gnnInputs) {
+//            if (pair.getEdgeRelation().isprobabilistic())
+//                parent.add(pair.getEdgeRelation());
+//            ArrayList<Rel> relList = (ArrayList<Rel>) pair.getFeatures();
+//            for (Rel rel : relList) {
+//                if (rel.isprobabilistic())
+//                    parent.add(rel);
+//            }
+//        }
+//        return parent;
+
+        TreeSet<Rel> result = new TreeSet<Rel>();
+        for (TorchInputRels inps: gnnCombinedClauses) {
+            result.addAll(inps.parentRels());
         }
-        return parent;
+        return result;
     }
 
     @Override
     public TreeSet<Rel> parentRels(TreeSet<String> processed) {
         System.out.println("parentRels code 2");
         TreeSet<Rel> result = new TreeSet<Rel>();
-        // this checks if processed makes sense here
-        assert !processed.isEmpty();
-        TreeSet<Rel> parent = new TreeSet<>();
-        for (TorchInputSpecs pair : gnnInputs) {
-            if (pair.getEdgeRelation().isprobabilistic())
-                parent.add(pair.getEdgeRelation());
-            ArrayList<Rel> relList = (ArrayList<Rel>) pair.getFeatures();
-            for (Rel rel : relList) {
-                if (rel.isprobabilistic())
-                    parent.add(rel);
-            }
+        assert !processed.isEmpty(); // when it is used?
+        for (TorchInputRels inps: gnnCombinedClauses) {
+            result.addAll(inps.parentRels());
         }
-        return parent;
+        return result;
+//        TreeSet<Rel> parent = new TreeSet<>();
+//        for (TorchInputSpecs pair : gnnInputs) {
+//            if (pair.getEdgeRelation().isprobabilistic())
+//                parent.add(pair.getEdgeRelation());
+//            ArrayList<Rel> relList = (ArrayList<Rel>) pair.getFeatures();
+//            for (Rel rel : relList) {
+//                if (rel.isprobabilistic())
+//                    parent.add(rel);
+//            }
+//        }
+//        return parent;
     }
 
     @Override

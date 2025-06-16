@@ -92,7 +92,7 @@ public class GnnPy {
         }
     }
 
-    public double[] inferModelHetero(int node, Map<String, double[][]> x_dict, Map<String, ArrayList<ArrayList<Integer>>> edge_dict, String idGnn) {
+    public double[] inferModelHetero(int node, Map<String, double[][]> x_dict, Map<String, ArrayList<ArrayList<Integer>>> edge_dict, List<TorchInputSpecs> gnnInputs, String idGnn) {
         SharedInterpreter interpreter = JepManager.getInterpreter(true);
         if (torchModel.getModelInterpreter() != interpreter)
             torchModel = loadTorchModel(interpreter, currentCatGnn, scriptPath); // update the model if they differ with interpreters
@@ -109,7 +109,7 @@ public class GnnPy {
             lastId = idGnn;
             changedUpdate = false;
 
-            currentResult = torchModel.forward(interpreter, currentXdict, currentEdgeDict);
+            currentResult = torchModel.forward(interpreter, currentXdict, currentEdgeDict, gnnInputs);
             return currentResult[currentNode];
         } catch (JepException e) {
             System.err.println("Failed to execute inference: " + e);
@@ -209,7 +209,6 @@ public class GnnPy {
         if (torchModel.getModelInterpreter() != interpreter)
             torchModel = loadTorchModel(interpreter, currentCatGnn, scriptPath);
         Object[] result = new Object[2];
-        CatGnn cpmHetero = (CatGnn) cpmGnn;
         result[0] = new double[((CatGnn) cpmGnn).numvals()];
 
         // only val no gradient computed
@@ -220,19 +219,23 @@ public class GnnPy {
                 sampledRelGobal.getmydata().add(inst.copy());
             }
 
-            if (GGboolRel == null)
-                GGboolRel = sampledRelGobal.getBoolBinaryRelations();
+            if (GGboolRel == null) {
+                GGboolRel = new Vector<>();
+                for (TorchInputSpecs inps: cpmGnn.getGnnInputs()) {
+                    GGboolRel.add(inps.getEdgeRelation());
+                }
+            }
             if (GGNodesDict.isEmpty())
-                GGNodesDict = constructNodesDict(cpmHetero, A);
+                GGNodesDict = constructNodesDict(cpmGnn, A);
             if (nodeMap.isEmpty())
-                nodeMap = constructNodesDictMap(cpmHetero, A);
+                nodeMap = constructNodesDictMap(cpmGnn, A);
 
-            Map<String, double[][]> x_dict = inputAttrToDict(cpmHetero, nodeMap, GGNodesDict, sampledRelGobal);
+            Map<String, double[][]> x_dict = inputAttrToDict(cpmGnn, nodeMap, GGNodesDict, sampledRelGobal);
             Map<String, ArrayList<ArrayList<Integer>>> edge_dict = edgesToDict(GGboolRel, sampledRelGobal, nodeMap);
             if (cpmGnn.getArgument().equals("[]") || cpmGnn.getArgument().equals(""))
-                result[0] = inferModelHetero(-1, x_dict, edge_dict, cpmGnn.getGnnId());
+                result[0] = inferModelHetero(-1, x_dict, edge_dict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId());
             else
-                result[0] = inferModelHetero(Integer.parseInt(cpmGnn.getArgument()), x_dict, edge_dict, cpmGnn.getGnnId());
+                result[0] = inferModelHetero(Integer.parseInt(cpmGnn.getArgument()), x_dict, edge_dict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId());
         } else {
             throw new RuntimeException("GRADIENT IN EVALUATION NOT IMPLEMENTED FOR GNN-RBN!");
         }
@@ -297,38 +300,47 @@ public class GnnPy {
         OneStrucData data = finalre.getmydata();
         int idxFeat = 0;
 
-        // find all the rels that each node have, using treemap the entries maintained sorted using the node (key)
+        // find all the rels that each node has, using treemap the entries maintained sorted using the node (key)
         Map<Integer, ArrayList<Rel>> nodeMapRel = new TreeMap<>();
         Map<Rel, OneRelData> relMap = new HashMap<>();
         Map<Rel, Integer> relIndex = new HashMap<>();
 
         int startIndex = 0;
+
         for (Rel r: attributes) {
-            Vector<int[]> nodeForRel = data.allTrue(r);
+            int[][] nodes = nodes_dict.get(r);
+            for (int[] node: nodes) {
+                if (node.length > 0) {
+                    if (!nodeMapRel.containsKey(node[0]))
+                        nodeMapRel.put(node[0], new ArrayList<Rel>());
+                    nodeMapRel.get(node[0]).add(r);
+                }
+            }
+
             relMap.put(r, data.find(r));
 
             // for each feature, see where in the vector it starts
             relIndex.put(r, startIndex);
             startIndex += r.numvals();
-
-            for (int[] node: nodeForRel) {
-                if (!nodeMapRel.containsKey(node[0])) {
-                    nodeMapRel.put(node[0], new ArrayList<Rel>());
-                }
-                nodeMapRel.get(node[0]).add(r);
-            }
         }
 
+        // It can happen that, for some relations, not all the nodes for the gnn input will not be filled in the bool_nodes
+        // this will leave part of the matrix with 0. If the GNN is defined properly in the rbn, this should not change the results
+        // because the incomplete nodes should not be dependent for the atom we are querying
         for (Map.Entry<Integer, ArrayList<Rel>> entry : nodeMapRel.entrySet()) {
             Integer currentNode = entry.getKey();
             ArrayList<Rel> nodeRels = entry.getValue();
-            idxFeat = 0;
             int rowIndex = nodeMap.get(currentNode);
             // for each node write its row in the feature array
             for (Rel r: nodeRels) {
                 if (r instanceof CatRel) {
                     OneCatRelData relData = (OneCatRelData) relMap.get(r);
-                    bool_nodes[rowIndex][relData.values.get(new int[]{currentNode}) + relIndex.get(r)] = 1;
+                    int[] nodeKey = new int[]{currentNode};
+                    if (relData.values.containsKey(nodeKey)) {
+                        bool_nodes[rowIndex][relData.values.get(nodeKey) + relIndex.get(r)] = 1;
+                    } else {
+                        System.err.println("Warning: " + r.name() + " and node " + currentNode + " not found in the data");
+                    }
                 } else {
                     if (r.valtype() == Rel.NUMERIC) {
                         OneNumRelData num_data = (OneNumRelData) relMap.get(r);
@@ -349,7 +361,7 @@ public class GnnPy {
         return bool_nodes;
     }
 
-    // initialize the input matrix with the values of the rels that are predefines otherwise set to 0
+    // initialize the input matrix with the values of the rels that are predefined otherwise set to 0
     // in sampledRel there are also the inst values!
     public static Map<String, double[][]> initXdict(CatGnn cpmGnn, Map<Rel, int[][]> GGnumNodesDict, Map<Integer, Integer> nodeMap, SparseRelStruc sampledRel) {
         Map<String, double[][]> x_dict = new HashMap<>();
@@ -526,9 +538,9 @@ public class GnnPy {
         }
 
         if (cpmGnn.getArgument().equals("[]") || cpmGnn.getArgument().equals(""))
-            return inferModelHetero(-1, GGxDict, GGedgeDict, cpmGnn.getGnnId());
+            return inferModelHetero(-1, GGxDict, GGedgeDict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId());
         else
-            return inferModelHetero(Integer.parseInt(cpmGnn.getArgument()), GGxDict, GGedgeDict, cpmGnn.getGnnId());
+            return inferModelHetero(Integer.parseInt(cpmGnn.getArgument()), GGxDict, GGedgeDict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId());
     }
 
     // Initial caching of the data in GGGnnNode
@@ -544,8 +556,12 @@ public class GnnPy {
             nodeMap = constructNodesDictMap(cpmGnn, A);
             GGxDict = new HashMap<>();
             GGedgeDict = new HashMap<>();
-            if (GGboolRel == null)
-                GGboolRel = GGsampledRel.getBoolBinaryRelations();
+            if (GGboolRel == null) {
+                GGboolRel = new Vector<>();
+                for (TorchInputSpecs inps: cpmGnn.getGnnInputs()) {
+                    GGboolRel.add(inps.getEdgeRelation());
+                }
+            }
         } else {
             GGnumNodes = -1;
             for (Rel attr : cpmGnn.getGnnattr()) {
@@ -669,9 +685,9 @@ public class GnnPy {
 
         double[] res = null;
         if (cpmGnn.getArgument().equals("[]") || cpmGnn.getArgument().equals(""))
-            res = inferModelHetero(-1, GGxDict, GGedgeDict, cpmGnn.getGnnId());
+            res = inferModelHetero(-1, GGxDict, GGedgeDict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId());
         else
-            res = inferModelHetero(Integer.parseInt(cpmGnn.getArgument()), GGxDict, GGedgeDict, cpmGnn.getGnnId());
+            res = inferModelHetero(Integer.parseInt(cpmGnn.getArgument()), GGxDict, GGedgeDict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId());
         return res;
     }
 
