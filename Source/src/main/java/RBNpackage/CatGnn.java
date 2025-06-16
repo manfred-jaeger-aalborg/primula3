@@ -344,6 +344,10 @@ public class CatGnn extends CPModel {
         return numLayers;
     }
 
+    public List<TorchInputRels> getGnnGroundCombinedClauses() {
+        return gnnGroundCombinedClauses;
+    }
+
     public void setNumLayers(int l) { this.numLayers = l; }
 
     public String getConfigModelPath() { return configModelPath; }

@@ -1,6 +1,7 @@
 package RBNLearning;
 
 import PyManager.GnnPy;
+import PyManager.TorchInputRels;
 import PyManager.TorchInputSpecs;
 import RBNExceptions.RBNCompatibilityException;
 import RBNExceptions.RBNIllegalArgumentException;
@@ -50,97 +51,51 @@ public class GGGnnNode extends GGCPMNode {
         if (this.cpm instanceof CatGnn) {
             setGnnPy(((CatGnn) cpm).getGnnPy()); // set the same GnnPy from the rel to the ggnode
             getGnnPy().setGradientGraph(gg); // save also the gradient graph
-            for (TorchInputSpecs pair : ((CatGnn) this.cpm).getGnnInputs()) {
-                ArrayList<Rel> pfargs = (ArrayList<Rel>) pair.getFeatures();
-                for (Rel pfargRel: pfargs) {
-                    if (!pfargRel.ispredefined()) { // do not add predefined values
-                        xPred = true;
-                        try {
-                            int[][] mat = A.allTypedTuples(pfargRel.getTypes());
-                            for (int k = 0; k < mat.length; k++) {
-                                ProbFormAtom atomAsPf = new ProbFormAtom(pfargRel, mat[k]);
 
-                                // we add as children only atoms that are influenced up to a max layer
-                                Set<Integer> allReached = null;
-                                if (((CatGnn) cpm).getNumLayers() > 0)
-                                    allReached = rbnutilities.getNodesInDepth(thisgg.myPrimula.getRels(), ((CatGnn) cpm).getNumLayers(), mat[k][0], (CatGnn) cpm);
+            ProbForm nextsubpf;
+            ProbForm groundnextsubpf;
+            double evalOfSubPF;
+            GGCPMNode constructedchild;
+            List<TorchInputRels> torchInputRels = ((CatGnn) this.cpm).getGnnGroundCombinedClauses();
+            DoubleVector vals = new DoubleVector();
 
-                                GGCPMNode ggmn = gg.findInAllnodes(atomAsPf, 0, 0, A);
-                                if (ggmn == null) {
-                                    ggmn = GGCPMNode.constructGGPFN(
-                                            gg,
-                                            atomAsPf,
-                                            allnodes,
-                                            A,
-                                            I,
-                                            inputcaseno,
-                                            observcaseno,
-                                            parameters,
-                                            false,
-                                            false,
-                                            "",
-                                            mapatoms,
-                                            evaluated);
-                                    allnodes.put(gg.makeKey(atomAsPf, 0, 0, A), ggmn);
-                                    this.children.add(ggmn);
-                                    ggmn.addToParents(this);
-                                }
-                                if (((CatGnn) cpm).getNumLayers() > 0 && allReached != null && allReached.contains(Integer.parseInt(((CatGnn) this.cpm).getArgument())) ) {
-                                    this.children.add(ggmn);
-                                     ggmn.addToParents(this);
-                                } else if (((CatGnn) cpm).getNumLayers() <= 0){
-                                    this.children.add(ggmn);
-                                    ggmn.addToParents(this);
-                                } else if (allReached == null && ((CatGnn) cpm).getNumLayers() > 0)
-                                    throw new RuntimeException("Something bad happened in the construction of GGGnnNode");
-                            }
+            for (TorchInputRels torchInputRel: torchInputRels) {
+                int[][] subslist = torchInputRel.tuplesSatisfyingCConstr(A, new String[0], new int[0]);
 
-                        } catch (RBNIllegalArgumentException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                }
-                // also for the edges
-                Rel edge = pair.getEdgeRelation();
-                if (!edge.ispredefined()) {
-                    edgePred = true;
-                    try {
-                        // TODO we can optimize the child with the layers depth also for the edges
-                        int[][] mat = A.allTypedTuples(edge.getTypes());
-                        for (int k = 0; k < mat.length; k++) {
-                            ProbFormAtom atomAsPf = new ProbFormAtom(edge, mat[k]);
-                            GGCPMNode ggmn = gg.findInAllnodes(atomAsPf, 0, 0, A);
-                            if (ggmn == null) {
-                                ggmn = GGCPMNode.constructGGPFN(
-                                        gg,
-                                        atomAsPf,
-                                        allnodes,
-                                        A,
-                                        I,
-                                        inputcaseno,
-                                        observcaseno,
-                                        parameters,
-                                        false,
-                                        false,
-                                        "",
-                                        mapatoms,
-                                        evaluated);
-                                allnodes.put(gg.makeKey(atomAsPf, 0, 0, A), ggmn);
-                                this.children.add(ggmn);
-                                ggmn.addToParents(this);
-                            }
-                            this.children.add(ggmn);
-                            ggmn.addToParents(this);
-                        }
+                for (int i = 0; i < torchInputRel.numPFargs(); i++) {
+                    nextsubpf = torchInputRel.probformAt(i);
+                    for (int j = 0; j < subslist.length; j++) {
+                        groundnextsubpf = nextsubpf.substitute(torchInputRel.getQuantvars(), subslist[j]);
 
-                    } catch (RBNIllegalArgumentException e) {
-                        throw new RuntimeException(e);
+                        evalOfSubPF = (double) groundnextsubpf.evaluate(A, I, new String[0], new int[0], false, useCurrentPvals,
+                                mapatoms, false, evaluated, parameters, ProbForm.RETURN_ARRAY, true, null)[0];
+
+                        if (Double.isNaN(evalOfSubPF)) {
+                            constructedchild = GGCPMNode.constructGGPFN(gg,
+                                    groundnextsubpf,
+                                    allnodes,
+                                    A,
+                                    I,
+                                    inputcaseno,
+                                    observcaseno,
+                                    parameters,
+                                    false,
+                                    false,
+                                    "",
+                                    mapatoms,
+                                    evaluated);
+                            if (!children.contains(constructedchild))
+                                children.add(constructedchild);
+                            constructedchild.addToParents(this);
+                        } else
+                            vals.add(evalOfSubPF);
                     }
                 }
             }
         } else {
             System.out.println("GGGnnNode cannot accept " + this.cpm.toString() + " as valid pf");
         }
+        System.out.println(children);
     }
 
     @Override
