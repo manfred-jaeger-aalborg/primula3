@@ -1,18 +1,18 @@
 <root>
    <Relations>
       <Rel name="sub" arity="1" argtypes="Domain" valtype="boolean" default="false" type="predefined" color="(30,25,220)"/>
-      <Rel name="hru_agr" arity="1" argtypes="Domain" valtype="boolean" default="false" type="predefined" color="(40,200,45)"/>
-      <Rel name="hru_urb" arity="1" argtypes="Domain" valtype="boolean" default="false" type="predefined" color="(190,150,45)"/>
-      <Rel name="sub_to_sub" arity="2" argtypes="sub,sub" valtype="boolean" default="false" type="predefined" color="(0,210,255)"/>
-      <Rel name="hru_agr_to_sub" arity="2" argtypes="hru_agr,sub" valtype="boolean" default="false" type="predefined" color="(0,70,0)"/>
-      <Rel name="sub_to_hru_agr" arity="2" argtypes="sub,hru_agr" valtype="boolean" default="false" type="predefined" color="(0,70,0)"/>
-      <Rel name="hru_urb_to_sub" arity="2" argtypes="hru_urb,sub" valtype="boolean" default="false" type="predefined" color="(0,70,0)"/>
-      <Rel name="sub_to_hru_urb" arity="2" argtypes="sub,hru_urb" valtype="boolean" default="false" type="predefined" color="(0,70,0)"/>
-      <Rel name="AreaAgr" arity="1" argtypes="hru_agr" valtype="numeric" default="0.0" type="predefined" color="(234,17,194)"/>
-      <Rel name="AreaUrb" arity="1" argtypes="hru_urb" valtype="numeric" default="0.0" type="predefined" color="(0,70,0)"/>
-      <Rel name="LandUseUrb" arity="1" argtypes="hru_urb" valtype="categorical" values="BERM,FESC,FRSD,FRST,RIWF,RIWN,UPWF,UPWN,WATR" default="?" type="predefined" color="(0,70,0)"/>
+      <Rel name="agr" arity="1" argtypes="Domain" valtype="boolean" default="false" type="predefined" color="(40,200,45)"/>
+      <Rel name="urb" arity="1" argtypes="Domain" valtype="boolean" default="false" type="predefined" color="(190,150,45)"/>
+      <Rel name="downstream" arity="2" argtypes="sub,sub" valtype="boolean" default="false" type="predefined" color="(0,210,255)"/>
+      <Rel name="downstream_agr" arity="2" argtypes="agr,sub" valtype="boolean" default="false" type="predefined" color="(0,70,0)"/>
+      <Rel name="upstream_agr" arity="2" argtypes="sub,agr" valtype="boolean" default="false" type="predefined" color="(0,70,0)"/>
+      <Rel name="downstream_urb" arity="2" argtypes="urb,sub" valtype="boolean" default="false" type="predefined" color="(0,70,0)"/>
+      <Rel name="upstream_urb" arity="2" argtypes="sub,urb" valtype="boolean" default="false" type="predefined" color="(0,70,0)"/>
+      <Rel name="AreaAgr" arity="1" argtypes="agr" valtype="numeric" default="0.0" type="predefined" color="(234,17,194)"/>
+      <Rel name="AreaUrb" arity="1" argtypes="urb" valtype="numeric" default="0.0" type="predefined" color="(0,70,0)"/>
+      <Rel name="LandUseUrb" arity="1" argtypes="urb" valtype="categorical" values="BERM,FESC,FRSD,FRST,RIWF,RIWN,UPWF,UPWN,WATR" default="?" type="predefined" color="(0,70,0)"/>
       <Rel name="SubType" arity="1" argtypes="sub" valtype="categorical" values="RES,SUB" default="?" type="predefined" color="(0,0,0)"/>
-      <Rel name="LandUse" arity="1" argtypes="hru_agr" valtype="categorical" values="CORN,COSY,PAST,SOYB" default="?" type="probabilistic" color="(0,70,0)"/>
+      <Rel name="LandUse" arity="1" argtypes="agr" valtype="categorical" values="CORN,COSY,PAST,SOYB" default="?" type="probabilistic" color="(0,70,0)"/>
       <Rel name="Pollution" arity="1" argtypes="sub" valtype="categorical" values="LOW,MED,HIG" default="?" type="probabilistic" color="(0,0,0)"/>
    </Relations>
    <Data>
@@ -32,9 +32,9 @@
          </Domain>
          <PredefinedRels>
             <d rel="sub" args="(0)(1)(2)" val="true"/>
-            <d rel="hru_agr" args="(3)(4)(5)(8)(9)(6)(7)(10)" val="true"/>
-            <d rel="sub_to_sub" args="(0,1)(1,2)" val="true"/>
-            <d rel="hru_agr_to_sub" args="(3,0)(4,0)(5,1)(8,2)(9,2)(6,1)(7,1)(10,2)" val="true"/>
+            <d rel="agr" args="(3)(4)(5)(8)(9)(6)(7)(10)" val="true"/>
+            <d rel="downstream" args="(0,1)(1,2)" val="true"/>
+            <d rel="downstream_agr" args="(3,0)(4,0)(5,1)(8,2)(9,2)(6,1)(7,1)(10,2)" val="true"/>
             <d rel="AreaAgr" args="(3)" val="0.9"/>
             <d rel="AreaAgr" args="(4)" val="0.6"/>
             <d rel="AreaAgr" args="(5)" val="0.8"/>
