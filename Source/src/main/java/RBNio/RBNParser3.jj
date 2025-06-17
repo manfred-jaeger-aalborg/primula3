@@ -14,6 +14,7 @@ PARSER_BEGIN(RBNParser3)
 
 package RBNio;
 
+import PyManager.*;
 import RBNpackage.*;
 import java.util.*;
 import myio.StringOps;
@@ -634,7 +635,7 @@ CatModelSoftMax CatSoftMax()  throws RBNIllegalArgumentException:
 	}
 }
 
-ArrayList<Rel> AttrList() throws RBNIllegalArgumentException:
+List<Rel> AttrList() throws RBNIllegalArgumentException:
 {
     ArrayList<Rel> attrs = new ArrayList<>();
     String attr;
@@ -663,7 +664,7 @@ ArrayList<Rel> AttrList() throws RBNIllegalArgumentException:
 ArrayList<Pair<BoolRel, ArrayList<Rel>>> ForInputList() throws RBNIllegalArgumentException:
 {
     ArrayList<Pair<BoolRel, ArrayList<Rel>>> inputs = new ArrayList<>();
-    ArrayList<Rel> attrs;
+    List<Rel> attrs;
     RBNReader3.ParsedTypedAtom parsedat;
     Token tk;
     Rel r;
@@ -695,26 +696,86 @@ String PathDec():
 	{return tok.image;}
 }
 
+TorchInputRels CombinationTorchRels()  throws RBNIllegalArgumentException:
+{
+  Token tok;
+  Vector<ProbForm> pflist;
+  Vector<String> arglist = new Vector<String>();
+  ProbForm[] pfarr;
+  ProbFormBool cc = new ProbFormBoolConstant(true);
+}
+{// grammar
+	<COMBCOMB>
+	pflist = ProbFormList()
+	<USINGTORCH>
+	(<COMBFORALL>
+	arglist = ArgList()
+	<COMBWHERE> cc=BoolFormula())?
+	{
+        switch(parseno){
+            case 1:
+                return null;
+                break;
+            case 2:
+                pfarr = new ProbForm[pflist.size()];
+                for (int i=0;i<pfarr.length;i++)
+                    pfarr[i]=pflist.elementAt(i);
+                return new TorchInputRels(pfarr,StringOps.stringVectorToArray(arglist),cc);
+        }
+	}
+}
+
 CatGnn CatGnn() throws RBNIllegalArgumentException :
 {
-    Token tk;
-    String configPath;
-    String moduleName;
+    Token tk1;
+    Token tk2;
     Vector<String> freeVals;
+    String configPath;
     int numVals = 1;
-    int numLayers = -1;
-    ArrayList<Pair<BoolRel, ArrayList<Rel>>> forInputs;
+    List<TorchInputSpecs> forInputs = new ArrayList<>();;
+    List<Rel> attrs;
+    Rel attrRel;
+    BoolRel edgeRel;
+    List<TorchInputRels> combineClauses = new ArrayList<>();
+    TorchInputRels pf;
 }
 {
     <COMPUTEWITHTORCH>
     configPath = PathDec()
     <WithNumValues>
-    tk = <NonNegNumber> { numVals = Integer.parseInt(tk.image); }
+    tk1 = <NonNegNumber> { numVals = Integer.parseInt(tk1.image); }
     <ForFreeVars>
     freeVals = UntypedArguments()
-    <UsingRels>
-    forInputs = ForInputList()
-    { return new CatGnn(configPath, freeVals, numVals, forInputs, true); }
+    (
+        <ATTR> ":"
+        <X> ":" attrs = AttrList()
+        <EDGE> ":" tk2 = <Name>
+        // TODO add edge attributes
+        {
+            edgeRel = (BoolRel) reader.getRelFromSignature(tk2.image);
+            TorchInputSpecs tis = new TorchInputSpecs(attrs, edgeRel);
+            forInputs.add(tis);
+        }
+    )+
+
+    pf = CombinationTorchRels()
+    { combineClauses.add(pf); }
+    (
+        ","
+        pf = CombinationTorchRels()
+        { combineClauses.add(pf); }
+    )*
+
+    {
+        switch(parseno)
+        {
+        case 1:
+            return null;
+            break;
+        case 2:
+            return new CatGnn(configPath, freeVals, numVals, forInputs, combineClauses, true);
+        }
+    }
 }
 
 
@@ -773,15 +834,27 @@ TOKEN : {
 }
 
 TOKEN : {
-    <WITHEDGE: "WITHEDGE" | "WithEdge" | "withedge" >
-}
-
-TOKEN : {
     <ForFreeVars: "FORFREEVARS" | "ForFreeVars" | "forfreevars" >
 }
 
 TOKEN : {
     <WithNumValues: "WITHNUMVALUES" | "WithNumValues" | "withnumvalues" >
+}
+
+TOKEN: {
+    <ATTR: "ATTR" | "Attr" | "attr" >
+}
+
+TOKEN: {
+    <X: "X" | "x" >
+}
+
+TOKEN : {
+    <EDGE: "EDGE" | "Edge" | "edge" >
+}
+
+TOKEN:{
+	<USINGTORCH: "usingtorch" | "USINGTORCH" | "UsingTorch" | "Usingtorch" >
 }
 
 TOKEN : {

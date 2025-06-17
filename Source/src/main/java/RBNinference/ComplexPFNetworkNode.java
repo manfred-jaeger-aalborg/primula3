@@ -64,9 +64,9 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 			long[] timers)
 			throws RBNCompatibilityException
     {
-		if (cpmodel instanceof CPMGnn) {
-			if (((CPMGnn) cpmodel).getGnnPy() == null)
-				((CPMGnn) cpmodel).setGnnPy(gnnPy);
+		if (cpmodel instanceof CatGnn) {
+			if (((CatGnn) cpmodel).getGnnPy() == null)
+				((CatGnn) cpmodel).setGnnPy(gnnPy);
 		}
         double[] result = cpmodel.evalSample(A,atomhasht,inst,evaluated,timers);
         //System.out.print(" cP: " + result);

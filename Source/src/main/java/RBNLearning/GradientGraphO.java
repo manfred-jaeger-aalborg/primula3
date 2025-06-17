@@ -2899,7 +2899,7 @@ public Hashtable<Rel, Vector<GGAtomMaxNode>> getMaxindicators() {
 
 private boolean checkGnnRel(RBN rbn) {
 	for(int i=0; i<rbn.prelements().length; i++) {
-		if (rbn.cpmod_prelements_At(i) instanceof CPMGnn)
+		if (rbn.cpmod_prelements_At(i) instanceof CatGnn)
 			return true;
 	}
 	return false;
@@ -2907,8 +2907,8 @@ private boolean checkGnnRel(RBN rbn) {
 
 public void setGnnPyToNodes() {
 	for (GGNode node: this.llnode.children){
-		if (node instanceof GGCPMGnn)
-			((GGCPMGnn) node).setGnnPy(this.gnnPy);
+		if (node instanceof GGGnnNode)
+			((GGGnnNode) node).setGnnPy(this.gnnPy);
 	}
 }
 

@@ -119,7 +119,7 @@ public class MapThread extends GGThread {
 		sampledRel.getmydata().add(a.copy());
 
 		for(int i=0; i<myprimula.getRBN().prelements().length; i++) {
-			if (myprimula.getRBN().cpmod_prelements_At(i) instanceof CPMGnn) {
+			if (myprimula.getRBN().cpmod_prelements_At(i) instanceof CatGnn) {
 				CatGnn cpm = (CatGnn) myprimula.getRBN().cpmod_prelements_At(i);
 				Map<Rel, int[][]> nodesDict = GnnPy.constructNodesDict(cpm, myprimula.getRels());
 				Map<Integer, Integer> nodeMap = GnnPy.constructNodesDictMap(cpm, myprimula.getRels());

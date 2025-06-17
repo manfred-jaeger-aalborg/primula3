@@ -39,25 +39,31 @@ public interface RBNParser3Constants {
   /** RegularExpression Id. */
   int FORNUMLAYERS = 40;
   /** RegularExpression Id. */
-  int WITHEDGE = 41;
+  int ForFreeVars = 41;
   /** RegularExpression Id. */
-  int ForFreeVars = 42;
+  int WithNumValues = 42;
   /** RegularExpression Id. */
-  int WithNumValues = 43;
+  int ATTR = 43;
   /** RegularExpression Id. */
-  int Name = 44;
+  int X = 44;
   /** RegularExpression Id. */
-  int Path = 45;
+  int EDGE = 45;
   /** RegularExpression Id. */
-  int MULT = 46;
+  int USINGTORCH = 46;
   /** RegularExpression Id. */
-  int PLUS = 47;
+  int Name = 47;
   /** RegularExpression Id. */
-  int MINUS = 48;
+  int Path = 48;
   /** RegularExpression Id. */
-  int Digits = 49;
+  int MULT = 49;
   /** RegularExpression Id. */
-  int NonNegNumber = 50;
+  int PLUS = 50;
+  /** RegularExpression Id. */
+  int MINUS = 51;
+  /** RegularExpression Id. */
+  int Digits = 52;
+  /** RegularExpression Id. */
+  int NonNegNumber = 53;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -107,9 +113,12 @@ public interface RBNParser3Constants {
     "<COMPUTEWITHTORCH>",
     "<UsingRels>",
     "<FORNUMLAYERS>",
-    "<WITHEDGE>",
     "<ForFreeVars>",
     "<WithNumValues>",
+    "<ATTR>",
+    "<X>",
+    "<EDGE>",
+    "<USINGTORCH>",
     "<Name>",
     "<Path>",
     "\"*\"",
