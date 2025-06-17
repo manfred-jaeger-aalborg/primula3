@@ -1,9 +1,30 @@
 LandUse([agr]a) = SOFTMAX 1,1,1,1;
 
-Pollution([sub]s) = COMPUTEWITHTORCH [ /Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/config_model.py ]
+Pollution([sub]v) = COMPUTEWITHTORCH [/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/config_model.py]
+
                     WithNumValues 3
-                    ForFreeVars (s)
-                    UsingRels
-                        LandUse,AreaAgr WITHEDGE hru_agr_to_sub,
-                        LandUseUrb,AreaUrb WITHEDGE hru_urb_to_sub,
-                        SubType WITHEDGE sub_to_sub;
+                    ForFreeVars (v)
+
+                    % gnn input definition
+                    NODE agr:
+                        FEATURE: LandUse, AreaAgr
+                        EDGE: downstream_agr
+
+                    NODE urb:
+                        FEATURE: LandUseUrb, AreaUrb
+                        EDGE: downstream_urb
+
+                    NODE sub:
+                        FEATURE: SubType
+                        EDGE: downstream
+
+                    % first-layer attributes
+                    COMBINE LandUse(la),AreaAgr(la) USINGTORCH FORALL la WHERE downstream_agr(la, v),
+                    % second-layer attributes
+                    COMBINE LandUse(la),AreaAgr(la) USINGTORCH FORALL la, lb WHERE (downstream(lb, v) & downstream_agr(la, lb)),
+
+                    COMBINE LandUseUrb(lu),AreaUrb(lu) USINGTORCH FORALL lu WHERE downstream_urb(lu, v),
+                    COMBINE LandUseUrb(lu),AreaUrb(lu) USINGTORCH FORALL lu WHERE (downstream(lb, v) & downstream_urb(lu, lb)),
+
+                    COMBINE SubType(v) USINGTORCH,
+                    COMBINE SubType(vb) USINGTORCH FORALL vb WHERE downstream(vb, v);
