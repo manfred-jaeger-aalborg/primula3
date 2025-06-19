@@ -1206,8 +1206,8 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
 //      String rbninputfilestring = "/home/jaeger/B/Primula/Examples/SWF/swf_nodefeat.rbn";
 //      String rstinputfilestring = "/home/jaeger/B/Primula/Examples/SWF/swf_coordinates_nodefeat.rdef";
 
-        String rbninputfilestring = "/home/jaeger/B/Primula/primula3/Examples/WaterPollution/water_pollution_model.rbn";
-        String rstinputfilestring = "/home/jaeger/B/Primula/primula3/Examples/simple_subbasin.rdef";
+//        String rbninputfilestring = "/home/jaeger/B/Primula/primula3/Examples/InformationDiffusion/independent_cascade.rbn";
+//        String rstinputfilestring = "/home/jaeger/B/Primula/primula3/Examples/InformationDiffusion/zachary_cascade.rdef";
 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/water-hawqs/water_rbn_2.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/water-hawqs/test_small_new_sampled.rdef";
@@ -1244,7 +1244,7 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
         }
         PrimulaGUI win = new PrimulaGUI(new Primula());
 //		SamiamManager.centerWindow( win );
-        win.loadDefaults();
+//        win.loadDefaults();
 		win.show();
     }
 }
