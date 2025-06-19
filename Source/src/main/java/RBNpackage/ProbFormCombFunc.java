@@ -476,8 +476,9 @@ public class ProbFormCombFunc extends ProbForm{
 					result[1] = new Gradient_TreeMap(params);
 					// Collect set of relevant parameters
 					parameters_to_iterate = new TreeSet<String>();
-					for (int j = 0; j < combargs.size(); j++)
-						parameters_to_iterate.addAll(((Gradient_TreeMap)combargs.get(j)[1]).keySet());
+					for (int j = 0; j < combargs.size(); j++) {
+						parameters_to_iterate.addAll(((Gradient_TreeMap) combargs.get(j)[1]).keySet());
+					}
 				}
 			for (String par : parameters_to_iterate) {
 				double[] derivs = new double[combargs.size()];
