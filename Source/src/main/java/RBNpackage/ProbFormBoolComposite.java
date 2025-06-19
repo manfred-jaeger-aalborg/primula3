@@ -118,8 +118,8 @@ public class ProbFormBoolComposite extends ProbFormBool {
 
 		if (!valonly) {
 			if (returntype == ProbForm.RETURN_SPARSE)
-				result[1] = new Gradient_Array(params);
-			else result[1] = new double[params.size()];
+				result[1] = new Gradient_TreeMap(params);
+			else result[1] = new Gradient_Array(params);
 		}
 
 		try {
