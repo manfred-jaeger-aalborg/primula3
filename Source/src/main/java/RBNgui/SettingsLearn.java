@@ -537,12 +537,12 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 		adamoptions.add(adamalphapanel);
 		adamoptions.add(useggscheckbox);
 		adamoptions.add(usememoizecheckbox);
-		adamoptions.add(gradoptions_menu);
+
 		
 		ascentoptions.add(maxiterationspanel);
 		ascentoptions.add(llikelihoodpanel);
 		ascentoptions.add(likelihoodwindowpanel);
-		
+		ascentoptions.add(gradoptions_menu);
 		ascentoptions.add(ascentoptionstabs);
 		
 //		terminateoptions.setBorder(BorderFactory.createTitledBorder("Termination"));
