@@ -412,9 +412,9 @@ public  class ProbFormAtom extends ProbForm {
 			//					result[0] = Double.NaN; 
 			if (!valonly) {
 				if (returntype==ProbForm.RETURN_ARRAY) 
-					result[1]=new double[params.size()];
-				else 
 					result[1]=new Gradient_Array(params);
+				else 
+					result[1]=new Gradient_TreeMap(params);
 			}
 		}
 		else if (relation.ispredefined()) {		
