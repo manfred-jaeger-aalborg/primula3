@@ -26,6 +26,7 @@ package RBNutilities;
 import java.lang.*;
 import java.util.*;
 
+import PyManager.TorchInputSpecs;
 import RBNgui.Primula;
 import RBNpackage.*;
 import RBNExceptions.*;
@@ -1732,7 +1733,7 @@ public class rbnutilities extends java.lang.Object
 		return result;
 	}
 
-	public static Set<Integer> getNodesInDepth(RelStruc rels, int maxDepth, int nodeArg, CPMGnn cpmGnn) {
+	public static Set<Integer> getNodesInDepth(RelStruc rels, int maxDepth, int nodeArg, CatGnn cpmGnn) {
 		Set<Integer> allReached = new LinkedHashSet<>();
 		Queue<Integer> queue = new LinkedList<>();
 		Map<Integer, Integer> nodeLayer = new HashMap<>();
@@ -1747,8 +1748,8 @@ public class rbnutilities extends java.lang.Object
 					continue;
 				}
 
-				for (Pair<BoolRel, ArrayList<Rel>> pair : cpmGnn.getGnnInputs()) {
-					Rel edge = pair.getFirst();
+				for (TorchInputSpecs pair : cpmGnn.getGnnInputs()) {
+					Rel edge = pair.getEdgeRelation();
 					ProbFormBoolAtom temp = new ProbFormBoolAtom(new ProbFormAtom(edge, new String[]{Integer.toString(current), "z"}), true);
 					int[][] res = rels.allTrue(temp, new String[]{"z"});
 					for (int[] node : res) {

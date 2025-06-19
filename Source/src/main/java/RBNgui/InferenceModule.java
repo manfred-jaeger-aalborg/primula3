@@ -462,7 +462,7 @@ public class InferenceModule implements GradientGraphOptions {
 
 	private boolean checkGnnRel(RBN rbn) {
 		for(int i=0; i<rbn.prelements().length; i++) {
-			if (rbn.cpmod_prelements_At(i) instanceof CPMGnn)
+			if (rbn.cpmod_prelements_At(i) instanceof CatGnn)
 				return true;
 		}
 		return false;
