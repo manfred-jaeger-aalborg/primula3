@@ -69,4 +69,4 @@ def load_model():
         weights_only=True
     ))
     model.eval()
-    return model, 2
+    return model

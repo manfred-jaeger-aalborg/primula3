@@ -76,13 +76,10 @@ public class GnnPy {
             String modelName = "py_model_" + catGnn.getGnnId();
             interp.exec("sys.path.append('" + configFile + "')");
             interp.exec("import " + catGnn.getGnnId() + " as " + catGnn.getGnnId() + "_module");
-            interp.exec(modelName + ", n_layers = " + catGnn.getGnnId() + "_module.load_model()");
-            Number num_layer = (Number) interp.getValue("n_layers");
+            interp.exec(modelName + " = " + catGnn.getGnnId() + "_module.load_model()");
             interp.exec("model_class_name = type(" + modelName + ").__name__");
             String modelClassName = interp.getValue("model_class_name").toString();
-
-            int layers = (num_layer != null) ? num_layer.intValue() : -1;
-            return new TorchModelWrapper(modelName, layers, modelClassName, interp);
+            return new TorchModelWrapper(modelName, modelClassName, interp);
         } catch (RuntimeException e) {
             System.err.println("Error loading torch model: " + e.getMessage());
             e.printStackTrace();

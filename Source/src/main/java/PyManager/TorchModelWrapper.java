@@ -5,19 +5,13 @@ import java.util.*;
 
 public class TorchModelWrapper {
     private final String modelName;
-    private final int numLayers;
     private final SharedInterpreter modelInterpreter;
     private final String modelClassName;
 
-    public TorchModelWrapper(String modelName, int numLayers, String modelClassName, SharedInterpreter interpreter) {
+    public TorchModelWrapper(String modelName, String modelClassName, SharedInterpreter interpreter) {
         this.modelName = modelName;
-        this.numLayers = numLayers;
         this.modelInterpreter = interpreter;
         this.modelClassName = modelClassName;
-    }
-
-    public int getNumLayers() {
-        return numLayers;
     }
 
     public SharedInterpreter getModelInterpreter() {
@@ -86,7 +80,6 @@ public class TorchModelWrapper {
         return "TorchModelWrapper{" +
                 "pyModel=" + modelName +
                 ", class=" + modelClassName +
-                ", numLayers=" + numLayers +
                 ", interpreter=" + modelInterpreter +
                 '}';
     }
