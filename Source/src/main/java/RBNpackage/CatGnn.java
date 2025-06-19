@@ -42,7 +42,7 @@ public class CatGnn extends CPModel {
     public CatGnn(String argument, String gnnId, int numLayers, int numvals, ArrayList input_attr, ArrayList edge_attr, String gnn_inference, boolean oneHotEncoding) {
         this.argument = argument;
         this.gnnId = gnnId;
-        this.categorical = true; // TODO: handle this with counting vals
+        this.categorical = true;
         this.numvals = numvals;
         this.numLayers = numLayers;
         this.input_attr = input_attr;
@@ -54,7 +54,7 @@ public class CatGnn extends CPModel {
     }
     public CatGnn(String configModelPath, Vector<String> freeVals, int numVals, List<TorchInputSpecs> inputs, List<TorchInputRels> combinedClauses, boolean withGnnPy) {
         File f = new File(configModelPath);
-        // get file name without extension
+        // get a file name without extension
         int lastIndexOfDot = f.getName().lastIndexOf('.');
         if (lastIndexOfDot == -1)
             this.gnnId = f.getName(); // No extension found
@@ -66,20 +66,18 @@ public class CatGnn extends CPModel {
         if (!freeVals.isEmpty())
             this.argument = freeVals.get(0);
 
-//        this.categorical = true ? inputs.size() > 1 : false;
         this.categorical = true;
         this.configModelPath = f.getParent();
         this.numvals = numVals;
         this.gnnInputs = inputs;
         this.gnnCombinedClauses = combinedClauses;
 
-        this.oneHotEncoding = oneHotEncoding; // this for now it is always true, keep this as default and remove it??
-        this.gnn_inference = gnn_inference; // this can be inferred by looking at the RBN arguments, no arguments means graph classification
+        this.oneHotEncoding = true; // this for now it is always true, later we need to add this to the RBN specification
 
         if (withGnnPy)
             this.gnnPy = new GnnPy(this, f.getParent());
 
-//        if (this.gnnPy == null) // TODO REDO THIS SAVE DATA!!
+//        if (this.gnnPy == null) // REDO THIS SAVE DATA!!
 //            savedData = false;
     }
     public CatGnn(String argument, GnnPy gnnpy) {

@@ -18,7 +18,6 @@ public class GnnPy {
     // We assume that the forward method for the gnn have always firm like this: forward(self, x, edge_index, ...)
     // x and edge_index are necessary, ot
     // hers arguments like batch can be set as None
-    private final String INFER_GNN = "forward"; // default function name to call in python
     private String scriptPath;
     private static ThreadLocal<SharedInterpreter> threadSharedInterp = new ThreadLocal<>();
     private double[][] currentResult;
@@ -38,7 +37,6 @@ public class GnnPy {
     private Map<Rel, int[][]> GGNodesDict;
     private SparseRelStruc sampledRelGobal;
     private boolean changedUpdate;
-    private Primula myprimula;
     private GradientGraphO mygg;
     private TorchModelWrapper torchModel;
     private CatGnn currentCatGnn;
@@ -99,7 +97,7 @@ public class GnnPy {
         int currentNode = (node != -1) ? node : 0;
 
         try {
-            // check if there is already computed the results for the specific node in the result matrix,
+            // check if there are already computed the results for the specific node in the result matrix,
             // otherwise compute for all nodes with one forward propagation
             // needs also to have the same id as before
             if (checkValuesDictCache(x_dict, edge_dict, idGnn))
@@ -254,7 +252,7 @@ public class GnnPy {
                 }
             }
             String key = subList.get(0).getTypes()[0].getName();
-            x_dict.put(key, createTensorMatrix(subList, nodeMap, GGNodesDict, sampledRel));
+            x_dict.put(key, createTensorMatrix(subList, nodeMap, GGNodesDict, sampledRel, cpmGnn.isOneHotEncoding()));
         }
         return x_dict;
     }
@@ -286,19 +284,18 @@ public class GnnPy {
 
     // this function works only with predefined rels! all the values in the GG will be set as 0
     // also with instantiated probabilistic rels (are inside the finalre)
-    public static double[][] createTensorMatrix(ArrayList<Rel> attributes, Map<Integer, Integer> nodeMap, Map<Rel, int[][]> nodes_dict, SparseRelStruc finalre) {
+    public static double[][] createTensorMatrix(ArrayList<Rel> attributes, Map<Integer, Integer> nodeMap, Map<Rel, int[][]> nodes_dict, SparseRelStruc finalre, boolean oneHot) {
         int num_col = 0;
         int num_nodes = nodes_dict.get(attributes.get(0)).length; // take the first (they should have all the same dimension)
         // count how many columns the matrix will have
         for (Rel r : attributes) {
-            if (r instanceof CatRel)
+            if (r instanceof CatRel && oneHot)
                 num_col += r.numvals();
             else
                 num_col += 1;
         }
         double[][] bool_nodes = createOneHotEncodingMatrix(num_nodes, num_col);
         OneStrucData data = finalre.getmydata();
-        int idxFeat = 0;
 
         // find all the rels that each node has, using treemap the entries maintained sorted using the node (key)
         Map<Integer, ArrayList<Rel>> nodeMapRel = new TreeMap<>();
@@ -321,7 +318,10 @@ public class GnnPy {
 
             // for each feature, see where in the vector it starts
             relIndex.put(r, startIndex);
-            startIndex += r.numvals();
+            if (oneHot)
+                startIndex += r.numvals();
+            else
+                startIndex++;
         }
 
         // It can happen that, for some relations, not all the nodes for the gnn input will not be filled in the bool_nodes
@@ -337,7 +337,10 @@ public class GnnPy {
                     OneCatRelData relData = (OneCatRelData) relMap.get(r);
                     int[] nodeKey = new int[]{currentNode};
                     if (relData.values.containsKey(nodeKey)) {
-                        bool_nodes[rowIndex][relData.values.get(nodeKey) + relIndex.get(r)] = 1;
+                        if (oneHot)
+                            bool_nodes[rowIndex][relData.values.get(nodeKey) + relIndex.get(r)] = 1;
+                        else
+                            bool_nodes[rowIndex][relIndex.get(r)] = relData.values.get(nodeKey);
                     } else {
                         System.err.println("Warning: " + r.name() + " and node " + currentNode + " not found in the data");
                     }
@@ -374,7 +377,7 @@ public class GnnPy {
                 }
             }
             String key = subList.get(0).getTypes()[0].getName();
-            double[][] inputXmatrix = createTensorMatrix(subList, nodeMap, GGnumNodesDict, sampledRel);
+            double[][] inputXmatrix = createTensorMatrix(subList, nodeMap, GGnumNodesDict, sampledRel, cpmGnn.isOneHotEncoding());
             x_dict.put(key, inputXmatrix);
         }
         return x_dict;
@@ -404,14 +407,14 @@ public class GnnPy {
                         if (maxNode.getmapInstVal() == -1 && maxNode.myatom().rel().equals(subRel)) {
                             int arg = maxNode.myatom().args[0];
                             int value = maxNode.getCurrentInst();
-                            if (subRel instanceof CatRel)
+                            if (subRel instanceof CatRel && cpmGnn.isOneHotEncoding())
                                 inputMatrix[nodeMap.get(arg)][value + idxFeat] = 1;
-                            else // numeric values should not be here
-                                inputMatrix[nodeMap.get(arg)][idxFeat] = 1;
+                            else
+                                inputMatrix[nodeMap.get(arg)][idxFeat] = value;
                         }
                     }
                 }
-                if (subRel instanceof CatRel)
+                if (subRel instanceof CatRel && cpmGnn.isOneHotEncoding())
                     idxFeat += subRel.numvals();
                 else
                     idxFeat++;
@@ -435,15 +438,22 @@ public class GnnPy {
                 for (Rel r: inputRels) {
                     if (currentMaxNode.myatom().rel() instanceof CatRel && r.equals(currentMaxNode.myatom().rel())) {
                         String key = currentMaxNode.myatom().rel().getTypes()[0].getName();
-                        for (int i = 0; i < currentMaxNode.myatom().rel().numvals(); i++) {
-                            GGxDict.get(key)[nodeMap.get(nodeToUpdate)][i + idxFeat] = 0;
+                        if (cpmGnn.isOneHotEncoding()) {
+                            for (int i = 0; i < currentMaxNode.myatom().rel().numvals(); i++) {
+                                GGxDict.get(key)[nodeMap.get(nodeToUpdate)][i + idxFeat] = 0;
+                            }
+                            GGxDict.get(key)[nodeMap.get(nodeToUpdate)][currentInst + idxFeat] = 1;
+                        } else {
+                            GGxDict.get(key)[nodeMap.get(nodeToUpdate)][idxFeat] = currentInst;
                         }
-                        GGxDict.get(key)[nodeMap.get(nodeToUpdate)][currentInst + idxFeat] = 1;
                         changedUpdate = true;
                     } else if (!(currentMaxNode.myatom().rel() instanceof CatRel) && r.equals(currentMaxNode.myatom().rel())) {
                         throw new RuntimeException("Relation " + r.name() + " not supported in setCurrentInstPy!");
                     }
-                    idxFeat += r.numvals();
+                    if (cpmGnn.isOneHotEncoding() && r instanceof CatRel)
+                        idxFeat += r.numvals();
+                    else
+                        idxFeat++;
                 }
             }
         }
@@ -529,7 +539,7 @@ public class GnnPy {
         if (GGxDict.isEmpty()) {
             GGxDict = initXdict(cpm, GGNodesDict, nodeMap, GGsampledRel);
             // we need to use the sampled values in the gradient graph structure (maxindicator) and assign them to the rel
-            // for GNNs the order of the features need to be respected: the order in input_attr in CatGnn will be used for constructing the vector
+            // for GNNs the order of the features needs to be respected: the order in input_attr in CatGnn will be used for constructing the vector
             updateInputDict2(GGxDict, GGNodesDict, cpm, ggcpmGnn);
         }
         if (GGedgeDict.isEmpty()) {
@@ -574,7 +584,7 @@ public class GnnPy {
                     throw new RuntimeException("Error in saveGnnData for features creation: " + e);
                 }
             }
-            // if the edge relations are predefined compute only once
+            // if the edge relations are predefined, compute only once
             if (GGboolRel == null)
                 GGboolRel = GGsampledRel.getBoolBinaryRelations();
         }
