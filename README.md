@@ -32,6 +32,7 @@ To compile Primula:
 
 The resulting Primula JAR file will be generated in the JAR folder.
 
-Need help? Don’t hesitate to reach out to either of these contacts, or use the [Issues](https://github.com/manfred-jaeger-aalborg/primula3/issues) tab on GitHub:
+### Need help? 
+Don’t hesitate to reach out to either of these contacts, or use the [Issues](https://github.com/manfred-jaeger-aalborg/primula3/issues) tab on GitHub:
 - jaeger@cs.aau.dk
 - rafpoj@cs.aau.dk
