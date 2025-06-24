@@ -660,35 +660,6 @@ List<Rel> AttrList() throws RBNIllegalArgumentException:
     { return attrs; }
 }
 
-
-ArrayList<Pair<BoolRel, ArrayList<Rel>>> ForInputList() throws RBNIllegalArgumentException:
-{
-    ArrayList<Pair<BoolRel, ArrayList<Rel>>> inputs = new ArrayList<>();
-    List<Rel> attrs;
-    RBNReader3.ParsedTypedAtom parsedat;
-    Token tk;
-    Rel r;
-}
-{
-    attrs = AttrList()
-    "WITHEDGE"
-    tk = <Name>
-    {
-        r = reader.getRelFromSignature(tk.image);
-        inputs.add(new Pair(r, attrs));
-    }
-    (
-        "," attrs = AttrList()
-        "WITHEDGE"
-        tk = <Name>
-        {
-            r = reader.getRelFromSignature(tk.image);
-            inputs.add(new Pair(r, attrs));
-        }
-    )*
-    { return inputs; }
-}
-
 String PathDec():
 {Token tok;}
 {
@@ -747,9 +718,9 @@ CatGnn CatGnn() throws RBNIllegalArgumentException :
     <ForFreeVars>
     freeVals = UntypedArguments()
     (
-        <ATTR> ":"
-        <X> ":" attrs = AttrList()
-        <EDGE> ":" tk2 = <Name>
+        <ATTR>
+        <X> attrs = AttrList()
+        <EDGE> tk2 = <Name>
         // TODO add edge attributes
         {
             edgeRel = (BoolRel) reader.getRelFromSignature(tk2.image);
@@ -842,15 +813,15 @@ TOKEN : {
 }
 
 TOKEN: {
-    <ATTR: "ATTR" | "Attr" | "attr" >
+    <ATTR: "ATTR:" | "Attr:" | "attr:" >
 }
 
 TOKEN: {
-    <X: "X" | "x" >
+    <X: "X:" | "x:" >
 }
 
 TOKEN : {
-    <EDGE: "EDGE" | "Edge" | "edge" >
+    <EDGE: "EDGE:" | "Edge:" | "edge:" >
 }
 
 TOKEN:{
