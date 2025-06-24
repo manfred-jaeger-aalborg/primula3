@@ -720,7 +720,7 @@ public class Bavaria extends JFrame implements ActionListener,ItemListener,KeyLi
 		centerView();
 
 		//		ImageIcon icon = new ImageIcon("small_logo.jpg");
-		ImageIcon icon = myPrimula.getIcon( Primula.STR_FILENAME_LOGO );
+		ImageIcon icon = new ImageIcon(getClass().getResource(Primula.STR_FILENAME_LOGO));
 		if (icon.getImageLoadStatus() == MediaTracker.COMPLETE) //image ok
 			this.setIconImage(icon.getImage());
 		this.setTitle(TITLE);

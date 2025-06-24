@@ -534,7 +534,7 @@ public class LearnModule extends JFrame implements ActionListener,MouseListener,
 		
 		
 		if (visible) {
-			ImageIcon icon = myprimula.getIcon( Primula.STR_FILENAME_LOGO );
+			ImageIcon icon = new ImageIcon(getClass().getResource(Primula.STR_FILENAME_LOGO));
 			if (icon.getImageLoadStatus() == MediaTracker.COMPLETE) //image ok
 				this.setIconImage(icon.getImage());
 			this.setTitle("Learn Module");

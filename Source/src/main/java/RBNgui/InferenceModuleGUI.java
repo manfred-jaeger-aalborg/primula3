@@ -185,13 +185,13 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
      */
     private Border emptySpace = BorderFactory.createEmptyBorder(10, 25, 5, 25);
 
-    ImageIcon toggleicon = new ImageIcon("src/main/java/Icons/toggle.png");
+    ImageIcon toggleicon = new ImageIcon(getClass().getResource("/toggle.png"));
 
-    ImageIcon cwaicon = new ImageIcon("src/main/java/Icons/cwa.png");
+    ImageIcon cwaicon = new ImageIcon(getClass().getResource("/cwa.png"));
 
-    ImageIcon deleteicon = new ImageIcon("src/main/java/Icons/delete.png");
+    ImageIcon deleteicon = new ImageIcon(getClass().getResource("/delete.png"));
 
-    ImageIcon clearicon = new ImageIcon("src/main/java/Icons/clear.png");
+    ImageIcon clearicon = new ImageIcon(getClass().getResource("/clear.png"));
 
     private JButton toggleTruthButton = new JButton(toggleicon);
 
@@ -816,7 +816,8 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
         fileChooser.addChoosableFileFilter(myFilterRDEF = new Filter_rdef());
         fileChooser.setFileFilter( myFilterRDEF );
 
-        ImageIcon icon = myprimula.getIcon( Primula.STR_FILENAME_LOGO );
+        ImageIcon icon = new ImageIcon(getClass().getResource(Primula.STR_FILENAME_LOGO));
+        
         if (icon.getImageLoadStatus() == MediaTracker.COMPLETE) //image ok
             this.setIconImage(icon.getImage());
 //		ImageIcon icon = new ImageIcon("small_logo.jpg");
