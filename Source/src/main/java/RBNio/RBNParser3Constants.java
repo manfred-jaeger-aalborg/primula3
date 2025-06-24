@@ -13,57 +13,57 @@ public interface RBNParser3Constants {
   /** RegularExpression Id. */
   int EOLtoken = 3;
   /** RegularExpression Id. */
-  int EOL = 28;
+  int EOL = 27;
   /** RegularExpression Id. */
-  int CombinationFunction = 29;
+  int CombinationFunction = 28;
   /** RegularExpression Id. */
-  int WIFWIF = 30;
+  int WIFWIF = 29;
   /** RegularExpression Id. */
-  int WIFTHEN = 31;
+  int WIFTHEN = 30;
   /** RegularExpression Id. */
-  int WIFELSE = 32;
+  int WIFELSE = 31;
   /** RegularExpression Id. */
-  int COMBCOMB = 33;
+  int COMBCOMB = 32;
   /** RegularExpression Id. */
-  int COMBWITH = 34;
+  int COMBWITH = 33;
   /** RegularExpression Id. */
-  int COMBFORALL = 35;
+  int COMBFORALL = 34;
   /** RegularExpression Id. */
-  int COMBWHERE = 36;
+  int COMBWHERE = 35;
   /** RegularExpression Id. */
-  int SOFTMAX = 37;
+  int SOFTMAX = 36;
   /** RegularExpression Id. */
-  int COMPUTEWITHTORCH = 38;
+  int COMPUTEWITHTORCH = 37;
   /** RegularExpression Id. */
-  int UsingRels = 39;
+  int UsingRels = 38;
   /** RegularExpression Id. */
-  int FORNUMLAYERS = 40;
+  int FORNUMLAYERS = 39;
   /** RegularExpression Id. */
-  int ForFreeVars = 41;
+  int ForFreeVars = 40;
   /** RegularExpression Id. */
-  int WithNumValues = 42;
+  int WithNumValues = 41;
   /** RegularExpression Id. */
-  int ATTR = 43;
+  int ATTR = 42;
   /** RegularExpression Id. */
-  int X = 44;
+  int X = 43;
   /** RegularExpression Id. */
-  int EDGE = 45;
+  int EDGE = 44;
   /** RegularExpression Id. */
-  int USINGTORCH = 46;
+  int USINGTORCH = 45;
   /** RegularExpression Id. */
-  int Name = 47;
+  int Name = 46;
   /** RegularExpression Id. */
-  int Path = 48;
+  int Path = 47;
   /** RegularExpression Id. */
-  int MULT = 49;
+  int MULT = 48;
   /** RegularExpression Id. */
-  int PLUS = 50;
+  int PLUS = 49;
   /** RegularExpression Id. */
-  int MINUS = 51;
+  int MINUS = 50;
   /** RegularExpression Id. */
-  int Digits = 52;
+  int Digits = 51;
   /** RegularExpression Id. */
-  int NonNegNumber = 53;
+  int NonNegNumber = 52;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -99,7 +99,6 @@ public interface RBNParser3Constants {
     "\"true\"",
     "\"false\"",
     "\"~\"",
-    "\"WITHEDGE\"",
     "<EOL>",
     "<CombinationFunction>",
     "<WIFWIF>",
