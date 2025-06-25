@@ -1728,16 +1728,16 @@ public class GradientGraphO extends GradientGraph{
 		curll = currentLogLikelihood();
 		System.out.println("final log-likelihood= " + curll);
 
-		for (GGCPMNode nextchild: this.llnode.children) {
-			if (nextchild.getMyatom().equals("constr(0)")) {
-				for (int i = 0; i < numchains; i++) {
-					for (int j = 0; j < windowsize; j++) {
-						System.out.print(nextchild.values_for_samples[i+j][0] + "\t");
-					}
-					System.out.println();
-				}
-			}
-		}
+//		for (GGCPMNode nextchild: this.llnode.children) {
+//			if (nextchild.getMyatom().equals("constr(0)")) {
+//				for (int i = 0; i < numchains; i++) {
+//					for (int j = 0; j < windowsize; j++) {
+//						System.out.print(nextchild.values_for_samples[i+j][0] + "\t");
+//					}
+//					System.out.println();
+//				}
+//			}
+//		}
 
 		return llnode.loglikelihood();
 	}

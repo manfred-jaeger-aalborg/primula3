@@ -1216,8 +1216,11 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/water-hawqs/water_rbn_2.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/water-hawqs/test_small_new_sampled.rdef";
 
-        String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/models/alpha1_20_20250623-151443/RBN_acr_graph_alpha1_20.rbn";
-        String rstinputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/rdef_files/alpha_problem/test-alpha1-blue_cat.rdef";
+//        String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/models/alpha1_20_20250623-151443/RBN_acr_graph_alpha1_20.rbn";
+//        String rstinputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/rdef_files/alpha_problem/test-alpha1-blue_cat.rdef";
+
+        String rbninputfilestring = "/Users/lz50rg/Dev/NeSy-for-graph-data/GNN-RBN-compile/RBN_acr_graph_alpha1_5_param.rbn";
+        String rstinputfilestring = "/Users/lz50rg/Dev/NeSy-for-graph-data/GNN-RBN-compile/train-barabasi-m2_2-5000-5-8-generative_cat.rdef";
 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/examples-primula/GNN-RBN-alpha/rbn_acr.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/rdef_files/alpha_problem/test-alpha1-blue.rdef";

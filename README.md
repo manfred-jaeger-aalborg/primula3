@@ -3,17 +3,15 @@ Java implementation of Relational Bayesian Networks
 
 ### To run the software:
 
-- Download the primula.jar file from the JAR directory
-- To get started: download an .rbn and an .rdef file from one of the directories under Examples/, and follow 
+- Download the `primula.jar` file from [latest release](https://github.com/manfred-jaeger-aalborg/primula3/releases/tag/latest)
+- To get started: download an `.rbn` and an `.rdef` file from one of the directories under Examples/, and follow 
   the instructions in the .pdf document for that example
 - You can run the .jar file with the following command:
 ```bash
   java -jar primula.jar
 ```
 
-For integration with PyTorch Geometric, see the separate documentation in Examples/WaterManagement
-
-
+For integration with PyTorch Geometric, see the separate documentation in `Examples/WaterManagement`
 
 ### Compiling Primula from Source
 
