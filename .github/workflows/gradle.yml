@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - master
+    paths:
+      - 'Source/**'
 
 jobs:
   build:
@@ -25,13 +27,12 @@ jobs:
       - name: Build JAR
         run: ./gradlew jar
         working-directory: ./Source
-
+          
       - name: Create or update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: Latest Release
+          name: Primula JAR
           files: JAR/primula.jar
-          overwrite: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
