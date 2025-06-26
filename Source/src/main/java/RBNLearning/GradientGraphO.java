@@ -136,18 +136,6 @@ public class GradientGraphO extends GradientGraph{
 		cooling_fact = 0.0;
 
 		RBN rbn = myPrimula.getRBN();
-		// During the GG construction, the evaluation can include also parts that need the GNN output.
-		// Jep has to be open and closed in the same thread. For this reason we need an instance og GnnPy.
-		// At the end of the construction, that instance will be closed.
-//		GnnPy tempGNN = null;
-//		if (this.checkGnnRel(rbn)) {
-//			try {
-//				tempGNN = new GnnPy(myPrimula);
-//				tempGNN.load_gnn_set(myPrimula.getLoadGnnSet());
-//			} catch (IOException e) {
-//				throw new RuntimeException("It was not possible to initialize GnnPy in GG: " + e);
-//			}
-//		}
 
 		this.minmaxbounds=mmbds;
 
@@ -1588,7 +1576,6 @@ public class GradientGraphO extends GradientGraph{
 			System.out.println(depthS + Arrays.toString(newvalues));
 			System.out.println(depthS + "Worst UGAS: " + worstUgasCount + "/" + newvalues.length);
 		}
-
 
 		for (int j=0;j<windowsize;j++){
 			gibbsSample(mythread);

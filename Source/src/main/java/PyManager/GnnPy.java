@@ -22,16 +22,12 @@ public class GnnPy {
     private Map<String, double[][]> currentXdict;
     private Map<String, ArrayList<ArrayList<Integer>>> currentEdgeDict;
     private String lastId;
-    private long dimOut;
-    private int numClass;
-    private ArrayList<String> gnnModelsId;
     private OneStrucData GGonsd;
     private SparseRelStruc GGsampledRel;
     private Vector<BoolRel> GGboolRel;
     private Map<String, double[][]> GGxDict;
     private Map<String, ArrayList<ArrayList<Integer>>> GGedgeDict;
     Map<Integer, Integer> nodeMap;
-    private int GGnumNodes;
     private Map<Rel, int[][]> GGNodesDict;
     private SparseRelStruc sampledRelGobal;
     private boolean changedUpdate;
@@ -44,10 +40,6 @@ public class GnnPy {
     public GnnPy(CatGnn catGnn, String configModelPath) {
         scriptPath = configModelPath;
         currentCatGnn = catGnn;
-
-        gnnModelsId = new ArrayList<>();
-        numClass = -1;
-        dimOut = -1;
         currentXdict = new Hashtable<>();
         currentEdgeDict = new Hashtable<>();
         GGNodesDict = new Hashtable<>();
@@ -572,31 +564,13 @@ public class GnnPy {
     }
 
     public void updateEdgeDictForSampling(Map<String, ArrayList<ArrayList<Integer>>> edge_dict, CatGnn cpmGnn, Hashtable<String, PFNetworkNode> atomhasht) {
-        // at the moment, edge-features are not implemented/supported
-//        Vector<GGCPMNode> childred = ggcpmNode.getChildren();
-//        TreeSet<Rel> parentRels = cpmGnn.parentRels();
-//        for (Rel edge: cpmGnn.getEdge_attr()) {
-//            ArrayList<ArrayList<Integer>> edge_index = edge_dict.get(edge.name());
-//            if (parentRels.contains(edge)) {
-//                for (GGCPMNode node: childred) {
-//                    GGAtomMaxNode maxNode = (GGAtomMaxNode) node;
-//                    if (maxNode.getmapInstVal() == -1 && maxNode.myatom().rel().equals(edge) && maxNode.myatom().args.length == 2) {
-////                        System.out.println(maxNode.myatom().rel() + "(" + maxNode.myatom().args[0] + "," +  maxNode.myatom().args[1] + ")");
-//                        if (maxNode.getCurrentInst() > 0) {
-//                            edge_index.get(0).add(maxNode.myatom().args[0]);
-//                            edge_index.get(1).add(maxNode.myatom().args[1]);
-//                        }
-//                    }
-//                }
-//            }
-//        }
-
-//        TreeSet<Rel> parentRels = cpmGnn.parentRels();
-//        for (Rel edge: cpmGnn.getEdge_attr()) {
-//            ArrayList<ArrayList<Integer>> edge_index = edge_dict.get(edge.name());
-//            if (parentRels.contains(edge)) {
+        TreeSet<Rel> parentRels = cpmGnn.parentRels();
+        for (TorchInputSpecs pair : cpmGnn.getGnnInputs()) {
+            BoolRel edge = pair.getEdgeRelation();
+            if (parentRels.contains(edge)) {
+                throw new RuntimeException("Edge features are not yet implemented for sampling!");
 //                for (int i = 0; i < edge_index.size(); i++) {
-//                    if (GGsampledRel.truthValueOf(edge, Arrays.a edge_index[i]) == -1) {
+//                    if (GGsampledRel.truthValueOf(edge, Arrays.edge_index[i]) == -1) {
 //                        if (maxNode.getmapInstVal() == -1 && maxNode.myatom().rel().equals(edge) && maxNode.myatom().args.length == 2) {
 //                            if (maxNode.getCurrentInst() > 0) {
 //                                edge_index.get(0).add(maxNode.myatom().args[0]);
@@ -605,9 +579,8 @@ public class GnnPy {
 //                        }
 //                    }
 //                }
-//            }
-//        }
-        throw new RuntimeException("Edge features are not yet implemented for sampling!");
+            }
+        }
     }
 
     // update the x matrix with the sampled value

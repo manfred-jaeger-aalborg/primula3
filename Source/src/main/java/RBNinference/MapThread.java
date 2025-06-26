@@ -34,9 +34,7 @@ public class MapThread extends GGThread {
 		mapprobs = new MapVals(infmodule.getQueryatoms());
 		if (infmodule.getInferenceModuleGUI() != null)
 			mapprobs.addObserver(infmodule.getInferenceModuleGUI());
-
-//        this.gnnIntegration = this.checkGnnRel(this.myprimula.getRBN());
-        this.isSampling = false;
+		this.isSampling = false;
 	}
 
 	public void run(){

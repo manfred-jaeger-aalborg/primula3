@@ -338,7 +338,6 @@ public class InferenceModule implements GradientGraphOptions {
 			idx++;
 		}
 
-		this.num_threads = 1;
 		this.numIterGreedyMap = 1;
 		this.mapSearchAlg = 2;
 	}
@@ -429,32 +428,25 @@ public class InferenceModule implements GradientGraphOptions {
 			else
 				mode = GradientGraphO.MAPMODE;
 
-            this.threads = new ArrayList<>();
 
-            // default is set to 1 (only for gui)
-            // to go back remove for loop and threads list
-            // last git revision number d60d5a886ef8749e6cb4d6519c34a80f85838e2d
-            for (int i = 0; i < num_threads; i++) {
-                gg = new GradientGraphO(myprimula,
-                        evidence,
-                        parameters,
-                        myprimula.makeMinMaxBounds(),
-                        this,
-                        queryatoms,
-                        mode,
-                        true);
-				((GradientGraphO) gg).setNumChains(numchains);
-				((GradientGraphO) gg).setWindowSize(windowsize);
-				((GradientGraphO) gg).setMapSearchAlg(mapSearchAlg);
-				((GradientGraphO) gg).setBatchSearchSize(batchSearchSize);
-				((GradientGraphO) gg).setSampleSizeScoring(sampleSizeScoring);
-				((GradientGraphO) gg).setLookaheadSearch(lookaheadSearch);
-				((GradientGraphO) gg).load_gnn_settings(myprimula.getLoadGnnSet());
-                mapthr = new MapThread(this, myprimula, (GradientGraphO) gg);
-                // mapthr = new MapThread(this,myprimula,(GradientGraphO)gg); or this?
-                mapthr.start();
-                threads.add(mapthr);
-            }
+			gg = new GradientGraphO(myprimula,
+					evidence,
+					parameters,
+					myprimula.makeMinMaxBounds(),
+					this,
+					queryatoms,
+					mode,
+					true);
+			((GradientGraphO) gg).setNumChains(numchains);
+			((GradientGraphO) gg).setWindowSize(windowsize);
+			((GradientGraphO) gg).setMapSearchAlg(mapSearchAlg);
+			((GradientGraphO) gg).setBatchSearchSize(batchSearchSize);
+			((GradientGraphO) gg).setSampleSizeScoring(sampleSizeScoring);
+			((GradientGraphO) gg).setLookaheadSearch(lookaheadSearch);
+			((GradientGraphO) gg).load_gnn_settings(myprimula.getLoadGnnSet());
+			mapthr = new MapThread(this, myprimula, (GradientGraphO) gg);
+			mapthr.start();
+
 		}
 		catch (RBNCompatibilityException ex){System.out.println(ex.toString());}
 		return gg;

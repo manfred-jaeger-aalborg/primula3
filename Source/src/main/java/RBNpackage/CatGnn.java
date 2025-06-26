@@ -49,8 +49,7 @@ public class CatGnn extends CPModel {
         this.edge_attr = edge_attr;
         this.oneHotEncoding = oneHotEncoding;
         this.gnn_inference = gnn_inference;
-        if (this.gnnPy == null)
-            isInitialized = false;
+        isInitialized = false;
     }
     public CatGnn(String configModelPath, Vector<String> freeVals, int numVals, List<TorchInputSpecs> inputs, List<TorchInputRels> combinedClauses, boolean withGnnPy) {
         File f = new File(configModelPath);
@@ -77,8 +76,7 @@ public class CatGnn extends CPModel {
         if (withGnnPy)
             this.gnnPy = new GnnPy(this, f.getParent());
 
-//        if (this.gnnPy == null) // REDO THIS SAVE DATA!!
-//            savedData = false;
+        isInitialized = false;
     }
     public CatGnn(String argument, GnnPy gnnpy) {
         this.argument = argument;
@@ -258,18 +256,6 @@ public class CatGnn extends CPModel {
     @Override
     public TreeSet<Rel> parentRels() {
 //        System.out.println("parentRels code 1");
-//        TreeSet<Rel> parent = new TreeSet<>();
-//        for (TorchInputSpecs pair : gnnInputs) {
-//            if (pair.getEdgeRelation().isprobabilistic())
-//                parent.add(pair.getEdgeRelation());
-//            ArrayList<Rel> relList = (ArrayList<Rel>) pair.getFeatures();
-//            for (Rel rel : relList) {
-//                if (rel.isprobabilistic())
-//                    parent.add(rel);
-//            }
-//        }
-//        return parent;
-
         TreeSet<Rel> result = new TreeSet<Rel>();
         for (TorchInputRels inps: gnnCombinedClauses) {
             result.addAll(inps.parentRels());
@@ -286,17 +272,6 @@ public class CatGnn extends CPModel {
             result.addAll(inps.parentRels());
         }
         return result;
-//        TreeSet<Rel> parent = new TreeSet<>();
-//        for (TorchInputSpecs pair : gnnInputs) {
-//            if (pair.getEdgeRelation().isprobabilistic())
-//                parent.add(pair.getEdgeRelation());
-//            ArrayList<Rel> relList = (ArrayList<Rel>) pair.getFeatures();
-//            for (Rel rel : relList) {
-//                if (rel.isprobabilistic())
-//                    parent.add(rel);
-//            }
-//        }
-//        return parent;
     }
 
     @Override
@@ -312,34 +287,8 @@ public class CatGnn extends CPModel {
         this.gnnPy = gnnPy;
     }
 
-    public void setEdge_name(String edge_name) {
-
-    }
-
-    public String getEdge_name() {
-        return null;
-    }
-
-    public Rel[] getGnnattr() {
-        List<Rel> rels = new ArrayList<>();
-        for (ArrayList<Rel> attr_list: input_attr) {
-            for (Rel r: attr_list) {
-                rels.add(r);
-            }
-        }
-        return rels.toArray(new Rel[0]);
-    }
-
-    public ArrayList<ArrayList<Rel>> getInput_attr() {
-        return input_attr;
-    }
-
     public List<TorchInputSpecs> getGnnInputs() {
         return this.gnnInputs;
-    }
-
-    public ArrayList<Rel> getEdge_attr() {
-        return edge_attr;
     }
 
     public String getArgument() {
@@ -354,24 +303,9 @@ public class CatGnn extends CPModel {
         return oneHotEncoding;
     }
 
-    public String getGnn_inference() {
-        return gnn_inference;
-    }
-
     public boolean isBoolean() { return !categorical; }
-
-    public int getNumLayers() {
-        return numLayers;
-    }
 
     public List<TorchInputRels> getGnnGroundCombinedClauses() {
         return gnnGroundCombinedClauses;
     }
-
-    public void setNumLayers(int l) { this.numLayers = l; }
-
-    public String getConfigModelPath() { return configModelPath; }
-
-    public TorchModelWrapper getTorchModel() { return torchModel; }
-    public void setTorchModel(TorchModelWrapper torchModel) { this.torchModel = torchModel; }
 }
