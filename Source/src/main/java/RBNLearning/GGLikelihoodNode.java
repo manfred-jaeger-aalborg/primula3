@@ -300,12 +300,8 @@ public  class GGLikelihoodNode extends GGNode{
 				if (childinst==1)
 					childlik = childval[0];
 				else
-					childlik = 1- childval[0];
+					childlik = 1 - childval[0];
 			}
-
-			//			if (nextchild.getMyatom().equals("target(0)")) {
-			//				System.out.println("target(): " + childlik);
-			//			}
 
 			if (!this.depends_on_sample || (this.depends_on_sample && sno!=null)) 
 				local_small_likelihood=SmallDouble.multiply(local_small_likelihood, childlik);

@@ -116,8 +116,8 @@ public class GGGnnNode extends GGCPMNode {
 
     @Override
     public boolean isBoolean() {
-        return !(cpm instanceof CatGnn);
-    } // for now, we return true if is not CatGnn
+        return cpm.numvals()==1;
+    }
 
 
     public GnnPy getGnnPy() {

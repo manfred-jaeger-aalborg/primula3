@@ -32,7 +32,7 @@ public class CatGnn extends CPModel {
     // if is set to true, means that the GNN is for categorical output, if false is boolean
     private boolean categorical;
     private int numvals;
-    private static boolean savedData = false;
+    private static boolean isInitialized = false;
     // this variable is used to set the inference for node or graph classification. Keyword: "node" or "graph"
     private String gnn_inference;
     private int numLayers;
@@ -50,7 +50,7 @@ public class CatGnn extends CPModel {
         this.oneHotEncoding = oneHotEncoding;
         this.gnn_inference = gnn_inference;
         if (this.gnnPy == null)
-            savedData = false;
+            isInitialized = false;
     }
     public CatGnn(String configModelPath, Vector<String> freeVals, int numVals, List<TorchInputSpecs> inputs, List<TorchInputRels> combinedClauses, boolean withGnnPy) {
         File f = new File(configModelPath);
@@ -131,24 +131,46 @@ public class CatGnn extends CPModel {
                              Profiler profiler)
             throws RBNCompatibilityException {
 
-        // if the attributes we depend on do not have a value, return NaN
-        if (parentRels().stream().anyMatch(r -> inst.find(r).isEmpty())) {
-            Object[] result = new Object[2];
-            result[0] = new double[this.numvals()];
-            Arrays.fill((double[]) result[0], Double.NaN);
-            return result;
+        // exhaustive check if all the elements have a value before evaluate the gnn
+        for (Rel parent: parentRels()) {
+            try {
+                int[][] alltuple = A.allTypedTuples(parent.getTypes());
+                for (int[] tuple2: alltuple) {
+                    int val = inst.truthValueOf(parent, tuple2);
+                    // if a tuple still does not have a value, return the NaN array
+                    if (val==-1) {
+                        Object[] result = new Object[2];
+                        result[0] = new double[this.numvals()];
+                        Arrays.fill((double[]) result[0], Double.NaN);
+                        return result;
+                    }
+                }
+            } catch (RBNIllegalArgumentException e) {
+                throw new RuntimeException(e);
+            }
         }
 
-        return gnnPy.evaluate_gnnHetero(A, inst, this, valonly);
+        Object[] res = gnnPy.evaluate_gnnHetero(A, inst, this, valonly);
+        if (this.numvals() == 1) {
+            double[] trueProb = (double[]) res[0];
+            double[] resultArray =  new double[] {1-trueProb[0],trueProb[0]};
+            res[0] = resultArray;
+        }
+        return res;
     }
 
     @Override
     public double[] evalSample(RelStruc A, Hashtable<String, PFNetworkNode> atomhasht, OneStrucData inst, Hashtable<String,double[]> evaluated, long[] timers) throws RBNCompatibilityException {
-        if (!savedData) {
-            this.gnnPy.saveGnnData((CatGnn) this, A, inst);
-            savedData = true;
+        if (!isInitialized) {
+            this.gnnPy.initGnnData(this, A, inst);
+            isInitialized = true;
         }
-        return gnnPy.evalSample_gnn(this, A, atomhasht, inst);
+        double[] resGnn = gnnPy.evalSample_gnn(this, A, atomhasht, inst);
+        if (this.numvals() == 1) {
+            double[] resultArray =  new double[] {1-resGnn[0],resGnn[0]};
+            return resultArray;
+        }
+        return resGnn;
     }
 
     @Override

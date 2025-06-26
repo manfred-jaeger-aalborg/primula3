@@ -4,10 +4,8 @@
 package PyManager;
 import RBNExceptions.RBNIllegalArgumentException;
 import RBNLearning.*;
-import RBNgui.Primula;
 import RBNinference.PFNetworkNode;
 import RBNpackage.*;
-import RBNutilities.Pair;
 import jep.*;
 import jep.python.PyObject;
 
@@ -338,9 +336,10 @@ public class GnnPy {
                             bool_nodes[rowIndex][relData.values.get(nodeKey) + relIndex.get(r)] = 1;
                         else
                             bool_nodes[rowIndex][relIndex.get(r)] = relData.values.get(nodeKey);
-                    } else {
-                        System.err.println("Warning: " + r.name() + " and node " + currentNode + " not found in the data");
                     }
+//                    else {
+//                        System.err.println("Warning: " + r.name() + " and node " + currentNode + " not found in the data");
+//                    }
                 } else {
                     if (r.valtype() == Rel.NUMERIC) {
                         OneNumRelData num_data = (OneNumRelData) relMap.get(r);
@@ -529,7 +528,7 @@ public class GnnPy {
         CatGnn cpm = (CatGnn) cpmGnn;
 
         if (!savedData) {
-            saveGnnData(cpm, A, inst);
+            initGnnData(cpm, A, inst);
             savedData = true;
         }
 
@@ -550,8 +549,8 @@ public class GnnPy {
             return inferModelHetero(Integer.parseInt(cpmGnn.getArgument()), GGxDict, GGedgeDict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId());
     }
 
-    // Initial caching of the data in GGGnnNode
-    public void saveGnnData(CatGnn cpmGnn, RelStruc A, OneStrucData inst) {
+
+    public void initGnnData(CatGnn cpmGnn, RelStruc A, OneStrucData inst) {
         if (GGonsd == null && GGsampledRel == null) {
             GGonsd = new OneStrucData(A.getmydata().copy()); // only one copy per time
             GGsampledRel = new SparseRelStruc(A.getNames(), GGonsd, A.getCoords(), A.signature());
@@ -569,21 +568,6 @@ public class GnnPy {
                     GGboolRel.add(inps.getEdgeRelation());
                 }
             }
-        } else {
-            GGnumNodes = -1;
-            for (Rel attr : cpmGnn.getGnnattr()) {
-                try {
-                    int[][] mat = A.allTypedTuples(attr.getTypes());
-                    // maybe there could be attributes with different number, we keep the biggest
-                    if (attr.arity == 1 && mat.length >= GGnumNodes)
-                        GGnumNodes = mat.length;
-                } catch (RBNIllegalArgumentException e) {
-                    throw new RuntimeException("Error in saveGnnData for features creation: " + e);
-                }
-            }
-            // if the edge relations are predefined, compute only once
-            if (GGboolRel == null)
-                GGboolRel = GGsampledRel.getBoolBinaryRelations();
         }
     }
 
@@ -623,9 +607,10 @@ public class GnnPy {
 //                }
 //            }
 //        }
-
+        throw new RuntimeException("Edge features are not yet implemented for sampling!");
     }
 
+    // update the x matrix with the sampled value
     public void updateInputDictForSampling(Map<String, double[][]> input_dict, Map<Rel, int[][]> GGnumNodesDict, CatGnn cpmGnn, Hashtable<String, PFNetworkNode> atomhasht) {
         TreeSet<Rel> parentRels = cpmGnn.parentRels();
         for (TorchInputSpecs pair : cpmGnn.getGnnInputs()) {
@@ -650,28 +635,10 @@ public class GnnPy {
                                     inputMatrix[nodeMap.get(arg)][idxFeat] = 1;
                             }
                         }
-
                     }
                 }
             }
         }
-//
-//                    for (int i = 0; i < mat.length; i++) {
-//                        if (GGsampledRel.truthValueOf(parent, mat[i]) == -1) {
-//                            GroundAtom myatom = new GroundAtom(parent, mat[i]);
-//                            String myatomname = myatom.asString();
-//                            PFNetworkNode gan = (PFNetworkNode) atomhasht.get(myatomname);
-//                            if (gan != null) {
-//                                double result = (double) gan.sampleinstVal();
-//                                boolean sampledVal = false;
-////                            GGsampledRel.getmydata().find(parent).
-//                                if (result == 1)
-//                                    sampledVal = true;
-//                                GGsampledRel.getmydata().findInBoolRel(parent).add(mat[i], sampledVal);
-//                            }
-//                        }
-//                    }
-//                }
     }
 
     public double[] evalSample_gnn(CatGnn cpmGnn, RelStruc A, Hashtable<String, PFNetworkNode> atomhasht, OneStrucData inst) {
@@ -679,16 +646,13 @@ public class GnnPy {
         if (torchModel.getModelInterpreter() != interpreter)
             torchModel = loadTorchModel(interpreter, currentCatGnn, scriptPath); // update the model if they differ with interpreters
 
-        CatGnn cpmHetero = (CatGnn) cpmGnn;
+        // expensive operation, everytime we create complexly the input matrix
+        GGxDict = initXdict(cpmGnn, GGNodesDict, nodeMap, GGsampledRel);
+        updateInputDictForSampling(GGxDict, GGNodesDict, cpmGnn, atomhasht);
 
-        if (GGxDict.isEmpty()) {
-            GGxDict = initXdict(cpmHetero, GGNodesDict, nodeMap, GGsampledRel);
-            updateInputDictForSampling(GGxDict, GGNodesDict, cpmHetero, atomhasht);
-        }
-        if (GGedgeDict.isEmpty()) {
-            GGedgeDict = initEdgesDict(GGboolRel, GGsampledRel);
-            updateEdgeDictForSampling(GGedgeDict, cpmHetero, atomhasht);
-        }
+        // TODO update edges in sampling
+        GGedgeDict = initEdgesDict(GGboolRel, GGsampledRel);
+        updateEdgeDictForSampling(GGedgeDict, cpmGnn, atomhasht);
 
         double[] res = null;
         if (cpmGnn.getArgument().equals("[]") || cpmGnn.getArgument().equals(""))

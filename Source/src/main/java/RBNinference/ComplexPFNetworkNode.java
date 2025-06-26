@@ -125,7 +125,7 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 					throws RBNCompatibilityException
 					/* adaptivemode argument not used (adaptive=non-adaptive in forward sampling for ComplexPFNNodes) */
 	{
-		//System.out.println("<" + myatom().asString(A));
+		// System.out.println("<" + myatom().asString(A));
 
 
 
@@ -139,7 +139,6 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 			probs = condProb(A,atomhasht,inst,evaluated,timers);
 
 		if (instantiated == -1){
-
 			sampleinst = rbnutilities.sampledValue(probs);
 			thissampleprob = probs[sampleinst];
 			thisdistrprob = thissampleprob;
