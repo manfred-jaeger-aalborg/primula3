@@ -79,7 +79,6 @@ public class GradientGraphO extends GradientGraph{
 
 	GGConstantNode[] paramNodes; /* All the constant (i.e. parameter) nodes */
 
-	public boolean debugPrint;
 	private GnnPy gnnPy;
 	private boolean gnnIntegration;
 	private int mapSearchAlg;
@@ -131,7 +130,6 @@ public class GradientGraphO extends GradientGraph{
 	{
 		super(mypr,data,params,go,mapats,m,showInfoInPrimula);
 
-		this.debugPrint = true;
 		num_iter = 0;
 		cooling_fact = 0.0;
 
@@ -211,14 +209,14 @@ public class GradientGraphO extends GradientGraph{
 		/* Start by constructing upper ground atom nodes for the map-query atoms
 		 *
 		 */
-		if (debugPrint)
+		if (myggoptions.ggverbose())
 			System.out.println("Building GG:");
 		if (mode == MAPMODE || mode == LEARNANDMAPMODE){
 			int[] naargs;
 			GroundAtom nextatom;
 			GGAtomMaxNode ggmn;
 
-			if (debugPrint)
+			if (myggoptions.ggverbose())
 				System.out.println("\t-constructing uga nodes for map-query atom...");
 			long startTime = System.currentTimeMillis();
 			for (Rel narel: mapatoms.keySet()) {
@@ -288,7 +286,7 @@ public class GradientGraphO extends GradientGraph{
 						currentpercentage++;
 					}
 				}
-				if (debugPrint)
+				if (myggoptions.ggverbose())
 					System.out.println("\t-uga map-query atoms constructed in: " + (System.currentTimeMillis()-((double)startTime))/1000.0 + " sec.");
 			} //for (Rel narel: mapatoms.keySet())
 		} // if (mode == MAPMODE || mode == LEARNANDMAPMODE)
@@ -298,7 +296,7 @@ public class GradientGraphO extends GradientGraph{
 		/* Now construct the nodes for the data/evidence atoms
 		 *
 		 */
-		if (debugPrint)
+		if (myggoptions.ggverbose())
 			System.out.println("\t-constructing nodes for data/evidence atom...");
 		int numNodes = 0;
 		long startTime = System.currentTimeMillis();
@@ -425,7 +423,7 @@ public class GradientGraphO extends GradientGraph{
 			} /* int j=0; j<rdoi.numObservations(); */
 
 		}
-		if (debugPrint)
+		if (myggoptions.ggverbose())
 			System.out.println("\t-finished constructing " + numNodes + " nodes in " + (System.currentTimeMillis()-((double)startTime))/1000.0 + " sec.");
 
 		if (showInfoInPrimula)
@@ -625,7 +623,7 @@ public class GradientGraphO extends GradientGraph{
 		//		System.out.println("Time 1:" + profiler.time1);
 		//		System.out.println("Time 2:" + profiler.time2);
 		//		System.out.println("Count 1:" + profiler.count1);
-		if (debugPrint) {
+		if (myggoptions.ggverbose()) {
 			System.out.println("#Ground atoms:" + llnode.childrenSize());
 			System.out.println("#Sum atoms:" + sumindicators.size());
 			System.out.println("#Max atoms:" + maxindicators.size());
@@ -1075,16 +1073,18 @@ public class GradientGraphO extends GradientGraph{
 			gibbsSample(mythread);
 
 		for (int iter = 0; iter < candidateList.size(); iter++) {
-			System.out.println("Iteration: " + iter);
+			if (myggoptions.ggverbose())
+				System.out.println("Iteration: " + iter);
 			GGAtomMaxNode node = candidateList.get(iter);
 			node.setScore(mythread, 0);
 			double score = node.getScore();
 
 			if (node != null && score > 0) {
-				System.out.println("Flipping node: " + node.getMyatom() + " from " + node.getCurrentInst() + " to " + node.getHighvalue() + " with score: " + score);
+				if (myggoptions.ggverbose())
+					System.out.println("Flipping node: " + node.getMyatom() + " from " + node.getCurrentInst() + " to " + node.getHighvalue() + " with score: " + score);
 				node.setCurrentInst(node.getHighvalue());
 				node.reEvaluateUpstream(null);
-			} else
+			} else if (myggoptions.ggverbose())
 				System.out.println("No improvement found in this iteration.");
 
 			for (int j = 0; j < windowsize; j++)
@@ -1106,7 +1106,7 @@ public class GradientGraphO extends GradientGraph{
 			scored_atoms.add(mxnode);
 		}
 
-		if (debugPrint) {
+		if (myggoptions.ggverbose()) {
 			System.out.println("Flip scores");
 			showMaxAtomFlipScoresBestK(scored_atoms, 10);
 	//		showMaxAtomFlipScores(scored_atoms);
@@ -1118,13 +1118,13 @@ public class GradientGraphO extends GradientGraph{
 			flipnext = scored_atoms.poll();
 			if (flipnext != null) {
 				if (flipnext.getScore() <= 0) {
-					if (num_flipped == 0 && debugPrint)
+					if (num_flipped == 0 && myggoptions.ggverbose())
 						System.out.println("Ineffective search, no atoms flipped!");
-					else if (num_flipped > 0 && debugPrint)
+					else if (num_flipped > 0 && myggoptions.ggverbose())
 						System.out.println("Flipped " + num_flipped + " atoms");
 					break;
 				}
-				if (debugPrint)
+				if (myggoptions.ggverbose())
 					System.out.println("Flipping: " + flipnext.getMyatom() + " to " + flipnext.getHighvalue());
 
 				flipnext.setCurrentInst(flipnext.getHighvalue());
@@ -1156,11 +1156,9 @@ public class GradientGraphO extends GradientGraph{
 					scored_atoms.add(mx);
 				}
 				if (myggoptions.ggverbose()) {
-					if (debugPrint) {
-						System.out.println("New flip scores");
+					System.out.println("New flip scores");
 	//				showMaxAtomFlipScores(scored_atoms);
 						showMaxAtomFlipScoresBestK(scored_atoms, 10);
-					}
 				}
 			} else {
 				System.out.println("flipnext null, return");
@@ -1170,7 +1168,7 @@ public class GradientGraphO extends GradientGraph{
 	//		printProgressBar(num_flipped, scored_atoms.size(), currentLogLikelihood());
 		}
 
-		if (debugPrint) {
+		if (myggoptions.ggverbose()) {
 			System.out.println("Map search result");
 			for (Rel r : maxindicators.keySet()) {
 				for (GGAtomMaxNode nextgimn : maxindicators.get(r))
@@ -1329,7 +1327,7 @@ public class GradientGraphO extends GradientGraph{
 		}
 		Collections.sort(scored_atoms, new GGAtomMaxNode_Comparator());
 
-		if (debugPrint) {
+		if (myggoptions.ggverbose()) {
 			System.out.println("Flip scores");
 			showMaxAtomFlipScoresBestK(scored_atoms, 10);
 		}
@@ -1368,7 +1366,7 @@ public class GradientGraphO extends GradientGraph{
 			if (flipnext.getScore()>0) {
 				topAtoms.add(flipnext);
 
-				if (debugPrint) {
+				if (myggoptions.ggverbose()) {
 					System.out.println("Flipping: " + flipnext.getMyatom() + " to " + flipnext.getHighvalue() + " with score " + flipnext.getScore());
 					System.out.println("num flipped: " + num_flipped);
 				}
@@ -1384,7 +1382,7 @@ public class GradientGraphO extends GradientGraph{
 			if (rescore_early || counterRescore == rescoreWhen) {
 				num_iter++;
 				// Recompute scores for the best atoms
-				if (debugPrint)
+				if (myggoptions.ggverbose())
 					System.out.println("Computing score for flipped atoms ...");
 
 				for (GGAtomMaxNode atom : rescoreList)
@@ -1440,7 +1438,7 @@ public class GradientGraphO extends GradientGraph{
 					it = scored_atoms.iterator();
 					counterRescore = 0;
 
-					if (myggoptions.ggverbose() && debugPrint) {
+					if (myggoptions.ggverbose()) {
 						System.out.println("New flip scores");
 						showMaxAtomFlipScoresBestK(scored_atoms, 10);
 					}
@@ -1497,7 +1495,7 @@ public class GradientGraphO extends GradientGraph{
 						values[i] = 1 - childval[0];
 				}
 			}
-			if (debugPrint)
+			if (myggoptions.ggverbose())
 				System.out.print(ugas.get(i).getMyatom() + " ");
 		}
 		return values;
@@ -1509,7 +1507,7 @@ public class GradientGraphO extends GradientGraph{
 
 	public double mapSearchRecursive(GGThread mythread, TreeSet<GGAtomMaxNode> alreadyflipped, Vector<GGAtomMaxNode> flipcandidates, double currentllratio, int depth, int maxDepth) {
 		if (depth == maxDepth) {
-			if (debugPrint)
+			if (myggoptions.ggverbose())
 				System.out.println("Max depth reached, return");
 			return currentllratio;
 		}
@@ -1518,7 +1516,7 @@ public class GradientGraphO extends GradientGraph{
 		for (int i = 0; i < depth; i++) {
 			depthS += "\t";
 		}
-		if (debugPrint)
+		if (myggoptions.ggverbose())
 			System.out.println(depthS + "current depth " + depth);
 		PriorityQueue<GGAtomMaxNode> scored_atoms = new PriorityQueue<GGAtomMaxNode>(new GGAtomMaxNode_Comparator()); // NB. with priority queue only the best is guarantee to be on the top
 
@@ -1537,7 +1535,7 @@ public class GradientGraphO extends GradientGraph{
 		}
 
 		if (flipnext == null){
-			if (debugPrint) {
+			if (myggoptions.ggverbose()) {
 				System.out.println(depthS + "could not find new candidate for flipping");
 				System.out.println(depthS + "1 returning " + currentllratio);
 			}
@@ -1547,7 +1545,7 @@ public class GradientGraphO extends GradientGraph{
 		Vector<GGCPMNode> ugas = flipnext.getAllugas();
 		double oldll = SmallDouble.log(llnode.evaluate(null,0, ugas,true,false,null));
 		double[] oldvalues = getUgasValues(ugas);
-		if (debugPrint) {
+		if (myggoptions.ggverbose()) {
 			System.out.println(depthS + "Old UGAS");
 			System.out.print(depthS);
 			System.out.println();
@@ -1569,7 +1567,7 @@ public class GradientGraphO extends GradientGraph{
 				worstUgasCount++;
 		}
 
-		if (debugPrint) {
+		if (myggoptions.ggverbose()) {
 			System.out.println(depthS + "New UGAS");
 			System.out.print(depthS);
 			System.out.println();
@@ -1581,7 +1579,7 @@ public class GradientGraphO extends GradientGraph{
 			gibbsSample(mythread);
 		}
 		if (numchains > 0 && myggoptions.ggverbose()) {
-			if (debugPrint)
+			if (myggoptions.ggverbose())
 				System.out.println(depthS + "New sampled values:");
 			showSumAtomsVals();
 		}
@@ -1589,7 +1587,7 @@ public class GradientGraphO extends GradientGraph{
 		 * here. Otherwise we determine the next indicator to flip.
 		 */
 		if (currentllratio > 1 && worstUgasCount==0) {
-			if (debugPrint)
+			if (myggoptions.ggverbose())
 				System.out.println(depthS + "2 returning " + currentllratio);
 			return currentllratio;
 		}
@@ -1607,12 +1605,12 @@ public class GradientGraphO extends GradientGraph{
 		GGCPMNode minuga = ugas.elementAt(minind);
 		double recsearch = mapSearchRecursive(mythread, alreadyflipped, minuga.getMaxIndicators(), currentllratio,depth+1, maxDepth);
 		if (recsearch < 1) {
-			if (debugPrint)
+			if (myggoptions.ggverbose())
 				System.out.println(depthS + "flipping back " + flipnext.getMyatom() + " to " + oldValue);
 			flipnext.setCurrentInst(oldValue);
 		}
 
-		if (debugPrint)
+		if (myggoptions.ggverbose())
 			System.out.println(depthS + "3 returning " + recsearch);
 		return recsearch;
 	}
@@ -1651,10 +1649,8 @@ public class GradientGraphO extends GradientGraph{
 		}
 
 		if (myggoptions.ggverbose()) {
-			if (debugPrint) {
-				System.out.println("Initial max values:");
-				showMaxAtomsVals();
-			}
+			System.out.println("Initial max values:");
+			showMaxAtomsVals();
 			if (this.numchains>0) {
 				System.out.println("Initial sampled values:");
 				showSumAtomsVals();
@@ -1667,13 +1663,13 @@ public class GradientGraphO extends GradientGraph{
 		System.out.println("initial log-likelihood= " + curll);
 
 		while (!terminate){
-			if (debugPrint)
+			if (myggoptions.ggverbose())
 				System.out.println("starting from the top ..." + itcount);
 			itcount++;
 			evaluateLikelihoodAndPartDerivs(true);
 			oldll=currentLogLikelihood();
 
-			if (debugPrint)
+			if (myggoptions.ggverbose())
 				System.out.println("log-likelihood= " + oldll);
 
 			if (mapSearchAlg == 0) {
@@ -1693,7 +1689,7 @@ public class GradientGraphO extends GradientGraph{
 				terminate = true;
 			}
 
-			if (debugPrint && mapSearchAlg != 2)
+			if (myggoptions.ggverbose() && mapSearchAlg != 2)
 				System.out.println("log-likelihood improvement " + oldll/score);
 
 			if (mapSearchAlg != 2 && oldll/score <= 1+myggoptions.getLLikThresh()) {
@@ -1701,10 +1697,10 @@ public class GradientGraphO extends GradientGraph{
 			}
 			if (!terminate) {
 				if (mode == LEARNMODE) {
-					if (debugPrint)
+					if (myggoptions.ggverbose())
 						System.out.print("Learning parameters ...");
 					learnParameters(mythread, GradientGraph.FullLearn, false);
-					if (debugPrint)
+					if (myggoptions.ggverbose())
 						System.out.println("... done");
 				}
 			}

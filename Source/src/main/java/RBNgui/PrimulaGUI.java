@@ -1042,7 +1042,7 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
             //evidenceModule.getACEControl().getActionCompile().actionPerformed( null );
         }
         else if( source == itemabout ){
-            JOptionPane.showMessageDialog(null,"Primula version 2.2 " + '\n' + "(C) 2009");
+            JOptionPane.showMessageDialog(null,"Primula version 3.0 " + '\n' + "(C) 2025");
         }
         else if (source == gnnSettingsModule) {
             System.out.println("ciao");

@@ -76,8 +76,6 @@ public class MapThread extends GGThread {
 						if (gg.parameters().size() > 0)
 							myLearnModule.setParameterValues(gg.getParameters());
 
-						mapprobs.setRestarts(restarts);
-						mapprobs.notifyObservers();
 						OneStrucData result = new OneStrucData();
 						result.setParentRelStruc(myprimula.getRels());
 
@@ -87,10 +85,11 @@ public class MapThread extends GGThread {
 								result.add(gal.atomAt(i), bestMapVals.get(key)[i], "?");
 							}
 						}
-
 						onsd.add(result);
-						restarts++;
 					}
+					mapprobs.setRestarts(restarts);
+					mapprobs.notifyObservers();
+					restarts++;
 				} else
 					System.out.println("MAP search aborted");
 			} catch (RBNNaNException e) {
