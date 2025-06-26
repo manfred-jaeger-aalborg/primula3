@@ -34,5 +34,6 @@ jobs:
           tag_name: latest
           name: Primula JAR
           files: JAR/primula.jar
+          overwrite_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
