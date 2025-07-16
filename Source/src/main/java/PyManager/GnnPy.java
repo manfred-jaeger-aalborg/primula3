@@ -38,17 +38,21 @@ public class GnnPy {
     private OneStrucData oldInst;
 
     public GnnPy(CatGnn catGnn, String configModelPath) {
+        initData();
         scriptPath = configModelPath;
         currentCatGnn = catGnn;
+        JepManager.addShutdownHook();
+        torchModel = loadTorchModel(JepManager.getInterpreter(true), catGnn, configModelPath);
+    }
+
+    public void initData() {
         currentXdict = new Hashtable<>();
         currentEdgeDict = new Hashtable<>();
         GGNodesDict = new Hashtable<>();
         GGedgeDict = new Hashtable<>();
+        nodeMap = new HashMap<>();
         changedUpdate = false;
         savedData = false;
-        nodeMap = new HashMap<>();
-        JepManager.addShutdownHook();
-        torchModel = loadTorchModel(JepManager.getInterpreter(true), catGnn, configModelPath);
     }
 
     public void load_gnn_set(Map<String, Object> sett) {

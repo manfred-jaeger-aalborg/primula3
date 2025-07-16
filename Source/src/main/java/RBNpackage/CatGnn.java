@@ -129,24 +129,40 @@ public class CatGnn extends CPModel {
                              Profiler profiler)
             throws RBNCompatibilityException {
 
-        // exhaustive check if all the elements have a value before evaluate the gnn
-        for (Rel parent: parentRels()) {
-            try {
-                int[][] alltuple = A.allTypedTuples(parent.getTypes());
-                for (int[] tuple2: alltuple) {
-                    int val = inst.truthValueOf(parent, tuple2);
-                    // if a tuple still does not have a value, return the NaN array
-                    if (val==-1) {
-                        Object[] result = new Object[2];
-                        result[0] = new double[this.numvals()];
-                        Arrays.fill((double[]) result[0], Double.NaN);
-                        return result;
+        // CHECK IF THIS DOES NOT BREAK INFERENCE WITH MAP or MCMC
+
+        for (TorchInputRels inps: gnnGroundCombinedClauses) {
+            Object[] res = inps.evaluate(A, inst, vars, tuple, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly, profiler);
+            // if res[0] contains NaN return res
+            if (res[0] instanceof double[]) {
+                double[] values = (double[]) res[0];
+                for (double value : values) {
+                    if (Double.isNaN(value)) {
+                        return res;
                     }
                 }
-            } catch (RBNIllegalArgumentException e) {
-                throw new RuntimeException(e);
             }
+
         }
+
+        // exhaustive check if all the elements have a value before evaluate the gnn
+//        for (Rel parent: parentRels()) {
+//            try {
+//                int[][] alltuple = A.allTypedTuples(parent.getTypes());
+//                for (int[] tuple2: alltuple) {
+//                    int val = inst.truthValueOf(parent, tuple2);
+//                    // if a tuple still does not have a value, return the NaN array
+//                    if (val==-1) {
+//                        Object[] result = new Object[2];
+//                        result[0] = new double[this.numvals()];
+//                        Arrays.fill((double[]) result[0], Double.NaN);
+//                        return result;
+//                    }
+//                }
+//            } catch (RBNIllegalArgumentException e) {
+//                throw new RuntimeException(e);
+//            }
+//        }
 
         Object[] res = gnnPy.evaluate_gnnHetero(A, inst, this, valonly);
         if (this.numvals() == 1) {

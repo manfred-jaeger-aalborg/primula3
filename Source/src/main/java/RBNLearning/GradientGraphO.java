@@ -2880,13 +2880,12 @@ public Hashtable<Rel, Vector<GGAtomMaxNode>> getMaxindicators() {
 	return maxindicators;
 }
 
-private boolean checkGnnRel(RBN rbn) {
-	for(int i=0; i<rbn.prelements().length; i++) {
-		if (rbn.cpmod_prelements_At(i) instanceof CatGnn)
-			return true;
+	public void initGnnPy(RBN rbn) {
+		for(int i=0; i<rbn.prelements().length; i++) {
+			if (rbn.cpmod_prelements_At(i) instanceof CatGnn)
+				((CatGnn) rbn.cpmod_prelements_At(i)).getGnnPy().initData();
+		}
 	}
-	return false;
-}
 
 public void setGnnPyToNodes() {
 	for (GGNode node: this.llnode.children){

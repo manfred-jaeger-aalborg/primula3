@@ -89,6 +89,9 @@ public class MapThread extends GGThread {
 					}
 					mapprobs.setRestarts(restarts);
 					mapprobs.notifyObservers();
+
+					gg.initGnnPy(myprimula.getRBN());
+
 					restarts++;
 				} else
 					System.out.println("MAP search aborted");

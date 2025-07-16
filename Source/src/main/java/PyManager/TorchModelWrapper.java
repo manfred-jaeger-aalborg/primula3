@@ -35,21 +35,22 @@ public class TorchModelWrapper {
             }
             interpreter.set("java_edge_rels", edgeRels);
 
+            StringBuilder sb = new StringBuilder();
             // if size is equal to 1, it is a "normal" gnn, else Heterogeneous
             if (xDict.size() == 1) {
                 String keyX = xDict.entrySet().iterator().next().getKey(); // in this case the dictionary should have only one key
                 String keyEdge = edgeDict.entrySet().iterator().next().getKey(); // in this case the dictionary should have only one key
 
-                interpreter.exec("xi = torch.as_tensor(java_map_x['" + keyX + "'], dtype=torch.float32)"); // TODO maybe this key can be more general (like take just the first element in the dict)
+                sb.append("xi = torch.as_tensor(java_map_x['" + keyX + "'], dtype=torch.float32)\n");  // TODO maybe this key can be more general (like take just the first element in the dict)
                 if (!edgeDict.isEmpty())
-                    interpreter.exec("ei = torch.as_tensor(java_map_edge['" + keyEdge + "'], dtype=torch.long)");
+                    sb.append("ei = torch.as_tensor(java_map_edge['" + keyEdge + "'], dtype=torch.long)\n");
                 else
-                    interpreter.exec("ei = torch.empty((2, 0), dtype=torch.long)");
-                interpreter.exec(modelName + ".eval()");
-                interpreter.exec("with torch.no_grad(): out = " + modelName + "(xi, ei)");
+                    sb.append("ei = torch.empty((2, 0), dtype=torch.long)\n");
+                sb.append(modelName + ".eval()\n");
+                sb.append("with torch.no_grad(): out = " + modelName + "(xi, ei)\n");
             } else {
-                interpreter.exec(
-                "data_h = HeteroData()\n" +
+                sb.append(
+                    "data_h = HeteroData()\n" +
 
                     "for key, value in java_map_x.items():\n" +
                     "    data_h[key].x = torch.as_tensor(value, dtype=torch.float32)\n" +
@@ -60,12 +61,13 @@ public class TorchModelWrapper {
                     "    else:\n" +
                     "        data_h[java_edge_rels[key][0], key, java_edge_rels[key][1]].edge_index = torch.empty((2, 0), dtype=torch.long)\n"
                 );
-                interpreter.exec(modelName + ".eval()");
-                interpreter.exec("with torch.no_grad(): out = " + modelName + "(data_h.x_dict, data_h.edge_index_dict)");
+                sb.append(modelName + ".eval()\n");
+                sb.append("with torch.no_grad(): out = " + modelName + "(data_h.x_dict, data_h.edge_index_dict)\n");
             }
 
             // Convert PyTorch tensor to NumPy array
-            interpreter.exec("out = out.detach().numpy()");
+            sb.append("out = out.detach().numpy()\n");
+            interpreter.exec(sb.toString());
             NDArray ndArray = (NDArray) interpreter.getValue("out");
             float[] tarr = (float[]) ndArray.getData();
             return PyUtils.convertTo2D(tarr, ndArray.getDimensions()[0], ndArray.getDimensions()[1]);
