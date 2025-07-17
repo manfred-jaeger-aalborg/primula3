@@ -66,38 +66,18 @@ public class JepManager {
         return null;
     }
 
-    private static String detectPythonExecutable(String pythonHome) {
-        try {
-            String envPythonHome = System.getenv("PYTHON_PRIMULA");
-            if (envPythonHome != null && !envPythonHome.isEmpty()) {
-                String pythonPath = envPythonHome + File.separator + "bin" + File.separator + "python";
-                File pythonFile = new File(pythonPath);
-                if (pythonFile.exists() && pythonFile.canExecute()) {
-                    return pythonPath;
-                }
-            }
-            // Fallback: use the provided pythonHome if available
-            if (pythonHome != null && !pythonHome.isEmpty()) {
-                File pythonFile = new File(pythonHome);
-                if (pythonFile.exists() && pythonFile.canExecute()) {
-                    return pythonHome;
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Unexpected error while detecting Python executable: " + e.getMessage());
-            e.printStackTrace();
-        }
-        // Python executable not found
-        return null;
-    }
-
     public static SharedInterpreter getInterpreter(boolean baseImport) {
         SharedInterpreter interp = threadLocalInterpreter.get();
         if (interp == null) {
             interp = new SharedInterpreter();
             if (baseImport) {
                 // Basic initialization for the interpreter
-                interp.exec("import torch\nimport numpy as np\nfrom torch_geometric.data import Data, HeteroData\nimport sys");
+                interp.exec("""
+                                import torch
+                                import numpy as np
+                                from torch_geometric.data import Data, HeteroData
+                                import sys
+                                """);
             }
             threadLocalInterpreter.set(interp);
             System.out.println("Interpreter created for thread: " + Thread.currentThread().getName());
