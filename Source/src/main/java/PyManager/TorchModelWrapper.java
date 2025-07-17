@@ -62,9 +62,9 @@ public class TorchModelWrapper {
             modelInterpreter.set("edge_dict", edgeDict);
 
             if (xDict.size() == 1) {
-                // Use single GNN logic
                 modelInterpreter.exec("out = forward_single_primula_(x_dict, edge_dict, " + modelName + ")");
             } else {
+                // Here the GNN is heterogeneous
                 // Build edge relation dictionary
                 Map<String, String[]> edgeRels = new HashMap<>();
                 for (TorchInputSpecs input : gnnInputs) {

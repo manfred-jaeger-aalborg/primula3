@@ -42,7 +42,11 @@ public class GnnPy {
         scriptPath = configModelPath;
         currentCatGnn = catGnn;
         JepManager.addShutdownHook();
+        System.out.println("Loading torch model: " + catGnn.getGnnId() + " from: " + configModelPath + "...");
+        long startTime = System.currentTimeMillis();
         torchModel = loadTorchModel(JepManager.getInterpreter(true), catGnn, configModelPath);
+        long endTime = System.currentTimeMillis();
+        System.out.println("Torch model loaded in " + (endTime - startTime)/1000. + " sec.");
     }
 
     public void initData() {

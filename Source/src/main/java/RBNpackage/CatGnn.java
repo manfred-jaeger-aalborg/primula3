@@ -220,7 +220,7 @@ public class CatGnn extends CPModel {
 
     @Override
     public String[] parameters() {
-        System.out.println("parameters code");
+//        System.out.println("parameters code");
         return new String[0];
     }
 

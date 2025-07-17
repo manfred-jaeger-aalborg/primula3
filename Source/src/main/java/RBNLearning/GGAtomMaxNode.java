@@ -68,6 +68,8 @@ public int getCurrentInst() {
 public void setCurrentInst(int currentInst) {
 	this.currentInst = currentInst;
 
+	// if the atom is a GNN element to update, we change the entry of the matrix
+	// this speeds up the inference, otherwise we have to rewrite the entire matrix at every new inst
 	for (GGCPMNode ggcpmNode: this.parents()) {
 		if (ggcpmNode instanceof GGGnnNode) {
 			GGGnnNode gggnn = (GGGnnNode) ggcpmNode;

@@ -211,8 +211,6 @@ public class TorchInputRels {
         /* Evaluate the probability formulas in pfargs and
          * enter results into combargs
          */
-        int nextindex;
-        double[] nextvalue;
 
         for (int i = 0; i < subspfcf.pfargs.length; i++) {
             for (int j = 0; j < subslist.length; j++) {
