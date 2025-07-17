@@ -97,10 +97,7 @@ public class JepManager {
             interp = new SharedInterpreter();
             if (baseImport) {
                 // Basic initialization for the interpreter
-                interp.exec("import torch");
-                interp.exec("import numpy as np");
-                interp.exec("from torch_geometric.data import Data, HeteroData");
-                interp.exec("import sys");
+                interp.exec("import torch\nimport numpy as np\nfrom torch_geometric.data import Data, HeteroData\nimport sys");
             }
             threadLocalInterpreter.set(interp);
             System.out.println("Interpreter created for thread: " + Thread.currentThread().getName());

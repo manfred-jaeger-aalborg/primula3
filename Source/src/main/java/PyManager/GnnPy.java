@@ -65,16 +65,23 @@ public class GnnPy {
         }
     }
 
-    public TorchModelWrapper loadTorchModel(SharedInterpreter interp, CatGnn catGnn, String configFile) {
+    public TorchModelWrapper loadTorchModel(SharedInterpreter interp, CatGnn catGnn, String configPath) {
         try {
-            String modelName = "py_model_" + catGnn.getGnnId();
-            interp.exec("sys.path.append('" + configFile + "')");
-            interp.exec("import " + catGnn.getGnnId() + " as " + catGnn.getGnnId() + "_module");
-            interp.exec(modelName + " = " + catGnn.getGnnId() + "_module.load_model()");
-            interp.exec("model_class_name = type(" + modelName + ").__name__");
+            String gnnId = catGnn.getGnnId();
+            String moduleName = gnnId + "_module";
+            String modelVar = "py_model_" + gnnId;
+
+            String initScript = String.join("\n",
+                    "import sys",
+                    "if '" + configPath + "' not in sys.path: sys.path.append('" + configPath + "')",
+                    "import " + gnnId + " as " + moduleName,
+                    modelVar + " = " + moduleName + ".load_model()",
+                    "model_class_name = type(" + modelVar + ").__name__"
+            );
+            interp.exec(initScript);
             String modelClassName = interp.getValue("model_class_name").toString();
-            return new TorchModelWrapper(modelName, modelClassName, interp);
-        } catch (RuntimeException e) {
+            return new TorchModelWrapper(modelVar, modelClassName, interp);
+        } catch (JepException e) {
             System.err.println("Error loading torch model: " + e.getMessage());
             e.printStackTrace();
             return null;
@@ -98,7 +105,7 @@ public class GnnPy {
             lastId = idGnn;
             changedUpdate = false;
 
-            currentResult = torchModel.forward(interpreter, currentXdict, currentEdgeDict, gnnInputs);
+            currentResult = torchModel.forward(currentXdict, currentEdgeDict, gnnInputs);
             return currentResult[currentNode];
         } catch (JepException e) {
             System.err.println("Failed to execute inference: " + e);
