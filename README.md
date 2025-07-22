@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="Source/src/main/resources/small_logo.jpg" alt="Primula" width="100" />
+</p>
+
 # Primula
 Java implementation of Relational Bayesian Networks
 
