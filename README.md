@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="Source/src/main/resources/small_logo.jpg" alt="Primula" width="100" />
+</p>
+
 # Primula
 Java implementation of Relational Bayesian Networks
 
@@ -11,7 +15,7 @@ Java implementation of Relational Bayesian Networks
   java -jar primula.jar
 ```
 
-For integration with PyTorch Geometric, see the separate documentation in `Examples/WaterManagement`
+For integration with PyTorch Geometric, see the separate documentation in `Examples/WaterPollution`
 
 ### Compiling Primula from Source
 
