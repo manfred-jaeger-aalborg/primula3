@@ -32,8 +32,6 @@ import java.util.*;
 
 import javax.swing.*;
 
-import myio.StringOps;
-
 import java.text.*;
 
 public class LearnThread extends GGThread {
@@ -133,9 +131,9 @@ public class LearnThread extends GGThread {
 			 * atoms
 			 * 
 			 */
-			String[][] parameternumrels = myprimula.getParamNumRels();
+			String[][] parameternumrels = myprimula.getParamNumRelsGUI();
 
-			Hashtable<String,Integer> parameters = myprimula.makeParameterIndex();
+			Hashtable<String,Integer> parameters = myprimula.makeParameterIndexGUI();
 			
 			double[][] minmaxbounds = myprimula.makeMinMaxBounds();
 

@@ -30,18 +30,14 @@ import javax.swing.*;
 import RBNutilities.rbnutilities;
 import myio.StringOps;
 
-import java.awt.event.*;
-import java.awt.*;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Vector;
 
-import MLNParser.MLNParserFacade;
 import RBNpackage.*;
 import RBNio.*;
-import RBNinference.*;
 import RBNExceptions.*;
 import RBNLearning.*;
 import edu.ucla.belief.ui.primula.*;
@@ -181,6 +177,9 @@ public class Primula {
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
 	protected GroundAtomList queryatoms = new GroundAtomList();
+
+	// store the parameters (for handling non-GUI selection)
+	protected String[][] paramnumrels;
 
 	/** @author keith cascio
 	 @since 20060728 */
@@ -426,11 +425,20 @@ public class Primula {
 		return new SparseRelStruc(rels.getNames(),instasosd.copy(),rels.getCoords(),sig);
 	}
 
-	public String[][] getParamNumRels(){
+	// this function makes use of the GUI to select the parameters
+	public String[][] getParamNumRelsGUI(){
 		if (isLrnModuleOpen)
 			return learnModule.getLearnModuleGUI().getSelectedNumRels();
 		else
 			return new String[0][0];
+	}
+
+	public String[][] getParamNumRels(){
+		return paramnumrels;
+	}
+
+	public void setParamNumRels(String[][] paramnumrels) {
+		this.paramnumrels = paramnumrels;
 	}
 
 	/** @author keith cascio
@@ -556,16 +564,31 @@ public class Primula {
 		else
 			return false;
 	}
-	
-	public Hashtable<String,Integer> makeParameterIndex(){
-		this.parameters = new Hashtable<String,Integer>();
+
+	// this function makes use of the GUI to select the parameters
+	public Hashtable<String,Integer> makeParameterIndexGUI() {
+		this.parameters = new Hashtable<String, Integer>();
 		int pidx = 0; // the index of the next parameter added to parameters
-		for (int i=0;i<rbnparameters.length;i++) {
+		for (int i = 0; i < rbnparameters.length; i++) {
 			parameters.put(rbnparameters[i], pidx);
 			pidx++;
 		}
-		String[][] parameternumrels = this.getParamNumRels();
-		
+		String[][] parameternumrels = this.getParamNumRelsGUI();
+		return createParameterInput(pidx, parameternumrels);
+	}
+
+	public Hashtable<String,Integer> makeParameterIndex() {
+		this.parameters = new Hashtable<String, Integer>();
+		int pidx = 0; // the index of the next parameter added to parameters
+		for (int i = 0; i < rbnparameters.length; i++) {
+			parameters.put(rbnparameters[i], pidx);
+			pidx++;
+		}
+		String[][] parameternumrels = this.getParamNumRels(); // a setParamNumRels must be used before calling this
+		return createParameterInput(pidx, parameternumrels);
+	}
+
+	public Hashtable<String,Integer> createParameterInput(int pidx, String[][] parameternumrels) {
 		/* Cannot handle learning numerical input relations for
 		 * data with multiple input domains: check this and throw
 		 * exception
@@ -679,10 +702,15 @@ public class Primula {
 	public Map<String,Object> getLoadGnnSet() { return this.load_gnn_set; }
 
 	public LearnModule openLearnModule(){
-		if(!isLrnModuleOpen){
+		if(!isLrnModuleOpen || learnModule == null){
 			learnModule = new LearnModule(this);
 			isLrnModuleOpen = true;
 		}
+		return learnModule;
+	}
+
+	public LearnModule createLearnModule() {
+		learnModule = new LearnModule(this);
 		return learnModule;
 	}
 

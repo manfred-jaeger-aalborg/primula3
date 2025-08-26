@@ -57,20 +57,19 @@ public class ParameterTableModel extends AbstractTableModel {
     	return rownum;
     }
 
-    public Object getValueAt( int row, int col) 
-    {
-    	switch( col ){
-    	case 0:
-    		if(      parameters.length > row )
-    			return parameters[row];
-    		break;
-    	case 1:
-    		if(      estimates.length > row )
-    			return (Double)estimates[row];
-    		break;
-    	}
-    	return new String("");
-    }
+	public Object getValueAt(int row, int col) {
+		switch (col) {
+			case 0:
+				if (parameters.length > row)
+					return parameters[row];
+				break;
+			case 1:
+				if (estimates.length > row)
+					return (Double) estimates[row];
+				break;
+		}
+		return new String("");
+	}
     
 //    public void setParameters(String[] params){
 //    	parameters = new String[params.length+2];
@@ -96,8 +95,7 @@ public class ParameterTableModel extends AbstractTableModel {
     	rownum = parameters.length;
     	estimates = new double[parameters.length];
     }
-    
-    
+
     public void setEstimates(double[] vals){
     	for (int i=0;i<estimates.length;i++)
     		estimates[i]=vals[i];
@@ -128,4 +126,8 @@ public class ParameterTableModel extends AbstractTableModel {
 //    public void initEstimates(int size){
 //    	estimates = new double[size];
 //    }
+	public void printParameterTable(){
+		for (int i=0;i<parameters.length;i++)
+			System.out.println(parameters[i]+" "+estimates[i]);
+	}
 }

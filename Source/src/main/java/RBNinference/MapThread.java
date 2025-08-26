@@ -216,6 +216,8 @@ public class MapThread extends GGThread {
 		return bestMapVals;
 	}
 
+	public ParameterTableModel getParameterTable() { return myLearnModule.getParammodel(); }
+
 	public double[] getBestLikelihood() {
 		return bestLikelihood;
 	}

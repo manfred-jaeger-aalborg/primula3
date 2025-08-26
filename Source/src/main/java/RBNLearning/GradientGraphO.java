@@ -84,7 +84,6 @@ public class GradientGraphO extends GradientGraph{
 	private int mapSearchAlg;
 	private int nIterGreedy;
 
-	private PrimulaGUI primulaGUI;
 	public int num_iter;
 	public double cooling_fact;
 	private int batchSearchSize;
@@ -2852,8 +2851,6 @@ public void setGnnPy(GnnPy gnnPy) {
 			gnnPy.load_gnn_set(sett);
 		}
 	}
-
-	public void setPrimulaGUI(PrimulaGUI primulaGUI) { this.primulaGUI = primulaGUI; }
 
 	public Vector<GGCPMNode> getllchildred() {
 		return llnode.children;
