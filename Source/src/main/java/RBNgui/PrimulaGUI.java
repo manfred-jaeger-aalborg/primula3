@@ -27,6 +27,8 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
 
     public Primula primula;
     InferenceModuleGUI evidenceModuleGUI;
+    LearnModuleGUI learnModuleGUI;
+
     private static final long serialVersionUID = 1L;
     public static final Color COLOR_YELLOW          = new Color(189, 187, 127);
     public static final Color COLOR_YELLOW_SELECTED = new Color(249, 245, 107);//58,57,98
@@ -1019,7 +1021,8 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
         // +Learn
         else if( source == lrnModule ){
             //actionlistener for opening the learn module
-            primula.openLearnModule(true);
+            primula.openLearnModule();
+            learnModuleGUI = new LearnModuleGUI(primula.learnModule);
             primula.learnModule.setMyprimulaGUI(this);
         }
         else if( source == exit ){
@@ -1195,12 +1198,13 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
 //        }
 //    }
 
-    public LearnModule openLearnModule(boolean visible){
+    public LearnModuleGUI openLearnModuleGUI(LearnModule lm){
         if(!primula.isLrnModuleOpen){
-            primula.learnModule = new LearnModule(primula, true);
+            primula.learnModule = lm;
+            learnModuleGUI = new LearnModuleGUI(primula.learnModule);
             primula.isLrnModuleOpen = true;
         }
-        return primula.learnModule;
+        return learnModuleGUI;
     }
 
     private void loadDefaults() throws RBNIllegalArgumentException {

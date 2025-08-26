@@ -106,17 +106,28 @@ public class LearnThread extends GGThread {
 		//		ggascentstrategy = myLearnModule.ggascentstrategy();
 	}
 
+	// constructor without GUI dependence
+	public LearnThread(Primula mypr,
+					   RelData ad,
+					   RelData[] d,
+					   ParameterTableModel parmod,
+					   LearnModule mylm){
+		myprimula = mypr;
+		myLearnModule = mylm;
+		databatches = d;
+		alldata = ad;
+		parammodel = parmod;
+		threadascentstrategy = myLearnModule.threadascentstrategy();
+		profiler = new Profiler();
+		parametertable = null;
+		numrestartsfield = null;
+	}
+
 	public void run() throws RBNRuntimeException
 	{
-		
-		
 		if (databatches != null)
 		{
 
-			
-			
-			
-			
 			/* Numerical relations to be learned, divided into blocks
 			 * Some relations may also be given by enumeration of their ground
 			 * atoms
@@ -130,10 +141,11 @@ public class LearnThread extends GGThread {
 
 			parammodel.setParameters(parameters);
 			parammodel.fireTableDataChanged();
-			parametertable.updateUI();
+			if (parametertable != null)
+				parametertable.updateUI();
 			// boolean computeLikOnly = (parameters.length == 0);
-
-			numrestartsfield.setText("" );
+			if (numrestartsfield != null)
+				numrestartsfield.setText("" );
 			double[] paramvals = new double[parameters.size()+1];
 
 //			if (threadascentstrategy == LearnModule.AscentBlock){
@@ -225,12 +237,8 @@ public class LearnThread extends GGThread {
 
 
 			long beforerestarts = System.currentTimeMillis();
-			
-			while (!isstopped() && (rest < myLearnModule.getRestarts() 
-					|| myLearnModule.getRestarts() == -1)){
-
+			while (!isstopped() && (rest < myLearnModule.getRestarts() || myLearnModule.getRestarts() == -1)){
 				System.out.println("# ***** RESTART **********");
-				
 				/* 
 				 * The RelStruc A only is needed for the case of learning NumRels
 				 * In this case, only a single input domain is allowed, and alldata.caseAt(0) returns
@@ -270,18 +278,17 @@ public class LearnThread extends GGThread {
 					parammodel.setEstimates(paramvals);
 				}
 				rest++;
-				numrestartsfield.setText(""+rest);					
-				parametertable.updateUI();
+				if (numrestartsfield != null)
+					numrestartsfield.setText(""+rest);
+				if (parametertable != null)
+					parametertable.updateUI();
 			} // while (!isstopped() && (rest < myLearnModule.getRestarts() 
 
 			profiler.addTime(Profiler.TIME_RESTARTS, System.currentTimeMillis()-beforerestarts);
 			profiler.addTime(Profiler.TIME_STOCH_GRAD, System.currentTimeMillis()-timestart);
 			
 			System.out.println(profiler.showTimers());
-
-//			System.out.println("# Time per mini batch: " + 
 //			profiler.getTime(Profiler.TIME_STOCH_GRAD)/(profiler.getTime(Profiler.NUM_EPOCHS)*databatches.length));
-			
 		} //	if (databatches != null)
 		System.out.println("# ***** END **********");
 		return;
@@ -383,9 +390,9 @@ public class LearnThread extends GGThread {
 						if (isfirstloop) {
 							gg = buildGGO(parameters,minmaxbounds,
 									isfirstrestart && isfirstloop,databatches[i]);
-							System.out.println("done build GG");
+							System.out.println("done build GG " + (i+1) + "/" + databatches.length);
 							gg.evaluateLikelihoodAndPartDerivs(false);
-							System.out.println("done evaluate GG");
+							System.out.println("done evaluate GG " + (i+1) + "/" + databatches.length);
 
 							allggs[i]=gg;
 						}
@@ -499,19 +506,15 @@ public class LearnThread extends GGThread {
 	
 			switch (myLearnModule.threadascentstrategy()){
 			case LearnModule.AscentStochHeur1:
-				
-				System.out.println(itcount + "     " + scalefac + "  " 
-						+ rbnutilities.euclidDist(oldparamvals, newparamvals) +"  "  +  epochobj );
+				System.out.println(itcount + "     " + scalefac + "  " + rbnutilities.euclidDist(oldparamvals, newparamvals) +"  "  +  epochobj );
 				break;
 			case LearnModule.AscentAdam:
 				long tick = System.currentTimeMillis();
 				long totalt = tick-startiterations;
 				long epocht = tick - startepoch;
-				
-				System.out.println(itcount + "\t" +  epocht +'\t' + totalt + "\t" + rbnutilities.euclidDist(beforeepochparamvals, newparamvals) 
-				+ "\t" +   epochobj + "\t" + tries);
-				break;
 
+				System.out.println("\t" + itcount + "\t" +  (epocht/1000.0) + "s\t" + (totalt/1000) + "s\t" + rbnutilities.euclidDist(beforeepochparamvals, newparamvals) + "\t" +   epochobj + "\t" + tries);
+				break;
 			}
 		
 
@@ -662,10 +665,10 @@ public class LearnThread extends GGThread {
 	/* Find initial parameter settings such that the likelihood
 	 * of data is nonzero
 	 */
-	private boolean initParams(RelStruc A, RelData data, String[][] parameternumrels,Profiler profiler)
+	private boolean initParams(RelStruc A, RelData data, String[][] parameternumrels, Profiler profiler)
 			throws RBNNaNException,RBNCompatibilityException
 	{
-		double scale = 0.1;
+		double scale = 1.0;
 		boolean success = false;
 		int tries =0;
 		double lik;
@@ -679,10 +682,12 @@ public class LearnThread extends GGThread {
 			if (lik == Double.NEGATIVE_INFINITY){
 				tries++;
 				scale=0.5*scale;
-			}
-			else
+			} else if (lik == 0.0) {
+				tries++;
+			} else if (lik != 0.0 || lik != Double.NEGATIVE_INFINITY) {
 				success = true;
-			success = true;
+			}
+//			success = true;
 		}
 		return success;
 	}
@@ -796,7 +801,7 @@ public class LearnThread extends GGThread {
 				} // for (int i=0; i<rbn.NumPFs(); i++){
 		 	} // for (int observcaseno=0; observcaseno<rdoi.numObservations(); observcaseno++){
 		} // for (int inputcaseno=0; inputcaseno<data.size(); inputcaseno++){
-	
+//		System.out.println("# Total number: " + totCount);
 		return result;
 	}
  		
@@ -810,5 +815,13 @@ public class LearnThread extends GGThread {
 			Profiler profiler) {
 		
 		return null;
+	}
+
+	public void setParametertable(JTable parametertable) {
+		this.parametertable = parametertable;
+	}
+
+	public void setNumrestartsfield(JTextField numrestartsfield) {
+		this.numrestartsfield = numrestartsfield;
 	}
 }

@@ -309,15 +309,18 @@ public class SettingsLearn extends JFrame implements ActionListener, ItemListene
 	 * @uml.property  name="learnmodule"
 	 * @uml.associationEnd  multiplicity="(1 1)" inverse="settingswindow:RBNgui.LearnModule"
 	 */
+	private LearnModuleGUI learnmodulegui;
 	private LearnModule learnmodule;
-	
-	public SettingsLearn(LearnModule lm){
+
+	public SettingsLearn(LearnModuleGUI lm){
 		
-		learnmodule = lm;
+		learnmodulegui = lm;
+		learnmodule =learnmodulegui.learnModule;
+
 		this.addWindowListener(
 				new WindowAdapter(){
 					public void windowClosing(WindowEvent e){
-						learnmodule.setSettingsOpen(false);
+						learnmodulegui.setSettingsOpen(false);
 						dispose();
 					}
 				}

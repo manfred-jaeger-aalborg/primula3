@@ -103,9 +103,10 @@ public class ParameterTableModel extends AbstractTableModel {
     		estimates[i]=vals[i];
     }
     
-    public void setParameterEstimates(double[] vals){
+    public void setParameterEstimates(double[] vals, double ll){
     	for (int i=0;i<estimates.length-1;i++)
     		estimates[i]=vals[i];
+		estimates[estimates.length-1]=ll;
     }
     
     /**

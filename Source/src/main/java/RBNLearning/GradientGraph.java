@@ -69,7 +69,7 @@ public abstract class GradientGraph{
 	 * for clustering tasks.
 	 */
 	public static int LEARNMODE = 0 ;
-	public static int MAPMODE =1 ;
+	public static int MAPMODE = 1 ;
 	public static int LEARNANDMAPMODE =2;
 	
 	public static int CompareIndicatorMaxNodesByScore =0;

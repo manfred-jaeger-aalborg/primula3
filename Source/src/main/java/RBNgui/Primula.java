@@ -428,7 +428,7 @@ public class Primula {
 
 	public String[][] getParamNumRels(){
 		if (isLrnModuleOpen)
-			return learnModule.getSelectedNumRels();
+			return learnModule.getLearnModuleGUI().getSelectedNumRels();
 		else
 			return new String[0][0];
 	}
@@ -678,9 +678,9 @@ public class Primula {
 
 	public Map<String,Object> getLoadGnnSet() { return this.load_gnn_set; }
 
-	public LearnModule openLearnModule(boolean visible){
+	public LearnModule openLearnModule(){
 		if(!isLrnModuleOpen){
-			learnModule = new LearnModule(this, visible);
+			learnModule = new LearnModule(this);
 			isLrnModuleOpen = true;
 		}
 		return learnModule;

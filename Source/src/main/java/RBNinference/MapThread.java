@@ -44,25 +44,28 @@ public class MapThread extends GGThread {
 		/* Open a LearnModule to monitor parameter values, if
 		 * there are any free parameters in the model
 		 */
-		
 		if (gg.parameters().size() > 0){
+			myLearnModule = myprimula.openLearnModule();
 			if (myprimula.getPrimulaGUI() != null) {
-				myLearnModule = myprimula.getPrimulaGUI().openLearnModule(true);
-				myLearnModule.disableDataTab();
-				myLearnModule.setParameters(gg.parameters());
-				gg.setLearnModule(myLearnModule);
+				LearnModuleGUI myLearnModuleGUI = myprimula.getPrimulaGUI().openLearnModuleGUI(myLearnModule);
+				myLearnModuleGUI.disableDataTab();
 			}
+			myLearnModule.setParameters(gg.parameters());
+			gg.setLearnModule(myLearnModule);
 		}
 
 		Hashtable<Rel,int[]> newmapvals = new Hashtable<>();
 		
 		int maxrestarts = myinfmodule.getMAPRestarts();
-		int restarts =1;
+		int currentRestarts = 1;
 		double oldll=Double.NEGATIVE_INFINITY;
 		double newll=0;
 		OneStrucData onsd = new OneStrucData(myprimula.getInstantiation());
 
-		while (running && ((maxrestarts == -1) || (restarts <= maxrestarts))) {
+		double averageTimeRestarts = 0;
+		double bestTimeRestarts = Double.POSITIVE_INFINITY;
+		while (running && ((maxrestarts == -1) || (currentRestarts <= maxrestarts))) {
+			long startrestart = System.currentTimeMillis();
 			try {
 				newll = gg.mapInference(this);
 				if (!Double.isNaN(newll)) {
@@ -74,7 +77,7 @@ public class MapThread extends GGThread {
 						mapprobs.setMVs(newmapvals);
 						mapprobs.setLL(String.valueOf(oldll));
 						if (gg.parameters().size() > 0)
-							myLearnModule.setParameterValues(gg.getParameters());
+							myLearnModule.setParameterValues(gg.getParameters(), newll);
 
 						OneStrucData result = new OneStrucData();
 						result.setParentRelStruc(myprimula.getRels());
@@ -87,18 +90,25 @@ public class MapThread extends GGThread {
 						}
 						onsd.add(result);
 					}
-					mapprobs.setRestarts(restarts);
+					mapprobs.setRestarts(currentRestarts);
 					mapprobs.notifyObservers();
 
 					gg.initGnnPy(myprimula.getRBN());
 
-					restarts++;
+					currentRestarts++;
+					long endrestart = System.currentTimeMillis();
+					long time = endrestart - startrestart;
+					if (time < bestTimeRestarts)
+						bestTimeRestarts = time;
+					averageTimeRestarts += time;
 				} else
 					System.out.println("MAP search aborted");
 			} catch (RBNNaNException e) {
 				throw new RuntimeException(e);
 			}
 		}
+		System.out.println("Average time for " + (currentRestarts-1) + " restarts: " + (averageTimeRestarts / (currentRestarts-1) / 1000.0) + " s");
+		System.out.println("Best time for " + (currentRestarts-1) + " restarts: " + (bestTimeRestarts / 1000.0) + " s");
 
 		System.out.println("Best log-likelihood found: " + oldll);
 
