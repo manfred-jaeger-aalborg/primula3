@@ -53,13 +53,20 @@ public class TorchModelWrapper {
         }
     }
 
-    public double[][] forward(Map<String, double[][]> xDict,
+    public Object[] forward(Map<String, double[][]> xDict,
                               Map<String, ArrayList<ArrayList<Integer>>> edgeDict,
-                              List<TorchInputSpecs> gnnInputs) {
+                              List<TorchInputSpecs> gnnInputs,
+                              boolean withgradients) {
+        // we use the same convention:
+        // result[0] is probabilities and result[1] gradients
+        Object[] result = new Object[2];
         try {
             // Set input data
             modelInterpreter.set("x_dict", xDict);
             modelInterpreter.set("edge_dict", edgeDict);
+
+            if (withgradients)
+                modelInterpreter.exec("x_dict = x_dict.clone().detach().requires_grad_(True)");
 
             if (xDict.size() == 1) {
                 modelInterpreter.exec("out = forward_single_primula_(x_dict, edge_dict, " + modelName + ")");
@@ -79,11 +86,33 @@ public class TorchModelWrapper {
                 modelInterpreter.exec("out = forward_hetero_primula_(x_dict, edge_dict, edge_rels, " + modelName + ")");
             }
 
-            NDArray ndArray = (NDArray) modelInterpreter.getValue("out");
-            float[] flatData = (float[]) ndArray.getData();
-            int rows = ndArray.getDimensions()[0];
-            int cols = ndArray.getDimensions()[1];
-            return PyUtils.convertTo2D(flatData, rows, cols);
+            NDArray outArray = (NDArray) modelInterpreter.getValue("out");
+            float[] temp = (float[]) outArray.getData();
+            // to keep some consistency, we convert the float data to double
+            double[] flatData = new double[temp.length];
+            for (int i = 0; i < temp.length; i++)
+                flatData[i] = temp[i];
+
+            int rows = outArray.getDimensions()[0];
+            int cols = outArray.getDimensions()[1];
+            result[0] = PyUtils.convertTo2D(flatData, rows, cols);
+
+            NDArray grad_x = null;
+            if (withgradients) {
+                modelInterpreter.exec("out.backward()");
+                modelInterpreter.exec("grad_x = x_dict.grad.cpu().numpy()");
+                grad_x = (NDArray) modelInterpreter.getValue("grad_x");
+
+                temp = (float[]) grad_x.getData();
+                double[] flatGradX = new double[temp.length];
+                for (int i = 0; i < temp.length; i++)
+                    flatGradX[i] = temp[i];
+
+                result[1] = PyUtils.convertTo2D(flatGradX, rows, cols);
+            } else
+                result[1] = null;
+
+            return result;
         } catch (JepException e) {
             System.err.println("Failed forward pass: " + e);
             return null;
