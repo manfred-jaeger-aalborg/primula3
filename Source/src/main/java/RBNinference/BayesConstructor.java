@@ -917,10 +917,6 @@ public class BayesConstructor extends java.lang.Object {
 			GroundAtom atom = currentnode.myatom();
 			String name = currentnode.name;
 
-			// to construct a Bayes network usign ProgFormGnn
-//			if ((cpmodel instanceof CPMGnn) && this.gnnPy != null)
-//				((CPMGnn) cpmodel).setGnnPy(this.gnnPy);
-
 			/* turn complexnode into simplenode
 			 */
 			cpt = (double[][])makeCPT(cpmodel,strucarg,inst,parvec)[0];

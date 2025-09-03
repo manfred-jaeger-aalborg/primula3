@@ -2,7 +2,7 @@ package PyManager;
 
 public class PyUtils {
 
-    public static double[][] convertTo2D(float[] inputArray, int rows, int cols) {
+    public static double[][] convertTo2D(double[] inputArray, int rows, int cols) {
         if (inputArray.length != rows * cols) {
             throw new IllegalStateException("The length of the input array does not match the provided dimensions.");
         }

@@ -1,6 +1,5 @@
 package PyManager;
 import jep.*;
-
 import java.util.*;
 
 public class TorchModelWrapper {
@@ -12,67 +11,116 @@ public class TorchModelWrapper {
         this.modelName = modelName;
         this.modelInterpreter = interpreter;
         this.modelClassName = modelClassName;
+
+        initializePythonEnvironment();
+    }
+
+    private void initializePythonEnvironment() {
+        try {
+            modelInterpreter.exec("import torch");
+            modelInterpreter.exec("from torch_geometric.data import HeteroData");
+
+            // Define reusable Python functions for GNN forward pass
+            modelInterpreter.exec("""
+                def forward_single_primula_(x_dict, edge_dict, model):
+                    xi = torch.as_tensor(list(x_dict.values())[0], dtype=torch.float32)
+                    if edge_dict:
+                        ei = torch.as_tensor(list(edge_dict.values())[0], dtype=torch.long)
+                    else:
+                        ei = torch.empty((2, 0), dtype=torch.long)
+                    model.eval()
+                    with torch.no_grad():
+                        out = model(xi, ei)
+                    return out.detach().numpy()
+                
+                def forward_hetero_primula_(x_dict, edge_dict, edge_rels, model):
+                    data_h = HeteroData()
+                    for key, value in x_dict.items():
+                        data_h[key].x = torch.as_tensor(value, dtype=torch.float32)
+                    for key, value in edge_dict.items():
+                        edge_type = (edge_rels[key][0], key, edge_rels[key][1])
+                        if value:
+                            data_h[edge_type].edge_index = torch.as_tensor(value, dtype=torch.long)
+                        else:
+                            data_h[edge_type].edge_index = torch.empty((2, 0), dtype=torch.long)
+                    model.eval()
+                    with torch.no_grad():
+                        out = model(data_h.x_dict, data_h.edge_index_dict)
+                    return out.detach().numpy()
+                """);
+        } catch (JepException e) {
+            throw new RuntimeException("Failed to initialize Python environment", e);
+        }
+    }
+
+    public Object[] forward(Map<String, double[][]> xDict,
+                              Map<String, ArrayList<ArrayList<Integer>>> edgeDict,
+                              List<TorchInputSpecs> gnnInputs,
+                              boolean withgradients) {
+        // we use the same convention:
+        // result[0] is probabilities and result[1] gradients
+        Object[] result = new Object[2];
+        try {
+            // Set input data
+            modelInterpreter.set("x_dict", xDict);
+            modelInterpreter.set("edge_dict", edgeDict);
+
+            if (withgradients)
+                modelInterpreter.exec("x_dict = x_dict.clone().detach().requires_grad_(True)");
+
+            if (xDict.size() == 1) {
+                modelInterpreter.exec("out = forward_single_primula_(x_dict, edge_dict, " + modelName + ")");
+            } else {
+                // Here the GNN is heterogeneous
+                // Build edge relation dictionary
+                Map<String, String[]> edgeRels = new HashMap<>();
+                for (TorchInputSpecs input : gnnInputs) {
+                    edgeRels.put(
+                            input.getEdgeRelation().name(),
+                            new String[]{
+                                    input.getEdgeRelation().getTypes()[0].getName(),
+                                    input.getEdgeRelation().getTypes()[1].getName()
+                            });
+                }
+                modelInterpreter.set("edge_rels", edgeRels);
+                modelInterpreter.exec("out = forward_hetero_primula_(x_dict, edge_dict, edge_rels, " + modelName + ")");
+            }
+
+            NDArray outArray = (NDArray) modelInterpreter.getValue("out");
+            float[] temp = (float[]) outArray.getData();
+            // to keep some consistency, we convert the float data to double
+            double[] flatData = new double[temp.length];
+            for (int i = 0; i < temp.length; i++)
+                flatData[i] = temp[i];
+
+            int rows = outArray.getDimensions()[0];
+            int cols = outArray.getDimensions()[1];
+            result[0] = PyUtils.convertTo2D(flatData, rows, cols);
+
+            NDArray grad_x = null;
+            if (withgradients) {
+                modelInterpreter.exec("out.backward()");
+                modelInterpreter.exec("grad_x = x_dict.grad.cpu().numpy()");
+                grad_x = (NDArray) modelInterpreter.getValue("grad_x");
+
+                temp = (float[]) grad_x.getData();
+                double[] flatGradX = new double[temp.length];
+                for (int i = 0; i < temp.length; i++)
+                    flatGradX[i] = temp[i];
+
+                result[1] = PyUtils.convertTo2D(flatGradX, rows, cols);
+            } else
+                result[1] = null;
+
+            return result;
+        } catch (JepException e) {
+            System.err.println("Failed forward pass: " + e);
+            return null;
+        }
     }
 
     public SharedInterpreter getModelInterpreter() {
         return modelInterpreter;
-    }
-
-    public double[][] forward(SharedInterpreter interpreter, Map<String, double[][]> xDict, Map<String, ArrayList<ArrayList<Integer>>> edgeDict, List<TorchInputSpecs> gnnInputs) {
-        try {
-            if (interpreter == null) {
-                throw new IllegalStateException("Interpreter null");
-            }
-            interpreter.set("java_map_x", xDict);
-            interpreter.set("java_map_edge", edgeDict);
-
-            Dictionary<String, String[]> edgeRels = new Hashtable<>();
-            for (TorchInputSpecs input: gnnInputs) {
-                edgeRels.put(
-                        input.getEdgeRelation().name(),
-                        new String[]{input.getEdgeRelation().getTypes()[0].getName(), input.getEdgeRelation().getTypes()[1].getName()}
-                );
-            }
-            interpreter.set("java_edge_rels", edgeRels);
-
-            // if size is equal to 1, it is a "normal" gnn, else Heterogeneous
-            if (xDict.size() == 1) {
-                String keyX = xDict.entrySet().iterator().next().getKey(); // in this case the dictionary should have only one key
-                String keyEdge = edgeDict.entrySet().iterator().next().getKey(); // in this case the dictionary should have only one key
-
-                interpreter.exec("xi = torch.as_tensor(java_map_x['" + keyX + "'], dtype=torch.float32)"); // TODO maybe this key can be more general (like take just the first element in the dict)
-                if (!edgeDict.isEmpty())
-                    interpreter.exec("ei = torch.as_tensor(java_map_edge['" + keyEdge + "'], dtype=torch.long)");
-                else
-                    interpreter.exec("ei = torch.empty((2, 0), dtype=torch.long)");
-                interpreter.exec(modelName + ".eval()");
-                interpreter.exec("with torch.no_grad(): out = " + modelName + "(xi, ei)");
-            } else {
-                interpreter.exec(
-                "data_h = HeteroData()\n" +
-
-                    "for key, value in java_map_x.items():\n" +
-                    "    data_h[key].x = torch.as_tensor(value, dtype=torch.float32)\n" +
-
-                    "for key, value in java_map_edge.items():\n" +
-                    "    if len(value) > 0:\n" +
-                    "        data_h[java_edge_rels[key][0], key, java_edge_rels[key][1]].edge_index = torch.as_tensor(value, dtype=torch.long)\n" +
-                    "    else:\n" +
-                    "        data_h[java_edge_rels[key][0], key, java_edge_rels[key][1]].edge_index = torch.empty((2, 0), dtype=torch.long)\n"
-                );
-                interpreter.exec(modelName + ".eval()");
-                interpreter.exec("with torch.no_grad(): out = " + modelName + "(data_h.x_dict, data_h.edge_index_dict)");
-            }
-
-            // Convert PyTorch tensor to NumPy array
-            interpreter.exec("out = out.detach().numpy()");
-            NDArray ndArray = (NDArray) interpreter.getValue("out");
-            float[] tarr = (float[]) ndArray.getData();
-            return PyUtils.convertTo2D(tarr, ndArray.getDimensions()[0], ndArray.getDimensions()[1]);
-        } catch (JepException e) {
-            System.err.println("Failed to forward pass: " + e);
-            return null;
-        }
     }
 
     @Override

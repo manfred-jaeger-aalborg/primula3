@@ -18,7 +18,7 @@ public class GnnPy {
     // hers arguments like batch can be set as None
     private String scriptPath;
     private static ThreadLocal<SharedInterpreter> threadSharedInterp = new ThreadLocal<>();
-    private double[][] currentResult;
+    private Object[] currentResult;
     private Map<String, double[][]> currentXdict;
     private Map<String, ArrayList<ArrayList<Integer>>> currentEdgeDict;
     private String lastId;
@@ -36,19 +36,29 @@ public class GnnPy {
     private CatGnn currentCatGnn;
     private boolean savedData;
     private OneStrucData oldInst;
+    private int currentXdictHash;
+    private int currentEdgeDictHash;
 
     public GnnPy(CatGnn catGnn, String configModelPath) {
+        initData();
         scriptPath = configModelPath;
         currentCatGnn = catGnn;
+        JepManager.addShutdownHook();
+        System.out.println("Loading torch model: " + catGnn.getGnnId() + " from: " + configModelPath + "...");
+        long startTime = System.currentTimeMillis();
+        torchModel = loadTorchModel(JepManager.getInterpreter(true), catGnn, configModelPath);
+        long endTime = System.currentTimeMillis();
+        System.out.println("Torch model loaded in " + (endTime - startTime)/1000. + " sec.");
+    }
+
+    public void initData() {
         currentXdict = new Hashtable<>();
         currentEdgeDict = new Hashtable<>();
         GGNodesDict = new Hashtable<>();
         GGedgeDict = new Hashtable<>();
+        nodeMap = new HashMap<>();
         changedUpdate = false;
         savedData = false;
-        nodeMap = new HashMap<>();
-        JepManager.addShutdownHook();
-        torchModel = loadTorchModel(JepManager.getInterpreter(true), catGnn, configModelPath);
     }
 
     public void load_gnn_set(Map<String, Object> sett) {
@@ -61,41 +71,46 @@ public class GnnPy {
         }
     }
 
-    public TorchModelWrapper loadTorchModel(SharedInterpreter interp, CatGnn catGnn, String configFile) {
+    public TorchModelWrapper loadTorchModel(SharedInterpreter interp, CatGnn catGnn, String configPath) {
         try {
-            String modelName = "py_model_" + catGnn.getGnnId();
-            interp.exec("sys.path.append('" + configFile + "')");
-            interp.exec("import " + catGnn.getGnnId() + " as " + catGnn.getGnnId() + "_module");
-            interp.exec(modelName + " = " + catGnn.getGnnId() + "_module.load_model()");
-            interp.exec("model_class_name = type(" + modelName + ").__name__");
+            String gnnId = catGnn.getGnnId();
+            String moduleName = gnnId + "_module";
+            String modelVar = "py_model_" + gnnId;
+
+            String initScript = String.join("\n",
+                    "import sys",
+                    "if '" + configPath + "' not in sys.path: sys.path.append('" + configPath + "')",
+                    "import " + gnnId + " as " + moduleName,
+                    modelVar + " = " + moduleName + ".load_model()",
+                    "model_class_name = type(" + modelVar + ").__name__"
+            );
+            interp.exec(initScript);
             String modelClassName = interp.getValue("model_class_name").toString();
-            return new TorchModelWrapper(modelName, modelClassName, interp);
-        } catch (RuntimeException e) {
+            return new TorchModelWrapper(modelVar, modelClassName, interp);
+        } catch (JepException e) {
             System.err.println("Error loading torch model: " + e.getMessage());
             e.printStackTrace();
             return null;
         }
     }
 
-    public double[] inferModelHetero(int node, Map<String, double[][]> x_dict, Map<String, ArrayList<ArrayList<Integer>>> edge_dict, List<TorchInputSpecs> gnnInputs, String idGnn) {
+    public Object[] inferModelHetero(Map<String, double[][]> x_dict, Map<String, ArrayList<ArrayList<Integer>>> edge_dict,
+                                     List<TorchInputSpecs> gnnInputs, String idGnn, boolean valonly) {
+
         SharedInterpreter interpreter = JepManager.getInterpreter(true);
         if (torchModel.getModelInterpreter() != interpreter)
-            torchModel = loadTorchModel(interpreter, currentCatGnn, scriptPath); // update the model if they differ with interpreters
-        int currentNode = (node != -1) ? node : 0;
+            torchModel = loadTorchModel(interpreter, currentCatGnn, scriptPath);
 
         try {
-            // check if there are already computed the results for the specific node in the result matrix,
-            // otherwise compute for all nodes with one forward propagation
-            // needs also to have the same id as before
+            // Quick hash-based check first
             if (checkValuesDictCache(x_dict, edge_dict, idGnn))
-                return currentResult[currentNode];
-            currentXdict = x_dict;
-            currentEdgeDict = edge_dict;
-            lastId = idGnn;
-            changedUpdate = false;
+                return currentResult;
 
-            currentResult = torchModel.forward(interpreter, currentXdict, currentEdgeDict, gnnInputs);
-            return currentResult[currentNode];
+            // Update cache
+            updateCache(x_dict, edge_dict, idGnn);
+
+            currentResult = torchModel.forward(currentXdict, currentEdgeDict, gnnInputs, !valonly);
+            return currentResult;
         } catch (JepException e) {
             System.err.println("Failed to execute inference: " + e);
             return null;
@@ -103,27 +118,76 @@ public class GnnPy {
     }
 
     private boolean checkValuesDictCache(Map<String, double[][]> x_dict, Map<String, ArrayList<ArrayList<Integer>>> edge_dict, String idGnn) {
-        if (changedUpdate)
+        if (changedUpdate || currentXdict == null || currentEdgeDict == null ||
+                currentResult == null || !Objects.equals(lastId, idGnn)) {
             return false;
-
-        if (currentXdict != null && currentEdgeDict != null && this.currentResult != null && Objects.equals(this.lastId, idGnn)) {
-            if (!currentXdict.keySet().equals(x_dict.keySet()) || !currentEdgeDict.keySet().equals(edge_dict.keySet()))
-                return false;
-            for (String key : currentXdict.keySet()) {
-                if (!Arrays.deepEquals(currentXdict.get(key), x_dict.get(key))) {
-                    currentResult = null;
-                    return false;
-                }
-            }
-            for (String key : currentEdgeDict.keySet()) {
-                if (!currentEdgeDict.get(key).equals(edge_dict.get(key))) {
-                    currentResult = null;
-                    return false;
-                }
-            }
-            return true;
         }
-        return false;
+
+        if (currentXdict.size() != x_dict.size() || currentEdgeDict.size() != edge_dict.size()) {
+            return false;
+        }
+
+        int newXdictHash = computeXdictHash(x_dict);
+        int newEdgeDictHash = computeEdgeDictHash(edge_dict);
+
+        // If hashes differ, definitely not equal
+        if (currentXdictHash != newXdictHash || currentEdgeDictHash != newEdgeDictHash) {
+            currentResult = null;
+            return false;
+        }
+
+        // Hashes match, but we need deep comparison to be certain (hash collisions)
+        if (!currentXdict.keySet().equals(x_dict.keySet()) ||
+                !currentEdgeDict.keySet().equals(edge_dict.keySet())) {
+            currentResult = null;
+            return false;
+        }
+
+        // Deep value comparison (expensive, but only if hashes match)
+        for (Map.Entry<String, double[][]> entry : x_dict.entrySet()) {
+            if (!Arrays.deepEquals(currentXdict.get(entry.getKey()), entry.getValue())) {
+                currentResult = null;
+                return false;
+            }
+        }
+
+        for (Map.Entry<String, ArrayList<ArrayList<Integer>>> entry : edge_dict.entrySet()) {
+            if (!Objects.equals(currentEdgeDict.get(entry.getKey()), entry.getValue())) {
+                currentResult = null;
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private void updateCache(Map<String, double[][]> x_dict, Map<String, ArrayList<ArrayList<Integer>>> edge_dict, String idGnn) {
+        currentXdict = x_dict;
+        currentEdgeDict = edge_dict;
+        lastId = idGnn;
+        changedUpdate = false;
+
+        // Update hashes
+        currentXdictHash = computeXdictHash(x_dict);
+        currentEdgeDictHash = computeEdgeDictHash(edge_dict);
+    }
+
+    private int computeXdictHash(Map<String, double[][]> x_dict) {
+        int hash = 17;
+        for (Map.Entry<String, double[][]> entry : x_dict.entrySet()) {
+            hash = hash * 31 + entry.getKey().hashCode();
+            hash = hash * 31 + Arrays.deepHashCode(entry.getValue());
+        }
+        return hash;
+    }
+
+    private int computeEdgeDictHash(Map<String, ArrayList<ArrayList<Integer>>> edge_dict) {
+        int hash = 17;
+        for (Map.Entry<String, ArrayList<ArrayList<Integer>>> entry : edge_dict.entrySet()) {
+            hash = hash * 31 + entry.getKey().hashCode();
+            hash = hash * 31 + Objects.hashCode(entry.getValue());
+        }
+        return hash;
     }
 
     public double[] getData(PyObject out){
@@ -196,33 +260,35 @@ public class GnnPy {
         Object[] result = new Object[2];
         result[0] = new double[((CatGnn) cpmGnn).numvals()];
 
-        // only val no gradient computed
-        if (valonly) {
-            if (oldInst == null || inst.containsAll(oldInst)) { // if the inst is different from the prior inst used, reconstruct
-                OneStrucData onsd = new OneStrucData(A.getmydata().copy()); // maybe avoid using copy...
-                sampledRelGobal = new SparseRelStruc(A.getNames(), onsd, A.getCoords(), A.signature());
-                sampledRelGobal.getmydata().add(inst.copy());
-            }
+        if (oldInst == null || inst.containsAll(oldInst)) { // if the inst is different from the prior inst used, reconstruct
+            OneStrucData onsd = new OneStrucData(A.getmydata().copy()); // maybe avoid using copy...
+            sampledRelGobal = new SparseRelStruc(A.getNames(), onsd, A.getCoords(), A.signature());
+            sampledRelGobal.getmydata().add(inst.copy());
+        }
 
-            if (GGboolRel == null) {
-                GGboolRel = new Vector<>();
-                for (TorchInputSpecs inps: cpmGnn.getGnnInputs()) {
-                    GGboolRel.add(inps.getEdgeRelation());
-                }
+        if (GGboolRel == null) {
+            GGboolRel = new Vector<>();
+            for (TorchInputSpecs inps: cpmGnn.getGnnInputs()) {
+                GGboolRel.add(inps.getEdgeRelation());
             }
-            if (GGNodesDict.isEmpty())
-                GGNodesDict = constructNodesDict(cpmGnn, A);
-            if (nodeMap.isEmpty())
-                nodeMap = constructNodesDictMap(cpmGnn, A);
+        }
+        if (GGNodesDict.isEmpty())
+            GGNodesDict = constructNodesDict(cpmGnn, A);
+        if (nodeMap.isEmpty())
+            nodeMap = constructNodesDictMap(cpmGnn, A);
 
-            Map<String, double[][]> x_dict = inputAttrToDict(cpmGnn, nodeMap, GGNodesDict, sampledRelGobal);
-            Map<String, ArrayList<ArrayList<Integer>>> edge_dict = edgesToDict(GGboolRel, sampledRelGobal, nodeMap);
-            if (cpmGnn.getArgument().equals("[]") || cpmGnn.getArgument().equals(""))
-                result[0] = inferModelHetero(-1, x_dict, edge_dict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId());
-            else
-                result[0] = inferModelHetero(Integer.parseInt(cpmGnn.getArgument()), x_dict, edge_dict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId());
-        } else {
-            throw new RuntimeException("GRADIENT IN EVALUATION NOT IMPLEMENTED FOR GNN-RBN!");
+        Map<String, double[][]> x_dict = inputAttrToDict(cpmGnn, nodeMap, GGNodesDict, sampledRelGobal);
+        Map<String, ArrayList<ArrayList<Integer>>> edge_dict = edgesToDict(GGboolRel, sampledRelGobal, nodeMap);
+
+        result = inferModelHetero(x_dict, edge_dict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), valonly);
+        double[][] outProbs = (double[][]) result[0];
+        double[][] outGrads;
+
+        int index = (cpmGnn.getArgument().equals("[]") || cpmGnn.getArgument().equals("")) ? 0 : Integer.parseInt(cpmGnn.getArgument());
+        result[0] = outProbs[index];
+        if (!valonly) {
+            outGrads = (double[][]) result[1];
+            result[1] = outGrads[index];
         }
         oldInst = inst;
         return result;
@@ -535,10 +601,12 @@ public class GnnPy {
             updateEdgeDict(GGedgeDict, cpm, ggcpmGnn);
         }
 
+        Object[] result = inferModelHetero(GGxDict, GGedgeDict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), true);
+        double[][] outProbs = (double[][]) result[0];
         if (cpmGnn.getArgument().equals("[]") || cpmGnn.getArgument().equals(""))
-            return inferModelHetero(-1, GGxDict, GGedgeDict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId());
+            return outProbs[0];
         else
-            return inferModelHetero(Integer.parseInt(cpmGnn.getArgument()), GGxDict, GGedgeDict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId());
+            return outProbs[Integer.parseInt(cpmGnn.getArgument())];
     }
 
 
@@ -627,12 +695,11 @@ public class GnnPy {
         GGedgeDict = initEdgesDict(GGboolRel, GGsampledRel);
         updateEdgeDictForSampling(GGedgeDict, cpmGnn, atomhasht);
 
-        double[] res = null;
+        Object[] result = inferModelHetero(GGxDict, GGedgeDict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), true);
         if (cpmGnn.getArgument().equals("[]") || cpmGnn.getArgument().equals(""))
-            res = inferModelHetero(-1, GGxDict, GGedgeDict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId());
+            return (double[]) result[0];
         else
-            res = inferModelHetero(Integer.parseInt(cpmGnn.getArgument()), GGxDict, GGedgeDict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId());
-        return res;
+            return (double[]) result[Integer.parseInt(cpmGnn.getArgument())];
     }
 
     private void printPython(Interpreter interpreter, String var) {

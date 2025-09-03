@@ -84,7 +84,6 @@ public class GradientGraphO extends GradientGraph{
 	private int mapSearchAlg;
 	private int nIterGreedy;
 
-	private PrimulaGUI primulaGUI;
 	public int num_iter;
 	public double cooling_fact;
 	private int batchSearchSize;
@@ -767,10 +766,6 @@ public class GradientGraphO extends GradientGraph{
 		/* Find initial instantiations with nonzero probability */
 
 		while (!success && !abort){
-//			for (GGAtomMaxNode mxnode: maxind_as_ts()) {
-//				mxnode.setCurrentInst(0);
-//			}
-
 			/* First instantiate the Max nodes */
 			for (GGAtomMaxNode mxnode: maxind_as_list()) {
 				mxnode.setRandomInst();
@@ -1108,7 +1103,7 @@ public class GradientGraphO extends GradientGraph{
 
 		if (myggoptions.ggverbose()) {
 			System.out.println("Flip scores");
-			showMaxAtomFlipScoresBestK(scored_atoms, 10);
+			showMaxAtomFlipScoresBest(scored_atoms);
 	//		showMaxAtomFlipScores(scored_atoms);
 		}
 
@@ -1158,7 +1153,7 @@ public class GradientGraphO extends GradientGraph{
 				if (myggoptions.ggverbose()) {
 					System.out.println("New flip scores");
 	//				showMaxAtomFlipScores(scored_atoms);
-						showMaxAtomFlipScoresBestK(scored_atoms, 10);
+						showMaxAtomFlipScoresBest(scored_atoms);
 				}
 			} else {
 				System.out.println("flipnext null, return");
@@ -1518,14 +1513,15 @@ public class GradientGraphO extends GradientGraph{
 		}
 		if (myggoptions.ggverbose())
 			System.out.println(depthS + "current depth " + depth);
-		PriorityQueue<GGAtomMaxNode> scored_atoms = new PriorityQueue<GGAtomMaxNode>(new GGAtomMaxNode_Comparator()); // NB. with priority queue only the best is guarantee to be on the top
+		PriorityQueue<GGAtomMaxNode> scored_atoms = new PriorityQueue<GGAtomMaxNode>(new GGAtomMaxNode_Comparator()); // NB. with a priority queue only the best is guaranteed to be on the top
 
 		for (GGAtomMaxNode mxnode: flipcandidates) {
 			mxnode.setScore(mythread,sampleSizeScoring);
 			scored_atoms.add(mxnode);
 		}
 
-//		showMaxAtomFlipScores(scored_atoms);
+		if (myggoptions.ggverbose())
+			showMaxAtomFlipScoresBest(scored_atoms);
 
 		GGAtomMaxNode flipnext = null;
 		for (Iterator<GGAtomMaxNode> it = scored_atoms.iterator(); (it.hasNext() && flipnext==null);){
@@ -1548,9 +1544,9 @@ public class GradientGraphO extends GradientGraph{
 		if (myggoptions.ggverbose()) {
 			System.out.println(depthS + "Old UGAS");
 			System.out.print(depthS);
-			System.out.println();
 			System.out.println(depthS + Arrays.toString(oldvalues));
 			System.out.println(depthS + "Flipping: " + flipnext.getMyatom() + " to " + flipnext.getHighvalue());
+			System.out.println();
 		}
 
 		int oldValue = flipnext.getCurrentInst();
@@ -1570,9 +1566,9 @@ public class GradientGraphO extends GradientGraph{
 		if (myggoptions.ggverbose()) {
 			System.out.println(depthS + "New UGAS");
 			System.out.print(depthS);
-			System.out.println();
 			System.out.println(depthS + Arrays.toString(newvalues));
 			System.out.println(depthS + "Worst UGAS: " + worstUgasCount + "/" + newvalues.length);
+			System.out.println();
 		}
 
 		for (int j=0;j<windowsize;j++){
@@ -1615,10 +1611,6 @@ public class GradientGraphO extends GradientGraph{
 		return recsearch;
 	}
 
-	class MyCount {
-		int count;
-	}
-
 	public static void printProgressBar(int current, int total, double curll) {
 		int progressBarLength = 40;
 		double progressPercentage = (double) current / total;
@@ -1657,7 +1649,6 @@ public class GradientGraphO extends GradientGraph{
 			}
 		}
 
-		MyCount myCount = new MyCount();
 		evaluateLikelihoodAndPartDerivs(true);
 		double curll = currentLogLikelihood();
 		System.out.println("initial log-likelihood= " + curll);
@@ -1695,11 +1686,12 @@ public class GradientGraphO extends GradientGraph{
 			if (mapSearchAlg != 2 && oldll/score <= 1+myggoptions.getLLikThresh()) {
 				terminate = true;
 			}
+
 			if (!terminate) {
-				if (mode == LEARNMODE) {
+				if (mode == LEARNANDMAPMODE) {
 					if (myggoptions.ggverbose())
-						System.out.print("Learning parameters ...");
-					learnParameters(mythread, GradientGraph.FullLearn, false);
+						System.out.println("Learning parameters ...");
+					learnParameters(mythread, GradientGraph.FullLearn, myggoptions.ggverbose());
 					if (myggoptions.ggverbose())
 						System.out.println("... done");
 				}
@@ -1766,16 +1758,8 @@ public class GradientGraphO extends GradientGraph{
 		}
 	}
 
-	public void showMaxAtomFlipScoresBestK(PriorityQueue<GGAtomMaxNode> scored_atoms, int k) {
-		Iterator<GGAtomMaxNode> it = scored_atoms.iterator();
-		System.out.println("Best " + k + " atoms:");
-		while (it.hasNext()) {
-			GGAtomMaxNode el = it.next();
-			System.out.println(el.getMyatom() + ": " + el.getScore());
-			k--;
-			if (k == 0)
-				break;
-		}
+	public void showMaxAtomFlipScoresBest(PriorityQueue<GGAtomMaxNode> scored_atoms) {
+		System.out.println("Best atom: " + scored_atoms.peek().getMyatom() + " score: " + scored_atoms.peek().getScore());
 	}
 
 	public void showMaxAtomFlipScoresBestK(List<GGAtomMaxNode> scored_atoms, int k) {
@@ -1898,10 +1882,7 @@ public class GradientGraphO extends GradientGraph{
  * [n+2]: the log-likelihood of the whole data = log-likelihood+this.likelihoodconst
  *
  */
-protected double[] thetasearch(double[] currenttheta,
-		GGThread mythread,
-		int fullorincremental,
-		boolean verbose)
+protected double[] thetasearch(double[] currenttheta, GGThread mythread, int fullorincremental, boolean verbose)
 				throws RBNNaNException{
 	double[] gradient;
 	double[] direction = null;
@@ -1910,12 +1891,9 @@ protected double[] thetasearch(double[] currenttheta,
 	double[] olddirection = null;
 	double newlikelihood =0;
 
-
 	boolean terminate = false;
 
-
 	double[] result = new double[currenttheta.length+3];
-
 
 	/* Initialize ascent strategy specific variables:*/
 	switch(myggoptions.ggascentstrategy()){
@@ -1931,8 +1909,6 @@ protected double[] thetasearch(double[] currenttheta,
 		olddirection = new double[parameters.size()];
 	}
 
-
-
 	int llwindow = myggoptions.getWindowSize();
 	int itindx = 0;
 	double gain; /* Likelihood gain */
@@ -1940,11 +1916,6 @@ protected double[] thetasearch(double[] currenttheta,
 	double[] llgains = new double[llwindow];
 	for (int i=0;i<llgains.length;i++)
 		llgains[i]=Double.POSITIVE_INFINITY;
-
-
-
-
-
 
 	int itcounter =0;
 	int maxiterations = myggoptions.getMaxIterations();
@@ -1954,16 +1925,11 @@ protected double[] thetasearch(double[] currenttheta,
 	double llikhood =  llnode.loglikelihood();
 	double newllikhood;
 
-
-	//System.out.println("Initial likelihood: " + llikhood);
-
 	if(Double.isInfinite(llikhood)){
 		result[currenttheta.length+3]=Double.NEGATIVE_INFINITY;
 		System.out.println("Zero likelihood at initial parameters");
 		return result;
 	}
-
-
 
 	long timestart = System.currentTimeMillis();
 
@@ -1980,17 +1946,13 @@ protected double[] thetasearch(double[] currenttheta,
 
 		evaluateLikelihoodAndPartDerivs(false);
 
-
-
 		gradient = llnode.gradientAsDouble();
-
 
 		/* If the gradient at llnode is not representable as a standard double vector
 		 * (usually only when useloglik == false) then gradient now is a scaled version of the actual
 		 * gradient. When useloglik == true, then this will usually not cause any loss
 		 * in precision.
 		 */
-
 
 		/* Now get the direction for the linesearch: */
 
@@ -2021,19 +1983,11 @@ protected double[] thetasearch(double[] currenttheta,
 		double gtimesd = rbnutilities.arrayDotProduct(rbnutilities.normalizeDoubleArray(gradient),
 				rbnutilities.normalizeDoubleArray(direction));
 
-
-
 		/****************************************
 		 * call linesearch
 		 ****************************************/
-		if (myggoptions.ggverbose() )
-			System.out.print("linesearch: ");
 
-
-		currenttheta = linesearch(currenttheta,
-				constrainedDirection(currenttheta,direction),
-				mythread);
-
+		currenttheta = linesearch(currenttheta, constrainedDirection(currenttheta,direction), mythread);
 
 		// If there was no progress on this linesearch, then this may
 		// have been caused by the lbfgs direction being too orthogonal to
@@ -2050,7 +2004,6 @@ protected double[] thetasearch(double[] currenttheta,
 			}
 		}
 
-
 		setParameters(currenttheta);
 		if (fullorincremental == GradientGraph.OneLineSearch)
 			terminate = true;
@@ -2060,12 +2013,8 @@ protected double[] thetasearch(double[] currenttheta,
 		if (verbose) {
 			double stepsize = rbnutilities.euclidDist(oldthetas, currenttheta);
 			long tick = System.currentTimeMillis()-timestart;
-			System.out.print(""+ itcounter + '\t' + " " + tick +  '\t'+ gtimesd + '\t'
-					+ stepsize +'\t'
-					+ llnode.loglikelihood());
+			System.out.println(""+ itcounter + '\t' + " " + tick +  '\t'+ gtimesd + '\t' + stepsize +'\t' + llnode.loglikelihood());
 		}
-
-
 
 		/****************************************
 		 * Gibbs sample
@@ -2073,15 +2022,13 @@ protected double[] thetasearch(double[] currenttheta,
 		if (!terminate){
 			newlikelihood = llnode.loglikelihood();
 
-
-			if (myggoptions.ggverbose() && numchains > 0)
+			if (verbose && numchains > 0)
 				System.out.print("<sampling ... ");
 
 			gibbsSample(mythread);
 
-			if (myggoptions.ggverbose()  && numchains > 0)
+			if (verbose && numchains > 0)
 				System.out.println("done>");
-
 		}
 
 		itcounter++;
@@ -2096,10 +2043,6 @@ protected double[] thetasearch(double[] currenttheta,
 
 		oldthetas = currenttheta;
 		oldgradient = gradient;
-		olddirection = direction;
-
-		if (verbose)
-			System.out.println();
 	} /* end main while loop */
 
 
@@ -2128,8 +2071,8 @@ protected double[] thetasearch(double[] currenttheta,
 public double[] learnParameters(GGThread mythread, int fullorincremental, boolean verbose)
 		throws RBNNaNException
 {
-	if (myggoptions.ggverbose())
-		System.out.println("** start learnParameters ** ");
+	if (verbose)
+		System.out.println("** start learnParameters **");
 	/* Returns:
 	 * resultArray[0:paramNodes.length-1] : the parameter values learned in the
 	 *                                      order given by paramNodes
@@ -2148,10 +2091,10 @@ public double[] learnParameters(GGThread mythread, int fullorincremental, boolea
 	 */
 
 	boolean success = false;
-	if (myggoptions.ggverbose())
-		System.out.print("< Initialize Markov Chains ... ");
 
 	if (mode==LEARNMODE && numchains>0){
+		if (verbose)
+			System.out.print("< Initialize Markov Chains ... ");
 		while (!success && !mythread.isstopped()){
 			if (initIndicators(mythread))
 				success = true;
@@ -2160,15 +2103,11 @@ public double[] learnParameters(GGThread mythread, int fullorincremental, boolea
 					myPrimula.getPrimulaGUI().showMessageThis("Failed to sample missing values");
 			}
 		}
+		if (verbose)
+			System.out.println("done >");
 	}
 
-
-	if (myggoptions.ggverbose())
-		System.out.println("done >");
-
 	double[] currenttheta = currentParameters();
-	double[] firstthetas = currenttheta.clone();
-
 
 	/************************************************
 	 *
@@ -2176,7 +2115,7 @@ public double[] learnParameters(GGThread mythread, int fullorincremental, boolea
 	 *
 	 ************************************************/
 	if (paramNodes.length>0){
-		lastthetas =thetasearch(currenttheta,mythread,fullorincremental,verbose);
+		lastthetas = thetasearch(currenttheta,mythread,fullorincremental,verbose);
 
 		for (int k=0;k<lastthetas.length;k++)
 			resultArray[k]=lastthetas[k];
@@ -2880,13 +2819,12 @@ public Hashtable<Rel, Vector<GGAtomMaxNode>> getMaxindicators() {
 	return maxindicators;
 }
 
-private boolean checkGnnRel(RBN rbn) {
-	for(int i=0; i<rbn.prelements().length; i++) {
-		if (rbn.cpmod_prelements_At(i) instanceof CatGnn)
-			return true;
+	public void initGnnPy(RBN rbn) {
+		for(int i=0; i<rbn.prelements().length; i++) {
+			if (rbn.cpmod_prelements_At(i) instanceof CatGnn)
+				((CatGnn) rbn.cpmod_prelements_At(i)).getGnnPy().initData();
+		}
 	}
-	return false;
-}
 
 public void setGnnPyToNodes() {
 	for (GGNode node: this.llnode.children){
@@ -2913,8 +2851,6 @@ public void setGnnPy(GnnPy gnnPy) {
 			gnnPy.load_gnn_set(sett);
 		}
 	}
-
-	public void setPrimulaGUI(PrimulaGUI primulaGUI) { this.primulaGUI = primulaGUI; }
 
 	public Vector<GGCPMNode> getllchildred() {
 		return llnode.children;

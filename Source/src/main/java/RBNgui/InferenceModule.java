@@ -417,17 +417,23 @@ public class InferenceModule implements GradientGraphOptions {
 //			maprestarts = true;
 			RelData evidence = new RelData(myprimula.getRels(),myprimula.getInstantiation());
 			int mode;
-			Hashtable<String,Integer> parameters = myprimula.makeParameterIndex();
+
+			Hashtable<String,Integer> parameters = new Hashtable<>();
+			if (inferenceModuleGUI != null)
+				parameters = myprimula.makeParameterIndexGUI();
+			else {
+				parameters = myprimula.makeParameterIndex();
+			}
+
 //			String[] rbnparams = myprimula.getRBN().parameters();
 //			Hashtable<String,Integer> rbnparamidx = new Hashtable<String,Integer>();
 //			for (int i=0;i<rbnparams.length;i++)
 //				rbnparamidx.put(rbnparams[i], i);
 
-			if (parameters.size() >0)
+			if (parameters.size() > 0)
 				mode = GradientGraphO.LEARNANDMAPMODE;
 			else
 				mode = GradientGraphO.MAPMODE;
-
 
 			gg = new GradientGraphO(myprimula,
 					evidence,

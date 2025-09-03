@@ -28,7 +28,7 @@ public class runexperiment {
 		String rbnoutputfilestring = rbnbase + "-" + timestamp	+ ".rbn";
 		
 		Primula primula = new Primula();
-		LearnModule lm = primula.openLearnModule(false);
+		LearnModule lm = primula.openLearnModule();
 		
 		int threadascentstrategy = LearnModule.AscentAdam;
 		int ggascentstrategy = LearnModule.AscentAdagrad;
