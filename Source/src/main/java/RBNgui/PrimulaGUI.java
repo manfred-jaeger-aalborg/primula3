@@ -1209,8 +1209,8 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/homophily/experiments/rbn_constraints/const_nodeconst_gnn.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/homophily/experiments/ising/rdef/ising_32_0.5_0_0.4_4_nodeconst.rdef";
 
-//      String rbninputfilestring = "/home/jaeger/B/Primula/Examples/HAWQS/water_rbn_parseminus.rbn";
-//      String rstinputfilestring = "/home/jaeger/B/Primula/Examples/HAWQS/river_with_data_train.rdef";
+      String rbninputfilestring = "/home/jaeger/B/Primula/Examples/JAIR-Ex/jair.rbn";
+      String rstinputfilestring = "/home/jaeger/B/Primula/Examples/JAIR-Ex/jair.rdef";
 
 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/water-hawqs/water_rbn_2.rbn";
@@ -1219,8 +1219,8 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/models/alpha1_20_20250623-151443/RBN_acr_graph_alpha1_20.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/rdef_files/alpha_problem/test-alpha1-blue_cat.rdef";
 
-        String rbninputfilestring = "/Users/lz50rg/Dev/NeSy-for-graph-data/GNN-RBN-compile/RBN_acr_graph_alpha1_5_param.rbn";
-        String rstinputfilestring = "/Users/lz50rg/Dev/NeSy-for-graph-data/GNN-RBN-compile/train-barabasi-m2_2-5000-5-8-generative_cat.rdef";
+//        String rbninputfilestring = "/Users/lz50rg/Dev/NeSy-for-graph-data/GNN-RBN-compile/RBN_acr_graph_alpha1_5_param.rbn";
+//        String rstinputfilestring = "/Users/lz50rg/Dev/NeSy-for-graph-data/GNN-RBN-compile/train-barabasi-m2_2-5000-5-8-generative_cat.rdef";
 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/examples-primula/GNN-RBN-alpha/rbn_acr.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/rdef_files/alpha_problem/test-alpha1-blue.rdef";
@@ -1254,7 +1254,7 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
         }
         PrimulaGUI win = new PrimulaGUI(new Primula());
 //		SamiamManager.centerWindow( win );
-//        win.loadDefaults();
+        win.loadDefaults();
 		win.show();
     }
 }
