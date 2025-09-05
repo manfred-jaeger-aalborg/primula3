@@ -453,8 +453,10 @@ public abstract class GGCPMNode extends GGNode{
 		if (ancestors == null) 
 			ancestors = ancestors();
 
-		for (GGNode anc: ancestors)
+		for (GGNode anc: ancestors) {
 			anc.resetValue(sno);
+			anc.resetGradient(sno);
+		}
 	}
 
 	/** Re-evaluates all ancestor nodes of this node. 
