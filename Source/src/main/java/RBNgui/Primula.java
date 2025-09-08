@@ -427,13 +427,15 @@ public class Primula {
 
 	// this function makes use of the GUI to select the parameters
 	public String[][] getParamNumRelsGUI(){
-		if (isLrnModuleOpen)
+		if (isLrnModuleOpen && learnModule.getLearnModuleGUI() != null)
 			return learnModule.getLearnModuleGUI().getSelectedNumRels();
 		else
 			return new String[0][0];
 	}
 
 	public String[][] getParamNumRels(){
+		if (paramnumrels == null)
+			return new String[0][0];
 		return paramnumrels;
 	}
 
