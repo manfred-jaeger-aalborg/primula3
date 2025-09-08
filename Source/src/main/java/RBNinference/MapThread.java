@@ -93,8 +93,6 @@ public class MapThread extends GGThread {
 					mapprobs.setRestarts(currentRestarts);
 					mapprobs.notifyObservers();
 
-					gg.initGnnPy(myprimula.getRBN());
-
 					currentRestarts++;
 					long endrestart = System.currentTimeMillis();
 					long time = endrestart - startrestart;

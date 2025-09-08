@@ -146,6 +146,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 		myparameters=new TreeSet<String>();
 		depends_on_sample=false;
 		outDim = 1; // The default value for ProbForm nodes. Needs to be overridden for categorical
+		gradient_for_samples = new ArrayList<Gradient>();
 	}
 
 	
@@ -233,7 +234,8 @@ public abstract class GGNode implements Comparable<GGNode>{
 			else
 				idx = sno;
 		}
-		gradient_for_samples.get(idx).reset();
+		if (idx<gradient_for_samples.size() && gradient_for_samples.get(idx)!=null)
+			gradient_for_samples.get(idx).reset();
 		is_evaluated_grad_for_samples[idx]=false;
 		
 	}
