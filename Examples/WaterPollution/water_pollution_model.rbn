@@ -6,25 +6,25 @@ Pollution([sub]v) = COMPUTEWITHTORCH [/Users/lz50rg/Dev/primula-workspace/primul
                     ForFreeVars (v)
 
                     % gnn input definition
-                    NODE agr:
-                        FEATURE: LandUse, AreaAgr
-                        EDGE: downstream_agr
+                    TYPEDICT
+                        NODEFEAT LandUse, AreaAgr
+                        EDGEGRAPH downstream_agr
 
-                    NODE urb:
-                        FEATURE: LandUseUrb, AreaUrb
-                        EDGE: downstream_urb
+                    TYPEDICT
+                        NODEFEAT LandUseUrb, AreaUrb
+                        EDGEGRAPH downstream_urb
 
-                    NODE sub:
-                        FEATURE: SubType
-                        EDGE: downstream
+                    TYPEDICT
+                        NODEFEAT SubType
+                        EDGEGRAPH downstream
 
                     % first-layer attributes
                     COMBINE LandUse(la),AreaAgr(la) USINGTORCH FORALL la WHERE downstream_agr(la, v),
                     % second-layer attributes
-                    COMBINE LandUse(la),AreaAgr(la) USINGTORCH FORALL la, lb WHERE (downstream(lb, v) & downstream_agr(la, lb)),
+                    COMBINE LandUse(la),AreaAgr(la) USINGTORCH FORALL la,lb WHERE (downstream(lb, v) & downstream_agr(la, lb)),
 
                     COMBINE LandUseUrb(lu),AreaUrb(lu) USINGTORCH FORALL lu WHERE downstream_urb(lu, v),
-                    COMBINE LandUseUrb(lu),AreaUrb(lu) USINGTORCH FORALL lu WHERE (downstream(lb, v) & downstream_urb(lu, lb)),
+                    COMBINE LandUseUrb(lu),AreaUrb(lu) USINGTORCH FORALL lu,lb WHERE (downstream(lb, v) & downstream_urb(lu, lb)),
 
                     COMBINE SubType(v) USINGTORCH,
                     COMBINE SubType(vb) USINGTORCH FORALL vb WHERE downstream(vb, v);

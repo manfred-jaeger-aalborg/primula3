@@ -59,7 +59,7 @@ public class TorchModelWrapper {
                     return out.detach().numpy()
                 
                 def forward_hetero_primula_(model, x_dict, edge_dict, edge_rels):
-                    model_type, device = _get_type_and_device(model)
+                    model_dtype, device = _get_type_and_device(model)
                     data_h = HeteroData()
                     for key, value in x_dict.items():
                         data_h[key].x = torch.as_tensor(value, dtype=model_dtype, device=device)
@@ -103,9 +103,9 @@ public class TorchModelWrapper {
 
             if (xDict.size() == 1) {
                 if (edge_attr.size() > 0)
-                    modelInterpreter.exec("out = forward_single_primula_(model=" + modelName + ", x_dict=x_pyGNNRBN, edge_dict=edge_pyGNNRBN, edge_attr=edge_attr_pyGNNRBN)");
+                    modelInterpreter.exec("out_pyGNNRBN = forward_single_primula_(model=" + modelName + ", x_dict=x_pyGNNRBN, edge_dict=edge_pyGNNRBN, edge_attr=edge_attr_pyGNNRBN)");
                 else
-                    modelInterpreter.exec("out = forward_single_primula_(model=" + modelName + ", x_dict=x_pyGNNRBN, edge_dict=edge_pyGNNRBN)");
+                    modelInterpreter.exec("out_pyGNNRBN = forward_single_primula_(model=" + modelName + ", x_dict=x_pyGNNRBN, edge_dict=edge_pyGNNRBN)");
             } else {
                 // Here the GNN is heterogeneous
                 // Build edge relation dictionary
@@ -121,10 +121,10 @@ public class TorchModelWrapper {
                 if (edge_attr.size() > 0)
                     throw new RuntimeException("Edge attribute not jet implemented for heterogeneous GNNs");
                 modelInterpreter.set("edge_rels_pyGNNRBN", edgeRels);
-                modelInterpreter.exec("out_pyGNNRBN = forward_hetero_primula_(x_pyGNNRBN, edge_pyGNNRBN, edge_rels_pyGNNRBN, " + modelName + ")");
+                modelInterpreter.exec("out_pyGNNRBN = forward_hetero_primula_(model=" + modelName + ", x_dict=x_pyGNNRBN, edge_dict=edge_pyGNNRBN, edge_rels=edge_rels_pyGNNRBN)");
             }
 
-            NDArray outArray = (NDArray) modelInterpreter.getValue("out");
+            NDArray outArray = (NDArray) modelInterpreter.getValue("out_pyGNNRBN");
             Object raw = outArray.getData();
             double[] flatData = PyUtils.toDoubleArray(raw);
 
