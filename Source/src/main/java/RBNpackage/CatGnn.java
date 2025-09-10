@@ -17,7 +17,7 @@ public class CatGnn extends CPModel {
     // the order of attributes need to be respected! this order will be used for the gnn encoding
     private ArrayList<ArrayList<Rel>> input_attr;
     private ArrayList edge_attr;
-    private String argument;
+    String argument;
 
     // true if we use one-hot encoding for the features representation
     private boolean oneHotEncoding;
@@ -37,7 +37,7 @@ public class CatGnn extends CPModel {
     private String gnn_inference;
     private int numLayers;
     private TorchModelWrapper torchModel;
-    private Vector<String> freeVals;
+    Vector<String> freeVals;
 
     public CatGnn(String argument, String gnnId, int numLayers, int numvals, ArrayList input_attr, ArrayList edge_attr, String gnn_inference, boolean oneHotEncoding) {
         this.argument = argument;
@@ -100,7 +100,7 @@ public class CatGnn extends CPModel {
     }
 
     @Override
-    public ProbForm conditionEvidence(RelStruc A, OneStrucData inst) throws RBNCompatibilityException {
+    public CPModel conditionEvidence(RelStruc A, OneStrucData inst) throws RBNCompatibilityException {
         // RAF: This is not required for gnn since it does not have direct dependencies
         System.out.println("conditionEvidence code");
         return null;
@@ -132,7 +132,7 @@ public class CatGnn extends CPModel {
         // CHECK IF THIS DOES NOT BREAK INFERENCE WITH MAP or MCMC
 
         for (TorchInputRels inps: gnnGroundCombinedClauses) {
-            Object[] res = inps.evaluate(A, inst, vars, tuple, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly, profiler);
+            Object[] res = inps.evaluate(A, inst, vars, tuple, gradindx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly, profiler);
             // if res[0] contains NaN return res
             if (res[0] instanceof double[]) {
                 double[] values = (double[]) res[0];
@@ -140,6 +140,11 @@ public class CatGnn extends CPModel {
                     if (Double.isNaN(value)) {
                         return res;
                     }
+                }
+            }
+            if (res[0] instanceof Double) {
+                if (Double.isNaN((Double) res[0])) {
+                    return res;
                 }
             }
 
@@ -164,8 +169,19 @@ public class CatGnn extends CPModel {
 //            }
 //        }
 
-        Object[] res = gnnPy.evaluate_gnnHetero(A, inst, this, valonly);
-        if (this.numvals() == 1) {
+        CatGnn subCatGnn = null;
+        if (this instanceof CatGnnBool)
+            subCatGnn = (CatGnnBool)this.substitute(vars, tuple);
+        else
+            subCatGnn = (CatGnn)this.substitute(vars, tuple);
+
+        Object[] res = gnnPy.evaluate_gnnHetero(A, inst, subCatGnn, valonly);
+
+        if (subCatGnn instanceof CatGnnBool) {
+            double[] trueProb = (double[]) res[0];
+            res[0] = trueProb[0];
+        }
+        if (!(subCatGnn instanceof CatGnnBool) && this.numvals() == 1) {
             double[] trueProb = (double[]) res[0];
             double[] resultArray =  new double[] {1-trueProb[0],trueProb[0]};
             res[0] = resultArray;
@@ -198,7 +214,7 @@ public class CatGnn extends CPModel {
         Vector result = new Vector();
         for (TorchInputRels inps: gnnGroundCombinedClauses) {
 
-            ProbForm nextprobform;
+            CPModel nextprobform;
 
             int[][] subslist = A.allTrue(inps.getCconstr(), inps.getQuantvars());
 
@@ -210,6 +226,16 @@ public class CatGnn extends CPModel {
             }
         }
         return result;
+    }
+
+    @Override
+    public int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, Hashtable<String, GroundAtom> atomhasht) throws RBNCompatibilityException {
+        return 0;
+    }
+
+    @Override
+    public int evaluatesTo(RelStruc A) throws RBNCompatibilityException {
+        return 0;
     }
 
     @Override
@@ -260,8 +286,25 @@ public class CatGnn extends CPModel {
 
     @Override
     public CPModel substitute(String[] vars, String[] args) {
-        System.out.println("substitute code 2");
-        return null;
+        List<TorchInputRels> newgnnInputs = new ArrayList<>();
+        for (TorchInputRels torchInput: gnnCombinedClauses) {
+            TorchInputRels newnewInput = torchInput.substitute(vars, args);
+            newgnnInputs.add(newnewInput);
+        }
+
+        CatGnn result = new CatGnn(this.configModelPath, this.freeVals, this.numvals, this.gnnInputs, this.gnnCombinedClauses, false);
+        result.gnnGroundCombinedClauses = newgnnInputs;
+        result.setGnnPy(this.getGnnPy());
+
+        if (vars.length == 0)
+            result.argument = Arrays.toString(new String[0]);
+        else
+            result.argument = rbnutilities.array_substitute(vars, new String[]{argument}, args)[0];
+
+        if (this.alias != null)
+            result.setAlias(this.alias.substitute(vars, args));
+
+        return result;
     }
 
     @Override

@@ -374,6 +374,7 @@ public class Primula {
 				if (getPrimulaGUI() != null)
 					getPrimulaGUI().getRbnfilename().setText(rbnfile.getName());
 			}catch (Exception ex){
+				System.err.println(ex);
 				rbn = null;
 				rbnfile = null;
 				if (getPrimulaGUI() != null) {

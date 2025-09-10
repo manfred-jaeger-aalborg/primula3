@@ -10,7 +10,7 @@ import RBNLearning.*;
 import RBNinference.PFNetworkNode;
 import RBNutilities.rbnutilities;
 
-public  class ProbFormAtom extends ProbForm {
+public class ProbFormAtom extends CPModel implements ProbForm {
 
 
 	private Rel relation;
@@ -154,7 +154,7 @@ public  class ProbFormAtom extends ProbForm {
 			throws RBNCompatibilityException
 			{
 		if (relation.isprobabilistic() && variable.equals("unknown_atom")){
-			double v = (double)this.evaluate(A, data, new String[0], new int[0], false, false, null , false, null, null, ProbForm.RETURN_ARRAY, true,null)[0];
+			double v = (double)this.evaluate(A, data, new String[0], new int[0], 0, false, false, null , false, null, null, ProbForm.RETURN_ARRAY, true,null)[0];
 			if (Double.isNaN(v))
 				return true;
 			else return false;
@@ -248,11 +248,12 @@ public  class ProbFormAtom extends ProbForm {
 //	}
 
 
-	public ProbForm sEval(RelStruc A){
+	public CPModel sEval(RelStruc A){
 		double val= (double)evaluate(A,
 				new OneStrucData(),
 				new String[0],
 				new int[0],
+				0,
 				false,
 				false,
 				new Hashtable<Rel,GroundAtomList>(),
@@ -296,7 +297,7 @@ public  class ProbFormAtom extends ProbForm {
 	public void setParameters(String[] params,  double[] values){
 	}
 	
-	public ProbForm conditionEvidence(RelStruc A, OneStrucData inst){
+	public CPModel conditionEvidence(RelStruc A, OneStrucData inst){
 		if (!this.isGround()) return new ProbFormAtom(relation,arguments);
 		else {
 			int truth = inst.truthValueOf(this.relation, rbnutilities.stringArrayToIntArray(this.arguments));
@@ -361,7 +362,8 @@ public  class ProbFormAtom extends ProbForm {
 	public Object[] evaluate(RelStruc A, 
 			OneStrucData inst, 
 			String[] vars, 
-			int[] tuple, 
+			int[] tuple,
+			int gradindx,
 			boolean useCurrentCvals, 
     		// String[] numrelparameters,
     		boolean useCurrentPvals,
@@ -545,5 +547,10 @@ public  class ProbFormAtom extends ProbForm {
 		}
 					
 	}
-	
+
+	@Override
+	public int numvals() {
+		return 2;
+	}
+
 }

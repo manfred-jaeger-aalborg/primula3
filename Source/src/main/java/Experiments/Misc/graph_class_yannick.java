@@ -99,23 +99,23 @@ public class graph_class_yannick {
         Pair p = new Pair(edgeRel, attrs_rels);
         inputs.add(p);
 
-        Vector<ProbForm> softmaxA = new Vector<>();
+        Vector<CPModel> softmaxA = new Vector<>();
         for (int i = 0; i < 2; i++) {
             softmaxA.add(new ProbFormConstant(1));
         }
-        Vector<ProbForm> softmaxX = new Vector<>();
+        Vector<CPModel> softmaxX = new Vector<>();
         for (int i = 0; i < 10; i++) {
             softmaxX.add(new ProbFormConstant(1));
         }
-        Vector<ProbForm> softmaxY = new Vector<>();
+        Vector<CPModel> softmaxY = new Vector<>();
         for (int i = 0; i < 8; i++) {
             softmaxY.add(new ProbFormConstant(1));
         }
-        Vector<ProbForm> softmaxD = new Vector<>();
+        Vector<CPModel> softmaxD = new Vector<>();
         for (int i = 0; i < 8; i++) {
             softmaxD.add(new ProbFormConstant(1));
         }
-        Vector<ProbForm> softmaxS = new Vector<>();
+        Vector<CPModel> softmaxS = new Vector<>();
         for (int i = 0; i < 5; i++) {
             softmaxS.add(new ProbFormConstant(1));
         }

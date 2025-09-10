@@ -174,6 +174,17 @@ public abstract class CPModel
     public abstract Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone)
 	throws RBNCompatibilityException;
 
+
+	/* FROM ProbForm: use for compatibility
+		When usesampleinst = true, then evaluation is not w.r.t.
+     * instantiation instasosd, but w.r.t. to sampleinst fields at
+     * PFNetworkNodes which are accessible via atomhasht
+     */
+	public abstract int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, Hashtable<String,GroundAtom> atomhasht)
+			throws RBNCompatibilityException;
+
+	public abstract int evaluatesTo(RelStruc A) throws RBNCompatibilityException;
+
  
     /** Returns all the parameters that this Model depends on 
      * Macro calls are not expanded!

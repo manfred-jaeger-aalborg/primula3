@@ -46,7 +46,7 @@ public class ProbFormBoolEquality extends ProbFormBool {
 	}
 
 	@Override
-	public ProbForm conditionEvidence(RelStruc A, OneStrucData inst)
+	public CPModel conditionEvidence(RelStruc A, OneStrucData inst)
 			throws RBNCompatibilityException {
 		return this;
 	}
@@ -68,7 +68,8 @@ public class ProbFormBoolEquality extends ProbFormBool {
 	public Object[] evaluate(RelStruc A, 
 			OneStrucData inst, 
 			String[] vars, 
-			int[] tuple, 
+			int[] tuple,
+			int gradindx,
 			boolean useCurrentCvals, 
     		// String[] numrelparameters,
     		boolean useCurrentPvals,
@@ -126,7 +127,7 @@ public class ProbFormBoolEquality extends ProbFormBool {
 	}
 
 	@Override
-	public ProbForm sEval(RelStruc A) throws RBNCompatibilityException {
+	public CPModel sEval(RelStruc A) throws RBNCompatibilityException {
 		
 		double value = evaluate(A, null);
 		if (value == 1) 
@@ -136,7 +137,7 @@ public class ProbFormBoolEquality extends ProbFormBool {
 	}
 
 	@Override
-	public ProbForm substitute(String[] vars, int[] args) {
+	public CPModel substitute(String[] vars, int[] args) {
 		if (vars.length != args.length)
 			System.out.println("ProbFormBoolEquality.substitute: vars: " + rbnutilities.arrayToString(vars) + "   args: " + rbnutilities.arrayToString(args));
 		String termx=term1;
@@ -158,7 +159,7 @@ public class ProbFormBoolEquality extends ProbFormBool {
 	}
 
 	@Override
-	public ProbForm substitute(String[] vars, String[] args) {
+	public CPModel substitute(String[] vars, String[] args) {
 		String termx=term1;
 		String sterm1 = term1;
 		String sterm2 = term2;
@@ -190,7 +191,7 @@ public class ProbFormBoolEquality extends ProbFormBool {
 		return (rbnutilities.IsInteger(term1) && rbnutilities.IsInteger(term2));
 	}
 
-	public ProbForm toStandardPF(boolean recursive){
+	public CPModel toStandardPF(boolean recursive){
 		return this;
 	}
 	
@@ -214,5 +215,10 @@ public class ProbFormBoolEquality extends ProbFormBool {
 	
 	public TreeSet<Rel> parentRels(TreeSet<String> processed){
 		return new TreeSet<Rel>();	
+	}
+
+	@Override
+	public int numvals() {
+		return 2;
 	}
 }

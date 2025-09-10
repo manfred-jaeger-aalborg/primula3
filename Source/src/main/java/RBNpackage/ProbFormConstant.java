@@ -44,7 +44,7 @@ import RBNinference.PFNetworkNode;
  * String identifiers of unknown Bernoulli constants start with '#'. Identifiers
  * of general constants start with '$'
  */
-public class ProbFormConstant extends ProbForm
+public class ProbFormConstant extends CPModel implements ProbForm
 {
 	public static int CONSTANT_BERNOULLI =0;
 	public static int CONSTANT_GENERAL =1;
@@ -105,7 +105,7 @@ public class ProbFormConstant extends ProbForm
 		return true;
 	}
 
-	public ProbForm substitute(String[] vars, int[] args)
+	public CPModel substitute(String[] vars, int[] args)
 	{
 		ProbFormConstant result;
 		if (paramname == "")
@@ -119,7 +119,7 @@ public class ProbFormConstant extends ProbForm
 		return result;
 	}
 
-	public ProbForm substitute(String[] vars, String[] args)
+	public CPModel substitute(String[] vars, String[] args)
 	{
 		if (paramname == "")
 			return new ProbFormConstant(cval);
@@ -132,7 +132,7 @@ public class ProbFormConstant extends ProbForm
 		}
 	}
 
-	public ProbForm conditionEvidence(RelStruc A, OneStrucData inst)
+	public CPModel conditionEvidence(RelStruc A, OneStrucData inst)
 	{
 		return this;
 	}
@@ -179,7 +179,8 @@ public class ProbFormConstant extends ProbForm
 	public Object[] evaluate(RelStruc A, 
 			OneStrucData inst, 
 			String[] vars, 
-			int[] tuple, 
+			int[] tuple,
+			int gradindx,
 			boolean useCurrentCvals, 
     		// String[] numrelparameters,
     		boolean useCurrentPvals,
@@ -244,7 +245,7 @@ public class ProbFormConstant extends ProbForm
 		return evaluatesTo(A);
 	}
 
-	public ProbForm sEval(RelStruc A){
+	public CPModel sEval(RelStruc A){
 		return this;
 	}
 
@@ -311,5 +312,9 @@ public class ProbFormConstant extends ProbForm
 	public TreeSet<Rel> parentRels(TreeSet<String> processed){
 		return new TreeSet<Rel>();	
 	}
-	
+
+	@Override
+	public int numvals() {
+		return 2;
+	}
 }

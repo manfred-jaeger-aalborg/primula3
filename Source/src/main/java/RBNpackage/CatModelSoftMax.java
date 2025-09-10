@@ -19,13 +19,13 @@ public class CatModelSoftMax extends CPModel {
 	 * the conditional probability distribution is the softmax over the values of the formulas
 	 */
 	
-	Vector<ProbForm> probforms;
+	Vector<CPModel> probforms;
 	
 	public CatModelSoftMax() {
-		probforms = new Vector<ProbForm>();
+		probforms = new Vector<CPModel>();
 	}
 	
-	public CatModelSoftMax(Vector<ProbForm> pfs) {
+	public CatModelSoftMax(Vector<CPModel> pfs) {
 		probforms = pfs;
 	}
 	
@@ -35,7 +35,7 @@ public class CatModelSoftMax extends CPModel {
 			return this.getAlias();
 
 		String result = "SOFTMAX  \n";
-		for (ProbForm pf: probforms) {
+		for (CPModel pf: probforms) {
 			result = result + pf.asString(syntax, 1, A, paramsAsValue, usealias);
 			result = result + ",\n";
 		}
@@ -45,7 +45,7 @@ public class CatModelSoftMax extends CPModel {
 	
 	public boolean multlinOnly() {
 		Boolean result = true;
-		for (ProbForm pf : probforms) {
+		for (CPModel pf : probforms) {
 			if (pf.multlinOnly()==false)
 				result=false;
 		}
@@ -55,8 +55,8 @@ public class CatModelSoftMax extends CPModel {
 	@Override
 	public CatModelSoftMax conditionEvidence(RelStruc A, OneStrucData inst) throws RBNCompatibilityException {
 		CatModelSoftMax result = new CatModelSoftMax();
-		for (ProbForm pf: this.probforms) {
-			result.addProbForm((ProbForm)pf.conditionEvidence(A, inst));
+		for (CPModel pf: this.probforms) {
+			result.addProbForm(pf.conditionEvidence(A, inst));
 		}
 		return result;
 	}
@@ -64,7 +64,7 @@ public class CatModelSoftMax extends CPModel {
 	@Override
 	public boolean dependsOn(String variable, RelStruc A, OneStrucData data) throws RBNCompatibilityException {
 		Boolean result = false;
-		for (ProbForm pf: this.probforms) {
+		for (CPModel pf: this.probforms) {
 			if (pf.dependsOn(variable, A, data))
 				result = true;
 		}
@@ -75,7 +75,7 @@ public class CatModelSoftMax extends CPModel {
 	public Object[] evaluate(RelStruc A, 
 			OneStrucData inst, 
 			String[] vars, 
-			int[] tuple, 
+			int[] tuple,
 			int gradindx,
 			boolean useCurrentCvals,
 			boolean useCurrentPvals, 
@@ -97,7 +97,8 @@ public class CatModelSoftMax extends CPModel {
 			Object[] pfval = probforms.elementAt(i).evaluate(A, 
 					inst, 
 					vars, 
-					tuple, 
+					tuple,
+					gradindx,
 					useCurrentCvals, 
 					useCurrentPvals, 
 					mapatoms, 
@@ -225,6 +226,16 @@ public class CatModelSoftMax extends CPModel {
 	}
 
 	@Override
+	public int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, Hashtable<String, GroundAtom> atomhasht) throws RBNCompatibilityException {
+		return 0;
+	}
+
+	@Override
+	public int evaluatesTo(RelStruc A) throws RBNCompatibilityException {
+		return 0;
+	}
+
+	@Override
 	public String[] parameters() {
 		String result[] = new String[0];
 		for (int i = 0;i<probforms.size();i++)
@@ -236,7 +247,7 @@ public class CatModelSoftMax extends CPModel {
 	public CatModelSoftMax sEval(RelStruc A) throws RBNCompatibilityException {
 		CatModelSoftMax result = new CatModelSoftMax();
 		for (int i = 0;i<probforms.size();i++)
-			result.addProbForm((ProbForm)probforms.elementAt(i).sEval(A));
+			result.addProbForm(probforms.elementAt(i).sEval(A));
 		return result;
 	}
 
@@ -244,7 +255,7 @@ public class CatModelSoftMax extends CPModel {
 	public CatModelSoftMax substitute(String[] vars, int[] args) {
 		CatModelSoftMax result = new CatModelSoftMax();
 		for (int i = 0;i<probforms.size();i++)
-			result.addProbForm((ProbForm)probforms.elementAt(i).substitute(vars,args));
+			result.addProbForm(probforms.elementAt(i).substitute(vars,args));
 		return result;
 	}
 
@@ -252,7 +263,7 @@ public class CatModelSoftMax extends CPModel {
 	public CatModelSoftMax substitute(String[] vars, String[] args) {
 		CatModelSoftMax result = new CatModelSoftMax();
 		for (int i = 0;i<probforms.size();i++)
-			result.addProbForm((ProbForm)probforms.elementAt(i).substitute(vars,args));
+			result.addProbForm(probforms.elementAt(i).substitute(vars,args));
 		return result;
 	}
 
@@ -290,7 +301,7 @@ public class CatModelSoftMax extends CPModel {
 		}
 	}
 	
-	public void addProbForm(ProbForm pf) {
+	public void addProbForm(CPModel pf) {
 		probforms.add(pf);
 	}
 	
@@ -298,7 +309,7 @@ public class CatModelSoftMax extends CPModel {
 		return probforms.size();
 	}
 	
-	public ProbForm pfAt(int i) {
+	public CPModel pfAt(int i) {
 		return probforms.elementAt(i);
 	}
 

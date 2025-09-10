@@ -971,7 +971,7 @@ public class BayesConstructor extends java.lang.Object {
 			 * to  complexnodes!
 			 */
 			if (evidencemode == Primula.OPTION_EVIDENCE_CONDITIONED){
-				nextnode.cpmodel = (ProbForm)nextnode.cpmodel.conditionEvidence(strucarg,instarg);
+				nextnode.cpmodel = nextnode.cpmodel.conditionEvidence(strucarg,instarg);
 			}
 
 			if (nextnode.cpmodel instanceof ProbFormConstant)
@@ -1143,7 +1143,7 @@ public class BayesConstructor extends java.lang.Object {
 
 		// Arrays storing the probforms and their types and
 		// values (if constants)
-		ProbForm[] pf = new ProbForm[3];
+		CPModel[] pf = new CPModel[3];
 		int[] type = new int[3];
 		double value[] = {0,0,0};
 		BNNode[] parnodes = new BNNode[3];
@@ -1241,7 +1241,7 @@ public class BayesConstructor extends java.lang.Object {
 	private void processComponentOfConvComp(int i,
 			ComplexBNNode oldnode,
 			BNNode newnode,
-			ProbForm[] pf,
+			CPModel[] pf,
 			int[] type,
 			double[] vals,
 			BNNode[] pnodes,
@@ -1465,12 +1465,12 @@ public class BayesConstructor extends java.lang.Object {
 		newnode.children       = node.children;
 
 		Vector<BNNode> decompnodes = new Vector<BNNode>();
-		ProbForm nextpf;
+		CPModel nextpf;
 		ComplexBNNode newbnnode;
 		int ind;
 
 
-		ProbForm[] argpfs      = ((ProbFormCombFunc)node.cpmodel).getPfargs();
+		CPModel[] argpfs      = ((ProbFormCombFunc)node.cpmodel).getPfargs();
 		ProbFormBool    ccon        = ((ProbFormCombFunc)node.cpmodel).getCconstr();
 		String[]   qvars       = ((ProbFormCombFunc)node.cpmodel).getQuantvars();
 		int[][]    argtuples   = new int[0][0];

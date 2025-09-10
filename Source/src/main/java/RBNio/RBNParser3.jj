@@ -67,10 +67,10 @@ void ReadRBN()  throws RBNIllegalArgumentException:
 
 void MacroDefinition()  throws RBNIllegalArgumentException:
 {RBNReader3.ParsedTypedAtom parsedat;
- ProbForm parsedprobform;
+ CPModel parsedprobform;
 }
 {// grammar
-	"@" parsedat = TypedAtom(true) "=" parsedprobform = ProbForm() ";"
+	"@" parsedat = TypedAtom(true) "=" (parsedprobform = ProbForm() | parsedprobform = CatGnn()) ";"
 	{// Add the '@' back to the name:
 	parsedat.set_relname("@"+parsedat.rel().name());
 	switch  (parseno){
@@ -106,8 +106,8 @@ CPModel CPModel()  throws RBNIllegalArgumentException:
     {return parsedcpm;}
 }
 
-ProbForm ProbForm()  throws RBNIllegalArgumentException:
-{ProbForm parsedpf;
+CPModel ProbForm()  throws RBNIllegalArgumentException:
+{CPModel parsedpf;
 }
 {// grammar
 	( LOOKAHEAD(Atom() "=" ) parsedpf= BoolCatEquality()
@@ -218,8 +218,8 @@ String TypeDeclaration():
 }
 
 
-ProbForm Constant():
-{ProbForm parsedpf;
+CPModel Constant():
+{CPModel parsedpf;
 }
 {// grammar
 	(parsedpf=NumericConstant() | parsedpf=Parameter())
@@ -252,7 +252,7 @@ ProbFormConstant  Parameter():
 	)
 }
 
-ProbForm Atom()  throws RBNIllegalArgumentException:
+CPModel Atom()  throws RBNIllegalArgumentException:
 {
  ProbFormAtom parsedpfatom;
  RBNReader3.ParsedUnTypedAtom parsedutat;
@@ -305,9 +305,9 @@ ProbFormConvComb ConvCombination()  throws RBNIllegalArgumentException:
 }
 
 ProbFormConvComb ConvCombinationClassic()  throws RBNIllegalArgumentException:
-{ProbForm pf1;
- ProbForm pf2;
- ProbForm pf3;
+{CPModel pf1;
+ CPModel pf2;
+ CPModel pf3;
 }
 {// grammar
 	"(" pf1 = ProbForm()
@@ -324,9 +324,9 @@ ProbFormConvComb ConvCombinationClassic()  throws RBNIllegalArgumentException:
 }
 
 ProbFormConvComb ConvCombinationCherry()  throws RBNIllegalArgumentException:
-{ProbForm pf1;
- ProbForm pf2;
- ProbForm pf3;
+{CPModel pf1;
+ CPModel pf2;
+ CPModel pf3;
 }
 {// grammar
 	<WIFWIF>  pf1 = ProbForm() <WIFTHEN> pf2 = ProbForm() <WIFELSE> pf3 = ProbForm()
@@ -360,9 +360,9 @@ ProbFormCombFunc CombinationFunc()  throws RBNIllegalArgumentException:
 
 ProbFormCombFunc CombinationFuncClassic()  throws RBNIllegalArgumentException:
 { Token tok;
-  Vector<ProbForm> pflist;
+  Vector<CPModel> pflist;
   Vector<String> arglist;
-  ProbForm[] pfarr;
+  CPModel[] pfarr;
   ProbFormBool cc = new ProbFormBoolConstant(true);
 }
 {// grammar
@@ -376,7 +376,7 @@ ProbFormCombFunc CombinationFuncClassic()  throws RBNIllegalArgumentException:
 		return null;
 		break;
 	case 2:
-	 pfarr = new ProbForm[pflist.size()];
+	 pfarr = new CPModel[pflist.size()];
 	 for (int i=0;i<pfarr.length;i++)
 		pfarr[i]=pflist.elementAt(i);
 	return new ProbFormCombFunc(tok.image,pfarr,StringOps.stringVectorToArray(arglist),cc);}
@@ -386,9 +386,9 @@ ProbFormCombFunc CombinationFuncClassic()  throws RBNIllegalArgumentException:
 
 ProbFormCombFunc CombinationFuncCherry()  throws RBNIllegalArgumentException:
 { Token tok;
-  Vector<ProbForm> pflist;
+  Vector<CPModel> pflist;
   Vector<String> arglist = new Vector<String>();
-  ProbForm[] pfarr;
+  CPModel[] pfarr;
   ProbFormBool cc = new ProbFormBoolConstant(true);
 }
 {// grammar
@@ -405,7 +405,7 @@ ProbFormCombFunc CombinationFuncCherry()  throws RBNIllegalArgumentException:
 		return null;
 		break;
 	case 2:
-	 pfarr = new ProbForm[pflist.size()];
+	 pfarr = new CPModel[pflist.size()];
 	 for (int i=0;i<pfarr.length;i++)
 		pfarr[i]=pflist.elementAt(i);
 	return new ProbFormCombFunc(tok.image,pfarr,StringOps.stringVectorToArray(arglist),cc);}
@@ -413,9 +413,9 @@ ProbFormCombFunc CombinationFuncCherry()  throws RBNIllegalArgumentException:
 }
 
 ProbFormCombFunc CombinationFuncProd()  throws RBNIllegalArgumentException:
-{Vector<ProbForm> pflist = new Vector<ProbForm>();
-ProbForm nextpf;
-ProbForm[] pfarr;
+{Vector<CPModel> pflist = new Vector<CPModel>();
+CPModel nextpf;
+CPModel[] pfarr;
 }
 {// grammar
     	"("
@@ -431,7 +431,7 @@ ProbForm[] pfarr;
 		return null;
 		break;
 	case 2:
-	 pfarr = new ProbForm[pflist.size()];
+	 pfarr = new CPModel[pflist.size()];
 	 for (int i=0;i<pfarr.length;i++)
 		pfarr[i]=pflist.elementAt(i);
 	return new ProbFormCombFunc("prod",pfarr,new String[0],new ProbFormBoolConstant(true));}
@@ -440,9 +440,9 @@ ProbForm[] pfarr;
 
 
 ProbFormCombFunc CombinationFuncSum()  throws RBNIllegalArgumentException:
-{Vector<ProbForm> pflist = new Vector<ProbForm>();
-ProbForm nextpf;
-ProbForm[] pfarr;
+{Vector<CPModel> pflist = new Vector<CPModel>();
+CPModel nextpf;
+CPModel[] pfarr;
 }
 {// grammar
     	"("
@@ -455,7 +455,7 @@ ProbForm[] pfarr;
 	   |
 	   <MINUS> nextpf = ProbForm()
        	   {
-            ProbForm[] pfl = new ProbForm[2];
+           CPModel[] pfl = new CPModel[2];
        	   pfl[0]=new ProbFormConstant(-1);
        	   pfl[1]=nextpf;
        	   pflist.add(new ProbFormCombFunc("prod",pfl,new String[0],new ProbFormBoolConstant(true)));
@@ -468,7 +468,7 @@ ProbForm[] pfarr;
 		return null;
 		break;
 	case 2:
-	 pfarr = new ProbForm[pflist.size()];
+	 pfarr = new CPModel[pflist.size()];
 	 for (int i=0;i<pfarr.length;i++)
 		pfarr[i]=pflist.elementAt(i);
 	return new ProbFormCombFunc("sum",pfarr,new String[0],new ProbFormBoolConstant(true));}
@@ -476,9 +476,9 @@ ProbForm[] pfarr;
 }
 
 
-Vector<ProbForm> ProbFormList()  throws RBNIllegalArgumentException:
-{Vector<ProbForm> pflist = new Vector<ProbForm>();
- ProbForm nextpf;
+Vector<CPModel> ProbFormList()  throws RBNIllegalArgumentException:
+{Vector<CPModel> pflist = new Vector<CPModel>();
+ CPModel nextpf;
 }
 {// grammar
 	( nextpf = ProbForm()
@@ -621,7 +621,7 @@ ProbFormMacroCall MacroCall()  throws RBNIllegalArgumentException:
 
 CatModelSoftMax CatSoftMax()  throws RBNIllegalArgumentException:
 {
-  Vector<ProbForm> pflist;
+  Vector<CPModel> pflist;
 }
 {// grammar
      <SOFTMAX>	pflist = ProbFormList()
@@ -670,9 +670,9 @@ String PathDec():
 TorchInputRels CombinationTorchRels()  throws RBNIllegalArgumentException:
 {
   Token tok;
-  Vector<ProbForm> pflist;
+  Vector<CPModel> pflist;
   Vector<String> arglist = new Vector<String>();
-  ProbForm[] pfarr;
+  CPModel[] pfarr;
   ProbFormBool cc = new ProbFormBoolConstant(true);
 }
 {// grammar
@@ -688,7 +688,7 @@ TorchInputRels CombinationTorchRels()  throws RBNIllegalArgumentException:
                 return null;
                 break;
             case 2:
-                pfarr = new ProbForm[pflist.size()];
+                pfarr = new CPModel[pflist.size()];
                 for (int i=0;i<pfarr.length;i++)
                     pfarr[i]=pflist.elementAt(i);
                 return new TorchInputRels(pfarr,StringOps.stringVectorToArray(arglist),cc);
@@ -752,6 +752,8 @@ CatGnn CatGnn() throws RBNIllegalArgumentException :
             return null;
             break;
         case 2:
+            if (numVals == 1)
+                return new CatGnnBool(configPath, freeVals, forInputs, combineClauses, true);
             return new CatGnn(configPath, freeVals, numVals, forInputs, combineClauses, true);
         }
     }

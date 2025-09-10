@@ -21,7 +21,7 @@ PARSER_BEGIN(MLNParser)
 package MLNParser.MLNParser;
 
 //import java.io.*;
-import RBNpackage.ProbForm;
+import RBNpackage.CPModel;
 import MLNExceptions.NoSuchRelationException;
 import MLNExceptions.BadArityException;
 import MLNParser.*;
@@ -78,7 +78,7 @@ void ReadMarkovLogicNetwork():
 //Relations
 void RelationList():
 {//variables
-	ProbForm formula;
+	CPModel formula;
 }
 {//grammar
 	(RelationDeclared()<EOL>)*
@@ -86,10 +86,10 @@ void RelationList():
 
 
 
-ProbForm RelationDeclared():
+CPModel RelationDeclared():
 {//variables
 	Token tok;
-	ProbForm formula;
+	CPModel formula;
 	ParsedRelation relation=new ParsedRelation();
 }
 {//grammar
@@ -150,7 +150,7 @@ void TypeDeclaration():
 //Hard formulas
 void HardFormulaList():
 {//variables
-	ProbForm formula;
+	CPModel formula;
 }
 {//grammar
 	(formula = HardFormula() "."(<EOL>)+
@@ -164,9 +164,9 @@ void HardFormulaList():
 
 
 
-ProbForm HardFormula():
+CPModel HardFormula():
 {//variables
-	ProbForm formula = null;
+	CPModel formula = null;
 }
 {//grammar
 	formula = Formula_1()
@@ -194,10 +194,10 @@ ProbForm HardFormula():
 // i=3: v
 // i=4: ^
 
-ProbForm Formula_1():
+CPModel Formula_1():
 {//variables
-	ProbForm formula = null;
-	ProbForm secondPart;
+	CPModel formula = null;
+	CPModel secondPart;
 }
 {//grammar
 	formula = Formula_2()( <IfAndOnlyIf> secondPart = Formula_2()
@@ -208,10 +208,10 @@ ProbForm Formula_1():
 	{return formula;}
 }
 
-ProbForm Formula_2():
+CPModel Formula_2():
 {//variables 
-	ProbForm formula = null;
-	ProbForm secondPart;
+	CPModel formula = null;
+	CPModel secondPart;
 }
 {//grammar
 	formula = Formula_3()( <Implies> secondPart = Formula_3() 
@@ -222,10 +222,10 @@ ProbForm Formula_2():
 	{return formula;}
 }
 
-ProbForm Formula_3():
+CPModel Formula_3():
 {//variables 
-	ProbForm formula = null;
-	ProbForm secondPart;
+	CPModel formula = null;
+	CPModel secondPart;
 }
 {//grammar
 	formula = Formula_4()( <Or> secondPart = Formula_4()	
@@ -236,10 +236,10 @@ ProbForm Formula_3():
 	{return formula;}
 }
 
-ProbForm Formula_4():
+CPModel Formula_4():
 {//variables 
-	ProbForm formula = null;
-	ProbForm secondPart;
+	CPModel formula = null;
+	CPModel secondPart;
 }
 {//grammar
 	formula = Formula()( <And> secondPart =  Formula()
@@ -250,10 +250,10 @@ ProbForm Formula_4():
 	{return formula;}
 }
 
-ProbForm Formula():
+CPModel Formula():
 {//variables
 	Token tok;
-	ProbForm formula = null;
+	CPModel formula = null;
 	ParsedRelation relation=new ParsedRelation();
 	Vector<String> quantargs = new Vector<String>();
 	String equalityvar1 = "";
@@ -375,7 +375,7 @@ ProbForm Formula():
 //Weight Formulas
 void WeightFormulaList():
 {//variables
-	ProbForm formula;
+	CPModel formula;
 	Token t;
 }
 {//grammar
@@ -387,10 +387,10 @@ void WeightFormulaList():
 	)*
 }
 
-ProbForm WeightFormula():
+CPModel WeightFormula():
 {//variables
 	Token t;
-	ProbForm formula = null;
+	CPModel formula = null;
 }
 {//grammar
 	t= <Weight> 

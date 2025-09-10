@@ -9,7 +9,7 @@ import RBNLearning.Profiler;
 import RBNinference.PFNetworkNode;
 import RBNutilities.rbnutilities;
 
-public class ProbFormMacroCall extends ProbForm {
+public class ProbFormMacroCall extends CPModel implements ProbForm {
 
 	private RBNMacro macro;
 	private String arguments[]; // The argument list when macro is called
@@ -22,7 +22,7 @@ public class ProbFormMacroCall extends ProbForm {
 	 * Here: arguments = [z,w].
 	 * 
 	 */
-	private ProbForm pf_sub; // the probform of macro addressed by this call with variables substituted
+	private CPModel pf_sub; // the probform of macro addressed by this call with variables substituted
 	
 	public ProbFormMacroCall(RBNMacro m, String[] args) {
 		macro = m;
@@ -32,10 +32,10 @@ public class ProbFormMacroCall extends ProbForm {
 	
 	private void setpf() {
 		if (pf_sub == null)
-			pf_sub = ((ProbForm)macro.cpmod()).substitute(macro.arguments(), arguments);
+			pf_sub = (macro.cpmod()).substitute(macro.arguments(), arguments);
 	}
 	
-	public void setpf(ProbForm pf) {
+	public void setpf(CPModel pf) {
 		pf_sub=pf;
 	}
 	
@@ -58,7 +58,7 @@ public class ProbFormMacroCall extends ProbForm {
 	}
 
 	@Override
-	public ProbForm conditionEvidence(RelStruc A, OneStrucData inst) throws RBNCompatibilityException {
+	public CPModel conditionEvidence(RelStruc A, OneStrucData inst) throws RBNCompatibilityException {
 		// conditionEvidence is only called for ground ProbForms by BayesConstructor
 		setpf();
 		return pf_sub.conditionEvidence(A, inst);
@@ -70,7 +70,7 @@ public class ProbFormMacroCall extends ProbForm {
 	}
 
 	@Override
-	public Object[] evaluate(RelStruc A, OneStrucData inst, String[] vars, int[] tuple, boolean useCurrentCvals,
+	public Object[] evaluate(RelStruc A, OneStrucData inst, String[] vars, int[] tuple, int gradindx, boolean useCurrentCvals,
 			boolean useCurrentPvals, Hashtable<Rel,GroundAtomList> mapatoms, boolean useCurrentMvals,
 			Hashtable<String, Object[]> evaluated, Hashtable<String, Integer> params, int returntype, boolean valonly,
 			Profiler profiler) throws RBNCompatibilityException {
@@ -100,7 +100,8 @@ public class ProbFormMacroCall extends ProbForm {
 		Object[] result = pf_sub.evaluate(A, 
 				inst,
 				vars, 
-				tuple, 
+				tuple,
+				gradindx,
 				useCurrentCvals, 
 				useCurrentPvals, 
 				mapatoms, 
@@ -185,7 +186,7 @@ public class ProbFormMacroCall extends ProbForm {
 //	}
 
 	@Override
-	public ProbForm sEval(RelStruc A) throws RBNCompatibilityException {
+	public CPModel sEval(RelStruc A) throws RBNCompatibilityException {
 		setpf();
 		pf_sub.sEval(A);
 		ProbFormMacroCall returnval = new ProbFormMacroCall(this.macro,this.arguments);
@@ -194,12 +195,12 @@ public class ProbFormMacroCall extends ProbForm {
 	}
 	
 	@Override
-	public ProbForm substitute(String[] vars, int[] args) {
+	public CPModel substitute(String[] vars, int[] args) {
 		return new ProbFormMacroCall(this.macro,rbnutilities.array_substitute(arguments, vars, args));
 	}
 
 	@Override
-	public ProbForm substitute(String[] vars, String[] args) {
+	public CPModel substitute(String[] vars, String[] args) {
 		return new ProbFormMacroCall(this.macro,rbnutilities.array_substitute(arguments, vars, args));
 	}
 
@@ -232,8 +233,8 @@ public class ProbFormMacroCall extends ProbForm {
 		}
 	}
 	
-	public ProbForm pform() {
-		return (ProbForm)macro.cpmod();
+	public CPModel pform() {
+		return macro.cpmod();
 	}
 	
 	public RBNMacro macro() {
@@ -244,4 +245,8 @@ public class ProbFormMacroCall extends ProbForm {
 		return arguments;
 	}
 
+	@Override
+	public int numvals() {
+		return 2;
+	}
 }

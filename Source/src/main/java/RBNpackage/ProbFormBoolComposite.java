@@ -100,7 +100,8 @@ public class ProbFormBoolComposite extends ProbFormBool {
 	public Object[] evaluate(RelStruc A, 
 			OneStrucData inst, 
 			String[] vars, 
-			int[] tuple, 
+			int[] tuple,
+			int gradindx,
 			boolean useCurrentCvals, 
     		// String[] numrelparameters,
     		boolean useCurrentPvals,
@@ -127,7 +128,7 @@ public class ProbFormBoolComposite extends ProbFormBool {
 			case ProbFormBool.OPERATORAND:
 				result[0]=1.0;
 				for (int i=0;(i<components.length && (double)result[0] != 0);i++) {
-					double nextfac = (double)components[i].evaluate(A,inst,vars,tuple,useCurrentCvals,useCurrentPvals,
+					double nextfac = (double)components[i].evaluate(A,inst,vars,tuple,gradindx,useCurrentCvals,useCurrentPvals,
 							mapatoms,useCurrentMvals,evaluated,params,returntype,valonly,null)[0];
 					if (nextfac==0)
 						result[0]=0.0; // This allows to overwrite a previous result[0] = NaN with a clean 0
@@ -139,7 +140,7 @@ public class ProbFormBoolComposite extends ProbFormBool {
 			case ProbFormBool.OPERATOROR:
 				result[0]=0.0;
 				for (int i=0;(i<components.length && (double)result[0]<1);i++)
-					result[0] = Math.max((double)result[0],(double)components[i].evaluate(A,inst,vars,tuple,useCurrentCvals,useCurrentPvals,
+					result[0] = Math.max((double)result[0],(double)components[i].evaluate(A,inst,vars,tuple,gradindx,useCurrentCvals,useCurrentPvals,
 							mapatoms,useCurrentMvals,evaluated,params,returntype,valonly,null)[0]);
 			}
 			if (!sign)
@@ -305,7 +306,7 @@ public class ProbFormBoolComposite extends ProbFormBool {
 
 
 	@Override
-	public ProbForm sEval(RelStruc A) 
+	public CPModel sEval(RelStruc A)
 			throws RBNCompatibilityException {
 
 		int evalto = evaluatesTo(A);
@@ -330,7 +331,7 @@ public class ProbFormBoolComposite extends ProbFormBool {
 	}
 
 	@Override
-	public ProbForm substitute(String[] vars, int[] args) {
+	public CPModel substitute(String[] vars, int[] args) {
 		ProbFormBool[] substarray = new ProbFormBool[components.length];
 		for (int i=0;i<components.length;i++)
 			substarray[i]=(ProbFormBool)components[i].substitute(vars,args);
@@ -341,7 +342,7 @@ public class ProbFormBoolComposite extends ProbFormBool {
 	}
 
 	@Override
-	public ProbForm substitute(String[] vars, String[] args) {
+	public CPModel substitute(String[] vars, String[] args) {
 		ProbFormBool[] substarray = new ProbFormBool[components.length];
 		for (int i=0;i<components.length;i++)
 			substarray[i]=(ProbFormBool)components[i].substitute(vars,args);
@@ -363,7 +364,7 @@ public class ProbFormBoolComposite extends ProbFormBool {
 		return operator;
 	}
 	
-	public ProbForm toStandardPF(boolean recursive){
+	public CPModel toStandardPF(boolean recursive){
 		/* returns a ProbFormCombFunc or ProbFormConvComb
 		 * If sign == true:
 		 *     operator == and: return (n-or{negated components}:0,1)
@@ -377,7 +378,7 @@ public class ProbFormBoolComposite extends ProbFormBool {
 		 */
 		
 		
-		ProbForm[] pfargs = new ProbForm[components.length];
+		CPModel[] pfargs = new CPModel[components.length];
 		for (int i=0;i<components.length;i++){
 			if (operator==ProbFormBool.OPERATORAND){
 				if (recursive)
@@ -435,5 +436,10 @@ public class ProbFormBoolComposite extends ProbFormBool {
 				result.addAll(components[i].parentRels(processed));
 			return result;
 		}
+	}
+
+	@Override
+	public int numvals() {
+		return 2;
 	}
 }

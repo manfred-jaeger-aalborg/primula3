@@ -105,7 +105,7 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
     }
 
     @Override
-    public ProbForm conditionEvidence(RelStruc A, OneStrucData inst)
+    public CPModel conditionEvidence(RelStruc A, OneStrucData inst)
             throws RBNCompatibilityException {
         Object newArg1 = new Object(), newArg2 = new Object();
 
@@ -128,6 +128,7 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
                              OneStrucData inst,
                              String[] vars,
                              int[] tuple,
+                             int gradindx,
                              boolean useCurrentCvals,
                              // String[] numrelparameters,
                              boolean useCurrentPvals,
@@ -155,7 +156,7 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
         double a1 = 0, a2 = 0;
         if (arg1 instanceof ProbFormAtom) {
             a1 = (double) ((ProbFormAtom) thissubstituted.arg1).evaluate(A, inst, vars,
-                    tuple, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated,
+                    tuple, gradindx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated,
                     params, returntype, valonly, profiler)[0];
             if (Double.isNaN(a1)) {
                 result[0] = Double.NaN;
@@ -167,7 +168,7 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
 
         if (arg2 instanceof ProbFormAtom) {
             a2 = (double) ((ProbFormAtom) thissubstituted.arg2).evaluate(A, inst, vars,
-                    tuple, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated,
+                    tuple, gradindx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated,
                     params, returntype, valonly, profiler)[0];
             if (Double.isNaN(a2)) {
                 result[0] = Double.NaN;
@@ -268,7 +269,7 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
     }
 
     @Override
-    public ProbForm sEval(RelStruc A) throws RBNCompatibilityException {
+    public CPModel sEval(RelStruc A) throws RBNCompatibilityException {
 
         Object a1 = null, a2 = null;
         if (arg1 instanceof ProbFormAtom) {
@@ -291,7 +292,7 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
     }
 
     @Override
-    public ProbForm substitute(String[] vars, int[] args) {
+    public CPModel substitute(String[] vars, int[] args) {
         if (vars.length != args.length)
             System.out.println("ProbFormBoolAtomEquality.substitute: vars: " + rbnutilities.arrayToString(vars) + "   args: " + rbnutilities.arrayToString(args));
 
@@ -314,7 +315,7 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
     }
 
     @Override
-    public ProbForm substitute(String[] vars, String[] args) {
+    public CPModel substitute(String[] vars, String[] args) {
         if (vars.length != args.length)
             System.out.println("ProbFormBoolAtomEquality.substitute: vars: " + rbnutilities.arrayToString(vars) + "   args: " + rbnutilities.arrayToString(args));
 
@@ -353,7 +354,7 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
         return (isGroundComponent(arg1) && isGroundComponent(arg2));
     }
 
-    public ProbForm toStandardPF(boolean recursive) {
+    public CPModel toStandardPF(boolean recursive) {
         return this;
     }
 
@@ -389,5 +390,10 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
             return this.parentRels();
         }
 
+    }
+
+    @Override
+    public int numvals() {
+        return 2;
     }
 }

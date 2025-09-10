@@ -111,7 +111,7 @@ private int highvalue;
 
 
 	public GGAtomMaxNode(GradientGraphO gg,
-			ProbForm pf,  
+			CPModel pf,
 			RelStruc A,
 			OneStrucData I,
 			int inputcasenoarg,

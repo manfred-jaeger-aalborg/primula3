@@ -46,7 +46,7 @@ public class GGCombFuncNode extends GGCPMNode{
 	double aggregateOfSubPFs;
 	
 	public GGCombFuncNode(GradientGraphO gg,
-			ProbForm pf, 
+			CPModel pf,
 			Hashtable allnodes,
 			RelStruc A,
 			OneStrucData I,
@@ -79,8 +79,8 @@ public class GGCombFuncNode extends GGCPMNode{
 		 * If yes, add this value to vals; if no, create a new child node for this probability
 		 * formula
 		 */
-		ProbForm nextsubpf;
-		ProbForm groundnextsubpf;
+		CPModel nextsubpf;
+		CPModel groundnextsubpf;
 		double evalOfSubPF;
 		GGCPMNode constructedchild;
 		
@@ -93,7 +93,7 @@ public class GGCombFuncNode extends GGCPMNode{
 				
 				double starttime = System.currentTimeMillis();
 				
-				evalOfSubPF = (double)groundnextsubpf.evaluate(A, I, new String[0], new int[0] , false,
+				evalOfSubPF = (double)groundnextsubpf.evaluate(A, I, new String[0], new int[0], 0, false,
 						useCurrentPvals,
 						mapatoms,false,evaluated,parameters,ProbForm.RETURN_ARRAY,true,null)[0];
 				
@@ -481,7 +481,6 @@ public class GGCombFuncNode extends GGCPMNode{
 
 
 	private Gradient  computeGradientINVSUM(Integer idx)
-	
 			throws RBNNaNException{
 		System.out.println("Gradient for INVSUM not implemented");
 		return null;
@@ -520,7 +519,7 @@ public class GGCombFuncNode extends GGCPMNode{
 		Gradient result = gradient_for_samples.get(idx);
 		result.reset();
 
-		
+
 		for (String param: this.myparameters) {
 			double partderiv = 0;
 			for (int i=0;i<children.size();i++) {

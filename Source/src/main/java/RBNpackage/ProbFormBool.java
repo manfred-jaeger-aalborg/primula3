@@ -9,7 +9,7 @@ import RBNExceptions.RBNCompatibilityException;
  * a boolean value 0 or 1. Boolean expression of 
  * Boolean atoms 
  */
-public abstract class ProbFormBool extends ProbForm {
+public abstract class ProbFormBool extends CPModel implements ProbForm {
 	
 	public static final int OPERATORAND = 0;
 	public static final int OPERATOROR = 1;
@@ -64,7 +64,7 @@ public abstract class ProbFormBool extends ProbForm {
 	 * interpretations of numerical atoms), and in the case of ProbFormBoolEquality
 	 * also nothing is changed
 	 */
-	public abstract ProbForm toStandardPF(boolean recursive);
+	public abstract CPModel toStandardPF(boolean recursive);
 	
 	public abstract ProbFormBool clone();
 	

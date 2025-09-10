@@ -35,7 +35,7 @@ import RBNutilities.*;
 import RBNLearning.Profiler;
 
 
-public class ProbFormCombFunc extends ProbForm{
+public class ProbFormCombFunc extends CPModel implements ProbForm {
 
 	/**
 	 * @uml.property  name="mycomb"
@@ -46,7 +46,7 @@ public class ProbFormCombFunc extends ProbForm{
 	 * @uml.property  name="pfargs"
 	 * @uml.associationEnd  multiplicity="(0 -1)"
 	 */
-	private ProbForm pfargs[];
+	private CPModel pfargs[];
 	/**
 	 * @uml.property  name="quantvars" multiplicity="(0 -1)" dimension="1"
 	 */
@@ -71,7 +71,7 @@ public class ProbFormCombFunc extends ProbForm{
 		return mycomb;
 	}
 
-	public ProbForm[] getPfargs() {
+	public CPModel[] getPfargs() {
 		return pfargs;
 	}
 
@@ -91,7 +91,7 @@ public class ProbFormCombFunc extends ProbForm{
 	{}
 
 	/** Creates new ProbFormCombFunc */
-	public ProbFormCombFunc(CombFunc mc,ProbForm[] pfa, String[] qvars, ProbFormBool cc) 
+	public ProbFormCombFunc(CombFunc mc,CPModel[] pfa, String[] qvars, ProbFormBool cc)
 			throws IllegalArgumentException
 			{
 		// Construct SSymbs and RSymbs
@@ -127,7 +127,7 @@ public class ProbFormCombFunc extends ProbForm{
 
 			}
 
-	public ProbFormCombFunc(String mc,ProbForm[] pfa, String[] qvars, ProbFormBool cc) 
+	public ProbFormCombFunc(String mc,CPModel[] pfa, String[] qvars, ProbFormBool cc)
 			throws IllegalArgumentException
 			{
 
@@ -200,7 +200,7 @@ public class ProbFormCombFunc extends ProbForm{
 		return result;
 	}
 
-	public ProbForm substitute(String[] vars, int[] args)
+	public CPModel substitute(String[] vars, int[] args)
 	{
 		ProbFormCombFunc result;
 		ProbFormBool subcconstr = null;
@@ -215,7 +215,7 @@ public class ProbFormCombFunc extends ProbForm{
 
 
 		// Perform substitution on pfargs
-		ProbForm[]  subpfargs = new ProbForm[pfargs.length];
+		CPModel[]  subpfargs = new CPModel[pfargs.length];
 		for (int i = 0; i<pfargs.length; i++)
 			subpfargs[i]=pfargs[i].substitute(subsvars,subsargs);
 		//Perform substitution on cconstr
@@ -228,10 +228,10 @@ public class ProbFormCombFunc extends ProbForm{
 		return result;
 	}
 
-	public ProbForm substitute(String[] vars, String[] args)
+	public CPModel substitute(String[] vars, String[] args)
 	{
 		ProbFormCombFunc result;
-		ProbForm[]  subpfargs = new ProbForm[pfargs.length];
+		CPModel[]  subpfargs = new CPModel[pfargs.length];
 		ProbFormBool subcconstr = null;
 
 
@@ -279,7 +279,7 @@ public class ProbFormCombFunc extends ProbForm{
 			throws RBNCompatibilityException{
 		//System.out.println("makeParentVec for " + this.asString() + ": ");
 		Vector result = new Vector();
-		ProbForm nextprobform;
+		CPModel nextprobform;
 
 		int[][] subslist = A.allTrue(cconstr,quantvars);
 
@@ -309,7 +309,7 @@ public class ProbFormCombFunc extends ProbForm{
 	//	}
 
 
-	public ProbForm conditionEvidence(RelStruc A, OneStrucData inst)
+	public CPModel conditionEvidence(RelStruc A, OneStrucData inst)
 			throws RBNCompatibilityException
 			{
 		//System.out.println("condition Evidence for " + this.asString());
@@ -369,7 +369,8 @@ public class ProbFormCombFunc extends ProbForm{
 	public Object[] evaluate(RelStruc A, 
 			OneStrucData inst, 
 			String[] vars, 
-			int[] tuple, 
+			int[] tuple,
+			int gradindx,
 			boolean useCurrentCvals, 
 			// String[] numrelparameters,
 			boolean useCurrentPvals,
@@ -436,6 +437,7 @@ public class ProbFormCombFunc extends ProbForm{
 						inst,
 						quantvars,
 						subslist[j],
+						gradindx,
 						useCurrentCvals,
 						useCurrentPvals,
 						mapatoms,
@@ -572,7 +574,7 @@ public class ProbFormCombFunc extends ProbForm{
 
 		//System.out.println("evalSample for " + this.makeKey(new String[0],new int[0],false));
 
-		ProbForm groundpf;
+		CPModel groundpf;
 		double[] combargs = new double[this.pfargs.length*subslist.length];
 		int nextindex;
 		double nextvalue;
@@ -801,7 +803,7 @@ public class ProbFormCombFunc extends ProbForm{
 	/** Returns the i'th probability formula in the argument of this formula's combination
 	 * function
 	 */
-	public ProbForm probformAt(int i){
+	public CPModel probformAt(int i){
 		return pfargs[i];
 	}
 
@@ -811,12 +813,12 @@ public class ProbFormCombFunc extends ProbForm{
 		return quantvars;
 	}
 
-	public ProbForm sEval(RelStruc A)
+	public CPModel sEval(RelStruc A)
 			throws RBNCompatibilityException
 			{
 		int[][] subslist = A.allTrue(cconstr,quantvars);
 
-		ProbForm[]  sevalpfargs = new ProbForm[pfargs.length*subslist.length];
+		CPModel[]  sevalpfargs = new CPModel[pfargs.length*subslist.length];
 		for (int i = 0; i<pfargs.length; i++){
 			for (int j=0;j<subslist.length;j++){
 				sevalpfargs[subslist.length*i+j]=pfargs[i].substitute(quantvars,subslist[j]).sEval(A);
@@ -876,5 +878,10 @@ public class ProbFormCombFunc extends ProbForm{
 				result.addAll(pfargs[i].parentRels(processed));
 			return result;
 		}
+	}
+
+	@Override
+	public int numvals() {
+		return 2;
 	}
 }

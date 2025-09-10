@@ -12,7 +12,7 @@ public class GGAtomEqualityNode extends GGCPMNode{
     double[] evalOfPFs;
     
     public GGAtomEqualityNode(GradientGraphO gg,
-                              ProbForm pf,
+							  CPModel pf,
                               Hashtable<String,GGCPMNode> allnodes,
                               RelStruc A,
                               OneStrucData I,
@@ -34,7 +34,8 @@ public class GGAtomEqualityNode extends GGCPMNode{
         		evalOfPFs[i]=(double)((ProbFormAtom)o).evaluate(A, 
     					I , 
     					new String[0], 
-    					new int[0] , 
+    					new int[0],
+						0,
     					false,
     					useCurrentPvals,
     					mapatoms,

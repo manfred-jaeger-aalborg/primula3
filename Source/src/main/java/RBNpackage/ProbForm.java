@@ -31,63 +31,28 @@ import RBNutilities.rbnutilities;
 import RBNgui.Primula;
 import RBNLearning.Profiler;
 
-public abstract class ProbForm extends CPModel
+public interface ProbForm
 {
-    
-    
-	public static final int PFATOM = 0;
-	public static final int PFBOOL = 1;
-	public static final int PFCOMBFUNC = 2;
-	public static final int PFCONVCOMB = 3;
-	public static final int PFCONST = 4;
+	int PFATOM = 0;
+	int PFBOOL = 1;
+	int PFCOMBFUNC = 2;
+	int PFCONVCOMB = 3;
+	int PFCONST = 4;
 
 	/* flags for data type of computed gradients: array or hashtable
 	 */
-	public static final int RETURN_ARRAY=0;
-	public static final int RETURN_SPARSE=1;
+	int RETURN_ARRAY=0;
+	int RETURN_SPARSE=1;
 	
 	
-    public ProbForm()
-    {alias = null;}  
+//    public ProbForm()
+//    {alias = null;}
 
-/*
- * To evaluate a ProbForm ignore the 'gradindx' argument!
- */
-    public Object[] evaluate(RelStruc A, 
+    Object[] evaluate(RelStruc A,
     		OneStrucData inst, 
     		String[] vars, 
-    		int[] tuple, 
-    		int gradindx,
-    		boolean useCurrentCvals, 
-    		//String[] numrelparameters,
-    		boolean useCurrentPvals,
-    		Hashtable<Rel,GroundAtomList> mapatoms,
-    		boolean useCurrentMvals,
-    		Hashtable<String,Object[]> evaluated,
-    		Hashtable<String,Integer> params,
-    		int returntype,
-    		boolean valonly,
-    		Profiler profiler)
-    throws RBNCompatibilityException{
-    	return evaluate(A, 
-        		inst, 
-        		vars, 
-        		tuple, 
-        		useCurrentCvals, 
-        		useCurrentPvals,
-        		mapatoms,
-        		useCurrentMvals,
-        		evaluated,
-        		params,
-        		returntype,
-        		valonly,
-        		profiler);
-    }
-    
-    public abstract Object[] evaluate(RelStruc A, 
-    		OneStrucData inst, 
-    		String[] vars, 
-    		int[] tuple, 
+    		int[] tuple,
+			int gradindx,
     		boolean useCurrentCvals, 
     		//String[] numrelparameters,
     		boolean useCurrentPvals,
@@ -112,10 +77,10 @@ public abstract class ProbForm extends CPModel
      * instantiation instasosd, but w.r.t. to sampleinst fields at 
      * PFNetworkNodes which are accessible via atomhasht
      */
-    public abstract int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, Hashtable<String,GroundAtom> atomhasht) 
+    int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, Hashtable<String,GroundAtom> atomhasht)
 	throws RBNCompatibilityException;
 
-    public abstract int evaluatesTo(RelStruc A) throws RBNCompatibilityException;
+    int evaluatesTo(RelStruc A) throws RBNCompatibilityException;
 
 
 
@@ -135,7 +100,7 @@ public abstract class ProbForm extends CPModel
 //    	return this.substitute(fvs,newvars);
 //    }
  
-    public static int typeOfPf(ProbForm pf){
+    static int typeOfPf(ProbForm pf){
     	if (pf instanceof ProbFormAtom)
     		return ProbForm.PFATOM;
     	if (pf instanceof ProbFormBool)
@@ -150,18 +115,15 @@ public abstract class ProbForm extends CPModel
     	return 0;
     }
     
-    public abstract ProbForm substitute(String[] vars, int[] args); 
-    
-    public abstract ProbForm substitute(String[] vars, String[] args);
-    
-    public abstract ProbForm sEval(RelStruc A) throws RBNCompatibilityException;
+    CPModel substitute(String[] vars, int[] args);
 
-    
-    public abstract ProbForm conditionEvidence(RelStruc A, OneStrucData inst)
+	CPModel substitute(String[] vars, String[] args);
+
+	CPModel sEval(RelStruc A) throws RBNCompatibilityException;
+
+
+	CPModel conditionEvidence(RelStruc A, OneStrucData inst)
     	    throws RBNCompatibilityException;
-    
-    public int numvals() {
-    	return 2;
-    }
+
 }
 

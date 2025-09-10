@@ -75,11 +75,12 @@ public class GGSoftMaxNode extends GGCPMNode{
 //		current_evalofpfs = new double[cpmsm.numvals()];
 
 		for (int i = 0; i<outDim; i++){
-			ProbForm pf = cpmsm.pfAt(i);
+			CPModel pf = cpmsm.pfAt(i);
 			evalOfPFs[i]= (double)(pf.evaluate(A, 
 					I , 
 					new String[0], 
-					new int[0] , 
+					new int[0],
+					0,
 					false,
 					useCurrentPvals,
 					mapatoms,

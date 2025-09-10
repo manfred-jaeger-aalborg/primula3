@@ -155,7 +155,7 @@ public abstract class GGCPMNode extends GGNode{
 		 */
 		if ((cpm instanceof ProbFormBoolAtom) && ((ProbFormBoolAtom)cpm).sign()==false){
 			((ProbFormBoolAtom)cpm).toggleSign();
-			cpm = new ProbFormConvComb((ProbForm)cpm,new ProbFormConstant(0), new ProbFormConstant(1));
+			cpm = new ProbFormConvComb(cpm,new ProbFormConstant(0), new ProbFormConstant(1));
 		}
 
 		if (!isuga) {
@@ -173,10 +173,10 @@ public abstract class GGCPMNode extends GGNode{
 					// then not be identified as an rbn parameter, because it receives an uga key.
 					// Therefore, turn the pf into auxiliary conv. comb. formula (1:pf,0) which will then be 
 					// handled by subsequent case.
-					cpm = new ProbFormConvComb(new ProbFormConstant(1.0),(ProbForm)cpm,new ProbFormConstant(0.0));
+					cpm = new ProbFormConvComb(new ProbFormConstant(1.0),cpm,new ProbFormConstant(0.0));
 				}
 				else {
-					result =  new GGConstantNode(gg,(ProbForm)cpm,A,I);
+					result =  new GGConstantNode(gg,cpm,A,I);
 					String pname = ((ProbFormConstant)cpm).getParamName();
 					if (pname !="") {
 						((GGConstantNode)result).setCurrentParamVal(gg.myPrimula.getRBN().getParameterValue(pname));
@@ -190,9 +190,9 @@ public abstract class GGCPMNode extends GGNode{
 				if (gg.mapatoms != null && 
 						gg.mapatoms(((ProbFormAtom)cpm).getRelation()) != null && 
 						gg.mapatoms(((ProbFormAtom)cpm).getRelation()).contains(((ProbFormAtom)cpm).atom()))
-					result =  new GGAtomMaxNode(gg,(ProbForm)cpm,A,I,inputcaseno,observcaseno);
+					result =  new GGAtomMaxNode(gg,cpm,A,I,inputcaseno,observcaseno);
 				else
-					result =  new GGAtomSumNode(gg,(ProbForm)cpm,A,I,inputcaseno,observcaseno);
+					result =  new GGAtomSumNode(gg,cpm,A,I,inputcaseno,observcaseno);
 			}
 			if ((cpm instanceof ProbFormAtom && ((ProbFormAtom)cpm).getRelation().ispredefined() )
 					|| 
@@ -215,22 +215,22 @@ public abstract class GGCPMNode extends GGNode{
 							pfvalue = Math.abs(1-pfvalue);
 					}
 					cpm=pfconst;
-					result = new GGConstantNode(gg,(ProbForm)cpm,A,I);
+					result = new GGConstantNode(gg,cpm,A,I);
 					((GGConstantNode)result).setCurrentParamVal(pfvalue);;
 				}
 
 			}
 			if (cpm instanceof ProbFormConvComb)
-				result =  new GGConvCombNode(gg,(ProbForm)cpm,allnodes,A,I,inputcaseno,observcaseno,parameters,
+				result =  new GGConvCombNode(gg,cpm,allnodes,A,I,inputcaseno,observcaseno,parameters,
 						useCurrentPvals,mapatoms,evaluated);
 			if (cpm instanceof CatModelSoftMax)
 				result =  new GGSoftMaxNode(gg,(CatModelSoftMax)cpm,allnodes,A,I,inputcaseno,observcaseno,parameters,
 						useCurrentPvals,mapatoms,evaluated);
 			if (cpm instanceof ProbFormCombFunc)
-				result =  new GGCombFuncNode(gg,(ProbForm)cpm,allnodes,A,I,inputcaseno,observcaseno,parameters,
+				result =  new GGCombFuncNode(gg,cpm,allnodes,A,I,inputcaseno,observcaseno,parameters,
 						useCurrentPvals,mapatoms,evaluated);
 			if (cpm instanceof ProbFormBoolComposite){
-				ProbForm pfstandard = ((ProbFormBoolComposite) cpm).toStandardPF(false);
+				CPModel pfstandard = ((ProbFormBoolComposite) cpm).toStandardPF(false);
 				if (pfstandard instanceof ProbFormCombFunc)
 					result =  new GGCombFuncNode(gg,pfstandard,allnodes,A,I,inputcaseno,observcaseno,parameters,
 							useCurrentPvals,mapatoms,evaluated);
@@ -239,15 +239,15 @@ public abstract class GGCPMNode extends GGNode{
 							useCurrentPvals,mapatoms,evaluated);
 			}
 			if (cpm instanceof ProbFormBoolConstant){
-				result = new GGConstantNode(gg,(ProbForm)cpm,A,I);
+				result = new GGConstantNode(gg,cpm,A,I);
 				((GGConstantNode)result).setCurrentParamVal(((ProbFormBoolConstant)cpm).value());
 			}
 			if (cpm instanceof ProbFormBoolEquality){
-				result = new GGConstantNode(gg,(ProbForm)cpm,A,I);
+				result = new GGConstantNode(gg,cpm,A,I);
 				((GGConstantNode)result).setCurrentParamVal(((ProbFormBoolEquality)cpm).evaluate(A,I));
 			}
 			if (cpm instanceof ProbFormBoolAtomEquality) {
-				result = new GGAtomEqualityNode(gg,(ProbForm)cpm,allnodes,A,I,inputcaseno,observcaseno,parameters,
+				result = new GGAtomEqualityNode(gg,cpm,allnodes,A,I,inputcaseno,observcaseno,parameters,
 						useCurrentPvals,mapatoms,evaluated);
 
 			}

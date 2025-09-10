@@ -30,7 +30,7 @@ public class ProbFormBoolConstant extends ProbFormBool {
 	}
 
 	@Override
-	public ProbForm conditionEvidence(RelStruc A, OneStrucData inst)
+	public CPModel conditionEvidence(RelStruc A, OneStrucData inst)
 			throws RBNCompatibilityException {
 		return new ProbFormBoolConstant(sign);
 	}
@@ -51,7 +51,8 @@ public class ProbFormBoolConstant extends ProbFormBool {
 	public Object[] evaluate(RelStruc A, 
 			OneStrucData inst, 
 			String[] vars, 
-			int[] tuple, 
+			int[] tuple,
+			int gradindx,
 			boolean useCurrentCvals, 
     		// String[] numrelparameters,
     		boolean useCurrentPvals,
@@ -138,12 +139,12 @@ public class ProbFormBoolConstant extends ProbFormBool {
 
 
 	@Override
-	public ProbForm sEval(RelStruc A) throws RBNCompatibilityException {
+	public CPModel sEval(RelStruc A) throws RBNCompatibilityException {
 		return new ProbFormBoolConstant(sign);
 	}
 
 	@Override
-	public ProbForm substitute(String[] vars, int[] args) {
+	public CPModel substitute(String[] vars, int[] args) {
 		ProbFormBoolConstant result = new ProbFormBoolConstant(sign);
 		if (this.alias != null)
 			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
@@ -151,14 +152,14 @@ public class ProbFormBoolConstant extends ProbFormBool {
 	}
 
 	@Override
-	public ProbForm substitute(String[] vars, String[] args) {
+	public CPModel substitute(String[] vars, String[] args) {
 		ProbFormBoolConstant result = new ProbFormBoolConstant(sign);
 		if (this.alias != null)
 			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
 		return result;
 	}
 
-	public ProbForm toStandardPF(boolean recursive)  {
+	public CPModel toStandardPF(boolean recursive)  {
 		double value = 0;
 		if (sign) value =1;
 		return new ProbFormConstant(value);
@@ -177,5 +178,10 @@ public class ProbFormBoolConstant extends ProbFormBool {
 	
 	public TreeSet<Rel> parentRels(TreeSet<String> processed){
 		return new TreeSet<Rel>();	
+	}
+
+	@Override
+	public int numvals() {
+		return 2;
 	}
 }

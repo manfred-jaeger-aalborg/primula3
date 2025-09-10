@@ -33,29 +33,29 @@ import RBNinference.PFNetworkNode;
 import RBNLearning.*;
 
 
-public class ProbFormConvComb extends ProbForm {
+public class ProbFormConvComb extends CPModel implements ProbForm{
 
 	/**
 	 * @uml.property  name="f1"
 	 * @uml.associationEnd  
 	 */
-	ProbForm F1;
+	CPModel F1;
 	/**
 	 * @uml.property  name="f2"
 	 * @uml.associationEnd  
 	 */
-	ProbForm F2;
+	CPModel F2;
 	/**
 	 * @uml.property  name="f3"
 	 * @uml.associationEnd  
 	 */
-	ProbForm F3;
+	CPModel F3;
 
 	public ProbFormConvComb()
 	{}
 
 	/** Creates new ProbFormConvComb */
-	public ProbFormConvComb(ProbForm f1, ProbForm f2, ProbForm f3) {
+	public ProbFormConvComb(CPModel f1, CPModel f2, CPModel f3) {
 //		SSymbs = rbnutilities.arraymerge(f1.SSymbs,f2.SSymbs);
 //		SSymbs = rbnutilities.arraymerge(SSymbs, f3.SSymbs);
 //		RSymbs = rbnutilities.arraymerge(f1.RSymbs,f2.RSymbs);
@@ -79,7 +79,7 @@ public class ProbFormConvComb extends ProbForm {
 		return (F1.multlinOnly() && F2.multlinOnly() && F3.multlinOnly());
 	}
 
-	public ProbForm substitute(String[] vars, int[] args)
+	public CPModel substitute(String[] vars, int[] args)
 	
 	{   
 		ProbFormConvComb result = new ProbFormConvComb(F1.substitute(vars,args),F2.substitute(vars,args),F3.substitute(vars,args));
@@ -88,7 +88,7 @@ public class ProbFormConvComb extends ProbForm {
 		return result;
 	}
 
-	public ProbForm substitute(String[] vars, String[] args)
+	public CPModel substitute(String[] vars, String[] args)
 	{
 		ProbFormConvComb result = new ProbFormConvComb(F1.substitute(vars,args),F2.substitute(vars,args),F3.substitute(vars,args));
 		if (this.alias != null)
@@ -112,9 +112,9 @@ public class ProbFormConvComb extends ProbForm {
 		Vector<GroundAtom> result = atomvec1;
 		double v1,v2,v3;
 	    
-		v1=(Double)F1.evaluate(A,inst,new String[0],new int[0],false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
-		v2=(Double)F2.evaluate(A,inst,new String[0],new int[0],false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
-		v3=(Double)F3.evaluate(A,inst,new String[0],new int[0],false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
+		v1=(Double)F1.evaluate(A,inst,new String[0],new int[0],0,false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
+		v2=(Double)F2.evaluate(A,inst,new String[0],new int[0],0,false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
+		v3=(Double)F3.evaluate(A,inst,new String[0],new int[0],0,false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
 
 		if (!Double.isNaN(v1))
 			atomvec1 = new Vector<GroundAtom>();
@@ -137,12 +137,12 @@ public class ProbFormConvComb extends ProbForm {
 		return result;
 	}
 
-	public ProbForm conditionEvidence(RelStruc A, OneStrucData inst)
+	public CPModel conditionEvidence(RelStruc A, OneStrucData inst)
 	throws RBNCompatibilityException
 	{
-		ProbForm newF1 = (ProbForm)F1.conditionEvidence(A,inst);
-		ProbForm newF2 = (ProbForm)F2.conditionEvidence(A,inst);
-		ProbForm newF3 = (ProbForm)F3.conditionEvidence(A,inst);
+		CPModel newF1 = F1.conditionEvidence(A,inst);
+		CPModel newF2 = F2.conditionEvidence(A,inst);
+		CPModel newF3 = F3.conditionEvidence(A,inst);
 		if ((newF1 instanceof ProbFormConstant)&&
 				(newF2 instanceof ProbFormConstant)&&
 				(newF3 instanceof ProbFormConstant))
@@ -158,15 +158,15 @@ public class ProbFormConvComb extends ProbForm {
 //		return new ProbFormConvComb(F1.conditionEvidence(instasosd),F2.conditionEvidence(instasosd),F3.conditionEvidence(instasosd));
 //	}
 
-	public ProbForm f1(){
+	public CPModel f1(){
 		return F1;
 	}
 
-	public ProbForm f2(){
+	public CPModel f2(){
 		return F2;
 	}
 
-	public ProbForm f3(){
+	public CPModel f3(){
 		return F3;
 	}
 
@@ -233,7 +233,8 @@ public class ProbFormConvComb extends ProbForm {
 	public Object[] evaluate(RelStruc A, 
 			OneStrucData inst, 
 			String[] vars, 
-			int[] tuple, 
+			int[] tuple,
+			int gradinx,
 			boolean useCurrentCvals, 
 			// String[] numrelparameters,
 			boolean useCurrentPvals,
@@ -279,9 +280,9 @@ public class ProbFormConvComb extends ProbForm {
 
 	Object[] result = new Object[2];
 
-	Object[] r1= F1.evaluate(A, inst, vars, tuple, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly,profiler);
-	Object[] r2= F2.evaluate(A, inst, vars, tuple, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly,profiler);
-	Object[] r3= F3.evaluate(A, inst, vars, tuple, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly,profiler);
+	Object[] r1= F1.evaluate(A, inst, vars, tuple, gradinx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly,profiler);
+	Object[] r2= F2.evaluate(A, inst, vars, tuple, gradinx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly,profiler);
+	Object[] r3= F3.evaluate(A, inst, vars, tuple, gradinx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly,profiler);
 
 	double r1v = (double)r1[0];
 	double r2v = (double)r2[0];
@@ -494,16 +495,16 @@ public class ProbFormConvComb extends ProbForm {
 
 	}
 
-	public ProbForm sEval(RelStruc A)
+	public CPModel sEval(RelStruc A)
 	throws RBNCompatibilityException
 	{
-		ProbForm f1 = F1.sEval(A);
-		ProbForm f2 = F2.sEval(A);
-		ProbForm f3 = F3.sEval(A);
+		CPModel f1 = F1.sEval(A);
+		CPModel f2 = F2.sEval(A);
+		CPModel f3 = F3.sEval(A);
 		return new ProbFormConvComb(f1,f2,f3);
 	}
 
-	public ProbForm subPF(int i){
+	public CPModel subPF(int i){
 		switch (i){
 		case 1: return F1;
 		case 2: return F2;
@@ -557,5 +558,10 @@ public class ProbFormConvComb extends ProbForm {
 			result.addAll(F3.parentRels(processed));
 			return result;
 		}
+	}
+
+	@Override
+	public int numvals() {
+		return 2;
 	}
 }

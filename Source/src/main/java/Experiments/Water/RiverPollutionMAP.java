@@ -111,7 +111,7 @@ public class RiverPollutionMAP {
                 )
         );
 
-        Vector<ProbForm> softmax = new Vector<>();
+        Vector<CPModel> softmax = new Vector<>();
         for (int i = 0; i < 4; i++) {
             softmax.add(new ProbFormConstant(0.5));
         }

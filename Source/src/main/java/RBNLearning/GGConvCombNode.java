@@ -43,18 +43,17 @@ public class GGConvCombNode extends GGCPMNode{
 
 	/** pf must be a ground ProbForm ! */
 	public GGConvCombNode(GradientGraphO gg,
-			ProbForm pf, 
-			Hashtable<String,GGCPMNode> allnodes, 
-			RelStruc A, 
-			OneStrucData I,
-			int inputcaseno,
-			int observcaseno,
-			Hashtable<String,Integer> parameters,
-			boolean useCurrentPvals,
-			Hashtable<Rel,GroundAtomList> mapatoms,
-    		Hashtable<String,Object[]>  evaluated )
-					throws RBNCompatibilityException
-					{
+						  	CPModel pf,
+							Hashtable<String,GGCPMNode> allnodes,
+							RelStruc A,
+							OneStrucData I,
+							int inputcaseno,
+							int observcaseno,
+							Hashtable<String,Integer> parameters,
+							boolean useCurrentPvals,
+							Hashtable<Rel,GroundAtomList> mapatoms,
+							Hashtable<String,Object[]>  evaluated )
+			throws RBNCompatibilityException {
 		super(gg,pf,A,I);
 	
 		evalOfSubPFs = new double[3];
@@ -63,7 +62,8 @@ public class GGConvCombNode extends GGCPMNode{
 			evalOfSubPFs[i]= (double)((ProbFormConvComb)pf).subPF(i+1).evaluate(A, 
 					I , 
 					new String[0], 
-					new int[0] , 
+					new int[0] ,
+					0,
 					false,
 					useCurrentPvals,
 					mapatoms,

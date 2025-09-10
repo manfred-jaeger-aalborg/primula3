@@ -35,8 +35,8 @@ public class GGGnnNode extends GGCPMNode {
             setGnnPy(((CatGnn) cpm).getGnnPy()); // set the same GnnPy from the rel to the ggnode
             getGnnPy().setGradientGraph(gg); // save also the gradient graph
 
-            ProbForm nextsubpf;
-            ProbForm groundnextsubpf;
+            CPModel nextsubpf;
+            CPModel groundnextsubpf;
             double evalOfSubPF;
             GGCPMNode constructedchild;
             List<TorchInputRels> torchInputRels = ((CatGnn) this.cpm).getGnnGroundCombinedClauses();
@@ -50,7 +50,7 @@ public class GGGnnNode extends GGCPMNode {
                     for (int j = 0; j < subslist.length; j++) {
                         groundnextsubpf = nextsubpf.substitute(torchInputRel.getQuantvars(), subslist[j]);
 
-                        evalOfSubPF = (double) groundnextsubpf.evaluate(A, I, new String[0], new int[0], false, useCurrentPvals,
+                        evalOfSubPF = (double) groundnextsubpf.evaluate(A, I, new String[0], new int[0], 0, false, useCurrentPvals,
                                 mapatoms, false, evaluated, parameters, ProbForm.RETURN_ARRAY, true, null)[0];
 
                         if (Double.isNaN(evalOfSubPF)) {

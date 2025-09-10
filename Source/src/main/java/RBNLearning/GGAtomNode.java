@@ -56,7 +56,7 @@ public abstract class GGAtomNode extends GGCPMNode{
 	protected Vector<GGCPMNode> allugas;
 	
 	public GGAtomNode(GradientGraphO gg,
-			ProbForm pf,  
+			CPModel pf,
 			RelStruc A,
 			OneStrucData I,
 			int inputcasenoarg,

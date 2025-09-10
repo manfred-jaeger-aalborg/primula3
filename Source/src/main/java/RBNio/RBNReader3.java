@@ -263,7 +263,7 @@ public class RBNReader3{
 		return macrosdefined.get(r.toStringWArity());
 	}
 	
-	protected void setMacroPF(Rel r, ProbForm pf){
+	protected void setMacroPF(Rel r, CPModel pf){
 		RBNMacro prdef = macrosdefined.get(r.toStringWArity());
 		prdef.set_cpmod(pf);
 		pf.setAlias(new ProbFormAtom(prdef.rel(),prdef.arguments()));

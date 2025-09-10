@@ -11,11 +11,11 @@ import java.util.Vector;
 
 public class TorchInputRels {
 
-    private ProbForm pfargs[];
+    private CPModel pfargs[];
     private String quantvars[];
     private ProbFormBool cconstr;
 
-    public ProbForm[] getPfargs() {
+    public CPModel[] getPfargs() {
         return pfargs;
     }
 
@@ -25,7 +25,7 @@ public class TorchInputRels {
         return cconstr;
     }
 
-    public TorchInputRels(ProbForm[] pfa, String[] qvars, ProbFormBool cc) throws IllegalArgumentException
+    public TorchInputRels(CPModel[] pfa, String[] qvars, ProbFormBool cc) throws IllegalArgumentException
     {
         pfargs = pfa;
         quantvars = qvars;
@@ -68,7 +68,7 @@ public class TorchInputRels {
 
 
         // Perform substitution on pfargs
-        ProbForm[]  subpfargs = new ProbForm[pfargs.length];
+        CPModel[]  subpfargs = new CPModel[pfargs.length];
         for (int i = 0; i<pfargs.length; i++)
             subpfargs[i]=pfargs[i].substitute(subsvars,subsargs);
         //Perform substitution on cconstr
@@ -104,7 +104,7 @@ public class TorchInputRels {
     public TorchInputRels substitute(String[] vars, String[] args)
     {
         TorchInputRels result;
-        ProbForm[]  subpfargs = new ProbForm[pfargs.length];
+        CPModel[]  subpfargs = new CPModel[pfargs.length];
         ProbFormBool subcconstr = null;
 
         // Rename all the variables bound
@@ -180,6 +180,7 @@ public class TorchInputRels {
                              OneStrucData inst,
                              String[] vars,
                              int[] tuple,
+                             int gradindx,
                              boolean useCurrentCvals,
                              boolean useCurrentPvals,
                              Hashtable<Rel,GroundAtomList> mapatoms,
@@ -218,6 +219,7 @@ public class TorchInputRels {
                         inst,
                         quantvars,
                         subslist[j],
+                        gradindx,
                         useCurrentCvals,
                         useCurrentPvals,
                         mapatoms,
@@ -248,7 +250,7 @@ public class TorchInputRels {
             for (int j = 0; j < nanArray.length; j++) {
                 nanArray[j] = Double.NaN;
             }
-            result[0] = nanArray;
+            result[0] = Double.NaN;
         } else {
             result[0] = vals;
         }
@@ -262,11 +264,11 @@ public class TorchInputRels {
         return pfargs.length;
     }
 
-    public ProbForm probformAt(int i){
+    public CPModel probformAt(int i){
         return pfargs[i];
     }
 
-    public void setPfargs(ProbForm[] pfargs) {
+    public void setPfargs(CPModel[] pfargs) {
         this.pfargs = pfargs;
     }
 

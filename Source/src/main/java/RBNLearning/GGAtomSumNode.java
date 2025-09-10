@@ -47,7 +47,7 @@ public class GGAtomSumNode extends GGAtomNode{
 
 
 	public GGAtomSumNode(GradientGraphO gg,
-			ProbForm pf,  
+			CPModel pf,
 			RelStruc A,
 			OneStrucData I,
 			int inputcasenoarg,
