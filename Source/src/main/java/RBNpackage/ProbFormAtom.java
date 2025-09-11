@@ -420,7 +420,7 @@ public class ProbFormAtom extends CPModel implements ProbForm {
 			}
 		}
 		else if (relation.ispredefined()) {		
-			String thisstr = this.asString(A);
+			String thisstr = substituted.asString(A);
 			Integer i = null;
 			if (params!= null)
 				i = params.get(thisstr);
