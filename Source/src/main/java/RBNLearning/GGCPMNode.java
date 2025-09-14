@@ -252,7 +252,7 @@ public abstract class GGCPMNode extends GGNode{
 
 			}
 
-			if (cpm instanceof CatGnn) {
+			if (cpm instanceof CatGnn || cpm instanceof CatGnnBool) {
 				result = new GGGnnNode(gg,cpm,allnodes,A,I,inputcaseno,observcaseno,parameters,useCurrentPvals,mapatoms,evaluated);
 			}
 
