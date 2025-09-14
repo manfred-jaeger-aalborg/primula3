@@ -1,4 +1,5 @@
 package PyManager;
+import RBNpackage.ProbForm;
 import jep.*;
 
 import java.io.StringWriter;
@@ -40,23 +41,64 @@ public class TorchModelWrapper {
                         device = param.device
                     return model_dtype, device
                 
-                def forward_single_primula_(model, x_dict, edge_dict, edge_attr=None):
+                def _to_tensor(x, dtype, device, requires_grad=False):
+                    if isinstance(x, torch.Tensor):
+                        t = x.to(device=device, dtype=dtype)
+                    else:
+                        t = torch.as_tensor(x, dtype=dtype, device=device)
+                    if requires_grad:
+                        t = t.clone().detach().requires_grad_(True)
+                    else:
+                        # clone+detach so we don't accidentally keep a graph or modify input
+                        t = t.clone().detach()
+                    return t
+                    
+                    
+                def forward_single_primula_(model, x_dict, edge_dict=None, with_gradients=False, edge_attr=None):
+                
+                    # get dtype & device from model
                     model_dtype, device = _get_type_and_device(model)
                 
-                    xi = torch.as_tensor(list(x_dict.values())[0], dtype=model_dtype, device=device)
-                    if edge_dict:
-                        ei = torch.as_tensor(list(edge_dict.values())[0], dtype=torch.long, device=device)
+                    # extract the first values from the dict-like inputs
+                    x_val = next(iter(x_dict.values()))
+                    e_val = next(iter(edge_dict.values())) if edge_dict else None
+                    ea_val = next(iter(edge_attr.values())) if edge_attr is not None else None
+                
+                    xi = _to_tensor(x_val, dtype=model_dtype, device=device, requires_grad=with_gradients)
+                
+                    if e_val is not None:
+                        ei = torch.as_tensor(e_val, dtype=torch.long, device=device)
                     else:
                         ei = torch.empty((2, 0), dtype=torch.long, device=device)
-                    if edge_attr is not None:
-                        ea = torch.as_tensor(list(edge_attr.values())[0], dtype=model_dtype, device=device)
-                    model.eval()
-                    with torch.no_grad():
-                        if edge_attr is not None:
-                            out = model(xi, ei, ea)
-                        else:
-                            out = model(xi, ei)
-                    return out.detach().numpy()
+                
+                    ea = None
+                    if ea_val is not None:
+                        ea = _to_tensor(ea_val, dtype=model_dtype, device=device, requires_grad=with_gradients)
+                
+                    if with_gradients:
+                        # clear gradients on inputs if present
+                        if xi.grad is not None:
+                            xi.grad.zero_()
+                        if ea is not None and ea.grad is not None:
+                            ea.grad.zero_()
+                
+                        out = model(xi, ei, ea) if ea is not None else model(xi, ei)
+                
+                        # reduce to scalar then backprop
+                        out_scalar = out.sum()
+                        out_scalar.backward()
+                
+                        # gather gradients and convert to numpy (or None)
+                        x_grad = xi.grad.detach().cpu().numpy() if xi.grad is not None else None
+                        ea_grad = ea.grad.detach().cpu().numpy() if (ea is not None and ea.grad is not None) else None
+                
+                        grads = (x_grad, ea_grad)
+                    else:
+                        with torch.no_grad():
+                            out = model(xi, ei, ea) if ea is not None else model(xi, ei)
+                        grads = None
+                
+                    return out, grads
                 
                 def forward_hetero_primula_(model, x_dict, edge_dict, edge_rels):
                     model_dtype, device = _get_type_and_device(model)
@@ -72,7 +114,7 @@ public class TorchModelWrapper {
                     model.eval()
                     with torch.no_grad():
                         out = model(data_h.x_dict, data_h.edge_index_dict)
-                    return out.detach().numpy()
+                    return out
                 """);
             // TODO implement forward_hetero_primula_ for edge_attr support
         } catch (JepException e) {
@@ -80,6 +122,9 @@ public class TorchModelWrapper {
         }
     }
 
+    // return an object[]
+    // obj[0] is double[][] of probabilities
+    // obj[1] is a Map<String, double[][]> of gradient for "x" (node attributes) and "ea" (edge attributes)
     public Object[] forward(Map<String, double[][]> xDict,
                               Map<String, ArrayList<ArrayList<Integer>>> edgeDict,
                               Map<String, double[][]> edge_attr,
@@ -95,17 +140,11 @@ public class TorchModelWrapper {
             if (edge_attr.size() > 0)
                 modelInterpreter.set("edge_attr_pyGNNRBN", edge_attr);
 
-            if (withgradients) {
-                modelInterpreter.exec("x_dict_pyGNNRBN = x_pyGNNRBN.clone().detach().requires_grad_(True)");
-                if (edge_attr.size() > 0)
-                    modelInterpreter.exec("edge_attr_pyGNNRBN = edge_attr_pyGNNRBN.clone().detach().requires_grad_(True)");
-            }
-
             if (xDict.size() == 1) {
                 if (edge_attr.size() > 0)
-                    modelInterpreter.exec("out_pyGNNRBN = forward_single_primula_(model=" + modelName + ", x_dict=x_pyGNNRBN, edge_dict=edge_pyGNNRBN, edge_attr=edge_attr_pyGNNRBN)");
+                    modelInterpreter.exec("out_pyGNNRBN, grad = forward_single_primula_(model=" + modelName + ", x_dict=x_pyGNNRBN, edge_dict=edge_pyGNNRBN, with_gradients=" + (withgradients ? "True":"False") + ", edge_attr=edge_attr_pyGNNRBN)");
                 else
-                    modelInterpreter.exec("out_pyGNNRBN = forward_single_primula_(model=" + modelName + ", x_dict=x_pyGNNRBN, edge_dict=edge_pyGNNRBN)");
+                    modelInterpreter.exec("out_pyGNNRBN, grad = forward_single_primula_(model=" + modelName + ", x_dict=x_pyGNNRBN, edge_dict=edge_pyGNNRBN, with_gradients=" + (withgradients ? "True":"False") + ")");
             } else {
                 // Here the GNN is heterogeneous
                 // Build edge relation dictionary
@@ -124,7 +163,7 @@ public class TorchModelWrapper {
                 modelInterpreter.exec("out_pyGNNRBN = forward_hetero_primula_(model=" + modelName + ", x_dict=x_pyGNNRBN, edge_dict=edge_pyGNNRBN, edge_rels=edge_rels_pyGNNRBN)");
             }
 
-            NDArray outArray = (NDArray) modelInterpreter.getValue("out_pyGNNRBN");
+            NDArray outArray = (NDArray) modelInterpreter.getValue("out_pyGNNRBN.detach().numpy()");
             Object raw = outArray.getData();
             double[] flatData = PyUtils.toDoubleArray(raw);
 
@@ -140,23 +179,49 @@ public class TorchModelWrapper {
             }
 
             NDArray grad_x = null;
-            if (withgradients) {
-                modelInterpreter.exec("out_pyGNNRBN.backward()");
-                modelInterpreter.exec("grad_x_pyGNNRBN = x_pyGNNRBN.grad.cpu().numpy()");
+            if (withgradients && xDict.size() == 1) {
+                // store the gradients for each input (x and if present also edge attributes) in a dictionary
+                Map<String, double[][]> gradsDict = new HashMap<>();
+
+                modelInterpreter.exec("grad_x_pyGNNRBN = grad[0]");
                 grad_x = (NDArray) modelInterpreter.getValue("grad_x_pyGNNRBN");
 
                 raw = grad_x.getData();
                 double[] flatGradX = PyUtils.toDoubleArray(raw);
                 outDim = grad_x.getDimensions();
+                double[][] gradXArray;
                 if (outDim.length == 2) {
                     int rows = grad_x.getDimensions()[0];
                     int cols = grad_x.getDimensions()[1];
-                    result[1] = PyUtils.convertTo2D(flatGradX, rows, cols);
-                } else if (outDim.length == 1) {
-                    result[1] = new double[][]{flatGradX};
-                } else {
+                    gradXArray = PyUtils.convertTo2D(flatGradX, rows, cols);
+                } else if (outDim.length == 1)
+                    gradXArray = new double[][]{flatGradX};
+                else
                     throw new RuntimeException("Invalid gradient output shape: " + Arrays.toString(outDim));
+
+                gradsDict.put("x", gradXArray);
+
+                NDArray grad_ea = null;
+                modelInterpreter.exec("grad_ea_pyGNNRBN = grad[1] if grad[1] is not None else None");
+                grad_ea = (NDArray) modelInterpreter.getValue("grad_ea_pyGNNRBN");
+                if (grad_ea != null) {
+                    raw = grad_ea.getData();
+                    double[] flatGradEA = PyUtils.toDoubleArray(raw);
+                    outDim = grad_ea.getDimensions();
+                    double[][] gradEAArray;
+                    if (outDim.length == 2) {
+                        int rows = grad_ea.getDimensions()[0];
+                        int cols = grad_ea.getDimensions()[1];
+                        gradEAArray = PyUtils.convertTo2D(flatGradEA, rows, cols);
+                    } else if (outDim.length == 1)
+                        gradEAArray = new double[][]{flatGradEA};
+                    else
+                        throw new RuntimeException("Invalid edge attr gradient shape: " + Arrays.toString(outDim));
+                    gradsDict.put("ea", gradEAArray);
                 }
+                result[1] = gradsDict;
+            } else if (withgradients && xDict.size() > 1) {
+                throw new RuntimeException("Gradients for heterogeneous GNNs not yet implemented");
             } else
                 result[1] = null;
 
