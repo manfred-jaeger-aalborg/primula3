@@ -482,8 +482,8 @@ public class GGCombFuncNode extends GGCPMNode{
 
 	private Gradient  computeGradientINVSUM(Integer idx)
 			throws RBNNaNException{
-		System.out.println("Gradient for INVSUM not implemented");
-		return null;
+//		System.out.println("Gradient for INVSUM not implemented");
+//		return null;
 //		TreeMap<String,double[]> result = new TreeMap<String,double[]>();
 //		double val = this.evaluate(idx)[0];
 //		if (val == 1.0)
@@ -496,6 +496,31 @@ public class GGCombFuncNode extends GGCPMNode{
 //			result = result*derivsum;
 //		}
 //		return result;
+		Gradient result = gradient_for_samples.get(idx);
+		result.reset();
+
+		double sumValue = 0.0;
+		for (int i=0; i<children.size(); i++) {
+			sumValue += children.elementAt(i).evaluate(idx)[0];
+		}
+
+		if (sumValue == 1.0) {
+			for (String param : this.myparameters) {
+				result.set_part_deriv(param, new double[] {0.0});
+			}
+		} else {
+			for (String param : this.myparameters) {
+				double partderiv = 0;
+				for (int i = 0; i < children.size(); i++) {
+					double[] childderiv = children.elementAt(i).evaluateGradient(idx).get_part_deriv(param);
+					if (childderiv != null)
+						partderiv += childderiv[0];
+				}
+				partderiv = -(1.0 / (sumValue * sumValue)) * partderiv;
+				result.set_part_deriv(param, new double[]{partderiv});
+			}
+		}
+		return result;
 	}
 
 	private Gradient computeGradientESUM(Integer idx )
