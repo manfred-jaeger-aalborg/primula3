@@ -11,9 +11,12 @@ import java.util.*;
 
 public class GGGnnNode extends GGCPMNode {
     private CPModel cpm;
-    private RelStruc A;
-    private OneStrucData inst;
+    // we can have only one reference og gnnPy on the same thread
+    // once the thread will create and use gnnPy it will set this variable
     private GnnPy gnnPy;
+    // those two variable are "shared"
+    private static RelStruc A;
+    private static OneStrucData inst;
 
     public GGGnnNode(GradientGraphO gg,
                      CPModel cpm,
@@ -27,6 +30,8 @@ public class GGGnnNode extends GGCPMNode {
                      Hashtable<Rel,GroundAtomList> mapatoms,
                      Hashtable<String,Object[]>  evaluated ) throws RBNCompatibilityException {
         super(gg, cpm, A, I);
+        // store the CPModel, and the "input" for the gnn (A and I)
+        // those variables will be used in the evaluate function
         this.cpm = cpm;
         this.A = A;
         this.inst = I;
@@ -42,6 +47,9 @@ public class GGGnnNode extends GGCPMNode {
             List<TorchInputRels> torchInputRels = ((CatGnn) this.cpm).getGnnGroundCombinedClauses();
             DoubleVector vals = new DoubleVector();
 
+            // differently from all the other probability formulas here we evaluate
+            // all the components of the GNN to see when it is not possible to evaluate.
+            // the subpf which are not evaluatable will return NaN and added to the children vector
             for (TorchInputRels torchInputRel: torchInputRels) {
                 int[][] subslist = torchInputRel.tuplesSatisfyingCConstr(A, new String[0], new int[0]);
 
@@ -50,8 +58,20 @@ public class GGGnnNode extends GGCPMNode {
                     for (int j = 0; j < subslist.length; j++) {
                         groundnextsubpf = nextsubpf.substitute(torchInputRel.getQuantvars(), subslist[j]);
 
-                        evalOfSubPF = (double) groundnextsubpf.evaluate(A, I, new String[0], new int[0], 0, false, useCurrentPvals,
-                                mapatoms, false, evaluated, parameters, ProbForm.RETURN_ARRAY, true, null)[0];
+                        evalOfSubPF = (double) groundnextsubpf.evaluate(A,
+                                I,
+                                new String[0],
+                                new int[0],
+                                0,
+                                false,
+                                useCurrentPvals,
+                                mapatoms,
+                                false,
+                                evaluated,
+                                parameters,
+                                ProbForm.RETURN_ARRAY,
+                                true,
+                                null)[0];
 
                         if (Double.isNaN(evalOfSubPF)) {
                             constructedchild = GGCPMNode.constructGGPFN(gg,
@@ -78,10 +98,14 @@ public class GGGnnNode extends GGCPMNode {
         } else {
             System.out.println("GGGnnNode cannot accept " + this.cpm.toString() + " as valid pf");
         }
+
     }
 
     @Override
     public double[] evaluate(Integer sno) {
+        if (this.gnnPy==null)
+            throw new RuntimeException("GnnPy is null in GGGnnNode");
+
         if (this.depends_on_sample && sno==null) {
             for (int i=0;i<thisgg.numchains*thisgg.windowsize;i++)
                 this.evaluate(i);
@@ -94,8 +118,7 @@ public class GGGnnNode extends GGCPMNode {
 
         double[] result = null;
         if (cpm instanceof CatGnn)
-            result = gnnPy.GGevaluate_gnnHetero(A, inst, thisgg, (CatGnn) cpm, this);
-
+            result = gnnPy.GGevaluate_gnnHetero(A, inst, (CatGnn) cpm, this);
 
         if (this.depends_on_sample) {
             if (cpm instanceof CatGnn)
@@ -111,14 +134,48 @@ public class GGGnnNode extends GGCPMNode {
 
     @Override
     public Gradient evaluateGradient(Integer sno) throws RBNNaNException {
-        throw new RuntimeException("evaluatePartDeriv(Integer sno, String param) NOT IMPLEMENTED in GGGnnNode");
+        if (this.gnnPy==null)
+            throw new RuntimeException("GnnPy is null in GGGnnNode");
+
+        if (this.depends_on_sample && sno==null) {
+            for (int i=0;i<thisgg.numchains*thisgg.windowsize;i++)
+                this.evaluateGradient(i);
+            return null;
+        }
+
+        int idx=0;
+        if (this.depends_on_sample)
+            idx=sno;
+
+        if (is_evaluated_grad_for_samples[idx])
+            return  gradient_for_samples.get(idx);
+
+        Gradient result = gradient_for_samples.get(idx);
+        result.reset();
+
+        double[] values = values_for_samples[idx];
+
+        Object[] outres = gnnPy.evaluate_gnnHetero(A, inst, (CatGnn) cpm, false);
+        Map<String, double[][]> grads = (Map<String, double[][]>) outres[1];
+
+        for (String param: this.myparameters) {
+            double[] res = new double[values.length];
+//            for (int i=0;i<values.length;i++) {
+//                res[i] = values[i] * grads.get(param)[0][i];
+//            }
+//            result.set_part_deriv(param, res);
+            result.set_part_deriv(param, grads.get(param)[0]);
+        }
+
+        is_evaluated_grad_for_samples[idx]=true;
+
+        return result;
     }
 
     @Override
     public boolean isBoolean() {
         return cpm.numvals()==1;
     }
-
 
     public GnnPy getGnnPy() {
         return this.gnnPy;

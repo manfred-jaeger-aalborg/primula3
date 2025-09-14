@@ -6,6 +6,8 @@ import PyManager.TorchInputSpecs;
 import PyManager.TorchModelWrapper;
 import RBNExceptions.RBNCompatibilityException;
 import RBNExceptions.RBNIllegalArgumentException;
+import RBNLearning.Gradient_Array;
+import RBNLearning.Gradient_TreeMap;
 import RBNLearning.Profiler;
 import RBNinference.PFNetworkNode;
 import RBNutilities.rbnutilities;
@@ -134,14 +136,14 @@ public class CatGnn extends CPModel {
         for (TorchInputRels inps: gnnGroundCombinedClauses) {
             Object[] res = inps.evaluate(A, inst, vars, tuple, gradindx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly, profiler);
             // if res[0] contains NaN return res
-            if (res[0] instanceof double[]) {
-                double[] values = (double[]) res[0];
-                for (double value : values) {
-                    if (Double.isNaN(value)) {
-                        return res;
-                    }
-                }
-            }
+//            if (res[0] instanceof double[]) {
+//                double[] values = (double[]) res[0];
+//                for (double value : values) {
+//                    if (Double.isNaN(value)) {
+//                        return res;
+//                    }
+//                }
+//            }
             if (res[0] instanceof Double) {
                 if (Double.isNaN((Double) res[0])) {
                     return res;
@@ -149,25 +151,6 @@ public class CatGnn extends CPModel {
             }
 
         }
-
-        // exhaustive check if all the elements have a value before evaluate the gnn
-//        for (Rel parent: parentRels()) {
-//            try {
-//                int[][] alltuple = A.allTypedTuples(parent.getTypes());
-//                for (int[] tuple2: alltuple) {
-//                    int val = inst.truthValueOf(parent, tuple2);
-//                    // if a tuple still does not have a value, return the NaN array
-//                    if (val==-1) {
-//                        Object[] result = new Object[2];
-//                        result[0] = new double[this.numvals()];
-//                        Arrays.fill((double[]) result[0], Double.NaN);
-//                        return result;
-//                    }
-//                }
-//            } catch (RBNIllegalArgumentException e) {
-//                throw new RuntimeException(e);
-//            }
-//        }
 
         CatGnn subCatGnn = null;
         if (this instanceof CatGnnBool)
@@ -186,6 +169,15 @@ public class CatGnn extends CPModel {
             double[] resultArray =  new double[] {1-trueProb[0],trueProb[0]};
             res[0] = resultArray;
         }
+
+        if (!valonly) {
+            res[1] = null;
+            if (returntype == ProbForm.RETURN_ARRAY)
+                res[1] = new Gradient_Array(params);
+            else
+                res[1] = new Gradient_TreeMap(params);
+        }
+
         return res;
     }
 
