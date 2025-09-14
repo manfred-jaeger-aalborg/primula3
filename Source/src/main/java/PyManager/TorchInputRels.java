@@ -80,26 +80,6 @@ public class TorchInputRels {
         return result;
     }
 
-    public TreeSet<Rel> parentRels(){
-        TreeSet<Rel> result = new TreeSet<Rel>();
-        for (int i=0;i<pfargs.length;i++)
-            result.addAll(pfargs[i].parentRels());
-        return result;
-    }
-
-    public TreeSet<Rel> parentRels(TreeSet<String> processed){
-        String mykey = this.makeKey(null,null,true);
-        if (processed.contains(mykey))
-            return new TreeSet<Rel>();
-        else {
-            processed.add(mykey);
-            TreeSet<Rel> result = new TreeSet<Rel>();
-            for (int i=0;i<pfargs.length;i++)
-                result.addAll(pfargs[i].parentRels(processed));
-            return result;
-        }
-    }
-
     // same code taken from ProbFormCombFunc
     public TorchInputRels substitute(String[] vars, String[] args)
     {
@@ -133,6 +113,26 @@ public class TorchInputRels {
         result = new TorchInputRels(subpfargs,newquantvars,subcconstr);
 
         return result;
+    }
+
+    public TreeSet<Rel> parentRels(){
+        TreeSet<Rel> result = new TreeSet<Rel>();
+        for (int i=0;i<pfargs.length;i++)
+            result.addAll(pfargs[i].parentRels());
+        return result;
+    }
+
+    public TreeSet<Rel> parentRels(TreeSet<String> processed){
+        String mykey = this.makeKey(null,null,true);
+        if (processed.contains(mykey))
+            return new TreeSet<Rel>();
+        else {
+            processed.add(mykey);
+            TreeSet<Rel> result = new TreeSet<Rel>();
+            for (int i=0;i<pfargs.length;i++)
+                result.addAll(pfargs[i].parentRels(processed));
+            return result;
+        }
     }
 
     public String makeKey(String[] vars, int[] args, Boolean nosub){
@@ -202,7 +202,7 @@ public class TorchInputRels {
             }
         }
 
-        TorchInputRels subspfcf = (TorchInputRels) this.substitute(vars, tuple);
+        TorchInputRels subspfcf = this.substitute(vars, tuple);
 
         int[][] subslist = tuplesSatisfyingCConstr(A, vars, tuple);
 
@@ -233,6 +233,7 @@ public class TorchInputRels {
         }
 
         Object[] result = new Object[2];
+        result[1] = null;
 
         double[] vals = new double[combargs.size()];
         int i = 0;
@@ -242,14 +243,15 @@ public class TorchInputRels {
             vals[i] = (Double) d[0];
             if (Double.isNaN(vals[i])) {
                 hasNaN = true;
+                break;
             }
             i++;
         }
         if (hasNaN) {
-            double[] nanArray = new double[vals.length];
-            for (int j = 0; j < nanArray.length; j++) {
-                nanArray[j] = Double.NaN;
-            }
+//            double[] nanArray = new double[vals.length];
+//            for (int j = 0; j < nanArray.length; j++) {
+//                nanArray[j] = Double.NaN;
+//            }
             result[0] = Double.NaN;
         } else {
             result[0] = vals;
