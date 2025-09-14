@@ -677,10 +677,11 @@ public class GnnPy {
                     throw new RuntimeException("Types of the relations do not match! " + subList.get(j).getTypesAsString() + " / " + subList.get(j + 1).getTypesAsString());
                 }
             }
-            String key = subList.get(0).getTypesAsString();
-
-            double[][] inputXmatrix = createEdgeAttrMatrix(subList, relToEdgeAttrMap, sampledRel, cpmGnn.isOneHotEncoding());
-            edge_attr.put(key, inputXmatrix);
+            if (subList.size() > 0) {
+                String key = subList.get(0).getTypesAsString();
+                double[][] inputXmatrix = createEdgeAttrMatrix(subList, relToEdgeAttrMap, sampledRel, cpmGnn.isOneHotEncoding());
+                edge_attr.put(key, inputXmatrix);
+            }
         }
         return edge_attr;
     }
