@@ -1213,30 +1213,42 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/homophily/experiments/rbn_constraints/const_nodeconst_gnn.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/homophily/experiments/ising/rdef/ising_32_0.5_0_0.4_4_nodeconst.rdef";
 
-//      String rbninputfilestring = "/home/jaeger/B/Primula/Examples/HAWQS/water_rbn_parseminus.rbn";
-//      String rstinputfilestring = "/home/jaeger/B/Primula/Examples/HAWQS/river_with_data_train.rdef";
-
-
-//        String rbninputfilestring = "/Users/lz50rg/Dev/water-hawqs/water_rbn_2.rbn";
-//        String rstinputfilestring = "/Users/lz50rg/Dev/water-hawqs/test_small_new_sampled.rdef";
-
 //        String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/models/alpha1_20_20250623-151443/RBN_acr_graph_alpha1_20.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/rdef_files/alpha_problem/test-alpha1-blue_cat.rdef";
 
-        String rbninputfilestring = "/Users/lz50rg/Dev/NeSy-for-graph-data/GNN-RBN-compile/RBN_acr_graph_alpha1_5_param.rbn";
-        String rstinputfilestring = "/Users/lz50rg/Dev/NeSy-for-graph-data/GNN-RBN-compile/train-barabasi-m2_2-5000-5-8-generative_cat.rdef";
+//        String rstinputfilestring = "/Users/lz50rg/Dev/NeSy-for-graph-data/GNN-RBN-compile/train-barabasi-m2_2-5000-5-8-generative_cat.rdef";
 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/examples-primula/GNN-RBN-alpha/rbn_acr.rbn";
-//        String rstinputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/rdef_files/alpha_problem/test-alpha1-blue.rdef";
 
+//        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_pollution-gibbs.rbn";
+//       String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_network_gibbs.rdef";
+
+        /// EXAMPLES
+
+        // MENDEL EXAMPLE
+//        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/Mendel/mendel.rbn";
+//        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/Mendel/mendel_s.rdef";
+
+        // COMMUNITY DETECTION
+//        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/Community/community_softclus_2c.rbn";
+//        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/Community/zachary.rdef";
+
+        // WATER GNN
+//        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_pollution_model.rbn";
+//        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/simple_subbasin_new.rdef";
+
+        // INFORMATION DIFFUSION
 //        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/InformationDiffusion/independent_cascade.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/InformationDiffusion/zachary_cascade.rdef";
 
-//        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_simple_gnn_new.rbn";
-//        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/simple_subbasin_new.rdef";
+        // ALPHA GNN
+//        String rbninputfilestring = "/Users/lz50rg/Dev/NeSy-for-graph-data/GNN-RBN-compile/rbns/alpha_gnn.rbn";
+        // ALPHA COMPILED
+//        String rbninputfilestring = "/Users/lz50rg/Dev/NeSy-for-graph-data/GNN-RBN-compile/models/alpha1_5_20250717-110708/RBN_acr_graph_alpha1_5.rbn";
+//        String rstinputfilestring = "/Users/lz50rg/Dev/GNN-RBN-workspace/GNN-RBN-reasoning/rdef_files/alpha_problem/test-alpha1-blue_cat.rdef";
 
-//        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_pollution-gibbs.rbn";
-//        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_network_gibbs.rdef";
+        String rbninputfilestring = "/Users/lz50rg/Desktop/rbnmut.rbn";
+        String rstinputfilestring = "/Users/lz50rg/Desktop/base6.rdef";
 
         primula.srsfile = new File(rstinputfilestring);
         primula.rbnfile = new File(rbninputfilestring);
@@ -1258,7 +1270,7 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
         }
         PrimulaGUI win = new PrimulaGUI(new Primula());
 //		SamiamManager.centerWindow( win );
-//        win.loadDefaults();
+        win.loadDefaults();
 		win.show();
     }
 }
