@@ -44,7 +44,7 @@ public class TorchModelWrapper {
                     model_dtype, device = _get_type_and_device(model)
                 
                     xi = torch.as_tensor(list(x_dict.values())[0], dtype=model_dtype, device=device)
-                    if edge_dict:
+                    if edge_dict and len(list(edge_dict.values())[0])>0:
                         ei = torch.as_tensor(list(edge_dict.values())[0], dtype=torch.long, device=device)
                     else:
                         ei = torch.empty((2, 0), dtype=torch.long, device=device)
