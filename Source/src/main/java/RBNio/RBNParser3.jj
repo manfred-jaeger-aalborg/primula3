@@ -489,29 +489,19 @@ Vector<CPModel> ProbFormList()  throws RBNIllegalArgumentException:
 	{return pflist;}
 }
 
-ProbFormBool BoolPrimary()  throws RBNIllegalArgumentException:
+ProbFormBool BoolFormula()  throws RBNIllegalArgumentException:
 {ProbFormBool pf;}
 {// grammar
     ( LOOKAHEAD(<Name> "(") pf = BoolAtom()
     | LOOKAHEAD(<Name> "=")  pf = BoolEquality()
+    | pf = BoolNegation()
     | LOOKAHEAD( "(" BoolFormula() "&"  )pf = BoolAnd()
     | LOOKAHEAD( "(" BoolFormula() "|"  )pf = BoolOr()
-    | "(" pf = BoolFormula() ")"
     | pf = BoolConstant()
     | pf = BoolCatEquality()
     )
     {return pf;}
 }
-
-ProbFormBool BoolFormula() throws RBNIllegalArgumentException:
-{ ProbFormBool pf; }
-{
-    ( pf = BoolNegation()
-    | pf = BoolPrimary()
-    )
-    { return pf; }
-}
-
 
 ProbFormBoolAtom BoolAtom()  throws RBNIllegalArgumentException:
 {RBNReader3.ParsedUnTypedAtom parsedat;
@@ -599,7 +589,7 @@ ProbFormBoolConstant BoolConstant():
 ProbFormBool BoolNegation()  throws RBNIllegalArgumentException:
 {ProbFormBool pfb;}
 { //grammar
-  "~" pfb = BoolPrimary()
+  "~" pfb = BoolFormula()
   {pfb.toggleSign();
   return pfb;}
 }
