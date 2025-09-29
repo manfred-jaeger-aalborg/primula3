@@ -136,14 +136,6 @@ public class CatGnn extends CPModel {
         for (TorchInputRels inps: gnnGroundCombinedClauses) {
             Object[] res = inps.evaluate(A, inst, vars, tuple, gradindx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly, profiler);
             // if res[0] contains NaN return res
-//            if (res[0] instanceof double[]) {
-//                double[] values = (double[]) res[0];
-//                for (double value : values) {
-//                    if (Double.isNaN(value)) {
-//                        return res;
-//                    }
-//                }
-//            }
             if (res[0] instanceof Double) {
                 if (Double.isNaN((Double) res[0])) {
                     return res;

@@ -187,6 +187,7 @@ public class SettingsMAP extends JFrame implements ActionListener, ItemListener,
 		if(source == algorithm1Radio){
 			infmodule.setMapSearchAlg(2);
 			firstBatchSizeText.setEnabled(false);
+			lookaheadtext.setEnabled(true);
 		}
 		else if(source == algorithm2Radio){
 			infmodule.setMapSearchAlg(3);

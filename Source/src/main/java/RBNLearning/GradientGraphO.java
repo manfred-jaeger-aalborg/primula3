@@ -783,6 +783,8 @@ public class GradientGraphO extends GradientGraph{
 			} else if (numchains != 0) success = true;
 
 			if (numchains == 0 && (mode==MAPMODE || mode==LEARNANDMAPMODE)) {
+				// reset the is_evaluated_val_for_samples, otherwise we cannot reevaluate with the new inst
+				resetValues(null,true);
 				llnode.evaluate(null);
 				if (llnode.likelihood()[0] != 0)
 					success = true;
@@ -803,7 +805,7 @@ public class GradientGraphO extends GradientGraph{
 		windowindex =0;
 
 	/* Perform windowsize-1 many steps of Gibbs sampling */
-	if (!abort){
+	if (!abort && windowindex*numchains>0){
 		for (int j=1;j<windowsize;j++){
 			gibbsSample(mythread);
 			if (myggoptions.ggverbose())
@@ -2802,7 +2804,11 @@ private TreeSet<GGAtomMaxNode> maxind_as_ts(){
 		return result;
 	}
 
-public Hashtable<Rel, Vector<GGAtomMaxNode>> getMaxindicators() {
+	public GGConstantNode[] getParamNodes() {
+		return paramNodes;
+	}
+
+	public Hashtable<Rel, Vector<GGAtomMaxNode>> getMaxindicators() {
 	return maxindicators;
 }
 

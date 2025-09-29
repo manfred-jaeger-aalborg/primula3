@@ -705,7 +705,7 @@ public class Primula {
 	public Map<String,Object> getLoadGnnSet() { return this.load_gnn_set; }
 
 	public LearnModule openLearnModule(){
-		if(!isLrnModuleOpen || learnModule == null){
+		if(!isLrnModuleOpen && learnModule == null){
 			learnModule = new LearnModule(this);
 			isLrnModuleOpen = true;
 		}

@@ -155,7 +155,7 @@ public class GGGnnNode extends GGCPMNode {
 
         double[] values = values_for_samples[idx];
 
-        Object[] outres = gnnPy.evaluate_gnnHetero(A, inst, (CatGnn) cpm, false);
+        Object[] outres = gnnPy.evaluate_gnnGradients(A, inst, (CatGnn) cpm, this);
         Map<String, double[][]> grads = (Map<String, double[][]>) outres[1];
 
         for (String param: this.myparameters) {

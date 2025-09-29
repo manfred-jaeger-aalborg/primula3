@@ -130,4 +130,11 @@ public class ParameterTableModel extends AbstractTableModel {
 		for (int i=0;i<parameters.length;i++)
 			System.out.println(parameters[i]+" "+estimates[i]);
 	}
+
+	public String getParameterTableString(){
+		String s = "";
+		for (int i=0;i<parameters.length;i++)
+			s += parameters[i] + " " + estimates[i] + "\n";
+		return s;
+	}
 }

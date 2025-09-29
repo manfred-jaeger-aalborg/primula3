@@ -204,8 +204,6 @@ public abstract class GGNode implements Comparable<GGNode>{
 	}
 
 	public void resetValue(Integer sno){
-//		if (this instanceof GGGnnNode)
-//			((GGGnnNode) this).getGnnPy().resetDict(false, ((GGGnnNode) this).isEdgePred());
 		if (depends_on_sample) { 
 			if (sno==null) {
 				for (int i=0;i<values_for_samples.length;i++)
@@ -380,4 +378,8 @@ public abstract class GGNode implements Comparable<GGNode>{
 	}
 
 	public Vector<GGCPMNode> getChildren() { return children; }
+
+	public Boolean[] getIs_evaluated_val_for_samples() {
+		return is_evaluated_val_for_samples;
+	}
 }

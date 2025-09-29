@@ -123,6 +123,7 @@ public  class GGLikelihoodNode extends GGNode{
 		ssqe=0;
 		bounds = new double[2][2];
 		ugasForParam = new Hashtable<String,Vector<GGCPMNode>>();
+		small_likelihood = new double[2];
 	}
 
 	public void initllgrads(int k){

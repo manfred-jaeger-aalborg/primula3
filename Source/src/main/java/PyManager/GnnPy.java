@@ -365,9 +365,12 @@ public class GnnPy {
         if (torchModel.getModelInterpreter() != interpreter)
             torchModel = loadTorchModel(interpreter, currentCatGnn, scriptPath);
 
+        if (!valonly)
+            throw new RuntimeException("Not implemented. Use evaluate_gnnGradients instead. Try with Gradient Graph");
+
         Object[] resultCopy = null;
         Object[] cached = basicStructCacheGet(A, inst, cpmGnn.getGnnId(), valonly);
-        if (cached != null && cached[0] != null)
+        if (false && (cached != null && cached[0] != null))
             resultCopy = cached.clone();
         else {
             // if cache miss, build inputs
@@ -394,52 +397,97 @@ public class GnnPy {
 
             Object[] result = inferModelHetero(x_dict, edge_dict, edge_attr, cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), valonly);
             resultCopy = result.clone();
-            if (!valonly) {
-                Map<String, double[][]> resGrads = (Map<String, double[][]>) resultCopy[1];
-                Map<String, double[][]> outGrads = new HashMap<>();
-                for (TorchInputSpecs pair : cpmGnn.getGnnInputs()) {
-                    ArrayList<Rel> subList = (ArrayList<Rel>) pair.getNodeAttributes();
-                    int relIdx = 0;
-                    double[][] xGrads = resGrads.get("x");
-                    for (Rel rel : subList) {
-                        if (rel instanceof NumRel) {
-                            for (int i = 0; i < xGrads.length; i++) {
-                                String atomString = rel.name()+"("+i+")";
-                                double[][] relGrad = new double[1][1];
-                                relGrad[0][0] = xGrads[i][relIdx];
-                                outGrads.put(atomString, relGrad);
-                            }
-                        }
-                        relIdx++;
-                    }
-
-                    subList = (ArrayList<Rel>) pair.getEdgeAttributes();
-                    relIdx = 0;
-                    xGrads = resGrads.get("ea");
-                    for (Rel rel : subList) {
-                        if (rel instanceof NumRel) {
-                            for (int i = 0; i < xGrads.length; i++) {
-                                String atomString = rel.name() + "(" + i + ")";
-                                double[][] relGrad = new double[1][1];
-                                relGrad[0][0] = xGrads[i][relIdx];
-                                outGrads.put(atomString, relGrad);
-                            }
-                        }
-                        relIdx++;
-                    }
-                }
-                resultCopy[1] = outGrads;
 
             basicStructCachePut(A, inst, cpmGnn.getGnnId(), resultCopy);
+            double[][] outProbsFull = (double[][]) resultCopy[0];
+            int nodeIndex = (cpmGnn.getArgument().equals("[]") || cpmGnn.getArgument().equals("")) ? 0 : Integer.parseInt(cpmGnn.getArgument());
+            resultCopy[0] = outProbsFull[nodeIndex];
         }
+        return resultCopy;
+    }
+
+    public Object[] evaluate_gnnGradients(RelStruc A, OneStrucData inst, CatGnn cpmGnn, GGCPMNode ggcpmNode) {
+        SharedInterpreter interpreter = JepManager.getInterpreter(true);
+        // mode torch model to the new interpreter
+        if (torchModel.getModelInterpreter() != interpreter)
+            torchModel = loadTorchModel(interpreter, currentCatGnn, scriptPath);
+
+        Object[] resultCopy = null;
+
+        // reconstruct sampledRelGobal from A+inst
+        OneStrucData onsd = new OneStrucData(A.getmydata().copy());
+        sampledRelGobal = new SparseRelStruc(A.getNames(), onsd, A.getCoords(), A.signature());
+        sampledRelGobal.getmydata().add(inst.copy());
+
+        if (GGboolRel == null) {
+            GGboolRel = new Vector<>();
+            for (TorchInputSpecs inps : cpmGnn.getGnnInputs())
+                GGboolRel.add(inps.getEdgeRelation());
+        }
+        if (relToNodeMap.isEmpty())
+            relToNodeMap = constructNodesDict(cpmGnn, A);
+        if (nodeMap.isEmpty())
+            nodeMap = constructNodesDictMap(cpmGnn, A);
+        if (relToEdgeAttrMap.isEmpty())
+            relToEdgeAttrMap = constructEdgeAttrDict(cpmGnn, A);
+
+        Map<String, double[][]> x_dict = inputAttrToDict(cpmGnn, nodeMap, relToNodeMap, sampledRelGobal);
+        x_dict = updateAttrDict(x_dict, cpmGnn, ggcpmNode, false);
+
+        Map<String, ArrayList<ArrayList<Integer>>> edge_dict =  edgesToDict(GGboolRel, sampledRelGobal, nodeMap);
+        edge_dict = updateEdgeDict(edge_dict, cpmGnn, ggcpmNode);
+
+        Map<String, double[][]> edge_attr = new HashMap<>();
+        if (relToEdgeAttrMap.size() > 0) {
+            edge_attr = initEdgeAttrdict(cpmGnn, relToEdgeAttrMap, sampledRelGobal);
+            edge_attr = updateAttrDict(edge_attr, cpmGnn, ggcpmNode,true);
+        }
+
+        Object[] result = inferModelHetero(x_dict, edge_dict, edge_attr, cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), false);
+        resultCopy = result.clone();
+
+        Map<String, double[][]> resGrads = (Map<String, double[][]>) resultCopy[1];
+        Map<String, double[][]> outGrads = new HashMap<>();
+        for (TorchInputSpecs pair : cpmGnn.getGnnInputs()) {
+            ArrayList<Rel> subList = (ArrayList<Rel>) pair.getNodeAttributes();
+            int relIdx = 0;
+            double[][] xGrads = resGrads.get("x");
+            for (Rel rel : subList) {
+                if (rel instanceof NumRel) {
+                    for (int i = 0; i < xGrads.length; i++) {
+                        String atomString = rel.name()+"("+i+")";
+                        double[][] relGrad = new double[1][1];
+                        relGrad[0][0] = xGrads[i][relIdx];
+                        outGrads.put(atomString, relGrad);
+                    }
+                }
+                relIdx++;
+            }
+
+            subList = (ArrayList<Rel>) pair.getEdgeAttributes();
+            relIdx = 0;
+            xGrads = resGrads.get("ea");
+            for (Rel rel : subList) {
+                if (rel instanceof NumRel) {
+                    for (int i = 0; i < xGrads.length; i++) {
+                        String atomString = rel.name() + "(" + i + ")";
+                        double[][] relGrad = new double[1][1];
+                        relGrad[0][0] = xGrads[i][relIdx];
+                        outGrads.put(atomString, relGrad);
+                    }
+                }
+                relIdx++;
+            }
+        }
+        resultCopy[1] = outGrads;
 
         double[][] outProbsFull = (double[][]) resultCopy[0];
         int nodeIndex = (cpmGnn.getArgument().equals("[]") || cpmGnn.getArgument().equals("")) ? 0 : Integer.parseInt(cpmGnn.getArgument());
         resultCopy[0] = outProbsFull[nodeIndex];
 
-        }
         return resultCopy;
     }
+
 
     public static Map<String, double[][]> inputAttrToDict(CatGnn cpmGnn, Map<Integer, Integer> nodeMap, Map<Rel, int[][]> GGNodesDict, SparseRelStruc sampledRel) {
         Map<String, double[][]> x_dict = new Hashtable<>();
@@ -749,13 +797,28 @@ public class GnnPy {
                         }
                     }
                 }
+                // check if we are learning parameters
+                if (mygg.getParamNodes().length > 0) {
+                    for (GGConstantNode node : mygg.getParamNodes()) {
+                        String name = node.paramname();
+                        int idx = name.indexOf('(');
+                        String relName = (idx != -1) ? name.substring(0, idx) : name;
+                        if (uniqueChildren.contains(node) && relName.equals(subRel.name())) {
+                            double value = node.getCurrentParamVal();
+                            int[] args = extractParamArgs(name);
+                            if (args != null && args.length > 0) {
+                                int row = nodeMap.get(args[0]);
+                                inputMatrix[row][idxFeat] = value;
+                            }
+                        }
+                    }
+                }
                 if (subRel instanceof CatRel && cpmGnn.isOneHotEncoding())
                     idxFeat += subRel.numvals();
                 else
                     idxFeat++;
             }
         }
-
         return inputDict;
     }
 
@@ -770,10 +833,11 @@ public class GnnPy {
                     throw new RuntimeException("Types of the relations do not match! " + subList.get(j).getTypesAsString() + " / " + subList.get(j + 1).getTypesAsString());
                 }
             }
-            String key = subList.get(0).getTypesAsString();
-
-            double[][] inputXmatrix = createEdgeAttrMatrix(subList, relToEdgeAttrMap, sampledRel, cpmGnn.isOneHotEncoding());
-            edge_attr.put(key, inputXmatrix);
+            if (subList.size() > 0) {
+                String key = subList.get(0).getTypesAsString();
+                double[][] inputXmatrix = createEdgeAttrMatrix(subList, relToEdgeAttrMap, sampledRel, cpmGnn.isOneHotEncoding());
+                edge_attr.put(key, inputXmatrix);
+            }
         }
         return edge_attr;
     }
@@ -991,7 +1055,6 @@ public class GnnPy {
     }
 
     public Map<String, ArrayList<ArrayList<Integer>>> updateEdgeDict(Map<String, ArrayList<ArrayList<Integer>>> edge_dict, CatGnn cpmGnn,  GGCPMNode ggcpmNode) {
-        // at the moment, edge-features are not implemented/supported
         Vector<GGCPMNode> childred = ggcpmNode.getChildren();
         TreeSet<Rel> parentRels = cpmGnn.parentRels();
         for (TorchInputSpecs pair : cpmGnn.getGnnInputs()) {
@@ -1031,7 +1094,7 @@ public class GnnPy {
             torchModel = loadTorchModel(interpreter, currentCatGnn, scriptPath);
         CatGnn cpm = (CatGnn) cpmGnn;
 
-        if (!savedData) {
+        if (!savedData || !ggcpmGnn.getIs_evaluated_val_for_samples()[0]) {
             initGnnData(cpm, A, inst);
             savedData = true;
         }
@@ -1053,6 +1116,7 @@ public class GnnPy {
 
         Object[] result = inferModelHetero(GGnodeAttrDict, GGedgeDict, GGedgeAttrDict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), true);
         double[][] outProbs = (double[][]) result[0];
+
         if (cpmGnn.getArgument().equals("[]") || cpmGnn.getArgument().equals(""))
             return outProbs[0];
         else
@@ -1073,6 +1137,7 @@ public class GnnPy {
             relToEdgeAttrMap = constructEdgeAttrDict(cpmGnn, A);
             GGnodeAttrDict = new HashMap<>();
             GGedgeDict = new HashMap<>();
+            GGedgeAttrDict = new HashMap<>();
             if (GGboolRel == null) {
                 GGboolRel = new Vector<>();
                 for (TorchInputSpecs inps: cpmGnn.getGnnInputs()) {
@@ -1215,6 +1280,63 @@ public class GnnPy {
 
         double[][] outProbs = (double[][]) result[0];
         return outProbs[Integer.parseInt(cpmGnn.getArgument())];
+    }
+
+    private int[] extractParamArgs(String paramName) {
+        int start = paramName.indexOf('(');
+        int end = paramName.indexOf(')');
+        if (start == -1 || end == -1 || end <= start) return null;
+
+        String s = paramName;
+        int i = start + 1;
+        int limit = end;
+
+        int count = 1;
+        for (int k = i; k < limit; k++) {
+            if (s.charAt(k) == ',') count++;
+        }
+
+        int[] out = new int[count];
+        int idx = 0;
+
+        while (i < limit) {
+            // skip leading whitespace
+            while (i < limit && Character.isWhitespace(s.charAt(i))) i++;
+            if (i >= limit) {
+                // trailing whitespace only — that means there was an empty token -> error
+                return null;
+            }
+
+            char c = s.charAt(i);
+
+            // parse digits
+            long val = 0;
+            int digits = 0;
+            while (i < limit) {
+                c = s.charAt(i);
+                if (c >= '0' && c <= '9') {
+                    val = val * 10 + (c - '0');
+                    digits++;
+                    i++;
+                } else break;
+            }
+            if (digits == 0) return null;
+            if (val < Integer.MIN_VALUE || val > Integer.MAX_VALUE) return null;
+            out[idx++] = (int) val;
+            while (i < limit && Character.isWhitespace(s.charAt(i))) i++;
+            if (i >= limit) break;
+            if (s.charAt(i) == ',') {
+                i++; // consume comma and continue to next argument
+                continue;
+            } else {
+                return null;
+            }
+        }
+
+        if (idx != count) {
+            return null;
+        }
+        return out;
     }
 
     private void printPython(Interpreter interpreter, String var) {
