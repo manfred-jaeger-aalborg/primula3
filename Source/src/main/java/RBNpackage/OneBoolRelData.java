@@ -647,6 +647,99 @@ public class OneBoolRelData extends OneRelData {
 		 makeIndex(true);
 		 makeIndex(false);
 	 }
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
+
+		OneBoolRelData other = (OneBoolRelData) obj;
+
+		// Compare relation
+		if (rel == null) {
+			if (other.rel != null) {
+				return false;
+			}
+		} else if (!rel.equals(other.rel)) {
+			return false;
+		}
+
+		// Compare default value
+		if (defaultval == null) {
+			if (other.defaultval != null) {
+				return false;
+			}
+		} else if (!defaultval.equals(other.defaultval)) {
+			return false;
+		}
+
+		// Compare trueAtoms
+		if (trueAtoms == null) {
+			if (other.trueAtoms != null) {
+				return false;
+			}
+		} else if (!compareSets(trueAtoms, other.trueAtoms)) {
+			return false;
+		}
+
+		// Compare falseAtoms
+		if (falseAtoms == null) {
+			if (other.falseAtoms != null) {
+				return false;
+			}
+		} else if (!compareSets(falseAtoms, other.falseAtoms)) {
+			return false;
+		}
+
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 31 * result + (rel != null ? rel.hashCode() : 0);
+		result = 31 * result + (defaultval != null ? defaultval.hashCode() : 0);
+		result = 31 * result + (trueAtoms != null ? computeSetHashCode(trueAtoms) : 0);
+		result = 31 * result + (falseAtoms != null ? computeSetHashCode(falseAtoms) : 0);
+		return result;
+	}
+
+	/**
+	 * Helper method to compare two TreeSets of int arrays
+	 */
+	private boolean compareSets(TreeSet<int[]> set1, TreeSet<int[]> set2) {
+		if (set1.size() != set2.size()) {
+			return false;
+		}
+
+		Iterator<int[]> it1 = set1.iterator();
+		Iterator<int[]> it2 = set2.iterator();
+
+		while (it1.hasNext() && it2.hasNext()) {
+			int[] arr1 = it1.next();
+			int[] arr2 = it2.next();
+			if (!Arrays.equals(arr1, arr2)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Helper method to compute hash code for a TreeSet of int arrays
+	 */
+	private int computeSetHashCode(TreeSet<int[]> set) {
+		int hash = 1;
+		for (int[] arr : set) {
+			hash = 31 * hash + Arrays.hashCode(arr);
+		}
+		return hash;
+	}
 //	 private void addToIndex(int[] tup, HashMap<Integer,TreeSet<int[]>>[] idx) {
 //		 // tup and idx have the same length rel.arity!
 //		 for (int i=0;i<rel.arity;i++) {

@@ -352,6 +352,102 @@ public class OneCatRelData extends OneRelData {
 		 return result;
 	 }
 
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
 
+		OneCatRelData other = (OneCatRelData) obj;
+
+		// Compare relation
+		if (rel == null) {
+			if (other.rel != null) {
+				return false;
+			}
+		} else if (!rel.equals(other.rel)) {
+			return false;
+		}
+
+		// Compare default value
+		if (defaultval == null) {
+			if (other.defaultval != null) {
+				return false;
+			}
+		} else if (!defaultval.equals(other.defaultval)) {
+			return false;
+		}
+
+		// Compare values
+		if (values == null) {
+			if (other.values != null) {
+				return false;
+			}
+		} else if (!compareValues(values, other.values)) {
+			return false;
+		}
+
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 31 * result + (rel != null ? rel.hashCode() : 0);
+		result = 31 * result + (defaultval != null ? defaultval.hashCode() : 0);
+		result = 31 * result + (values != null ? computeValuesHashCode(values) : 0);
+		return result;
+	}
+
+	/**
+	 * Helper method to compare two TreeMaps with int[] keys and Integer values
+	 */
+	private boolean compareValues(TreeMap<int[], Integer> map1, TreeMap<int[], Integer> map2) {
+		if (map1.size() != map2.size()) {
+			return false;
+		}
+
+		Iterator<Map.Entry<int[], Integer>> it1 = map1.entrySet().iterator();
+		Iterator<Map.Entry<int[], Integer>> it2 = map2.entrySet().iterator();
+
+		while (it1.hasNext() && it2.hasNext()) {
+			Map.Entry<int[], Integer> entry1 = it1.next();
+			Map.Entry<int[], Integer> entry2 = it2.next();
+
+			// Compare keys (int arrays)
+			if (!Arrays.equals(entry1.getKey(), entry2.getKey())) {
+				return false;
+			}
+
+			// Compare values (Integers)
+			Integer val1 = entry1.getValue();
+			Integer val2 = entry2.getValue();
+
+			if (val1 == null) {
+				if (val2 != null) {
+					return false;
+				}
+			} else if (!val1.equals(val2)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Helper method to compute hash code for TreeMap with int[] keys and Integer values
+	 */
+	private int computeValuesHashCode(TreeMap<int[], Integer> map) {
+		int hash = 1;
+		for (Map.Entry<int[], Integer> entry : map.entrySet()) {
+			hash = 31 * hash + Arrays.hashCode(entry.getKey());
+			hash = 31 * hash + (entry.getValue() != null ? entry.getValue().hashCode() : 0);
+		}
+		return hash;
+	}
 
 }

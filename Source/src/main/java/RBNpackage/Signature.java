@@ -53,4 +53,21 @@ public class Signature {
 		}
 		return true;
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null || getClass() != obj.getClass())
+			return false;
+		Signature other = (Signature) obj;
+		return Objects.equals(rels, other.rels);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(rels);
+	}
+
+
 }

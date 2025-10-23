@@ -1564,7 +1564,90 @@ public class OneStrucData {
 	public double getWeight() {
 		return weight;
 	}
-	
-	
+
+	/**
+	 * Checks if this OneStrucData is equal to another object.
+	 * Two OneStrucData objects are considered equal if they contain the same
+	 * relational data (boolean, numeric, and categorical relations).
+	 * The parentrelstruc and weight are not considered in the equality check.
+	 *
+	 * @param obj the object to compare with
+	 * @return true if the objects are equal, false otherwise
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
+
+		OneStrucData other = (OneStrucData) obj;
+
+		// Check if the sizes match
+		if (this.allonebooldata.size() != other.allonebooldata.size() ||
+				this.allonenumdata.size() != other.allonenumdata.size() ||
+				this.allonecatdata.size() != other.allonecatdata.size()) {
+			return false;
+		}
+
+		// Check boolean relation data
+		for (OneBoolRelData thisBoolData : this.allonebooldata) {
+			OneBoolRelData otherBoolData = other.findInBoolRel(thisBoolData.rel());
+			if (otherBoolData == null || !thisBoolData.equals(otherBoolData)) {
+				return false;
+			}
+		}
+
+		// Check numeric relation data
+		for (OneNumRelData thisNumData : this.allonenumdata) {
+			OneNumRelData otherNumData = other.findInNumRel(thisNumData.rel());
+			if (otherNumData == null || !thisNumData.equals(otherNumData)) {
+				return false;
+			}
+		}
+
+		// Check categorical relation data
+		for (OneCatRelData thisCatData : this.allonecatdata) {
+			OneCatRelData otherCatData = other.findInCatRel(thisCatData.rel());
+			if (otherCatData == null || !thisCatData.equals(otherCatData)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Returns a hash code value for this OneStrucData.
+	 * The hash code is computed based on the relational data.
+	 *
+	 * @return a hash code value for this object
+	 */
+	@Override
+	public int hashCode() {
+		int result = 17;
+
+		// Include boolean relation data in hash
+		for (OneBoolRelData boolData : allonebooldata) {
+			result = 31 * result + (boolData != null ? boolData.hashCode() : 0);
+		}
+
+		// Include numeric relation data in hash
+		for (OneNumRelData numData : allonenumdata) {
+			result = 31 * result + (numData != null ? numData.hashCode() : 0);
+		}
+
+		// Include categorical relation data in hash
+		for (OneCatRelData catData : allonecatdata) {
+			result = 31 * result + (catData != null ? catData.hashCode() : 0);
+		}
+
+		return result;
+	}
+
+
 }
 

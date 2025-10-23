@@ -1024,6 +1024,61 @@ public abstract class RelStruc implements Cloneable{
 	public Signature signature(){
 		return sig;
 	}
-	
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
+
+		RelStruc other = (RelStruc) obj;
+
+		// Compare domain size
+		if (dom != other.dom) {
+			return false;
+		}
+
+		// Compare signature
+		if (sig == null) {
+			if (other.sig != null) {
+				return false;
+			}
+		} else if (!sig.equals(other.sig)) {
+			return false;
+		}
+
+		// Compare element names
+		if (elementnames == null) {
+			if (other.elementnames != null) {
+				return false;
+			}
+		} else if (!elementnames.equals(other.elementnames)) {
+			return false;
+		}
+
+		// Compare mydata
+		if (mydata == null) {
+			if (other.mydata != null) {
+				return false;
+			}
+		} else if (!mydata.equals(other.mydata)) {
+			return false;
+		}
+
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 31 * result + dom;
+		result = 31 * result + (sig != null ? sig.hashCode() : 0);
+		result = 31 * result + (elementnames != null ? elementnames.hashCode() : 0);
+		result = 31 * result + (mydata != null ? mydata.hashCode() : 0);
+		return result;
+	}
 
 }
