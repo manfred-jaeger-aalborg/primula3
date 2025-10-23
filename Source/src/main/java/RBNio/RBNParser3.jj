@@ -19,7 +19,6 @@ import RBNpackage.*;
 import java.util.*;
 import myio.StringOps;
 import RBNExceptions.*;
-import RBNutilities.Pair;
 
 public class RBNParser3{
 	private int parseno = 1;
@@ -70,8 +69,15 @@ void MacroDefinition()  throws RBNIllegalArgumentException:
  CPModel parsedprobform;
 }
 {// grammar
-	"@" parsedat = TypedAtom(true) "=" (parsedprobform = ProbForm() | parsedprobform = CatGnn()) ";"
-	{// Add the '@' back to the name:
+	"@" parsedat = TypedAtom(true) "="
+	(
+          // choose CatGnn only when COMPUTEWITHTORCH is next 
+          LOOKAHEAD( <COMPUTEWITHTORCH> ) parsedprobform = CatGnn()
+        |
+          parsedprobform = ProbForm()
+    )
+    ";"
+	{
 	parsedat.set_relname("@"+parsedat.rel().name());
 	switch  (parseno){
 	case 1:
@@ -677,33 +683,48 @@ String PathDec():
 	{return tok.image;}
 }
 
-TorchInputRels CombinationTorchRels()  throws RBNIllegalArgumentException:
-{
-  Token tok;
-  Vector<CPModel> pflist;
+TorchInputPf CombinationTorchRels() throws RBNIllegalArgumentException:
+{ Token tok;
+  Vector<CPModel> pflistNodeFeat = new Vector<>();
+  Vector<CPModel> pflistEdgeGraph = new Vector<>();
+  Vector<CPModel> pflistEdgeAttr = new Vector<>();
   Vector<String> arglist = new Vector<String>();
   CPModel[] pfarr;
+  CPModel[] pfarrNodeAttr;
+  CPModel[] pfarrEdge;
+  CPModel[] pfarrEdgeAttr;
   ProbFormBool cc = new ProbFormBoolConstant(true);
 }
 {// grammar
-	<COMBCOMB>
-	pflist = ProbFormList()
-	<USINGTORCH>
-	(<COMBFORALL>
-	arglist = ArgList()
-	<COMBWHERE> cc=BoolFormula())?
-	{
-        switch(parseno){
-            case 1:
-                return null;
-                break;
-            case 2:
-                pfarr = new CPModel[pflist.size()];
-                for (int i=0;i<pfarr.length;i++)
-                    pfarr[i]=pflist.elementAt(i);
-                return new TorchInputRels(pfarr,StringOps.stringVectorToArray(arglist),cc);
-        }
-	}
+ <COMBCOMB> 
+ <NODEFEAT> pflistNodeFeat = ProbFormList()
+ (<EDGEGRAPH> pflistEdgeGraph = ProbFormList())?
+ (<EDGEATTR> pflistEdgeAttr = ProbFormList())?
+ <USINGTORCH>
+ (<COMBFORALL> arglist = ArgList() <COMBWHERE> cc=BoolFormula())?
+ {
+    switch(parseno){
+        case 1: return null; break;
+        case 2:
+            pfarr = new CPModel[pflistNodeFeat.size()+pflistEdgeGraph.size()+pflistEdgeAttr.size()];
+            pfarrNodeAttr = new CPModel[pflistNodeFeat.size()];
+            pfarrEdge = new CPModel[pflistEdgeGraph.size()];
+            pfarrEdgeAttr = new CPModel[pflistEdgeAttr.size()];
+            int indexAll = 0;
+            for (int i=0;i<pflistNodeFeat.size();i++, indexAll++){
+                pfarr[indexAll]=pflistNodeFeat.elementAt(i);
+                pfarrNodeAttr[i]=pflistNodeFeat.elementAt(i);
+            }
+            for (int i=0;i<pflistEdgeGraph.size();i++, indexAll++){
+                pfarr[indexAll]=pflistEdgeGraph.elementAt(i);
+                pfarrEdge[i]=pflistEdgeGraph.elementAt(i);
+            }
+            for (int i=0;i<pflistEdgeAttr.size();i++, indexAll++){
+                pfarr[indexAll]=pflistEdgeAttr.elementAt(i);
+                pfarrEdgeAttr[i]=pflistEdgeAttr.elementAt(i);
+            }
+            return new TorchInputPf(pfarr, pfarrNodeAttr, pfarrEdge, pfarrEdgeAttr, StringOps.stringVectorToArray(arglist),cc);
+    } }
 }
 
 CatGnn CatGnn() throws RBNIllegalArgumentException :
@@ -711,15 +732,18 @@ CatGnn CatGnn() throws RBNIllegalArgumentException :
     Token tk1 = null;
     Token tk2;
     Vector<String> freeVals;
+    Vector<String> outTypes;
     String configPath;
     int numVals = 1;
-    List<TorchInputSpecs> forInputs = new ArrayList<>();;
+    List<TorchInputSpecs> forInputs = new ArrayList<>();
     List<Rel> attrs;
     List<Rel> edgeAttrs = new ArrayList<>();
     Rel attrRel;
     BoolRel edgeRel;
-    List<TorchInputRels> combineClauses = new ArrayList<>();
-    TorchInputRels pf;
+    TypedTorchPf tti = new TypedTorchPf();
+    TorchInputPf tri;
+    TorchCombine tc;
+    List<List<TorchInputPf>> combineClausesType = new ArrayList<>();
 }
 {
     <COMPUTEWITHTORCH>
@@ -728,6 +752,8 @@ CatGnn CatGnn() throws RBNIllegalArgumentException :
     tk1 = <NonNegNumber> { numVals = Integer.parseInt(tk1.image); }
     <ForFreeVars>
     freeVals = UntypedArguments()
+    <ForOutTypes>
+    outTypes = UntypedArguments()
     (
         <TYPEDICT>
             <NODEFEAT> attrs = AttrList()
@@ -738,22 +764,32 @@ CatGnn CatGnn() throws RBNIllegalArgumentException :
             {
                 edgeRel = (BoolRel) reader.getRelFromSignature(tk2.image);
                 if (edgeAttrs.size() > 0) {
-                    TorchInputSpecs tis = new TorchInputSpecs(attrs, edgeRel, edgeAttrs);
+                    TorchInputSpecs tis = new TorchInputSpecs(attrs.get(0).getTypesAsString(), attrs, edgeRel, edgeAttrs);
                     forInputs.add(tis);
                 } else {
-                    TorchInputSpecs tis = new TorchInputSpecs(attrs, edgeRel, null);
+                    TorchInputSpecs tis = new TorchInputSpecs(attrs.get(0).getTypesAsString(), attrs, edgeRel, null);
                     forInputs.add(tis);
                 }
             }
-    )+
 
-    pf = CombinationTorchRels()
-    { combineClauses.add(pf); }
-    (
-        ","
-        pf = CombinationTorchRels()
-        { combineClauses.add(pf); }
-    )*
+            {List<TorchInputPf> combineClauses = new ArrayList<>();}
+
+            tri = CombinationTorchRels()
+            {
+                combineClauses.add(tri);
+            }
+            (
+                ","
+                tri = CombinationTorchRels()
+                {
+                    combineClauses.add(tri);
+                }
+            )*
+            {
+                combineClausesType.add(combineClauses);
+                tti.addCombine(attrs.get(0).getTypesAsString(), combineClauses);
+            }
+    )+
 
     {
         switch(parseno)
@@ -763,8 +799,8 @@ CatGnn CatGnn() throws RBNIllegalArgumentException :
             break;
         case 2:
             if (numVals == 1)
-                return new CatGnnBool(configPath, freeVals, forInputs, combineClauses, true);
-            return new CatGnn(configPath, freeVals, numVals, forInputs, combineClauses, true);
+                return new CatGnnBool(configPath, freeVals, forInputs, tti, outTypes, true);
+            return new CatGnn(configPath, freeVals, numVals, forInputs, tti, outTypes, true);
         }
     }
 }
@@ -826,6 +862,10 @@ TOKEN : {
 
 TOKEN : {
     <ForFreeVars: "FORFREEVARS" | "ForFreeVars" | "forfreevars" >
+}
+
+TOKEN : {
+    <ForOutTypes: "FOROUTTYPES" | "ForOutTypes" | "forouttypes" >
 }
 
 TOKEN : {
