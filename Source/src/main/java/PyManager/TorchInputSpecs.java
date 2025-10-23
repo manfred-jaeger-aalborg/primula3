@@ -7,12 +7,14 @@ import java.util.*;
 
 public class TorchInputSpecs {
 
-    List<Rel> features;
+    String type;
+    List<Rel> nodeAttributes;
     BoolRel edgeRelation;
     List<Rel> edgeAttributes;
 
-    public TorchInputSpecs(List<Rel> features, BoolRel edgeRelation, List<Rel> edgeAttributes) {
-        this.features = features;
+    public TorchInputSpecs(String type, List<Rel> nodeAttributes, BoolRel edgeRelation, List<Rel> edgeAttributes) {
+        this.type = type;
+        this.nodeAttributes = nodeAttributes;
         this.edgeRelation = edgeRelation;
         if (edgeAttributes == null)
             this.edgeAttributes = new ArrayList<>();
@@ -24,19 +26,19 @@ public class TorchInputSpecs {
     public String toString() {
         if (edgeAttributes != null || edgeAttributes.size() > 0) {
             return "NODE " + ":\n" +
-                    "  FEATURE: " + String.join(", ", features.toString()) + "\n" +
+                    "  FEATURE: " + String.join(", ", nodeAttributes.toString()) + "\n" +
                     "  EDGE: " + edgeRelation.toString() + "\n" +
                     "  EDGE ATTRIBUTES: " + String.join(", ", edgeAttributes.toString());
         }
         return "NODE " + ":\n" +
-                "  FEATURE: " + String.join(", ", features.toString()) + "\n" +
+                "  FEATURE: " + String.join(", ", nodeAttributes.toString()) + "\n" +
                 "  EDGE: " + edgeRelation.toString();
     }
 
-    public List<Rel> getNodeAttributes() { return features; }
+    public List<Rel> getNodeAttributes() { return nodeAttributes; }
 
-    public void setFeatures(List<Rel> features) {
-        this.features = features;
+    public void setNodeAttributes(List<Rel> nodeAttributes) {
+        this.nodeAttributes = nodeAttributes;
     }
 
     public BoolRel getEdgeRelation() {
@@ -50,4 +52,8 @@ public class TorchInputSpecs {
     public List<Rel> getEdgeAttributes() { return edgeAttributes; }
 
     public void setEdgeAttributes(List<Rel> edgeAttributes) { this.edgeAttributes = edgeAttributes; }
+
+    public String getType() {
+        return type;
+    }
 }

@@ -5,15 +5,17 @@ import RBNgui.Primula;
 import RBNpackage.*;
 import RBNutilities.rbnutilities;
 
-import java.util.Hashtable;
-import java.util.TreeSet;
-import java.util.Vector;
+import java.util.*;
 
-public class TorchInputRels {
+public class TorchInputPf {
 
     private CPModel pfargs[];
+    private CPModel pfargsNode[];
+    private CPModel pfargsEdge[];
+    private CPModel pfargsEdgeAttr[];
     private String quantvars[];
     private ProbFormBool cconstr;
+    // TODO ADD LAYER COMBINE
 
     public CPModel[] getPfargs() {
         return pfargs;
@@ -25,9 +27,29 @@ public class TorchInputRels {
         return cconstr;
     }
 
-    public TorchInputRels(CPModel[] pfa, String[] qvars, ProbFormBool cc) throws IllegalArgumentException
+    public TorchInputPf(CPModel[] pfa,
+                        String[] qvars,
+                        ProbFormBool cc) throws IllegalArgumentException
     {
         pfargs = pfa;
+        quantvars = qvars;
+        cconstr = cc;
+        pfargsNode = null;
+        pfargsEdge = null;
+        pfargsEdgeAttr = null;
+    }
+
+    public TorchInputPf(CPModel[] pfa,
+                        CPModel[] pfaNode,
+                        CPModel[] pfaEdge,
+                        CPModel[] pfaEdgeAttr,
+                        String[] qvars,
+                        ProbFormBool cc) throws IllegalArgumentException
+    {
+        pfargs = pfa;
+        pfargsNode = pfaNode;
+        pfargsEdge = pfaEdge;
+        pfargsEdgeAttr = pfaEdgeAttr;
         quantvars = qvars;
         cconstr = cc;
     }
@@ -53,9 +75,9 @@ public class TorchInputRels {
         return result;
     }
 
-    public TorchInputRels substitute(String[] vars, int[] args)
+    public TorchInputPf substitute(String[] vars, int[] args)
     {
-        TorchInputRels result;
+        TorchInputPf result;
         ProbFormBool subcconstr = null;
         /* Construct new substitution arguments by
          * eliminating the variables that appear in
@@ -66,24 +88,35 @@ public class TorchInputRels {
         subsvars = rbnutilities.arraysubstraction(vars,quantvars);
         int[] subsargs = rbnutilities.CorrArraySubstraction(subsvars,vars,args);
 
-
         // Perform substitution on pfargs
         CPModel[]  subpfargs = new CPModel[pfargs.length];
         for (int i = 0; i<pfargs.length; i++)
             subpfargs[i]=pfargs[i].substitute(subsvars,subsargs);
-        //Perform substitution on cconstr
 
+        // just copy the results in order for the node, edges and edge attributes
+        int idxShared = 0;
+        CPModel[]  subpfargsNode = new CPModel[pfargsNode.length];
+        for (int i = 0; i<pfargsNode.length; i++, idxShared++)
+            subpfargsNode[i]=subpfargs[i];
+        CPModel[]  subpfargsEdge = new CPModel[pfargsEdge.length];
+        for (int i = 0; i<pfargsEdge.length; i++, idxShared++)
+            subpfargsEdge[i]=subpfargs[idxShared];
+        CPModel[]  subpfargsEdgeAttr = new CPModel[pfargsEdgeAttr.length];
+        for (int i = 0; i<pfargsEdgeAttr.length; i++, idxShared++)
+            subpfargsEdgeAttr[i]=subpfargs[idxShared];
+
+        //Perform substitution on cconstr
         subcconstr = (ProbFormBool)cconstr.substitute(vars,args);
 
-        result = new TorchInputRels(subpfargs,quantvars,subcconstr);
+        result = new TorchInputPf(subpfargs, subpfargsNode, subpfargsEdge, subpfargsEdgeAttr, quantvars,subcconstr);
 
         return result;
     }
 
     // same code taken from ProbFormCombFunc
-    public TorchInputRels substitute(String[] vars, String[] args)
+    public TorchInputPf substitute(String[] vars, String[] args)
     {
-        TorchInputRels result;
+        TorchInputPf result;
         CPModel[]  subpfargs = new CPModel[pfargs.length];
         ProbFormBool subcconstr = null;
 
@@ -103,6 +136,18 @@ public class TorchInputRels {
         for (int i = 0; i<pfargs.length; i++)
             subpfargs[i]=pfargs[i].substitute(quantvars,newquantvars);
 
+        // just copy the results in order for the node, edges and edge attributes
+        int idxShared = 0;
+        CPModel[]  subpfargsNode = new CPModel[pfargsNode.length];
+        for (int i = 0; i<pfargsNode.length; i++, idxShared++)
+            subpfargsNode[i]=subpfargs[i];
+        CPModel[]  subpfargsEdge = new CPModel[pfargsEdge.length];
+        for (int i = 0; i<pfargsEdge.length; i++, idxShared++)
+            subpfargsEdge[i]=subpfargs[idxShared];
+        CPModel[]  subpfargsEdgeAttr = new CPModel[pfargsEdgeAttr.length];
+        for (int i = 0; i<pfargsEdgeAttr.length; i++, idxShared++)
+            subpfargsEdgeAttr[i]=subpfargs[idxShared];
+
         subcconstr = (ProbFormBool)cconstr.substitute(quantvars,newquantvars);
 
         // Now perform the original substitution
@@ -110,7 +155,7 @@ public class TorchInputRels {
             subpfargs[i]=subpfargs[i].substitute(vars,args);
 
         subcconstr = (ProbFormBool)subcconstr.substitute(vars,args);
-        result = new TorchInputRels(subpfargs,newquantvars,subcconstr);
+        result = new TorchInputPf(subpfargs, subpfargsNode, subpfargsEdge, subpfargsEdgeAttr, newquantvars,subcconstr);
 
         return result;
     }
@@ -202,7 +247,7 @@ public class TorchInputRels {
             }
         }
 
-        TorchInputRels subspfcf = this.substitute(vars, tuple);
+        TorchInputPf subspfcf = this.substitute(vars, tuple);
 
         int[][] subslist = tuplesSatisfyingCConstr(A, vars, tuple);
 
@@ -262,6 +307,31 @@ public class TorchInputRels {
         return result;
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("TorchInputRels{");
+        sb.append("pfargs=").append(Arrays.toString(pfargs));
+        sb.append(", pfargsNode=").append(Arrays.toString(pfargsNode));
+        sb.append(", pfargsEdge=").append(Arrays.toString(pfargsEdge));
+        sb.append(", pfargsEdgeAttr=").append(Arrays.toString(pfargsEdgeAttr));
+        sb.append(", quantvars=").append(Arrays.toString(quantvars));
+        sb.append(", cconstr=").append(cconstr == null ? "null" : cconstr.toString());
+        sb.append('}');
+        return sb.toString();
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Arrays.hashCode(pfargs);
+        result = 31 * result + Arrays.hashCode(pfargsNode);
+        result = 31 * result + Arrays.hashCode(pfargsEdge);
+        result = 31 * result + Arrays.hashCode(pfargsEdgeAttr);
+        result = 31 * result + Arrays.hashCode(quantvars);
+        result = 31 * result + Objects.hashCode(cconstr);
+        return result;
+    }
+
     public int numPFargs(){
         return pfargs.length;
     }
@@ -280,5 +350,29 @@ public class TorchInputRels {
 
     public void setCconstr(ProbFormBool cconstr) {
         this.cconstr = cconstr;
+    }
+
+    public CPModel[] getPfargsNode() {
+        return pfargsNode;
+    }
+
+    public CPModel[] getPfargsEdge() {
+        return pfargsEdge;
+    }
+
+    public CPModel[] getPfargsEdgeAttr() {
+        return pfargsEdgeAttr;
+    }
+
+    public CPModel getPfargsNodeAt(int i) {
+        return pfargsNode[i];
+    }
+
+    public CPModel getPfargsEdgeAt(int i) {
+        return pfargsEdge[i];
+    }
+
+    public CPModel getPfargsEdgeAttrAt(int i) {
+        return pfargsEdgeAttr[i];
     }
 }
