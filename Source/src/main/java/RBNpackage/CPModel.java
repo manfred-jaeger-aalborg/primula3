@@ -257,6 +257,11 @@ public abstract class CPModel
     public abstract TreeSet<Rel> parentRels(TreeSet<String> processed);
     
     public abstract int numvals();
-    
+
+	@Override
+	public int hashCode() {
+		String k = this.asString(Primula.CLASSICSYNTAX, 0, null, false, true);
+		return (k == null) ? 0 : k.hashCode();
+	}
 }
 
