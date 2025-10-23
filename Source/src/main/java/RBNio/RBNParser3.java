@@ -816,11 +816,9 @@ switch(parseno){
     List<TorchInputSpecs> forInputs = new ArrayList<>();
     List<Rel> attrs;
     List<Rel> edgeAttrs = new ArrayList<>();
-    Rel attrRel;
     BoolRel edgeRel;
     TypedTorchPf tti = new TypedTorchPf();
     TorchInputPf tri;
-    TorchCombine tc;
     List<List<TorchInputPf>> combineClausesType = new ArrayList<>();
     jj_consume_token(COMPUTEWITHTORCH);
     configPath = PathDec();
@@ -1466,7 +1464,7 @@ parseno = pn;
     return false;
   }
 
-  private boolean jj_3R_CatGnn_749_5_16()
+  private boolean jj_3R_CatGnn_747_5_16()
  {
     if (jj_scan_token(COMPUTEWITHTORCH)) return true;
     if (jj_3R_PathDec_682_9_47()) return true;
@@ -1547,7 +1545,7 @@ parseno = pn;
 
   private boolean jj_3_8()
  {
-    if (jj_3R_CatGnn_749_5_16()) return true;
+    if (jj_3R_CatGnn_747_5_16()) return true;
     return false;
   }
 
@@ -2184,13 +2182,6 @@ parseno = pn;
     return false;
   }
 
-  private boolean jj_3_65()
- {
-    if (jj_scan_token(14)) return true;
-    if (jj_3R_CombinationTorchRels_699_2_40()) return true;
-    return false;
-  }
-
   private boolean jj_3R_BoolConstant_598_9_33()
  {
     Token xsp;
@@ -2214,6 +2205,13 @@ parseno = pn;
     if (jj_3R_ArgList_177_10_32()) return true;
     if (jj_scan_token(COMBWHERE)) return true;
     if (jj_3R_BoolFormula_515_5_20()) return true;
+    return false;
+  }
+
+  private boolean jj_3_65()
+ {
+    if (jj_scan_token(14)) return true;
+    if (jj_3R_CombinationTorchRels_699_2_40()) return true;
     return false;
   }
 
@@ -2335,14 +2333,6 @@ parseno = pn;
     return false;
   }
 
-  private boolean jj_3_66()
- {
-    if (jj_scan_token(TYPEDICT)) return true;
-    if (jj_scan_token(NODEFEAT)) return true;
-    if (jj_3R_AttrList_663_5_39()) return true;
-    return false;
-  }
-
   private boolean jj_3R_CombinationFuncClassic_375_9_28()
  {
     if (jj_scan_token(CombinationFunction)) return true;
@@ -2355,6 +2345,14 @@ parseno = pn;
     xsp = jj_scanpos;
     if (jj_3_35()) jj_scanpos = xsp;
     if (jj_scan_token(22)) return true;
+    return false;
+  }
+
+  private boolean jj_3_66()
+ {
+    if (jj_scan_token(TYPEDICT)) return true;
+    if (jj_scan_token(NODEFEAT)) return true;
+    if (jj_3R_AttrList_663_5_39()) return true;
     return false;
   }
 

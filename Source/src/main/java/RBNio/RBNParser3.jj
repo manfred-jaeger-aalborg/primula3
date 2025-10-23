@@ -738,11 +738,9 @@ CatGnn CatGnn() throws RBNIllegalArgumentException :
     List<TorchInputSpecs> forInputs = new ArrayList<>();
     List<Rel> attrs;
     List<Rel> edgeAttrs = new ArrayList<>();
-    Rel attrRel;
     BoolRel edgeRel;
     TypedTorchPf tti = new TypedTorchPf();
     TorchInputPf tri;
-    TorchCombine tc;
     List<List<TorchInputPf>> combineClausesType = new ArrayList<>();
 }
 {
