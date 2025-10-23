@@ -1,30 +1,70 @@
 LandUse([agr]a) = SOFTMAX 1,1,1,1;
 
 Pollution([sub]v) = COMPUTEWITHTORCH [/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/config_model.py]
-
+                    
                     WithNumValues 3
                     ForFreeVars (v)
+                    ForOutTypes (sub)
 
                     % gnn input definition
                     TYPEDICT
                         NODEFEAT LandUse, AreaAgr
                         EDGEGRAPH downstream_agr
 
+                        % first-layer
+                        COMBINE 
+                            NODEFEAT
+                                LandUse(la),AreaAgr(la)
+                            EDGEGRAPH
+                                downstream_agr(la,v)
+                        USINGTORCH FORALL la WHERE downstream_agr(la, v),
+
+                        % second-layer
+                        COMBINE 
+                            NODEFEAT
+                                LandUse(la),AreaAgr(la)
+                            EDGEGRAPH
+                                downstream_agr(la,lb) 
+                        USINGTORCH FORALL la,lb WHERE (downstream(lb, v) & downstream_agr(la, lb))
+
+                        % third-layer
+                        % COMBINE 
+                        %     NODEFEAT
+                        %         LandUse(la),AreaAgr(la)
+                        %     EDGEGRAPH
+                        %         downstream_agr(la,lb) 
+                        % USINGTORCH FORALL la,lb,lc WHERE ((downstream(lb, lc) & downstream_agr(la, lb)) & downstream(lc,v))
+
                     TYPEDICT
                         NODEFEAT LandUseUrb, AreaUrb
                         EDGEGRAPH downstream_urb
 
+                        COMBINE 
+                            NODEFEAT
+                                LandUseUrb(lu),AreaUrb(lu)
+                            EDGEGRAPH
+                                downstream_urb(lu, v) 
+                        USINGTORCH FORALL lu WHERE downstream_urb(lu, v),
+
+                        COMBINE 
+                            NODEFEAT
+                                LandUseUrb(lu),AreaUrb(lu)
+                            EDGEGRAPH
+                                downstream_urb(lu, lb) 
+                        USINGTORCH FORALL lu, lb WHERE (downstream(lb, v) & downstream_urb(lu, lb))
+
                     TYPEDICT
                         NODEFEAT SubType
                         EDGEGRAPH downstream
+                        
+                        COMBINE 
+                            NODEFEAT
+                                SubType(v) 
+                        USINGTORCH,
 
-                    % first-layer attributes
-                    COMBINE LandUse(la),AreaAgr(la) USINGTORCH FORALL la WHERE downstream_agr(la, v),
-                    % second-layer attributes
-                    COMBINE LandUse(la),AreaAgr(la) USINGTORCH FORALL la,lb WHERE (downstream(lb, v) & downstream_agr(la, lb)),
-
-                    COMBINE LandUseUrb(lu),AreaUrb(lu) USINGTORCH FORALL lu WHERE downstream_urb(lu, v),
-                    COMBINE LandUseUrb(lu),AreaUrb(lu) USINGTORCH FORALL lu,lb WHERE (downstream(lb, v) & downstream_urb(lu, lb)),
-
-                    COMBINE SubType(v) USINGTORCH,
-                    COMBINE SubType(vb) USINGTORCH FORALL vb WHERE downstream(vb, v);
+                        COMBINE 
+                            NODEFEAT
+                                SubType(vb) 
+                            EDGEGRAPH
+                                downstream(vb, v)
+                        USINGTORCH FORALL vb WHERE downstream(vb, v);
