@@ -89,6 +89,7 @@ public class GradientGraphO extends GradientGraph{
 	private int batchSearchSize;
 	private int sampleSizeScoring;
 	private int lookaheadSearch;
+	private int maxitersa;
 
 	// https://stackoverflow.com/questions/4573123/java-updating-text-in-the-command-line-without-a-new-line
 	// for now the function will not be integrated (merging conflicts)
@@ -1517,7 +1518,7 @@ public class GradientGraphO extends GradientGraph{
 				flipnext=nextimn;
 		}
 
-		if (flipnext == null){
+		if (flipnext == null) { // do we allow negative scores?  || flipnext.getScore() <= 0
 			if (myggoptions.ggverbose()) {
 				System.out.println(depthS + "could not find new candidate for flipping");
 				System.out.println(depthS + "1 returning " + currentllratio);
@@ -1558,8 +1559,10 @@ public class GradientGraphO extends GradientGraph{
 			System.out.println();
 		}
 
-		for (int j=0;j<windowsize;j++){
-			gibbsSample(mythread);
+		if (windowsize*numchains>0) {
+			for (int j = 0; j < windowsize; j++) {
+				gibbsSample(mythread);
+			}
 		}
 		if (numchains > 0 && myggoptions.ggverbose()) {
 			if (myggoptions.ggverbose())
@@ -1596,6 +1599,175 @@ public class GradientGraphO extends GradientGraph{
 		if (myggoptions.ggverbose())
 			System.out.println(depthS + "3 returning " + recsearch);
 		return recsearch;
+	}
+
+	// Helper method to collect all ugas from flip candidates
+	private Vector<GGCPMNode> getAllUgas(Vector<GGAtomMaxNode> flipcandidates) {
+		Set<GGCPMNode> ugasSet = new HashSet<>();
+		for (GGAtomMaxNode node : flipcandidates) {
+			ugasSet.addAll(node.getAllugas());
+		}
+		return new Vector<>(ugasSet);
+	}
+
+	// Alternative: Adaptive Simulated Annealing with dynamic cooling
+	public double mapSearchAdaptiveSA(GGThread mythread, Vector<GGAtomMaxNode> flipcandidates,
+									  int maxIterations) {
+
+		// Auto-calculate initial temperature based on initial state variance
+		double initialTemp = calculateInitialTemperature(mythread, flipcandidates);
+
+		// Adaptive cooling: slower cooling when accepting many moves
+		double baseCoolingRate = 0.95;
+		double temperature = initialTemp;
+
+		Map<GGAtomMaxNode, Integer> currentState = new HashMap<>();
+		Map<GGAtomMaxNode, Integer> bestState = new HashMap<>();
+
+		for (GGAtomMaxNode node : flipcandidates) {
+			currentState.put(node, node.getCurrentInst());
+			bestState.put(node, node.getCurrentInst());
+		}
+
+		Vector<GGCPMNode> allUgas = getAllUgas(flipcandidates);
+		double currentLL = SmallDouble.log(llnode.evaluate(null, 0, allUgas, true, false, null));
+		double bestLL = currentLL;
+
+		Random rand = new Random();
+		int recentAccepts = 0;
+		int windowSizeSA = 100;
+		int acceptedMoves = 0;
+		int rejectedMoves = 0;
+
+		if (myggoptions.ggverbose()) {
+			System.out.println("Starting Simulated Annealing");
+			System.out.println("Initial LL: " + currentLL);
+			System.out.println("Initial Temperature: " + temperature);
+		}
+
+		for (int iteration = 0; iteration < maxIterations; iteration++) {
+
+			GGAtomMaxNode candidateNode = flipcandidates.get(rand.nextInt(flipcandidates.size()));
+			candidateNode.setScore(mythread, sampleSizeScoring);
+			int proposedValue = candidateNode.getHighvalue();
+			int currentValue = candidateNode.getCurrentInst();
+
+			if (proposedValue == currentValue) continue;
+
+			double energyBefore = -currentLL;
+
+			candidateNode.setCurrentInst(proposedValue);
+			candidateNode.reEvaluateUpstream(null);
+
+			for (int j = 0; j < this.windowsize; j++) {
+				gibbsSample(mythread);
+			}
+
+			double llAfter = SmallDouble.log(llnode.evaluate(null, 0, allUgas, true, false, null));
+			double energyAfter = -llAfter;
+			double deltaEnergy = energyAfter - energyBefore;
+
+			boolean accept = deltaEnergy < 0 || rand.nextDouble() < Math.exp(-deltaEnergy / temperature);
+
+			if (accept) {
+				currentLL = llAfter;
+				currentState.put(candidateNode, proposedValue);
+				recentAccepts++;
+
+				if (currentLL > bestLL) {
+					bestLL = currentLL;
+					for (Map.Entry<GGAtomMaxNode, Integer> entry : currentState.entrySet()) {
+						bestState.put(entry.getKey(), entry.getValue());
+					}
+
+					if (myggoptions.ggverbose()) {
+						System.out.println("Iteration " + iteration + ": New best LL = " + bestLL +
+								" (T=" + String.format("%.4f", temperature) + ")");
+					}
+				}
+			} else {
+				candidateNode.setCurrentInst(currentValue);
+				candidateNode.reEvaluateUpstream(null);
+			}
+
+			if (iteration > 0 && iteration % (maxIterations / 10) == 0) {
+				if (myggoptions.ggverbose()) {
+					System.out.println("Iteration " + iteration +
+							": Current LL=" + currentLL +
+							", Best LL=" + bestLL +
+							", T=" + String.format("%.4f", temperature) +
+							", Accepted=" + acceptedMoves +
+							", Rejected=" + rejectedMoves);
+				}
+			}
+
+			// Adaptive cooling based on acceptance rate
+			if (iteration % windowSizeSA == 0 && iteration > 0) {
+				double acceptanceRate = (double) recentAccepts / windowSizeSA;
+				double adaptiveCooling = baseCoolingRate;
+
+				if (acceptanceRate > 0.5) {
+					adaptiveCooling = 0.98; // Slower cooling when exploring well
+				} else if (acceptanceRate < 0.1) {
+					adaptiveCooling = 0.90; // Faster cooling when stuck
+				}
+
+				temperature *= Math.pow(adaptiveCooling, windowSizeSA);
+				recentAccepts = 0;
+			}
+
+			if (temperature < 1e-10) break;
+		}
+
+		if (myggoptions.ggverbose()) {
+			System.out.println("\nRestoring best state found");
+			System.out.println("Best LL: " + bestLL);
+			System.out.println("Total accepted moves: " + acceptedMoves);
+			System.out.println("Total rejected moves: " + rejectedMoves);
+		}
+
+		// Restore best state
+		for (Map.Entry<GGAtomMaxNode, Integer> entry : bestState.entrySet()) {
+			entry.getKey().setCurrentInst(entry.getValue());
+			entry.getKey().reEvaluateUpstream(null);
+		}
+
+		for (int j = 0; j < this.windowsize; j++) {
+			gibbsSample(mythread);
+		}
+
+		Vector<GGCPMNode> finalUgas = getAllUgas(flipcandidates);
+		double initialLL = SmallDouble.log(llnode.evaluate(null, 0, finalUgas, true, false, null));
+
+		return Math.exp(bestLL - initialLL);
+	}
+
+	// Calculate initial temperature heuristically
+	private double calculateInitialTemperature(GGThread mythread, Vector<GGAtomMaxNode> flipcandidates) {
+		// Sample a few random flips to estimate energy variance
+		Random rand = new Random();
+		Vector<Double> energyDiffs = new Vector<>();
+
+		for (int i = 0; i < Math.min(20, flipcandidates.size()); i++) {
+			GGAtomMaxNode node = flipcandidates.get(rand.nextInt(flipcandidates.size()));
+			Vector<GGCPMNode> ugas = node.getAllugas();
+
+			double llBefore = SmallDouble.log(llnode.evaluate(null, 0, ugas, true, false, null));
+			int oldValue = node.getCurrentInst();
+
+			node.setScore(mythread, sampleSizeScoring);
+			node.setCurrentInst(node.getHighvalue());
+			node.reEvaluateUpstream(null);
+
+			double llAfter = SmallDouble.log(llnode.evaluate(null, 0, ugas, true, false, null));
+			energyDiffs.add(Math.abs(llAfter - llBefore));
+
+			node.setCurrentInst(oldValue);
+			node.reEvaluateUpstream(null);
+		}
+
+		double avgEnergyDiff = energyDiffs.stream().mapToDouble(d -> d).average().orElse(1.0);
+		return avgEnergyDiff * 10; // Start with temp ~10x average energy change
 	}
 
 	public static void printProgressBar(int current, int total, double curll) {
@@ -1647,7 +1819,6 @@ public class GradientGraphO extends GradientGraph{
 		while (!terminate){
 			if (myggoptions.ggverbose())
 				System.out.println("starting from the top ..." + itcount);
-			itcount++;
 			evaluateLikelihoodAndPartDerivs(true);
 			oldll=currentLogLikelihood();
 
@@ -1658,10 +1829,21 @@ public class GradientGraphO extends GradientGraph{
 				System.out.println("MAP search 0..");
 				score = mapSearch(mythread, maxind_as_ts());
 			}
-			else if (mapSearchAlg == 1)
+			else if (mapSearchAlg == 1) {
 				score = greedySearch(mythread, maxind_as_ts(), nIterGreedy, 1, 1);
+			}
 			else if (mapSearchAlg == 2) {
 				Vector flip = maxind_as_vec();
+				// Start with the initial configuration using SA
+//				if (itcount == 0) {
+//					mapSearchAdaptiveSA(mythread, flip, flip.size());
+//					evaluateLikelihoodAndPartDerivs(true);
+//					flip = maxind_as_vec();
+//					score = mapSearchRecursiveWrap(mythread, flip, this.lookaheadSearch);
+//				}
+//				else
+//					score = mapSearchRecursiveWrap(mythread, flip, this.lookaheadSearch);
+
 				score = mapSearchRecursiveWrap(mythread, flip, this.lookaheadSearch);
 				evaluateLikelihoodAndPartDerivs(true);
 				if (score <= 1)
@@ -1669,6 +1851,10 @@ public class GradientGraphO extends GradientGraph{
 			} else if (mapSearchAlg == 3) {
 				score = mapSearchSampling(mythread, maxind_as_list());
 				terminate = true;
+			} else if (mapSearchAlg == 4) {
+				Vector flip = maxind_as_vec();
+				score = mapSearchAdaptiveSA(mythread, flip, this.maxitersa);
+				evaluateLikelihoodAndPartDerivs(true);
 			}
 
 			if (myggoptions.ggverbose() && mapSearchAlg != 2)
@@ -1687,9 +1873,11 @@ public class GradientGraphO extends GradientGraph{
 						System.out.println("... done");
 				}
 			}
+			itcount++;
 		}
 
 		System.out.println();
+		resetValues(null, true);
 		evaluateLikelihoodAndPartDerivs(true);
 		curll = currentLogLikelihood();
 		System.out.println("final log-likelihood= " + curll);
@@ -2876,5 +3064,9 @@ public void setGnnPy(GnnPy gnnPy) {
 
 	public void setLookaheadSearch(int lookaheadSearch) {
 		this.lookaheadSearch = lookaheadSearch;
+	}
+
+	public void setMaxIterSA(int maxitersa) {
+		this.maxitersa = maxitersa;
 	}
 }

@@ -61,6 +61,10 @@ public class SettingsMAP extends JFrame implements ActionListener, ItemListener,
 	private JTextField firstBatchSizeText = new JTextField(5);
 	private JPanel firstBatchSizePanel = new JPanel(new FlowLayout());
 
+	private JLabel maxIterSALabel = new JLabel("Max iter (SA)");
+	private JTextField maxIterSAText = new JTextField(5);
+	private JPanel maxIterSAPanel = new JPanel(new FlowLayout());
+
 	private JPanel generaloptions = new JPanel(new GridLayout(3,1));
 	private JPanel incompleteoptions = new JPanel(new GridLayout(4,1));
 	private JPanel terminateoptions = new JPanel(new GridLayout(3,1));
@@ -69,6 +73,7 @@ public class SettingsMAP extends JFrame implements ActionListener, ItemListener,
 
 	private JRadioButton algorithm1Radio = new JRadioButton("Algorithm 1 (with lookahead)");
 	private JRadioButton algorithm2Radio = new JRadioButton("Algorithm 2");
+	private JRadioButton algorithm4Radio = new JRadioButton("Simulated Annealing");
 	private ButtonGroup algorithmGroup = new ButtonGroup();
 	private JPanel algorithmPanel = new JPanel(new FlowLayout());
 
@@ -112,21 +117,28 @@ public class SettingsMAP extends JFrame implements ActionListener, ItemListener,
 		firstBatchSizePanel.add(firstBatchSizeLabel);
 		firstBatchSizePanel.add(firstBatchSizeText);
 
+		maxIterSAPanel.add(maxIterSALabel);
+		maxIterSAPanel.add(maxIterSAText);
+
 		lookaheadpanel.add(lookaheadLabel);
 		lookaheadpanel.add(lookaheadtext);
 
 		algorithmGroup.add(algorithm1Radio);
 		algorithmGroup.add(algorithm2Radio);
+		algorithmGroup.add(algorithm4Radio);
 		algorithm1Radio.setSelected(true);
 		algorithmPanel.add(algorithm1Radio);
 		algorithmPanel.add(algorithm2Radio);
+		algorithmPanel.add(algorithm4Radio);
 		algorithm1Radio.addActionListener(this);
 		algorithm2Radio.addActionListener(this);
+		algorithm4Radio.addActionListener(this);
 
 		generaloptions.add(restartspanel);
 		generaloptions.add(verbosecheckbox);
 		generaloptions.add(algorithmPanel);
 		generaloptions.add(firstBatchSizePanel);
+		generaloptions.add(maxIterSAPanel);
 		generaloptions.add(lookaheadpanel);
 
 		generaloptions.setBorder(BorderFactory.createTitledBorder("General"));
@@ -169,10 +181,14 @@ public class SettingsMAP extends JFrame implements ActionListener, ItemListener,
 		firstBatchSizeText.setText(""+infmodule.getBatchSearchSize());
 		firstBatchSizeText.addKeyListener(this);
 
+		maxIterSAText.setText(""+infmodule.getMaxIterSA());
+		maxIterSAText.addKeyListener(this);
+
 		verbosecheckbox.setSelected(infmodule.getVerbose());
 		verbosecheckbox.addItemListener(this);
 
 		firstBatchSizeText.setEnabled(false);
+		maxIterSAText.setEnabled(false);
 
 		ImageIcon icon = new ImageIcon("small_logo.jpg");
 		if (icon.getImageLoadStatus() == MediaTracker.COMPLETE)
@@ -188,11 +204,18 @@ public class SettingsMAP extends JFrame implements ActionListener, ItemListener,
 			infmodule.setMapSearchAlg(2);
 			firstBatchSizeText.setEnabled(false);
 			lookaheadtext.setEnabled(true);
+			maxIterSAText.setEnabled(false);
 		}
 		else if(source == algorithm2Radio){
 			infmodule.setMapSearchAlg(3);
 			firstBatchSizeText.setEnabled(true);
 			lookaheadtext.setEnabled(false);
+			maxIterSAText.setEnabled(false);
+		} else if(source == algorithm4Radio){
+			infmodule.setMapSearchAlg(4);
+			firstBatchSizeText.setEnabled(false);
+			lookaheadtext.setEnabled(false);
+			maxIterSAText.setEnabled(true);
 		}
 	}
 
@@ -263,6 +286,13 @@ public class SettingsMAP extends JFrame implements ActionListener, ItemListener,
 				infmodule.setBatchSearchSize(tempint.intValue());
 			}
 			catch(NumberFormatException exception){
+			}
+		}
+		else if(source == maxIterSAText){
+			try{
+				Integer tempint = Integer.valueOf(maxIterSAText.getText());
+				infmodule.setMaxIterSA(tempint.intValue());
+			} catch (NumberFormatException e1) {
 			}
 		}
 		else if(source == lookaheadtext){
