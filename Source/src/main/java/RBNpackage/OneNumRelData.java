@@ -556,6 +556,41 @@ public class OneNumRelData extends OneRelData{
 			 System.out.println("key " + k + " value: " + numAtoms.get(k));
 	 }
 
+	 public boolean equalsData(OneNumRelData other) {
+		 if (other == null) {
+			 return false;
+		 }
+
+		 // Compare relation
+		 if (rel == null) {
+			 if (other.rel != null) {
+				 return false;
+			 }
+		 } else if (!rel.equals(other.rel)) {
+			 return false;
+		 }
+
+		 // Compare default value
+		 if (defaultval == null) {
+			 if (other.defaultval != null) {
+				 return false;
+			 }
+		 } else if (!defaultval.equals(other.defaultval)) {
+			 return false;
+		 }
+
+		 // Compare numAtoms
+		 if (numAtoms == null) {
+			 if (other.numAtoms != null) {
+				 return false;
+			 }
+		 } else if (!compareNumAtoms(numAtoms, other.numAtoms)) {
+			 return false;
+		 }
+
+		 return true;
+	 }
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) {

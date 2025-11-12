@@ -352,6 +352,41 @@ public class OneCatRelData extends OneRelData {
 		 return result;
 	 }
 
+	 public boolean equalsData(OneCatRelData other) {
+		 if (other == null) {
+			 return false;
+		 }
+
+		 // Compare relation
+		 if (rel == null) {
+			 if (other.rel != null) {
+				 return false;
+			 }
+		 } else if (!rel.equals(other.rel)) {
+			 return false;
+		 }
+
+		 // Compare default value
+		 if (defaultval == null) {
+			 if (other.defaultval != null) {
+				 return false;
+			 }
+		 } else if (!defaultval.equals(other.defaultval)) {
+			 return false;
+		 }
+
+		 // Compare values
+		 if (values == null) {
+			 if (other.values != null) {
+				 return false;
+			 }
+		 } else if (!compareValues(values, other.values)) {
+			 return false;
+		 }
+
+		 return true;
+	 }
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) {

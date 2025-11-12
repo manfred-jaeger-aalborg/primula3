@@ -1565,6 +1565,46 @@ public class OneStrucData {
 		return weight;
 	}
 
+	// similar as equals but checks the data only and not reference!
+	public boolean equalsData(OneStrucData other) {
+		if (other == null) {
+			return false;
+		}
+
+		// Check if the sizes match
+		if (this.allonebooldata.size() != other.allonebooldata.size() ||
+				this.allonenumdata.size() != other.allonenumdata.size() ||
+				this.allonecatdata.size() != other.allonecatdata.size()) {
+			return false;
+		}
+
+		// Check boolean relation data
+		for (OneBoolRelData thisBoolData : this.allonebooldata) {
+			OneBoolRelData otherBoolData = other.findInBoolRel(thisBoolData.rel());
+			if (otherBoolData == null || !thisBoolData.equalsData(otherBoolData)) {
+				return false;
+			}
+		}
+
+		// Check numeric relation data
+		for (OneNumRelData thisNumData : this.allonenumdata) {
+			OneNumRelData otherNumData = other.findInNumRel(thisNumData.rel());
+			if (otherNumData == null || !thisNumData.equalsData(otherNumData)) {
+				return false;
+			}
+		}
+
+		// Check categorical relation data
+		for (OneCatRelData thisCatData : this.allonecatdata) {
+			OneCatRelData otherCatData = other.findInCatRel(thisCatData.rel());
+			if (otherCatData == null || !thisCatData.equalsData(otherCatData)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 	/**
 	 * Checks if this OneStrucData is equal to another object.
 	 * Two OneStrucData objects are considered equal if they contain the same

@@ -648,6 +648,50 @@ public class OneBoolRelData extends OneRelData {
 		 makeIndex(false);
 	 }
 
+	 public boolean equalsData(OneBoolRelData other) {
+		 if (other == null) {
+			 return false;
+		 }
+
+		 // Compare relation
+		 if (rel == null) {
+			 if (other.rel != null) {
+				 return false;
+			 }
+		 } else if (!rel.equals(other.rel)) {
+			 return false;
+		 }
+
+		 // Compare default value
+		 if (defaultval == null) {
+			 if (other.defaultval != null) {
+				 return false;
+			 }
+		 } else if (!defaultval.equals(other.defaultval)) {
+			 return false;
+		 }
+
+		 // Compare trueAtoms
+		 if (trueAtoms == null) {
+			 if (other.trueAtoms != null) {
+				 return false;
+			 }
+		 } else if (!compareSets(trueAtoms, other.trueAtoms)) {
+			 return false;
+		 }
+
+		 // Compare falseAtoms
+		 if (falseAtoms == null) {
+			 if (other.falseAtoms != null) {
+				 return false;
+			 }
+		 } else if (!compareSets(falseAtoms, other.falseAtoms)) {
+			 return false;
+		 }
+
+		 return true;
+	 }
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) {
