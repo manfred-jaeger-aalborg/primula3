@@ -261,13 +261,14 @@ public class CatGnn extends CPModel {
         else
             result = new CatGnn(this.configModelPath, this.freeVals, this.numvals, this.gnnInputs, newpf, this.outTypes, false);
 
+        result.argument = this.argument;
         result.groundTypedTorchPf = newpf;
         result.setGnnPy(this.getGnnPy());
 
-        if (vars.length == 0)
-            result.argument = Arrays.toString(new String[0]);
-        else
+        if (vars.length != 0)
             result.argument = rbnutilities.array_substitute(vars, new String[]{argument}, args)[0];
+//        else
+//            result.argument = Arrays.toString(new String[0]);
 
         if (this.alias != null)
             result.setAlias(this.alias.substitute(vars, args));
@@ -285,13 +286,15 @@ public class CatGnn extends CPModel {
         else
             result = new CatGnn(this.configModelPath, this.freeVals, this.numvals, this.gnnInputs, newpf, this.outTypes, false);
 
+        result.argument = this.argument;
         result.groundTypedTorchPf = newpf;
         result.setGnnPy(this.getGnnPy());
 
-        if (vars.length == 0)
-            result.argument = Arrays.toString(new String[0]);
-        else
+        if (vars.length != 0)
             result.argument = rbnutilities.array_substitute(vars, new String[]{argument}, args)[0];
+//        else
+//            result.argument = Arrays.toString(new String[0]);
+
 
         if (this.alias != null)
             result.setAlias(this.alias.substitute(vars, args));

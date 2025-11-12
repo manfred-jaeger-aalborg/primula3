@@ -370,7 +370,12 @@ public class GnnPy {
             throw new RuntimeException("Not implemented. Use evaluate_gnnGradients instead. Try with Gradient Graph");
 
         Object[] resultCopy = null;
-        Object[] cached = basicStructCacheGet(inst, cpmGnn.getGnnId(), valonly);
+//        Object[] cached = basicStructCacheGet(inst, cpmGnn.getGnnId(), valonly);
+        // DO WE NEED CACHING HERE?
+        // N.B.: in the construction of the bayesian network, [BayesConstruct: makeCPT()]
+        // we change the inst without a copy of the object so we have the same reference (equal() fail to compare!)
+        Object[] cached = null;
+
         if (cached != null && cached[0] != null)
             resultCopy = cached.clone();
         else {
@@ -398,13 +403,27 @@ public class GnnPy {
 
             Object[] result = inferModelHetero(x_dict, edge_dict, edge_attr, cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), valonly);
             resultCopy = result.clone();
-
             basicStructCachePut(inst, cpmGnn.getGnnId(), resultCopy);
-            double[][] outProbsFull = (double[][]) resultCopy[0];
-            int nodeIndex = (cpmGnn.getArgument().equals("[]") || cpmGnn.getArgument().equals("")) ? 0 : Integer.parseInt(cpmGnn.getArgument());
-            resultCopy[0] = outProbsFull[nodeIndex];
         }
+        double[][] outProbsFull = (double[][]) resultCopy[0];
+
+        String outType = cpmGnn.getOutTypes().get(0);
+        int nodeIndex = (cpmGnn.getArgument().equals("[]") || cpmGnn.getArgument().equals("")) ? 0 : getNodeByType(relToNodeMap, outType, Integer.parseInt(cpmGnn.getArgument()));
+        if (nodeIndex == -1) {
+            throw new RuntimeException("Could not find node of type " + outType + " with index " + cpmGnn.getArgument());
+        }
+        resultCopy[0] = outProbsFull[nodeIndex];
         return resultCopy;
+    }
+
+    public int getNodeByType(Map<Rel, int[][]> relNodeMap, String type, int nodeIdx) {
+        for (Map.Entry<Rel, int[][]> entry : relNodeMap.entrySet()) {
+            String typeName = entry.getKey().getTypes()[0].getName();
+            if (type.equals(typeName)) {
+                return entry.getValue()[nodeIdx][0];
+            }
+        }
+        return -1;
     }
 
     public Object[] GGevaluate_gnnGradients(Integer sno, RelStruc A, OneStrucData inst, CatGnn cpmGnn, GGCPMNode ggcpmNode) {
@@ -457,7 +476,7 @@ public class GnnPy {
                 relIdx++;
             }
 
-            // edge attributes grads
+            // edge attributes grads13 = {double[57]@1625} [-0.22445032000541687, 0.01452187541872263, -0.09580807387828827, 0.04337388649582863, 0.033709827810525894, 0.1422426551580429, 0.17550571262836456, 0.061612337827682495, -0.01995239220559597, -0.0016841309843584895, -0.001965058036148548, -0.002265435876324773, -0.0025815789122134447, -0.002909214235842228, -0.003245773958042264, -0.0035912671592086554, -0.00394787872210145, -0.004318977706134319, -0.0047082314267754555, -0.005119148176163435, -0.00555501040071249, -0.006018909625709057, -0.006513677537441254, -0.007041583303362131, -0.007603800389915705, -0.00819958746433258, -0.00882485881447792, -0.009468862786889076, -0.010104347951710224, -0.010655861347913742, -0.01089834701269865, -0.010156515054404736, -0.006567280273884535, -0.001269652508199215, -0.0014863497344776988, -0.0017154887318611145, -0.0019549503922462463, -0.002201878698542714, -0.002454758621752262, -0.00271426048129797, -0.00298296264372766, -0.0032645014580339193, -0.0035627398174256086, -0.003881273325532675,… View
             subList = (ArrayList<Rel>) pair.getEdgeAttributes();
             relIdx = 0;
             double[][] eaGrads = resGrads.get("ea");
@@ -476,12 +495,16 @@ public class GnnPy {
             }
         }
 
-        resultCopy[1] = outGrads;
+
 
         double[][] outProbsFull = (double[][]) resultCopy[0];
-        int nodeIndex = (cpmGnn.getArgument().equals("[]") || cpmGnn.getArgument().equals("")) ? 0 : Integer.parseInt(cpmGnn.getArgument());
+        int nodeIndex = 0;
+        if (!(cpmGnn.getArgument().equals("[]") || cpmGnn.getArgument().equals(""))) {
+            String outType = cpmGnn.getOutTypes().get(0);
+            nodeIndex = ggcnn.getNodeIndexIfPresent(outType, Integer.parseInt(cpmGnn.getArgument()));
+        }
         resultCopy[0] = outProbsFull[nodeIndex];
-
+        resultCopy[1] = outGrads;
         basicStructCachePut(inst, cpmGnn.getGnnId(), resultCopy);
         return resultCopy;
     }
@@ -1199,8 +1222,11 @@ public class GnnPy {
         for (TorchInputSpecs pair : cpmGnn.getGnnInputs()) {
             int num_col = 0,  startIndex = 0;
             String pftype = pair.getType();
-            Map<Integer, Object[]> relIndex = new HashMap<>();
             ArrayList<Rel> subList = (ArrayList<Rel>) pair.getNodeAttributes();
+
+            int[] startIndices = new int[subList.size()];
+            Rel[] rels = new Rel[subList.size()];
+
             Type nodeType = null;
             int pfIndex = 0;
             for (Rel r : subList) {
@@ -1213,13 +1239,15 @@ public class GnnPy {
                 if (r.getTypes().length > 1)
                     throw new RuntimeException("More than one type for node attribute " + r.name());
 
+                startIndices[pfIndex] = startIndex;
+                rels[pfIndex] = r;
+
                 // for each feature, see where in the vector it starts
-                relIndex.put(pfIndex, new Object[]{startIndex, r});
                 startIndex += (r instanceof CatRel) ? (int) r.numvals() : 1;
                 pfIndex++;
             }
-            Hashtable<String, Hashtable<String, Object[]>> evalNodesAll = ggcnn.getEvalOfNodes();
-            Hashtable<String, Object[]> nodesTable = (evalNodesAll != null) ? evalNodesAll.get(pftype) : null;
+            HashMap<String, HashMap<String, Object[]>> evalNodesAll = ggcnn.getEvalOfNodes();
+            HashMap<String, Object[]> nodesTable = (evalNodesAll != null) ? evalNodesAll.get(pftype) : null;
 
             int num_nodes = nodesTable.size();
             if (num_nodes == 0) // should we also check if nodesTable is 0? this has to be well-defined also in the gnn
@@ -1240,11 +1268,9 @@ public class GnnPy {
                     double[] valchild = constructedchild.evaluate(sno);
                     value = valchild[0];
                 }
-
                 int col = (int) node[4];
-                Object[] nodeRel = relIndex.get(col);
-                int startingIndex = (Integer) nodeRel[0];
-                Rel r = (Rel) nodeRel[1];
+                int startingIndex = startIndices[col];
+                Rel r = rels[col];
 
                 double matrixValue = 1.;
                 if (r instanceof CatRel) {
@@ -1265,8 +1291,8 @@ public class GnnPy {
             }
             x_dict.put(pftype, bool_nodes);
 
-            Hashtable<String, Hashtable<String, Object[]>> evalEdgesAll = ggcnn.getEvalOfEdge();
-            Hashtable<String, Object[]> edgeTable = (evalNodesAll != null) ? evalEdgesAll.get(pftype) : null;
+            HashMap<String, HashMap<String, Object[]>> evalEdgesAll = ggcnn.getEvalOfEdge();
+            HashMap<String, Object[]> edgeTable = (evalNodesAll != null) ? evalEdgesAll.get(pftype) : null;
 
             Map<String, Integer> edgeKeyToIndex = new LinkedHashMap<>();
             ArrayList<ArrayList<Integer>> edges = new ArrayList<>();
@@ -1295,27 +1321,37 @@ public class GnnPy {
             edge_dict.put(pair.getEdgeRelation().name(), edges);
 
             ArrayList<Rel> subListEdgeAttr = (ArrayList<Rel>) pair.getEdgeAttributes();
-            relIndex = new HashMap<>();
             startIndex = 0; pfIndex = 0;
             if (subListEdgeAttr != null && !subListEdgeAttr.isEmpty()) {
+                int edgeAttrSize = subListEdgeAttr.size();
+                int[] edgeStartIndices = new int[edgeAttrSize];
+                Rel[] edgeRels = new Rel[edgeAttrSize];
+                boolean[] edgeIsCatRel = new boolean[edgeAttrSize];
+                int[] edgeNumVals = new int[edgeAttrSize];
+
                 num_col = 0;
                 for (Rel r : subListEdgeAttr) {
-                    if (r instanceof CatRel && cpmGnn.isOneHotEncoding())
+                    boolean isCat = r instanceof CatRel;
+                    edgeIsCatRel[pfIndex] = isCat;
+
+                    int nVals = isCat ? (int) r.numvals() : 1;
+                    edgeNumVals[pfIndex] = nVals;
+
+                    if (isCat && cpmGnn.isOneHotEncoding())
                         num_col += r.numvals();
                     else
                         num_col += 1;
+
                     // for each feature, see where in the vector it starts
-                    relIndex.put(pfIndex, new Object[]{startIndex, r});
+                    edgeStartIndices[pfIndex] = startIndex;
+                    edgeRels[pfIndex] = r;
                     pfIndex++;
-                    if (r instanceof CatRel)
-                        startIndex += (int) r.numvals();
-                    else
-                        startIndex++;
+                    startIndex += isCat ? nVals : 1;
                 }
                 double[][] edge_attr = createOneHotEncodingMatrix(edges.get(0).size(), num_col);
 
-                Hashtable<String, Hashtable<String, Object[]>> evalOfEdgesAttr = ggcnn.getEvalOfEdgeAttr();
-                Hashtable<String, Object[]> edgeAttrTable = (evalOfEdgesAttr != null) ? evalOfEdgesAttr.get(pftype) : null;
+                HashMap<String, HashMap<String, Object[]>> evalOfEdgesAttr = ggcnn.getEvalOfEdgeAttr();
+                HashMap<String, Object[]> edgeAttrTable = (evalOfEdgesAttr != null) ? evalOfEdgesAttr.get(pftype) : null;
                 if (edgeAttrTable != null) {
                     for (Object[] edgeattr : edgeAttrTable.values()) {
                         int argEdge = -2;
@@ -1346,13 +1382,13 @@ public class GnnPy {
                             }
                         }
 
-                        Object[] nodeRel = relIndex.get(col);
-                        int startingIndex = (Integer) nodeRel[0];
-                        Rel r = (Rel) nodeRel[1];
+                        int startingIndex = edgeStartIndices[col];
+                        Rel r = edgeRels[col];
+                        boolean isCat = edgeIsCatRel[col];
 
                         // determine which row(s) and columns to update
                         double matrixValue = 1.;
-                        if (r instanceof CatRel) {
+                        if (isCat) {
                             // if onehot encoding
                             col = (int) (value + startingIndex);
                         } else {

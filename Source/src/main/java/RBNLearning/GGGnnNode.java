@@ -26,9 +26,9 @@ public class GGGnnNode extends GGCPMNode {
     private Vector<Object> evaluated_children;
 
     // the graph constructed
-    private Hashtable<String, Hashtable<String, Object[]>> evalOfNodes;
-    private Hashtable<String, Hashtable<String, Object[]>> evalOfEdgeAttr;
-    private Hashtable<String, Hashtable<String, Object[]>> evalOfEdge;
+    private HashMap<String, HashMap<String, Object[]>> evalOfNodes;
+    private HashMap<String, HashMap<String, Object[]>> evalOfEdgeAttr;
+    private HashMap<String, HashMap<String, Object[]>> evalOfEdge;
 //    private Hashtable<String, int[][]> evalOfEdge;
 
     public GGGnnNode(GradientGraphO gg,
@@ -57,9 +57,9 @@ public class GGGnnNode extends GGCPMNode {
 
         this.evaluated_children = new Vector<>();
 
-        this.evalOfNodes = new Hashtable<>();
-        this.evalOfEdgeAttr = new Hashtable<>();
-        this.evalOfEdge = new Hashtable<>();
+        this.evalOfNodes = new HashMap<>();
+        this.evalOfEdgeAttr = new HashMap<String, HashMap<String, Object[]>>();
+        this.evalOfEdge = new HashMap<String, HashMap<String, Object[]>>();
         this.nodeMapping = new HashMap<>();
 
         setGnnPy(cpmgnn.getGnnPy()); // set the same GnnPy from the rel to the ggnode
@@ -73,21 +73,21 @@ public class GGGnnNode extends GGCPMNode {
         // the subpfs which are not evaluatable will return NaN and added to the children vector
         for (String pftype: ttpf.getTypedNames()) { // loop through all the TYPEDICT
 
-            Hashtable<String, Object[]> evalOfNodesForType = this.evalOfNodes.get(pftype);
+            HashMap<String, Object[]> evalOfNodesForType = this.evalOfNodes.get(pftype);
             if (evalOfNodesForType == null) {
-                evalOfNodesForType = new Hashtable<>();
+                evalOfNodesForType = new HashMap<>();
                 this.evalOfNodes.put(pftype, evalOfNodesForType);
             }
 
-            Hashtable<String, Object[]> evalOfEdgeForType = this.evalOfEdge.get(pftype);
+            HashMap<String, Object[]> evalOfEdgeForType = this.evalOfEdge.get(pftype);
             if (evalOfEdgeForType == null) {
-                evalOfEdgeForType = new Hashtable<>();
+                evalOfEdgeForType = new HashMap<>();
                 this.evalOfEdge.put(pftype, evalOfEdgeForType);
             }
 
-            Hashtable<String, Object[]> evalOfEdgeAttrForType = this.evalOfEdgeAttr.get(pftype);
+            HashMap<String, Object[]> evalOfEdgeAttrForType = this.evalOfEdgeAttr.get(pftype);
             if (evalOfEdgeAttrForType == null) {
-                evalOfEdgeAttrForType = new Hashtable<>();
+                evalOfEdgeAttrForType = new HashMap<>();
                 this.evalOfEdgeAttr.put(pftype, evalOfEdgeAttrForType);
             }
 
@@ -146,7 +146,7 @@ public class GGGnnNode extends GGCPMNode {
                                       String pftype,
                                       int[][] tuples,
                                       CPModel nextsubpf,
-                                      Hashtable<String, Object[]> evalOfPFs,
+                                      HashMap<String, Object[]> evalOfPFs,
                                       TorchInputPf torchInputPf,
                                       GradientGraphO gg,
                                       int probFormIdx,
@@ -245,8 +245,9 @@ public class GGGnnNode extends GGCPMNode {
                         argNode[0] = Integer.parseInt(args[0]);
                         argNode[1] = Integer.parseInt(args[1]);
                     } else // there could be more cases here
-                        throw new RBNCompatibilityException("groundnextsubpf is not a ProbFormArom with 2 arguments");
-                }
+                        throw new RBNCompatibilityException("EDGEGRAPH is not a ProbFormArom with 2 arguments");
+                } else
+                    throw new RBNCompatibilityException("Currently EDGEGRAPH supports only ProbFormAtom with 2 arguments");
             }
 
             // Map node indices to sequential numbers starting from 0
@@ -457,11 +458,11 @@ public class GGGnnNode extends GGCPMNode {
     	return 0;
     }
 
-    public Hashtable<String, Hashtable<String, Object[]>> getEvalOfNodes() {
+    public HashMap<String, HashMap<String, Object[]>> getEvalOfNodes() {
         return evalOfNodes;
     }
 
-    public Hashtable<String, Hashtable<String, Object[]>> getEvalOfEdgeAttr() {
+    public HashMap<String, HashMap<String, Object[]>> getEvalOfEdgeAttr() {
         return evalOfEdgeAttr;
     }
 
@@ -470,7 +471,7 @@ public class GGGnnNode extends GGCPMNode {
 //    }
 
 
-    public Hashtable<String, Hashtable<String, Object[]>> getEvalOfEdge() {
+    public HashMap<String, HashMap<String, Object[]>> getEvalOfEdge() {
         return evalOfEdge;
     }
 
