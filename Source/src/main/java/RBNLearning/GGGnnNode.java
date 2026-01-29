@@ -389,7 +389,10 @@ public class GGGnnNode extends GGCPMNode {
         Map<String, double[][]> grads = (Map<String, double[][]>) outres[1];
 
         for (String param: this.myparameters) {
-            result.set_part_deriv(param, grads.get(param)[0]);
+            if (grads.containsKey(param))
+                result.set_part_deriv(param, grads.get(param)[0]);
+//            else
+//                System.out.println(param + " not found");
         }
 
         is_evaluated_grad_for_samples[idx]=true;
