@@ -480,7 +480,10 @@ public  class GGLikelihoodNode extends GGNode{
 
 					if (!child.isBoolean()) {
 						childlik = childval[childinst];
-						childgrad_at_value=idpd.getPd()[childinst];
+						if (idpd.getPd().length > 1)
+							childgrad_at_value=idpd.getPd()[childinst];
+						else
+							childgrad_at_value=idpd.getPd()[0];
 
 					} else {
 						if (childinst==1) {

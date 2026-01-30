@@ -1216,8 +1216,11 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/Community/community_softclus_2c.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/Community/zachary.rdef";
 //
-//        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/InformationDiffusion/independent_cascade.rbn";
-//        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/InformationDiffusion/zachary_cascade.rdef";
+        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/InformationDiffusion/independent_cascade_no_mem.rbn";
+        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/InformationDiffusion/zachary_cascade_basic.rdef";
+
+//        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/InformationDiffusion/TemporalGNN/independent_cascade_gnn.rbn";
+//        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/InformationDiffusion/TemporalGNN/zachary_cascade_uniform_simple.rdef";
 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/RSE/primula/model.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/RSE/primula/simulation_graph_0.rdef";
@@ -1225,8 +1228,8 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/toy_dataset/model_ea.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/toy_dataset/toy.rdef";
 
-        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_pollution_model.rbn";
-        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/simple_subbasin_new.rdef";
+//        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_pollution_model.rbn";
+//        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/simple_subbasin_new.rdef";
 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_pollution-gibbs.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_network_gibbs.rdef";
@@ -1252,8 +1255,8 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
             if( Primula.STR_OPTION_DEBUG.equals( arg ) ) Primula.FLAG_DEBUG = true;
         }
         PrimulaGUI win = new PrimulaGUI(new Primula());
-//		SamiamManager.centerWindow( win );
-//        win.loadDefaults();
+		SamiamManager.centerWindow( win );
+        win.loadDefaults();
 		win.show();
     }
 }

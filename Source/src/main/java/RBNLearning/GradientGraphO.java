@@ -1484,11 +1484,26 @@ public class GradientGraphO extends GradientGraph{
 		return values;
 	}
 
-	public double mapSearchRecursiveWrap(GGThread mythread, Vector<GGAtomMaxNode> flipcandidates, int maxDepth) {
-		return mapSearchRecursive(mythread, new TreeSet<GGAtomMaxNode>(new GGAtomMaxNode_Comparator()), flipcandidates, 1, 0, maxDepth);
+	public double mapSearchRecursiveWrap(GGThread mythread,
+										 Vector<GGAtomMaxNode> flipcandidates,
+										 int maxDepth,
+										 int batchSize) {
+		return mapSearchRecursive(mythread,
+				new TreeSet<GGAtomMaxNode>(new GGAtomMaxNode_Comparator()),
+				flipcandidates,
+				1.0,
+				0,
+				maxDepth,
+				batchSize);
 	}
 
-	public double mapSearchRecursive(GGThread mythread, TreeSet<GGAtomMaxNode> alreadyflipped, Vector<GGAtomMaxNode> flipcandidates, double currentllratio, int depth, int maxDepth) {
+	public double mapSearchRecursive(GGThread mythread,
+									 TreeSet<GGAtomMaxNode> alreadyflipped,
+									 Vector<GGAtomMaxNode> flipcandidates,
+									 double currentllratio,
+									 int depth,
+									 int maxDepth,
+									 int batchSize) {
 		if (depth == maxDepth) {
 			if (myggoptions.ggverbose())
 				System.out.println("Max depth reached, return");
@@ -1496,110 +1511,277 @@ public class GradientGraphO extends GradientGraph{
 		}
 
 		String depthS = "";
-		for (int i = 0; i < depth; i++) {
-			depthS += "\t";
-		}
+		for (int i = 0; i < depth; i++) depthS += "\t";
 		if (myggoptions.ggverbose())
 			System.out.println(depthS + "current depth " + depth);
-		PriorityQueue<GGAtomMaxNode> scored_atoms = new PriorityQueue<GGAtomMaxNode>(new GGAtomMaxNode_Comparator()); // NB. with a priority queue only the best is guaranteed to be on the top
 
+		// Score all candidates and build a priority queue (best first depending on comparator)
+		PriorityQueue<GGAtomMaxNode> scored_atoms = new PriorityQueue<GGAtomMaxNode>(new GGAtomMaxNode_Comparator());
 		for (GGAtomMaxNode mxnode: flipcandidates) {
-			mxnode.setScore(mythread,sampleSizeScoring);
+			mxnode.setScore(mythread, sampleSizeScoring);
 			scored_atoms.add(mxnode);
 		}
 
 		if (myggoptions.ggverbose())
 			showMaxAtomFlipScoresBest(scored_atoms);
 
-		GGAtomMaxNode flipnext = null;
-		for (Iterator<GGAtomMaxNode> it = scored_atoms.iterator(); (it.hasNext() && flipnext==null);){
-			GGAtomMaxNode nextimn = it.next();
-			if (!alreadyflipped.contains(nextimn))
-				flipnext=nextimn;
+		// Select up to batchSize best atoms that are not in alreadyflipped
+		ArrayList<GGAtomMaxNode> selected = new ArrayList<GGAtomMaxNode>(batchSize);
+		PriorityQueue<GGAtomMaxNode> tmpQueue = new PriorityQueue<GGAtomMaxNode>(scored_atoms); // copy to poll safely
+		while (!tmpQueue.isEmpty() && selected.size() < batchSize) {
+			GGAtomMaxNode candidate = tmpQueue.poll();
+			if (!alreadyflipped.contains(candidate)) {
+				selected.add(candidate);
+			}
 		}
 
-		if (flipnext == null) { // do we allow negative scores?  || flipnext.getScore() <= 0
+		if (selected.isEmpty()) {
 			if (myggoptions.ggverbose()) {
-				System.out.println(depthS + "could not find new candidate for flipping");
+				System.out.println(depthS + "could not find new candidate(s) for flipping");
 				System.out.println(depthS + "1 returning " + currentllratio);
 			}
 			return currentllratio;
 		}
 
-		Vector<GGCPMNode> ugas = flipnext.getAllugas();
-		double oldll = SmallDouble.log(llnode.evaluate(null,0, ugas,true,false,null));
-		double[] oldvalues = getUgasValues(ugas);
+		// Early return rule: if any selected atom has negative score, return (do we keep this??)
+//		for (GGAtomMaxNode sel : selected) {
+//			if (sel.getScore() <= 0) {
+//				if (myggoptions.ggverbose()) {
+//					System.out.println(depthS + "Selected atom has negative score (" + sel.getScore() + "), returning early.");
+//				}
+//				return currentllratio;
+//			}
+//		}
+
+		// Collect union of UGAs affected by all selected atoms (preserve insertion order)
+		LinkedHashSet<GGCPMNode> unionUgasSet = new LinkedHashSet<>();
+		for (GGAtomMaxNode sel : selected) {
+			for (GGCPMNode u : sel.getAllugas()) unionUgasSet.add(u);
+		}
+		Vector<GGCPMNode> unionUgas = new Vector<>(unionUgasSet);
+
+		// Evaluate old likelihood and save old values for all UGAs
+		double oldll = SmallDouble.log(llnode.evaluate(null, 0, unionUgas, true, false, null));
+		double[] oldvalues = getUgasValues(unionUgas);
 		if (myggoptions.ggverbose()) {
-			System.out.println(depthS + "Old UGAS");
+			System.out.println(depthS + "Old UGAS (union)");
 			System.out.print(depthS);
-			System.out.println(depthS + Arrays.toString(oldvalues));
-			System.out.println(depthS + "Flipping: " + flipnext.getMyatom() + " to " + flipnext.getHighvalue());
+			System.out.println(Arrays.toString(oldvalues));
+			System.out.println(depthS + "Flipping batch of " + selected.size() + " atoms:");
+			for (GGAtomMaxNode sel : selected) {
+				System.out.println(depthS + "  " + sel.getMyatom() + " -> " + sel.getHighvalue() + " (score=" + sel.getScore() + ")");
+			}
 			System.out.println();
 		}
 
-		int oldValue = flipnext.getCurrentInst();
-		flipnext.setCurrentInst(flipnext.getHighvalue());
-		flipnext.reEvaluateUpstream(null);
+		// Save old values (currentInst) to restore on backtrack if needed
+		int[] oldInsts = new int[selected.size()];
+		for (int i = 0; i < selected.size(); i++) {
+			oldInsts[i] = selected.get(i).getCurrentInst();
+		}
 
-		double newll = SmallDouble.log(llnode.evaluate(null,0, ugas,true,false,null));
-		double[] newvalues = getUgasValues(ugas);
-		currentllratio = currentllratio*oldll/newll;
+		// Apply flips for all selected atoms and re-evaluate upstream
+		// discard atoms with negative score
+		Iterator<GGAtomMaxNode> it = selected.iterator();
+		while (it.hasNext()) {
+			GGAtomMaxNode sel = it.next();
+			if (sel.getScore() > 0) {
+				sel.setCurrentInst(sel.getHighvalue());
+				sel.reEvaluateUpstream(null);
+			} else
+				it.remove();
+		}
 
-		int worstUgasCount=0;
+		// Evaluate new likelihood and values over union
+		double newll = SmallDouble.log(llnode.evaluate(null, 0, unionUgas, true, false, null));
+		double[] newvalues = getUgasValues(unionUgas);
+		if (newll == 0) {
+			// avoid division by zero (defensive)
+			if (myggoptions.ggverbose())
+				System.out.println(depthS + "Warning: newll == 0");
+		}
+		currentllratio = currentllratio * (oldll == 0 ? 1.0 : oldll / newll);
+
+		int worstUgasCount = 0;
 		for (int i = 0; i < newvalues.length; i++) {
-			if (newvalues[i]<oldvalues[i])
-				worstUgasCount++;
+			if (newvalues[i] < oldvalues[i]) worstUgasCount++;
 		}
 
 		if (myggoptions.ggverbose()) {
-			System.out.println(depthS + "New UGAS");
+			System.out.println(depthS + "New UGAS (union)");
 			System.out.print(depthS);
-			System.out.println(depthS + Arrays.toString(newvalues));
+			System.out.println(Arrays.toString(newvalues));
 			System.out.println(depthS + "Worst UGAS: " + worstUgasCount + "/" + newvalues.length);
 			System.out.println();
 		}
 
-		if (windowsize*numchains>0) {
-			for (int j = 0; j < windowsize; j++) {
-				gibbsSample(mythread);
-			}
+		// Optional Gibbs sampling as in original code
+		if (windowsize*numchains > 0) {
+			for (int j = 0; j < windowsize; j++) gibbsSample(mythread);
 		}
 		if (numchains > 0 && myggoptions.ggverbose()) {
-			if (myggoptions.ggverbose())
-				System.out.println(depthS + "New sampled values:");
+			System.out.println(depthS + "New sampled values:");
 			showSumAtomsVals();
 		}
-		/* If we have obtained an improvement in likelihood, then we terminate
-		 * here. Otherwise we determine the next indicator to flip.
-		 */
-		if (currentllratio > 1 && worstUgasCount==0) {
+
+		// If improvement and no worse UGAs, return
+		if (currentllratio > 1 && worstUgasCount == 0) {
 			if (myggoptions.ggverbose())
 				System.out.println(depthS + "2 returning " + currentllratio);
 			return currentllratio;
 		}
 
-		/* Find the uga that had the worst change in likelihood */
-		alreadyflipped.add(flipnext);
+		// Add all selected atoms to alreadyflipped (so recursive steps won't reuse them)
+		for (GGAtomMaxNode sel : selected) alreadyflipped.add(sel);
+
+		// Find the UGA with the minimum ratio new/old (worst)
 		int minind = 0;
-		double minratio = newvalues[0]/oldvalues[0];
-		for (int i=0;i<newvalues.length;i++){
-			if (newvalues[i]/oldvalues[i]<minratio){
-				minratio = newvalues[i]/oldvalues[i];
+		double minratio = newvalues[0] / oldvalues[0];
+		for (int i = 1; i < newvalues.length; i++) {
+			double r = newvalues[i] / oldvalues[i];
+			if (r < minratio) {
+				minratio = r;
 				minind = i;
 			}
 		}
-		GGCPMNode minuga = ugas.elementAt(minind);
-		double recsearch = mapSearchRecursive(mythread, alreadyflipped, minuga.getMaxIndicators(), currentllratio,depth+1, maxDepth);
+		GGCPMNode minuga = unionUgas.elementAt(minind);
+
+		// Recurse using the indicators that can change the worst UGA
+		double recsearch = mapSearchRecursive(mythread, alreadyflipped, minuga.getMaxIndicators(), currentllratio, depth + 1, maxDepth, batchSize);
+
+		// If recursive search indicates decrease (recsearch < 1) then roll back flips
 		if (recsearch < 1) {
-			if (myggoptions.ggverbose())
-				System.out.println(depthS + "flipping back " + flipnext.getMyatom() + " to " + oldValue);
-			flipnext.setCurrentInst(oldValue);
+			if (myggoptions.ggverbose()) {
+				System.out.println(depthS + "flipping back batch to old values");
+			}
+			for (int i = 0; i < selected.size(); i++) {
+				GGAtomMaxNode sel = selected.get(i);
+				sel.setCurrentInst(oldInsts[i]);
+				sel.reEvaluateUpstream(null);
+			}
 		}
 
 		if (myggoptions.ggverbose())
 			System.out.println(depthS + "3 returning " + recsearch);
 		return recsearch;
 	}
+
+//	public double mapSearchRecursiveWrap(GGThread mythread, Vector<GGAtomMaxNode> flipcandidates, int maxDepth) {
+//		return mapSearchRecursive(mythread, new TreeSet<GGAtomMaxNode>(new GGAtomMaxNode_Comparator()), flipcandidates, 1, 0, maxDepth);
+//	}
+//
+//	public double mapSearchRecursive(GGThread mythread, TreeSet<GGAtomMaxNode> alreadyflipped, Vector<GGAtomMaxNode> flipcandidates, double currentllratio, int depth, int maxDepth) {
+//		if (depth == maxDepth) {
+//			if (myggoptions.ggverbose())
+//				System.out.println("Max depth reached, return");
+//			return currentllratio;
+//		}
+//
+//		String depthS = "";
+//		for (int i = 0; i < depth; i++) {
+//			depthS += "\t";
+//		}
+//		if (myggoptions.ggverbose())
+//			System.out.println(depthS + "current depth " + depth);
+//		PriorityQueue<GGAtomMaxNode> scored_atoms = new PriorityQueue<GGAtomMaxNode>(new GGAtomMaxNode_Comparator()); // NB. with a priority queue only the best is guaranteed to be on the top
+//
+//		for (GGAtomMaxNode mxnode: flipcandidates) {
+//			mxnode.setScore(mythread,sampleSizeScoring);
+//			scored_atoms.add(mxnode);
+//		}
+//
+//		if (myggoptions.ggverbose())
+//			showMaxAtomFlipScoresBest(scored_atoms);
+//
+//		GGAtomMaxNode flipnext = null;
+//		for (Iterator<GGAtomMaxNode> it = scored_atoms.iterator(); (it.hasNext() && flipnext==null);){
+//			GGAtomMaxNode nextimn = it.next();
+//			if (!alreadyflipped.contains(nextimn))
+//				flipnext=nextimn;
+//		}
+//
+//		if (flipnext == null) { // do we allow negative scores?  || flipnext.getScore() <= 0
+//			if (myggoptions.ggverbose()) {
+//				System.out.println(depthS + "could not find new candidate for flipping");
+//				System.out.println(depthS + "1 returning " + currentllratio);
+//			}
+//			return currentllratio;
+//		}
+//
+//		Vector<GGCPMNode> ugas = flipnext.getAllugas();
+//		double oldll = SmallDouble.log(llnode.evaluate(null,0, ugas,true,false,null));
+//		double[] oldvalues = getUgasValues(ugas);
+//		if (myggoptions.ggverbose()) {
+//			System.out.println(depthS + "Old UGAS");
+//			System.out.print(depthS);
+//			System.out.println(depthS + Arrays.toString(oldvalues));
+//			System.out.println(depthS + "Flipping: " + flipnext.getMyatom() + " to " + flipnext.getHighvalue());
+//			System.out.println();
+//		}
+//
+//		int oldValue = flipnext.getCurrentInst();
+//		flipnext.setCurrentInst(flipnext.getHighvalue());
+//		flipnext.reEvaluateUpstream(null);
+//
+//		double newll = SmallDouble.log(llnode.evaluate(null,0, ugas,true,false,null));
+//		double[] newvalues = getUgasValues(ugas);
+//		currentllratio = currentllratio*oldll/newll;
+//
+//		int worstUgasCount=0;
+//		for (int i = 0; i < newvalues.length; i++) {
+//			if (newvalues[i]<oldvalues[i])
+//				worstUgasCount++;
+//		}
+//
+//		if (myggoptions.ggverbose()) {
+//			System.out.println(depthS + "New UGAS");
+//			System.out.print(depthS);
+//			System.out.println(depthS + Arrays.toString(newvalues));
+//			System.out.println(depthS + "Worst UGAS: " + worstUgasCount + "/" + newvalues.length);
+//			System.out.println();
+//		}
+//
+//		if (windowsize*numchains>0) {
+//			for (int j = 0; j < windowsize; j++) {
+//				gibbsSample(mythread);
+//			}
+//		}
+//		if (numchains > 0 && myggoptions.ggverbose()) {
+//			if (myggoptions.ggverbose())
+//				System.out.println(depthS + "New sampled values:");
+//			showSumAtomsVals();
+//		}
+//		/* If we have obtained an improvement in likelihood, then we terminate
+//		 * here. Otherwise we determine the next indicator to flip.
+//		 */
+//		if (currentllratio > 1 && worstUgasCount==0) {
+//			if (myggoptions.ggverbose())
+//				System.out.println(depthS + "2 returning " + currentllratio);
+//			return currentllratio;
+//		}
+//
+//		/* Find the uga that had the worst change in likelihood */
+//		alreadyflipped.add(flipnext);
+//		int minind = 0;
+//		double minratio = newvalues[0]/oldvalues[0];
+//		for (int i=0;i<newvalues.length;i++){
+//			if (newvalues[i]/oldvalues[i]<minratio){
+//				minratio = newvalues[i]/oldvalues[i];
+//				minind = i;
+//			}
+//		}
+//		GGCPMNode minuga = ugas.elementAt(minind);
+//		double recsearch = mapSearchRecursive(mythread, alreadyflipped, minuga.getMaxIndicators(), currentllratio,depth+1, maxDepth);
+//		if (recsearch < 1) {
+//			if (myggoptions.ggverbose())
+//				System.out.println(depthS + "flipping back " + flipnext.getMyatom() + " to " + oldValue);
+//			flipnext.setCurrentInst(oldValue);
+//		}
+//
+//		if (myggoptions.ggverbose())
+//			System.out.println(depthS + "3 returning " + recsearch);
+//		return recsearch;
+//	}
 
 	// Helper method to collect all ugas from flip candidates
 	private Vector<GGCPMNode> getAllUgas(Vector<GGAtomMaxNode> flipcandidates) {
@@ -1817,6 +1999,16 @@ public class GradientGraphO extends GradientGraph{
 		System.out.println("initial log-likelihood= " + curll);
 
 		while (!terminate){
+			if (!terminate) {
+				if (mode == LEARNANDMAPMODE) {
+					if (myggoptions.ggverbose())
+						System.out.println("Learning parameters ...");
+					learnParameters(mythread, GradientGraph.FullLearn, myggoptions.ggverbose());
+					if (myggoptions.ggverbose())
+						System.out.println("... done");
+				}
+			}
+
 			if (myggoptions.ggverbose())
 				System.out.println("starting from the top ..." + itcount);
 			evaluateLikelihoodAndPartDerivs(true);
@@ -1836,7 +2028,7 @@ public class GradientGraphO extends GradientGraph{
 				Vector flip = maxind_as_vec();
 				// Start with the initial configuration using SA
 //				if (itcount == 0) {
-//					mapSearchAdaptiveSA(mythread, flip, flip.size());
+//					mapSearchAdaptiveSA(mythread, flip, flip.size()*2);
 //					evaluateLikelihoodAndPartDerivs(true);
 //					flip = maxind_as_vec();
 //					score = mapSearchRecursiveWrap(mythread, flip, this.lookaheadSearch);
@@ -1844,10 +2036,8 @@ public class GradientGraphO extends GradientGraph{
 //				else
 //					score = mapSearchRecursiveWrap(mythread, flip, this.lookaheadSearch);
 
-				score = mapSearchRecursiveWrap(mythread, flip, this.lookaheadSearch);
+				score = mapSearchRecursiveWrap(mythread, flip, this.lookaheadSearch, 1);
 				evaluateLikelihoodAndPartDerivs(true);
-				if (score <= 1)
-					terminate = true;
 			} else if (mapSearchAlg == 3) {
 				score = mapSearchSampling(mythread, maxind_as_list());
 				terminate = true;
@@ -1855,13 +2045,6 @@ public class GradientGraphO extends GradientGraph{
 				Vector flip = maxind_as_vec();
 				score = mapSearchAdaptiveSA(mythread, flip, this.maxitersa);
 				evaluateLikelihoodAndPartDerivs(true);
-			}
-
-			if (myggoptions.ggverbose() && mapSearchAlg != 2)
-				System.out.println("log-likelihood improvement " + oldll/score);
-
-			if (mapSearchAlg != 2 && oldll/score <= 1+myggoptions.getLLikThresh()) {
-				terminate = true;
 			}
 
 			if (!terminate) {
@@ -1872,6 +2055,16 @@ public class GradientGraphO extends GradientGraph{
 					if (myggoptions.ggverbose())
 						System.out.println("... done");
 				}
+			}
+
+			if (score <= 1 && mapSearchAlg == 2)
+				terminate = true;
+
+			if (myggoptions.ggverbose() && mapSearchAlg != 2)
+				System.out.println("log-likelihood improvement " + oldll/score);
+
+			if (mapSearchAlg != 2 && oldll/score <= 1+myggoptions.getLLikThresh()) {
+				terminate = true;
 			}
 			itcount++;
 		}

@@ -476,7 +476,6 @@ public class GnnPy {
                 relIdx++;
             }
 
-            // edge attributes grads13 = {double[57]@1625} [-0.22445032000541687, 0.01452187541872263, -0.09580807387828827, 0.04337388649582863, 0.033709827810525894, 0.1422426551580429, 0.17550571262836456, 0.061612337827682495, -0.01995239220559597, -0.0016841309843584895, -0.001965058036148548, -0.002265435876324773, -0.0025815789122134447, -0.002909214235842228, -0.003245773958042264, -0.0035912671592086554, -0.00394787872210145, -0.004318977706134319, -0.0047082314267754555, -0.005119148176163435, -0.00555501040071249, -0.006018909625709057, -0.006513677537441254, -0.007041583303362131, -0.007603800389915705, -0.00819958746433258, -0.00882485881447792, -0.009468862786889076, -0.010104347951710224, -0.010655861347913742, -0.01089834701269865, -0.010156515054404736, -0.006567280273884535, -0.001269652508199215, -0.0014863497344776988, -0.0017154887318611145, -0.0019549503922462463, -0.002201878698542714, -0.002454758621752262, -0.00271426048129797, -0.00298296264372766, -0.0032645014580339193, -0.0035627398174256086, -0.003881273325532675,… View
             subList = (ArrayList<Rel>) pair.getEdgeAttributes();
             relIdx = 0;
             double[][] eaGrads = resGrads.get("ea");
@@ -484,7 +483,7 @@ public class GnnPy {
                 for (Rel rel : subList) {
                     if (rel instanceof NumRel) {
                         for (int i = 0; i < eaGrads.length; i++) {
-                            String atomString = rel.name() + "(" + i + ")";
+                            String atomString = rel.name() + "(" + edge_dict.get(pair.getEdgeRelation().name()).get(0).get(i) + "," + edge_dict.get(pair.getEdgeRelation().name()).get(1).get(i) + ")";
                             double[][] relGrad = new double[1][1];
                             relGrad[0][0] = eaGrads[i][relIdx];
                             outGrads.put(atomString, relGrad);
@@ -1261,7 +1260,7 @@ public class GnnPy {
                 bool_nodes = createOneHotEncodingMatrix(1, num_col);
 
             for (Object[] node : nodesTable.values()) {
-                int argNode = ((int[]) node[1])[0];
+                int argNode = ((Vector<int[]>) node[1]).get(0)[0];
                 double value = (double) node[2];
                 if (Double.isNaN(value)) {
                     GGCPMNode constructedchild = (GGCPMNode) node[0];
@@ -1301,7 +1300,7 @@ public class GnnPy {
             int idx = 0;
             for (Object[] edge : edgeTable.values()) {
                 double value = (double) edge[2];
-                int[] edge_index = (int[]) edge[1];
+                Vector<int[]> edge_args = (Vector<int[]>) edge[1];
                 if (Double.isNaN(value)) {
                     GGCPMNode constructedchild = (GGCPMNode) edge[0];
                     double[] valchild = constructedchild.evaluate(sno);
@@ -1309,13 +1308,28 @@ public class GnnPy {
                 }
 
                 if (value != 0) {
-                    edges.get(0).add(edge_index[0]);
-                    edges.get(1).add(edge_index[1]);
-                    String key = Arrays.toString((int[]) edge[3]);
-                    if (!edgeKeyToIndex.containsKey(key)) {
-                        edgeKeyToIndex.put(key, idx);
+                    for (int[] edge_index : edge_args) {
+                        int a = edge_index[0];
+                        int b = edge_index[1];
+                        // check if edges already contains edge_index
+                        boolean exists = false;
+                        int size = edges.get(0).size();
+                        for (int i = 0; i < size; i++) {
+                            if (edges.get(0).get(i) == a && edges.get(1).get(i) == b) {
+                                exists = true;
+                                break;
+                            }
+                        }
+                        if (!exists) {
+                            edges.get(0).add(a);
+                            edges.get(1).add(b);
+                            String key = Arrays.toString((int[]) edge[3]);
+                            if (!edgeKeyToIndex.containsKey(key)) {
+                                edgeKeyToIndex.put(key, idx);
+                            }
+                            idx++;
+                        }
                     }
-                    idx++;
                 }
             }
             edge_dict.put(pair.getEdgeRelation().name(), edges);

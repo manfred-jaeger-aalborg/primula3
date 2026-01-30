@@ -167,11 +167,12 @@ public class GGGnnNode extends GGCPMNode {
             String[] quantvars = torchInputPf.getQuantvars();
             CPModel groundnextsubpf = nextsubpf.substitute(quantvars, tuples[j]);
             int referringArg = 0;
-            int[] argNode = new int[2];
+            Vector<int[]> argNodes = new Vector<>();
 
             if (mode==0) {
                 // node attr
                 // if it is an atom take the args directly
+                int[] argNode = new int[1];
                 if (groundnextsubpf instanceof ProbFormAtom) {
                     if (((ProbFormAtom) groundnextsubpf).getArguments().length == 1)
                         argNode[0] = Integer.parseInt(((ProbFormAtom) groundnextsubpf).getArguments()[0]);
@@ -209,10 +210,11 @@ public class GGGnnNode extends GGCPMNode {
                 } else if (groundnextsubpf instanceof ProbFormConstant) {
                     argNode[0] = -1;
                 }
+                argNodes.add(argNode);
             } else if (mode==1) {
+                int[] argNode = new int[1];
                 // edge attr
                 argNode[0] = -1;
-
                 if (groundnextsubpf instanceof ProbFormAtom) {
                     // there should be a check somewhere that does not allow to use relations with one arg...
                     if (((ProbFormAtom) groundnextsubpf).getArguments().length == 2)
@@ -236,27 +238,52 @@ public class GGGnnNode extends GGCPMNode {
                 } else {
                     argNode[0] = j;
                 }
+                argNodes.add(argNode);
             } else if (mode==2) {
                 // edges
                 if (groundnextsubpf instanceof ProbFormAtom) {
+                    int[] argNode = new int[2];
                     // there should be a check somewhere that does not allow to use relations with one arg...
                     if (((ProbFormAtom) groundnextsubpf).getArguments().length == 2) {
                         String[] args = ((ProbFormAtom) groundnextsubpf).getArguments();
                         argNode[0] = Integer.parseInt(args[0]);
                         argNode[1] = Integer.parseInt(args[1]);
+                        argNodes.add(argNode);
                     } else // there could be more cases here
                         throw new RBNCompatibilityException("EDGEGRAPH is not a ProbFormArom with 2 arguments");
+                } else if (groundnextsubpf instanceof ProbFormBool) {
+                    ProbFormBoolComposite groundnextsubpf_bool = (ProbFormBoolComposite) groundnextsubpf;
+                    int numComponents = groundnextsubpf_bool.numComponents();
+                    for (int i=0; i<numComponents; i++) {
+                        if (groundnextsubpf_bool.componentAt(i) instanceof ProbFormBoolAtom) {
+                            int[] argNode = new int[2];
+                            String[] args = ((ProbFormBoolAtom) groundnextsubpf_bool.componentAt(i)).getArguments();
+                            argNode[0] = Integer.parseInt(args[0]);
+                            argNode[1] = Integer.parseInt(args[1]);
+                            argNodes.add(argNode);
+                        }
+                    }
                 } else
-                    throw new RBNCompatibilityException("Currently EDGEGRAPH supports only ProbFormAtom with 2 arguments");
+                    throw new RBNCompatibilityException("Currently EDGEGRAPH supports ProbFormAtom,ProbFormBool,ProbFormBoolComposite with 2 arguments");
             }
 
             // Map node indices to sequential numbers starting from 0
-            if (argNode[0] >= 0 && mode != 2) {
-                argNode[0] = getOrAssignNodeIndex(pftype, argNode[0]);
-            } else if (argNode[0] >= 0 && mode == 2 && nextsubpf instanceof ProbFormAtom && ((ProbFormAtom) nextsubpf).getArguments().length == 2) {
-                // remap the edges args
-                argNode[0] = getOrAssignNodeIndex(((ProbFormAtom) nextsubpf).getRelation().getTypes()[0].getName(), argNode[0]);
-                argNode[1] = getOrAssignNodeIndex(((ProbFormAtom) nextsubpf).getRelation().getTypes()[1].getName(), argNode[1]);
+            int numComponents = 0;
+            for (int[] argNode : argNodes) {
+                if (argNode[0] >= 0 && mode != 2) {
+                    argNode[0] = getOrAssignNodeIndex(pftype, argNode[0]);
+                } else if (argNode[0] >= 0 && mode == 2 && nextsubpf instanceof ProbFormAtom && ((ProbFormAtom) nextsubpf).getArguments().length == 2) {
+                    // remap the edges args
+                    argNode[0] = getOrAssignNodeIndex(((ProbFormAtom) nextsubpf).getRelation().getTypes()[0].getName(), argNode[0]);
+                    argNode[1] = getOrAssignNodeIndex(((ProbFormAtom) nextsubpf).getRelation().getTypes()[1].getName(), argNode[1]);
+                } else if (argNode[0] >= 0 && mode == 2 && nextsubpf instanceof ProbFormBoolComposite) {
+                    if (((ProbFormBoolComposite) nextsubpf).componentAt(numComponents) instanceof ProbFormBoolAtom) {
+                        ProbFormBoolAtom nextsubpf_atom = (ProbFormBoolAtom) ((ProbFormBoolComposite) nextsubpf).componentAt(numComponents);
+                        argNode[0] = getOrAssignNodeIndex(nextsubpf_atom.getRelation().getTypes()[0].getName(), argNode[0]);
+                        argNode[1] = getOrAssignNodeIndex(nextsubpf_atom.getRelation().getTypes()[1].getName(), argNode[1]);
+                    }
+                    numComponents++;
+                }
             }
 
             double evalOfSubPF = (double) groundnextsubpf.evaluate(
@@ -294,12 +321,12 @@ public class GGGnnNode extends GGCPMNode {
                     children.add(constructedchild);
                     String key = groundnextsubpf.makeKey(A);
                     // store the child, the value, the element for substitution, the position in the column
-                    evalOfPFs.put(key, new Object[]{constructedchild, argNode, evalOfSubPF, tuples[j], probFormIdx});
+                    evalOfPFs.put(key, new Object[]{constructedchild, argNodes, evalOfSubPF, tuples[j], probFormIdx});
                 }
                 constructedchild.addToParents(this);
             } else {
                 String key = groundnextsubpf.makeKey(A);
-                evalOfPFs.put(key, new Object[]{groundnextsubpf, argNode, evalOfSubPF, tuples[j], probFormIdx});
+                evalOfPFs.put(key, new Object[]{groundnextsubpf, argNodes, evalOfSubPF, tuples[j], probFormIdx});
             }
             evaluated_children.add(groundnextsubpf);
         }
@@ -362,7 +389,10 @@ public class GGGnnNode extends GGCPMNode {
         Map<String, double[][]> grads = (Map<String, double[][]>) outres[1];
 
         for (String param: this.myparameters) {
-            result.set_part_deriv(param, grads.get(param)[0]);
+            if (grads.containsKey(param))
+                result.set_part_deriv(param, grads.get(param)[0]);
+//            else
+//                System.out.println(param + " not found");
         }
 
         is_evaluated_grad_for_samples[idx]=true;
