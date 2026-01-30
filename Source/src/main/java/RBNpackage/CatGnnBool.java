@@ -9,7 +9,7 @@ import RBNutilities.rbnutilities;
 import java.io.File;
 import java.util.*;
 
-public class CatGnnBool extends CatGnn implements RBNform {
+public class CatGnnBool extends CatGnn {
 
     public CatGnnBool(String argument, String gnnId, int numLayers, ArrayList input_attr, ArrayList edge_attr, String gnn_inference, boolean oneHotEncoding) {
         super(argument, gnnId, numLayers, 1, input_attr, edge_attr, gnn_inference, oneHotEncoding);
