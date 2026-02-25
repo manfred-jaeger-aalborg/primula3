@@ -28,7 +28,8 @@ import java.util.*;
 
 import RBNLearning.*;
 import RBNinference.PFNetworkNode;
-
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 
 
 /** A ProbFormConstant represents a numerical constant. The formula can
@@ -95,9 +96,9 @@ public class ProbFormConstant extends CPModel implements ProbForm
 			ctype=CONSTANT_GENERAL;
 	}
 
-	public String[] freevars()
+	public VarTerm[] freevars()
 	{
-		String[] result = new String[0];
+		VarTerm[] result = new VarTerm[0];
 		return result;
 	}
 
@@ -130,6 +131,42 @@ public class ProbFormConstant extends CPModel implements ProbForm
 				result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
 			return result;
 		}
+	}
+
+	@Override
+	public CPModel substitute(String[] vars, ArgTerm[] args) {
+		if (paramname == "")
+			return new ProbFormConstant(cval);
+
+		ProbFormConstant result = new ProbFormConstant(paramname);
+		result.setCvals(paramname, cval);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	@Override
+	public CPModel substitute(ArgTerm[] vars, ArgTerm[] args) {
+		if (paramname == "")
+			return new ProbFormConstant(cval);
+
+		ProbFormConstant result = new ProbFormConstant(paramname);
+		result.setCvals(paramname, cval);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	@Override
+	public CPModel substitute(ArgTerm[] vars, int[] args) {
+		if (paramname == "")
+			return new ProbFormConstant(cval);
+
+		ProbFormConstant result = new ProbFormConstant(paramname);
+		result.setCvals(paramname, cval);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
 	}
 
 	public CPModel conditionEvidence(RelStruc A, OneStrucData inst)
@@ -178,7 +215,7 @@ public class ProbFormConstant extends CPModel implements ProbForm
 
 	public Object[] evaluate(RelStruc A, 
 			OneStrucData inst, 
-			String[] vars, 
+			ArgTerm[] vars,
 			int[] tuple,
 			int gradindx,
 			boolean useCurrentCvals, 

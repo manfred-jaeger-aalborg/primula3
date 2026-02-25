@@ -7,6 +7,8 @@ import java.util.TreeSet;
 import RBNExceptions.RBNCompatibilityException;
 import RBNLearning.*;
 import RBNinference.PFNetworkNode;
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 import RBNutilities.rbnutilities;
 
 /* A conjunction or disjunction of subformulas contained in the
@@ -98,8 +100,8 @@ public class ProbFormBoolComposite extends ProbFormBool {
 //	}
 
 	public Object[] evaluate(RelStruc A, 
-			OneStrucData inst, 
-			String[] vars, 
+			OneStrucData inst,
+			ArgTerm[] vars,
 			int[] tuple,
 			int gradindx,
 			boolean useCurrentCvals, 
@@ -276,8 +278,8 @@ public class ProbFormBoolComposite extends ProbFormBool {
 	}
 
 	@Override
-	public String[] freevars() {
-		String[] result = components[0].freevars();
+	public VarTerm[] freevars() {
+		VarTerm[] result = components[0].freevars();
 		for (int i=1;i<components.length;i++)
 			result = rbnutilities.arraymerge(result,components[i].freevars());
 		return result;
@@ -352,6 +354,39 @@ public class ProbFormBoolComposite extends ProbFormBool {
 		return result;
 	}
 
+	@Override
+	public CPModel substitute(String[] vars, ArgTerm[] args) {
+		ProbFormBool[] substarray = new ProbFormBool[components.length];
+		for (int i=0;i<components.length;i++)
+			substarray[i]=(ProbFormBool)components[i].substitute(vars,args);
+		ProbFormBoolComposite result = new ProbFormBoolComposite(substarray,operator,sign);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	@Override
+	public CPModel substitute(ArgTerm[] vars, ArgTerm[] args) {
+		ProbFormBool[] substarray = new ProbFormBool[components.length];
+		for (int i=0;i<components.length;i++)
+			substarray[i]=(ProbFormBool)components[i].substitute(vars,args);
+		ProbFormBoolComposite result = new ProbFormBoolComposite(substarray,operator,sign);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	@Override
+	public CPModel substitute(ArgTerm[] vars, int[] args) {
+		ProbFormBool[] substarray = new ProbFormBool[components.length];
+		for (int i=0;i<components.length;i++)
+			substarray[i]=(ProbFormBool)components[i].substitute(vars,args);
+		ProbFormBoolComposite result = new ProbFormBoolComposite(substarray,operator,sign);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
 	public int numComponents(){
 		return components.length;
 	}
@@ -396,7 +431,7 @@ public class ProbFormBoolComposite extends ProbFormBool {
 					pfargs[i]= components[i].clone();   
 			}
 		}
-		ProbFormCombFunc pfcomb = new ProbFormCombFunc("n-or",pfargs,new String[0],new ProbFormBoolConstant(true));
+		ProbFormCombFunc pfcomb = new ProbFormCombFunc("n-or",pfargs,new ArgTerm[0],new ProbFormBoolConstant(true));
 		if ( (sign && operator==ProbFormBool.OPERATOROR) || ( !sign && operator==ProbFormBool.OPERATORAND)) {
 			return pfcomb;		
 		}
@@ -426,7 +461,7 @@ public class ProbFormBoolComposite extends ProbFormBool {
 	}
 	
 	public TreeSet<Rel> parentRels(TreeSet<String> processed){
-		String mykey = this.makeKey(null,null,true);
+		String mykey = this.makeKey((String[]) null,null,true);
 		if (processed.contains(mykey))
 			return new TreeSet<Rel>();
 		else {

@@ -1,0 +1,21 @@
+@oldinfo(a,t) = COMBINE hasinfo(a,tt)
+                    WITH n-or
+                FORALL tt
+                WHERE tt+1=t;
+
+@initinfo(a,t) = ((t=0) & source(a));
+
+@getsinfo(a,t) =    WIF @oldinfo(a,t)
+                    THEN 0.0
+                    ELSE COMBINE (link(aa,a)*receiveinfo(aa,tt))
+                        WITH n-or
+                        FORALL aa,tt
+                        WHERE (link(aa,a) & (tt+1=t));
+
+receiveinfo(a,t) =  WIF @initinfo(a,t)
+			      	THEN 1.0
+			      	ELSE @getsinfo(a,t);
+
+hasinfo(a,t) =  WIF @oldinfo(a,t)
+                THEN 1.0
+                ELSE receiveinfo(a,t);

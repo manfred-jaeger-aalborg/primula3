@@ -4,6 +4,7 @@ package RBNio;
 import PyManager.*;
 import RBNpackage.*;
 import java.util.*;
+import RBNpackage.VarTermPackage.*;
 import myio.StringOps;
 import RBNExceptions.*;
 

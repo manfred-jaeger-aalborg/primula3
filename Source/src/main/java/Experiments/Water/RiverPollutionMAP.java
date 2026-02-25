@@ -5,6 +5,8 @@ import RBNLearning.GradientGraph;
 import RBNgui.InferenceModule;
 import RBNgui.Primula;
 import RBNpackage.*;
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 import RBNutilities.rbnutilities;
 
 import java.io.File;
@@ -42,113 +44,17 @@ public class RiverPollutionMAP {
 
     public static void main(String[] args) {
         Primula primula = new Primula();
-        primula.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
-        primula.setScriptPath("/Users/lz50rg/Dev/primula-workspace/primula3/Source/python");
-        primula.setScriptName("load_gnn");
 
-        Map<String, Object> load_gnn_set = new HashMap<>();
-        load_gnn_set.put("model", "riverGNN");
-        load_gnn_set.put("sdataset", "pollution");
-        load_gnn_set.put("base_path", "/Users/lz50rg/Dev/water-hawqs/models/");
-        primula.setLoadGnnSet(load_gnn_set);
+        primula.loadSparseRelFile(new File("/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/simple_subbasin_new.rdef"));
+        primula.loadRBNFunction(new File("/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_pollution_model.rbn"));
 
-//        File srsfile = new File("/Users/lz50rg/Dev/water-hawqs/src/test.rdef");
-        File srsfile = new File("/Users/lz50rg/Dev/water-hawqs/river_test_const.rdef");
-        primula.loadSparseRelFile(srsfile);
-
-        String val_name = "CORN,COSY,PAST,SOYB";
-
-        ArrayList<ArrayList<Rel>> attrs_rels = new ArrayList<>();
-        attrs_rels.add(
-                new ArrayList<Rel>(
-                        Arrays.asList(
-                            new CatRel("LandUse", 1, typeStringToArray("hru_agr", 1), valStringToArray(val_name)),
-                            new NumRel("AreaAgr", 1, typeStringToArray("hru_agr", 1))
-                        )
-                )
-        );
-        attrs_rels.add(
-                new ArrayList<Rel>(
-                        Arrays.asList(
-                                new CatRel("LandUseUrb", 1, typeStringToArray("hru_urb", 1), valStringToArray("BERM,FESC,FRSD,FRST,RIWF,RIWN,UPWF,UPWN,WATR")),
-                                new NumRel("AreaUrb", 1, typeStringToArray("hru_urb", 1))
-                        )
-                )
-        );
-        attrs_rels.add(
-                new ArrayList<Rel>(
-                    Arrays.asList(
-                        new CatRel("SubType", 1, typeStringToArray("sub", 1), valStringToArray("RES,SUB"))
-                    )
-                )
-        );
-
-        // set LandUse as probabilistic
-        attrs_rels.get(0).get(0).setInout(Rel.PROBABILISTIC);
-
-        BoolRel agrsub = new BoolRel("hru_agr_to_sub", 2, typeStringToArray("hru_agr,sub",2));
-        BoolRel urbsub = new BoolRel("hru_urb_to_sub", 2, typeStringToArray("hru_urb,sub",2));
-        BoolRel subsub = new BoolRel("sub_to_sub", 2, typeStringToArray("sub,sub",2));
-        ArrayList<Rel> edge_attr = new ArrayList<>();
-        edge_attr.add(agrsub);
-        edge_attr.add(urbsub);
-        edge_attr.add(subsub);
-        edge_attr.get(0).setInout(Rel.PREDEFINED);
-        edge_attr.get(1).setInout(Rel.PREDEFINED);
-        edge_attr.get(2).setInout(Rel.PREDEFINED);
-
-        RBNPreldef gnn_rbn = new  RBNPreldef(
-                new CatRel("Pollution", 1, typeStringToArray("sub",1), valStringToArray("LOW,MED,HIG")),
-                new String[]{"v"},
-                new CatGnn("v",
-                        "HeteroGraphpollution",
-                        2,
-                        3,
-                        attrs_rels,
-                        edge_attr,
-                        "node",
-                        true
-                )
-        );
-
-        Vector<CPModel> softmax = new Vector<>();
-        for (int i = 0; i < 4; i++) {
-            softmax.add(new ProbFormConstant(0.5));
-        }
-
-        RBNPreldef gnn_attr = new  RBNPreldef(
-                new CatRel("LandUse", 1, typeStringToArray("hru_agr", 1), valStringToArray(val_name)),
-                new String[]{"v"},
-                new CatModelSoftMax(softmax)
-        );
-
-        RBN file_rbn = new RBN(new File("/Users/lz50rg/Dev/water-hawqs/water_count_sub.rbn"), primula.getSignature());
-        RBNPreldef[] riverrbn = file_rbn.prelements();
-        RBN manual_rbn = new RBN(3, 0);
-        manual_rbn.insertPRel(gnn_rbn, 0);
-        manual_rbn.insertPRel(gnn_attr, 1);
-        manual_rbn.insertPRel(riverrbn[0], 2);
-
-//        manual_rbn.insertPRel(riverrbn[1], 3);
-
-//        RBN file_rbn = new RBN(new File("/Users/lz50rg/Dev/water-hawqs/water_rbn.rbn"), primula.getSignature());
-//        RBNPreldef[] riverrbn = file_rbn.prelements();
-//        RBN manual_rbn = new RBN(3, 0);
-//        for (int i = 0; i < 3; i++) {
-//            manual_rbn.insertPRel(riverrbn[i], i);
-//        }
-
-        primula.setRbn(manual_rbn);
-        primula.getInstantiation().init(manual_rbn);
-        primula.setRbnparameters(manual_rbn.parameters());
 
         Vector<GroundAtomList> gal_vec = new Vector<>();
         RelStruc input_struct = primula.getRels();
-        CatRel tmp_query = new CatRel("LandUse", 1, typeStringToArray("hru_agr", 1), valStringToArray(val_name));
-        CatRel pollRel = new CatRel("Pollution", 1, typeStringToArray("sub",1), valStringToArray("LOW,MED,HIG"));
-        tmp_query.setInout(Rel.PROBABILISTIC);
-        pollRel.setInout(Rel.PROBABILISTIC);
 
+        String val_name = "CORN,COSY,PAST,SOYB";
+        CatRel tmp_query = new CatRel("LandUse", 1, typeStringToArray("agr", 1), valStringToArray(val_name));
+        tmp_query.setInout(Rel.PROBABILISTIC);
 
         try {
             InferenceModule im = primula.createInferenceModule();
@@ -158,17 +64,7 @@ public class RiverPollutionMAP {
             for (int[] ints: mat) gal_vec.get(0).add(tmp_query, ints);
             im.addQueryAtoms(tmp_query, gal_vec.get(0));
 
-            mat = input_struct.allTypedTuples(pollRel.getTypes());
-            gal_vec.add(new GroundAtomList());
-            for (int[] ints: mat) gal_vec.get(1).add(pollRel, ints);
-            im.addQueryAtoms(pollRel, gal_vec.get(1));
-
-//            im.toggleAtom(tmp_query, 0);
-            im.setMapSearchAlg(3);
-            im.setNumIterGreedyMap(4000);
             im.setNumRestarts(1);
-            im.setWindowSize(100);
-            im.setNumChains(0);
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();
 
@@ -187,7 +83,6 @@ public class RiverPollutionMAP {
                 values_count.put(crops.get(i), 0);
             }
 
-//            PrintWriter writer = new PrintWriter("final-graph.txt", "UTF-8");
             System.out.println("\nMAP INFERENCE RESULTS:\n");
             for (GroundAtomList gal: gal_vec) {
                 for (int i = 0; i < gal.size(); i++) {
@@ -196,14 +91,10 @@ public class RiverPollutionMAP {
                         values_count.put(crops.get(res[i]), values_count.get(crops.get(res[i]))+1);
                 }
             }
-//            writer.close();
 
             System.out.println("Final GG logLikelihood: " + GG.currentLogLikelihood());
 
             System.out.println(values_count);
-
-            // Save values
-
 
             System.exit( 0 );
         } catch (InterruptedException e) {
@@ -211,11 +102,6 @@ public class RiverPollutionMAP {
         } catch (RBNIllegalArgumentException e) {
             throw new RuntimeException(e);
         }
-//        catch (FileNotFoundException e) {
-//            throw new RuntimeException(e);
-//        } catch (UnsupportedEncodingException e) {
-//            throw new RuntimeException(e);
-//        }
     }
 }
 

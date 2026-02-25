@@ -8,6 +8,8 @@ import java.util.TreeSet;
 import RBNExceptions.RBNCompatibilityException;
 import RBNinference.PFNetworkNode;
 import RBNLearning.Profiler;
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 
 /* This is basically a wrapper class around
  * ProbFormAtom. Needed to make ProbFormAtom available 
@@ -34,7 +36,12 @@ public class ProbFormBoolAtom extends ProbFormBool {
 		sign =s;
 		pfatom = pfatm;
 	}
-	
+
+	public ProbFormBoolAtom(Rel r, ArgTerm[] args, boolean s) {
+		sign = s;
+		pfatom = new ProbFormAtom(r, args);
+	}
+
 	@Override
 	public String asString(int syntax, int depth, RelStruc A, boolean paramsAsValue,boolean usealias){
 		String result ="";
@@ -45,7 +52,7 @@ public class ProbFormBoolAtom extends ProbFormBool {
 		return result+pfatom.asString(syntax, depth, A, paramsAsValue,usealias) ;
 	}
 	
-	@Override
+//	@Override
 //	public double evaluate(RelStruc A, 
 //			OneStrucData inst, 
 //			String[] vars, 
@@ -76,7 +83,7 @@ public class ProbFormBoolAtom extends ProbFormBool {
 
 	public Object[] evaluate(RelStruc A, 
 			OneStrucData inst, 
-			String[] vars, 
+			ArgTerm[] vars,
 			int[] tuple,
 			int gradindx,
 			boolean useCurrentCvals, 
@@ -182,7 +189,7 @@ public class ProbFormBoolAtom extends ProbFormBool {
 	}
 	
 	@Override
-	public String[] freevars() {
+	public VarTerm[] freevars() {
 		return pfatom.freevars();
 	}
 
@@ -228,12 +235,36 @@ public class ProbFormBoolAtom extends ProbFormBool {
 			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
 		return result;
 	}
-	
+
+	@Override
+	public CPModel substitute(String[] vars, ArgTerm[] args) {
+		ProbFormBoolAtom result = new ProbFormBoolAtom((ProbFormAtom)pfatom.substitute(vars,args),sign);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	@Override
+	public CPModel substitute(ArgTerm[] vars, ArgTerm[] args) {
+		ProbFormBoolAtom result = new ProbFormBoolAtom((ProbFormAtom)pfatom.substitute(vars,args),sign);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	@Override
+	public CPModel substitute(ArgTerm[] vars, int[] args) {
+		ProbFormBoolAtom result = new ProbFormBoolAtom((ProbFormAtom)pfatom.substitute(vars,args),sign);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
 	public Rel getRelation(){
 		return pfatom.getRelation();
 	}
 	
-	public String[] getArguments(){
+	public ArgTerm[] getArguments(){
 		return pfatom.getArguments();
 	}
 

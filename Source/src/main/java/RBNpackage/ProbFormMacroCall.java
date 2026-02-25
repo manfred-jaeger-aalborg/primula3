@@ -1,18 +1,18 @@
 package RBNpackage;
 
-import java.util.Hashtable;
-import java.util.TreeSet;
-import java.util.Vector;
+import java.util.*;
 
 import RBNExceptions.RBNCompatibilityException;
 import RBNLearning.Profiler;
 import RBNinference.PFNetworkNode;
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 import RBNutilities.rbnutilities;
 
 public class ProbFormMacroCall extends CPModel implements ProbForm {
 
 	private RBNMacro macro;
-	private String arguments[]; // The argument list when macro is called
+	private ArgTerm arguments[]; // The argument list when macro is called
 	/* Example: 
 	 * 
 	 * @macro(u,v) = WIF r(u) THEN 0.3 ELSE  t(v);
@@ -23,8 +23,8 @@ public class ProbFormMacroCall extends CPModel implements ProbForm {
 	 * 
 	 */
 	private CPModel pf_sub; // the probform of macro addressed by this call with variables substituted
-	
-	public ProbFormMacroCall(RBNMacro m, String[] args) {
+
+	public ProbFormMacroCall(RBNMacro m, ArgTerm[] args) {
 		macro = m;
 		arguments=args;
 		pf_sub = null;
@@ -44,14 +44,19 @@ public class ProbFormMacroCall extends CPModel implements ProbForm {
 		String result = new String();
 		result = macro.rel().printname();
 		result = result.concat("(");
-		for (int i = 0; i<arguments.length-1; i++)
-			if (rbnutilities.IsInteger(arguments[i]) && A!=null)
-				result = result.concat(A.nameAt(Integer.parseInt(arguments[i])) + ",");
-			else result = result.concat(arguments[i] + ",");
-		if (arguments.length>0){
-			if (rbnutilities.IsInteger(arguments[arguments.length-1])&& A!=null)
-				result = result.concat(A.nameAt(Integer.parseInt(arguments[arguments.length-1])));
-			else result = result.concat(arguments[arguments.length-1]);
+		for (int i = 0; i < arguments.length - 1; i++) {
+			String argStr = arguments[i].argEval();
+			if (argStr != null && rbnutilities.IsInteger(argStr) && A != null)
+				result = result.concat(A.nameAt(Integer.parseInt(argStr)) + ",");
+			else
+				result = result.concat(arguments[i].toString() + ",");
+		}
+		if (arguments.length > 0) {
+			String argStr = arguments[arguments.length - 1].argEval();
+			if (argStr != null && rbnutilities.IsInteger(argStr) && A != null)
+				result = result.concat(A.nameAt(Integer.parseInt(argStr)));
+			else
+				result = result.concat(arguments[arguments.length - 1].toString());
 		}
 		result = result.concat(")");
 		return result;
@@ -70,7 +75,7 @@ public class ProbFormMacroCall extends CPModel implements ProbForm {
 	}
 
 	@Override
-	public Object[] evaluate(RelStruc A, OneStrucData inst, String[] vars, int[] tuple, int gradindx, boolean useCurrentCvals,
+	public Object[] evaluate(RelStruc A, OneStrucData inst, ArgTerm[] vars, int[] tuple, int gradindx, boolean useCurrentCvals,
 			boolean useCurrentPvals, Hashtable<Rel,GroundAtomList> mapatoms, boolean useCurrentMvals,
 			Hashtable<String, Object[]> evaluated, Hashtable<String, Integer> params, int returntype, boolean valonly,
 			Profiler profiler) throws RBNCompatibilityException {
@@ -144,8 +149,16 @@ public class ProbFormMacroCall extends CPModel implements ProbForm {
 	}
 
 	@Override
-	public String[] freevars() {
-			return rbnutilities.NonIntOnly(macro.arguments);
+	public VarTerm[] freevars() {
+		HashSet<String> s = new HashSet<>();
+		for (ArgTerm t : macro.arguments) {
+			Set<String> vars = t.getVariables();
+			if (vars != null) s.addAll(vars);
+		}
+		VarTerm[] out = new VarTerm[s.size()];
+		int idx = 0;
+		for (String v : s) out[idx++] = new VarTerm(v);
+		return out;
 	}
 
 //	@Override
@@ -157,7 +170,7 @@ public class ProbFormMacroCall extends CPModel implements ProbForm {
 	@Override
 	public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone) 
 			throws RBNCompatibilityException {
-		String mykey = this.makeKey(null,null,true);
+		String mykey = this.makeKey((String[]) null,null,true);
 		if (macrosdone.contains(mykey))
 			return new Vector<GroundAtom>();
 		else {
@@ -204,6 +217,21 @@ public class ProbFormMacroCall extends CPModel implements ProbForm {
 		return new ProbFormMacroCall(this.macro,rbnutilities.array_substitute(arguments, vars, args));
 	}
 
+	@Override
+	public CPModel substitute(String[] vars, ArgTerm[] args) {
+		return new ProbFormMacroCall(this.macro,rbnutilities.array_substitute(arguments, vars, args));
+	}
+
+	@Override
+	public CPModel substitute(ArgTerm[] vars, ArgTerm[] args) {
+		return new ProbFormMacroCall(this.macro,rbnutilities.array_substitute(arguments, vars, args));
+	}
+
+	@Override
+	public CPModel substitute(ArgTerm[] vars, int[] args) {
+		return new ProbFormMacroCall(this.macro,rbnutilities.array_substitute(arguments, vars, args));
+	}
+
 //	@Override
 //	public void updateSig(Signature s) {
 //		/* Do nothing here. Signature update should be performed directly by iterating in the 
@@ -224,7 +252,7 @@ public class ProbFormMacroCall extends CPModel implements ProbForm {
 	}
 	
 	public TreeSet<Rel> parentRels(TreeSet<String> processed){
-		String mykey = this.makeKey(null,null,true);
+		String mykey = this.makeKey((String[]) null,null,true);
 		if (processed.contains(mykey))
 			return new TreeSet<Rel>();
 		else {
@@ -241,7 +269,7 @@ public class ProbFormMacroCall extends CPModel implements ProbForm {
 		return macro;
 	}
 	
-	public String[] args(){
+	public ArgTerm[] args(){
 		return arguments;
 	}
 

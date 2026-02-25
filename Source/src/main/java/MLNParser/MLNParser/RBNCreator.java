@@ -5,6 +5,8 @@
 package MLNParser.MLNParser;
 
 import RBNpackage.*;
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 import myio.StringOps;
 import MLNExceptions.NoSuchRelationException;
 import MLNExceptions.BadArityException;
@@ -156,7 +158,7 @@ public class RBNCreator {
     	formargs[0]=formula;
         return new ProbFormCombFunc(new CombFuncNOr(), 
         		formargs, 
-        		StringOps.stringVectorToArray(quantargs) , 
+        		StringOps.stringVectorToArgArray(quantargs) ,
         		new ProbFormBoolConstant(true));
     }
 
@@ -167,7 +169,7 @@ public class RBNCreator {
         return new ProbFormConvComb(
         		new ProbFormCombFunc(new CombFuncNOr(), 
         		formargs, 
-        		StringOps.stringVectorToArray(quantargs) , 
+        		StringOps.stringVectorToArgArray(quantargs),
         		new ProbFormBoolConstant(true)),
         		new ProbFormConstant(0.0),
         		new ProbFormConstant(1.0));
@@ -268,7 +270,7 @@ public class RBNCreator {
     
     public Type[] checkFreeVars(CPModel formula){
         try{
-            String[] freevars = formula.freevars();
+            ArgTerm[] freevars = formula.freevars();
             Type[] freetypes = new Type[freevars.length];
             Type[] typesOfRelation;
             for(int i=0;i<freevars.length;i++){
@@ -283,7 +285,7 @@ public class RBNCreator {
                                 freetypes[i]=typesOfRelation[numArg];
                             }else{
                                 if(freetypes[i]!=typesOfRelation[numArg])
-                                    throw new DifferentTypesException(freetypes[i],relations.get(rel.getRelationName()),freevars[i]);
+                                    throw new DifferentTypesException(freetypes[i],relations.get(rel.getRelationName()),freevars[i].toString());
                             }
                         }
                 }
@@ -370,9 +372,9 @@ public class RBNCreator {
         Vector<BoolRel> rels = new Vector(relations.values());
         for (BoolRel rel: rels){
             if(probabilisticRelations.contains(rel.printname())){
-                String[] args = new String[rel.getArity()];
+                ArgTerm[] args = new ArgTerm[rel.getArity()];
                 for (int i=0;i<args.length;i++)
-                	args[i]="x" + i;
+                	args[i]=new VarTerm( "x" + i);
                 
                 RBNPreldef pdef=new RBNPreldef(rel,args,new ProbFormConstant(0.5));
                 network.insertPRel(pdef, currentForm);

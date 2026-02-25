@@ -1,7 +1,7 @@
 package PyManager;
+
 import RBNpackage.ProbForm;
 import jep.*;
-
 import java.io.StringWriter;
 import java.util.*;
 
@@ -10,9 +10,6 @@ public class TorchModelWrapper {
     private final SharedInterpreter modelInterpreter;
     private final String modelClassName;
 
-    // Cache Python function references to avoid string execution overhead
-    private Object forwardSingleFunc;
-    private Object forwardHeteroFunc;
     private Object modelRef;
 
     public TorchModelWrapper(String modelName, String modelClassName, SharedInterpreter interpreter) {
@@ -29,78 +26,56 @@ public class TorchModelWrapper {
             modelInterpreter.exec("import torch");
             modelInterpreter.exec("from torch_geometric.data import HeteroData");
 
-            // Optimized Python functions with minimal overhead
+            // Optimized Python functions utilizing .view() for zero-copy reshaping of flat arrays
             modelInterpreter.exec("""
-                def _get_type_and_device(model):
+                def _get_device(model):
                     param = next(model.parameters(), None)
-                    if param is None:
-                        buf = next(model.buffers(), None)
-                        if buf is None:
-                            return torch.get_default_dtype(), torch.device("cpu")
-                        return buf.dtype, buf.device
-                    return param.dtype, param.device
+                    return param.device if param is not None else torch.device("cpu")
                 
-                def _to_tensor(x, dtype, device, requires_grad=False):
-                    if isinstance(x, torch.Tensor):
-                        t = x.to(device=device, dtype=dtype)
-                    else:
-                        t = torch.as_tensor(x, dtype=dtype, device=device)
-                    t = t.clone().detach()
-                    if requires_grad:
-                        t.requires_grad_(True)
-                    return t
+                def forward_single_fast_(model, flat_x, x_shape, flat_edge, num_edges, with_gradients, flat_ea, ea_shape):
+                    device = _get_device(model)
                     
-                def forward_single_primula_(model, x_dict, edge_dict, with_gradients, edge_attr):
-                    model_dtype, device = _get_type_and_device(model)
-                    
-                    # Direct extraction without iterator overhead
-                    x_items = list(x_dict.items())
-                    edge_items = list(edge_dict.items())
-                    
-                    x_val = x_items[0][1]
-                    e_val = edge_items[0][1] if edge_items and len(edge_items[0][1]) > 0 else None
-                    ea_val = list(edge_attr.items())[0][1] if edge_attr else None
-                
-                    xi = _to_tensor(x_val, dtype=model_dtype, device=device, requires_grad=with_gradients)
-                    
-                    if e_val is not None:
-                        ei = torch.as_tensor(e_val, dtype=torch.long, device=device)
+                    # Reshape features and edges without copying memory
+                    xi = torch.as_tensor(flat_x, dtype=torch.float32, device=device).view(x_shape[0], x_shape[1])
+                    if num_edges > 0:
+                        ei = torch.as_tensor(flat_edge, dtype=torch.long, device=device).view(2, num_edges)
                     else:
                         ei = torch.empty((2, 0), dtype=torch.long, device=device)
-                
-                    ea = _to_tensor(ea_val, dtype=model_dtype, device=device, requires_grad=with_gradients) if ea_val is not None else None
-                
+                    
+                    ea = None
+                    if flat_ea is not None:
+                        ea = torch.as_tensor(flat_ea, dtype=torch.float32, device=device).view(ea_shape[0], ea_shape[1])
+
                     if with_gradients:
+                        xi.requires_grad_(True)
                         if ea is not None:
-                            out = model(xi, ei, ea)
-                        else:
-                            out = model(xi, ei)
+                            ea.requires_grad_(True)
                         
-                        out_scalar = out.sum()
-                        out_scalar.backward()
+                        out = model(xi, ei, ea) if ea is not None else model(xi, ei)
+                        out.sum().backward()
                         
                         x_grad = xi.grad.detach().cpu().numpy() if xi.grad is not None else None
                         ea_grad = ea.grad.detach().cpu().numpy() if (ea is not None and ea.grad is not None) else None
-                        
-                        # Return tuple: (output_numpy, x_grad, ea_grad)
                         return out.detach().cpu().numpy(), x_grad, ea_grad
                     else:
                         model.eval()
                         with torch.no_grad():
                             out = model(xi, ei, ea) if ea is not None else model(xi, ei)
                         return out.cpu().numpy(), None, None
-                
-                def forward_hetero_primula_(model, x_dict, edge_dict, edge_rels):
-                    model_dtype, device = _get_type_and_device(model)
+
+                def forward_hetero_fast_(model, flat_x_dict, x_shapes_dict, flat_edge_dict, edge_cols_dict, edge_rels):
+                    device = _get_device(model)
                     data_h = HeteroData()
                     
-                    for key, value in x_dict.items():
-                        data_h[key].x = torch.as_tensor(value, dtype=model_dtype, device=device)
+                    for key, flat_x in flat_x_dict.items():
+                        shape = x_shapes_dict[key]
+                        data_h[key].x = torch.as_tensor(flat_x, dtype=torch.float32, device=device).view(shape[0], shape[1])
                     
-                    for key, value in edge_dict.items():
+                    for key, flat_edge in flat_edge_dict.items():
+                        num_edges = edge_cols_dict[key]
                         edge_type = (edge_rels[key][0], key, edge_rels[key][1])
-                        if value:
-                            data_h[edge_type].edge_index = torch.as_tensor(value, dtype=torch.long, device=device)
+                        if num_edges > 0:
+                            data_h[edge_type].edge_index = torch.as_tensor(flat_edge, dtype=torch.long, device=device).view(2, num_edges)
                         else:
                             data_h[edge_type].edge_index = torch.empty((2, 0), dtype=torch.long, device=device)
                     
@@ -116,9 +91,6 @@ public class TorchModelWrapper {
 
     private void cachePythonReferences() {
         try {
-            // Cache function and model references to avoid repeated lookups
-            forwardSingleFunc = modelInterpreter.getValue("forward_single_primula_");
-            forwardHeteroFunc = modelInterpreter.getValue("forward_hetero_primula_");
             modelRef = modelInterpreter.getValue(modelName);
         } catch (JepException e) {
             throw new RuntimeException("Failed to cache Python references", e);
@@ -134,69 +106,60 @@ public class TorchModelWrapper {
 
         try {
             if (xDict.size() == 1) {
+                // --- SINGLE GRAPH FLATTENING ---
+                String nodeType = xDict.keySet().iterator().next();
+                double[][] xData = xDict.get(nodeType);
+                float[] flatX = flattenMatrix(xData);
+                int[] xShape = {xData.length, xData.length > 0 ? xData[0].length : 0};
+
+                String edgeType = edgeDict.isEmpty() ? null : edgeDict.keySet().iterator().next();
+                ArrayList<ArrayList<Integer>> edges = edgeType != null ? edgeDict.get(edgeType) : null;
+                int numEdges = (edges != null && !edges.isEmpty()) ? edges.get(0).size() : 0;
+                int[] flatEdge = flattenEdges(edges);
+
+                float[] flatEA = null;
+                int[] eaShape = null;
+                if (!edge_attr.isEmpty()) {
+                    String eaKey = edge_attr.keySet().iterator().next();
+                    double[][] eaData = edge_attr.get(eaKey);
+                    flatEA = flattenMatrix(eaData);
+                    eaShape = new int[]{eaData.length, eaData.length > 0 ? eaData[0].length : 0};
+                }
+
                 Object pythonResult = modelInterpreter.invoke(
-                        "forward_single_primula_",
-                        modelRef,
-                        xDict,
-                        edgeDict,
-                        withgradients,
-                        edge_attr.isEmpty() ? null : edge_attr
+                        "forward_single_fast_",
+                        modelRef, flatX, xShape, flatEdge, numEdges, withgradients, flatEA, eaShape
                 );
 
-                @SuppressWarnings("unchecked")
                 List<Object> pyTuple = (List<Object>) pythonResult;
                 NDArray outArray = (NDArray) pyTuple.get(0);
-
                 result[0] = convertNDArrayTo2D(outArray);
-
-                // Handle binary output correction if needed
                 correctBinaryOutput(result[0], outArray.getDimensions());
 
-                // Handle gradients
                 if (withgradients) {
                     Map<String, double[][]> gradsDict = new HashMap<>();
-
-                    if (pyTuple.get(1) != null) {
-                        NDArray gradX = (NDArray) pyTuple.get(1);
-                        gradsDict.put("x", convertNDArrayTo2D(gradX));
-                    }
-
-                    if (pyTuple.get(2) != null) {
-                        NDArray gradEA = (NDArray) pyTuple.get(2);
-                        gradsDict.put("ea", convertNDArrayTo2D(gradEA));
-                    }
-
+                    if (pyTuple.get(1) != null) gradsDict.put("x", convertNDArrayTo2D((NDArray) pyTuple.get(1)));
+                    if (pyTuple.get(2) != null) gradsDict.put("ea", convertNDArrayTo2D((NDArray) pyTuple.get(2)));
                     result[1] = gradsDict.isEmpty() ? null : gradsDict;
-                } else {
-                    result[1] = null;
                 }
 
             } else {
-                // Heterogeneous GNN
-                if (!edge_attr.isEmpty()) {
-                    throw new RuntimeException("Edge attributes not yet implemented for heterogeneous GNNs");
-                }
+                // --- HETEROGENEOUS GRAPH FLATTENING ---
+                if (!edge_attr.isEmpty()) throw new RuntimeException("Edge attributes not implemented for hetero GNNs");
+                if (withgradients) throw new RuntimeException("Gradients not implemented for hetero GNNs");
 
-                if (withgradients) {
-                    throw new RuntimeException("Gradients for heterogeneous GNNs not yet implemented");
-                }
-
-                // Build edge relation dictionary once
+                Object[] flatXData = flattenXDict(xDict);
+                Object[] flatEdgeData = flattenEdgeDict(edgeDict);
                 Map<String, String[]> edgeRels = buildEdgeRelations(gnnInputs);
 
                 Object pythonResult = modelInterpreter.invoke(
-                        "forward_hetero_primula_",
-                        modelRef,
-                        xDict,
-                        edgeDict,
-                        edgeRels
+                        "forward_hetero_fast_",
+                        modelRef, flatXData[0], flatXData[1], flatEdgeData[0], flatEdgeData[1], edgeRels
                 );
 
                 NDArray outArray = (NDArray) pythonResult;
                 result[0] = convertNDArrayTo2D(outArray);
-                result[1] = null;
             }
-
             return result;
 
         } catch (JepException e) {
@@ -205,55 +168,122 @@ public class TorchModelWrapper {
         }
     }
 
-    // Helper method to convert NDArray to 2D double array
+    // --- HELPER METHODS FOR FLATTENING ---
+
+    private static float[] flattenMatrix(double[][] matrix) {
+        final int rows = matrix.length;
+        if (rows == 0) return new float[0];
+
+        final int cols = matrix[0].length;
+        final float[] flat = new float[rows * cols];
+
+        int idx = 0;
+        for (int r = 0; r < rows; r++) {
+            final double[] row = matrix[r];
+            for (int c = 0; c < cols; c++) {
+                flat[idx++] = (float) row[c];
+            }
+        }
+
+        return flat;
+    }
+
+    private static int[] flattenEdges(ArrayList<ArrayList<Integer>> edges) {
+        if (edges == null || edges.isEmpty()) return new int[0];
+
+        final ArrayList<Integer> src = edges.get(0);
+        final int numEdges = src.size();
+        if (numEdges == 0) return new int[0];
+
+        final ArrayList<Integer> dst = edges.get(1);
+        final int[] flat = new int[2 * numEdges];
+
+        for (int i = 0; i < numEdges; i++) {
+            flat[i] = src.get(i);
+            flat[numEdges + i] = dst.get(i);
+        }
+
+        return flat;
+    }
+
+    private static Object[] flattenXDict(Map<String, double[][]> xDict) {
+        final int size = xDict.size();
+        final Map<String, float[]> flatX = new HashMap<>(size);
+        final Map<String, int[]> shapes = new HashMap<>(size);
+
+        for (Map.Entry<String, double[][]> entry : xDict.entrySet()) {
+            final String key = entry.getKey();
+            final double[][] m = entry.getValue();
+
+            final int rows = m.length;
+            final int cols = (rows == 0) ? 0 : m[0].length;
+
+            flatX.put(key, flattenMatrix(m));
+            shapes.put(key, new int[]{rows, cols});
+        }
+
+        return new Object[]{flatX, shapes};
+    }
+
+    private static Object[] flattenEdgeDict(Map<String, ArrayList<ArrayList<Integer>>> edgeDict) {
+        final int size = edgeDict.size();
+        final Map<String, int[]> flatEdges = new HashMap<>(size);
+        final Map<String, Integer> counts = new HashMap<>(size);
+
+        for (Map.Entry<String, ArrayList<ArrayList<Integer>>> entry : edgeDict.entrySet()) {
+            final String key = entry.getKey();
+            final ArrayList<ArrayList<Integer>> edges = entry.getValue();
+
+            int num = 0;
+            int[] flat = new int[0];
+
+            if (edges != null && !edges.isEmpty()) {
+                final ArrayList<Integer> src = edges.get(0);
+                num = src.size();
+                if (num > 0) {
+                    final ArrayList<Integer> dst = edges.get(1);
+                    flat = new int[2 * num];
+                    for (int i = 0; i < num; i++) {
+                        flat[i] = src.get(i);
+                        flat[num + i] = dst.get(i);
+                    }
+                }
+            }
+
+            flatEdges.put(key, flat);
+            counts.put(key, num);
+        }
+
+        return new Object[]{flatEdges, counts};
+    }
+
     private double[][] convertNDArrayTo2D(NDArray array) {
         Object raw = array.getData();
         double[] flatData = PyUtils.toDoubleArray(raw);
         int[] dims = array.getDimensions();
-
-        if (dims.length == 2) {
-            return PyUtils.convertTo2D(flatData, dims[0], dims[1]);
-        } else if (dims.length == 1) {
-            return new double[][]{flatData};
-        } else {
-            throw new RuntimeException("Invalid output shape: " + Arrays.toString(dims));
-        }
+        if (dims.length == 2) return PyUtils.convertTo2D(flatData, dims[0], dims[1]);
+        if (dims.length == 1) return new double[][]{flatData};
+        throw new RuntimeException("Invalid output shape: " + Arrays.toString(dims));
     }
 
-    // Optimized binary output correction
     private void correctBinaryOutput(Object outputObj, int[] dims) {
         if (dims.length == 2 && dims[0] == 1 && dims[1] == 2) {
             double[][] output = (double[][]) outputObj;
-            double val0 = output[0][0];
-            double val1 = output[0][1];
-
-            if (val0 == 1.0 || val0 == 0.0) {
-                output[0][0] = 1.0 - val1;
-            }
-            if (val1 == 1.0 || val1 == 0.0) {
-                output[0][1] = 1.0 - val0;
-            }
+            if (output[0][0] == 1.0 || output[0][0] == 0.0) output[0][0] = 1.0 - output[0][1];
+            if (output[0][1] == 1.0 || output[0][1] == 0.0) output[0][1] = 1.0 - output[0][0];
         }
     }
 
-    // Build edge relations map
     private Map<String, String[]> buildEdgeRelations(List<TorchInputSpecs> gnnInputs) {
         Map<String, String[]> edgeRels = new HashMap<>();
         for (TorchInputSpecs input : gnnInputs) {
-            edgeRels.put(
-                    input.getEdgeRelation().name(),
-                    new String[]{
-                            input.getEdgeRelation().getTypes()[0].getName(),
-                            input.getEdgeRelation().getTypes()[1].getName()
-                    }
-            );
+            edgeRels.put(input.getEdgeRelation().name(),
+                    new String[]{input.getEdgeRelation().getTypes()[0].getName(), input.getEdgeRelation().getTypes()[1].getName()});
         }
         return edgeRels;
     }
 
-    public SharedInterpreter getModelInterpreter() {
-        return modelInterpreter;
-    }
+    public SharedInterpreter getModelInterpreter() { return modelInterpreter; }
 
     @Override
     public String toString() {

@@ -34,6 +34,7 @@ import RBNExceptions.*;
 import RBNLearning.*;
 import RBNgui.Primula;
 
+import com.sun.jdi.IntegerType;
 import myio.*;
 
 import org.dom4j.Element;
@@ -45,7 +46,7 @@ public class RDEFReader {
 
 	public static final int READONESTRUC =0;
 	public static final int READRELDATA =1;
-	
+
 	private Primula myprimula;
 	
 	private static class stringKeyPairComparator implements Comparator{
@@ -585,7 +586,9 @@ public class RDEFReader {
 			}
 			if (nexttype.equals("Domain"))
 				result[i]=new TypeDomain();
-			else
+			else if (nexttype.equals("Integer")) {
+				result[i] = new TypeInteger();
+			} else
 				result[i]=new TypeRel(nexttype);
 		}
 		return result;

@@ -206,11 +206,11 @@ public abstract class GGCPMNode extends GGNode{
 					double pfvalue =0 ;
 					if (cpm instanceof ProbFormAtom){
 						pfvalue = A.valueOf( ((ProbFormAtom)cpm).getRelation(), 
-								rbnutilities.stringArrayToIntArray(((ProbFormAtom)cpm).getArguments()));
+								rbnutilities.argTermArrayToIntArray(((ProbFormAtom)cpm).getArguments()));
 					}
 					if (cpm instanceof ProbFormBoolAtom){
 						pfvalue = A.truthValueOf( ((ProbFormAtom)cpm).getRelation(), 
-								rbnutilities.stringArrayToIntArray(((ProbFormAtom)cpm).getArguments()));
+								rbnutilities.argTermArrayToIntArray(((ProbFormAtom)cpm).getArguments()));
 						if (!((ProbFormBool)cpm).sign())
 							pfvalue = Math.abs(1-pfvalue);
 					}

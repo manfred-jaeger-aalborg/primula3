@@ -10,7 +10,6 @@ import jep.*;
 import jep.python.PyObject;
 
 import java.io.*;
-import java.sql.Types;
 import java.util.*;
 
 public class GnnPy {
@@ -407,10 +406,10 @@ public class GnnPy {
         }
         double[][] outProbsFull = (double[][]) resultCopy[0];
 
-        String outType = cpmGnn.getOutTypes().get(0);
-        int nodeIndex = (cpmGnn.getArgument().equals("[]") || cpmGnn.getArgument().equals("")) ? 0 : getNodeByType(relToNodeMap, outType, Integer.parseInt(cpmGnn.getArgument()));
+        String outType = cpmGnn.getOutTypes()[0].getName();
+        int nodeIndex = (cpmGnn.getArguments().equals("[]") || cpmGnn.getArguments().equals("")) ? 0 : getNodeByType(relToNodeMap, outType, Integer.parseInt(cpmGnn.getArguments()[0].argEval())); // TODO right now only the frist arg is used
         if (nodeIndex == -1) {
-            throw new RuntimeException("Could not find node of type " + outType + " with index " + cpmGnn.getArgument());
+            throw new RuntimeException("Could not find node of type " + outType + " with index " + cpmGnn.getArguments());
         }
         resultCopy[0] = outProbsFull[nodeIndex];
         return resultCopy;
@@ -498,9 +497,9 @@ public class GnnPy {
 
         double[][] outProbsFull = (double[][]) resultCopy[0];
         int nodeIndex = 0;
-        if (!(cpmGnn.getArgument().equals("[]") || cpmGnn.getArgument().equals(""))) {
-            String outType = cpmGnn.getOutTypes().get(0);
-            nodeIndex = ggcnn.getNodeIndexIfPresent(outType, Integer.parseInt(cpmGnn.getArgument()));
+        if (!(cpmGnn.getArguments().equals("[]") || cpmGnn.getArguments().equals(""))) {
+            String outType = cpmGnn.getOutTypes()[0].getName();
+            nodeIndex = ggcnn.getNodeIndexIfPresent(outType, Integer.parseInt(cpmGnn.getArguments()[0].argEval()));
         }
         resultCopy[0] = outProbsFull[nodeIndex];
         resultCopy[1] = outGrads;
@@ -595,7 +594,7 @@ public class GnnPy {
             resultCopy[1] = outGrads;
 
             double[][] outProbsFull = (double[][]) resultCopy[0];
-            int nodeIndex = (cpmGnn.getArgument().equals("[]") || cpmGnn.getArgument().equals("")) ? 0 : Integer.parseInt(cpmGnn.getArgument());
+            int nodeIndex = (cpmGnn.getArguments().equals("[]") || cpmGnn.getArguments().equals("")) ? 0 : Integer.parseInt(cpmGnn.getArguments()[0].argEval());
             resultCopy[0] = outProbsFull[nodeIndex];
             basicStructCachePut(inst, cpmGnn.getGnnId(), resultCopy);
         }
@@ -1451,12 +1450,12 @@ public class GnnPy {
         Object[] result = inferModelHetero(x_dict, edge_dict, edgeAttr_dict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), true);
         double[][] outProbs = (double[][]) result[0];
 
-        if (cpmGnn.getArgument().equals("[]") || cpmGnn.getArgument().equals(""))
+        if (cpmGnn.getArguments().equals("[]") || cpmGnn.getArguments().equals(""))
             return outProbs[0];
         else {
             // TODO riscky here! If we have more than one out types!
-            String outType = cpm.getOutTypes().get(0);
-            return outProbs[ggcnn.getNodeIndexIfPresent(outType, Integer.parseInt(cpmGnn.getArgument()))];
+            String outType = cpm.getOutTypes()[0].getName();
+            return outProbs[ggcnn.getNodeIndexIfPresent(outType, Integer.parseInt(cpmGnn.getArguments()[0].argEval()))];
         }
 
 //        if (!savedData || !ggcpmGnn.getIs_evaluated_val_for_samples()[0]) {
@@ -1686,11 +1685,11 @@ public class GnnPy {
         updateEdgeInputDictForSampling(GGedgeAttrDict, relToEdgeAttrMap, cpmGnn, atomhasht);
 
         Object[] result = inferModelHetero(GGnodeAttrDict, GGedgeDict, GGedgeAttrDict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), true);
-        if (cpmGnn.getArgument().equals("[]") || cpmGnn.getArgument().equals(""))
+        if (cpmGnn.getArguments().equals("[]") || cpmGnn.getArguments().equals(""))
             return (double[]) result[0];
 
         double[][] outProbs = (double[][]) result[0];
-        return outProbs[Integer.parseInt(cpmGnn.getArgument())];
+        return outProbs[Integer.parseInt(cpmGnn.getArguments()[0].argEval())];
     }
 
     private int[] extractParamArgs(String paramName) {

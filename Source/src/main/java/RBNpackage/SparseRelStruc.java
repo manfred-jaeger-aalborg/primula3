@@ -25,6 +25,7 @@ package RBNpackage;
 
 import java.util.*;
 import RBNExceptions.*;
+import RBNpackage.VarTermPackage.*;
 import RBNutilities.*;
 
 
@@ -121,7 +122,7 @@ public class SparseRelStruc extends RelStruc {
 
 	/* Overrides the default implementation
 	 */
-	public int[][] allTrue(ProbFormBool cc,String[] vars)// the elements of vars must be distinct!
+	public int[][] allTrue(ProbFormBool cc, String[] vars)// the elements of vars must be distinct!
 	throws IllegalArgumentException,RBNCompatibilityException
 	{
 
@@ -136,7 +137,26 @@ public class SparseRelStruc extends RelStruc {
 			result[index]=nextIntArr;
 			index++;
 		}
-		return result;   
+		return result;
+	}
+
+
+	public int[][] allTrue(ProbFormBool cc, ArgTerm[] vars)// the elements of vars must be distinct!
+			throws IllegalArgumentException,RBNCompatibilityException
+	{
+
+		TreeSet<int[]> prelimResult = allTrueAsTreeSet(cc, vars);
+
+		int[][] result = new int[prelimResult.size()][vars.length];
+		Iterator<int[]> it = prelimResult.iterator();
+		int index = 0;
+		int[] nextIntArr;
+		while (it.hasNext()){
+			nextIntArr=it.next();
+			result[index]=nextIntArr;
+			index++;
+		}
+		return result;
 	}
 
 
@@ -343,9 +363,20 @@ public class SparseRelStruc extends RelStruc {
 //		return result;
 //	}
 
-	public TreeSet<int[]> allTrueAsTreeSet(ProbFormBool cc,String[] vars)
+public TreeSet<int[]> allTrueAsTreeSet(ProbFormBool cc, String[] vars)
+			throws IllegalArgumentException, RBNCompatibilityException {
+
+		ArgTerm[] argTermVars = new ArgTerm[vars.length];
+		for (int i = 0; i < vars.length; i++) {
+			argTermVars[i] = new VarTerm(vars[i]);
+		}
+		return allTrueAsTreeSet(cc, argTermVars);
+	}
+
+
+	public TreeSet<int[]> allTrueAsTreeSet(ProbFormBool cc, ArgTerm[] vars)
 			throws IllegalArgumentException,RBNCompatibilityException
-			{
+	{
 		//System.out.println("allTrueAsTreeSet for " + cc.asString());
 		TreeSet<int[]> result = new TreeSet<int[]>(new IntArrayComparator());
 
@@ -358,26 +389,57 @@ public class SparseRelStruc extends RelStruc {
 		{
 			Vector<int[]> alltrue;
 			Rel crel = ((ProbFormBoolAtom) cc).getRelation();
-			String[] args = ((ProbFormBoolAtom) cc).getArguments();
-			if (RelStruc.isOrdRel(crel)){
-				alltrue = mydata.allTrueOrdRel(crel, args);
-			}
-			else 
+			ArgTerm[] args = ((ProbFormBoolAtom) cc).getArguments();
+			if (RelStruc.isOrdRel(crel)) {
+				alltrue = mydata.allTrueOrdRel(crel, rbnutilities.getArgumentsAsString(args));
+			} else
 				//alltrue = mydata.allTrue(crel);
-				alltrue=mydata.allTrue(crel,args);
-			for (int i = 0;i<alltrue.size();i++)
-				rbnutilities.allSatisfyingTuples(args, alltrue.elementAt(i), vars, result , dom);
+				alltrue = mydata.allTrue(crel, args);
+			for (int i = 0; i < alltrue.size(); i++)
+				rbnutilities.allSatisfyingTuples(args, alltrue.elementAt(i), vars, result, dom);
+
 		};
 
 		if (cc instanceof ProbFormBoolEquality)
 		{
-			int[][] alltrue = new int[dom][2];
-			for (int i=0;i<dom;i++){
-				alltrue[i][0]=i;
-				alltrue[i][1]=i;
+			boolean hasIntTerm = false;
+			for (ArgTerm term : ((ProbFormBoolEquality) cc).terms()) {
+				if (term instanceof IntOp) {
+					hasIntTerm = true;
+					break;
+				}
 			}
-			for (int i = 0;i<alltrue.length;i++)
-				rbnutilities.allSatisfyingTuples(((ProbFormBoolEquality)cc).terms(), alltrue[i], vars, result ,  dom);
+
+			if (hasIntTerm) {
+				int[] maxValues = new int[vars.length];
+				for (int i = 0; i < maxValues.length; i++) {
+					maxValues[i] = maxIntegerValue;
+				}
+
+				List<int[]> allCombs = new ArrayList<>();
+				rbnutilities.generate(maxValues, new int[maxValues.length], 0, allCombs);
+
+				for (int[] comb : allCombs) {
+					ProbFormBoolEquality instantiated = (ProbFormBoolEquality) cc;
+					ArgTerm[] newargs = new ArgTerm[vars.length];
+					for (int i = 0; i < comb.length; i++) {
+						newargs[i] = new VarTerm(comb[i]);
+					}
+
+					instantiated = (ProbFormBoolEquality) instantiated.substitute(vars, newargs);
+					if (instantiated.evaluatesTo(this) == 1) {
+						result.add(comb);
+					}
+				}
+			} else {
+				int[][] alltrue = new int[dom][2];
+				for (int i = 0; i < dom; i++) {
+					alltrue[i][0] = i;
+					alltrue[i][1] = i;
+				}
+				for (int i = 0; i < alltrue.length; i++)
+					rbnutilities.allSatisfyingTuples(((ProbFormBoolEquality) cc).terms(), alltrue[i], vars, result, dom);
+			}
 		}
 		if (cc instanceof ProbFormBoolComposite)
 		{
@@ -417,7 +479,7 @@ public class SparseRelStruc extends RelStruc {
 			result = notresult;
 		}
 		return result;
-			}
+	}
 
 	//	private void printTS(TreeSet ts){
 	//		Iterator it = ts.iterator();

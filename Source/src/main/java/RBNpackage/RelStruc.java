@@ -28,6 +28,7 @@ import java.awt.Color;
 import java.io.*;
 
 import RBNExceptions.*;
+import RBNpackage.VarTermPackage.ArgTerm;
 import RBNutilities.*;
 import RBNio.*;
 import RBNLearning.*;
@@ -44,7 +45,8 @@ public abstract class RelStruc implements Cloneable{
 	public static int BLP_FORMAT = 1;
 	public static int MLN_FORMAT = 2;
 
-	
+	public final int maxIntegerValue = 20;
+
 	private Signature sig;
 
 	/* Domain of structure is
@@ -525,38 +527,64 @@ public abstract class RelStruc implements Cloneable{
 
 
 
-	public int trueOrdAtom(Rel ordrel, String[] args){
+	public int trueOrdAtom(Rel ordrel, ArgTerm[] args){
 		// check whether at is ground:
 		boolean isground = true;
 		int firstarg;
 		int secondarg;	
 			
 			for (int i=0;i<args.length;i++)
-				if (!rbnutilities.IsInteger(args[i])) isground = false;
+				if (!rbnutilities.IsInteger(args[i].argEval())) isground = false;
 			if (!isground)
 				throw new IllegalArgumentException("Attempt to evaluate non-ground atom " + ordrel.name() + rbnutilities.arrayToString(args));
 			if (ordrel.equals(OrdRels[0])){
-				firstarg = Integer.parseInt(args[0]);
-				secondarg = Integer.parseInt(args[1]);
+				firstarg = Integer.parseInt(args[0].argEval());
+				secondarg = Integer.parseInt(args[1].argEval());
 				if (firstarg < secondarg) return 1;
 				else return 0;
 			}
 			if (ordrel.equals(OrdRels[1])){
-				firstarg = Integer.parseInt(args[0]);
-				secondarg = Integer.parseInt(args[1]);
+				firstarg = Integer.parseInt(args[0].argEval());
+				secondarg = Integer.parseInt(args[1].argEval());
 				if (firstarg +1 == secondarg) return 1;
 				else return 0;
 			}
 			if (ordrel.equals(OrdRels[2])){
-				firstarg = Integer.parseInt(args[0]);
+				firstarg = Integer.parseInt(args[0].argEval());
 				if (firstarg  == 0) return 1;
 				else return 0;
 			}
 			if (ordrel.equals(OrdRels[3])){
-				firstarg = Integer.parseInt(args[0]);
+				firstarg = Integer.parseInt(args[0].argEval());
 				if (firstarg  == dom-1) return 1;
 				else return 0;
 			}
+//			// equals/2
+//			if (ordrel.equals(OrdRels[4])){
+//				firstarg = Integer.parseInt(args[0]);
+//				secondarg = Integer.parseInt(args[1]);
+//				return (firstarg == secondarg) ? 1 : 0;
+//			}
+//			// great then/2 x>y
+//			if (ordrel.equals(OrdRels[5])){
+//				firstarg = Integer.parseInt(args[0]);
+//				secondarg = Integer.parseInt(args[1]);
+//				return (firstarg > secondarg) ? 1 : 0;
+//			}
+//			// plus/3: x + y = z
+//			if (ordrel.equals(OrdRels[6])){
+//				int x = Integer.parseInt(args[0]);
+//				int y = Integer.parseInt(args[1]);
+//				int z = Integer.parseInt(args[2]);
+//				return (x + y == z) ? 1 : 0;
+//			}
+//			// minus/3: x - y = z
+//			if (ordrel.equals(OrdRels[7])){
+//				int x = Integer.parseInt(args[0]);
+//				int y = Integer.parseInt(args[1]);
+//				int z = Integer.parseInt(args[2]);
+//				return (x - y == z) ? 1 : 0;
+//			}
 			
 		
 		throw new RuntimeException("Program should never reach this line!");
@@ -578,8 +606,11 @@ public abstract class RelStruc implements Cloneable{
 	throws RBNIllegalArgumentException
 	{
 		int[] result = null;
-		if (rtype instanceof TypeInteger)
-			throw new RBNIllegalArgumentException("Cannot handle Integer Type yet");
+		if (rtype instanceof TypeInteger) {
+			result = new int[maxIntegerValue + 1];
+			for (int i = 0; i <= maxIntegerValue; i++)
+				result[i] = i;
+		}
 
 		if (rtype instanceof TypeDomain){
 			result = new int[dom];
@@ -612,7 +643,7 @@ public abstract class RelStruc implements Cloneable{
 	 * allTrue that does not make use of the specific representation
 	 * of relations in RelStruc
 	 */
-	public int[][] allTrue(ProbFormBool cc,String[] vars)// the elements of vars must be distinct!
+	public int[][] allTrue(ProbFormBool cc, String[] vars)// the elements of vars must be distinct!
 	throws IllegalArgumentException,RBNCompatibilityException
 	{
 		int k = vars.length;
@@ -631,7 +662,27 @@ public abstract class RelStruc implements Cloneable{
 		for (int i =0; i<result.length; i++) result[i]=prelimarray.elementAt(i);
 		return result;
 	}
-	
+
+	public int[][] allTrue(ProbFormBool cc, ArgTerm[] vars)
+			throws IllegalArgumentException, RBNCompatibilityException
+	{
+		int k = vars.length;
+		int m = rbnutilities.IntPow(dom, k);
+		Vector<int[]> prelimarray = new Vector<int[]>();
+
+		for (int i = 0; i < m; i++)
+		{
+			int[] thistuple = rbnutilities.indexToTuple(i, k, dom);
+
+			if (cc.evaluatesTo(this) == 1)
+				prelimarray.add(thistuple);
+		}
+
+		int[][] result = new int[prelimarray.size()][k];
+		for (int i = 0; i < result.length; i++) result[i] = prelimarray.elementAt(i);
+		return result;
+	}
+
 
 
 	public Vector<int[]> allTrue(Rel r){

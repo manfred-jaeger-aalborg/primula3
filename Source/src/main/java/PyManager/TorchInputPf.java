@@ -3,6 +3,8 @@ import RBNExceptions.RBNCompatibilityException;
 import RBNLearning.Profiler;
 import RBNgui.Primula;
 import RBNpackage.*;
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 import RBNutilities.rbnutilities;
 
 import java.util.*;
@@ -13,7 +15,7 @@ public class TorchInputPf {
     private CPModel pfargsNode[];
     private CPModel pfargsEdge[];
     private CPModel pfargsEdgeAttr[];
-    private String quantvars[];
+    private ArgTerm quantvars[]; // TODO quantvars should be ArgTerm
     private ProbFormBool cconstr;
     // TODO ADD LAYER COMBINE
 
@@ -21,14 +23,14 @@ public class TorchInputPf {
         return pfargs;
     }
 
-    public String[] getQuantvars() { return quantvars; }
+    public ArgTerm[] getQuantvars() { return quantvars; }
 
     public ProbFormBool getCconstr() {
         return cconstr;
     }
 
     public TorchInputPf(CPModel[] pfa,
-                        String[] qvars,
+                        ArgTerm[] qvars,
                         ProbFormBool cc) throws IllegalArgumentException
     {
         pfargs = pfa;
@@ -43,7 +45,7 @@ public class TorchInputPf {
                         CPModel[] pfaNode,
                         CPModel[] pfaEdge,
                         CPModel[] pfaEdgeAttr,
-                        String[] qvars,
+                        ArgTerm[] qvars,
                         ProbFormBool cc) throws IllegalArgumentException
     {
         pfargs = pfa;
@@ -54,16 +56,16 @@ public class TorchInputPf {
         cconstr = cc;
     }
 
-    public  String[] freevars()
+    public VarTerm[] freevars()
     {
-        String result[]={};
+        VarTerm result[]={};
         // first collect all the free variables from the pfargs formulas
         for (int i = 0 ; i<pfargs.length ; i++)
             result = rbnutilities.arraymerge(result,pfargs[i].freevars());
         // add the variables in the constraint:
         result = rbnutilities.arraymerge(result,cconstr.freevars());
         // subtract the variables in quantvars
-        result = rbnutilities.arraysubstraction(result,quantvars);
+        result = (VarTerm[]) rbnutilities.arraysubstraction(result,quantvars);
         return result;
     }
 
@@ -85,7 +87,7 @@ public class TorchInputPf {
          * substitution values from vars and args
          */
         String[] subsvars;
-        subsvars = rbnutilities.arraysubstraction(vars,quantvars);
+        subsvars = rbnutilities.arraysubstraction(vars, rbnutilities.getVarsFromArgs(quantvars));
         int[] subsargs = rbnutilities.CorrArraySubstraction(subsvars,vars,args);
 
         // Perform substitution on pfargs
@@ -109,7 +111,6 @@ public class TorchInputPf {
         subcconstr = (ProbFormBool)cconstr.substitute(vars,args);
 
         result = new TorchInputPf(subpfargs, subpfargsNode, subpfargsEdge, subpfargsEdgeAttr, quantvars,subcconstr);
-
         return result;
     }
 
@@ -122,19 +123,25 @@ public class TorchInputPf {
 
         // Rename all the variables bound
         // by combination function
-        String[] freev = freevars();
-        String[] reserved = new String[vars.length+args.length+freev.length];
+        ArgTerm[] freev = freevars();
+        Vector<String> reservedvec = new Vector<>();
         for (int i = 0;i<vars.length;i++)
-            reserved[i]=vars[i];
+            reservedvec.add(vars[i]);
         for (int i = 0;i<args.length;i++)
-            reserved[vars.length+i]=args[i];
-        for (int i = 0;i<freev.length;i++)
-            reserved[vars.length+args.length+i]=freev[i];
+            reservedvec.add(args[i]);
+        for (int i = 0;i<freev.length;i++) {
+            for (String vs : freev[i].getVariables())
+                reservedvec.add(vs);
+        }
+        String[] reserved = reservedvec.toArray(new String[0]);
 
-        String[] newquantvars = rbnutilities.NewVariables(reserved,quantvars.length);
+        String[] newquantvars = rbnutilities.NewVariables(reserved, rbnutilities.getVarsFromArgs(quantvars).length);
+        ArgTerm[] newquantvarsAsArgTerm = new ArgTerm[newquantvars.length];
+        for (int i = 0; i<newquantvars.length; i++)
+            newquantvarsAsArgTerm[i] = new VarTerm(newquantvars[i]);
 
         for (int i = 0; i<pfargs.length; i++)
-            subpfargs[i]=pfargs[i].substitute(quantvars,newquantvars);
+            subpfargs[i]=pfargs[i].substitute(rbnutilities.getVarsFromArgs(quantvars),newquantvars);
 
         // just copy the results in order for the node, edges and edge attributes
         int idxShared = 0;
@@ -148,15 +155,137 @@ public class TorchInputPf {
         for (int i = 0; i<pfargsEdgeAttr.length; i++, idxShared++)
             subpfargsEdgeAttr[i]=subpfargs[idxShared];
 
-        subcconstr = (ProbFormBool)cconstr.substitute(quantvars,newquantvars);
+        subcconstr = (ProbFormBool)cconstr.substitute(quantvars, newquantvarsAsArgTerm);
 
         // Now perform the original substitution
         for (int i = 0; i<pfargs.length; i++)
             subpfargs[i]=subpfargs[i].substitute(vars,args);
 
         subcconstr = (ProbFormBool)subcconstr.substitute(vars,args);
-        result = new TorchInputPf(subpfargs, subpfargsNode, subpfargsEdge, subpfargsEdgeAttr, newquantvars,subcconstr);
+        result = new TorchInputPf(subpfargs, subpfargsNode, subpfargsEdge, subpfargsEdgeAttr, newquantvarsAsArgTerm, subcconstr);
+        return result;
+    }
 
+    public TorchInputPf substitute(String[] vars, ArgTerm[] args)
+    {
+        TorchInputPf result;
+        CPModel[]  subpfargs = new CPModel[pfargs.length];
+        ProbFormBool subcconstr = null;
+
+        ArgTerm[] freev = freevars();
+        Vector<String> reservedvec = new Vector<>();
+        for (int i = 0;i<vars.length;i++)
+            reservedvec.add(vars[i]);
+        for (int i = 0;i<args.length;i++) {
+            for (String vs : args[i].getVariables())
+                reservedvec.add(vs);
+        }
+        for (int i = 0;i<freev.length;i++) {
+            for (String vs : freev[i].getVariables())
+                reservedvec.add(vs);
+        }
+        String[] reserved = reservedvec.toArray(new String[0]);
+
+        String[] newquantvars = rbnutilities.NewVariables(reserved, rbnutilities.getVarsFromArgs(quantvars).length);
+        ArgTerm[] newquantvarsAsArgTerm = new ArgTerm[newquantvars.length];
+        for (int i = 0; i<newquantvars.length; i++)
+            newquantvarsAsArgTerm[i] = new VarTerm(newquantvars[i]);
+
+        for (int i = 0; i<pfargs.length; i++)
+            subpfargs[i]=pfargs[i].substitute(rbnutilities.getVarsFromArgs(quantvars),newquantvars);
+
+        subcconstr = (ProbFormBool)cconstr.substitute(quantvars, newquantvarsAsArgTerm);
+
+        // Now perform the original substitution
+        for (int i = 0; i<pfargs.length; i++)
+            subpfargs[i]=subpfargs[i].substitute(vars,args);
+
+        // just copy the results in order for the node, edges and edge attributes
+        int idxShared = 0;
+        CPModel[]  subpfargsNode = new CPModel[pfargsNode.length];
+        for (int i = 0; i<pfargsNode.length; i++, idxShared++)
+            subpfargsNode[i]=subpfargs[i];
+        CPModel[]  subpfargsEdge = new CPModel[pfargsEdge.length];
+        for (int i = 0; i<pfargsEdge.length; i++, idxShared++)
+            subpfargsEdge[i]=subpfargs[idxShared];
+        CPModel[]  subpfargsEdgeAttr = new CPModel[pfargsEdgeAttr.length];
+        for (int i = 0; i<pfargsEdgeAttr.length; i++, idxShared++)
+            subpfargsEdgeAttr[i]=subpfargs[idxShared];
+
+        //Perform substitution on cconstr
+        subcconstr = (ProbFormBool)subcconstr.substitute(vars,args);
+
+        result = new TorchInputPf(subpfargs, subpfargsNode, subpfargsEdge, subpfargsEdgeAttr, quantvars, subcconstr);
+
+        return result;
+    }
+
+    public TorchInputPf substitute(ArgTerm[] vars, int[] args) {
+        ArgTerm[] subsvars = rbnutilities.arraysubstraction(vars, rbnutilities.getVarsFromArgs(quantvars));
+        int[] subsargs = rbnutilities.CorrArraySubstraction(rbnutilities.getVarsFromArgs(subsvars), rbnutilities.getVarsFromArgs(vars), args);
+
+        // Perform substitution on pfargs
+        CPModel[]  subpfargs = new CPModel[pfargs.length];
+        for (int i = 0; i<pfargs.length; i++)
+            subpfargs[i]=pfargs[i].substitute(subsvars,subsargs);
+        //Perform substitution on cconstr
+
+        // just copy the results in order for the node, edges and edge attributes
+        int idxShared = 0;
+        CPModel[]  subpfargsNode = new CPModel[pfargsNode.length];
+        for (int i = 0; i<pfargsNode.length; i++, idxShared++)
+            subpfargsNode[i]=subpfargs[i];
+        CPModel[]  subpfargsEdge = new CPModel[pfargsEdge.length];
+        for (int i = 0; i<pfargsEdge.length; i++, idxShared++)
+            subpfargsEdge[i]=subpfargs[idxShared];
+        CPModel[]  subpfargsEdgeAttr = new CPModel[pfargsEdgeAttr.length];
+        for (int i = 0; i<pfargsEdgeAttr.length; i++, idxShared++)
+            subpfargsEdgeAttr[i]=subpfargs[idxShared];
+
+        ProbFormBool subcconstr = (ProbFormBool)cconstr.substitute(vars,args);
+        TorchInputPf result = new TorchInputPf(subpfargs, subpfargsNode, subpfargsEdge, subpfargsEdgeAttr, quantvars, subcconstr);
+        return result;
+    }
+
+    public TorchInputPf substitute(ArgTerm[] vars, ArgTerm[] args)
+    {
+        TorchInputPf result;
+        CPModel[]  subpfargs = new CPModel[pfargs.length];
+        ProbFormBool subcconstr = null;
+
+        ArgTerm[] freev = freevars();
+        ArgTerm[] reserved = new ArgTerm[vars.length+args.length+freev.length];
+        for (int i = 0;i<vars.length;i++)
+            reserved[i]=vars[i];
+        for (int i = 0;i<args.length;i++)
+            reserved[vars.length+i]=args[i];
+        for (int i = 0;i<freev.length;i++)
+            reserved[vars.length+args.length+i]= freev[i];
+
+        ArgTerm[] newquantvars = rbnutilities.NewVariables(reserved, rbnutilities.getVarsFromArgs(quantvars).length);
+
+        for (int i = 0; i<pfargs.length; i++)
+            subpfargs[i]=pfargs[i].substitute(rbnutilities.getVarsFromArgs(quantvars), newquantvars);
+
+        subcconstr = (ProbFormBool)cconstr.substitute(quantvars, newquantvars);
+
+        // Now perform the original substitution
+        for (int i = 0; i<pfargs.length; i++)
+            subpfargs[i]=subpfargs[i].substitute(vars,args);
+
+        int idxShared = 0;
+        CPModel[]  subpfargsNode = new CPModel[pfargsNode.length];
+        for (int i = 0; i<pfargsNode.length; i++, idxShared++)
+            subpfargsNode[i]=subpfargs[i];
+        CPModel[]  subpfargsEdge = new CPModel[pfargsEdge.length];
+        for (int i = 0; i<pfargsEdge.length; i++, idxShared++)
+            subpfargsEdge[i]=subpfargs[idxShared];
+        CPModel[]  subpfargsEdgeAttr = new CPModel[pfargsEdgeAttr.length];
+        for (int i = 0; i<pfargsEdgeAttr.length; i++, idxShared++)
+            subpfargsEdgeAttr[i]=subpfargs[idxShared];
+
+        subcconstr = (ProbFormBool)subcconstr.substitute(vars,args);
+        result = new TorchInputPf(subpfargs, subpfargsNode, subpfargsEdge, subpfargsEdgeAttr, quantvars, subcconstr);
         return result;
     }
 
@@ -180,7 +309,7 @@ public class TorchInputPf {
         }
     }
 
-    public String makeKey(String[] vars, int[] args, Boolean nosub){
+    public String makeKey(ArgTerm[] vars, int[] args, Boolean nosub){
         if (nosub) {
             return this.asString(Primula.CLASSICSYNTAX, 0, null, false, true);
         }
@@ -211,7 +340,7 @@ public class TorchInputPf {
     /** Returns the set of all tuples in A that satisfy the CConstr of this formula
      * after the substituion vars/tuple has been performed
      */
-    public int[][] tuplesSatisfyingCConstr(RelStruc A,  String[] vars, int[] tuple)
+    public int[][] tuplesSatisfyingCConstr(RelStruc A, ArgTerm[] vars, int[] tuple)
             throws RBNCompatibilityException {
         ProbFormBool subscc = (ProbFormBool)this.cconstr.substitute(vars,tuple);
         return  A.allTrue(subscc,quantvars);
@@ -223,7 +352,7 @@ public class TorchInputPf {
      */
     public Object[] evaluate(RelStruc A,
                              OneStrucData inst,
-                             String[] vars,
+                             ArgTerm[] vars,
                              int[] tuple,
                              int gradindx,
                              boolean useCurrentCvals,
@@ -344,7 +473,7 @@ public class TorchInputPf {
         this.pfargs = pfargs;
     }
 
-    public void setQuantvars(String[] quantvars) {
+    public void setQuantvars(ArgTerm[] quantvars) {
         this.quantvars = quantvars;
     }
 

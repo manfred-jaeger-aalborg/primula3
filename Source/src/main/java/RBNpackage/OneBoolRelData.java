@@ -24,6 +24,7 @@ package RBNpackage;
 
 import java.util.*;
 
+import RBNpackage.VarTermPackage.ArgTerm;
 import mymath.MyMathOps;
 import RBNutilities.IntArrayComparator;
 import RBNutilities.randomGenerators;
@@ -218,6 +219,11 @@ public class OneBoolRelData extends OneRelData {
 	}
 
 	public TreeSet<int[]> allTrue(String[] args){
+		return this.allTrue(args, trueAtomsIndex);
+	}
+
+	@Override
+	public TreeSet<int[]> allTrue(ArgTerm[] args) {
 		return this.allTrue(args, trueAtomsIndex);
 	}
 

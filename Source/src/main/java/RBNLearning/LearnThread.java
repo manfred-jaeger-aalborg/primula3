@@ -26,6 +26,7 @@ package RBNLearning;
 import RBNExceptions.*;
 import RBNpackage.*;
 import RBNgui.*;
+import RBNpackage.VarTermPackage.ArgTerm;
 import RBNutilities.*;
 import RBNinference.*;
 import java.util.*;
@@ -734,7 +735,7 @@ public class LearnThread extends GGThread {
 					evaluated = new Hashtable<String,Object[]>();
 				for (int i=0; i<rbn.NumPFs(); i++){
 					CPModel nextcpm = rbn.cpmod_prelements_At(i);
-					String[] vars = rbn.arguments_prels_At(i);
+					ArgTerm[] vars = rbn.arguments_prels_At(i);
 					Rel nextrel = rbn.relAt(i);
 					Vector<int[]> inrel = osd.allInstantiated(nextrel);
 					for (int[] tuple: inrel) {

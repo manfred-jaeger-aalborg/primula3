@@ -5,6 +5,8 @@ import RBNLearning.Gradient_Array;
 import RBNLearning.Gradient_TreeMap;
 import RBNLearning.Profiler;
 import RBNinference.PFNetworkNode;
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 import RBNutilities.rbnutilities;
 // import jdk.incubator.vector.VectorOperators;
 
@@ -126,7 +128,7 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
 
     public Object[] evaluate(RelStruc A,
                              OneStrucData inst,
-                             String[] vars,
+                             ArgTerm[] vars,
                              int[] tuple,
                              int gradindx,
                              boolean useCurrentCvals,
@@ -230,16 +232,16 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
     }
 
     @Override
-    public String[] freevars() {
-        String[] a1 = null;
-        String[] a2 = null;
+    public VarTerm[] freevars() {
+        VarTerm[] a1 = null;
+        VarTerm[] a2 = null;
         if (arg1 instanceof ProbFormAtom)
             a1 = ((ProbFormAtom) arg1).freevars();
-        else a1 = new String[0];
+        else a1 = new VarTerm[0];
         if (arg2 instanceof ProbFormAtom)
             a2 = ((ProbFormAtom) arg2).freevars();
         else
-            a2 = new String[0];
+            a2 = new VarTerm[0];
         return rbnutilities.arraymerge(a1, a2);
     }
 
@@ -338,6 +340,75 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
 
     }
 
+    @Override
+    public CPModel substitute(String[] vars, ArgTerm[] args) {
+        if (vars.length != args.length)
+            System.out.println("ProbFormBoolAtomEquality.substitute: vars: " + rbnutilities.arrayToString(vars) + "   args: " + rbnutilities.arrayToString(args));
+
+        Object a1 = null, a2 = null;
+        if (arg1 instanceof ProbFormAtom)
+            a1 = ((ProbFormAtom) arg1).substitute(vars, args);
+        else if (arg1 instanceof Integer) {
+            a1 = arg1;
+        }
+        if (arg2 instanceof ProbFormAtom)
+            a2 = ((ProbFormAtom) arg2).substitute(vars, args);
+        else if (arg2 instanceof Integer) {
+            a2 = arg2;
+        }
+
+        RBNpackage.ProbFormBoolAtomEquality result = new RBNpackage.ProbFormBoolAtomEquality(a1, a2, sign);
+        if (this.alias != null)
+            result.setAlias((ProbFormAtom) this.alias.substitute(vars, args));
+        return result;
+    }
+
+    @Override
+    public CPModel substitute(ArgTerm[] vars, ArgTerm[] args) {
+        if (vars.length != args.length)
+            System.out.println("ProbFormBoolAtomEquality.substitute: vars: " + rbnutilities.arrayToString(vars) + "   args: " + rbnutilities.arrayToString(args));
+
+        Object a1 = null, a2 = null;
+        if (arg1 instanceof ProbFormAtom)
+            a1 = ((ProbFormAtom) arg1).substitute(vars, args);
+        else if (arg1 instanceof Integer) {
+            a1 = arg1;
+        }
+        if (arg2 instanceof ProbFormAtom)
+            a2 = ((ProbFormAtom) arg2).substitute(vars, args);
+        else if (arg2 instanceof Integer) {
+            a2 = arg2;
+        }
+
+        RBNpackage.ProbFormBoolAtomEquality result = new RBNpackage.ProbFormBoolAtomEquality(a1, a2, sign);
+        if (this.alias != null)
+            result.setAlias((ProbFormAtom) this.alias.substitute(vars, args));
+        return result;
+    }
+
+    @Override
+    public CPModel substitute(ArgTerm[] vars, int[] args) {
+        if (vars.length != args.length)
+            System.out.println("ProbFormBoolAtomEquality.substitute: vars: " + rbnutilities.arrayToString(vars) + "   args: " + rbnutilities.arrayToString(args));
+
+        Object a1 = null, a2 = null;
+        if (arg1 instanceof ProbFormAtom)
+            a1 = ((ProbFormAtom) arg1).substitute(vars, args);
+        else if (arg1 instanceof Integer) {
+            a1 = arg1;
+        }
+        if (arg2 instanceof ProbFormAtom)
+            a2 = ((ProbFormAtom) arg2).substitute(vars, args);
+        else if (arg2 instanceof Integer) {
+            a2 = arg2;
+        }
+
+        RBNpackage.ProbFormBoolAtomEquality result = new RBNpackage.ProbFormBoolAtomEquality(a1, a2, sign);
+        if (this.alias != null)
+            result.setAlias((ProbFormAtom) this.alias.substitute(vars, args));
+        return result;
+    }
+
     public Object arg1() {
         return arg1;
     }
@@ -382,7 +453,7 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
     }
 
     public TreeSet<Rel> parentRels(TreeSet<String> processed) {
-        String mykey = this.makeKey(null, null, true);
+        String mykey = this.makeKey((String[]) null, null, true);
         if (processed.contains(mykey))
             return new TreeSet<Rel>();
         else {

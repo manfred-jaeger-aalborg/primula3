@@ -234,7 +234,8 @@ public abstract class GGNode implements Comparable<GGNode>{
 		}
 		if (idx<gradient_for_samples.size() && gradient_for_samples.get(idx)!=null)
 			gradient_for_samples.get(idx).reset();
-		is_evaluated_grad_for_samples[idx]=false;
+		if (idx<is_evaluated_grad_for_samples.length)
+			is_evaluated_grad_for_samples[idx]=false;
 		
 	}
 

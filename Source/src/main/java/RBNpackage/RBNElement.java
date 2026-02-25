@@ -1,5 +1,7 @@
 package RBNpackage;
 
+import RBNpackage.VarTermPackage.ArgTerm;
+
 public class RBNElement
 {
 	/*
@@ -12,7 +14,7 @@ public class RBNElement
 
 	Rel prel;           // Relation
 
-	String[] arguments; // Argument list. Must be superset of free variables of prfrm.
+	ArgTerm[] arguments; // Argument list. Must be superset of free variables of prfrm.
 
 	CPModel cpmod;
 
@@ -30,17 +32,17 @@ public class RBNElement
 //			r.setValtype(Rel.CATEGORICAL);
 	}
 
-	public RBNElement(Rel r, String[] args, CPModel pf)
+	public RBNElement(Rel r, ArgTerm[] args, CPModel pf)
 	{
 		this(r,pf);
 		arguments = args;
 	}
 	
-	public String[] arguments() {
+	public ArgTerm[] arguments() {
 		return arguments;
 	}
 
-	public void set_args(String[] a) {
+	public void set_args(ArgTerm[] a) {
 		arguments=a;
 	}
 	

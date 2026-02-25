@@ -5,6 +5,8 @@ import RBNLearning.RelDataForOneInput;
 import RBNgui.InferenceModule;
 import RBNgui.Primula;
 import RBNpackage.*;
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 import RBNutilities.rbnutilities;
 
 import java.io.*;
@@ -120,8 +122,8 @@ public class ising {
 
         RBNPreldef gnn_rbn = new  RBNPreldef(
                 new CatRel("CAT", 1, typeStringToArray("node",1), valStringToArray("POS,NEG")),
-                new String[]{"v"},
-                new CatGnn("v",
+                new ArgTerm[]{new VarTerm("v")},
+                new CatGnn(new ArgTerm[]{new VarTerm("v")},
                         load_gnn_set.get("model")+"ising",
                         -1,
                         2,

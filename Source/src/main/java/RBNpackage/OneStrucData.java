@@ -31,6 +31,7 @@ import java.util.Iterator;
 import java.util.TreeSet;
 import java.util.Vector;
 
+import RBNpackage.VarTermPackage.ArgTerm;
 import org.dom4j.Element;
 import RBNExceptions.*;
 import RBNLearning.RelData;
@@ -469,6 +470,17 @@ public class OneStrucData {
 	}
 
 	public Vector<int[]> allTrue(Rel r,String[] args){
+		if (RelStruc.isOrdRel(r))
+			return allTrueOrdRel(r, new String[r.getArity()]); // this case should never occur
+		else {
+			OneRelData ori = find(r);
+			if (ori != null)
+				return (Vector<int[]>) rbnutilities.treeSetToVector(ori.allTrue(args));
+			else return new Vector<int[]>();
+		}
+	}
+
+	public Vector<int[]> allTrue(Rel r, ArgTerm[] args){
 		if (RelStruc.isOrdRel(r))
 			return allTrueOrdRel(r, new String[r.getArity()]); // this case should never occur
 		else {

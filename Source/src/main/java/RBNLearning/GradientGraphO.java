@@ -29,6 +29,7 @@ import PyManager.GnnPy;
 import RBNpackage.*;
 import RBNgui.*;
 import RBNExceptions.*;
+import RBNpackage.VarTermPackage.ArgTerm;
 import RBNutilities.*;
 import RBNinference.*;
 import myio.StringOps;
@@ -171,7 +172,7 @@ public class GradientGraphO extends GradientGraph{
 
 		Rel nextrel;
 		Vector<int[]> inrel;
-		String[] vars; /* The argument list for nextpf */
+		ArgTerm[] vars; /* The argument list for nextpf */
 		CPModel groundnextcpm;
 		String atomstring;
 		GGCPMNode fnode;
@@ -219,8 +220,13 @@ public class GradientGraphO extends GradientGraph{
 			if (myggoptions.ggverbose())
 				System.out.println("\t-constructing uga nodes for map-query atom...");
 			long startTime = System.currentTimeMillis();
+			int count = 0;
 			for (Rel narel: mapatoms.keySet()) {
+				System.out.println(narel.name() + " " + mapatoms.get(narel).size());
 				for (int qano=0; qano<mapatoms.get(narel).size(); qano++){
+					System.out.println( "\t\t" + mapatoms.get(narel).atomAt(qano).asString());
+					System.out.println(count);
+					count++;
 					nextatom = mapatoms.get(narel).atomAt(qano);
 					narel = nextatom.rel();
 					naargs = nextatom.args();
@@ -340,7 +346,7 @@ public class GradientGraphO extends GradientGraph{
 
 							Object pfeval = groundnextcpm.evaluate(A,
 									osd,
-									new String[0],
+									new ArgTerm[0],
 									new int[0],
 									0, // irrelevant because valonly=true
 									false,
@@ -432,7 +438,10 @@ public class GradientGraphO extends GradientGraph{
 		GroundAtom at;
 		int[] nextarg;
 
-		for (GGAtomSumNode nextggin: sumindicators) {
+//		for (GGAtomSumNode nextggin: sumindicators) {
+		for (int i = 0; i < sumindicators.size(); i++) {
+			GGAtomSumNode nextggin = sumindicators.elementAt(i);
+			System.out.println("SumIndicator size: " + sumindicators.size());
 			at = nextggin.myatom();
 			nextarg = at.args();
 			inputcaseno = nextggin.inputcaseno();

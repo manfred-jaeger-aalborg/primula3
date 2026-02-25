@@ -6,6 +6,8 @@ import RBNLearning.Gradient_Array;
 import RBNLearning.Gradient_TreeMap;
 import RBNLearning.Profiler;
 import RBNinference.PFNetworkNode;
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 import RBNutilities.rbnutilities;
 
 import java.io.File;
@@ -15,7 +17,7 @@ public class CatGnn extends CPModel {
     // the order of attributes need to be respected! this order will be used for the gnn encoding
     private ArrayList<ArrayList<Rel>> input_attr;
     private ArrayList edge_attr;
-    String argument;
+    ArgTerm[] arguments;
 
     // true if we use one-hot encoding for the features representation
     private boolean oneHotEncoding;
@@ -40,11 +42,10 @@ public class CatGnn extends CPModel {
     private String gnn_inference;
     private int numLayers;
     private TorchModelWrapper torchModel;
-    Vector<String> freeVals;
-    Vector<String> outTypes;
+    Type[] outTypes;
 
-    public CatGnn(String argument, String gnnId, int numLayers, int numvals, ArrayList input_attr, ArrayList edge_attr, String gnn_inference, boolean oneHotEncoding) {
-        this.argument = argument;
+    public CatGnn(ArgTerm[] arguments, String gnnId, int numLayers, int numvals, ArrayList input_attr, ArrayList edge_attr, String gnn_inference, boolean oneHotEncoding) {
+        this.arguments = arguments;
         this.gnnId = gnnId;
         this.categorical = true;
         this.numvals = numvals;
@@ -56,7 +57,7 @@ public class CatGnn extends CPModel {
         isInitialized = false;
     }
 
-    public CatGnn(String configModelPath, Vector<String> freeVals, int numVals, List<TorchInputSpecs> inputs, TypedTorchPf typedTorchPf, Vector<String> outTypes, boolean withGnnPy) {
+    public CatGnn(String configModelPath, ArgTerm[] arguments, int numVals, List<TorchInputSpecs> inputs, TypedTorchPf typedTorchPf, Type[] outTypes, boolean withGnnPy) {
         File f = new File(configModelPath);
         // get a file name without extension
         int lastIndexOfDot = f.getName().lastIndexOf('.');
@@ -65,10 +66,7 @@ public class CatGnn extends CPModel {
         else
             this.gnnId = f.getName().substring(0, lastIndexOfDot);
 
-        this.argument = "";
-        this.freeVals = freeVals;
-        if (!freeVals.isEmpty())
-            this.argument = freeVals.get(0);
+        this.arguments = arguments.clone();
 
         this.categorical = true;
         this.configModelPath = f.getParent();
@@ -88,7 +86,7 @@ public class CatGnn extends CPModel {
     @Override
     public String asString(int syntax, int depth, RelStruc A, boolean paramsAsValue, boolean usealias) {
         StringBuilder sb = new StringBuilder();
-        sb.append("GNN("+this.argument+")=");
+        sb.append("GNN("+Arrays.toString(this.arguments)+")=");
         sb.append("[");
         sb.append(gnnPy.getTorchModel().toString()+", ");
         if (gnnInputs != null && !gnnInputs.isEmpty()) {
@@ -117,7 +115,7 @@ public class CatGnn extends CPModel {
     @Override
     public Object[] evaluate(RelStruc A,
                              OneStrucData inst,
-                             String[] vars,
+                             ArgTerm[] vars,
                              int[] tuple,
                              int gradindx,
                              boolean useCurrentCvals,
@@ -188,24 +186,22 @@ public class CatGnn extends CPModel {
     }
 
     @Override
-    public String[] freevars() {
+    public VarTerm[] freevars() {
         System.out.println("freevars code");
 //        return rbnutilities.NonIntOnly(new String[]{this.argument}); // convert
         for (TorchInputPf inps: groundTypedTorchPf.getCombines()) {
-            String[] res = inps.freevars();
+            VarTerm[] res = inps.freevars();
             if (res.length > 0)
                 return res;
         }
-        return new String[0];
+        return new VarTerm[0];
     }
 
     @Override
     public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone) throws RBNCompatibilityException {
         Vector result = new Vector();
         for (TorchInputPf inps: groundTypedTorchPf.getCombines()) {
-
             CPModel nextprobform;
-
             int[][] subslist = A.allTrue(inps.getCconstr(), inps.getQuantvars());
 
             for (int i = 0; i < inps.getPfargs().length; i++) {
@@ -257,16 +253,15 @@ public class CatGnn extends CPModel {
 
         CatGnn result;
         if (this instanceof CatGnnBool)
-            result = new CatGnnBool(this.configModelPath, this.freeVals, this.gnnInputs, newpf, this.outTypes, false);
+            result = new CatGnnBool(this.configModelPath, this.arguments, this.gnnInputs, newpf, this.outTypes, false);
         else
-            result = new CatGnn(this.configModelPath, this.freeVals, this.numvals, this.gnnInputs, newpf, this.outTypes, false);
+            result = new CatGnn(this.configModelPath, this.arguments, this.numvals, this.gnnInputs, newpf, this.outTypes, false);
 
-        result.argument = this.argument;
         result.groundTypedTorchPf = newpf;
         result.setGnnPy(this.getGnnPy());
 
         if (vars.length != 0)
-            result.argument = rbnutilities.array_substitute(vars, new String[]{argument}, args)[0];
+            result.arguments = rbnutilities.array_substitute(arguments, vars, args);
 //        else
 //            result.argument = Arrays.toString(new String[0]);
 
@@ -282,18 +277,84 @@ public class CatGnn extends CPModel {
 
         CatGnn result;
         if (this instanceof CatGnnBool)
-            result = new CatGnnBool(this.configModelPath, this.freeVals, this.gnnInputs, newpf, this.outTypes, false);
+            result = new CatGnnBool(this.configModelPath, this.arguments, this.gnnInputs, newpf, this.outTypes, false);
         else
-            result = new CatGnn(this.configModelPath, this.freeVals, this.numvals, this.gnnInputs, newpf, this.outTypes, false);
+            result = new CatGnn(this.configModelPath, this.arguments, this.numvals, this.gnnInputs, newpf, this.outTypes, false);
 
-        result.argument = this.argument;
         result.groundTypedTorchPf = newpf;
         result.setGnnPy(this.getGnnPy());
 
         if (vars.length != 0)
-            result.argument = rbnutilities.array_substitute(vars, new String[]{argument}, args)[0];
-//        else
-//            result.argument = Arrays.toString(new String[0]);
+            result.arguments = rbnutilities.array_substitute(arguments, vars, args);
+
+
+        if (this.alias != null)
+            result.setAlias(this.alias.substitute(vars, args));
+
+        return result;
+    }
+
+    @Override
+    public CPModel substitute(String[] vars, ArgTerm[] args) {
+        TypedTorchPf newpf = this.typedTorchPf.substitute(vars, args);
+
+        CatGnn result;
+        if (this instanceof CatGnnBool)
+            result = new CatGnnBool(this.configModelPath, this.arguments, this.gnnInputs, newpf, this.outTypes, false);
+        else
+            result = new CatGnn(this.configModelPath, this.arguments, this.numvals, this.gnnInputs, newpf, this.outTypes, false);
+
+        result.groundTypedTorchPf = newpf;
+        result.setGnnPy(this.getGnnPy());
+
+        if (vars.length != 0)
+            result.arguments = rbnutilities.array_substitute(arguments, vars, args);
+
+
+        if (this.alias != null)
+            result.setAlias(this.alias.substitute(vars, args));
+
+        return result;
+    }
+
+    @Override
+    public CPModel substitute(ArgTerm[] vars, ArgTerm[] args) {
+        TypedTorchPf newpf = this.typedTorchPf.substitute(vars, args);
+
+        CatGnn result;
+        if (this instanceof CatGnnBool)
+            result = new CatGnnBool(this.configModelPath, this.arguments, this.gnnInputs, newpf, this.outTypes, false);
+        else
+            result = new CatGnn(this.configModelPath, this.arguments, this.numvals, this.gnnInputs, newpf, this.outTypes, false);
+
+        result.groundTypedTorchPf = newpf;
+        result.setGnnPy(this.getGnnPy());
+
+        if (vars.length != 0)
+            result.arguments = rbnutilities.array_substitute(arguments, vars, args);
+
+
+        if (this.alias != null)
+            result.setAlias(this.alias.substitute(vars, args));
+
+        return result;
+    }
+
+    @Override
+    public CPModel substitute(ArgTerm[] vars, int[] args) {
+        TypedTorchPf newpf = this.typedTorchPf.substitute(vars, args);
+
+        CatGnn result;
+        if (this instanceof CatGnnBool)
+            result = new CatGnnBool(this.configModelPath, this.arguments, this.gnnInputs, newpf, this.outTypes, false);
+        else
+            result = new CatGnn(this.configModelPath, this.arguments, this.numvals, this.gnnInputs, newpf, this.outTypes, false);
+
+        result.groundTypedTorchPf = newpf;
+        result.setGnnPy(this.getGnnPy());
+
+        if (vars.length != 0)
+            result.arguments = rbnutilities.array_substitute(arguments, vars, args);
 
 
         if (this.alias != null)
@@ -353,8 +414,8 @@ public class CatGnn extends CPModel {
         return this.gnnInputs;
     }
 
-    public String getArgument() {
-        return argument;
+    public ArgTerm[] getArguments() {
+        return arguments;
     }
 
     public String getGnnId() {
@@ -367,5 +428,5 @@ public class CatGnn extends CPModel {
 
     public boolean isBoolean() { return !categorical; }
 
-    public Vector<String> getOutTypes() { return outTypes; }
+    public Type[] getOutTypes() { return outTypes; }
 }

@@ -29,6 +29,8 @@ import RBNExceptions.*;
 import RBNinference.*;
 import RBNgui.Primula;
 import RBNLearning.Profiler;
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 
 /**
  * Abstract class representing conditional probability models. Implementing 
@@ -38,15 +40,10 @@ import RBNLearning.Profiler;
  */
 public abstract class CPModel
 {
-    
-	
 	/* An atomic representation of this probform that can be used to form keys etc. */ 
 	public ProbFormAtom alias; 
-	
 
     public abstract String asString(int syntax, int depth, RelStruc A, boolean paramsAsValue, boolean usealias);
-    
-
   
     public void setAlias(ProbFormAtom pfa) {
     	alias = pfa;
@@ -120,7 +117,7 @@ public abstract class CPModel
     public abstract Object[] evaluate(
 			RelStruc A,
     		OneStrucData inst, 
-    		String[] vars,
+    		ArgTerm[] vars,
     		int[] tuple,
     		int gradindx,
     		boolean useCurrentCvals, 
@@ -140,7 +137,7 @@ public abstract class CPModel
     		OneStrucData inst
     		)  throws RBNCompatibilityException
     {
-    	return (double)this.evaluate(A,inst,new String[0], new int[0], 0, false, false,null,false,null,null,ProbForm.RETURN_ARRAY,true,null)[0];
+    	return (double)this.evaluate(A,inst,new ArgTerm[0], new int[0], 0, false, false,null,false,null,null,ProbForm.RETURN_ARRAY,true,null)[0];
     }
     
     /** Evaluate this probform over RelStruc A. For ground atoms on which probform
@@ -160,7 +157,7 @@ public abstract class CPModel
 	throws RBNCompatibilityException;
 
     /** returns the free variables of the model */
-    public abstract String[] freevars();
+    public abstract VarTerm[] freevars();
     
 //    /** returns the vector of (ground!) Atoms on which the
 //     * evaluation of the model depends
@@ -212,8 +209,12 @@ public abstract class CPModel
     public abstract CPModel substitute(String[] vars, int[] args); 
     
     public abstract CPModel substitute(String[] vars, String[] args);
-    
-    
+
+	public abstract CPModel substitute(String[] vars, ArgTerm[] args);
+
+	public abstract CPModel substitute(ArgTerm[] vars, ArgTerm[] args);
+
+	public abstract CPModel substitute(ArgTerm[] args, int[] args1);
 //    /**
 //     * See updateSig in RBN class
 //     * @param s
@@ -246,10 +247,25 @@ public abstract class CPModel
     		return groundalias.asString(Primula.CLASSICSYNTAX, 0, null, false, true);
     	}
     	else return this.substitute(vars,args).asString(Primula.CLASSICSYNTAX, 0, null, false, true);
-    } 
-    
-    
-    /* Returns set of relations that evaluation of this Model depends on */
+    }
+
+	public String makeKey(ArgTerm[] vars, int[] args, Boolean nosub){
+		if (nosub) {
+			if (this.alias != null)
+				return this.alias.getRelation().name();
+			if (this instanceof ProbFormAtom)
+				return ((ProbFormAtom)this).getRelation().name();
+			return this.asString(Primula.CLASSICSYNTAX, 0, null, false, true);
+		}
+		if (this.alias != null) {
+			ProbFormAtom groundalias = this.alias.substitute(vars, args);
+			return groundalias.asString(Primula.CLASSICSYNTAX, 0, null, false, true);
+		}
+		else return this.substitute(vars,args).asString(Primula.CLASSICSYNTAX, 0, null, false, true);
+	}
+
+
+	/* Returns set of relations that evaluation of this Model depends on */
     public abstract TreeSet<Rel> parentRels();
     
     /* Returns set of relations that evaluation of this Model depends on, checks in recursion whether sub-formula has already

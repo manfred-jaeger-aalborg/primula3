@@ -24,6 +24,7 @@ package RBNpackage;
 
 import java.util.*;
 
+import RBNpackage.VarTermPackage.ArgTerm;
 import RBNutilities.*;
 
 import mymath.MyMathOps;
@@ -241,9 +242,12 @@ public class OneNumRelData extends OneRelData{
 		return this.allTrue(args, numAtomsIndex);
 	}
 
-	
+	@Override
+	public TreeSet<int[]> allTrue(ArgTerm[] args) {
+		return this.allTrue(args, numAtomsIndex);
+	}
 
-	
+
 	public Vector<String[]> allTrue(RelStruc A){
 		Vector<String[]> result = new Vector<String[]>();
 

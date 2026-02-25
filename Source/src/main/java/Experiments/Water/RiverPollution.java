@@ -5,6 +5,8 @@ import RBNLearning.GradientGraph;
 import RBNgui.*;
 import RBNinference.SampleProbs;
 import RBNpackage.*;
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 import RBNutilities.rbnutilities;
 
 import java.io.File;
@@ -110,8 +112,8 @@ public class RiverPollution {
 
         RBNPreldef gnn_rbn = new  RBNPreldef(
                 new CatRel("Pollution", 1, typeStringToArray("sub",1), valStringToArray("LOW,MED,HIG")),
-                new String[]{"v"},
-                new CatGnn("v",
+                new ArgTerm[]{new VarTerm("v")},
+                new CatGnn(new ArgTerm[]{new VarTerm("v")},
                         "HeteroGraphpollution",
                         2,
                         3,
@@ -129,7 +131,7 @@ public class RiverPollution {
 
         RBNPreldef gnn_attr = new  RBNPreldef(
                 new CatRel("LandUse", 1, typeStringToArray("hru_agr", 1), valStringToArray(val_name)),
-                new String[]{"v"},
+                new ArgTerm[]{new VarTerm("v")},
                 new CatModelSoftMax(softmax)
         );
 

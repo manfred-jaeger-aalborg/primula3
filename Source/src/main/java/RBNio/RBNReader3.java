@@ -2,6 +2,7 @@ package RBNio;
 
 import RBNpackage.*;
 import RBNExceptions.*;
+import RBNpackage.VarTermPackage.ArgTerm;
 import myio.StringOps;
 import java.io.*;
 import java.util.*;
@@ -70,21 +71,21 @@ public class RBNReader3{
 			rel.set_name(rn);
 		}
 		
-		String[] args(){
-			return StringOps.stringVectorToArray(pargs.args());
+		ArgTerm[] args(){
+			return pargs.args().toArray(new ArgTerm[0]);
 		}
 	}
-	
+
 	class ParsedUnTypedAtom{
 		Rel rel;
-		Vector<String> args;;
-		
-		ParsedUnTypedAtom(String relname, Vector<String> a,boolean isMacro)
+		Vector<ArgTerm> args;
+
+		ParsedUnTypedAtom(String relname, Vector<ArgTerm> a,boolean isMacro)
 				throws RBNIllegalArgumentException
-				{
+		{
 			Rel r = null;
 			if (isMacro)
-				r = new BoolRel(relname,a.size());
+				r = new BoolRel(relname, a.size());
 			else {
 				r = sig.getRelByName(relname);
 				if (r==null) {
@@ -93,27 +94,27 @@ public class RBNReader3{
 			}
 			rel = r;
 			args = a;
-				}
-		
-		Rel rel(){
+		}
+
+		Rel rel() {
 			return rel;
 		}
-		
+
 		void set_relname(String rn) {
 			rel.set_name(rn);
 		}
-		
-		String[] args(){
-			return StringOps.stringVectorToArray(args);
+
+		ArgTerm[] args(){
+			return args.toArray(new ArgTerm[0]);
 		}
-		
+
 	}
-	
+
 	class ParsedTypedArguments{
 		Vector<Type> types;
-		Vector<String> args;
+		Vector<ArgTerm> args;
 		
-		ParsedTypedArguments(Vector<Type> typ, Vector<String> ar){
+		ParsedTypedArguments(Vector<Type> typ, Vector<ArgTerm> ar){
 			types = typ;
 			args = ar;
 		}
@@ -131,7 +132,7 @@ public class RBNReader3{
 			return result;
 		}
 		
-		Vector<String> args(){
+		Vector<ArgTerm> args(){
 			return args;
 		}
 	}

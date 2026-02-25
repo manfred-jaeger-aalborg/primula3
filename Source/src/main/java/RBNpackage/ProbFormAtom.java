@@ -1,49 +1,46 @@
 package RBNpackage;
 
-import java.util.Hashtable;
-import java.util.Vector;
-import java.util.TreeSet;
+import java.lang.invoke.VarHandle;
+import java.util.*;
 
 
 import RBNExceptions.RBNCompatibilityException;
 import RBNLearning.*;
 import RBNinference.PFNetworkNode;
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 import RBNutilities.rbnutilities;
 
 public class ProbFormAtom extends CPModel implements ProbForm {
 
-
 	private Rel relation;
-	private String arguments[];
+	private ArgTerm arguments[];
 
 	public ProbFormAtom()
 	{
-//		SSymbs = new Rel[0];
-//		RSymbs = new Rel[0];
 		relation = new BoolRel();
-		arguments = new String[0];
+		arguments = new ArgTerm[0];
 	}
 
 	public ProbFormAtom(Rel r)
 	{
-//		SSymbs = new Rel[0];
-//		RSymbs = new Rel[1];
-//		RSymbs[0] = r;
 		relation = r;
-		arguments = new String[r.arity];
+		arguments = new ArgTerm[r.arity];
 	}
 
+	public ProbFormAtom(Rel rel, ArgTerm[] arguments) {
+		this.relation = rel;
+		this.arguments = (arguments == null) ? new ArgTerm[0] : arguments;
+	}
 
 	/** Creates new ProbFormAtom */
 	public ProbFormAtom(Rel r, String[] args) 
 	throws IllegalArgumentException
 	{
-//		SSymbs = new Rel[0];
-//		RSymbs = new Rel[1];
-//		RSymbs[0] = r;
 		relation = r;
 		if (args.length == r.arity){
-			arguments = args;}
+			arguments = argsFromStrings(args);
+		}
 		else {
 			throw new IllegalArgumentException("Error in constructing Indicator-Formula: arguments do not match arity of " + r.name);
 		}
@@ -52,19 +49,44 @@ public class ProbFormAtom extends CPModel implements ProbForm {
 	public ProbFormAtom(Rel r, int[] args) 
 	throws IllegalArgumentException
 	{
-//		SSymbs = new Rel[0];
-//		RSymbs = new Rel[1];
-//		RSymbs[0] = r;
 		relation = r;
 		if (args.length == r.arity)
 		{
-			arguments = new String[args.length];
+			arguments = new ArgTerm[args.length];
 			for (int i=0; i<args.length; i++)
-				arguments[i]=Integer.toString(args[i]);
+				arguments[i]= new VarTerm(Integer.toString(args[i]));
 		}
 		else {
 			throw new IllegalArgumentException("Error in constructing Indicator-Formula: arguments do not match arity of " + r.name);
 		}
+	}
+
+
+	public ArgTerm[] argsFromStrings(String[] strargs) {
+		if (strargs == null)
+			return new ArgTerm[0];
+		ArgTerm[] args = new ArgTerm[strargs.length];
+		for (int i = 0; i < args.length; i++)
+			args[i] = new VarTerm(strargs[i]);
+		return args;
+	}
+
+	public void setArgumentsFromStrings(String[] strargs) {
+		if (strargs == null) {
+			this.arguments = new ArgTerm[0];
+			return;
+		}
+		this.arguments = new ArgTerm[strargs.length];
+		for (int i = 0; i < strargs.length; i++)
+			this.arguments[i] = new VarTerm(strargs[i]);
+	}
+
+	public String[] getArgumentsAsString() {
+		String[] out = new String[arguments.length];
+		for (int i = 0; i < arguments.length; i++) {
+			out[i] = arguments[i].argEval();
+		}
+		return out;
 	}
 
 	/** Returns the arguments as an array of integers if formula represents
@@ -76,9 +98,10 @@ public class ProbFormAtom extends CPModel implements ProbForm {
 		int[] result = new int[arguments.length];
 		if (!this.isGround())
 			throw new RuntimeException("ProbFormIndicator.argsIfGround() applied to non-ground indicator");
-		else{
-			for (int i=0; i<arguments.length; i++)
-				result[i] = Integer.parseInt(arguments[i]);
+		else {
+			for (int i = 0; i < arguments.length; i++) {
+				result[i] = Integer.parseInt(arguments[i].argEval());
+			}
 		}
 		return result;
 	}
@@ -107,35 +130,33 @@ public class ProbFormAtom extends CPModel implements ProbForm {
 //		return result;
 //	}
 
-	public String asString(int syntax, int depth, RelStruc A,boolean paramsAsValue,boolean usealias)
-	{
+	public String asString(int syntax, int depth, RelStruc A, boolean paramsAsValue, boolean usealias) {
 		if (usealias && this.getAlias() != null)
 			return this.getAlias();
 		String tabstring = "";
-		for (int i=0;i<depth;i++)
-			tabstring = tabstring +" ";
-
-		String result = new String();
-		result = this.asString(A);
-		return result;
+		for (int i = 0; i < depth; i++)
+			tabstring = tabstring + " ";
+		return tabstring + this.asString(A);
 	}
 
-	public String asString(RelStruc A)
-	{
-		String result = new String();
-		result = relation.printname();
+	public String asString(RelStruc A) {
+		String result = relation.printname();
 		result = result.concat("(");
-		for (int i = 0; i<arguments.length-1; i++)
-			if (rbnutilities.IsInteger(arguments[i]) && A!=null)
-				result = result.concat(A.nameAt(Integer.parseInt(arguments[i])) + ",");
-			else result = result.concat(arguments[i] + ",");
-		if (arguments.length>0){
-			if (rbnutilities.IsInteger(arguments[arguments.length-1])&& A!=null)
-				result = result.concat(A.nameAt(Integer.parseInt(arguments[arguments.length-1])));
-			else result = result.concat(arguments[arguments.length-1]);
+		for (int i = 0; i < arguments.length - 1; i++) {
+			String argStr = arguments[i].argEval();
+			if (argStr != null && rbnutilities.IsInteger(argStr) && A != null && !(getRelation().getTypes()[i] instanceof TypeInteger))
+				result = result.concat(A.nameAt(Integer.parseInt(argStr)) + ",");
+			else
+				result = result.concat(arguments[i].toString() + ",");
 		}
-		result = result.concat(")");
-		return result;
+		if (arguments.length > 0) {
+			String argStr = arguments[arguments.length - 1].toString();
+			if (argStr != null && rbnutilities.IsInteger(argStr) && A != null && !(getRelation().getTypes()[arguments.length - 1] instanceof TypeInteger))
+				result = result.concat(A.nameAt(Integer.parseInt(argStr)));
+			else
+				result = result.concat(arguments[arguments.length - 1].toString());
+		}
+		return result.concat(")");
 	}
 
 	/** Returns the ground atom if this ProbForm represents a ground atom;
@@ -152,15 +173,15 @@ public class ProbFormAtom extends CPModel implements ProbForm {
 
 	public boolean dependsOn(String variable, RelStruc A, OneStrucData data)
 			throws RBNCompatibilityException
-			{
+	{
 		if (relation.isprobabilistic() && variable.equals("unknown_atom")){
-			double v = (double)this.evaluate(A, data, new String[0], new int[0], 0, false, false, null , false, null, null, ProbForm.RETURN_ARRAY, true,null)[0];
+			double v = (double)this.evaluate(A, data, new ArgTerm[0], new int[0], 0, false, false, null , false, null, null, ProbForm.RETURN_ARRAY, true,null)[0];
 			if (Double.isNaN(v))
 				return true;
 			else return false;
 		}
-		else return false;
-			}
+			else return false;
+	}
 
 	public boolean equals(ProbFormAtom pfi)
 	{
@@ -170,50 +191,63 @@ public class ProbFormAtom extends CPModel implements ProbForm {
 			if (!arguments[i].equals(pfi.arguments[i])) result = false;
 		return result;
 	}
-
+	
 
 	public  int evaluatesTo(RelStruc A){
 		if (A.isOrdRel(relation))
-			return A.trueOrdAtom(relation,arguments);
+			return A.trueOrdAtom(relation, arguments);
 		if (relation.ispredefined()){
-			int[] argsasints = rbnutilities.stringArrayToIntArray(arguments);
+			int[] argsasints = rbnutilities.argTermArrayToIntArray(arguments);
 			if (argsasints == null)
-				throw new IllegalArgumentException("Attempt to evaluate non-ground atom " + this.asString(A));		
-			return A.truthValueOf(relation,argsasints);
+				throw new IllegalArgumentException("Attempt to evaluate non-ground atom " + this.asString(A));
+			return A.truthValueOf(relation, argsasints);
 		}
 		return -1; // not predefined 
 	}
 
-	public  int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, Hashtable atomhasht)
+	public int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, Hashtable atomhasht)
 			throws RBNCompatibilityException{
 		if (relation.ispredefined())
 			return evaluatesTo(A);
-		
-		int[] argsasints = rbnutilities.stringArrayToIntArray(arguments);
+
+		int[] argsasints = rbnutilities.argTermArrayToIntArray(arguments);
 		if (argsasints == null)
-			throw new IllegalArgumentException("Attempt to evaluate non-ground atom " + this.asString(A));		
-		
+			throw new IllegalArgumentException("Attempt to evaluate non-ground atom " + this.asString(A));
+
 		if (!usesampleinst)
-			return inst.truthValueOf(relation,argsasints);
-		
-		else{
-			GroundAtom myatom = new GroundAtom(relation,argsasints);
+			return inst.truthValueOf(relation, argsasints);
+		else {
+			GroundAtom myatom = new GroundAtom(relation, argsasints);
 			String myatomname = myatom.asString();
-			PFNetworkNode gan = (PFNetworkNode)atomhasht.get(myatomname);
+			PFNetworkNode gan = (PFNetworkNode) atomhasht.get(myatomname);
 			return gan.sampleinstVal();
 		}
 	}
 
-	public String[] freevars()
-	{
-		return rbnutilities.NonIntOnly(arguments);
+	public VarTerm[] freevars() {
+		HashSet<String> s = new HashSet<>();
+		for (ArgTerm t : arguments) {
+			Set<String> vars = t.getVariables();
+			if (vars != null) {
+				s.addAll(vars);
+			}
+		}
+
+		VarTerm[] out = new VarTerm[s.size()];
+		int idx = 0;
+		for (String v : s)
+			out[idx++] = new VarTerm(v);
+
+		return rbnutilities.NonIntOnly(out);
 	}
 
 	public boolean isGround()
 	{
-		if (this.freevars().length>0){
-			return false;}
-		else return true;
+		for (ArgTerm t : arguments) {
+			if (!t.isGround())
+				return false;
+		}
+		return true;
 	}
 
 
@@ -221,14 +255,14 @@ public class ProbFormAtom extends CPModel implements ProbForm {
 		return makeParentVec(A, new OneStrucData(),null);
 	}
 
-	public  Vector<GroundAtom> makeParentVec(RelStruc A,OneStrucData inst, TreeSet<String> macrosdone){
+	public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone) {
 		Vector<GroundAtom> result = new Vector<GroundAtom>();
 		if (this.getRelation().ispredefined())
 			return result;
 		if (!this.isGround())
 			throw new RuntimeException("Detected dependency on non-ground atom");
-		if (inst.truthValueOf(relation,rbnutilities.stringArrayToIntArray(arguments))==-1){
-			result.add(new GroundAtom(relation,rbnutilities.stringArrayToIntArray(arguments)));
+		if (inst.truthValueOf(relation, rbnutilities.argTermArrayToIntArray(arguments)) == -1) {
+			result.add(new GroundAtom(relation, rbnutilities.argTermArrayToIntArray(arguments)));
 		}
 		return result;
 	}
@@ -251,7 +285,7 @@ public class ProbFormAtom extends CPModel implements ProbForm {
 	public CPModel sEval(RelStruc A){
 		double val= (double)evaluate(A,
 				new OneStrucData(),
-				new String[0],
+				new ArgTerm[0],
 				new int[0],
 				0,
 				false,
@@ -266,9 +300,9 @@ public class ProbFormAtom extends CPModel implements ProbForm {
 				)[0];
 
 		if (relation.ispredefined()){
-			int[] argsasints = rbnutilities.stringArrayToIntArray(arguments);
+			int[] argsasints = rbnutilities.argTermArrayToIntArray(arguments);
 			if (argsasints == null)
-				throw new IllegalArgumentException("Attempt to evaluate non-ground atom " + this.asString(A) + " in ProbFormAtom.sEval");		
+				throw new IllegalArgumentException("Attempt to evaluate non-ground atom " + this.asString(A) + " in ProbFormAtom.sEval");
 			return new ProbFormConstant(val);
 		}
 		else return this; 
@@ -294,13 +328,40 @@ public class ProbFormAtom extends CPModel implements ProbForm {
 		return result;
 	}
 
-	public void setParameters(String[] params,  double[] values){
+	@Override
+	public ProbFormAtom substitute(String[] vars, ArgTerm[] args) {
+		ProbFormAtom result = new ProbFormAtom(relation);
+		result.arguments = rbnutilities.array_substitute(arguments,vars,args);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	@Override
+	public ProbFormAtom substitute(ArgTerm[] vars, ArgTerm[] args) {
+		ProbFormAtom result = new ProbFormAtom(relation);
+		result.arguments = rbnutilities.array_substitute(arguments,vars,args);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	@Override
+	public ProbFormAtom substitute(ArgTerm[] vars, int[] args) {
+		ProbFormAtom result = new ProbFormAtom(relation);
+		result.arguments = rbnutilities.array_substitute(arguments,vars,args);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	public void setParameters(String[] params, double[] values){
 	}
 	
 	public CPModel conditionEvidence(RelStruc A, OneStrucData inst){
 		if (!this.isGround()) return new ProbFormAtom(relation,arguments);
 		else {
-			int truth = inst.truthValueOf(this.relation, rbnutilities.stringArrayToIntArray(this.arguments));
+			int truth = inst.truthValueOf(this.relation, rbnutilities.argTermArrayToIntArray(this.arguments));
 			switch (truth){
 			case -1 : return new ProbFormAtom(relation,arguments); 
 			case 0 : return new ProbFormConstant(0);
@@ -361,7 +422,7 @@ public class ProbFormAtom extends CPModel implements ProbForm {
 
 	public Object[] evaluate(RelStruc A, 
 			OneStrucData inst, 
-			String[] vars, 
+			ArgTerm[] vars,
 			int[] tuple,
 			int gradindx,
 			boolean useCurrentCvals, 
@@ -402,42 +463,42 @@ public class ProbFormAtom extends CPModel implements ProbForm {
 			result[0]= A.trueOrdAtom(relation,arguments);
 		}
 		else if (relation.isprobabilistic()){
-			value = inst.valueOf(substituted.relation, rbnutilities.stringArrayToIntArray(substituted.getArguments()));
+			value = inst.valueOf(substituted.relation, rbnutilities.argTermArrayToIntArray(substituted.getArguments()));
 			if (value != -1 )
 				result[0] = value;
-			else 
-				result[0] = Double.NaN; 
-			//			else if (!useCurrentMvals 
-			//					&& mapatoms != null 
-			//					&&  mapatoms.get(relation)!= null 
+			else
+				result[0] = Double.NaN;
+			//			else if (!useCurrentMvals
+			//					&& mapatoms != null
+			//					&&  mapatoms.get(relation)!= null
 			//					&&  mapatoms.get(relation).contains(relation,substituted.argsIfGround())
-			//					result[0] = Double.NaN; 
+			//					result[0] = Double.NaN;
+
 			if (!valonly) {
-				if (returntype==ProbForm.RETURN_ARRAY) 
-					result[1]=new Gradient_Array(params);
-				else 
-					result[1]=new Gradient_TreeMap(params);
+				if (returntype == ProbForm.RETURN_ARRAY)
+					result[1] = new Gradient_Array(params);
+				else
+					result[1] = new Gradient_TreeMap(params);
 			}
 		}
-		else if (relation.ispredefined()) {		
+		else if (relation.ispredefined()) {
 			String thisstr = substituted.asString(A);
 			Integer i = null;
-			if (params!= null)
+			if (params != null)
 				i = params.get(thisstr);
 
 			if (i==null || useCurrentPvals)
-				result[0] = A.valueOf(relation, rbnutilities.stringArrayToIntArray(substituted.getArguments()));
+				result[0] = A.valueOf(relation, rbnutilities.argTermArrayToIntArray(substituted.getArguments()));
 			else
-				result[0] = Double.NaN;	
+				result[0] = Double.NaN;
 
 			if (!valonly) {
-				result[1]=null;
 				if (returntype == ProbForm.RETURN_ARRAY)
-					result[1]=new Gradient_Array(params);
+					result[1] = new Gradient_Array(params);
 				else
-					result[1]= new Gradient_TreeMap(params);
-				if (i!=null)
-					((Gradient)result[1]).set_part_deriv(thisstr,new double[] {1.0});
+					result[1] = new Gradient_TreeMap(params);
+				if (i != null)
+					((Gradient) result[1]).set_part_deriv(thisstr, new double[]{1.0});
 //				if (returntype==ProbForm.RETURN_ARRAY) {
 //					result[1]=new double[params.size()];
 //					if (i!=null)
@@ -460,7 +521,7 @@ public class ProbFormAtom extends CPModel implements ProbForm {
 	}
 
 
-	public  double[] evalSample(RelStruc A, 
+	public double[] evalSample(RelStruc A,
 			Hashtable<String,PFNetworkNode> atomhasht, 
 			OneStrucData inst, 
     		Hashtable<String,double[]> evaluated,
@@ -485,19 +546,19 @@ public class ProbFormAtom extends CPModel implements ProbForm {
 				result = new double[] {this.evaluate(A,inst)};
 			}
 			if (relation.isprobabilistic()){
-				GroundAtom myatom = new GroundAtom(relation,rbnutilities.stringArrayToIntArray(arguments));
+				GroundAtom myatom = new GroundAtom(relation,rbnutilities.argTermArrayToIntArray(arguments));
 				String myatomname = myatom.asString();
-				if (atomhasht.get(myatomname) == null)	/* myatom is not in the network, because 
-				 * it has become an isolated prob. zero 
-				 * node due to the instantiation instasosd. 
+				if (atomhasht.get(myatomname) == null)	/* myatom is not in the network, because
+				 * it has become an isolated prob. zero
+				 * node due to the instantiation instasosd.
 				 * Its truth value is found in instasosd
 				 */
 				{
-					result=new double[] {(double)inst.truthValueOf(myatom)};  
+					result = new double[]{(double) inst.truthValueOf(myatom)};
 				}
 				else {
-					PFNetworkNode gan = (PFNetworkNode)atomhasht.get(myatomname);
-					result = new double[] {(double)gan.sampleinstVal()};
+					PFNetworkNode gan = (PFNetworkNode) atomhasht.get(myatomname);
+					result = new double[]{(double) gan.sampleinstVal()};
 				}
 			}
 		}
@@ -511,11 +572,19 @@ public class ProbFormAtom extends CPModel implements ProbForm {
 	public Rel getRelation(){
 		return relation;
 	}
-	
-	public String[] getArguments(){
+
+	// if it args can be evaluated, make them all general varterm
+	public void evalArgs() {
+		if (!isGround())
+			throw new IllegalArgumentException("Attempt to evaluate non-ground atom");
+		for (int i = 0; i < arguments.length; i++)
+			arguments[i] = new VarTerm(arguments[i].argEval());
+	}
+
+	public ArgTerm[] getArguments(){
 		return arguments;
 	}
-	
+
 	public void updateSig(Signature s){
 		Rel relinsig = s.getRelByName(relation.name());
 		if (relinsig == null){
@@ -538,7 +607,7 @@ public class ProbFormAtom extends CPModel implements ProbForm {
 	}
 	
 	public TreeSet<Rel> parentRels(TreeSet<String> processed){
-		String mykey=this.makeKey(null,null,true);
+		String mykey=this.makeKey((String[]) null,null,true);
 		if (processed.contains(mykey))
 			return new TreeSet<Rel>();
 		else {

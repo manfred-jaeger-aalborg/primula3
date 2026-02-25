@@ -5,6 +5,7 @@ package RBNio;
 import PyManager.*;
 import RBNpackage.*;
 import java.util.*;
+import RBNpackage.VarTermPackage.*;
 import myio.StringOps;
 import RBNExceptions.*;
 
@@ -32,12 +33,12 @@ public class RBNParser3 implements RBNParser3Constants {
 }
 
   final public void MacroDefinition() throws ParseException, RBNIllegalArgumentException {RBNReader3.ParsedTypedAtom parsedat;
- CPModel parsedprobform;
+    CPModel parsedprobform;
     jj_consume_token(9);
     parsedat = TypedAtom(true);
     jj_consume_token(10);
     if (jj_2_4(2147483647)) {
-      parsedprobform = CatGnn();
+      parsedprobform = ReadCatGnn(parsedat);
     } else if (jj_2_5(3)) {
       parsedprobform = ProbForm();
     } else {
@@ -46,38 +47,39 @@ public class RBNParser3 implements RBNParser3Constants {
     }
     jj_consume_token(11);
 parsedat.set_relname("@"+parsedat.rel().name());
-        switch  (parseno){
+        switch  (parseno) {
         case 1:
-                reader.addMacroDefined(new RBNMacro(((BoolRel)parsedat.rel()),parsedat.args(),null));
-                break;
+            reader.addMacroDefined(new RBNMacro(((BoolRel)parsedat.rel()),parsedat.args(),null));
+            break;
         case 2:
-                reader.setMacroPF(parsedat.rel(),parsedprobform);
+            reader.setMacroPF(parsedat.rel(),parsedprobform);
         }
 }
 
   final public void ProbRelDefinition() throws ParseException, RBNIllegalArgumentException {RBNReader3.ParsedTypedAtom parsedat;
- CPModel parsedcpm;
+    CPModel parsedcpm;
     // grammar
             parsedat = TypedAtom(false);
     jj_consume_token(10);
-    parsedcpm = CPModel();
+    parsedcpm = CPModel(parsedat);
     jj_consume_token(11);
-switch  (parseno){
-                case 1:
-                        reader.addProbRelDefined(new RBNPreldef(parsedat.rel(),parsedat.args(),parsedcpm));
-                        break;
-                case 2:
-                reader.setProbRelPF(parsedat.rel(),parsedcpm);
-        }
+switch  (parseno)
+        {
+            case 1:
+                reader.addProbRelDefined(new RBNPreldef(parsedat.rel(),parsedat.args(),parsedcpm));
+                break;
+            case 2:
+            reader.setProbRelPF(parsedat.rel(),parsedcpm);
+            }
 }
 
-  final public CPModel CPModel() throws ParseException, RBNIllegalArgumentException {CPModel parsedcpm;
+  final public CPModel CPModel(RBNReader3.ParsedTypedAtom contextAt) throws ParseException, RBNIllegalArgumentException {CPModel parsedcpm;
     if (jj_2_6(3)) {
       parsedcpm = CatSoftMax();
     } else if (jj_2_7(3)) {
       parsedcpm = ProbForm();
     } else if (jj_2_8(3)) {
-      parsedcpm = CatGnn();
+      parsedcpm = ReadCatGnn(contextAt);
     } else {
       jj_consume_token(-1);
       throw new ParseException();
@@ -111,13 +113,13 @@ switch  (parseno){
     throw new Error("Missing return statement in function");
 }
 
-  final public RBNReader3.ParsedUnTypedAtom UntypedAtom(boolean ismacro) throws ParseException, RBNIllegalArgumentException {Vector<String> args;
+  final public RBNReader3.ParsedUnTypedAtom UntypedAtom(boolean ismacro) throws ParseException, RBNIllegalArgumentException {Vector<ArgTerm> args;
   Token tok;
   Rel rel;
     // grammar
             tok = jj_consume_token(Name);
     args = UntypedArguments();
-{if ("" != null) return reader.new ParsedUnTypedAtom(tok.image,args,ismacro);}
+{if ("" != null) return reader.new ParsedUnTypedAtom(tok.image, args, ismacro);}
     throw new Error("Missing return statement in function");
 }
 
@@ -134,7 +136,7 @@ arity = args.arity();
     throw new Error("Missing return statement in function");
 }
 
-  final public Vector<String> UntypedArguments() throws ParseException {Vector<String> parsedargs;
+  final public Vector<ArgTerm> UntypedArguments() throws ParseException {Vector<ArgTerm> parsedargs;
     jj_consume_token(12);
     parsedargs = ArgList();
     jj_consume_token(13);
@@ -142,11 +144,11 @@ arity = args.arity();
     throw new Error("Missing return statement in function");
 }
 
-  final public Vector<String> ArgList() throws ParseException {Vector<String> parsedargs = new Vector<String>();
- Token tok;
+  final public Vector<ArgTerm> ArgList() throws ParseException {Vector<ArgTerm> parsedArgs = new Vector<ArgTerm>();
+    ArgTerm t;
     if (jj_2_18(3)) {
-      tok = jj_consume_token(Name);
-parsedargs.add(tok.image);
+      t = ArgExpr();
+parsedArgs.add(t);
       label_2:
       while (true) {
         if (jj_2_17(3)) {
@@ -155,54 +157,95 @@ parsedargs.add(tok.image);
           break label_2;
         }
         jj_consume_token(14);
-        tok = jj_consume_token(Name);
-parsedargs.add(tok.image);
+        t = ArgExpr();
+parsedArgs.add(t);
       }
     } else {
       ;
     }
-{if ("" != null) return parsedargs;}
+{if ("" != null) return parsedArgs;}
+    throw new Error("Missing return statement in function");
+}
+
+  final public ArgTerm ArgExpr() throws ParseException {ArgTerm left;
+    ArgTerm right;
+    left = ArgPrimary();
+    label_3:
+    while (true) {
+      if (jj_2_19(3)) {
+        ;
+      } else {
+        break label_3;
+      }
+      jj_consume_token(PLUS);
+      right = ArgPrimary();
+left = new IntPlus(left, right);
+    }
+{if ("" != null) return left;}
+    throw new Error("Missing return statement in function");
+}
+
+  final public ArgTerm ArgPrimary() throws ParseException {Token t;
+    ArgTerm e;
+    if (jj_2_20(3)) {
+      t = jj_consume_token(Name);
+{if ("" != null) return new VarTerm(t.image);}
+    } else if (jj_2_21(3)) {
+      t = jj_consume_token(NonNegNumber);
+{if ("" != null) return new VarTerm(t.image);}
+    } else if (jj_2_22(3)) {
+      jj_consume_token(12);
+      e = ArgExpr();
+      jj_consume_token(13);
+{if ("" != null) return e;}
+    } else {
+      jj_consume_token(-1);
+      throw new ParseException();
+    }
     throw new Error("Missing return statement in function");
 }
 
   final public RBNReader3.ParsedTypedArguments TypedArguments() throws ParseException {Token tok;
-        Vector<String> args = new Vector<String>();
+        Vector<ArgTerm> args = new Vector<ArgTerm>();
         Vector<Type> types = new Vector<Type>();
         String typestr = null;
     jj_consume_token(12);
-    if (jj_2_22(3)) {
-      if (jj_2_19(3)) {
+    if (jj_2_26(3)) {
+      if (jj_2_23(3)) {
         typestr = TypeDeclaration();
       } else {
         ;
       }
 if (typestr != null)
-                        {types.add(new TypeRel(typestr));
-                         typestr = null;
-                        }
-                  else {types.add(new TypeDomain());}
+            {
+                types.add(new TypeRel(typestr));
+                typestr = null;
+            }
+            else {types.add(new TypeDomain());}
       tok = jj_consume_token(Name);
-args.add(tok.image);
-      label_3:
+args.add(new VarTerm(tok.image));
+      label_4:
       while (true) {
-        if (jj_2_20(3)) {
+        if (jj_2_24(3)) {
           ;
         } else {
-          break label_3;
+          break label_4;
         }
         jj_consume_token(14);
-        if (jj_2_21(3)) {
+        if (jj_2_25(3)) {
           typestr = TypeDeclaration();
         } else {
           ;
         }
-if (typestr != null)
-                        {types.add(new TypeRel(typestr));
-                         typestr = null;
+if (typestr != null) {
+                types.add(new TypeRel(typestr));
+                typestr = null;
                         }
-                  else {types.add(new TypeDomain());}
+                    else {
+                types.add(new TypeDomain());
+            }
         tok = jj_consume_token(Name);
-args.add(tok.image);
+args.add(new VarTerm(tok.image));
       }
     } else {
       ;
@@ -221,9 +264,9 @@ args.add(tok.image);
 }
 
   final public CPModel Constant() throws ParseException {CPModel parsedpf;
-    if (jj_2_23(3)) {
+    if (jj_2_27(3)) {
       parsedpf = NumericConstant();
-    } else if (jj_2_24(3)) {
+    } else if (jj_2_28(3)) {
       parsedpf = Parameter();
     } else {
       jj_consume_token(-1);
@@ -235,10 +278,10 @@ args.add(tok.image);
 
   final public ProbFormConstant NumericConstant() throws ParseException {ProbFormConstant parsedpfconst;
  Token tok;
-    if (jj_2_25(3)) {
+    if (jj_2_29(3)) {
       tok = jj_consume_token(NonNegNumber);
 parsedpfconst = new ProbFormConstant(Double.parseDouble(tok.image));
-    } else if (jj_2_26(3)) {
+    } else if (jj_2_30(3)) {
       jj_consume_token(MINUS);
       tok = jj_consume_token(NonNegNumber);
 parsedpfconst = new ProbFormConstant(-Double.parseDouble(tok.image));
@@ -252,11 +295,11 @@ parsedpfconst = new ProbFormConstant(-Double.parseDouble(tok.image));
 
   final public ProbFormConstant Parameter() throws ParseException {ProbFormConstant parsedpfconst;
  Token tok;
-    if (jj_2_27(3)) {
+    if (jj_2_31(3)) {
       jj_consume_token(17);
       tok = jj_consume_token(Name);
 {if ("" != null) return new ProbFormConstant("#" + tok.image);}
-    } else if (jj_2_28(3)) {
+    } else if (jj_2_32(3)) {
       jj_consume_token(18);
       tok = jj_consume_token(Name);
 {if ("" != null) return new ProbFormConstant("$" + tok.image);}
@@ -300,9 +343,9 @@ switch(parseno){
 }
 
   final public ProbFormConvComb ConvCombination() throws ParseException, RBNIllegalArgumentException {ProbFormConvComb pf;
-    if (jj_2_29(3)) {
+    if (jj_2_33(3)) {
       pf = ConvCombinationClassic();
-    } else if (jj_2_30(3)) {
+    } else if (jj_2_34(3)) {
       pf = ConvCombinationCherry();
     } else {
       jj_consume_token(-1);
@@ -355,13 +398,13 @@ switch(parseno){
 }
 
   final public ProbFormCombFunc CombinationFunc() throws ParseException, RBNIllegalArgumentException {ProbFormCombFunc pf;
-    if (jj_2_31(3)) {
+    if (jj_2_35(3)) {
       pf = CombinationFuncClassic();
-    } else if (jj_2_32(3)) {
+    } else if (jj_2_36(3)) {
       pf = CombinationFuncCherry();
-    } else if (jj_2_33(2147483647)) {
+    } else if (jj_2_37(2147483647)) {
       pf = CombinationFuncSum();
-    } else if (jj_2_34(2147483647)) {
+    } else if (jj_2_38(2147483647)) {
       pf = CombinationFuncProd();
     } else {
       jj_consume_token(-1);
@@ -378,7 +421,7 @@ switch(parseno){
 
   final public ProbFormCombFunc CombinationFuncClassic() throws ParseException, RBNIllegalArgumentException {Token tok;
   Vector<CPModel> pflist;
-  Vector<String> arglist;
+  Vector<ArgTerm> arglist;
   CPModel[] pfarr;
   ProbFormBool cc = new ProbFormBoolConstant(true);
     // grammar
@@ -388,7 +431,7 @@ switch(parseno){
     jj_consume_token(21);
     arglist = ArgList();
     jj_consume_token(19);
-    if (jj_2_35(3)) {
+    if (jj_2_39(3)) {
       cc = BoolFormula();
     } else {
       ;
@@ -402,20 +445,21 @@ switch(parseno){
          pfarr = new CPModel[pflist.size()];
          for (int i=0;i<pfarr.length;i++)
                 pfarr[i]=pflist.elementAt(i);
-        {if ("" != null) return new ProbFormCombFunc(tok.image,pfarr,StringOps.stringVectorToArray(arglist),cc);}}
+    ArgTerm[] argterms = arglist.toArray(new ArgTerm[0]);
+    {if ("" != null) return new ProbFormCombFunc(tok.image,pfarr,argterms,cc);}}
     throw new Error("Missing return statement in function");
 }
 
   final public ProbFormCombFunc CombinationFuncCherry() throws ParseException, RBNIllegalArgumentException {Token tok;
   Vector<CPModel> pflist;
-  Vector<String> arglist = new Vector<String>();
+  Vector<ArgTerm> arglist = new Vector<ArgTerm>();
   CPModel[] pfarr;
   ProbFormBool cc = new ProbFormBoolConstant(true);
     jj_consume_token(COMBCOMB);
     pflist = ProbFormList();
     jj_consume_token(COMBWITH);
     tok = jj_consume_token(CombinationFunction);
-    if (jj_2_36(3)) {
+    if (jj_2_40(3)) {
       jj_consume_token(COMBFORALL);
       arglist = ArgList();
       jj_consume_token(COMBWHERE);
@@ -423,15 +467,17 @@ switch(parseno){
     } else {
       ;
     }
-switch(parseno){
+switch(parseno) {
         case 1:
-                {if ("" != null) return null;}
-                break;
+            {if ("" != null) return null;}
+            break;
         case 2:
-         pfarr = new CPModel[pflist.size()];
-         for (int i=0;i<pfarr.length;i++)
+            pfarr = new CPModel[pflist.size()];
+            for (int i=0;i<pfarr.length;i++)
                 pfarr[i]=pflist.elementAt(i);
-        {if ("" != null) return new ProbFormCombFunc(tok.image,pfarr,StringOps.stringVectorToArray(arglist),cc);}}
+            ArgTerm[] argterms = arglist.toArray(new ArgTerm[0]);
+            {if ("" != null) return new ProbFormCombFunc(tok.image,pfarr,argterms,cc);}
+    }
     throw new Error("Missing return statement in function");
 }
 
@@ -441,54 +487,12 @@ CPModel[] pfarr;
     jj_consume_token(12);
     nextpf = ProbForm();
 pflist.add(nextpf);
-    label_4:
+    label_5:
     while (true) {
       jj_consume_token(MULT);
       nextpf = ProbForm();
 pflist.add(nextpf);
-      if (jj_2_37(3)) {
-        ;
-      } else {
-        break label_4;
-      }
-    }
-    jj_consume_token(13);
-switch(parseno){
-        case 1:
-                {if ("" != null) return null;}
-                break;
-        case 2:
-         pfarr = new CPModel[pflist.size()];
-         for (int i=0;i<pfarr.length;i++)
-                pfarr[i]=pflist.elementAt(i);
-        {if ("" != null) return new ProbFormCombFunc("prod",pfarr,new String[0],new ProbFormBoolConstant(true));}}
-    throw new Error("Missing return statement in function");
-}
-
-  final public ProbFormCombFunc CombinationFuncSum() throws ParseException, RBNIllegalArgumentException {Vector<CPModel> pflist = new Vector<CPModel>();
-CPModel nextpf;
-CPModel[] pfarr;
-    jj_consume_token(12);
-    nextpf = ProbForm();
-pflist.add(nextpf);
-    label_5:
-    while (true) {
-      if (jj_2_38(3)) {
-        jj_consume_token(PLUS);
-        nextpf = ProbForm();
-pflist.add(nextpf);
-      } else if (jj_2_39(3)) {
-        jj_consume_token(MINUS);
-        nextpf = ProbForm();
-CPModel[] pfl = new CPModel[2];
-           pfl[0]=new ProbFormConstant(-1);
-           pfl[1]=nextpf;
-           pflist.add(new ProbFormCombFunc("prod",pfl,new String[0],new ProbFormBoolConstant(true)));
-      } else {
-        jj_consume_token(-1);
-        throw new ParseException();
-      }
-      if (jj_2_40(3)) {
+      if (jj_2_41(3)) {
         ;
       } else {
         break label_5;
@@ -503,21 +507,63 @@ switch(parseno){
          pfarr = new CPModel[pflist.size()];
          for (int i=0;i<pfarr.length;i++)
                 pfarr[i]=pflist.elementAt(i);
-        {if ("" != null) return new ProbFormCombFunc("sum",pfarr,new String[0],new ProbFormBoolConstant(true));}}
+        {if ("" != null) return new ProbFormCombFunc("prod",pfarr,new ArgTerm[0],new ProbFormBoolConstant(true));}}
+    throw new Error("Missing return statement in function");
+}
+
+  final public ProbFormCombFunc CombinationFuncSum() throws ParseException, RBNIllegalArgumentException {Vector<CPModel> pflist = new Vector<CPModel>();
+CPModel nextpf;
+CPModel[] pfarr;
+    jj_consume_token(12);
+    nextpf = ProbForm();
+pflist.add(nextpf);
+    label_6:
+    while (true) {
+      if (jj_2_42(3)) {
+        jj_consume_token(PLUS);
+        nextpf = ProbForm();
+pflist.add(nextpf);
+      } else if (jj_2_43(3)) {
+        jj_consume_token(MINUS);
+        nextpf = ProbForm();
+CPModel[] pfl = new CPModel[2];
+           pfl[0]=new ProbFormConstant(-1);
+           pfl[1]=nextpf;
+           pflist.add(new ProbFormCombFunc("prod",pfl,new ArgTerm[0],new ProbFormBoolConstant(true)));
+      } else {
+        jj_consume_token(-1);
+        throw new ParseException();
+      }
+      if (jj_2_44(3)) {
+        ;
+      } else {
+        break label_6;
+      }
+    }
+    jj_consume_token(13);
+switch(parseno){
+        case 1:
+                {if ("" != null) return null;}
+                break;
+        case 2:
+         pfarr = new CPModel[pflist.size()];
+         for (int i=0;i<pfarr.length;i++)
+                pfarr[i]=pflist.elementAt(i);
+        {if ("" != null) return new ProbFormCombFunc("sum",pfarr,new ArgTerm[0],new ProbFormBoolConstant(true));}}
     throw new Error("Missing return statement in function");
 }
 
   final public Vector<CPModel> ProbFormList() throws ParseException, RBNIllegalArgumentException {Vector<CPModel> pflist = new Vector<CPModel>();
  CPModel nextpf;
-    if (jj_2_42(3)) {
+    if (jj_2_46(3)) {
       nextpf = ProbForm();
 pflist.add(nextpf);
-      label_6:
+      label_7:
       while (true) {
-        if (jj_2_41(3)) {
+        if (jj_2_45(3)) {
           ;
         } else {
-          break label_6;
+          break label_7;
         }
         jj_consume_token(14);
         nextpf = ProbForm();
@@ -531,21 +577,21 @@ pflist.add(nextpf);
 }
 
   final public ProbFormBool BoolPrimary() throws ParseException, RBNIllegalArgumentException {ProbFormBool pf;
-    if (jj_2_43(2147483647)) {
+    if (jj_2_47(2147483647)) {
       pf = BoolAtom();
-    } else if (jj_2_44(2147483647)) {
+    } else if (jj_2_48(2147483647)) {
       pf = BoolEquality();
-    } else if (jj_2_45(2147483647)) {
+    } else if (jj_2_49(2147483647)) {
       pf = BoolAnd();
-    } else if (jj_2_46(2147483647)) {
+    } else if (jj_2_50(2147483647)) {
       pf = BoolOr();
-    } else if (jj_2_47(3)) {
+    } else if (jj_2_51(3)) {
       jj_consume_token(12);
       pf = BoolFormula();
       jj_consume_token(13);
-    } else if (jj_2_48(3)) {
+    } else if (jj_2_52(3)) {
       pf = BoolConstant();
-    } else if (jj_2_49(3)) {
+    } else if (jj_2_53(3)) {
       pf = BoolCatEquality();
     } else {
       jj_consume_token(-1);
@@ -556,9 +602,9 @@ pflist.add(nextpf);
 }
 
   final public ProbFormBool BoolFormula() throws ParseException, RBNIllegalArgumentException {ProbFormBool pf;
-    if (jj_2_50(3)) {
+    if (jj_2_54(3)) {
       pf = BoolNegation();
-    } else if (jj_2_51(3)) {
+    } else if (jj_2_55(3)) {
       pf = BoolPrimary();
     } else {
       jj_consume_token(-1);
@@ -571,52 +617,54 @@ pflist.add(nextpf);
   final public ProbFormBoolAtom BoolAtom() throws ParseException, RBNIllegalArgumentException {RBNReader3.ParsedUnTypedAtom parsedat;
     // grammar
             parsedat = UntypedAtom(false);
-{if ("" != null) return new ProbFormBoolAtom(parsedat.rel(),parsedat.args(),true);}
+{if ("" != null) return new ProbFormBoolAtom(parsedat.rel(), parsedat.args(), true);}
     throw new Error("Missing return statement in function");
 }
 
   final public ProbFormBoolEquality BoolEquality() throws ParseException, RBNIllegalArgumentException {Token tok1;
  Token tok2;
+ ArgTerm term1;
+ ArgTerm term2;
     // grammar
-            tok1 = jj_consume_token(Name);
+        term1 = ArgExpr();
     jj_consume_token(10);
-    tok2 = jj_consume_token(Name);
-{if ("" != null) return new ProbFormBoolEquality(tok1.image,tok2.image,true);}
+    term2 = ArgExpr();
+{if ("" != null) return new ProbFormBoolEquality(term1,term2,true);}
     throw new Error("Missing return statement in function");
 }
 
   final public ProbFormBoolAtomEquality BoolCatEquality() throws ParseException, RBNIllegalArgumentException {Object tok1;
  Object tok2;
-    if (jj_2_52(3)) {
+    if (jj_2_56(3)) {
       tok1 = UntypedAtom(false);
-    } else if (jj_2_53(3)) {
+    } else if (jj_2_57(3)) {
       tok1 = jj_consume_token(Name).image;
     } else {
       jj_consume_token(-1);
       throw new ParseException();
     }
     jj_consume_token(10);
-    if (jj_2_54(3)) {
+    if (jj_2_58(3)) {
       tok2 = UntypedAtom(false);
-    } else if (jj_2_55(3)) {
+    } else if (jj_2_59(3)) {
       tok2 = jj_consume_token(Name).image;
     } else {
       jj_consume_token(-1);
       throw new ParseException();
     }
-switch(parseno){
+switch(parseno) {
         case 1:
-                {if ("" != null) return null;}
-                break;
+            {if ("" != null) return null;}
+            break;
         case 2:
              if (tok1 instanceof RBNReader3.ParsedUnTypedAtom){
                 tok1= new ProbFormAtom(((RBNReader3.ParsedUnTypedAtom)tok1).rel(),((RBNReader3.ParsedUnTypedAtom)tok1).args());
-             }
+        }
              if (tok2 instanceof RBNReader3.ParsedUnTypedAtom){
                 tok2= new ProbFormAtom(((RBNReader3.ParsedUnTypedAtom)tok2).rel(),((RBNReader3.ParsedUnTypedAtom)tok2).args());
-             }
+        }
              {if ("" != null) return new ProbFormBoolAtomEquality(tok1,tok2,true,reader.getSig());}
-             }
+        }
     throw new Error("Missing return statement in function");
 }
 
@@ -625,15 +673,15 @@ ProbFormBool nextpfb;
     jj_consume_token(12);
     nextpfb = BoolFormula();
 comps.add(nextpfb);
-    label_7:
+    label_8:
     while (true) {
       jj_consume_token(23);
       nextpfb = BoolFormula();
 comps.add(nextpfb);
-      if (jj_2_56(3)) {
+      if (jj_2_60(3)) {
         ;
       } else {
-        break label_7;
+        break label_8;
       }
     }
     jj_consume_token(13);
@@ -646,15 +694,15 @@ ProbFormBool nextpfb;
     jj_consume_token(12);
     nextpfb = BoolFormula();
 comps.add(nextpfb);
-    label_8:
+    label_9:
     while (true) {
       jj_consume_token(21);
       nextpfb = BoolFormula();
 comps.add(nextpfb);
-      if (jj_2_57(3)) {
+      if (jj_2_61(3)) {
         ;
       } else {
-        break label_8;
+        break label_9;
       }
     }
     jj_consume_token(13);
@@ -663,10 +711,10 @@ comps.add(nextpfb);
 }
 
   final public ProbFormBoolConstant BoolConstant() throws ParseException {
-    if (jj_2_58(3)) {
+    if (jj_2_62(3)) {
       jj_consume_token(24);
 {if ("" != null) return new ProbFormBoolConstant(true);}
-    } else if (jj_2_59(3)) {
+    } else if (jj_2_63(3)) {
       jj_consume_token(25);
 {if ("" != null) return new ProbFormBoolConstant(false);}
     } else {
@@ -724,12 +772,12 @@ switch(parseno){
     tk = jj_consume_token(Name);
 r = reader.getRelFromSignature(tk.image);
         attrs.add(r);
-    label_9:
+    label_10:
     while (true) {
-      if (jj_2_60(3)) {
+      if (jj_2_64(3)) {
         ;
       } else {
-        break label_9;
+        break label_10;
       }
       jj_consume_token(14);
       tk = jj_consume_token(Name);
@@ -749,32 +797,32 @@ r = reader.getRelFromSignature(tk.image);
 }
 
   final public TorchInputPf CombinationTorchRels() throws ParseException, RBNIllegalArgumentException {Token tok;
-  Vector<CPModel> pflistNodeFeat = new Vector<>();
-  Vector<CPModel> pflistEdgeGraph = new Vector<>();
-  Vector<CPModel> pflistEdgeAttr = new Vector<>();
-  Vector<String> arglist = new Vector<String>();
-  CPModel[] pfarr;
-  CPModel[] pfarrNodeAttr;
-  CPModel[] pfarrEdge;
-  CPModel[] pfarrEdgeAttr;
-  ProbFormBool cc = new ProbFormBoolConstant(true);
+    Vector<CPModel> pflistNodeFeat = new Vector<>();
+    Vector<CPModel> pflistEdgeGraph = new Vector<>();
+    Vector<CPModel> pflistEdgeAttr = new Vector<>();
+    Vector<ArgTerm> arglist = new Vector<ArgTerm>();
+    CPModel[] pfarr;
+    CPModel[] pfarrNodeAttr;
+    CPModel[] pfarrEdge;
+    CPModel[] pfarrEdgeAttr;
+    ProbFormBool cc = new ProbFormBoolConstant(true);
     jj_consume_token(COMBCOMB);
     jj_consume_token(NODEFEAT);
     pflistNodeFeat = ProbFormList();
-    if (jj_2_61(3)) {
+    if (jj_2_65(3)) {
       jj_consume_token(EDGEGRAPH);
       pflistEdgeGraph = ProbFormList();
     } else {
       ;
     }
-    if (jj_2_62(3)) {
+    if (jj_2_66(3)) {
       jj_consume_token(EDGEATTR);
       pflistEdgeAttr = ProbFormList();
     } else {
       ;
     }
     jj_consume_token(USINGTORCH);
-    if (jj_2_63(3)) {
+    if (jj_2_67(3)) {
       jj_consume_token(COMBFORALL);
       arglist = ArgList();
       jj_consume_token(COMBWHERE);
@@ -782,7 +830,7 @@ r = reader.getRelFromSignature(tk.image);
     } else {
       ;
     }
-switch(parseno){
+switch(parseno) {
         case 1: {if ("" != null) return null;} break;
         case 2:
             pfarr = new CPModel[pflistNodeFeat.size()+pflistEdgeGraph.size()+pflistEdgeAttr.size()];
@@ -802,15 +850,15 @@ switch(parseno){
                 pfarr[indexAll]=pflistEdgeAttr.elementAt(i);
                 pfarrEdgeAttr[i]=pflistEdgeAttr.elementAt(i);
             }
-            {if ("" != null) return new TorchInputPf(pfarr, pfarrNodeAttr, pfarrEdge, pfarrEdgeAttr, StringOps.stringVectorToArray(arglist),cc);}
-    }
+            {if ("" != null) return new TorchInputPf(pfarr, pfarrNodeAttr, pfarrEdge, pfarrEdgeAttr, arglist.toArray(new ArgTerm[0]),cc);}
+        }
     throw new Error("Missing return statement in function");
 }
 
-  final public CatGnn CatGnn() throws ParseException, RBNIllegalArgumentException {Token tk1 = null;
+  final public CatGnn ReadCatGnn(RBNReader3.ParsedTypedAtom parsedat) throws ParseException, RBNIllegalArgumentException {Token tk1 = null;
     Token tk2;
-    Vector<String> freeVals;
-    Vector<String> outTypes;
+    ArgTerm[] freeVals;
+    Type[] outTypes;
     String configPath;
     int numVals = 1;
     List<TorchInputSpecs> forInputs = new ArrayList<>();
@@ -822,21 +870,17 @@ switch(parseno){
     List<List<TorchInputPf>> combineClausesType = new ArrayList<>();
     jj_consume_token(COMPUTEWITHTORCH);
     configPath = PathDec();
-    jj_consume_token(WithNumValues);
-    tk1 = jj_consume_token(NonNegNumber);
-numVals = Integer.parseInt(tk1.image);
-    jj_consume_token(ForFreeVars);
-    freeVals = UntypedArguments();
-    jj_consume_token(ForOutTypes);
-    outTypes = UntypedArguments();
-    label_10:
+numVals = (int) parsedat.rel().numvals();
+    freeVals = parsedat.args();
+    outTypes = parsedat.rel.getTypes();
+    label_11:
     while (true) {
       jj_consume_token(TYPEDICT);
       jj_consume_token(NODEFEAT);
       attrs = AttrList();
       jj_consume_token(EDGEGRAPH);
       tk2 = jj_consume_token(Name);
-      if (jj_2_64(3)) {
+      if (jj_2_68(3)) {
         jj_consume_token(EDGEATTR);
         edgeAttrs = AttrList();
       } else {
@@ -853,12 +897,12 @@ edgeRel = (BoolRel) reader.getRelFromSignature(tk2.image);
 List<TorchInputPf> combineClauses = new ArrayList<>();
       tri = CombinationTorchRels();
 combineClauses.add(tri);
-      label_11:
+      label_12:
       while (true) {
-        if (jj_2_65(3)) {
+        if (jj_2_69(3)) {
           ;
         } else {
-          break label_11;
+          break label_12;
         }
         jj_consume_token(14);
         tri = CombinationTorchRels();
@@ -866,21 +910,21 @@ combineClauses.add(tri);
       }
 combineClausesType.add(combineClauses);
                 tti.addCombine(attrs.get(0).getTypesAsString(), combineClauses);
-      if (jj_2_66(3)) {
+      if (jj_2_70(3)) {
         ;
       } else {
-        break label_10;
+        break label_11;
       }
     }
 switch(parseno)
         {
-        case 1:
-            {if ("" != null) return null;}
-            break;
-        case 2:
-            if (numVals == 1)
-                {if ("" != null) return new CatGnnBool(configPath, freeVals, forInputs, tti, outTypes, true);}
-            {if ("" != null) return new CatGnn(configPath, freeVals, numVals, forInputs, tti, outTypes, true);}
+            case 1:
+                {if ("" != null) return null;}
+                break;
+            case 2:
+                if (numVals == 1)
+                    {if ("" != null) return new CatGnnBool(configPath, freeVals, forInputs, tti, outTypes, true);}
+                {if ("" != null) return new CatGnn(configPath, freeVals, numVals, forInputs, tti, outTypes, true);}
         }
     throw new Error("Missing return statement in function");
 }
@@ -1426,25 +1470,39 @@ parseno = pn;
     finally { jj_save(65, xla); }
   }
 
-  private boolean jj_3_17()
+  private boolean jj_2_67(int xla)
  {
-    if (jj_scan_token(14)) return true;
-    if (jj_scan_token(Name)) return true;
-    return false;
+    jj_la = xla; jj_lastpos = jj_scanpos = token;
+    try { return (!jj_3_67()); }
+    catch(LookaheadSuccess ls) { return true; }
+    finally { jj_save(66, xla); }
   }
 
-  private boolean jj_3_18()
+  private boolean jj_2_68(int xla)
  {
-    if (jj_scan_token(Name)) return true;
-    Token xsp;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3_17()) { jj_scanpos = xsp; break; }
-    }
-    return false;
+    jj_la = xla; jj_lastpos = jj_scanpos = token;
+    try { return (!jj_3_68()); }
+    catch(LookaheadSuccess ls) { return true; }
+    finally { jj_save(67, xla); }
   }
 
-  private boolean jj_3R_ArgList_177_10_32()
+  private boolean jj_2_69(int xla)
+ {
+    jj_la = xla; jj_lastpos = jj_scanpos = token;
+    try { return (!jj_3_69()); }
+    catch(LookaheadSuccess ls) { return true; }
+    finally { jj_save(68, xla); }
+  }
+
+  private boolean jj_2_70(int xla)
+ {
+    jj_la = xla; jj_lastpos = jj_scanpos = token;
+    try { return (!jj_3_70()); }
+    catch(LookaheadSuccess ls) { return true; }
+    finally { jj_save(69, xla); }
+  }
+
+  private boolean jj_3R_ArgList_181_5_35()
  {
     Token xsp;
     xsp = jj_scanpos;
@@ -1452,66 +1510,61 @@ parseno = pn;
     return false;
   }
 
-  private boolean jj_3_34()
- {
-    if (jj_3R_CombinationFuncProd_427_9_31()) return true;
-    return false;
-  }
-
-  private boolean jj_3_33()
- {
-    if (jj_3R_CombinationFuncSum_454_9_30()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_CatGnn_747_5_16()
- {
-    if (jj_scan_token(COMPUTEWITHTORCH)) return true;
-    if (jj_3R_PathDec_682_9_47()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_CombinationFunc_357_11_49()
- {
-    if (jj_3R_CombinationFuncProd_427_9_31()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_UntypedArguments_167_9_54()
+  private boolean jj_3R_UntypedArguments_171_9_57()
  {
     if (jj_scan_token(12)) return true;
-    if (jj_3R_ArgList_177_10_32()) return true;
+    if (jj_3R_ArgList_181_5_35()) return true;
     if (jj_scan_token(13)) return true;
     return false;
   }
 
-  private boolean jj_3R_CombinationFunc_356_11_48()
+  private boolean jj_3_55()
  {
-    if (jj_3R_CombinationFuncSum_454_9_30()) return true;
+    if (jj_3R_BoolPrimary_540_5_39()) return true;
     return false;
   }
 
-  private boolean jj_3_32()
+  private boolean jj_3_67()
  {
-    if (jj_3R_CombinationFuncCherry_401_9_29()) return true;
+    if (jj_scan_token(COMBFORALL)) return true;
+    if (jj_3R_ArgList_181_5_35()) return true;
+    if (jj_scan_token(COMBWHERE)) return true;
+    if (jj_3R_BoolFormula_554_5_21()) return true;
     return false;
   }
 
-  private boolean jj_3_52()
+  private boolean jj_3_50()
  {
-    if (jj_3R_UntypedAtom_138_9_37()) return true;
+    if (jj_scan_token(12)) return true;
+    if (jj_3R_BoolFormula_554_5_21()) return true;
+    if (jj_scan_token(21)) return true;
     return false;
   }
 
-  private boolean jj_3R_BoolCatEquality_547_9_34()
+  private boolean jj_3_54()
+ {
+    if (jj_3R_BoolNegation_650_3_38()) return true;
+    return false;
+  }
+
+  private boolean jj_3_49()
+ {
+    if (jj_scan_token(12)) return true;
+    if (jj_3R_BoolFormula_554_5_21()) return true;
+    if (jj_scan_token(23)) return true;
+    return false;
+  }
+
+  private boolean jj_3_66()
+ {
+    if (jj_scan_token(EDGEATTR)) return true;
+    if (jj_3R_ProbFormList_529_9_41()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_BoolFormula_554_5_21()
  {
     Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_52()) {
-    jj_scanpos = xsp;
-    if (jj_3_53()) return true;
-    }
-    if (jj_scan_token(10)) return true;
     xsp = jj_scanpos;
     if (jj_3_54()) {
     jj_scanpos = xsp;
@@ -1520,95 +1573,220 @@ parseno = pn;
     return false;
   }
 
-  private boolean jj_3_31()
+  private boolean jj_3_65()
  {
-    if (jj_3R_CombinationFuncClassic_375_9_28()) return true;
+    if (jj_scan_token(EDGEGRAPH)) return true;
+    if (jj_3R_ProbFormList_529_9_41()) return true;
     return false;
   }
 
-  private boolean jj_3R_CombinationFunc_354_9_19()
+  private boolean jj_3_48()
  {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_31()) {
-    jj_scanpos = xsp;
-    if (jj_3_32()) {
-    jj_scanpos = xsp;
-    if (jj_3R_CombinationFunc_356_11_48()) {
-    jj_scanpos = xsp;
-    if (jj_3R_CombinationFunc_357_11_49()) return true;
-    }
-    }
-    }
+    if (jj_3R_ArgExpr_194_5_24()) return true;
+    if (jj_scan_token(10)) return true;
+    return false;
+  }
+
+  private boolean jj_3_47()
+ {
+    if (jj_scan_token(Name)) return true;
+    if (jj_scan_token(12)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_CombinationTorchRels_742_5_43()
+ {
+    if (jj_scan_token(COMBCOMB)) return true;
+    if (jj_scan_token(NODEFEAT)) return true;
     return false;
   }
 
   private boolean jj_3_8()
  {
-    if (jj_3R_CatGnn_747_5_16()) return true;
+    if (jj_3R_ReadCatGnn_791_5_17()) return true;
     return false;
   }
 
-  private boolean jj_3R_BoolEquality_537_9_57()
+  private boolean jj_3R_ConvCombinationClassic_354_9_29()
+ {
+    if (jj_scan_token(12)) return true;
+    if (jj_3R_ProbForm_124_9_15()) return true;
+    if (jj_scan_token(19)) return true;
+    if (jj_3R_ProbForm_124_9_15()) return true;
+    if (jj_scan_token(14)) return true;
+    if (jj_3R_ProbForm_124_9_15()) return true;
+    if (jj_scan_token(13)) return true;
+    return false;
+  }
+
+  private boolean jj_3_53()
+ {
+    if (jj_3R_BoolCatEquality_588_9_37()) return true;
+    return false;
+  }
+
+  private boolean jj_3_52()
+ {
+    if (jj_3R_BoolConstant_640_9_36()) return true;
+    return false;
+  }
+
+  private boolean jj_3_51()
+ {
+    if (jj_scan_token(12)) return true;
+    if (jj_3R_BoolFormula_554_5_21()) return true;
+    if (jj_scan_token(13)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_BoolPrimary_543_7_56()
+ {
+    if (jj_3R_BoolOr_625_9_62()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_BoolPrimary_542_7_55()
+ {
+    if (jj_3R_BoolAnd_610_9_61()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_BoolPrimary_541_7_54()
+ {
+    if (jj_3R_BoolEquality_578_5_60()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_TypedAtom_157_9_44()
  {
     if (jj_scan_token(Name)) return true;
-    if (jj_scan_token(10)) return true;
-    if (jj_scan_token(Name)) return true;
+    if (jj_3R_TypedArguments_222_9_58()) return true;
     return false;
   }
 
-  private boolean jj_3R_TypedAtom_152_9_41()
+  private boolean jj_3R_BoolPrimary_540_7_53()
+ {
+    if (jj_3R_BoolAtom_565_9_59()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_BoolPrimary_540_5_39()
+ {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_BoolPrimary_540_7_53()) {
+    jj_scanpos = xsp;
+    if (jj_3R_BoolPrimary_541_7_54()) {
+    jj_scanpos = xsp;
+    if (jj_3R_BoolPrimary_542_7_55()) {
+    jj_scanpos = xsp;
+    if (jj_3R_BoolPrimary_543_7_56()) {
+    jj_scanpos = xsp;
+    if (jj_3_51()) {
+    jj_scanpos = xsp;
+    if (jj_3_52()) {
+    jj_scanpos = xsp;
+    if (jj_3_53()) return true;
+    }
+    }
+    }
+    }
+    }
+    }
+    return false;
+  }
+
+  private boolean jj_3R_PathDec_724_9_50()
+ {
+    if (jj_scan_token(15)) return true;
+    if (jj_scan_token(Path)) return true;
+    return false;
+  }
+
+  private boolean jj_3_45()
+ {
+    if (jj_scan_token(14)) return true;
+    if (jj_3R_ProbForm_124_9_15()) return true;
+    return false;
+  }
+
+  private boolean jj_3_34()
+ {
+    if (jj_3R_ConvCombinationCherry_373_9_30()) return true;
+    return false;
+  }
+
+  private boolean jj_3_46()
+ {
+    if (jj_3R_ProbForm_124_9_15()) return true;
+    Token xsp;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_45()) { jj_scanpos = xsp; break; }
+    }
+    return false;
+  }
+
+  private boolean jj_3_33()
+ {
+    if (jj_3R_ConvCombinationClassic_354_9_29()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_ProbFormList_529_9_41()
+ {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_46()) jj_scanpos = xsp;
+    return false;
+  }
+
+  private boolean jj_3R_ConvCombination_337_9_19()
+ {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_33()) {
+    jj_scanpos = xsp;
+    if (jj_3_34()) return true;
+    }
+    return false;
+  }
+
+  private boolean jj_3R_UntypedAtom_143_9_40()
  {
     if (jj_scan_token(Name)) return true;
-    if (jj_3R_TypedArguments_194_9_55()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_ConvCombinationCherry_338_9_27()
- {
-    if (jj_scan_token(WIFWIF)) return true;
-    if (jj_3R_ProbForm_119_9_14()) return true;
-    if (jj_scan_token(WIFTHEN)) return true;
-    if (jj_3R_ProbForm_119_9_14()) return true;
-    if (jj_scan_token(WIFELSE)) return true;
-    if (jj_3R_ProbForm_119_9_14()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_BoolAtom_526_9_56()
- {
-    if (jj_3R_UntypedAtom_138_9_37()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_UntypedAtom_138_9_37()
- {
-    if (jj_scan_token(Name)) return true;
-    if (jj_3R_UntypedArguments_167_9_54()) return true;
+    if (jj_3R_UntypedArguments_171_9_57()) return true;
     return false;
   }
 
   private boolean jj_3_7()
  {
-    if (jj_3R_ProbForm_119_9_14()) return true;
+    if (jj_3R_ProbForm_124_9_15()) return true;
     return false;
   }
 
   private boolean jj_3_13()
  {
-    if (jj_3R_CombinationFunc_354_9_19()) return true;
+    if (jj_3R_CombinationFunc_389_9_20()) return true;
     return false;
   }
 
   private boolean jj_3_12()
  {
-    if (jj_3R_ConvCombination_302_9_18()) return true;
+    if (jj_3R_ConvCombination_337_9_19()) return true;
     return false;
   }
 
   private boolean jj_3_11()
  {
-    if (jj_3R_Atom_269_9_17()) return true;
+    if (jj_3R_Atom_304_9_18()) return true;
+    return false;
+  }
+
+  private boolean jj_3_64()
+ {
+    if (jj_scan_token(14)) return true;
+    if (jj_scan_token(Name)) return true;
     return false;
   }
 
@@ -1616,205 +1794,89 @@ parseno = pn;
  {
     if (jj_scan_token(Name)) return true;
     if (jj_scan_token(10)) return true;
-    if (jj_3R_Atom_269_9_17()) return true;
-    return false;
-  }
-
-  private boolean jj_3_51()
- {
-    if (jj_3R_BoolPrimary_501_5_36()) return true;
+    if (jj_3R_Atom_304_9_18()) return true;
     return false;
   }
 
   private boolean jj_3_9()
  {
-    if (jj_3R_Atom_269_9_17()) return true;
+    if (jj_3R_Atom_304_9_18()) return true;
     if (jj_scan_token(10)) return true;
-    return false;
-  }
-
-  private boolean jj_3_46()
- {
-    if (jj_scan_token(12)) return true;
-    if (jj_3R_BoolFormula_515_5_20()) return true;
-    if (jj_scan_token(21)) return true;
-    return false;
-  }
-
-  private boolean jj_3_50()
- {
-    if (jj_3R_BoolNegation_608_3_35()) return true;
-    return false;
-  }
-
-  private boolean jj_3_45()
- {
-    if (jj_scan_token(12)) return true;
-    if (jj_3R_BoolFormula_515_5_20()) return true;
-    if (jj_scan_token(23)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_BoolFormula_515_5_20()
- {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_50()) {
-    jj_scanpos = xsp;
-    if (jj_3_51()) return true;
-    }
-    return false;
-  }
-
-  private boolean jj_3R_ConvCombinationClassic_319_9_26()
- {
-    if (jj_scan_token(12)) return true;
-    if (jj_3R_ProbForm_119_9_14()) return true;
-    if (jj_scan_token(19)) return true;
-    if (jj_3R_ProbForm_119_9_14()) return true;
-    if (jj_scan_token(14)) return true;
-    if (jj_3R_ProbForm_119_9_14()) return true;
-    if (jj_scan_token(13)) return true;
     return false;
   }
 
   private boolean jj_3_16()
  {
-    if (jj_3R_Constant_231_9_22()) return true;
-    return false;
-  }
-
-  private boolean jj_3_44()
- {
-    if (jj_scan_token(Name)) return true;
-    if (jj_scan_token(10)) return true;
+    if (jj_3R_Constant_266_9_23()) return true;
     return false;
   }
 
   private boolean jj_3_15()
  {
-    if (jj_3R_MacroCall_620_9_21()) return true;
-    return false;
-  }
-
-  private boolean jj_3_43()
- {
-    if (jj_scan_token(Name)) return true;
-    if (jj_scan_token(12)) return true;
+    if (jj_3R_MacroCall_662_9_22()) return true;
     return false;
   }
 
   private boolean jj_3_14()
  {
-    if (jj_3R_BoolFormula_515_5_20()) return true;
+    if (jj_3R_BoolFormula_554_5_21()) return true;
     return false;
   }
 
-  private boolean jj_3R_ProbForm_123_11_46()
+  private boolean jj_3R_ProbForm_128_11_49()
  {
-    if (jj_3R_CombinationFunc_354_9_19()) return true;
+    if (jj_3R_CombinationFunc_389_9_20()) return true;
     return false;
   }
 
-  private boolean jj_3_63()
+  private boolean jj_3R_ProbForm_127_11_48()
  {
-    if (jj_scan_token(COMBFORALL)) return true;
-    if (jj_3R_ArgList_177_10_32()) return true;
-    if (jj_scan_token(COMBWHERE)) return true;
-    if (jj_3R_BoolFormula_515_5_20()) return true;
+    if (jj_3R_ConvCombination_337_9_19()) return true;
     return false;
   }
 
-  private boolean jj_3R_ProbForm_122_11_45()
+  private boolean jj_3R_ProbForm_126_11_47()
  {
-    if (jj_3R_ConvCombination_302_9_18()) return true;
+    if (jj_3R_Atom_304_9_18()) return true;
     return false;
   }
 
-  private boolean jj_3R_ProbForm_121_11_44()
+  private boolean jj_3R_AttrList_705_5_42()
  {
-    if (jj_3R_Atom_269_9_17()) return true;
+    if (jj_scan_token(Name)) return true;
+    Token xsp;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_64()) { jj_scanpos = xsp; break; }
+    }
     return false;
   }
 
-  private boolean jj_3_49()
+  private boolean jj_3R_ProbForm_125_11_46()
  {
-    if (jj_3R_BoolCatEquality_547_9_34()) return true;
+    if (jj_3R_BoolCatEquality_588_9_37()) return true;
     return false;
   }
 
-  private boolean jj_3_62()
+  private boolean jj_3R_ProbForm_124_11_45()
  {
-    if (jj_scan_token(EDGEATTR)) return true;
-    if (jj_3R_ProbFormList_490_9_38()) return true;
+    if (jj_3R_BoolCatEquality_588_9_37()) return true;
     return false;
   }
 
-  private boolean jj_3R_ProbForm_120_11_43()
- {
-    if (jj_3R_BoolCatEquality_547_9_34()) return true;
-    return false;
-  }
-
-  private boolean jj_3_48()
- {
-    if (jj_3R_BoolConstant_598_9_33()) return true;
-    return false;
-  }
-
-  private boolean jj_3_61()
- {
-    if (jj_scan_token(EDGEGRAPH)) return true;
-    if (jj_3R_ProbFormList_490_9_38()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_ProbForm_119_11_42()
- {
-    if (jj_3R_BoolCatEquality_547_9_34()) return true;
-    return false;
-  }
-
-  private boolean jj_3_47()
- {
-    if (jj_scan_token(12)) return true;
-    if (jj_3R_BoolFormula_515_5_20()) return true;
-    if (jj_scan_token(13)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_BoolPrimary_504_7_53()
- {
-    if (jj_3R_BoolOr_583_9_59()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_BoolPrimary_503_7_52()
- {
-    if (jj_3R_BoolAnd_568_9_58()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_CombinationTorchRels_699_2_40()
- {
-    if (jj_scan_token(COMBCOMB)) return true;
-    if (jj_scan_token(NODEFEAT)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_ProbForm_119_9_14()
+  private boolean jj_3R_ProbForm_124_9_15()
  {
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3R_ProbForm_119_11_42()) {
+    if (jj_3R_ProbForm_124_11_45()) {
     jj_scanpos = xsp;
-    if (jj_3R_ProbForm_120_11_43()) {
+    if (jj_3R_ProbForm_125_11_46()) {
     jj_scanpos = xsp;
-    if (jj_3R_ProbForm_121_11_44()) {
+    if (jj_3R_ProbForm_126_11_47()) {
     jj_scanpos = xsp;
-    if (jj_3R_ProbForm_122_11_45()) {
+    if (jj_3R_ProbForm_127_11_48()) {
     jj_scanpos = xsp;
-    if (jj_3R_ProbForm_123_11_46()) {
+    if (jj_3R_ProbForm_128_11_49()) {
     jj_scanpos = xsp;
     if (jj_3_14()) {
     jj_scanpos = xsp;
@@ -1831,115 +1893,103 @@ parseno = pn;
     return false;
   }
 
-  private boolean jj_3R_BoolPrimary_502_7_51()
+  private boolean jj_3_43()
  {
-    if (jj_3R_BoolEquality_537_9_57()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_BoolPrimary_501_7_50()
- {
-    if (jj_3R_BoolAtom_526_9_56()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_BoolPrimary_501_5_36()
- {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_BoolPrimary_501_7_50()) {
-    jj_scanpos = xsp;
-    if (jj_3R_BoolPrimary_502_7_51()) {
-    jj_scanpos = xsp;
-    if (jj_3R_BoolPrimary_503_7_52()) {
-    jj_scanpos = xsp;
-    if (jj_3R_BoolPrimary_504_7_53()) {
-    jj_scanpos = xsp;
-    if (jj_3_47()) {
-    jj_scanpos = xsp;
-    if (jj_3_48()) {
-    jj_scanpos = xsp;
-    if (jj_3_49()) return true;
-    }
-    }
-    }
-    }
-    }
-    }
-    return false;
-  }
-
-  private boolean jj_3_30()
- {
-    if (jj_3R_ConvCombinationCherry_338_9_27()) return true;
-    return false;
-  }
-
-  private boolean jj_3_29()
- {
-    if (jj_3R_ConvCombinationClassic_319_9_26()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_ConvCombination_302_9_18()
- {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_29()) {
-    jj_scanpos = xsp;
-    if (jj_3_30()) return true;
-    }
-    return false;
-  }
-
-  private boolean jj_3_41()
- {
-    if (jj_scan_token(14)) return true;
-    if (jj_3R_ProbForm_119_9_14()) return true;
+    if (jj_scan_token(MINUS)) return true;
+    if (jj_3R_ProbForm_124_9_15()) return true;
     return false;
   }
 
   private boolean jj_3_42()
  {
-    if (jj_3R_ProbForm_119_9_14()) return true;
+    if (jj_scan_token(PLUS)) return true;
+    if (jj_3R_ProbForm_124_9_15()) return true;
+    return false;
+  }
+
+  private boolean jj_3_44()
+ {
     Token xsp;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3_41()) { jj_scanpos = xsp; break; }
+    xsp = jj_scanpos;
+    if (jj_3_42()) {
+    jj_scanpos = xsp;
+    if (jj_3_43()) return true;
     }
     return false;
   }
 
-  private boolean jj_3R_PathDec_682_9_47()
+  private boolean jj_3R_Atom_304_9_18()
  {
-    if (jj_scan_token(15)) return true;
-    if (jj_scan_token(Path)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_ProbFormList_490_9_38()
- {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_42()) jj_scanpos = xsp;
+    if (jj_3R_UntypedAtom_143_9_40()) return true;
     return false;
   }
 
   private boolean jj_3_6()
  {
-    if (jj_3R_CatSoftMax_643_6_15()) return true;
+    if (jj_3R_CatSoftMax_685_6_16()) return true;
     return false;
   }
 
-  private boolean jj_3R_ProbRelDefinition_97_9_13()
+  private boolean jj_3R_CombinationFuncSum_493_9_33()
  {
-    if (jj_3R_TypedAtom_152_9_41()) return true;
+    if (jj_scan_token(12)) return true;
+    if (jj_3R_ProbForm_124_9_15()) return true;
+    Token xsp;
+    if (jj_3_44()) return true;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_44()) { jj_scanpos = xsp; break; }
+    }
+    if (jj_scan_token(13)) return true;
     return false;
   }
 
-  private boolean jj_3_60()
+  private boolean jj_3R_CatSoftMax_685_6_16()
  {
-    if (jj_scan_token(14)) return true;
+    if (jj_scan_token(SOFTMAX)) return true;
+    if (jj_3R_ProbFormList_529_9_41()) return true;
+    return false;
+  }
+
+  private boolean jj_3_28()
+ {
+    if (jj_3R_Parameter_288_9_28()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_ProbRelDefinition_100_9_14()
+ {
+    if (jj_3R_TypedAtom_157_9_44()) return true;
+    return false;
+  }
+
+  private boolean jj_3_32()
+ {
+    if (jj_scan_token(18)) return true;
+    if (jj_scan_token(Name)) return true;
+    return false;
+  }
+
+  private boolean jj_3_31()
+ {
+    if (jj_scan_token(17)) return true;
+    if (jj_scan_token(Name)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_Parameter_288_9_28()
+ {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_31()) {
+    jj_scanpos = xsp;
+    if (jj_3_32()) return true;
+    }
+    return false;
+  }
+
+  private boolean jj_3_59()
+ {
     if (jj_scan_token(Name)) return true;
     return false;
   }
@@ -1950,91 +2000,136 @@ parseno = pn;
     return false;
   }
 
-  private boolean jj_3R_AttrList_663_5_39()
+  private boolean jj_3_41()
  {
-    if (jj_scan_token(Name)) return true;
-    Token xsp;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3_60()) { jj_scanpos = xsp; break; }
-    }
+    if (jj_scan_token(MULT)) return true;
+    if (jj_3R_ProbForm_124_9_15()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_MacroCall_662_9_22()
+ {
+    if (jj_scan_token(9)) return true;
+    if (jj_3R_UntypedAtom_143_9_40()) return true;
+    return false;
+  }
+
+  private boolean jj_3_30()
+ {
+    if (jj_scan_token(MINUS)) return true;
+    if (jj_scan_token(NonNegNumber)) return true;
     return false;
   }
 
   private boolean jj_3_2()
  {
-    if (jj_3R_ProbRelDefinition_97_9_13()) return true;
+    if (jj_3R_ProbRelDefinition_100_9_14()) return true;
     return false;
   }
 
-  private boolean jj_3_39()
+  private boolean jj_3_29()
  {
-    if (jj_scan_token(MINUS)) return true;
-    if (jj_3R_ProbForm_119_9_14()) return true;
+    if (jj_scan_token(NonNegNumber)) return true;
     return false;
   }
 
-  private boolean jj_3_38()
- {
-    if (jj_scan_token(PLUS)) return true;
-    if (jj_3R_ProbForm_119_9_14()) return true;
-    return false;
-  }
-
-  private boolean jj_3_5()
- {
-    if (jj_3R_ProbForm_119_9_14()) return true;
-    return false;
-  }
-
-  private boolean jj_3_40()
- {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_38()) {
-    jj_scanpos = xsp;
-    if (jj_3_39()) return true;
-    }
-    return false;
-  }
-
-  private boolean jj_3R_Atom_269_9_17()
- {
-    if (jj_3R_UntypedAtom_138_9_37()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_CombinationFuncSum_454_9_30()
+  private boolean jj_3R_CombinationFuncProd_466_9_34()
  {
     if (jj_scan_token(12)) return true;
-    if (jj_3R_ProbForm_119_9_14()) return true;
+    if (jj_3R_ProbForm_124_9_15()) return true;
     Token xsp;
-    if (jj_3_40()) return true;
+    if (jj_3_41()) return true;
     while (true) {
       xsp = jj_scanpos;
-      if (jj_3_40()) { jj_scanpos = xsp; break; }
+      if (jj_3_41()) { jj_scanpos = xsp; break; }
     }
     if (jj_scan_token(13)) return true;
     return false;
   }
 
-  private boolean jj_3R_MacroDefinition_72_9_12()
+  private boolean jj_3R_NumericConstant_275_9_27()
+ {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_29()) {
+    jj_scanpos = xsp;
+    if (jj_3_30()) return true;
+    }
+    return false;
+  }
+
+  private boolean jj_3_5()
+ {
+    if (jj_3R_ProbForm_124_9_15()) return true;
+    return false;
+  }
+
+  private boolean jj_3_27()
+ {
+    if (jj_3R_NumericConstant_275_9_27()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_Constant_266_9_23()
+ {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_27()) {
+    jj_scanpos = xsp;
+    if (jj_3_28()) return true;
+    }
+    return false;
+  }
+
+  private boolean jj_3R_MacroDefinition_74_9_13()
  {
     if (jj_scan_token(9)) return true;
-    if (jj_3R_TypedAtom_152_9_41()) return true;
+    if (jj_3R_TypedAtom_157_9_44()) return true;
     return false;
   }
 
-  private boolean jj_3_24()
+  private boolean jj_3_69()
  {
-    if (jj_3R_Parameter_253_9_25()) return true;
+    if (jj_scan_token(14)) return true;
+    if (jj_3R_CombinationTorchRels_742_5_43()) return true;
     return false;
   }
 
-  private boolean jj_3R_CatSoftMax_643_6_15()
+  private boolean jj_3R_BoolNegation_650_3_38()
  {
-    if (jj_scan_token(SOFTMAX)) return true;
-    if (jj_3R_ProbFormList_490_9_38()) return true;
+    if (jj_scan_token(26)) return true;
+    if (jj_3R_BoolPrimary_540_5_39()) return true;
+    return false;
+  }
+
+  private boolean jj_3_63()
+ {
+    if (jj_scan_token(25)) return true;
+    return false;
+  }
+
+  private boolean jj_3_62()
+ {
+    if (jj_scan_token(24)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_BoolConstant_640_9_36()
+ {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_62()) {
+    jj_scanpos = xsp;
+    if (jj_3_63()) return true;
+    }
+    return false;
+  }
+
+  private boolean jj_3R_TypeDeclaration_257_9_26()
+ {
+    if (jj_scan_token(15)) return true;
+    if (jj_scan_token(Name)) return true;
+    if (jj_scan_token(16)) return true;
     return false;
   }
 
@@ -2051,140 +2146,200 @@ parseno = pn;
 
   private boolean jj_3_1()
  {
-    if (jj_3R_MacroDefinition_72_9_12()) return true;
-    return false;
-  }
-
-  private boolean jj_3_28()
- {
-    if (jj_scan_token(18)) return true;
-    if (jj_scan_token(Name)) return true;
-    return false;
-  }
-
-  private boolean jj_3_27()
- {
-    if (jj_scan_token(17)) return true;
-    if (jj_scan_token(Name)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_Parameter_253_9_25()
- {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_27()) {
-    jj_scanpos = xsp;
-    if (jj_3_28()) return true;
-    }
-    return false;
-  }
-
-  private boolean jj_3_26()
- {
-    if (jj_scan_token(MINUS)) return true;
-    if (jj_scan_token(NonNegNumber)) return true;
-    return false;
-  }
-
-  private boolean jj_3_37()
- {
-    if (jj_scan_token(MULT)) return true;
-    if (jj_3R_ProbForm_119_9_14()) return true;
-    return false;
-  }
-
-  private boolean jj_3_55()
- {
-    if (jj_scan_token(Name)) return true;
-    return false;
-  }
-
-  private boolean jj_3_25()
- {
-    if (jj_scan_token(NonNegNumber)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_NumericConstant_240_9_24()
- {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_25()) {
-    jj_scanpos = xsp;
-    if (jj_3_26()) return true;
-    }
-    return false;
-  }
-
-  private boolean jj_3R_MacroCall_620_9_21()
- {
-    if (jj_scan_token(9)) return true;
-    if (jj_3R_UntypedAtom_138_9_37()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_CombinationFuncProd_427_9_31()
- {
-    if (jj_scan_token(12)) return true;
-    if (jj_3R_ProbForm_119_9_14()) return true;
-    Token xsp;
-    if (jj_3_37()) return true;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3_37()) { jj_scanpos = xsp; break; }
-    }
-    if (jj_scan_token(13)) return true;
-    return false;
-  }
-
-  private boolean jj_3_23()
- {
-    if (jj_3R_NumericConstant_240_9_24()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_Constant_231_9_22()
- {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_23()) {
-    jj_scanpos = xsp;
-    if (jj_3_24()) return true;
-    }
-    return false;
-  }
-
-  private boolean jj_3R_TypeDeclaration_222_9_23()
- {
-    if (jj_scan_token(15)) return true;
-    if (jj_scan_token(Name)) return true;
-    if (jj_scan_token(16)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_BoolNegation_608_3_35()
- {
-    if (jj_scan_token(26)) return true;
-    if (jj_3R_BoolPrimary_501_5_36()) return true;
-    return false;
-  }
-
-  private boolean jj_3_59()
- {
-    if (jj_scan_token(25)) return true;
+    if (jj_3R_MacroDefinition_74_9_13()) return true;
     return false;
   }
 
   private boolean jj_3_58()
  {
-    if (jj_scan_token(24)) return true;
+    if (jj_3R_UntypedAtom_143_9_40()) return true;
     return false;
   }
 
-  private boolean jj_3R_BoolConstant_598_9_33()
+  private boolean jj_3_40()
+ {
+    if (jj_scan_token(COMBFORALL)) return true;
+    if (jj_3R_ArgList_181_5_35()) return true;
+    if (jj_scan_token(COMBWHERE)) return true;
+    if (jj_3R_BoolFormula_554_5_21()) return true;
+    return false;
+  }
+
+  private boolean jj_3_61()
+ {
+    if (jj_scan_token(21)) return true;
+    if (jj_3R_BoolFormula_554_5_21()) return true;
+    return false;
+  }
+
+  private boolean jj_3_25()
+ {
+    if (jj_3R_TypeDeclaration_257_9_26()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_CombinationFuncCherry_437_9_32()
+ {
+    if (jj_scan_token(COMBCOMB)) return true;
+    if (jj_3R_ProbFormList_529_9_41()) return true;
+    if (jj_scan_token(COMBWITH)) return true;
+    if (jj_scan_token(CombinationFunction)) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_40()) jj_scanpos = xsp;
+    return false;
+  }
+
+  private boolean jj_3_68()
+ {
+    if (jj_scan_token(EDGEATTR)) return true;
+    if (jj_3R_AttrList_705_5_42()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_BoolOr_625_9_62()
+ {
+    if (jj_scan_token(12)) return true;
+    if (jj_3R_BoolFormula_554_5_21()) return true;
+    Token xsp;
+    if (jj_3_61()) return true;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_61()) { jj_scanpos = xsp; break; }
+    }
+    if (jj_scan_token(13)) return true;
+    return false;
+  }
+
+  private boolean jj_3_24()
+ {
+    if (jj_scan_token(14)) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_25()) jj_scanpos = xsp;
+    if (jj_scan_token(Name)) return true;
+    return false;
+  }
+
+  private boolean jj_3_60()
+ {
+    if (jj_scan_token(23)) return true;
+    if (jj_3R_BoolFormula_554_5_21()) return true;
+    return false;
+  }
+
+  private boolean jj_3_57()
+ {
+    if (jj_scan_token(Name)) return true;
+    return false;
+  }
+
+  private boolean jj_3_70()
+ {
+    if (jj_scan_token(TYPEDICT)) return true;
+    if (jj_scan_token(NODEFEAT)) return true;
+    if (jj_3R_AttrList_705_5_42()) return true;
+    return false;
+  }
+
+  private boolean jj_3_23()
+ {
+    if (jj_3R_TypeDeclaration_257_9_26()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_BoolAnd_610_9_61()
+ {
+    if (jj_scan_token(12)) return true;
+    if (jj_3R_BoolFormula_554_5_21()) return true;
+    Token xsp;
+    if (jj_3_60()) return true;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_60()) { jj_scanpos = xsp; break; }
+    }
+    if (jj_scan_token(13)) return true;
+    return false;
+  }
+
+  private boolean jj_3_26()
  {
     Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_23()) jj_scanpos = xsp;
+    if (jj_scan_token(Name)) return true;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_24()) { jj_scanpos = xsp; break; }
+    }
+    return false;
+  }
+
+  private boolean jj_3_39()
+ {
+    if (jj_3R_BoolFormula_554_5_21()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_TypedArguments_222_9_58()
+ {
+    if (jj_scan_token(12)) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_26()) jj_scanpos = xsp;
+    if (jj_scan_token(13)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_CombinationFuncClassic_410_9_31()
+ {
+    if (jj_scan_token(CombinationFunction)) return true;
+    if (jj_scan_token(20)) return true;
+    if (jj_3R_ProbFormList_529_9_41()) return true;
+    if (jj_scan_token(21)) return true;
+    if (jj_3R_ArgList_181_5_35()) return true;
+    if (jj_scan_token(19)) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_39()) jj_scanpos = xsp;
+    if (jj_scan_token(22)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_ReadCatGnn_791_5_17()
+ {
+    if (jj_scan_token(COMPUTEWITHTORCH)) return true;
+    if (jj_3R_PathDec_724_9_50()) return true;
+    return false;
+  }
+
+  private boolean jj_3_38()
+ {
+    if (jj_3R_CombinationFuncProd_466_9_34()) return true;
+    return false;
+  }
+
+  private boolean jj_3_37()
+ {
+    if (jj_3R_CombinationFuncSum_493_9_33()) return true;
+    return false;
+  }
+
+  private boolean jj_3_56()
+ {
+    if (jj_3R_UntypedAtom_143_9_40()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_BoolCatEquality_588_9_37()
+ {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_56()) {
+    jj_scanpos = xsp;
+    if (jj_3_57()) return true;
+    }
+    if (jj_scan_token(10)) return true;
     xsp = jj_scanpos;
     if (jj_3_58()) {
     jj_scanpos = xsp;
@@ -2193,166 +2348,139 @@ parseno = pn;
     return false;
   }
 
-  private boolean jj_3_54()
+  private boolean jj_3_22()
  {
-    if (jj_3R_UntypedAtom_138_9_37()) return true;
-    return false;
-  }
-
-  private boolean jj_3_36()
- {
-    if (jj_scan_token(COMBFORALL)) return true;
-    if (jj_3R_ArgList_177_10_32()) return true;
-    if (jj_scan_token(COMBWHERE)) return true;
-    if (jj_3R_BoolFormula_515_5_20()) return true;
-    return false;
-  }
-
-  private boolean jj_3_65()
- {
-    if (jj_scan_token(14)) return true;
-    if (jj_3R_CombinationTorchRels_699_2_40()) return true;
+    if (jj_scan_token(12)) return true;
+    if (jj_3R_ArgExpr_194_5_24()) return true;
+    if (jj_scan_token(13)) return true;
     return false;
   }
 
   private boolean jj_3_21()
  {
-    if (jj_3R_TypeDeclaration_222_9_23()) return true;
+    if (jj_scan_token(NonNegNumber)) return true;
     return false;
   }
 
-  private boolean jj_3R_CombinationFuncCherry_401_9_29()
+  private boolean jj_3R_ArgPrimary_208_5_25()
  {
-    if (jj_scan_token(COMBCOMB)) return true;
-    if (jj_3R_ProbFormList_490_9_38()) return true;
-    if (jj_scan_token(COMBWITH)) return true;
-    if (jj_scan_token(CombinationFunction)) return true;
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3_36()) jj_scanpos = xsp;
-    return false;
-  }
-
-  private boolean jj_3_57()
- {
-    if (jj_scan_token(21)) return true;
-    if (jj_3R_BoolFormula_515_5_20()) return true;
+    if (jj_3_20()) {
+    jj_scanpos = xsp;
+    if (jj_3_21()) {
+    jj_scanpos = xsp;
+    if (jj_3_22()) return true;
+    }
+    }
     return false;
   }
 
   private boolean jj_3_20()
  {
-    if (jj_scan_token(14)) return true;
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_21()) jj_scanpos = xsp;
     if (jj_scan_token(Name)) return true;
     return false;
   }
 
-  private boolean jj_3R_BoolOr_583_9_59()
+  private boolean jj_3R_CombinationFunc_392_11_52()
  {
-    if (jj_scan_token(12)) return true;
-    if (jj_3R_BoolFormula_515_5_20()) return true;
-    Token xsp;
-    if (jj_3_57()) return true;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3_57()) { jj_scanpos = xsp; break; }
-    }
-    if (jj_scan_token(13)) return true;
+    if (jj_3R_CombinationFuncProd_466_9_34()) return true;
     return false;
   }
 
-  private boolean jj_3_19()
+  private boolean jj_3R_CombinationFunc_391_11_51()
  {
-    if (jj_3R_TypeDeclaration_222_9_23()) return true;
+    if (jj_3R_CombinationFuncSum_493_9_33()) return true;
     return false;
   }
 
-  private boolean jj_3_22()
+  private boolean jj_3_36()
  {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_19()) jj_scanpos = xsp;
-    if (jj_scan_token(Name)) return true;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3_20()) { jj_scanpos = xsp; break; }
-    }
-    return false;
-  }
-
-  private boolean jj_3_64()
- {
-    if (jj_scan_token(EDGEATTR)) return true;
-    if (jj_3R_AttrList_663_5_39()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_TypedArguments_194_9_55()
- {
-    if (jj_scan_token(12)) return true;
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_22()) jj_scanpos = xsp;
-    if (jj_scan_token(13)) return true;
-    return false;
-  }
-
-  private boolean jj_3_53()
- {
-    if (jj_scan_token(Name)) return true;
-    return false;
-  }
-
-  private boolean jj_3_56()
- {
-    if (jj_scan_token(23)) return true;
-    if (jj_3R_BoolFormula_515_5_20()) return true;
+    if (jj_3R_CombinationFuncCherry_437_9_32()) return true;
     return false;
   }
 
   private boolean jj_3_35()
  {
-    if (jj_3R_BoolFormula_515_5_20()) return true;
+    if (jj_3R_CombinationFuncClassic_410_9_31()) return true;
     return false;
   }
 
-  private boolean jj_3R_BoolAnd_568_9_58()
+  private boolean jj_3R_CombinationFunc_389_9_20()
  {
-    if (jj_scan_token(12)) return true;
-    if (jj_3R_BoolFormula_515_5_20()) return true;
-    Token xsp;
-    if (jj_3_56()) return true;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3_56()) { jj_scanpos = xsp; break; }
-    }
-    if (jj_scan_token(13)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_CombinationFuncClassic_375_9_28()
- {
-    if (jj_scan_token(CombinationFunction)) return true;
-    if (jj_scan_token(20)) return true;
-    if (jj_3R_ProbFormList_490_9_38()) return true;
-    if (jj_scan_token(21)) return true;
-    if (jj_3R_ArgList_177_10_32()) return true;
-    if (jj_scan_token(19)) return true;
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3_35()) jj_scanpos = xsp;
-    if (jj_scan_token(22)) return true;
+    if (jj_3_35()) {
+    jj_scanpos = xsp;
+    if (jj_3_36()) {
+    jj_scanpos = xsp;
+    if (jj_3R_CombinationFunc_391_11_51()) {
+    jj_scanpos = xsp;
+    if (jj_3R_CombinationFunc_392_11_52()) return true;
+    }
+    }
+    }
     return false;
   }
 
-  private boolean jj_3_66()
+  private boolean jj_3_19()
  {
-    if (jj_scan_token(TYPEDICT)) return true;
-    if (jj_scan_token(NODEFEAT)) return true;
-    if (jj_3R_AttrList_663_5_39()) return true;
+    if (jj_scan_token(PLUS)) return true;
+    if (jj_3R_ArgPrimary_208_5_25()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_BoolEquality_578_5_60()
+ {
+    if (jj_3R_ArgExpr_194_5_24()) return true;
+    if (jj_scan_token(10)) return true;
+    if (jj_3R_ArgExpr_194_5_24()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_ArgExpr_194_5_24()
+ {
+    if (jj_3R_ArgPrimary_208_5_25()) return true;
+    Token xsp;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_19()) { jj_scanpos = xsp; break; }
+    }
+    return false;
+  }
+
+  private boolean jj_3_17()
+ {
+    if (jj_scan_token(14)) return true;
+    if (jj_3R_ArgExpr_194_5_24()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_BoolAtom_565_9_59()
+ {
+    if (jj_3R_UntypedAtom_143_9_40()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_ConvCombinationCherry_373_9_30()
+ {
+    if (jj_scan_token(WIFWIF)) return true;
+    if (jj_3R_ProbForm_124_9_15()) return true;
+    if (jj_scan_token(WIFTHEN)) return true;
+    if (jj_3R_ProbForm_124_9_15()) return true;
+    if (jj_scan_token(WIFELSE)) return true;
+    if (jj_3R_ProbForm_124_9_15()) return true;
+    return false;
+  }
+
+  private boolean jj_3_18()
+ {
+    if (jj_3R_ArgExpr_194_5_24()) return true;
+    Token xsp;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_17()) { jj_scanpos = xsp; break; }
+    }
     return false;
   }
 
@@ -2380,7 +2508,7 @@ parseno = pn;
 	private static void jj_la1_init_1() {
 	   jj_la1_1 = new int[] {};
 	}
-  final private JJCalls[] jj_2_rtns = new JJCalls[66];
+  final private JJCalls[] jj_2_rtns = new JJCalls[70];
   private boolean jj_rescan = false;
   private int jj_gc = 0;
 
@@ -2637,7 +2765,7 @@ parseno = pn;
 
   private void jj_rescan_token() {
 	 jj_rescan = true;
-	 for (int i = 0; i < 66; i++) {
+	 for (int i = 0; i < 70; i++) {
 	   try {
 		 JJCalls p = jj_2_rtns[i];
 
@@ -2711,6 +2839,10 @@ parseno = pn;
 			   case 63: jj_3_64(); break;
 			   case 64: jj_3_65(); break;
 			   case 65: jj_3_66(); break;
+			   case 66: jj_3_67(); break;
+			   case 67: jj_3_68(); break;
+			   case 68: jj_3_69(); break;
+			   case 69: jj_3_70(); break;
 			 }
 		   }
 		   p = p.next;

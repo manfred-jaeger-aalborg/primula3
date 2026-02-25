@@ -6,6 +6,8 @@ import PyManager.TypedTorchPf;
 import RBNExceptions.RBNCompatibilityException;
 import RBNExceptions.RBNNaNException;
 import RBNpackage.*;
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 
 import java.util.*;
 
@@ -97,7 +99,7 @@ public class GGGnnNode extends GGCPMNode {
             for (int c = 0; c < torchInputPfListType.size(); c++) { // loop through all the COMBINE
                 TorchInputPf torchInputPf = torchInputPfListType.get(c);
 
-                int[][] subslist = torchInputPf.tuplesSatisfyingCConstr(A, new String[0], new int[0]);
+                int[][] subslist = torchInputPf.tuplesSatisfyingCConstr(A, new ArgTerm[0], new int[0]);
 //                edgeList = merge2DArrays(edgeList, subslist);
 
                 // Node attributes
@@ -164,7 +166,7 @@ public class GGGnnNode extends GGCPMNode {
         for (int j = 0; j < tuples.length; j++) {
             // this part is used to understand which of the quantvars are used for the unary attributes
             // NOT FULLY TESTED
-            String[] quantvars = torchInputPf.getQuantvars();
+            ArgTerm[] quantvars = torchInputPf.getQuantvars();
             CPModel groundnextsubpf = nextsubpf.substitute(quantvars, tuples[j]);
             int referringArg = 0;
             Vector<int[]> argNodes = new Vector<>();
@@ -175,12 +177,12 @@ public class GGGnnNode extends GGCPMNode {
                 int[] argNode = new int[1];
                 if (groundnextsubpf instanceof ProbFormAtom) {
                     if (((ProbFormAtom) groundnextsubpf).getArguments().length == 1)
-                        argNode[0] = Integer.parseInt(((ProbFormAtom) groundnextsubpf).getArguments()[0]);
+                        argNode[0] = Integer.parseInt(((ProbFormAtom) groundnextsubpf).getArguments()[0].argEval());
                     else
                         argNode[0] = -1;
                 } else if (groundnextsubpf instanceof ProbFormMacroCall) {
                     if (((ProbFormMacroCall) groundnextsubpf).args().length == 1)
-                        argNode[0] = Integer.parseInt(((ProbFormMacroCall) groundnextsubpf).args()[0]);
+                        argNode[0] = Integer.parseInt(((ProbFormMacroCall) groundnextsubpf).args()[0].argEval());
                     else
                         argNode[0] = -1;
                 } else if (groundnextsubpf instanceof ProbFormCombFunc) {
@@ -189,11 +191,11 @@ public class GGGnnNode extends GGCPMNode {
                     if (tuples[j].length == 2) {
                         String groundnextsubpf_str = groundnextsubpf.asString(0, 0, A, false, false);
                         System.out.println(groundnextsubpf_str);
-                        String[] quantvars_0 = new String[]{quantvars[0], quantvars[0]};
+                        ArgTerm[] quantvars_0 = new ArgTerm[]{quantvars[0], quantvars[0]};
                         CPModel ground_0 = nextsubpf.substitute(quantvars_0, tuples[j]);
                         String ground_0_str = ground_0.asString(0, 0, A, false, false);
                         System.out.println(ground_0_str);
-                        String[] quantvars_1 = new String[]{quantvars[0] + quantvars_0[1], quantvars[0] + quantvars_0[1]};
+                        ArgTerm[] quantvars_1 = new ArgTerm[]{new VarTerm(quantvars[0].argEval() + quantvars_0[1].argEval()), new VarTerm(quantvars[0].argEval() + quantvars_0[1].argEval())};
                         CPModel ground_1 = nextsubpf.substitute(quantvars_1, tuples[j]);
                         String ground_1_str = ground_1.asString(0, 0, A, false, false);
                         // if the string matches (with the same first quantvar repeted) then the first is the one used
@@ -245,9 +247,9 @@ public class GGGnnNode extends GGCPMNode {
                     int[] argNode = new int[2];
                     // there should be a check somewhere that does not allow to use relations with one arg...
                     if (((ProbFormAtom) groundnextsubpf).getArguments().length == 2) {
-                        String[] args = ((ProbFormAtom) groundnextsubpf).getArguments();
-                        argNode[0] = Integer.parseInt(args[0]);
-                        argNode[1] = Integer.parseInt(args[1]);
+                        ArgTerm[] args = ((ProbFormAtom) groundnextsubpf).getArguments();
+                        argNode[0] = Integer.parseInt(args[0].argEval());
+                        argNode[1] = Integer.parseInt(args[1].argEval());
                         argNodes.add(argNode);
                     } else // there could be more cases here
                         throw new RBNCompatibilityException("EDGEGRAPH is not a ProbFormArom with 2 arguments");
@@ -257,9 +259,9 @@ public class GGGnnNode extends GGCPMNode {
                     for (int i=0; i<numComponents; i++) {
                         if (groundnextsubpf_bool.componentAt(i) instanceof ProbFormBoolAtom) {
                             int[] argNode = new int[2];
-                            String[] args = ((ProbFormBoolAtom) groundnextsubpf_bool.componentAt(i)).getArguments();
-                            argNode[0] = Integer.parseInt(args[0]);
-                            argNode[1] = Integer.parseInt(args[1]);
+                            ArgTerm[] args = ((ProbFormBoolAtom) groundnextsubpf_bool.componentAt(i)).getArguments();
+                            argNode[0] = Integer.parseInt(args[0].argEval());
+                            argNode[1] = Integer.parseInt(args[1].argEval());
                             argNodes.add(argNode);
                         }
                     }
@@ -289,7 +291,7 @@ public class GGGnnNode extends GGCPMNode {
             double evalOfSubPF = (double) groundnextsubpf.evaluate(
                     A,
                     I,
-                    new String[0],
+                    new ArgTerm[0],
                     new int[0],
                     0,
                     false,

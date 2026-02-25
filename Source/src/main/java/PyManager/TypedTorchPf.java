@@ -1,6 +1,7 @@
 package PyManager;
 
 import RBNpackage.CPModel;
+import RBNpackage.VarTermPackage.ArgTerm;
 
 import java.util.*;
 
@@ -66,6 +67,45 @@ public class TypedTorchPf {
     }
 
     public TypedTorchPf substitute(String[] vars, String[] args) {
+        TypedTorchPf newpf = new TypedTorchPf();
+        for (String type: this.getTypedNames()) {
+            List<TorchInputPf> newtipList = new ArrayList<>();
+            for (TorchInputPf tip: this.getCombines(type)) {
+                TorchInputPf newtip = tip.substitute(vars, args);
+                newtipList.add(newtip);
+            }
+            newpf.addCombine(type, newtipList);
+        }
+        return newpf;
+    }
+
+    public TypedTorchPf substitute(String[] vars, ArgTerm[] args) {
+        TypedTorchPf newpf = new TypedTorchPf();
+        for (String type: this.getTypedNames()) {
+            List<TorchInputPf> newtipList = new ArrayList<>();
+            for (TorchInputPf tip: this.getCombines(type)) {
+                TorchInputPf newtip = tip.substitute(vars, args);
+                newtipList.add(newtip);
+            }
+            newpf.addCombine(type, newtipList);
+        }
+        return newpf;
+    }
+
+    public TypedTorchPf substitute(ArgTerm[] vars, int[] args) {
+        TypedTorchPf newpf = new TypedTorchPf();
+        for (String type: this.getTypedNames()) {
+            List<TorchInputPf> newtipList = new ArrayList<>();
+            for (TorchInputPf tip: this.getCombines(type)) {
+                TorchInputPf newtip = tip.substitute(vars, args);
+                newtipList.add(newtip);
+            }
+            newpf.addCombine(type, newtipList);
+        }
+        return newpf;
+    }
+
+    public TypedTorchPf substitute(ArgTerm[] vars, ArgTerm[] args) {
         TypedTorchPf newpf = new TypedTorchPf();
         for (String type: this.getTypedNames()) {
             List<TorchInputPf> newtipList = new ArrayList<>();

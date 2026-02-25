@@ -8,6 +8,8 @@ import RBNLearning.Gradient_Array;
 import RBNLearning.Gradient_TreeMap;
 import RBNLearning.Profiler;
 import RBNinference.PFNetworkNode;
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 import RBNutilities.rbnutilities;
 
 public class CatModelSoftMax extends CPModel {
@@ -74,7 +76,7 @@ public class CatModelSoftMax extends CPModel {
 	@Override
 	public Object[] evaluate(RelStruc A, 
 			OneStrucData inst, 
-			String[] vars, 
+			ArgTerm[] vars,
 			int[] tuple,
 			int gradindx,
 			boolean useCurrentCvals,
@@ -96,7 +98,7 @@ public class CatModelSoftMax extends CPModel {
 
 			Object[] pfval = probforms.elementAt(i).evaluate(A, 
 					inst, 
-					vars, 
+					vars,
 					tuple,
 					gradindx,
 					useCurrentCvals, 
@@ -204,8 +206,8 @@ public class CatModelSoftMax extends CPModel {
 	}
 
 	@Override
-	public String[] freevars() {
-		String result[] = new String[0];
+	public VarTerm[] freevars() {
+		VarTerm result[] = new VarTerm[0];
 		for (int i = 0;i<probforms.size();i++)
 			result= rbnutilities.arraymerge(result,probforms.elementAt(i).freevars());
 		return result;
@@ -267,7 +269,31 @@ public class CatModelSoftMax extends CPModel {
 		return result;
 	}
 
-//	@Override
+	@Override
+	public CPModel substitute(String[] vars, ArgTerm[] args) {
+		CatModelSoftMax result = new CatModelSoftMax();
+		for (int i = 0;i<probforms.size();i++)
+			result.addProbForm(probforms.elementAt(i).substitute(vars,args));
+		return result;
+	}
+
+	@Override
+	public CPModel substitute(ArgTerm[] vars, ArgTerm[] args) {
+		CatModelSoftMax result = new CatModelSoftMax();
+		for (int i = 0;i<probforms.size();i++)
+			result.addProbForm(probforms.elementAt(i).substitute(vars,args));
+		return result;
+	}
+
+	@Override
+	public CPModel substitute(ArgTerm[] vars, int[] args) {
+		CatModelSoftMax result = new CatModelSoftMax();
+		for (int i = 0;i<probforms.size();i++)
+			result.addProbForm(probforms.elementAt(i).substitute(vars,args));
+		return result;
+	}
+
+	//	@Override
 //	public void updateSig(Signature s) {
 //		for (int i = 0;i<probforms.size();i++)
 //			probforms.elementAt(i).updateSig(s);
@@ -289,7 +315,7 @@ public class CatModelSoftMax extends CPModel {
 
 	@Override
 	public TreeSet<Rel> parentRels(TreeSet<String> processed) {
-		String mykey = this.makeKey(null,null,true);
+		String mykey = this.makeKey((String[]) null,null,true);
 		if (processed.contains(mykey))
 			return new TreeSet<Rel>();
 		else {

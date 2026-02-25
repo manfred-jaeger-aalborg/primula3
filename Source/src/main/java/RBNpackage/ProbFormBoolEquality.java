@@ -1,19 +1,25 @@
 package RBNpackage;
 
-import java.util.Hashtable;
-import java.util.Vector;
-import java.util.TreeSet;
+import java.util.*;
 
 import RBNExceptions.RBNCompatibilityException;
 import RBNinference.PFNetworkNode;
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 import RBNutilities.rbnutilities;
 import RBNLearning.*;
 
 public class ProbFormBoolEquality extends ProbFormBool {
 
-	private String term1,term2;
+	private ArgTerm term1,term2;
 	
 	public ProbFormBoolEquality(String t1, String t2, boolean s){
+		term1= new VarTerm(t1);
+		term2= new VarTerm(t2);
+		sign = s;
+	}
+
+	public ProbFormBoolEquality(ArgTerm t1, ArgTerm t2, boolean s){
 		term1=t1;
 		term2=t2;
 		sign = s;
@@ -31,7 +37,7 @@ public class ProbFormBoolEquality extends ProbFormBool {
 	public int evaluatesTo(RelStruc A) throws RBNCompatibilityException {
 		if (!isGround())
 			return -1;
-		boolean tv = (Integer.parseInt(term1) == Integer.parseInt(term2));
+		boolean tv = (Integer.parseInt(term1.argEval()) == Integer.parseInt(term2.argEval()));
 		if ((tv && sign)||(!tv && !sign))
 			return 1;
 		else
@@ -42,7 +48,11 @@ public class ProbFormBoolEquality extends ProbFormBool {
 	public String asString(int syntax, int depth, RelStruc A, boolean paramsAsValue,boolean usealias) {
 		if (usealias && this.getAlias() != null)
 			return this.getAlias();
-		return "[" + term1 + "=" + term2 + "]";
+		return "[" + term1.toString() + "=" + term2.toString() + "]";
+	}
+
+	public String asString() {
+		return "[" + term1.toString() + "=" + term2.toString() + "]";
 	}
 
 	@Override
@@ -67,7 +77,7 @@ public class ProbFormBoolEquality extends ProbFormBool {
 
 	public Object[] evaluate(RelStruc A, 
 			OneStrucData inst, 
-			String[] vars, 
+			ArgTerm[] vars,
 			int[] tuple,
 			int gradindx,
 			boolean useCurrentCvals, 
@@ -80,19 +90,18 @@ public class ProbFormBoolEquality extends ProbFormBool {
     		int returntype,
     		boolean valonly,
     		Profiler profiler)
-	{			
-//		if (!valonly)
-//			System.out.println("Warning: trying to evaluate gradient for Boolean ProbForm" + this.makeKey(A));
+	{
 		Object[] result = new Object[2];
-		
-		if (returntype == ProbForm.RETURN_SPARSE)
-			result[1] = new Gradient_TreeMap(params);
-		else result[1] = new Gradient_Array(params);
-		
+		if (!valonly) {
+			if (returntype == ProbForm.RETURN_SPARSE)
+				result[1] = new Gradient_TreeMap(params);
+			else result[1] = new Gradient_Array(params);
+		}
+
 		ProbFormBoolEquality thissubstituted = (ProbFormBoolEquality)this.substitute(vars,tuple);
 		if (!thissubstituted.isGround())
 			throw new IllegalArgumentException("Attempt to evaluate non-ground equality");
-		if (Integer.parseInt(thissubstituted.term1)==Integer.parseInt(thissubstituted.term2)) result[0] =1.0;
+		if (Integer.parseInt(thissubstituted.term1.argEval())==Integer.parseInt(thissubstituted.term2.argEval())) result[0] =1.0;
 		else result[0]=0.0;
 		return result;
 	}	
@@ -109,8 +118,8 @@ public class ProbFormBoolEquality extends ProbFormBool {
 	}
 
 	@Override
-	public String[] freevars() {
-		String bothterms[] = {term1,term2}; 
+	public VarTerm[] freevars() {
+		ArgTerm bothterms[] = {term1,term2};
 		return rbnutilities.NonIntOnly(bothterms);
 	}
 
@@ -140,18 +149,18 @@ public class ProbFormBoolEquality extends ProbFormBool {
 	public CPModel substitute(String[] vars, int[] args) {
 		if (vars.length != args.length)
 			System.out.println("ProbFormBoolEquality.substitute: vars: " + rbnutilities.arrayToString(vars) + "   args: " + rbnutilities.arrayToString(args));
-		String termx=term1;
-		String sterm1 = term1;
-		String sterm2 = term2;
-			for (int j = 0; j<vars.length; j++)
-			{
-				if (termx.equals(vars[j])) sterm1 = String.valueOf(args[j]);
-			}
-			termx = term2;
-			for (int j = 0; j<vars.length; j++)
-			{
-				if (termx.equals(vars[j])) sterm2 = String.valueOf(args[j]);
-			}
+		ArgTerm termx = term1;
+		ArgTerm sterm1 = term1;
+		ArgTerm sterm2 = term2;
+		for (int j = 0; j<vars.length; j++)
+		{
+			if (termx.equals(vars[j])) sterm1 = new VarTerm(args[j]);
+		}
+		termx = term2;
+		for (int j = 0; j<vars.length; j++)
+		{
+			if (termx.equals(vars[j])) sterm2 = new VarTerm(args[j]);
+		}
 		ProbFormBoolEquality result = 	new ProbFormBoolEquality(sterm1, sterm2,sign);
 		if (this.alias != null)
 			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
@@ -160,43 +169,133 @@ public class ProbFormBoolEquality extends ProbFormBool {
 
 	@Override
 	public CPModel substitute(String[] vars, String[] args) {
-		String termx=term1;
-		String sterm1 = term1;
-		String sterm2 = term2;
+		if (vars.length != args.length)
+			System.out.println("ProbFormBoolEquality.substitute: vars: " + rbnutilities.arrayToString(vars) + "   args: " + rbnutilities.arrayToString(args));
+		ArgTerm termx = term1;
+		ArgTerm sterm1 = term1;
+		ArgTerm sterm2 = term2;
 		for (int j = 0; j<vars.length; j++)
 		{
-			if (termx.equals(vars[j])) sterm1 = args[j];
+			if (termx.equals(vars[j])) sterm1 = new VarTerm(args[j]);
 		}
 		termx = term2;
 		for (int j = 0; j<vars.length; j++)
 		{
-			if (termx.equals(vars[j])) sterm2 = args[j];
+			if (termx.equals(vars[j])) sterm2 = new VarTerm(args[j]);
 		}
 		ProbFormBoolEquality result = 	new ProbFormBoolEquality(sterm1, sterm2,sign);
 		if (this.alias != null)
 			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
-		return result;	
-
+		return result;
 	}
-	
-	public String term1(){
+
+	@Override
+	public CPModel substitute(String[] vars, ArgTerm[] args) {
+		if (vars.length != args.length)
+			System.out.println("ProbFormBoolEquality.substitute: vars: " + rbnutilities.arrayToString(vars) + "   args: " + rbnutilities.arrayToString(args));
+		ArgTerm termx = term1;
+		ArgTerm sterm1 = term1;
+		ArgTerm sterm2 = term2;
+		for (int j = 0; j<vars.length; j++)
+		{
+			for (String vs: termx.getVariables()) {
+				if (vs.equals(vars[j]))
+					sterm1 = sterm1.substitute(vars[j], args[j]);
+			}
+		}
+		termx = term2;
+		for (int j = 0; j<vars.length; j++)
+		{
+			for (String vs: termx.getVariables()) {
+				if (vs.equals(vars[j]))
+					sterm1 = sterm1.substitute(vars[j], args[j]);
+			}
+		}
+		ProbFormBoolEquality result = 	new ProbFormBoolEquality(sterm1, sterm2,sign);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+    }
+
+	@Override
+	public CPModel substitute(ArgTerm[] vars, ArgTerm[] args) {
+		if (vars.length != args.length)
+			System.out.println("ProbFormBoolEquality.substitute: vars: " + rbnutilities.arrayToString(vars) + "   args: " + rbnutilities.arrayToString(args));
+		ArgTerm termx = term1;
+		ArgTerm sterm1 = term1;
+		ArgTerm sterm2 = term2;
+		for (int j = 0; j<vars.length; j++)
+		{
+			Set<String> sameVars = termx.varsEqual(vars[j]);
+			if (sameVars.size() > 0)
+				sterm1 = sterm1.substitute(vars[j], args[j]);
+		}
+		termx = term2;
+		for (int j = 0; j<vars.length; j++)
+		{
+			Set<String> sameVars = termx.varsEqual(vars[j]);
+			if (sameVars.size() > 0)
+				sterm2 = sterm2.substitute(vars[j], args[j]);
+		}
+		ProbFormBoolEquality result = 	new ProbFormBoolEquality(sterm1, sterm2,sign);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	@Override
+	public CPModel substitute(ArgTerm[] vars, int[] args) {
+		if (vars.length != args.length)
+			System.out.println("ProbFormBoolEquality.substitute: vars: " + rbnutilities.arrayToString(vars) + "   args: " + rbnutilities.arrayToString(args));
+		ArgTerm termx = term1;
+		ArgTerm sterm1 = term1;
+		ArgTerm sterm2 = term2;
+		for (int j = 0; j<vars.length; j++)
+		{
+			Set<String> sameVars = termx.varsEqual(vars[j]);
+			if (sameVars.size() > 0)
+				sterm1 = sterm1.substitute(vars[j], args[j]);
+		}
+		termx = term2;
+		for (int j = 0; j<vars.length; j++)
+		{
+			Set<String> sameVars = termx.varsEqual(vars[j]);
+			if (sameVars.size() > 0)
+				sterm2 = sterm2.substitute(vars[j], args[j]);
+		}
+		ProbFormBoolEquality result = 	new ProbFormBoolEquality(sterm1, sterm2,sign);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+//	public String term1(){
+//		return term1.toString();
+//	}
+
+	public ArgTerm term1() {
 		return term1;
 	}
-	
-	public String term2(){
+
+	public ArgTerm term2() {
 		return term2;
 	}
 	
+//	public String term2(){
+//		return term2;
+//	}
+	
 	private boolean isGround(){
-		return (rbnutilities.IsInteger(term1) && rbnutilities.IsInteger(term2));
+		return term1.isGround() && term2().isGround();
+//		return (rbnutilities.IsInteger(term1) && rbnutilities.IsInteger(term2));
 	}
 
 	public CPModel toStandardPF(boolean recursive){
 		return this;
 	}
 	
-	public String[] terms(){
-		String[] result = new String[2];
+	public ArgTerm[] terms(){
+		ArgTerm[] result = new ArgTerm[2];
 		result[0]=term1;
 		result[1]=term2;
 		return result;

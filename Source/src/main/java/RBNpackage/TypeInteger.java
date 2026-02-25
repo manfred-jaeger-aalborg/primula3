@@ -34,10 +34,10 @@ public class TypeInteger extends Type{
     /** Returns integer vector [0,1,...,maxindex]
      **/
     public int[] allElements(int maxindex){
-	int[] result = new int[maxindex+1];
-	for (int i=0;i<=maxindex;i++)
-	    result[i]=i;
-	return result;
+        int[] result = new int[maxindex+1];
+        for (int i=0;i<=maxindex;i++)
+            result[i]=i;
+        return result;
     }
 
     public String getName(){

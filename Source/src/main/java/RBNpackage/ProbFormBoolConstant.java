@@ -7,6 +7,8 @@ import java.util.TreeSet;
 import RBNExceptions.RBNCompatibilityException;
 import RBNLearning.*;
 import RBNinference.PFNetworkNode;
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 
 /* represents 'false' if sign=true, else represents
  * 'true'
@@ -49,8 +51,8 @@ public class ProbFormBoolConstant extends ProbFormBool {
 //	}
 
 	public Object[] evaluate(RelStruc A, 
-			OneStrucData inst, 
-			String[] vars, 
+			OneStrucData inst,
+			ArgTerm[] vars,
 			int[] tuple,
 			int gradindx,
 			boolean useCurrentCvals, 
@@ -121,8 +123,8 @@ public class ProbFormBoolConstant extends ProbFormBool {
 	}
 
 	@Override
-	public String[] freevars() {
-		return new String[0];
+	public VarTerm[] freevars() {
+		return new VarTerm[0];
 	}
 
 //	@Override
@@ -153,6 +155,30 @@ public class ProbFormBoolConstant extends ProbFormBool {
 
 	@Override
 	public CPModel substitute(String[] vars, String[] args) {
+		ProbFormBoolConstant result = new ProbFormBoolConstant(sign);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	@Override
+	public CPModel substitute(String[] vars, ArgTerm[] args) {
+		ProbFormBoolConstant result = new ProbFormBoolConstant(sign);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	@Override
+	public CPModel substitute(ArgTerm[] vars, ArgTerm[] args) {
+		ProbFormBoolConstant result = new ProbFormBoolConstant(sign);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	@Override
+	public CPModel substitute(ArgTerm[] vars, int[] args) {
 		ProbFormBoolConstant result = new ProbFormBoolConstant(sign);
 		if (this.alias != null)
 			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));

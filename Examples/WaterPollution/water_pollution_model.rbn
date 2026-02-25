@@ -2,10 +2,6 @@ LandUse([agr]a) = SOFTMAX 1,1,1,1;
 
 Pollution([sub]v) = COMPUTEWITHTORCH [/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/config_model.py]
                     
-                    WithNumValues 3
-                    ForFreeVars (v)
-                    ForOutTypes (sub)
-
                     % gnn input definition
                     TYPEDICT
                         NODEFEAT LandUse, AreaAgr

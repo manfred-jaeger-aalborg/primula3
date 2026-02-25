@@ -4,6 +4,7 @@ import java.util.*;
 import RBNExceptions.RBNCompatibilityException;
 import RBNExceptions.RBNNaNException;
 import RBNpackage.*;
+import RBNpackage.VarTermPackage.ArgTerm;
 
 import java.util.Hashtable;
 
@@ -33,7 +34,7 @@ public class GGAtomEqualityNode extends GGCPMNode{
         	else { // o is ProbFormAtom
         		evalOfPFs[i]=(double)((ProbFormAtom)o).evaluate(A, 
     					I , 
-    					new String[0], 
+    					new ArgTerm[0],
     					new int[0],
 						0,
     					false,

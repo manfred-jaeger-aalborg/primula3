@@ -3,6 +3,7 @@ package RBNpackage;
 import java.util.Hashtable;
 
 import RBNExceptions.RBNCompatibilityException;
+import RBNpackage.VarTermPackage.ArgTerm;
 
 /*
  * ProbForms that are guaranteed to evaluate to 
@@ -70,5 +71,5 @@ public abstract class ProbFormBool extends CPModel implements ProbForm {
 	
 	public void setCvals(String paramname, double val) {
 	}
-	
+
 }

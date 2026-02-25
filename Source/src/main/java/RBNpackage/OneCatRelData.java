@@ -24,6 +24,7 @@ package RBNpackage;
 
 import java.util.*;
 
+import RBNpackage.VarTermPackage.ArgTerm;
 import mymath.MyMathOps;
 import RBNutilities.IntArrayComparator;
 import RBNutilities.randomGenerators;
@@ -158,6 +159,10 @@ public class OneCatRelData extends OneRelData {
 	}
 
 	public TreeSet<int[]> allTrue(String[] args){
+		return this.allTrue(args, knownValues);
+	}
+
+	public TreeSet<int[]> allTrue(ArgTerm[] args){
 		return this.allTrue(args, knownValues);
 	}
 

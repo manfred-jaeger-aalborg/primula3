@@ -27,6 +27,7 @@ import java.util.*;
 
 import RBNpackage.*;
 import RBNExceptions.*;
+import RBNpackage.VarTermPackage.ArgTerm;
 import RBNutilities.*;
 
 
@@ -78,7 +79,7 @@ public class GGSoftMaxNode extends GGCPMNode{
 			CPModel pf = cpmsm.pfAt(i);
 			evalOfPFs[i]= (double)(pf.evaluate(A, 
 					I , 
-					new String[0], 
+					new ArgTerm[0],
 					new int[0],
 					0,
 					false,

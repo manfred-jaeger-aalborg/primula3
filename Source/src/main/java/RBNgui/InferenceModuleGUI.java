@@ -4,6 +4,7 @@ import RBNinference.BayesNetIntHuginNet;
 import RBNinference.MapVals;
 import RBNinference.SampleProbs;
 import RBNpackage.*;
+import com.sun.jdi.IntegerType;
 import edu.ucla.belief.ace.Control;
 import edu.ucla.belief.ace.SettingsPanel;
 import edu.ucla.belief.ui.primula.SamiamManager;
@@ -104,6 +105,24 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
      * @uml.associationEnd multiplicity="(1 1)"
      */
     private JScrollPane instantiationsScrollList = new JScrollPane();
+
+    // -----------------------------------------------------------------------
+    // Integer argument input panel
+    // -----------------------------------------------------------------------
+
+    /**
+     * Panel that becomes visible whenever the current argument position (el_pos)
+     * of the selected relation expects an integer value.  The user types the
+     * integer in intInputField and confirms with intInputConfirmButton (or Enter).
+     */
+    private JPanel  intInputPanel         = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 2));
+    private JLabel  intInputLabel         = new JLabel("Integer value for arg");
+    private JLabel  intInputArgPosLabel   = new JLabel("0:");
+    private JTextField intInputField      = new JTextField(8);
+    private JButton intInputConfirmButton = new JButton("Add");
+    private JLabel  intInputErrorLabel    = new JLabel(" ");
+
+    // -----------------------------------------------------------------------
 
     /**
      * @uml.property name="queryatomsLabel"
@@ -472,6 +491,89 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
      */
     private int index;
 
+    private boolean isIntegerArgument(Rel rel, int pos) {
+        if (rel == null || pos < 0 || pos >= rel.getArity()) return false;
+        try {
+            RBNpackage.Type relType = rel.getTypes()[pos];
+            if (relType == null) return false;
+            return relType instanceof TypeInteger;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Show or hide the integer-input panel depending on whether the argument
+     * at the current el_pos of the currently selected relation expects
+     * an integer
+     */
+    private void refreshIntInputPanel() {
+        boolean needInt = (selected_rel != null) && (selected_rel.getArity() > 0) && isIntegerArgument(selected_rel, el_pos);
+
+        if (needInt) {
+            intInputArgPosLabel.setText((el_pos + 1) + ":");
+            intInputField.setText("");
+            intInputErrorLabel.setText(" ");
+            intInputPanel.setVisible(true);
+            intInputField.requestFocusInWindow();
+        } else {
+            intInputPanel.setVisible(false);
+        }
+        intInputPanel.getParent().revalidate();
+        intInputPanel.getParent().repaint();
+    }
+
+    /**
+     * Reads and validates the integer entered in intInputField and,
+     * if valid, stores it element_tuple[el_pos] and advances the
+     * tuple-building state machine exactly as a regular element-name click would
+     */
+    private void commitIntegerArgument() {
+        String text = intInputField.getText().trim();
+        int intVal;
+        try {
+            intVal = Integer.parseInt(text);
+        } catch (NumberFormatException ex) {
+            intInputErrorLabel.setText("Not a valid integer!");
+            intInputErrorLabel.setForeground(Color.RED);
+            intInputField.selectAll();
+            intInputField.requestFocusInWindow();
+            return;
+        }
+        intInputErrorLabel.setText(" ");
+
+        // Store the raw integer in the tuple slot
+        inferenceModuleCore.element_tuple[el_pos] = intVal;
+
+        if (el_pos < selected_rel.getArity() - 1) {
+            addedTuples += intVal + ", ...";
+            el_pos++;
+            refreshIntInputPanel();
+            infoMessage.setText(selected_rel.name.name + " (" + addedTuples + ")");
+        } else {
+            // Tuple complete
+            addedTuples += intVal;
+            intInputPanel.setVisible(false);
+
+            if (queryModeOn) {
+                addQueryAtoms(selected_rel, inferenceModuleCore.element_tuple);
+                infoMessage.setText(selected_rel.name.name + " (" + addedTuples + ")");
+            } else {
+                int[][] instantiations = inferenceModuleCore.allMatchingTuples(inferenceModuleCore.element_tuple, el_pos);
+                inferenceModuleCore.inst.add(selected_rel, instantiations, selected_val, "?");
+                inferenceModuleCore.updateInstantiationList();
+                instantiationsPanel.updateUI();
+                infoMessage.setText(selected_rel.name.name + "(" + addedTuples + ") = "
+                        + selected_rel.get_String_val(selected_val));
+            }
+
+            inferenceModuleCore.element_tuple = new int[selected_rel.getArity()];
+            addedTuples = "";
+            el_pos = 0;
+            myprimula.updateBavaria();
+        }
+    }
+
     public void setupUI() {
         buildQueryatomsTables(inferenceModuleCore.queryModels);
 
@@ -506,8 +608,38 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
         elementNamesList.setModel(inferenceModuleCore.elementNamesListModel);
         elementNamesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         elementNamesScrollList.getViewport().add(elementNamesList);
+
+        // -----------------------------------------------------------------------
+        // Build the integer-argument input panel and embed it below elementNamesList
+        // -----------------------------------------------------------------------
+        intInputLabel.setFont(intInputLabel.getFont().deriveFont(Font.BOLD));
+        intInputErrorLabel.setForeground(Color.RED);
+        intInputConfirmButton.setBackground(PrimulaGUI.COLOR_GREEN);
+        intInputConfirmButton.setToolTipText("Confirm integer value (or press Enter)");
+
+        intInputPanel.setBorder(BorderFactory.createTitledBorder("Integer argument"));
+        intInputPanel.add(intInputLabel);
+        intInputPanel.add(intInputArgPosLabel);
+        intInputPanel.add(intInputField);
+        intInputPanel.add(intInputConfirmButton);
+        intInputPanel.add(intInputErrorLabel);
+        intInputPanel.setVisible(false);  // hidden until needed
+
+        // Allow confirming with the Enter key inside the text field
+        intInputField.addActionListener(e -> commitIntegerArgument());
+        intInputConfirmButton.addActionListener(this);
+
+        // Wrap elementNamesScrollList + intInputPanel in a vertical panel
+        JPanel elementNamesWithIntPanel = new JPanel();
+        elementNamesWithIntPanel.setLayout(new BoxLayout(elementNamesWithIntPanel, BoxLayout.Y_AXIS));
+        elementNamesScrollList.setAlignmentX(Component.LEFT_ALIGNMENT);
+        intInputPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        elementNamesWithIntPanel.add(elementNamesScrollList);
+        elementNamesWithIntPanel.add(intInputPanel);
+        // -----------------------------------------------------------------------
+
         elementNamesPanel.add(elementNamesLabel, BorderLayout.NORTH);
-        elementNamesPanel.add(elementNamesScrollList, BorderLayout.CENTER);
+        elementNamesPanel.add(elementNamesWithIntPanel, BorderLayout.CENTER);
         eiPanel.add(elementNamesPanel);
 
         instantiationsList.setModel(inferenceModuleCore.instantiationsListModel);
@@ -844,14 +976,19 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
     {
         Object source = e.getSource();
 
-//		if( source == instButton ){
-//			el_pos=0;
-//			instButton.setBackground(Primula.COLOR_BLUE_SELECTED);
-//			queryButton.setBackground(Primula.COLOR_BLUE);
-//			elementNamesList.clearSelection();
-//			queryModeOn = false;
-//			infoMessage.setText(" ");
-//		}
+        //		if( source == instButton ){
+        //			el_pos=0;
+        //			instButton.setBackground(Primula.COLOR_BLUE_SELECTED);
+        //			queryButton.setBackground(Primula.COLOR_BLUE);
+        //			elementNamesList.clearSelection();
+        //			queryModeOn = false;
+        //			infoMessage.setText(" ");
+        //		}
+
+        if (source == intInputConfirmButton) {
+            commitIntegerArgument();
+            return;
+        }
 
         if( source == toggleTruthButton ){
             if(selectedInstAtom != null && selectedInstAtom.rel instanceof BoolRel){
@@ -1074,10 +1211,16 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
             String names = ""+rel.name.name + "(";
             for(int j=0; j<nodes.length; ++j){
                 if(j+1 < nodes.length){
-                    names = names + inferenceModuleCore.elementNamesListModel.elementAt(nodes[j]) + ",";
+                    if (rel.getTypes()[j] instanceof TypeInteger)
+                        names += nodes[j] + ",";
+                    else
+                        names = names + inferenceModuleCore.elementNamesListModel.elementAt(nodes[j]) + ",";
                 }
                 else { //last item
-                    names = names + inferenceModuleCore.elementNamesListModel.elementAt(nodes[j]);
+                    if (rel.getTypes()[j] instanceof TypeInteger)
+                        names += nodes[j];
+                    else
+                        names = names + inferenceModuleCore.elementNamesListModel.elementAt(nodes[j]);
                 }
             }
             names = names + ")";
@@ -1175,6 +1318,7 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
                 addQueryAtoms(selected_rel, new int[0]);
                 infoMessage.setText(selected_rel.name.name+" ("+addedTuples+")");
             }
+            refreshIntInputPanel();
         }
 
         else if( source == valuesList ){
@@ -1190,9 +1334,18 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
                 inferenceModuleCore.updateInstantiationList();
                 instantiationsPanel.updateUI();
             }
+            refreshIntInputPanel();
         }
 
         else if( source == elementNamesList ){
+            // if the current argument position expects an integer, ignore
+            // clicks on the element names list and remind the user to use the panel.
+            if (isIntegerArgument(selected_rel, el_pos)) {
+                infoMessage.setText("Please enter an integer value in the panel above.");
+                intInputField.requestFocusInWindow();
+                return;
+            }
+
             int selected_element = elementNamesList.locationToIndex(e.getPoint());
             if(!inferenceModuleCore.sampling){
                 if(selected_rel != null && selected_rel.getArity()>0){  //relation should be selected first
@@ -1201,9 +1354,11 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
                     if (el_pos<selected_rel.getArity()-1) {
                         el_pos++;
                         addedTuples += (String)inferenceModuleCore.elementNamesListModel.elementAt(inferenceModuleCore.element_tuple[index]) +", ...";
+                        refreshIntInputPanel();
                     }
                     else { // tuple now complete
                         addedTuples += (String)inferenceModuleCore.elementNamesListModel.elementAt(inferenceModuleCore.element_tuple[index]);
+                        intInputPanel.setVisible(false);
                         if(queryModeOn){
                             addQueryAtoms(selected_rel, inferenceModuleCore.element_tuple);
                             infoMessage.setText(selected_rel.name.name+" ("+addedTuples+")");
@@ -1221,6 +1376,7 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
                         inferenceModuleCore.element_tuple = new int[selected_rel.getArity()];
                         addedTuples = "";
                         el_pos=0;
+                        refreshIntInputPanel();
                     }
 
                 }
@@ -1345,6 +1501,7 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
         selectedInstAtom = null;
         selectedQueryAtom = null;
 
+        intInputPanel.setVisible(false);
         if( inferenceModuleCore.myACEControl != null ) inferenceModuleCore.myACEControl.clear();//keith cascio 20060515
     }
 
@@ -1376,34 +1533,44 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
         int[] temp = new int[tuple.length];
         int pos = 0;
         int length = tuple.length;
+        int[] intpos = new int[length];
         for(int x=0; x<tuple.length; x++){
             temp[x] = tuple[x];
+            if (rel.getTypes()[x] instanceof TypeInteger)
+                intpos[x] = x;
+            else
+                intpos[x] = -1;
         }
         for(int i=0; i<length; i++){
-            if(inferenceModuleCore.elementNamesListModel.elementAt(tuple[i]).equals("*")){
-                Vector v = rstnew.getNames();
-                for(int j=0; j<v.size(); j++){
-                    temp[pos] = j;
-                    result.add(buildAtoms(rel, temp));
-                }
-            }
-            else if(((String)inferenceModuleCore.elementNamesListModel.elementAt(tuple[i])).startsWith("[")){
-                Vector<BoolRel> attributeNames = rstnew.getBoolAttributes();
-                BoolRel nextattr;
-                for(int j =0; j<attributeNames.size();j++){
-                    nextattr = attributeNames.elementAt(j);
-                    if(((String)inferenceModuleCore.elementNamesListModel.elementAt(tuple[i])).equals("["+ nextattr +"*]")){
-                        Vector<int[]> tuples = rstnew.allTrue(nextattr);
-                        for(int k =0; k<tuples.size(); k++){
-                            int[] temp2 = tuples.elementAt(k);
-                            temp[pos] = temp2[0];
-                            result.add(buildAtoms(rel, temp));
+            if (intpos[i] < 0) {
+                if (inferenceModuleCore.elementNamesListModel.elementAt(tuple[i]).equals("*")) {
+                    Vector v = rstnew.getNames();
+                    for (int j = 0; j < v.size(); j++) {
+                        temp[pos] = j;
+                        result.add(buildAtoms(rel, temp));
+                    }
+                } else if (((String) inferenceModuleCore.elementNamesListModel.elementAt(tuple[i])).startsWith("[")) {
+                    Vector<BoolRel> attributeNames = rstnew.getBoolAttributes();
+                    BoolRel nextattr;
+                    for (int j = 0; j < attributeNames.size(); j++) {
+                        nextattr = attributeNames.elementAt(j);
+                        if (((String) inferenceModuleCore.elementNamesListModel.elementAt(tuple[i])).equals("[" + nextattr + "*]")) {
+                            Vector<int[]> tuples = rstnew.allTrue(nextattr);
+                            for (int k = 0; k < tuples.size(); k++) {
+                                int[] temp2 = tuples.elementAt(k);
+                                temp[pos] = temp2[0];
+                                result.add(buildAtoms(rel, temp));
+                            }
                         }
                     }
+                } else {
+                    if (pos == length - 1) {
+                        result.add(rel, temp);
+                    }
                 }
-            }
-            else{
-                if(pos == length-1){
+            } else {
+                temp[pos] = tuple[intpos[i]];
+                if (pos == length - 1) {
                     result.add(rel, temp);
                 }
             }
@@ -1453,6 +1620,7 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
         selectedInstAtom = null;
         selectedQueryAtom = null;
 
+        intInputPanel.setVisible(false);
         if( inferenceModuleCore.myACEControl != null ) inferenceModuleCore.myACEControl.clear();//keith cascio 20061201
     }
 
@@ -1555,6 +1723,7 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
                     el_pos=0;
                     elementNamesList.clearSelection();
                     infoMessage.setText("Select Relation - Value - Element name(s) ");
+                    refreshIntInputPanel();
                     break;
                 case 1: // Query tab
                     queryModeOn = true;
@@ -1564,6 +1733,7 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
                     buildQueryatomsTables(inferenceModuleCore.queryModels);
                     queryatomsPanel.updateUI();
                     outerQueryPane.updateUI();
+                    refreshIntInputPanel();
                     break;
                 case 2: // MCMC tab
                     buildMCMCTables();

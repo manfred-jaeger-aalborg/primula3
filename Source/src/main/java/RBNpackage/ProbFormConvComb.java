@@ -27,6 +27,8 @@ package RBNpackage;
 import java.util.*;
 
 import RBNExceptions.*;
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 import RBNutilities.*;
 import RBNgui.Primula;
 import RBNinference.PFNetworkNode;
@@ -66,9 +68,9 @@ public class ProbFormConvComb extends CPModel implements ProbForm{
 	}
 
 
-	public String[] freevars()
+	public VarTerm[] freevars()
 	{
-		String result[];
+		VarTerm result[];
 		result = rbnutilities.arraymerge(F1.freevars(),F2.freevars());
 		result = rbnutilities.arraymerge(result,F3.freevars());
 		return result;
@@ -96,6 +98,30 @@ public class ProbFormConvComb extends CPModel implements ProbForm{
 		return result;
 	}
 
+	@Override
+	public CPModel substitute(String[] vars, ArgTerm[] args) {
+		ProbFormConvComb result = new ProbFormConvComb(F1.substitute(vars,args),F2.substitute(vars,args),F3.substitute(vars,args));
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	@Override
+	public CPModel substitute(ArgTerm[] vars, ArgTerm[] args) {
+		ProbFormConvComb result = new ProbFormConvComb(F1.substitute(vars,args),F2.substitute(vars,args),F3.substitute(vars,args));
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	@Override
+	public CPModel substitute(ArgTerm[] vars, int[] args) {
+		ProbFormConvComb result = new ProbFormConvComb(F1.substitute(vars,args),F2.substitute(vars,args),F3.substitute(vars,args));
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
 
 	public  Vector makeParentVec(RelStruc A)
 	throws RBNCompatibilityException
@@ -112,9 +138,9 @@ public class ProbFormConvComb extends CPModel implements ProbForm{
 		Vector<GroundAtom> result = atomvec1;
 		double v1,v2,v3;
 	    
-		v1=(Double)F1.evaluate(A,inst,new String[0],new int[0],0,false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
-		v2=(Double)F2.evaluate(A,inst,new String[0],new int[0],0,false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
-		v3=(Double)F3.evaluate(A,inst,new String[0],new int[0],0,false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
+		v1=(Double)F1.evaluate(A,inst,new ArgTerm[0],new int[0],0,false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
+		v2=(Double)F2.evaluate(A,inst,new ArgTerm[0],new int[0],0,false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
+		v3=(Double)F3.evaluate(A,inst,new ArgTerm[0],new int[0],0,false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
 
 		if (!Double.isNaN(v1))
 			atomvec1 = new Vector<GroundAtom>();
@@ -232,7 +258,7 @@ public class ProbFormConvComb extends CPModel implements ProbForm{
 
 	public Object[] evaluate(RelStruc A, 
 			OneStrucData inst, 
-			String[] vars, 
+			ArgTerm[] vars,
 			int[] tuple,
 			int gradinx,
 			boolean useCurrentCvals, 
@@ -547,7 +573,7 @@ public class ProbFormConvComb extends CPModel implements ProbForm{
 	}
 	
 	public TreeSet<Rel> parentRels(TreeSet<String> processed){
-		String mykey = this.makeKey(null,null,true);
+		String mykey = this.makeKey((String[]) null,null,true);
 		if (processed.contains(mykey))
 			return new TreeSet<Rel>();
 		else {

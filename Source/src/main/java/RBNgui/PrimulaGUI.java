@@ -1215,9 +1215,16 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/Community/community_softclus_2c.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/Community/zachary.rdef";
-//
-        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/InformationDiffusion/independent_cascade_no_mem.rbn";
-        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/InformationDiffusion/zachary_cascade_basic.rdef";
+
+//        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/InformationDiffusion/independent_cascade.rbn";
+//        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/InformationDiffusion/independent_cascade.rdef";
+//        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/InformationDiffusion/zachary_cascade_basic_3.rdef";
+
+//        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/InformationDiffusion/IntArg/independent_cascade.rbn";
+//        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/InformationDiffusion/IntArg/independent_cascade.rdef";
+
+//        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/Dummy/rbn.rbn";
+//        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/Dummy/rdef.rdef";
 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/InformationDiffusion/TemporalGNN/independent_cascade_gnn.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/InformationDiffusion/TemporalGNN/zachary_cascade_uniform_simple.rdef";
@@ -1236,6 +1243,9 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/RSE/primula/model_rbn_small.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/RSE/primula/simulation_graph_0_small.rdef";
+
+        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/GNN-homophily/Cora/cora_rbn.rbn";
+        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/GNN-homophily/Cora/rdef/cora_nodeconst_homProp_0.rdef";
         primula.srsfile = new File(rstinputfilestring);
         primula.rbnfile = new File(rbninputfilestring);
 
@@ -1257,6 +1267,6 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
         PrimulaGUI win = new PrimulaGUI(new Primula());
 		SamiamManager.centerWindow( win );
         win.loadDefaults();
-		win.show();
+		win.setVisible(true);
     }
 }

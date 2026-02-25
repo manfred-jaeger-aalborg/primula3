@@ -17,6 +17,7 @@ package RBNio;
 import PyManager.*;
 import RBNpackage.*;
 import java.util.*;
+import RBNpackage.VarTermPackage.*;
 import myio.StringOps;
 import RBNExceptions.*;
 
@@ -65,50 +66,54 @@ void ReadRBN()  throws RBNIllegalArgumentException:
 
 
 void MacroDefinition()  throws RBNIllegalArgumentException:
-{RBNReader3.ParsedTypedAtom parsedat;
- CPModel parsedprobform;
+{
+    RBNReader3.ParsedTypedAtom parsedat;
+    CPModel parsedprobform;
 }
 {// grammar
 	"@" parsedat = TypedAtom(true) "="
 	(
           // choose CatGnn only when COMPUTEWITHTORCH is next 
-          LOOKAHEAD( <COMPUTEWITHTORCH> ) parsedprobform = CatGnn()
+          LOOKAHEAD( <COMPUTEWITHTORCH> ) parsedprobform = ReadCatGnn(parsedat)
         |
           parsedprobform = ProbForm()
     )
     ";"
 	{
-	parsedat.set_relname("@"+parsedat.rel().name());
-	switch  (parseno){
-	case 1:
-		reader.addMacroDefined(new RBNMacro(((BoolRel)parsedat.rel()),parsedat.args(),null));
-		break;
-	case 2:
-		reader.setMacroPF(parsedat.rel(),parsedprobform);
-	}
+        parsedat.set_relname("@"+parsedat.rel().name());
+        switch  (parseno) {
+        case 1:
+            reader.addMacroDefined(new RBNMacro(((BoolRel)parsedat.rel()),parsedat.args(),null));
+            break;
+        case 2:
+            reader.setMacroPF(parsedat.rel(),parsedprobform);
+        }
 	}
 }
 
 void ProbRelDefinition()  throws RBNIllegalArgumentException:
-{RBNReader3.ParsedTypedAtom parsedat;
- CPModel parsedcpm;
+{
+    RBNReader3.ParsedTypedAtom parsedat;
+    CPModel parsedcpm;
 }
 {// grammar
-	parsedat = TypedAtom(false) "=" parsedcpm = CPModel() ";"
-	{switch  (parseno){
-		case 1:
-			reader.addProbRelDefined(new RBNPreldef(parsedat.rel(),parsedat.args(),parsedcpm));
-			break;
-		case 2:
-		reader.setProbRelPF(parsedat.rel(),parsedcpm);
-	}
+	parsedat = TypedAtom(false) "=" parsedcpm = CPModel(parsedat) ";"
+	{
+        switch  (parseno)
+        {
+            case 1:
+                reader.addProbRelDefined(new RBNPreldef(parsedat.rel(),parsedat.args(),parsedcpm));
+                break;
+            case 2:
+            reader.setProbRelPF(parsedat.rel(),parsedcpm);
+	    }
 	}
 }
 
-CPModel CPModel()  throws RBNIllegalArgumentException:
+CPModel CPModel(RBNReader3.ParsedTypedAtom contextAt)  throws RBNIllegalArgumentException:
 {CPModel parsedcpm;}
 {// grammar
-    (parsedcpm = CatSoftMax() | parsedcpm = ProbForm() | parsedcpm = CatGnn())
+    (parsedcpm = CatSoftMax() | parsedcpm = ProbForm() | parsedcpm = ReadCatGnn(contextAt))
     {return parsedcpm;}
 }
 
@@ -128,16 +133,16 @@ CPModel ProbForm()  throws RBNIllegalArgumentException:
 	{return parsedpf;}
 }
 
-RBNReader3.ParsedUnTypedAtom  UntypedAtom(boolean ismacro) throws RBNIllegalArgumentException:
+RBNReader3.ParsedUnTypedAtom UntypedAtom(boolean ismacro) throws RBNIllegalArgumentException:
 {
-  Vector<String> args;
+  Vector<ArgTerm> args;
   Token tok;
   Rel rel;
 }
 {// grammar
 	tok = <Name> args = UntypedArguments()
 	{
-	 return reader.new ParsedUnTypedAtom(tok.image,args,ismacro);
+	 return reader.new ParsedUnTypedAtom(tok.image, args, ismacro);
 	}
 }
 
@@ -158,62 +163,92 @@ RBNReader3.ParsedTypedAtom TypedAtom(boolean ismacro) throws RBNIllegalArgumentE
 
 }
 
-
-
-Vector<String> UntypedArguments():
-{Vector<String> parsedargs;
+Vector<ArgTerm> UntypedArguments():
+{
+    Vector<ArgTerm> parsedargs;
 }
 {// grammar
 	"(" parsedargs = ArgList() ")"
-	{return parsedargs;}
+	{ return parsedargs; }
 }
 
-
-Vector<String> ArgList():
-{Vector<String> parsedargs = new Vector<String>();
- Token tok;
+Vector<ArgTerm> ArgList() :
+{
+    Vector<ArgTerm> parsedArgs = new Vector<ArgTerm>();
+    ArgTerm t;
 }
-{// grammar
-	 ( tok = <Name>
-		{parsedargs.add(tok.image);}
-	 ("," tok = <Name>
-		{parsedargs.add(tok.image);}
-	 )*  )?
-	{return parsedargs;}
+{
+    (
+        t = ArgExpr() { parsedArgs.add(t); }
+        ( "," t = ArgExpr() { parsedArgs.add(t); } )*
+    )?
+    { return parsedArgs; }
+}
+
+ArgTerm ArgExpr() :
+{
+    ArgTerm left;
+    ArgTerm right;
+}
+{
+    left = ArgPrimary()
+    (
+        <PLUS> right = ArgPrimary() { left = new IntPlus(left, right); }
+//      | "-" right = ArgPrimary() { left = new IntMinus(left, right); }
+    )*
+    { return left; }
+}
+
+ArgTerm ArgPrimary() :
+{
+    Token t;
+    ArgTerm e;
+}
+{
+    t = <Name> { return new VarTerm(t.image); }
+  | t = <NonNegNumber> { return new VarTerm(t.image); }
+  | "(" e = ArgExpr() ")" { return e; }
 }
 
 
 RBNReader3.ParsedTypedArguments TypedArguments():
 {
 	Token tok;
-	Vector<String> args = new Vector<String>();
+	Vector<ArgTerm> args = new Vector<ArgTerm>();
 	Vector<Type> types = new Vector<Type>();
 	String typestr = null;
 }
 {// grammar
 	"("
-	( (typestr = TypeDeclaration())?
-		{ if (typestr != null)
-			{types.add(new TypeRel(typestr));
-			 typestr = null;
-			}
-		  else {types.add(new TypeDomain());}
+	(
+	    (typestr = TypeDeclaration())?
+		{
+            if (typestr != null)
+            {
+                types.add(new TypeRel(typestr));
+                typestr = null;
+            }
+            else {types.add(new TypeDomain());}
 		}
-	tok=<Name>
-		{args.add(tok.image);}
-	( "," (typestr = TypeDeclaration())?
-		{ if (typestr != null)
-			{types.add(new TypeRel(typestr));
-			 typestr = null;
+	    tok=<Name>
+		{ args.add(new VarTerm(tok.image)); }
+
+	    ( "," (typestr = TypeDeclaration())?
+		{
+            if (typestr != null) {
+                types.add(new TypeRel(typestr));
+                typestr = null;
 			}
-		  else {types.add(new TypeDomain());}
+		    else {
+                types.add(new TypeDomain());
+            }
 		}
-	tok=<Name>
-		{args.add(tok.image);}
-	)*
+	    tok=<Name>
+		{ args.add(new VarTerm(tok.image)); }
+	    )*
 	) ?
 	")"
-	{return reader.new ParsedTypedArguments(types,args);}
+	{ return reader.new ParsedTypedArguments(types,args); }
 }
 
 String TypeDeclaration():
@@ -367,7 +402,7 @@ ProbFormCombFunc CombinationFunc()  throws RBNIllegalArgumentException:
 ProbFormCombFunc CombinationFuncClassic()  throws RBNIllegalArgumentException:
 { Token tok;
   Vector<CPModel> pflist;
-  Vector<String> arglist;
+  Vector<ArgTerm> arglist;
   CPModel[] pfarr;
   ProbFormBool cc = new ProbFormBoolConstant(true);
 }
@@ -385,15 +420,16 @@ ProbFormCombFunc CombinationFuncClassic()  throws RBNIllegalArgumentException:
 	 pfarr = new CPModel[pflist.size()];
 	 for (int i=0;i<pfarr.length;i++)
 		pfarr[i]=pflist.elementAt(i);
-	return new ProbFormCombFunc(tok.image,pfarr,StringOps.stringVectorToArray(arglist),cc);}
-	}
+    ArgTerm[] argterms = arglist.toArray(new ArgTerm[0]);
+    return new ProbFormCombFunc(tok.image,pfarr,argterms,cc);}
+}
 }
 
 
 ProbFormCombFunc CombinationFuncCherry()  throws RBNIllegalArgumentException:
 { Token tok;
   Vector<CPModel> pflist;
-  Vector<String> arglist = new Vector<String>();
+  Vector<ArgTerm> arglist = new Vector<ArgTerm>();
   CPModel[] pfarr;
   ProbFormBool cc = new ProbFormBoolConstant(true);
 }
@@ -406,16 +442,19 @@ ProbFormCombFunc CombinationFuncCherry()  throws RBNIllegalArgumentException:
 	arglist = ArgList()
 	<COMBWHERE> cc=BoolFormula())?
 
-	{switch(parseno){
-	case 1:
-		return null;
-		break;
-	case 2:
-	 pfarr = new CPModel[pflist.size()];
-	 for (int i=0;i<pfarr.length;i++)
-		pfarr[i]=pflist.elementAt(i);
-	return new ProbFormCombFunc(tok.image,pfarr,StringOps.stringVectorToArray(arglist),cc);}
-	}
+	{
+    switch(parseno) {
+        case 1:
+            return null;
+            break;
+        case 2:
+            pfarr = new CPModel[pflist.size()];
+            for (int i=0;i<pfarr.length;i++)
+                pfarr[i]=pflist.elementAt(i);
+            ArgTerm[] argterms = arglist.toArray(new ArgTerm[0]);
+            return new ProbFormCombFunc(tok.image,pfarr,argterms,cc);
+    }
+}
 }
 
 ProbFormCombFunc CombinationFuncProd()  throws RBNIllegalArgumentException:
@@ -440,7 +479,7 @@ CPModel[] pfarr;
 	 pfarr = new CPModel[pflist.size()];
 	 for (int i=0;i<pfarr.length;i++)
 		pfarr[i]=pflist.elementAt(i);
-	return new ProbFormCombFunc("prod",pfarr,new String[0],new ProbFormBoolConstant(true));}
+	return new ProbFormCombFunc("prod",pfarr,new ArgTerm[0],new ProbFormBoolConstant(true));}
 	}
 }
 
@@ -464,7 +503,7 @@ CPModel[] pfarr;
            CPModel[] pfl = new CPModel[2];
        	   pfl[0]=new ProbFormConstant(-1);
        	   pfl[1]=nextpf;
-       	   pflist.add(new ProbFormCombFunc("prod",pfl,new String[0],new ProbFormBoolConstant(true)));
+       	   pflist.add(new ProbFormCombFunc("prod",pfl,new ArgTerm[0],new ProbFormBoolConstant(true)));
        	   }
        	)
 	)+
@@ -477,7 +516,7 @@ CPModel[] pfarr;
 	 pfarr = new CPModel[pflist.size()];
 	 for (int i=0;i<pfarr.length;i++)
 		pfarr[i]=pflist.elementAt(i);
-	return new ProbFormCombFunc("sum",pfarr,new String[0],new ProbFormBoolConstant(true));}
+	return new ProbFormCombFunc("sum",pfarr,new ArgTerm[0],new ProbFormBoolConstant(true));}
 	}
 }
 
@@ -499,7 +538,7 @@ ProbFormBool BoolPrimary()  throws RBNIllegalArgumentException:
 {ProbFormBool pf;}
 {// grammar
     ( LOOKAHEAD(<Name> "(") pf = BoolAtom()
-    | LOOKAHEAD(<Name> "=")  pf = BoolEquality()
+    | LOOKAHEAD(ArgExpr() "=")  pf = BoolEquality()
     | LOOKAHEAD( "(" BoolFormula() "&"  )pf = BoolAnd()
     | LOOKAHEAD( "(" BoolFormula() "|"  )pf = BoolOr()
     | "(" pf = BoolFormula() ")"
@@ -524,7 +563,7 @@ ProbFormBoolAtom BoolAtom()  throws RBNIllegalArgumentException:
 }
 {// grammar
 	parsedat = UntypedAtom(false)
-	{return new ProbFormBoolAtom(parsedat.rel(),parsedat.args(),true);}
+	{return new ProbFormBoolAtom(parsedat.rel(), parsedat.args(), true);}
 }
 
 
@@ -532,33 +571,36 @@ ProbFormBoolEquality BoolEquality()  throws RBNIllegalArgumentException:
 {
  Token tok1;
  Token tok2;
+ ArgTerm term1;
+ ArgTerm term2;
 }
 {// grammar
-	tok1= <Name> "=" tok2 = <Name>
-	{return new ProbFormBoolEquality(tok1.image,tok2.image,true);}
+    term1 = ArgExpr() "=" term2 = ArgExpr()
+	{return new ProbFormBoolEquality(term1,term2,true);}
 }
 
-ProbFormBoolAtomEquality BoolCatEquality()  throws RBNIllegalArgumentException:
+ProbFormBoolAtomEquality BoolCatEquality() throws RBNIllegalArgumentException :
 {
  Object tok1;
  Object tok2;
 }
 {// grammar
 	(tok1=UntypedAtom(false) | tok1=<Name>.image) "=" (tok2=UntypedAtom(false) | tok2=<Name>.image)
-		{switch(parseno){
-	case 1:
-		return null;
-		break;
-	case 2:
-	     if (tok1 instanceof RBNReader3.ParsedUnTypedAtom){
-	     	tok1= new ProbFormAtom(((RBNReader3.ParsedUnTypedAtom)tok1).rel(),((RBNReader3.ParsedUnTypedAtom)tok1).args());
-	     }
-	     if (tok2 instanceof RBNReader3.ParsedUnTypedAtom){
-	     	tok2= new ProbFormAtom(((RBNReader3.ParsedUnTypedAtom)tok2).rel(),((RBNReader3.ParsedUnTypedAtom)tok2).args());
-	     }
-	     return new ProbFormBoolAtomEquality(tok1,tok2,true,reader.getSig());
-	     }
-	     }
+    {
+        switch(parseno) {
+        case 1:
+            return null;
+            break;
+        case 2:
+             if (tok1 instanceof RBNReader3.ParsedUnTypedAtom){
+                tok1= new ProbFormAtom(((RBNReader3.ParsedUnTypedAtom)tok1).rel(),((RBNReader3.ParsedUnTypedAtom)tok1).args());
+        }
+             if (tok2 instanceof RBNReader3.ParsedUnTypedAtom){
+                tok2= new ProbFormAtom(((RBNReader3.ParsedUnTypedAtom)tok2).rel(),((RBNReader3.ParsedUnTypedAtom)tok2).args());
+        }
+             return new ProbFormBoolAtomEquality(tok1,tok2,true,reader.getSig());
+        }
+    }
 }
 
 ProbFormBoolComposite BoolAnd()  throws RBNIllegalArgumentException:
@@ -684,26 +726,27 @@ String PathDec():
 }
 
 TorchInputPf CombinationTorchRels() throws RBNIllegalArgumentException:
-{ Token tok;
-  Vector<CPModel> pflistNodeFeat = new Vector<>();
-  Vector<CPModel> pflistEdgeGraph = new Vector<>();
-  Vector<CPModel> pflistEdgeAttr = new Vector<>();
-  Vector<String> arglist = new Vector<String>();
-  CPModel[] pfarr;
-  CPModel[] pfarrNodeAttr;
-  CPModel[] pfarrEdge;
-  CPModel[] pfarrEdgeAttr;
-  ProbFormBool cc = new ProbFormBoolConstant(true);
+{
+    Token tok;
+    Vector<CPModel> pflistNodeFeat = new Vector<>();
+    Vector<CPModel> pflistEdgeGraph = new Vector<>();
+    Vector<CPModel> pflistEdgeAttr = new Vector<>();
+    Vector<ArgTerm> arglist = new Vector<ArgTerm>();
+    CPModel[] pfarr;
+    CPModel[] pfarrNodeAttr;
+    CPModel[] pfarrEdge;
+    CPModel[] pfarrEdgeAttr;
+    ProbFormBool cc = new ProbFormBoolConstant(true);
 }
 {// grammar
- <COMBCOMB> 
- <NODEFEAT> pflistNodeFeat = ProbFormList()
- (<EDGEGRAPH> pflistEdgeGraph = ProbFormList())?
- (<EDGEATTR> pflistEdgeAttr = ProbFormList())?
- <USINGTORCH>
- (<COMBFORALL> arglist = ArgList() <COMBWHERE> cc=BoolFormula())?
- {
-    switch(parseno){
+    <COMBCOMB>
+    <NODEFEAT> pflistNodeFeat = ProbFormList()
+    (<EDGEGRAPH> pflistEdgeGraph = ProbFormList())?
+    (<EDGEATTR> pflistEdgeAttr = ProbFormList())?
+    <USINGTORCH>
+    (<COMBFORALL> arglist = ArgList() <COMBWHERE> cc=BoolFormula())?
+    {
+    switch(parseno) {
         case 1: return null; break;
         case 2:
             pfarr = new CPModel[pflistNodeFeat.size()+pflistEdgeGraph.size()+pflistEdgeAttr.size()];
@@ -723,16 +766,17 @@ TorchInputPf CombinationTorchRels() throws RBNIllegalArgumentException:
                 pfarr[indexAll]=pflistEdgeAttr.elementAt(i);
                 pfarrEdgeAttr[i]=pflistEdgeAttr.elementAt(i);
             }
-            return new TorchInputPf(pfarr, pfarrNodeAttr, pfarrEdge, pfarrEdgeAttr, StringOps.stringVectorToArray(arglist),cc);
-    } }
+            return new TorchInputPf(pfarr, pfarrNodeAttr, pfarrEdge, pfarrEdgeAttr, arglist.toArray(new ArgTerm[0]),cc);
+        }
+    }
 }
 
-CatGnn CatGnn() throws RBNIllegalArgumentException :
+CatGnn ReadCatGnn(RBNReader3.ParsedTypedAtom parsedat) throws RBNIllegalArgumentException :
 {
     Token tk1 = null;
     Token tk2;
-    Vector<String> freeVals;
-    Vector<String> outTypes;
+    ArgTerm[] freeVals;
+    Type[] outTypes;
     String configPath;
     int numVals = 1;
     List<TorchInputSpecs> forInputs = new ArrayList<>();
@@ -746,12 +790,18 @@ CatGnn CatGnn() throws RBNIllegalArgumentException :
 {
     <COMPUTEWITHTORCH>
     configPath = PathDec()
-    <WithNumValues>
-    tk1 = <NonNegNumber> { numVals = Integer.parseInt(tk1.image); }
-    <ForFreeVars>
-    freeVals = UntypedArguments()
-    <ForOutTypes>
-    outTypes = UntypedArguments()
+//    <WithNumValues>
+//    tk1 = <NonNegNumber> { numVals = Integer.parseInt(tk1.image); }
+//    <ForFreeVars>
+//    freeVals = UntypedArguments()
+//    <ForOutTypes>
+//    outTypes = UntypedArguments()
+{
+    numVals = (int) parsedat.rel().numvals();
+    freeVals = parsedat.args();
+    outTypes = parsedat.rel.getTypes();
+}
+
     (
         <TYPEDICT>
             <NODEFEAT> attrs = AttrList()
@@ -792,13 +842,13 @@ CatGnn CatGnn() throws RBNIllegalArgumentException :
     {
         switch(parseno)
         {
-        case 1:
-            return null;
-            break;
-        case 2:
-            if (numVals == 1)
-                return new CatGnnBool(configPath, freeVals, forInputs, tti, outTypes, true);
-            return new CatGnn(configPath, freeVals, numVals, forInputs, tti, outTypes, true);
+            case 1:
+                return null;
+                break;
+            case 2:
+                if (numVals == 1)
+                    return new CatGnnBool(configPath, freeVals, forInputs, tti, outTypes, true);
+                return new CatGnn(configPath, freeVals, numVals, forInputs, tti, outTypes, true);
         }
     }
 }
@@ -925,11 +975,9 @@ TOKEN:{
 //			   | "." (["0"-"9"])+ >
 //}
 
-TOKEN: {<#Digits: (["0"-"9"])+>
-} 
+TOKEN: {<#Digits: (["0"-"9"])+>}
 
-TOKEN: {<NonNegNumber: <Digits> | "."<Digits> | <Digits> "."<Digits> | <Digits> ".">
-}
+TOKEN: {<NonNegNumber: <Digits> | "."<Digits> | <Digits> "."<Digits> | <Digits> ".">}
 
 //TOKEN: {<Constant:  (<MINUS>)?  (<Digits> | "."<Digits> | <Digits> "."<Digits> | <Digits> ".")>
 //}

@@ -28,6 +28,7 @@ import java.util.*;
 import RBNpackage.*;
 import RBNgui.*;
 import RBNExceptions.*;
+import RBNpackage.VarTermPackage.ArgTerm;
 
 
 /** In a GGConvCombNode the children vector has exactly
@@ -61,7 +62,7 @@ public class GGConvCombNode extends GGCPMNode{
 		for (int i = 0; i<3; i++){
 			evalOfSubPFs[i]= (double)((ProbFormConvComb)pf).subPF(i+1).evaluate(A, 
 					I , 
-					new String[0], 
+					new ArgTerm[0],
 					new int[0] ,
 					0,
 					false,

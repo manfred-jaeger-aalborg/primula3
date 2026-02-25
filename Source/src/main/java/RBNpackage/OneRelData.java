@@ -25,6 +25,7 @@ package RBNpackage;
 
 import java.util.*;
 
+import RBNpackage.VarTermPackage.ArgTerm;
 import RBNutilities.IntArrayComparator;
 
 import RBNutilities.rbnutilities;
@@ -88,6 +89,8 @@ public abstract class OneRelData {
 	public abstract TreeSet<int[]> allTrue();
 	
 	public abstract TreeSet<int[]> allTrue(String[] args);
+
+	public abstract TreeSet<int[]> allTrue(ArgTerm[] args);
 	
 	public abstract Vector<String[]> allTrue(RelStruc A);
 	
@@ -107,6 +110,33 @@ public abstract class OneRelData {
 		for (int i=0;i<args.length;i++) {
 			if (rbnutilities.IsInteger(args[i])) {
 				TreeSet<int[]> slicefori = trueIndex[i].get(Integer.parseInt(args[i]));
+				if (slicefori==null)
+					existsnull=true;
+				slices.add(slicefori);
+			}
+		}
+		if (slices.size()==0) {
+			return this.allTrue();
+		}
+		if (existsnull) {
+			return new TreeSet<int[]>(new IntArrayComparator());
+		}
+		else {
+			TreeSet<int[]> result = slices.elementAt(0);
+			for (int i=1; i < slices.size(); i++)
+				result = rbnutilities.treeSetIntersection(result, slices.elementAt(i));
+			return result;
+		}
+	}
+
+	public TreeSet<int[]> allTrue(ArgTerm[] args, HashMap<Integer,TreeSet<int[]>>[] trueIndex){
+
+		Vector<TreeSet<int[]>> slices = new Vector<TreeSet<int[]>>();
+		boolean existsnull=false;
+
+		for (int i=0;i<args.length;i++) {
+			if (rbnutilities.IsInteger(args[i].argEval())) {
+				TreeSet<int[]> slicefori = trueIndex[i].get(Integer.parseInt(args[i].argEval()));
 				if (slicefori==null)
 					existsnull=true;
 				slices.add(slicefori);

@@ -27,6 +27,7 @@ import java.util.*;
 
 import RBNpackage.*;
 import RBNExceptions.*;
+import RBNpackage.VarTermPackage.ArgTerm;
 import RBNutilities.*;
 
 
@@ -67,7 +68,7 @@ public class GGCombFuncNode extends GGCPMNode{
 		typeOfComb = pfcomb.getMycombInt();
 
 		//double starttime=System.currentTimeMillis();
-		int[][] subslist = pfcomb.tuplesSatisfyingCConstr(A, new String[0], new int[0]);
+		int[][] subslist = pfcomb.tuplesSatisfyingCConstr(A, new ArgTerm[0], new int[0]);
 		//thisgg.profiler.time1 +=(System.currentTimeMillis()-starttime);
 		//System.out.println("tt1:" + thisgg.profiler.time1);
 				
@@ -93,7 +94,7 @@ public class GGCombFuncNode extends GGCPMNode{
 				
 				double starttime = System.currentTimeMillis();
 				
-				evalOfSubPF = (double)groundnextsubpf.evaluate(A, I, new String[0], new int[0], 0, false,
+				evalOfSubPF = (double)groundnextsubpf.evaluate(A, I, new ArgTerm[0], new int[0], 0, false,
 						useCurrentPvals,
 						mapatoms,false,evaluated,parameters,ProbForm.RETURN_ARRAY,true,null)[0];
 				

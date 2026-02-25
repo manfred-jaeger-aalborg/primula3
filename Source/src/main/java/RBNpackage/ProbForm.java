@@ -27,6 +27,7 @@ package RBNpackage;
 import java.util.*;
 import RBNExceptions.*;
 import RBNinference.*;
+import RBNpackage.VarTermPackage.ArgTerm;
 import RBNutilities.rbnutilities;
 import RBNgui.Primula;
 import RBNLearning.Profiler;
@@ -50,7 +51,7 @@ public interface ProbForm
 
     Object[] evaluate(RelStruc A,
     		OneStrucData inst, 
-    		String[] vars, 
+    		ArgTerm[] vars,
     		int[] tuple,
 			int gradindx,
     		boolean useCurrentCvals, 

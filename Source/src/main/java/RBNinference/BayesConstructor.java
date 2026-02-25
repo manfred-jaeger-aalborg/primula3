@@ -32,6 +32,7 @@ import PyManager.GnnPy;
 import RBNpackage.*;
 import RBNgui.*;
 import RBNExceptions.*;
+import RBNpackage.VarTermPackage.ArgTerm;
 import RBNutilities.*;
 
 
@@ -167,7 +168,7 @@ public class BayesConstructor extends java.lang.Object {
 				}
 				
 				CPModel groundcpm = cpm.substitute(myprimula.getRBN().args(ga.rel()), ga.args());
-				String argumentnames = rbnutilities.namestring(ga.args(),strucarg);
+				String argumentnames = rbnutilities.namestring(ga.args(),strucarg, ga.rel());
 				switch (nodetype){
 				case COMPLNODE:
 					newestnode = new ComplexBNGroundAtomNode(
@@ -211,7 +212,7 @@ public class BayesConstructor extends java.lang.Object {
 						for (int[] arg : instarg.allInstantiated(br)) {
 							CPModel groundcpm = cpm.substitute(myprimula.getRBN().args(br), arg);
 							GroundAtom ga = new GroundAtom(br,arg);
-							String argumentnames = rbnutilities.namestring(ga.args(),strucarg);
+							String argumentnames = rbnutilities.namestring(ga.args(),strucarg,ga.rel());
 							switch (nodetype){
 							case COMPLNODE:
 								newestnode = new ComplexBNGroundAtomNode(
@@ -287,9 +288,9 @@ public class BayesConstructor extends java.lang.Object {
 					BNNode newestnode;
 					if (groundatomhasht.get(pga.asString())==null) {
 						CPModel ppf = myprimula.getRBN().cpmodel(pga.rel());
-						String[] args = myprimula.getRBN().arguments(pga.rel());
+						ArgTerm[] args = myprimula.getRBN().arguments(pga.rel());
 						CPModel ppf_sub = ppf.substitute(args, pga.args);
-						String argumentnames = rbnutilities.namestring(pga.args(),strucarg);
+						String argumentnames = rbnutilities.namestring(pga.args(),strucarg, pga.rel());
 						switch (nodetype){
 						case COMPLNODE:
 							newestnode = new ComplexBNGroundAtomNode(
@@ -329,7 +330,7 @@ public class BayesConstructor extends java.lang.Object {
 		 */
 
 		Rel thisrel;
-		String[] thisvars;
+		ArgTerm[] thisvars;
 		int[] thistuple;
 		GroundAtom thisatom;
 		CPModel thispf;
@@ -349,7 +350,7 @@ public class BayesConstructor extends java.lang.Object {
 				/* Determine the domainelement names corresponding to
 				 * thistuple
 				 */ 
-				String argumentnames = rbnutilities.namestring(thistuple,strucarg);
+				String argumentnames = rbnutilities.namestring(thistuple,strucarg,thisatom.rel());
 				groundpf = thispf.substitute(thisvars,thistuple);
 
 
@@ -818,7 +819,7 @@ public class BayesConstructor extends java.lang.Object {
 			if (isboolmodel) {
 			double trueval =(double)cpmodel.evaluate(A,
 					copyinst,
-					new String[0], 
+					new ArgTerm[0],
 					new int[0], 
 					0,
 					true,
@@ -835,7 +836,7 @@ public class BayesConstructor extends java.lang.Object {
 			if (iscatmodel) {
 				Object[] res = cpmodel.evaluate(A,
 						copyinst,
-						new String[0],
+						new ArgTerm[0],
 						new int[0],
 						0,
 						true,
@@ -1103,7 +1104,7 @@ public class BayesConstructor extends java.lang.Object {
 		}
 
 		Rel parrel = ((ProbFormAtom)node.cpmodel).getRelation();
-		int[] parargs = rbnutilities.stringArrayToIntArray(((ProbFormAtom)node.cpmodel).getArguments());
+		int[] parargs = rbnutilities.argTermArrayToIntArray(((ProbFormAtom)node.cpmodel).getArguments());
 		GroundAtom paratom = new GroundAtom(parrel,parargs);
 		BNNode par = groundatomhasht.get(paratom.hashCode());
 		newnode.parents.add(par);
@@ -1330,7 +1331,7 @@ public class BayesConstructor extends java.lang.Object {
 			// Now the usual case:
 
 			GroundAtom at = new GroundAtom(((ProbFormAtom)pf[i]).getRelation(),
-					rbnutilities.stringArrayToIntArray(((ProbFormAtom)pf[i]).getArguments()));
+					rbnutilities.argTermArrayToIntArray(((ProbFormAtom)pf[i]).getArguments()));
 			pnodes[i] = groundatomhasht.get(at.hashCode());
 			pnodes[i].children.add(newnode);
 			break;
@@ -1470,12 +1471,12 @@ public class BayesConstructor extends java.lang.Object {
 		int ind;
 
 
-		CPModel[] argpfs      = ((ProbFormCombFunc)node.cpmodel).getPfargs();
-		ProbFormBool    ccon        = ((ProbFormCombFunc)node.cpmodel).getCconstr();
-		String[]   qvars       = ((ProbFormCombFunc)node.cpmodel).getQuantvars();
-		int[][]    argtuples   = new int[0][0];
+		CPModel[] argpfs = ((ProbFormCombFunc)node.cpmodel).getPfargs();
+		ProbFormBool ccon = ((ProbFormCombFunc)node.cpmodel).getCconstr();
+		ArgTerm[] qvars = ((ProbFormCombFunc)node.cpmodel).getQuantvars();
+		int[][] argtuples = new int[0][0];
 		try{
-			argtuples = strucarg.allTrue(ccon,qvars);
+			argtuples = strucarg.allTrue(ccon, rbnutilities.getVarsFromArgs(qvars));
 		}
 		catch( RBNCompatibilityException e ){myprimulaGUI.showMessage(e.toString());};
 		for (int i=0;i<argpfs.length;i++){
@@ -1483,7 +1484,7 @@ public class BayesConstructor extends java.lang.Object {
 				nextpf = argpfs[i].substitute(qvars,argtuples[j]);
 				if (nextpf instanceof ProbFormAtom){
 					GroundAtom at = new GroundAtom(((ProbFormAtom)nextpf).getRelation(),
-							rbnutilities.stringArrayToIntArray(((ProbFormAtom)nextpf).getArguments()));
+							rbnutilities.argTermArrayToIntArray(((ProbFormAtom)nextpf).getArguments()));
 					BNNode nextdecompnode = (BNNode) groundatomhasht.get(at.hashCode());
 					if (nextdecompnode == null)
 						System.out.println("Trying to retrieve non-existent node " + at.asString(strucarg) 

@@ -47,6 +47,7 @@ import RBNinference.BayesConstructor;
 import RBNinference.MapThread;
 import RBNinference.PFNetwork;
 import RBNinference.SampleThread;
+import RBNpackage.VarTermPackage.ArgTerm;
 import RBNutilities.rbnutilities;
 import edu.ucla.belief.ace.Control;
 
@@ -544,6 +545,35 @@ public class InferenceModule implements GradientGraphOptions {
 		return rbnutilities.cartesProd(elementsForCoordinate);
 	}
 
+	protected int[][] allMatchingTuples(int[] tuple, int integerPos){
+		Vector<int[]> elementsForCoordinate = new Vector<int[]>();
+		int[] nextComponent;
+		String stringAtTupleIndex;
+		for(int i=0; i<tuple.length; i++){
+			if (i != integerPos) {
+				stringAtTupleIndex = (String) elementNamesListModel.elementAt(tuple[i]);
+				if (stringAtTupleIndex.equals("*")) {
+					nextComponent = new int[myprimula.getRels().domSize()];
+					for (int j = 0; j < nextComponent.length; j++)
+						nextComponent[j] = j;
+				} else if (stringAtTupleIndex.startsWith("[")) {
+					String attrname = stringAtTupleIndex.substring(1, stringAtTupleIndex.length() - 2);
+					Vector<int[]> elementsOfAttr = myprimula.getRels().allTrue(myprimula.sig.getRelByName(attrname));
+					/* Turn vector of int[1] into int[]:*/
+					nextComponent = rbnutilities.intArrVecToArr(elementsOfAttr);
+				} else { /* tuple[i] is the domain element with index i */
+					nextComponent = new int[1];
+					nextComponent[0] = tuple[i];
+				}
+			} else {
+				nextComponent = new int[1];
+				nextComponent[0] = tuple[i];
+			}
+			elementsForCoordinate.add(nextComponent);
+		}
+		return rbnutilities.cartesProd(elementsForCoordinate);
+	}
+
 	private int[][] allMatchingTuples(String[] strtuple){
 		Vector<int[]> elementsForCoordinate = new Vector<int[]>();
 		int[] nextComponent;
@@ -582,9 +612,15 @@ public class InferenceModule implements GradientGraphOptions {
 			if (temp.rel.arity > 0) {
 				for (int j = 0; j < nodes.length; ++j) {
 					if (j + 1 < nodes.length) {
-						names = names + elementNamesListModel.elementAt(nodes[j]) + ", ";
+						if (temp.rel.getTypes()[j] instanceof TypeInteger)
+							names = names + nodes[j] + ", ";
+						else
+							names = names + elementNamesListModel.elementAt(nodes[j]) + ", ";
 					} else {  //last item
-						names = names + elementNamesListModel.elementAt(nodes[j]);
+						if (temp.rel.getTypes()[j] instanceof TypeInteger)
+							names = names + nodes[j];
+						else
+							names = names + elementNamesListModel.elementAt(nodes[j]);
 					}
 				}
 			}
@@ -1030,7 +1066,7 @@ public class InferenceModule implements GradientGraphOptions {
 		for (Rel r : sig.getProbRels()) {
 			System.out.println("Evaluate relation " + r.name() + " for " + rdata.cases().size() + " input domains");
 			CPModel cpm = rbn.cpmodel(r);
-			String[] varargs = rbn.args(r);
+			ArgTerm[] varargs = rbn.args(r);
 
 			double[] result = new double[2];
 
