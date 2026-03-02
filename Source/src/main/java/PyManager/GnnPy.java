@@ -518,7 +518,7 @@ public class GnnPy {
                 lastDictGnnId = cpmGnn.getGnnId();
             } else {
                 // inst object changed but equals() returned true?
-                System.out.println("CHECK evaluate_gnnHetero!!");
+//                System.out.println("CHECK evaluate_gnnHetero!!");
             }
 
             // use cached or newly built dictionaries for inference
@@ -1574,7 +1574,7 @@ public class GnnPy {
         return new Object[]{x_dict, edge_dict, edgeAttr_dict};
     }
 
-    public double[] GGevaluate_gnnHetero(Integer sno, RelStruc A, OneStrucData inst, CatGnn cpmGnn, GGCPMNode ggcpmGnn) {
+    public double[] GGevaluate_gnnHetero(CatGnn cpmGnn, GGCPMNode ggcpmGnn) {
         SharedInterpreter interpreter = JepManager.getInterpreter(true);
         // mode torch model to the new interpreter
         if (torchModel.getModelInterpreter() != interpreter)
@@ -1584,6 +1584,31 @@ public class GnnPy {
         GGGnnNode ggcnn = (GGGnnNode) ggcpmGnn;
 
         Object[] result = inferModelHetero(ggcnn.getXDict(), ggcnn.getEdgeDict(), ggcnn.getEdgeAttrDict(), cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), true);
+        double[][] outProbs = (double[][]) result[0];
+
+        if (cpmGnn.getArguments().equals("[]") || cpmGnn.getArguments().equals(""))
+            return outProbs[0];
+        else {
+            // TODO riscky here! If we have more than one out types!
+            String outType = cpm.getOutTypes()[0].getName();
+            return outProbs[ggcnn.getNodeIndexIfPresent(outType, Integer.parseInt(cpmGnn.getArguments()[0].argEval()))];
+        }
+    }
+
+    public double[] GGevaluate_gnnHetero(Map<String, double[][]> xdict,
+                                         Map<String, ArrayList<ArrayList<Integer>>> edgedict,
+                                         Map<String, double[][]> edgeattrdict,
+                                         CatGnn cpmGnn,
+                                         GGCPMNode ggcpmGnn) {
+        SharedInterpreter interpreter = JepManager.getInterpreter(true);
+        // mode torch model to the new interpreter
+        if (torchModel.getModelInterpreter() != interpreter)
+            torchModel = loadTorchModel(interpreter, currentCatGnn, scriptPath);
+
+        CatGnn cpm = (CatGnn) cpmGnn;
+        GGGnnNode ggcnn = (GGGnnNode) ggcpmGnn;
+
+        Object[] result = inferModelHetero(xdict, edgedict, edgeattrdict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), true);
         double[][] outProbs = (double[][]) result[0];
 
         if (cpmGnn.getArguments().equals("[]") || cpmGnn.getArguments().equals(""))

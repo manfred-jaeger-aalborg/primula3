@@ -46,6 +46,14 @@ public class GGGnnNode extends GGCPMNode {
     /** Edge-attribute matrices, keyed by pftype. Rebuilt on every {@link #evaluate} call. */
     public Map<String, double[][]>                    getEdgeAttrDict() { return Collections.unmodifiableMap(edgeAttr_dict); }
 
+    // Increment whenever input matrices logically change
+    private long inputVersion = 0;
+
+    // Version when cache was computed
+    private long cachedVersion = -1;
+
+    // Cached output
+    private double[] cachedResult = null;;
 
     public GGGnnNode(GradientGraphO gg,
                      CPModel cpm,
@@ -118,7 +126,6 @@ public class GGGnnNode extends GGCPMNode {
             }
         }
 
-        // this mean that the node is probably disconnected
         // evaluate only this node
         if (nodeMappingByType.isEmpty()) {
             for (String pftype : ttpf.getTypedNames()) {
@@ -340,8 +347,16 @@ public class GGGnnNode extends GGCPMNode {
         }
 
         double[] result = null;
-        if (cpmgnn instanceof CatGnn)
-            result = gnnPy.GGevaluate_gnnHetero(sno, A, inst, cpmgnn, this);
+
+        if (cpmgnn instanceof CatGnn) {
+            if (isCacheValid()) {
+                result = cachedResult;
+            } else {
+                result = gnnPy.GGevaluate_gnnHetero(getXDict(), getEdgeDict(), getEdgeAttrDict(), cpmgnn, this);
+                cachedResult = (result != null) ? result.clone() : null;
+                cachedVersion = inputVersion;
+            }
+        }
 
         if (this.depends_on_sample) {
             if (cpmgnn instanceof CatGnn)
@@ -353,6 +368,10 @@ public class GGGnnNode extends GGCPMNode {
         }
 
         return result;
+    }
+
+    private boolean isCacheValid() {
+        return cachedResult != null && cachedVersion == inputVersion;
     }
 
     @Override
@@ -392,6 +411,7 @@ public class GGGnnNode extends GGCPMNode {
         buildEdgeMatrices();          // topology first — no sno needed
         buildNodeFeatureMatrices(init);
         buildEdgeAttrMatrices(init);
+        inputVersion++;
     }
 
     private void buildEdgeMatrices() {
@@ -611,7 +631,7 @@ public class GGGnnNode extends GGCPMNode {
     public void setCurrentInstPy(int currentInst, GGAtomMaxNode currentMaxNode) {
         Rel rel = currentMaxNode.myatom().rel();
         boolean oneHot = cpmgnn.isOneHotEncoding();
-
+        inputVersion++;
         if (updateNodeAttribute(rel, currentMaxNode, currentInst, oneHot)) return;
         if (updateEdgeIndex(rel, currentMaxNode, currentInst)) return;
         updateEdgeAttribute(rel, currentMaxNode, currentInst, oneHot);
