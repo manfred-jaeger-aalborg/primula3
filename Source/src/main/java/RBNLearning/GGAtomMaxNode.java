@@ -35,78 +35,76 @@ import RBNExceptions.*;
 
 public class GGAtomMaxNode extends GGAtomNode{
 
-public static int USEMINSCORE = 0;
-public static int USEAVGSCORE = 1;
-public static int USELLSCORE = 2;
+	public static int USEMINSCORE = 0;
+	public static int USEAVGSCORE = 1;
+	public static int USELLSCORE = 2;
 
-/* 
- * The value if this is instantiated by the evidence.
- * If mapinstVal!=-1, then no MAP inference is performed on 
- * this GGAtomMaxNode
- */
-int mapInstVal=-1;
-
-
-public int getmapInstVal() {
-	return mapInstVal;
-}
-
-public void setmapInstVal(int v) {
-	this.mapInstVal = v;
-}
-
-/** The current instantiation 
- * 
- */
-int currentInst=-1;
+	/*
+	 * The value if this is instantiated by the evidence.
+	 * If mapinstVal!=-1, then no MAP inference is performed on
+	 * this GGAtomMaxNode
+	 */
+	int mapInstVal=-1;
 
 
-public int getCurrentInst() {
-	return currentInst;
-}
+	public int getmapInstVal() {
+		return mapInstVal;
+	}
 
-public void setCurrentInst(int currentInst) {
-	this.currentInst = currentInst;
+	public void setmapInstVal(int v) {
+		this.mapInstVal = v;
+	}
 
-	// if the atom is a GNN element to update, we change the entry of the matrix
-	// this speeds up the inference, otherwise we have to rewrite the entire matrix at every new inst
-	for (GGCPMNode ggcpmNode: this.parents()) {
-		if (ggcpmNode instanceof GGGnnNode) {
-			GGGnnNode gggnn = (GGGnnNode) ggcpmNode;
-			gggnn.getGnnPy().setCurrentInstPy(currentInst, this, gggnn);
-			break;
+	/** The current instantiation
+	 * for safety reason, use get and set to access
+	 */
+	private int currentInst=-1;
+
+	public int getCurrentInst() {
+		return currentInst;
+	}
+
+	public void setCurrentInst(int currentInst) {
+		this.currentInst = currentInst;
+
+		// if the atom is a GNN element to update, we change the entry of the matrix
+		// this speeds up the inference, otherwise we have to rewrite the entire matrix at every new inst
+		for (GGCPMNode parent : parents) {
+			if (parent instanceof GGGnnNode gnn) {
+				gnn.setCurrentInstPy(currentInst, this);
+				break;
+			}
 		}
 	}
-}
 
-///* A value that represents the contribution of this node with its
-//* current instantiation value to the likelihood. Used as a selection
-//* heuristic for flipping instantiation values during MAP inference  
-//*/
-//private double score;
+	///* A value that represents the contribution of this node with its
+	//* current instantiation value to the likelihood. Used as a selection
+	//* heuristic for flipping instantiation values during MAP inference
+	//*/
+	//private double score;
 
-/* The log-likelihood change induced by changing the current instantiation
- * value of this Atom to one of the alternative.
- * 
- * Note: the flipscores array is currently only produced as a by-product of
- * computing highscore/highvalue. May be used in future developments.
- */
-private double[] flipscores;
+	/* The log-likelihood change induced by changing the current instantiation
+	 * value of this Atom to one of the alternative.
+	 *
+	 * Note: the flipscores array is currently only produced as a by-product of
+	 * computing highscore/highvalue. May be used in future developments.
+	 */
+	private double[] flipscores;
 
-/* The maximum flipscore value, without the flipscore corresponding to the current value
- * Thus, highscore can be <0 (if all possible changes of the current instantiation lead to a 
- * decrease in likelihood.
- */
-private double highscore; 
+	/* The maximum flipscore value, without the flipscore corresponding to the current value
+	 * Thus, highscore can be <0 (if all possible changes of the current instantiation lead to a
+	 * decrease in likelihood.
+	 */
+	private double highscore;
 
-/* The value for which highscore is obtained */
-private int highvalue;
+	/* The value for which highscore is obtained */
+	private int highvalue;
 
-/* The index of this.myatom in the list GradientGraphO.maxatoms.
- * Needed in order to sort the GradientGraphIndicatorMaxNodes according to
- * the queryatom list in the InferenceModule 
- */
-//private int index;
+	/* The index of this.myatom in the list GradientGraphO.maxatoms.
+	 * Needed in order to sort the GradientGraphIndicatorMaxNodes according to
+	 * the queryatom list in the InferenceModule
+	 */
+	//private int index;
 
 
 
@@ -251,6 +249,6 @@ private int highvalue;
 	}
 	
 	public void setRandomInst() {
-		currentInst = (int)(Math.random()*myatom.rel().numvals());
+		this.setCurrentInst((int)(Math.random()*myatom.rel().numvals()));
 	}
 }

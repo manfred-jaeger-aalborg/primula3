@@ -12,6 +12,20 @@ public class TorchModelWrapper {
 
     private Object modelRef;
 
+    private int lastFlattenHash = 0;
+    private Map<String, float[]> cachedFlatXDict = null;
+    private Map<String, int[]> cachedXShapeDict = null;
+    private Map<String, int[]> cachedFlatEdgeDict = null;
+    private Map<String, Integer> cachedEdgeCounts = null;
+
+    // primitive single-type cache
+    private float[] cachedFlatX = null;
+    private int[] cachedXShape = null;
+    private int[] cachedFlatEdge = null;
+    private int cachedNumEdges = 0;
+    private float[] cachedFlatEA = null;
+    private int[] cachedEAShape = null;
+
     public TorchModelWrapper(String modelName, String modelClassName, SharedInterpreter interpreter) {
         this.modelName = modelName;
         this.modelInterpreter = interpreter;
@@ -25,6 +39,7 @@ public class TorchModelWrapper {
         try {
             modelInterpreter.exec("import torch");
             modelInterpreter.exec("from torch_geometric.data import HeteroData");
+            modelInterpreter.exec("import sys");
 
             // Optimized Python functions utilizing .view() for zero-copy reshaping of flat arrays
             modelInterpreter.exec("""
@@ -66,19 +81,19 @@ public class TorchModelWrapper {
                 def forward_hetero_fast_(model, flat_x_dict, x_shapes_dict, flat_edge_dict, edge_cols_dict, edge_rels):
                     device = _get_device(model)
                     data_h = HeteroData()
-                    
+                                      
                     for key, flat_x in flat_x_dict.items():
                         shape = x_shapes_dict[key]
                         data_h[key].x = torch.as_tensor(flat_x, dtype=torch.float32, device=device).view(shape[0], shape[1])
-                    
-                    for key, flat_edge in flat_edge_dict.items():
+                                                              
+                    for key, flat_edge in flat_edge_dict.items():                        
                         num_edges = edge_cols_dict[key]
-                        edge_type = (edge_rels[key][0], key, edge_rels[key][1])
+                        edge_type = (edge_rels[key][0], key, edge_rels[key][1])  
                         if num_edges > 0:
                             data_h[edge_type].edge_index = torch.as_tensor(flat_edge, dtype=torch.long, device=device).view(2, num_edges)
                         else:
                             data_h[edge_type].edge_index = torch.empty((2, 0), dtype=torch.long, device=device)
-                    
+                                                                   
                     model.eval()
                     with torch.no_grad():
                         out = model(data_h.x_dict, data_h.edge_index_dict)
@@ -97,6 +112,39 @@ public class TorchModelWrapper {
         }
     }
 
+    /**
+     * Compute a simple hash for a matrix dictionary (sum of each matrix hash).
+     */
+    private static int hashMatrixDict(Map<String, double[][]> dict) {
+        int h = 0;
+        for (double[][] m : dict.values()) {
+            int rows = m.length;
+            int cols = (rows == 0) ? 0 : m[0].length;
+            h = 31 * h + rows;
+            h = 31 * h + cols;
+            for (int i = 0; i < rows; i++) {
+                for (int j = 0; j < cols; j++) {
+                    h = 31 * h + Double.hashCode(m[i][j]);
+                }
+            }
+        }
+        return h;
+    }
+
+    private static int hashEdgeDict(Map<String, ArrayList<ArrayList<Integer>>> dict) {
+        int h = 0;
+        for (ArrayList<ArrayList<Integer>> edges : dict.values()) {
+            if (edges == null || edges.isEmpty()) continue;
+            ArrayList<Integer> src = edges.get(0);
+            ArrayList<Integer> dst = edges.get(1);
+            int num = src.size();
+            h = 31 * h + num;
+            for (int v : src) h = 31 * h + v;
+            for (int v : dst) h = 31 * h + v;
+        }
+        return h;
+    }
+
     public Object[] forward(Map<String, double[][]> xDict,
                             Map<String, ArrayList<ArrayList<Integer>>> edgeDict,
                             Map<String, double[][]> edge_attr,
@@ -104,32 +152,63 @@ public class TorchModelWrapper {
                             boolean withgradients) {
         Object[] result = new Object[2];
 
+        // compute a hash of the three inputs so we can reuse flattened arrays
+        int curHash = Objects.hash(hashMatrixDict(xDict), hashEdgeDict(edgeDict), hashMatrixDict(edge_attr));
+        boolean reuseFlat = (curHash == lastFlattenHash);
+
         try {
             if (xDict.size() == 1) {
-                // --- SINGLE GRAPH FLATTENING ---
+                // GRAPH FLATTENING
                 String nodeType = xDict.keySet().iterator().next();
                 double[][] xData = xDict.get(nodeType);
-                float[] flatX = flattenMatrix(xData);
-                int[] xShape = {xData.length, xData.length > 0 ? xData[0].length : 0};
-
-                String edgeType = edgeDict.isEmpty() ? null : edgeDict.keySet().iterator().next();
-                ArrayList<ArrayList<Integer>> edges = edgeType != null ? edgeDict.get(edgeType) : null;
-                int numEdges = (edges != null && !edges.isEmpty()) ? edges.get(0).size() : 0;
-                int[] flatEdge = flattenEdges(edges);
-
+                float[] flatX;
+                int[] xShape;
+                int[] flatEdge;
+                int numEdges;
                 float[] flatEA = null;
                 int[] eaShape = null;
-                if (!edge_attr.isEmpty()) {
-                    String eaKey = edge_attr.keySet().iterator().next();
-                    double[][] eaData = edge_attr.get(eaKey);
-                    flatEA = flattenMatrix(eaData);
-                    eaShape = new int[]{eaData.length, eaData.length > 0 ? eaData[0].length : 0};
+
+                if (reuseFlat) {
+                    flatX = cachedFlatX;
+                    xShape = cachedXShape;
+                    flatEdge = cachedFlatEdge;
+                    numEdges = cachedNumEdges;
+                    flatEA = cachedFlatEA;
+                    eaShape = cachedEAShape;
+                } else {
+                    flatX = flattenMatrix(xData);
+                    xShape = new int[]{xData.length, xData.length > 0 ? xData[0].length : 0};
+
+                    String edgeType = edgeDict.isEmpty() ? null : edgeDict.keySet().iterator().next();
+                    ArrayList<ArrayList<Integer>> edges = edgeType != null ? edgeDict.get(edgeType) : null;
+                    numEdges = (edges != null && !edges.isEmpty()) ? edges.get(0).size() : 0;
+                    flatEdge = flattenEdges(edges);
+
+                    if (!edge_attr.isEmpty()) {
+                        String eaKey = edge_attr.keySet().iterator().next();
+                        double[][] eaData = edge_attr.get(eaKey);
+                        flatEA = flattenMatrix(eaData);
+                        eaShape = new int[]{eaData.length, eaData.length > 0 ? eaData[0].length : 0};
+                    }
+
+                    // store for reuse
+                    cachedFlatX = flatX;
+                    cachedXShape = xShape;
+                    cachedFlatEdge = flatEdge;
+                    cachedNumEdges = numEdges;
+                    cachedFlatEA = flatEA;
+                    cachedEAShape = eaShape;
+                    lastFlattenHash = curHash;
                 }
 
+                // perform the forward call using flattened arrays (either reused or just computed)
+                long startTime = System.nanoTime();
                 Object pythonResult = modelInterpreter.invoke(
                         "forward_single_fast_",
                         modelRef, flatX, xShape, flatEdge, numEdges, withgradients, flatEA, eaShape
                 );
+                long endTime = System.nanoTime();
+//                System.out.println("Operation took " + ((endTime - startTime) / 1_000_000.0) + " milliseconds");
 
                 List<Object> pyTuple = (List<Object>) pythonResult;
                 NDArray outArray = (NDArray) pyTuple.get(0);
@@ -144,18 +223,34 @@ public class TorchModelWrapper {
                 }
 
             } else {
-                // --- HETEROGENEOUS GRAPH FLATTENING ---
+                // HETEROGENEOUS GRAPH FLATTENING
                 if (!edge_attr.isEmpty()) throw new RuntimeException("Edge attributes not implemented for hetero GNNs");
                 if (withgradients) throw new RuntimeException("Gradients not implemented for hetero GNNs");
 
-                Object[] flatXData = flattenXDict(xDict);
-                Object[] flatEdgeData = flattenEdgeDict(edgeDict);
+                Object[] flatXData;
+                Object[] flatEdgeData;
+                if (reuseFlat && cachedFlatXDict != null) {
+                    flatXData = new Object[]{cachedFlatXDict, cachedXShapeDict};
+                    flatEdgeData = new Object[]{cachedFlatEdgeDict, cachedEdgeCounts};
+                } else {
+                    flatXData = flattenXDict(xDict);
+                    flatEdgeData = flattenEdgeDict(edgeDict);
+                    // store
+                    cachedFlatXDict = (Map<String,float[]>) flatXData[0];
+                    cachedXShapeDict = (Map<String,int[]>) flatXData[1];
+                    cachedFlatEdgeDict = (Map<String,int[]>) flatEdgeData[0];
+                    cachedEdgeCounts = (Map<String,Integer>) flatEdgeData[1];
+                    lastFlattenHash = curHash;
+                }
                 Map<String, String[]> edgeRels = buildEdgeRelations(gnnInputs);
 
+                long startTime = System.nanoTime();
                 Object pythonResult = modelInterpreter.invoke(
                         "forward_hetero_fast_",
                         modelRef, flatXData[0], flatXData[1], flatEdgeData[0], flatEdgeData[1], edgeRels
                 );
+                long endTime = System.nanoTime();
+//                System.out.println("Operation took " + ((endTime - startTime) / 1_000_000.0) + " milliseconds");
 
                 NDArray outArray = (NDArray) pythonResult;
                 result[0] = convertNDArrayTo2D(outArray);
@@ -167,8 +262,6 @@ public class TorchModelWrapper {
             return null;
         }
     }
-
-    // --- HELPER METHODS FOR FLATTENING ---
 
     private static float[] flattenMatrix(double[][] matrix) {
         final int rows = matrix.length;

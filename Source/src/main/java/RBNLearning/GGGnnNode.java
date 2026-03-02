@@ -1,7 +1,9 @@
 package RBNLearning;
 
 import PyManager.GnnPy;
+import PyManager.PyUtils.EvalEntry;
 import PyManager.TorchInputPf;
+import PyManager.TorchInputSpecs;
 import PyManager.TypedTorchPf;
 import RBNExceptions.RBNCompatibilityException;
 import RBNExceptions.RBNNaNException;
@@ -12,342 +14,330 @@ import RBNpackage.VarTermPackage.VarTerm;
 import java.util.*;
 
 public class GGGnnNode extends GGCPMNode {
-    private CatGnn cpmgnn;
-    // we can have only one reference og gnnPy on the same thread
-    // once the thread will create and use gnnPy it will set this variable
-    private GnnPy gnnPy;
-    private Map<Integer, Integer> nodeMapping;
-    // those two variable are "shared"
-    private static RelStruc A;
-    private static OneStrucData inst;
 
-    // Per-type node mapping: for each node "type" keep an independent mapping nodeId -> index (starting at 0)
+    // Mode enum — replaces magic int constants 0 / 1 / 2
+    public enum Mode {NODE, EDGE_ATTR, EDGE}
+
+    private final CatGnn cpmgnn;
+    private GnnPy gnnPy;
+
+    private final RelStruc A;
+    private final OneStrucData inst;
+
+    // Per-type node mapping: typeName -> (nodeId -> compactIndex from 0)
     private final Map<String, Map<Integer, Integer>> nodeMappingByType = new HashMap<>();
     private final Map<String, Integer> nextIndexByType = new HashMap<>();
 
-    private Vector<Object> evaluated_children;
+    // "pftype|subkey" -> EvalEntry.
+    private final Map<String, EvalEntry> evalOfNodes = new HashMap<>();
+    private final Map<String, EvalEntry> evalOfEdgeAttr = new HashMap<>();
+    private final Map<String, EvalEntry> evalOfEdge = new HashMap<>();
 
-    // the graph constructed
-    private HashMap<String, HashMap<String, Object[]>> evalOfNodes;
-    private HashMap<String, HashMap<String, Object[]>> evalOfEdgeAttr;
-    private HashMap<String, HashMap<String, Object[]>> evalOfEdge;
-//    private Hashtable<String, int[][]> evalOfEdge;
+    private final Set<GGCPMNode> childrenSet = new LinkedHashSet<>();
+
+    private final Map<String, double[][]> x_dict = new HashMap<>();
+    private final Map<String, ArrayList<ArrayList<Integer>>> edge_dict = new HashMap<>();
+    private final Map<String, double[][]> edgeAttr_dict = new HashMap<>();
+
+    /** Node-feature matrices, keyed by pftype. Rebuilt on every {@link #evaluate} call. */
+    public Map<String, double[][]>                    getXDict()        { return Collections.unmodifiableMap(x_dict);        }
+    /** Edge-index lists, keyed by pftype. Each value is [sourceList, destList]. */
+    public Map<String, ArrayList<ArrayList<Integer>>> getEdgeDict()     { return Collections.unmodifiableMap(edge_dict);     }
+    /** Edge-attribute matrices, keyed by pftype. Rebuilt on every {@link #evaluate} call. */
+    public Map<String, double[][]>                    getEdgeAttrDict() { return Collections.unmodifiableMap(edgeAttr_dict); }
+
 
     public GGGnnNode(GradientGraphO gg,
                      CPModel cpm,
-                     Hashtable allnodes,
+                     HashMap allnodes,
                      RelStruc A,
                      OneStrucData I,
                      int inputcaseno,
                      int observcaseno,
-                     Hashtable<String,Integer> parameters,
+                     HashMap<String, Integer> parameters,
                      boolean useCurrentPvals,
-                     Hashtable<Rel,GroundAtomList> mapatoms,
-                     Hashtable<String,Object[]>  evaluated ) throws RBNCompatibilityException {
+                     HashMap<Rel, GroundAtomList> mapatoms,
+                     HashMap<String, Object[]> evaluated) throws RBNCompatibilityException {
+
         super(gg, cpm, A, I);
 
-        if (!(cpm instanceof CatGnn)) {
-            throw new RBNCompatibilityException("GGGnnNode cannot accept " + this.cpmgnn.toString() + " as valid pf");
-        }
+        if (!(cpm instanceof CatGnn))
+            throw new RBNCompatibilityException("GGGnnNode requires a CatGnn CPModel, got: " + cpm);
 
-        // store the CPModel, and the "input" for the gnn (A and I)
-        // those variables will be used in the evaluate function
-        // the entire input for the gnn will be constructed later in evaluate()
         this.cpmgnn = (CatGnn) cpm;
         this.A = A;
         this.inst = I;
 
-        this.evaluated_children = new Vector<>();
+        setGnnPy(cpmgnn.getGnnPy());
+        getGnnPy().setGradientGraph(gg);
 
-        this.evalOfNodes = new HashMap<>();
-        this.evalOfEdgeAttr = new HashMap<String, HashMap<String, Object[]>>();
-        this.evalOfEdge = new HashMap<String, HashMap<String, Object[]>>();
-        this.nodeMapping = new HashMap<>();
-
-        setGnnPy(cpmgnn.getGnnPy()); // set the same GnnPy from the rel to the ggnode
-        getGnnPy().setGradientGraph(gg); // save also the gradient graph
-
-        CPModel nextsubpf;
         TypedTorchPf ttpf = cpmgnn.getGroundTypedTorchPf();
 
-        // differently from all the other probability formulas here we evaluate
-        // all the components of the GNN to see when it is not possible to evaluate.
-        // the subpfs which are not evaluatable will return NaN and added to the children vector
-        for (String pftype: ttpf.getTypedNames()) { // loop through all the TYPEDICT
+        // construct the children of this Gradient Graph node by evaluating all the pf for node, edge, and edge attr
 
-            HashMap<String, Object[]> evalOfNodesForType = this.evalOfNodes.get(pftype);
-            if (evalOfNodesForType == null) {
-                evalOfNodesForType = new HashMap<>();
-                this.evalOfNodes.put(pftype, evalOfNodesForType);
+        // iterate over edges to understand which nodes actually belong to the sub-graph
+        for (String pftype : ttpf.getTypedNames()) {
+            // for each combine (layer definition)
+            for (TorchInputPf tip : ttpf.getCombines(pftype)) {
+
+                int[][] subslist = tip.tuplesSatisfyingCConstr(A, new ArgTerm[0], new int[0]);
+                // for each pf of that layer for edge
+                for (int i = 0; i < tip.getPfargsEdge().length; i++) {
+                    evaluateForAllTuples(
+                            Mode.EDGE, pftype, subslist, tip.getPfargsEdgeAt(i),
+                            evalOfEdge, tip, gg, i, allnodes, A, I,
+                            inputcaseno, observcaseno, parameters,
+                            useCurrentPvals, mapatoms, evaluated,
+                            true);
+                }
             }
+        }
 
-            HashMap<String, Object[]> evalOfEdgeForType = this.evalOfEdge.get(pftype);
-            if (evalOfEdgeForType == null) {
-                evalOfEdgeForType = new HashMap<>();
-                this.evalOfEdge.put(pftype, evalOfEdgeForType);
-            }
+        // evaluate all the atom entries whose node ids are present in the subgraph
+        for (String pftype : ttpf.getTypedNames()) {
+            for (TorchInputPf tip : ttpf.getCombines(pftype)) {
+                int[][] subslist = tip.tuplesSatisfyingCConstr(A, new ArgTerm[0], new int[0]);
 
-            HashMap<String, Object[]> evalOfEdgeAttrForType = this.evalOfEdgeAttr.get(pftype);
-            if (evalOfEdgeAttrForType == null) {
-                evalOfEdgeAttrForType = new HashMap<>();
-                this.evalOfEdgeAttr.put(pftype, evalOfEdgeAttrForType);
-            }
-
-            List<TorchInputPf> torchInputPfListType = ttpf.getCombines(pftype);
-            int[][] edgeList = new int[0][];
-
-            for (int c = 0; c < torchInputPfListType.size(); c++) { // loop through all the COMBINE
-                TorchInputPf torchInputPf = torchInputPfListType.get(c);
-
-                int[][] subslist = torchInputPf.tuplesSatisfyingCConstr(A, new ArgTerm[0], new int[0]);
-//                edgeList = merge2DArrays(edgeList, subslist);
-
-                // Node attributes
-                for (int i = 0, probFormIdx = 0; i < torchInputPf.getPfargsNode().length; i++, probFormIdx++) {
-                    nextsubpf = torchInputPf.getPfargsNodeAt(i);
-                    evaluateForAllTuples(0, pftype, subslist, nextsubpf, evalOfNodesForType, torchInputPf, gg, probFormIdx, allnodes, A, I, inputcaseno, observcaseno, parameters, useCurrentPvals, mapatoms, evaluated);
+                for (int i = 0; i < tip.getPfargsNode().length; i++) {
+                    evaluateForAllTuples(
+                            Mode.NODE, pftype, subslist, tip.getPfargsNodeAt(i),
+                            evalOfNodes, tip, gg, i, allnodes, A, I,
+                            inputcaseno, observcaseno, parameters,
+                            useCurrentPvals, mapatoms, evaluated,
+                            false);
                 }
 
-                // Edge attributes
-                for (int i = 0, probFormIdx = 0; i < torchInputPf.getPfargsEdgeAttr().length; i++, probFormIdx++) {
-                    nextsubpf = torchInputPf.getPfargsEdgeAttrAt(i);
-                    evaluateForAllTuples(1, pftype, subslist, nextsubpf, evalOfEdgeAttrForType, torchInputPf, gg, probFormIdx, allnodes, A, I, inputcaseno, observcaseno, parameters, useCurrentPvals, mapatoms, evaluated);
+                for (int i = 0; i < tip.getPfargsEdgeAttr().length; i++) {
+                    evaluateForAllTuples(
+                            Mode.EDGE_ATTR, pftype, subslist, tip.getPfargsEdgeAttrAt(i),
+                            evalOfEdgeAttr, tip, gg, i, allnodes, A, I,
+                            inputcaseno, observcaseno, parameters,
+                            useCurrentPvals, mapatoms, evaluated,
+                            false);
                 }
-
-                // create the edges
-                for (int i = 0, probFormIdx = 0; i < torchInputPf.getPfargsEdge().length; i++, probFormIdx++) {
-                    nextsubpf = torchInputPf.getPfargsEdgeAt(i);
-                    evaluateForAllTuples(2, pftype, subslist, nextsubpf, evalOfEdgeForType, torchInputPf, gg, probFormIdx, allnodes, A, I, inputcaseno, observcaseno, parameters, useCurrentPvals, mapatoms, evaluated);
-                }
-
-                // create the edges
-//                for (int i = 0; i < torchInputPf.getPfargsEdge().length; i++) {
-//                    nextsubpf = torchInputPf.getPfargsEdgeAt(i);
-//                    for (int j = 0; j < subslist.length; j++) {
-//                        String[] quantvars = torchInputPf.getQuantvars();
-//                        CPModel groundnextsubpf = nextsubpf.substitute(quantvars, subslist[j]);
-//                        if (groundnextsubpf instanceof ProbFormAtom) {
-//                            String[] args = ((ProbFormAtom) groundnextsubpf).getArguments();
-//                            int[] intArray = new int[args.length];
-//                            Type[] t = ((ProbFormAtom) groundnextsubpf).atom().rel.getTypes();
-//                            for (int k = 0; k < args.length; k++) {
-//                                int nodeId = Integer.parseInt(args[k]);
-//                                // Per-type mapping to a compact, sequential index
-//                                intArray[k] = getOrAssignNodeIndex(t[k].getName(), nodeId);
-//                            }
-//                            edgeList = mergeArrays(edgeList, intArray);
-//                        }
-//                    }
-//                }
             }
-//            this.evalOfEdge.put(pftype, edgeList);
+        }
+
+        // this mean that the node is probably disconnected
+        // evaluate only this node
+        if (nodeMappingByType.isEmpty()) {
+            for (String pftype : ttpf.getTypedNames()) {
+                for (TorchInputPf tip : ttpf.getCombines(pftype)) {
+                    int[][] subslist = tip.tuplesSatisfyingCConstr(A, new ArgTerm[0], new int[0]);
+
+                    for (int i = 0; i < tip.getPfargsNode().length; i++) {
+                        evaluateForAllTuples(
+                                Mode.NODE, pftype, subslist, tip.getPfargsNodeAt(i),
+                                evalOfNodes, tip, gg, i, allnodes, A, I,
+                                inputcaseno, observcaseno, parameters,
+                                useCurrentPvals, mapatoms, evaluated,
+                                true);
+                    }
+                }
+            }
+        }
+
+        buildInputMatrices(0);
+    }
+
+
+    private void evaluateForAllTuples(
+            Mode mode,
+            String pftype,
+            int[][] tuples,
+            CPModel nextsubpf,
+            Map<String, EvalEntry> target,
+            TorchInputPf tip,
+            GradientGraphO gg,
+            int probFormIdx,
+            HashMap allnodes,
+            RelStruc A,
+            OneStrucData I,
+            int inputcaseno,
+            int observcaseno,
+            HashMap<String, Integer> parameters,
+            boolean useCurrentPvals,
+            HashMap<Rel, GroundAtomList> mapatoms,
+            HashMap<String, Object[]> evaluated,
+            boolean assignNewIndices) throws RBNCompatibilityException {
+
+        for (int[] tuple : tuples) {
+
+            ArgTerm[] quantvars = tip.getQuantvars();
+            CPModel groundsubpf = nextsubpf.substitute(quantvars, tuple);
+
+            // take the argument of the specific atom
+            List<int[]> argNodes = resolveArgNodes(mode, groundsubpf, nextsubpf, tuple, quantvars);
+            // since the graph for the specific node can be a sub graph, we need to reconstruct the indexes for the edges
+            // returns false when a required node is absent from the subgraph
+            if (!remapToCompactIndices(mode, argNodes, pftype, nextsubpf, assignNewIndices)) {
+                continue;
+            }
+
+            double evalValue = (double) groundsubpf.evaluate(
+                    A, I, new ArgTerm[0], new int[0],
+                    0, false, useCurrentPvals,
+                    mapatoms, false, evaluated,
+                    parameters, ProbForm.RETURN_ARRAY, true, null)[0];
+
+            String key = pftype + "|" + groundsubpf.makeKey(A);
+
+            if (Double.isNaN(evalValue)) {
+                GGCPMNode child = GGCPMNode.constructGGPFN(gg, groundsubpf, allnodes, A, I, inputcaseno, observcaseno, parameters, false, false, "", mapatoms, evaluated);
+                if (childrenSet.add(child)) {
+                    children.add(child);
+                    target.put(key, new EvalEntry(child, argNodes, evalValue, tuple, probFormIdx));
+                }
+                child.addToParents(this);
+            } else {
+                target.put(key, new EvalEntry(groundsubpf, argNodes, evalValue, tuple, probFormIdx));
+            }
         }
     }
 
-    private void evaluateForAllTuples(int mode, //0:node, 1:edge attr, 2:edge
-                                      String pftype,
-                                      int[][] tuples,
-                                      CPModel nextsubpf,
-                                      HashMap<String, Object[]> evalOfPFs,
-                                      TorchInputPf torchInputPf,
-                                      GradientGraphO gg,
-                                      int probFormIdx,
-                                      Hashtable allnodes,
-                                      RelStruc A,
-                                      OneStrucData I,
-                                      int inputcaseno,
-                                      int observcaseno,
-                                      Hashtable<String,Integer> parameters,
-                                      boolean useCurrentPvals,
-                                      Hashtable<Rel,GroundAtomList> mapatoms,
-                                      Hashtable<String,Object[]>  evaluated)
+    // one function that will delegate which resolve to take
+    // we need different methods for each different atom and type
+    private List<int[]> resolveArgNodes(Mode mode, CPModel groundsubpf, CPModel nextsubpf, int[] tuple, ArgTerm[] quantvars)
+            throws RBNCompatibilityException {
+        return switch (mode) {
+            case NODE      -> resolveNodeArgs     (groundsubpf, nextsubpf, tuple, quantvars);
+            case EDGE_ATTR -> resolveEdgeAttrArgs (groundsubpf, tuple);
+            case EDGE      -> resolveEdgeArgs     (groundsubpf);
+        };
+    }
+
+    private List<int[]> resolveNodeArgs(CPModel groundsubpf, CPModel nextsubpf, int[] tuple, ArgTerm[] quantvars)
             throws RBNCompatibilityException {
 
-        for (int j = 0; j < tuples.length; j++) {
-            // this part is used to understand which of the quantvars are used for the unary attributes
-            // NOT FULLY TESTED
-            ArgTerm[] quantvars = torchInputPf.getQuantvars();
-            CPModel groundnextsubpf = nextsubpf.substitute(quantvars, tuples[j]);
-            int referringArg = 0;
-            Vector<int[]> argNodes = new Vector<>();
+        int nodeId;
+        if (groundsubpf instanceof ProbFormAtom pfa) {
+            nodeId = pfa.getArguments().length == 1 ? Integer.parseInt(pfa.getArguments()[0].argEval()) : -1;
 
-            if (mode==0) {
-                // node attr
-                // if it is an atom take the args directly
-                int[] argNode = new int[1];
-                if (groundnextsubpf instanceof ProbFormAtom) {
-                    if (((ProbFormAtom) groundnextsubpf).getArguments().length == 1)
-                        argNode[0] = Integer.parseInt(((ProbFormAtom) groundnextsubpf).getArguments()[0].argEval());
-                    else
-                        argNode[0] = -1;
-                } else if (groundnextsubpf instanceof ProbFormMacroCall) {
-                    if (((ProbFormMacroCall) groundnextsubpf).args().length == 1)
-                        argNode[0] = Integer.parseInt(((ProbFormMacroCall) groundnextsubpf).args()[0].argEval());
-                    else
-                        argNode[0] = -1;
-                } else if (groundnextsubpf instanceof ProbFormCombFunc) {
-                    if (tuples[j].length == 1)
-                        argNode[0] = tuples[j][0];
-                    if (tuples[j].length == 2) {
-                        String groundnextsubpf_str = groundnextsubpf.asString(0, 0, A, false, false);
-                        System.out.println(groundnextsubpf_str);
-                        ArgTerm[] quantvars_0 = new ArgTerm[]{quantvars[0], quantvars[0]};
-                        CPModel ground_0 = nextsubpf.substitute(quantvars_0, tuples[j]);
-                        String ground_0_str = ground_0.asString(0, 0, A, false, false);
-                        System.out.println(ground_0_str);
-                        ArgTerm[] quantvars_1 = new ArgTerm[]{new VarTerm(quantvars[0].argEval() + quantvars_0[1].argEval()), new VarTerm(quantvars[0].argEval() + quantvars_0[1].argEval())};
-                        CPModel ground_1 = nextsubpf.substitute(quantvars_1, tuples[j]);
-                        String ground_1_str = ground_1.asString(0, 0, A, false, false);
-                        // if the string matches (with the same first quantvar repeted) then the first is the one used
-                        if (ground_0_str.equals(groundnextsubpf_str)) {
-                            if (ground_0_str.equals(ground_1_str))
-                                referringArg = -1;
-                            else
-                                referringArg = 0;
-                        } else
-                            referringArg = 1;
-                        argNode[0] = tuples[j][referringArg];
-                    } else if (tuples[j].length != 1 || tuples[j].length != 2)
-                        throw new RBNCompatibilityException("Wrong number of arguments for substitution");
-                } else if (groundnextsubpf instanceof ProbFormConstant) {
-                    argNode[0] = -1;
-                }
-                argNodes.add(argNode);
-            } else if (mode==1) {
-                int[] argNode = new int[1];
-                // edge attr
-                argNode[0] = -1;
-                if (groundnextsubpf instanceof ProbFormAtom) {
-                    // there should be a check somewhere that does not allow to use relations with one arg...
-                    if (((ProbFormAtom) groundnextsubpf).getArguments().length == 2)
-                        argNode[0] = j;
-                    else
-                        argNode[0] = -1;
-                } else if (groundnextsubpf instanceof ProbFormMacroCall) {
-                    if (((ProbFormMacroCall) groundnextsubpf).args().length == 2)
-                        argNode[0] = j;
-                    else
-                        argNode[0] = -1;
-                } else if (groundnextsubpf instanceof ProbFormCombFunc) {
-                    if (tuples[j].length == 2)
-                        argNode[0] = j;
-                    else if (tuples[j].length == 1)
-                        argNode[0] = j;
-                    else
-                        throw new RBNCompatibilityException("Wrong number of arguments for substitution (edge attributes)");
-                } else if (groundnextsubpf instanceof ProbFormConstant) {
-                    argNode[0] = -1;
-                } else {
-                    argNode[0] = j;
-                }
-                argNodes.add(argNode);
-            } else if (mode==2) {
-                // edges
-                if (groundnextsubpf instanceof ProbFormAtom) {
-                    int[] argNode = new int[2];
-                    // there should be a check somewhere that does not allow to use relations with one arg...
-                    if (((ProbFormAtom) groundnextsubpf).getArguments().length == 2) {
-                        ArgTerm[] args = ((ProbFormAtom) groundnextsubpf).getArguments();
-                        argNode[0] = Integer.parseInt(args[0].argEval());
-                        argNode[1] = Integer.parseInt(args[1].argEval());
-                        argNodes.add(argNode);
-                    } else // there could be more cases here
-                        throw new RBNCompatibilityException("EDGEGRAPH is not a ProbFormArom with 2 arguments");
-                } else if (groundnextsubpf instanceof ProbFormBool) {
-                    ProbFormBoolComposite groundnextsubpf_bool = (ProbFormBoolComposite) groundnextsubpf;
-                    int numComponents = groundnextsubpf_bool.numComponents();
-                    for (int i=0; i<numComponents; i++) {
-                        if (groundnextsubpf_bool.componentAt(i) instanceof ProbFormBoolAtom) {
-                            int[] argNode = new int[2];
-                            ArgTerm[] args = ((ProbFormBoolAtom) groundnextsubpf_bool.componentAt(i)).getArguments();
-                            argNode[0] = Integer.parseInt(args[0].argEval());
-                            argNode[1] = Integer.parseInt(args[1].argEval());
-                            argNodes.add(argNode);
-                        }
-                    }
-                } else
-                    throw new RBNCompatibilityException("Currently EDGEGRAPH supports ProbFormAtom,ProbFormBool,ProbFormBoolComposite with 2 arguments");
-            }
+        } else if (groundsubpf instanceof ProbFormMacroCall pmc) {
+            nodeId = pmc.args().length == 1 ? Integer.parseInt(pmc.args()[0].argEval()) : -1;
 
-            // Map node indices to sequential numbers starting from 0
-            int numComponents = 0;
-            for (int[] argNode : argNodes) {
-                if (argNode[0] >= 0 && mode != 2) {
-                    argNode[0] = getOrAssignNodeIndex(pftype, argNode[0]);
-                } else if (argNode[0] >= 0 && mode == 2 && nextsubpf instanceof ProbFormAtom && ((ProbFormAtom) nextsubpf).getArguments().length == 2) {
-                    // remap the edges args
-                    argNode[0] = getOrAssignNodeIndex(((ProbFormAtom) nextsubpf).getRelation().getTypes()[0].getName(), argNode[0]);
-                    argNode[1] = getOrAssignNodeIndex(((ProbFormAtom) nextsubpf).getRelation().getTypes()[1].getName(), argNode[1]);
-                } else if (argNode[0] >= 0 && mode == 2 && nextsubpf instanceof ProbFormBoolComposite) {
-                    if (((ProbFormBoolComposite) nextsubpf).componentAt(numComponents) instanceof ProbFormBoolAtom) {
-                        ProbFormBoolAtom nextsubpf_atom = (ProbFormBoolAtom) ((ProbFormBoolComposite) nextsubpf).componentAt(numComponents);
-                        argNode[0] = getOrAssignNodeIndex(nextsubpf_atom.getRelation().getTypes()[0].getName(), argNode[0]);
-                        argNode[1] = getOrAssignNodeIndex(nextsubpf_atom.getRelation().getTypes()[1].getName(), argNode[1]);
-                    }
-                    numComponents++;
-                }
-            }
-
-            double evalOfSubPF = (double) groundnextsubpf.evaluate(
-                    A,
-                    I,
-                    new ArgTerm[0],
-                    new int[0],
-                    0,
-                    false,
-                    useCurrentPvals,
-                    mapatoms,
-                    false,
-                    evaluated,
-                    parameters,
-                    ProbForm.RETURN_ARRAY,
-                    true,
-                    null)[0];
-
-            if (Double.isNaN(evalOfSubPF)) {
-                GGCPMNode constructedchild = GGCPMNode.constructGGPFN(
-                        gg,
-                        groundnextsubpf,
-                        allnodes,
-                        A,
-                        I,
-                        inputcaseno,
-                        observcaseno,
-                        parameters,
-                        false,
-                        false,
-                        "",
-                        mapatoms,
-                        evaluated);
-                if (!children.contains(constructedchild)) {
-                    children.add(constructedchild);
-                    String key = groundnextsubpf.makeKey(A);
-                    // store the child, the value, the element for substitution, the position in the column
-                    evalOfPFs.put(key, new Object[]{constructedchild, argNodes, evalOfSubPF, tuples[j], probFormIdx});
-                }
-                constructedchild.addToParents(this);
+        } else if (groundsubpf instanceof ProbFormCombFunc) {
+            if (tuple.length == 1) {
+                nodeId = tuple[0];
+            } else if (tuple.length == 2) {
+                nodeId = resolveReferringArg(groundsubpf, nextsubpf, quantvars, tuple);
             } else {
-                String key = groundnextsubpf.makeKey(A);
-                evalOfPFs.put(key, new Object[]{groundnextsubpf, argNodes, evalOfSubPF, tuples[j], probFormIdx});
+                throw new RBNCompatibilityException("Wrong number of arguments for substitution");
             }
-            evaluated_children.add(groundnextsubpf);
+        } else {
+            nodeId = -1;  // ProbFormConstant and any unknown type
         }
+        return List.of(new int[]{nodeId});
     }
+
+    private int resolveReferringArg(CPModel groundsubpf, CPModel nextsubpf, ArgTerm[] quantvars, int[] tuple) {
+        String groundStr = groundsubpf.asString(0, 0, A, false, false);
+        ArgTerm[] qv00 = {quantvars[0], quantvars[0]};
+        String g0Str = nextsubpf.substitute(qv00, tuple).asString(0, 0, A, false, false);
+        ArgTerm[] qv11 = {new VarTerm(quantvars[0].argEval() + qv00[1].argEval()), new VarTerm(quantvars[0].argEval() + qv00[1].argEval())};
+        String g1Str = nextsubpf.substitute(qv11, tuple).asString(0, 0, A, false, false);
+
+        if (g0Str.equals(groundStr))
+            return g0Str.equals(g1Str) ? -1 : tuple[0];
+        return tuple[1];
+    }
+
+
+    private List<int[]> resolveEdgeAttrArgs(CPModel groundsubpf, int[] tuple) {
+        // edge-attribute rows are identified by their position in the tuple list
+        // store the raw index (j) only for 2-argument atoms, otherwise -1
+        int idx;
+        if (groundsubpf instanceof ProbFormAtom pfa)
+            idx = pfa.getArguments().length == 2 ? Arrays.hashCode(tuple) : -1;
+        else if (groundsubpf instanceof ProbFormMacroCall pmc)
+            idx = pmc.args().length == 2 ? Arrays.hashCode(tuple) : -1;
+        else if (groundsubpf instanceof ProbFormConstant)
+            idx = -1;
+        else
+            idx = Arrays.hashCode(tuple);
+        return List.of(new int[]{idx});
+    }
+
+    private List<int[]> resolveEdgeArgs(CPModel groundsubpf) throws RBNCompatibilityException {
+        if (groundsubpf instanceof ProbFormAtom pfa) {
+            if (pfa.getArguments().length != 2)
+                throw new RBNCompatibilityException("EDGEGRAPH ProbFormAtom must have exactly 2 arguments");
+
+            ArgTerm[] args = pfa.getArguments();
+            return List.of(new int[]{Integer.parseInt(args[0].argEval()), Integer.parseInt(args[1].argEval())});
+
+        } else if (groundsubpf instanceof ProbFormBoolComposite composite) {
+            List<int[]> result = new ArrayList<>();
+
+            for (int i = 0; i < composite.numComponents(); i++) {
+                if (composite.componentAt(i) instanceof ProbFormBoolAtom atom) {
+                    ArgTerm[] args = atom.getArguments();
+                    result.add(new int[]{Integer.parseInt(args[0].argEval()), Integer.parseInt(args[1].argEval())});
+                }
+            }
+            return result;
+        }
+        throw new RBNCompatibilityException(
+                "EDGEGRAPH supports ProbFormAtom or ProbFormBoolComposite with 2 arguments");
+    }
+
+    private boolean remapToCompactIndices(Mode mode, List<int[]> argNodes, String pftype, CPModel nextsubpf, boolean assignNewIndices) {
+        int compIdx = 0;
+        for (int[] argNode : argNodes) {
+            if (argNode[0] < 0) { compIdx++; continue; }
+
+            if (mode != Mode.EDGE) {
+                if (assignNewIndices) {
+                    argNode[0] = getOrAssignNodeIndex(pftype, argNode[0]);
+                } else {
+                    Integer mapped = getNodeIndexIfPresent(pftype, argNode[0]);
+                    if (mapped == null) return false;  // outside this subgraph, skip tuple
+                    argNode[0] = mapped;
+                }
+            } else {
+                if (nextsubpf instanceof ProbFormAtom pfa && pfa.getArguments().length == 2) {
+                    argNode[0] = assignNewIndices
+                            ? getOrAssignNodeIndex(pfa.getRelation().getTypes()[0].getName(), argNode[0])
+                            : lookupOrFail(pfa.getRelation().getTypes()[0].getName(), argNode[0]);
+                    argNode[1] = assignNewIndices
+                            ? getOrAssignNodeIndex(pfa.getRelation().getTypes()[1].getName(), argNode[1])
+                            : lookupOrFail(pfa.getRelation().getTypes()[1].getName(), argNode[1]);
+
+                    if (argNode[0] < 0 || argNode[1] < 0) return false;
+
+                } else if (nextsubpf instanceof ProbFormBoolComposite composite
+                        && composite.componentAt(compIdx) instanceof ProbFormBoolAtom atom) {
+
+                    argNode[0] = assignNewIndices
+                            ? getOrAssignNodeIndex(atom.getRelation().getTypes()[0].getName(), argNode[0])
+                            : lookupOrFail(atom.getRelation().getTypes()[0].getName(), argNode[0]);
+                    argNode[1] = assignNewIndices
+                            ? getOrAssignNodeIndex(atom.getRelation().getTypes()[1].getName(), argNode[1])
+                            : lookupOrFail(atom.getRelation().getTypes()[1].getName(), argNode[1]);
+
+                    if (argNode[0] < 0 || argNode[1] < 0) return false;
+                }
+            }
+            compIdx++;
+        }
+        return true;
+    }
+
+    private int lookupOrFail(String type, int nodeId) {
+        Integer v = getNodeIndexIfPresent(type, nodeId);
+        return v != null ? v : -1;
+    }
+
 
     @Override
     public double[] evaluate(Integer sno) {
-        if (this.gnnPy==null)
-            throw new RuntimeException("GnnPy is null in GGGnnNode");
+        if (gnnPy == null) throw new RuntimeException("GnnPy is null in GGGnnNode");
 
-        if (this.depends_on_sample && sno==null) {
-            for (int i=0;i<thisgg.numchains*thisgg.windowsize;i++)
-                this.evaluate(i);
+        if (depends_on_sample && sno == null) {
+            for (int i = 0; i < thisgg.numchains * thisgg.windowsize; i++)
+                evaluate(i);
             return null;
         }
-        if (this.depends_on_sample && is_evaluated_val_for_samples[sno])
-            return this.values_for_samples[sno];
-        if (!this.depends_on_sample && is_evaluated_val_for_samples[0])
-            return this.values_for_samples[0];
 
         double[] result = null;
         if (cpmgnn instanceof CatGnn)
@@ -367,105 +357,220 @@ public class GGGnnNode extends GGCPMNode {
 
     @Override
     public Gradient evaluateGradient(Integer sno) throws RBNNaNException {
-        if (this.gnnPy==null)
-            throw new RuntimeException("GnnPy is null in GGGnnNode");
+        if (gnnPy == null) throw new RuntimeException("GnnPy is null in GGGnnNode");
 
-        if (this.depends_on_sample && sno==null) {
-            for (int i=0;i<thisgg.numchains*thisgg.windowsize;i++)
-                this.evaluateGradient(i);
+        if (depends_on_sample && sno == null) {
+            for (int i = 0; i < thisgg.numchains * thisgg.windowsize; i++)
+                evaluateGradient(i);
             return null;
         }
 
-        int idx=0;
-        if (this.depends_on_sample)
-            idx=sno;
-
+        int idx = depends_on_sample ? sno : 0;
         if (is_evaluated_grad_for_samples[idx])
-            return  gradient_for_samples.get(idx);
+            return gradient_for_samples.get(idx);
 
         Gradient result = gradient_for_samples.get(idx);
         result.reset();
 
-//        Object[] outres = gnnPy.evaluate_gnnGradients(A, inst, cpmgnn, this);
         Object[] outres = gnnPy.GGevaluate_gnnGradients(sno, A, inst, cpmgnn, this);
+        @SuppressWarnings("unchecked")
         Map<String, double[][]> grads = (Map<String, double[][]>) outres[1];
 
-        for (String param: this.myparameters) {
+        for (String param : myparameters)
             if (grads.containsKey(param))
                 result.set_part_deriv(param, grads.get(param)[0]);
-//            else
-//                System.out.println(param + " not found");
-        }
 
-        is_evaluated_grad_for_samples[idx]=true;
-
+        is_evaluated_grad_for_samples[idx] = true;
         return result;
     }
 
-    @Override
-    public boolean isBoolean() {
-        return cpmgnn.numvals()==1;
+    private void buildInputMatrices(Integer init) {
+        x_dict.clear();
+        edge_dict.clear();
+        edgeAttr_dict.clear();
+
+        buildEdgeMatrices();          // topology first — no sno needed
+        buildNodeFeatureMatrices(init);
+        buildEdgeAttrMatrices(init);
     }
 
-    public static int[][] mergeArrays(int[][] a, int[] b) {
-        if (b == null) return a;
-        if (a == null) {
-            int[][] result = new int[1][];
-            result[0] = Arrays.copyOf(b, b.length);
-            return result;
-        }
+    private void buildEdgeMatrices() {
+        for (TorchInputSpecs spec : cpmgnn.getGnnInputs()) {
+            String pftype = spec.getType();
+            String edgeKey = spec.getEdgeRelation().name();   // matches edgesToDict / GGconstructInputGraph
+            Map<String, EvalEntry> edgeTable = getEntriesForType(evalOfEdge, pftype);
 
-        int validRowsA = 0;
-        for (int[] row : a) if (row != null) validRowsA++;
+            ArrayList<Integer> sources = new ArrayList<>();
+            ArrayList<Integer> dests = new ArrayList<>();
 
-        int[][] result = new int[validRowsA + 1][];
-
-        int index = 0;
-        for (int[] row : a) {
-            if (row != null) {
-                result[index++] = Arrays.copyOf(row, row.length);
+            for (EvalEntry entry : edgeTable.values()) {
+                for (int[] endpoints : entry.argNodes()) {
+                    if (endpoints.length == 2 && endpoints[0] >= 0 && endpoints[1] >= 0) {
+                        sources.add(endpoints[0]);
+                        dests.add(endpoints[1]);
+                    }
+                }
             }
-        }
 
-        result[index] = Arrays.copyOf(b, b.length);
-        return result;
+            ArrayList<ArrayList<Integer>> edgeList = new ArrayList<>();
+            edgeList.add(sources);
+            edgeList.add(dests);
+            edge_dict.put(edgeKey, edgeList);   // key = relation name, not pftype
+        }
     }
 
-    public static int[][] merge2DArrays(int[][] a, int[][] b) {
-        int validRowsA = 0;
-        int validRowsB = 0;
+    private void buildNodeFeatureMatrices(Integer sno) {
+        for (TorchInputSpecs spec : cpmgnn.getGnnInputs()) {
+            String pftype = spec.getType();
+            @SuppressWarnings("unchecked")
+            ArrayList<Rel> subList = (ArrayList<Rel>) spec.getNodeAttributes();
+            if (subList == null || subList.isEmpty()) continue;
 
-        for (int[] row : a) if (row != null) validRowsA++;
-        for (int[] row : b) if (row != null) validRowsB++;
+            // Compute column layout and validate that all attributes share the same node type.
+            int num_col = 0;
+            int startIndex = 0;
+            int[] startIndices = new int[subList.size()];
+            Rel[] rels = new Rel[subList.size()];
+            Type nodeType = null;
 
-        int[][] result = new int[validRowsA + validRowsB][];
+            for (int i = 0; i < subList.size(); i++) {
+                Rel r = subList.get(i);
+                num_col += (r instanceof CatRel && cpmgnn.isOneHotEncoding()) ? (int) r.numvals() : 1;
 
-        int index = 0;
-        for (int[] row : a) {
-            if (row != null) {
-                result[index++] = row;
+                if (r.getTypes().length > 1)
+                    throw new RuntimeException("More than one type for node attribute " + r.name());
+                if (nodeType == null)
+                    nodeType = r.getTypes()[0];
+                else if (!nodeType.equals(r.getTypes()[0]))
+                    throw new RuntimeException("Not all the same type for node attribute " + r.name() + " typed: " + r.getTypesAsString() + " vs " + nodeType.getName());
+
+                startIndices[i] = startIndex;
+                rels[i] = r;
+                startIndex += (r instanceof CatRel) ? (int) r.numvals() : 1;
             }
-        }
-        for (int[] row : b) {
-            if (row != null) {
-                result[index++] = row;
+
+            Map<String, EvalEntry> nodesTable = getEntriesForType(evalOfNodes, pftype);
+            int uniqueNodes = nextIndexByType.getOrDefault(pftype, 0);
+            if (uniqueNodes == 0) uniqueNodes = 1;  // always allocate at least one row
+
+            if (!nodesTable.isEmpty() && nodesTable.size() % subList.size() != 0)
+                throw new RuntimeException("Node eval-table size " + nodesTable.size() + " is not divisible by attribute count " + subList.size());
+
+            double[][] matrix = createZeroMatrix(uniqueNodes, num_col);
+
+            for (EvalEntry entry : nodesTable.values()) {
+                int argNode = entry.argNodes().get(0)[0];
+                double value = resolveEvalValue(entry, sno);
+
+                int pfIdx = (int) entry.probFormIdx();
+                int startingIdx = startIndices[pfIdx];
+                Rel r = rels[pfIdx];
+                int col = startingIdx;
+                double cellValue = 1.0;
+
+                if (r instanceof CatRel && value >= 0) {
+                    col = (int) (value + startingIdx);
+                } else if (r.valtype() == Rel.NUMERIC || r.valtype() == Rel.BOOLEAN) {
+                    cellValue = value;
+                }
+
+                if (argNode < 0) {
+                    for (int row = 0; row < uniqueNodes; row++)
+                        matrix[row][col] = cellValue;
+                } else {
+                    matrix[argNode][col] = cellValue;
+                }
             }
+            x_dict.put(pftype, matrix);
         }
-        return result;
     }
 
-    // Returns the existing index for (type,nodeId) or assigns the next per-type index starting at 0
+    private void buildEdgeAttrMatrices(Integer sno) {
+        for (TorchInputSpecs spec : cpmgnn.getGnnInputs()) {
+            String pftype = spec.getType();
+            @SuppressWarnings("unchecked")
+            ArrayList<Rel> subList = (ArrayList<Rel>) spec.getEdgeAttributes();
+            if (subList == null || subList.isEmpty()) continue;
+
+            // Compute column layout.
+            int num_col = 0;
+            int startIndex = 0;
+            int[] startIndices = new int[subList.size()];
+            Rel[] rels = new Rel[subList.size()];
+
+            for (int i = 0; i < subList.size(); i++) {
+                Rel r = subList.get(i);
+                num_col += (r instanceof CatRel && cpmgnn.isOneHotEncoding()) ? (int) r.numvals() : 1;
+                startIndices[i] = startIndex;
+                rels[i] = r;
+                startIndex += (r instanceof CatRel) ? (int) r.numvals() : 1;
+            }
+
+            // Number of edges for this type — sourced from the already-built edge_dict.
+            // Key must match buildEdgeMatrices: edgeRelation.name(), not pftype.
+            String edgeKey = spec.getEdgeRelation().name();
+            ArrayList<ArrayList<Integer>> edgeList = edge_dict.get(edgeKey);
+            int num_edges = (edgeList != null && !edgeList.isEmpty())
+                    ? edgeList.get(0).size() : 1;
+            if (num_edges == 0) num_edges = 1;
+
+            Map<String, EvalEntry> edgeAttrTable = getEntriesForType(evalOfEdgeAttr, pftype);
+            double[][] matrix = createZeroMatrix(num_edges, num_col);
+
+            for (EvalEntry entry : edgeAttrTable.values()) {
+                int argEdge = entry.argNodes().get(0)[0];
+                double value = resolveEvalValue(entry, sno);
+
+                int pfIdx = (int) entry.probFormIdx();
+                int startingIdx = startIndices[pfIdx];
+                Rel r = rels[pfIdx];
+                int col = startingIdx;
+                double cellValue = 1.0;
+
+                if (r instanceof CatRel) {
+                    col = (int) (value + startingIdx);
+                } else if (r.valtype() == Rel.NUMERIC || r.valtype() == Rel.BOOLEAN) {
+                    cellValue = value;
+                }
+
+                if (argEdge < 0) {
+                    for (int row = 0; row < num_edges; row++)
+                        matrix[row][col] = cellValue;
+                } else {
+                    matrix[argEdge][col] = cellValue;
+                }
+            }
+            edgeAttr_dict.put(pftype, matrix);
+        }
+    }
+
+    /**
+     * Returns the eval value for an entry, delegating to the child GGCPMNode
+     * when the stored value is NaN (i.e. the value depends on the current sample).
+     */
+    private double resolveEvalValue(EvalEntry entry, Integer sno) {
+        double value = entry.evalValue();
+        if (Double.isNaN(value)) {
+            GGCPMNode child = (GGCPMNode) entry.evaluatedNode();
+            value = child.evaluate(sno)[0];
+        }
+        return value;
+    }
+
+    private static double[][] createZeroMatrix(int rows, int cols) {
+        return new double[rows][cols];
+    }
+
+    // this function returns the next available index starting from zero
     public int getOrAssignNodeIndex(String type, int nodeId) {
         Objects.requireNonNull(type, "type must not be null");
-        Map<Integer, Integer> mapping = nodeMappingByType.computeIfAbsent(type, t -> new HashMap<>());
-        Integer idx = mapping.get(nodeId);
-        if (idx != null) {
-            return idx;
-        }
-        int next = nextIndexByType.getOrDefault(type, 0);
-        mapping.put(nodeId, next);
-        nextIndexByType.put(type, next + 1);
-        return next;
+        return nodeMappingByType
+                .computeIfAbsent(type, t -> new HashMap<>())
+                .computeIfAbsent(nodeId, id -> {
+                    int next = nextIndexByType.getOrDefault(type, 0);
+                    nextIndexByType.put(type, next + 1);
+                    return next;
+                });
     }
 
     public Integer getNodeIndexIfPresent(String type, int nodeId) {
@@ -473,8 +578,206 @@ public class GGGnnNode extends GGCPMNode {
         return mapping != null ? mapping.get(nodeId) : null;
     }
 
+    // Maps use composite keys "pftype|subkey".
+    // Use getEntriesForType() to get only entries for a specific pftype,
+    // with the prefix already stripped
+    /** Keys use the composite form {@code "pftype|subkey"}. */
+    public Map<String, EvalEntry> getEvalOfNodes()    { return Collections.unmodifiableMap(evalOfNodes);    }
+    public Map<String, EvalEntry> getEvalOfEdgeAttr() { return Collections.unmodifiableMap(evalOfEdgeAttr); }
+    public Map<String, EvalEntry> getEvalOfEdge()     { return Collections.unmodifiableMap(evalOfEdge);     }
+
+    public static Map<String, EvalEntry> getEntriesForType(Map<String, EvalEntry> map, String pftype) {
+        if (map == null || pftype == null) return Collections.emptyMap();
+        String prefix = pftype + "|";
+        Map<String, EvalEntry> result = new HashMap<>();
+        for (Map.Entry<String, EvalEntry> e : map.entrySet())
+            if (e.getKey().startsWith(prefix))
+                result.put(e.getKey().substring(prefix.length()), e.getValue());
+        return result;
+    }
+
+    // -------------------------------------------------------------------------
+    // Incremental matrix updates (called from GnnPy.setCurrentInstPy)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Updates exactly the one cell (or one-hot slice) that corresponds to
+     * {@code currentMaxNode}'s atom in whichever of the three feature matrices
+     * owns it.  Much cheaper than a full {@link #buildInputMatrices} rebuild.
+     *
+     * @param currentInst  the new categorical / boolean / numeric value
+     * @param currentMaxNode  the atom node whose value just changed
+     */
+    public void setCurrentInstPy(int currentInst, GGAtomMaxNode currentMaxNode) {
+        Rel rel = currentMaxNode.myatom().rel();
+        boolean oneHot = cpmgnn.isOneHotEncoding();
+
+        if (updateNodeAttribute(rel, currentMaxNode, currentInst, oneHot)) return;
+        if (updateEdgeIndex(rel, currentMaxNode, currentInst)) return;
+        updateEdgeAttribute(rel, currentMaxNode, currentInst, oneHot);
+    }
+
+    /**
+     * Updates a cell in {@link #x_dict} when {@code rel} is a node-attribute relation
+     * (unary atom, 1-argument).
+     *
+     * @return {@code true} if the update was handled and the caller should stop.
+     */
+    private boolean updateNodeAttribute(Rel rel, GGAtomMaxNode currentMaxNode,
+                                        int currentInst, boolean oneHot) {
+        if (currentMaxNode.myatom().args().length != 1) return false;
+
+        for (TorchInputSpecs spec : cpmgnn.getGnnInputs()) {
+            @SuppressWarnings("unchecked")
+            List<Rel> nodeAttrs = (List<Rel>) spec.getNodeAttributes();
+            if (nodeAttrs == null) continue;
+
+            int colOffset = 0;
+            for (Rel r : nodeAttrs) {
+                if (r.equals(rel)) {
+                    String pftype = spec.getType();
+                    double[][] mat = x_dict.get(pftype);
+                    if (mat == null) return false;
+
+                    int nodeId = currentMaxNode.myatom().args()[0];
+                    Integer row = getNodeIndexIfPresent(pftype, nodeId);
+                    if (row == null) return false;
+
+                    writeFeatureCell(mat, row, colOffset, currentInst, rel, oneHot);
+                    return true;
+                }
+                colOffset += (oneHot && r instanceof CatRel) ? (int) r.numvals() : 1;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Updates {@link #edge_dict} when {@code rel} is a binary edge-defining relation.
+     * Adds or removes the edge (src→dst) based on {@code currentInst}:
+     * 1 / true → ensure the edge is present; 0 / false → ensure it is absent.
+     *
+     * @return {@code true} if the update was handled and the caller should stop.
+     */
+    private boolean updateEdgeIndex(Rel rel, GGAtomMaxNode currentMaxNode, int currentInst) {
+        if (currentMaxNode.myatom().args().length != 2) return false;
+
+        for (TorchInputSpecs spec : cpmgnn.getGnnInputs()) {
+            @SuppressWarnings("unchecked")
+            List<Rel> edgeRels = (List<Rel>) spec.getEdgeRelation();
+            if (edgeRels == null || !edgeRels.contains(rel)) continue;
+
+            String edgeKey = spec.getEdgeRelation().name();
+            ArrayList<ArrayList<Integer>> edgeList = edge_dict.get(edgeKey);
+            if (edgeList == null || edgeList.size() < 2) return false;
+
+            int rawSrc = currentMaxNode.myatom().args()[0];
+            int rawDst = currentMaxNode.myatom().args()[1];
+
+            // Translate original ids to compact indices.
+            String srcType = rel.getTypes()[0].getName();
+            String dstType = rel.getTypes()[1].getName();
+            Integer src = getNodeIndexIfPresent(srcType, rawSrc);
+            Integer dst = getNodeIndexIfPresent(dstType, rawDst);
+            if (src == null || dst == null) return false;
+
+            ArrayList<Integer> sources = edgeList.get(0);
+            ArrayList<Integer> dests = edgeList.get(1);
+
+            // Find existing position (if any).
+            int existingIdx = -1;
+            for (int i = 0; i < sources.size(); i++) {
+                if (sources.get(i) == src && dests.get(i) == dst) {
+                    existingIdx = i;
+                    break;
+                }
+            }
+
+            boolean edgeShouldExist = (currentInst != 0);
+            if (edgeShouldExist && existingIdx < 0) {
+                sources.add(src);
+                dests.add(dst);
+            } else if (!edgeShouldExist && existingIdx >= 0) {
+                sources.remove(existingIdx);
+                dests.remove(existingIdx);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Updates a cell in {@link #edgeAttr_dict} when {@code rel} is an edge-attribute
+     * relation (binary atom, 2-arguments).
+     *
+     * @return {@code true} if the update was handled and the caller should stop.
+     */
+    private boolean updateEdgeAttribute(Rel rel, GGAtomMaxNode currentMaxNode, int currentInst, boolean oneHot) {
+        if (currentMaxNode.myatom().args().length != 2) return false;
+
+        for (TorchInputSpecs spec : cpmgnn.getGnnInputs()) {
+            @SuppressWarnings("unchecked")
+            List<Rel> edgeAttrRels = (List<Rel>) spec.getEdgeAttributes();
+            if (edgeAttrRels == null) continue;
+
+            int colOffset = 0;
+            for (Rel r : edgeAttrRels) {
+                if (r.equals(rel)) {
+                    String edgeKey = spec.getEdgeRelation().name();
+                    double[][] mat = edgeAttr_dict.get(spec.getType());
+                    if (mat == null) return false;
+
+                    // Locate the edge row by matching compact src/dst in edge_dict.
+                    int rawSrc = currentMaxNode.myatom().args()[0];
+                    int rawDst = currentMaxNode.myatom().args()[1];
+                    String srcType = rel.getTypes()[0].getName();
+                    String dstType = rel.getTypes()[1].getName();
+                    Integer src = getNodeIndexIfPresent(srcType, rawSrc);
+                    Integer dst = getNodeIndexIfPresent(dstType, rawDst);
+                    if (src == null || dst == null) return false;
+
+                    int edgeRow = findEdgeRow(edgeKey, src, dst);  // key = relation name
+                    if (edgeRow < 0) return false;
+
+                    writeFeatureCell(mat, edgeRow, colOffset, currentInst, rel, oneHot);
+                    return true;
+                }
+                colOffset += (oneHot && r instanceof CatRel) ? (int) r.numvals() : 1;
+            }
+        }
+        return false;
+    }
+
+
+    private void writeFeatureCell(double[][] mat, int row, int colOffset, int value, Rel rel, boolean oneHot) {
+        double[] matRow = mat[row];
+        if (rel instanceof CatRel) {
+            if (oneHot) {
+                int numVals = (int) rel.numvals();
+                Arrays.fill(matRow, colOffset, colOffset + numVals, 0.0);
+                matRow[colOffset + value] = 1.0;
+            } else {
+                matRow[colOffset] = value;
+            }
+        } else {
+            // BoolRel or numeric
+            matRow[colOffset] = value;
+        }
+    }
+
+    private int findEdgeRow(String pftype, int src, int dst) {
+        ArrayList<ArrayList<Integer>> edgeList = edge_dict.get(pftype);
+        if (edgeList == null || edgeList.size() < 2) return -1;
+        ArrayList<Integer> sources = edgeList.get(0);
+        ArrayList<Integer> dests   = edgeList.get(1);
+        for (int i = 0; i < sources.size(); i++) {
+            if (sources.get(i) == src && dests.get(i) == dst) return i;
+        }
+        return -1;
+    }
+
     public GnnPy getGnnPy() {
-        return this.gnnPy;
+        return gnnPy;
     }
 
     public void setGnnPy(GnnPy gnnPy) {
@@ -485,101 +788,35 @@ public class GGGnnNode extends GGCPMNode {
         return cpmgnn;
     }
 
+    @Override
+    public boolean isBoolean() { return cpmgnn.numvals() == 1; }
+
     public int outDim() {
-    	System.out.println("outDim still needs to be implemented for GGGnnNode");
-    	return 0;
+        System.out.println("outDim still needs to be implemented for GGGnnNode");
+        return 0;
     }
 
-    public HashMap<String, HashMap<String, Object[]>> getEvalOfNodes() {
-        return evalOfNodes;
-    }
-
-    public HashMap<String, HashMap<String, Object[]>> getEvalOfEdgeAttr() {
-        return evalOfEdgeAttr;
-    }
-
-//    public Hashtable<String, int[][]> getEvalOfEdge() {
-//        return evalOfEdge;
-//    }
-
-
-    public HashMap<String, HashMap<String, Object[]>> getEvalOfEdge() {
-        return evalOfEdge;
-    }
-
-    public boolean comapre(Object obj) {
-        // Fast path: reference equality
+    public boolean equals(Object obj) {
         if (this == obj) return true;
-
-        // Null check and type check
         if (obj == null || getClass() != obj.getClass()) return false;
-
-        GGGnnNode other = (GGGnnNode) obj;
-
-        // Compare node mapping structures
-        if (!Objects.equals(nodeMapping, other.nodeMapping)) return false;
-        if (!Objects.equals(nodeMappingByType, other.nodeMappingByType)) return false;
-        if (!Objects.equals(nextIndexByType, other.nextIndexByType)) return false;
-
-        // Compare evaluated children
-//        if (!Objects.equals(evaluated_children, other.evaluated_children)) return false;
-
-        // Compare evaluation structures
-        if (!Objects.equals(evalOfNodes, other.evalOfNodes)) return false;
-        if (!Objects.equals(evalOfEdgeAttr, other.evalOfEdgeAttr)) return false;
-
-        // Deep comparison for 2D arrays in evalOfEdge
-//        if (!compareEvalOfEdge(evalOfEdge, other.evalOfEdge)) return false;
-
-        return true;
+        GGGnnNode o = (GGGnnNode) obj;
+        return Objects.equals(nodeMappingByType, o.nodeMappingByType)
+                && Objects.equals(nextIndexByType, o.nextIndexByType)
+                && Objects.equals(evalOfNodes, o.evalOfNodes)
+                && Objects.equals(evalOfEdgeAttr, o.evalOfEdgeAttr)
+                && Objects.equals(evalOfEdge, o.evalOfEdge);
     }
 
     @Override
     public int hashCode() {
-        // Start with parent hashCode
-        int result = super.hashCode();
-
-        // Combine with this class's fields
-        result = 31 * result + Objects.hashCode(cpmgnn);
-        result = 31 * result + Objects.hashCode(gnnPy);
-        result = 31 * result + Objects.hashCode(nodeMapping);
-        result = 31 * result + Objects.hashCode(nodeMappingByType);
-        result = 31 * result + Objects.hashCode(nextIndexByType);
-        result = 31 * result + Objects.hashCode(evaluated_children);
-        result = 31 * result + Objects.hashCode(evalOfNodes);
-        result = 31 * result + Objects.hashCode(evalOfEdgeAttr);
-//        result = 31 * result + hashCodeEvalOfEdge(evalOfEdge);
-        result = 31 * result + Objects.hashCode(evalOfEdge);
-
-        return result;
+        int h = super.hashCode();
+        h = 31 * h + Objects.hashCode(cpmgnn);
+        h = 31 * h + Objects.hashCode(gnnPy);
+        h = 31 * h + Objects.hashCode(nodeMappingByType);
+        h = 31 * h + Objects.hashCode(nextIndexByType);
+        h = 31 * h + Objects.hashCode(evalOfNodes);
+        h = 31 * h + Objects.hashCode(evalOfEdgeAttr);
+        h = 31 * h + Objects.hashCode(evalOfEdge);
+        return h;
     }
-
-    // Helper method for deep comparison of evalOfEdge
-    private boolean compareEvalOfEdge(Hashtable<String, int[][]> map1, Hashtable<String, int[][]> map2) {
-        if (map1 == map2) return true;
-        if (map1 == null || map2 == null) return false;
-        if (map1.size() != map2.size()) return false;
-
-        for (String key : map1.keySet()) {
-            int[][] arr1 = map1.get(key);
-            int[][] arr2 = map2.get(key);
-
-            if (!Arrays.deepEquals(arr1, arr2)) return false;
-        }
-
-        return true;
-    }
-
-    // Helper method for hashing evalOfEdge
-    private int hashCodeEvalOfEdge(Hashtable<String, int[][]> map) {
-        if (map == null) return 0;
-
-        int result = 0;
-        for (Map.Entry<String, int[][]> entry : map.entrySet()) {
-            result += Objects.hashCode(entry.getKey()) + Arrays.deepHashCode(entry.getValue());
-        }
-
-        return result;
-    }
-
 }
