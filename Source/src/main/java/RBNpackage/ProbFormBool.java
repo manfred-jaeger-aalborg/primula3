@@ -1,6 +1,6 @@
 package RBNpackage;
 
-import java.util.Hashtable;
+import java.util.HashMap;
 
 import RBNExceptions.RBNCompatibilityException;
 import RBNpackage.VarTermPackage.ArgTerm;
@@ -25,7 +25,7 @@ public abstract class ProbFormBool extends CPModel implements ProbForm {
 		sign = true;
 	}
 	
-	public abstract int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, Hashtable<String,GroundAtom> atomhasht) 
+	public abstract int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, HashMap<String,GroundAtom> atomhasht)
 	throws RBNCompatibilityException;
 
     public abstract int evaluatesTo(RelStruc A) throws RBNCompatibilityException;

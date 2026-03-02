@@ -145,7 +145,7 @@ public class InferenceModule implements GradientGraphOptions {
 	 * @uml.property  name="queryatoms"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
-	Hashtable<Rel,GroundAtomList> queryatoms;
+	HashMap<Rel,GroundAtomList> queryatoms;
 
 //	/**
 //	 * Maps a string representation of a query atom to a two-part index:
@@ -153,9 +153,9 @@ public class InferenceModule implements GradientGraphOptions {
 //	 * queryatomsScrollists), the second
 //	 * is the index for this tuple in that table
 //	 */
-//	private Hashtable<String,int[]> groundAtomIndex;
+//	private HashMap<String,int[]> groundAtomIndex;
 
-	public Hashtable<Rel, GroundAtomList> getQueryatoms() {
+	public HashMap<Rel, GroundAtomList> getQueryatoms() {
 		return queryatoms;
 	}
 
@@ -163,7 +163,7 @@ public class InferenceModule implements GradientGraphOptions {
 	 * Maps a relation (identified by its name) to the index of the query atoms
 	 * for this relation in the queryatomsScrolllists
 	 */
-	Hashtable<String,Integer> relIndex = new Hashtable<String,Integer>();
+	HashMap<String,Integer> relIndex = new HashMap<String,Integer>();
 	/**
 	 * Vector of relations defining their order in queryatomsScrolllists:
 	 *
@@ -329,8 +329,8 @@ public class InferenceModule implements GradientGraphOptions {
 
 		updateInstantiationList();
 
-		queryatoms=myprimula.queryatoms.asHashTable();
-		relIndex = new Hashtable<String,Integer>();
+		queryatoms=myprimula.queryatoms.asHashMap();
+		relIndex = new HashMap<>();
 		relList = new Vector<Rel>();
 		int idx =0;
 
@@ -392,7 +392,7 @@ public class InferenceModule implements GradientGraphOptions {
         sampthr.setRunning(false);
     }
 
-    public void setQueryAtoms(Hashtable<Rel,GroundAtomList> atomsList) {
+    public void setQueryAtoms(HashMap<Rel,GroundAtomList> atomsList) {
         this.queryatoms = atomsList;
     }
 
@@ -421,7 +421,7 @@ public class InferenceModule implements GradientGraphOptions {
 			RelData evidence = new RelData(myprimula.getRels(),myprimula.getInstantiation());
 			int mode;
 
-			Hashtable<String,Integer> parameters = new Hashtable<>();
+			HashMap<String,Integer> parameters = new HashMap<>();
 			if (inferenceModuleGUI != null)
 				parameters = myprimula.makeParameterIndexGUI();
 			else {
@@ -429,7 +429,7 @@ public class InferenceModule implements GradientGraphOptions {
 			}
 
 //			String[] rbnparams = myprimula.getRBN().parameters();
-//			Hashtable<String,Integer> rbnparamidx = new Hashtable<String,Integer>();
+//			HashMap<String,Integer> rbnparamidx = new HashMap<String,Integer>();
 //			for (int i=0;i<rbnparams.length;i++)
 //				rbnparamidx.put(rbnparams[i], i);
 
@@ -1074,7 +1074,7 @@ public class InferenceModule implements GradientGraphOptions {
 				RelStruc A = rdoi.inputDomain();
 				for (OneStrucData osd: rdoi.allOneStrucData()) {
 
-					Hashtable<String,Object[]> evaluated = new Hashtable<String,Object[]>();
+					HashMap<String,Object[]> evaluated = new HashMap<String,Object[]>();
 
 					if (r instanceof BoolRel) {
 						double prob =0;
@@ -1488,9 +1488,9 @@ public class InferenceModule implements GradientGraphOptions {
 	}
 	public void deleteQueryAtoms() {
 		queryModels=new Vector<QueryTableModel>();
-		queryatoms = new Hashtable<Rel, GroundAtomList>();
+		queryatoms = new HashMap<Rel, GroundAtomList>();
 		relList = new Vector<Rel>();
-		relIndex = new Hashtable<String,Integer>();
+		relIndex = new HashMap<String,Integer>();
 	}
 
 	public Primula getPrimula() {

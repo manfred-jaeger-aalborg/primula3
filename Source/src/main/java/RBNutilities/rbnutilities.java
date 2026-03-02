@@ -34,21 +34,37 @@ import mymath.*;
 
 public class rbnutilities extends java.lang.Object
 {
-    public static boolean IsInteger(String argentry)
-        /* returns true of argentry is a string
+//    public static boolean IsInteger(String argentry)
+//        /* returns true of argentry is a string
+//         * representing an integer. Needed in freevars()
+//         */
+//    {
+//    	if (argentry.length()==0) return false;
+//    	for (int i = 0; i < argentry.length(); i++)
+//    	{
+//    		if (!Character.isDigit(argentry.charAt(i)))
+//    		{
+//    			return false;
+//    		}
+//    	}
+//    	return true;
+//    }
+
+	public static boolean IsInteger(String s) {
+		/* returns true of argentry is a string
          * representing an integer. Needed in freevars()
          */
-    {
-    	if (argentry.length()==0) return false;
-    	for (int i = 0; i < argentry.length(); i++)
-    	{
-    		if (!Character.isDigit(argentry.charAt(i)))
-    		{
-    			return false;
-    		}
-    	}
-    	return true;
-    }
+		if (s == null) return false;
+		int len = s.length();
+		if (len == 0) return false;
+
+		for (int i = 0; i < len; i++) {
+			char c = s.charAt(i);
+			if ((c - '0') > 9 || (c - '0') < 0)
+				return false;
+		}
+		return true;
+	}
 
     public static boolean IsInteger(String[] args){
     	boolean result = true;
@@ -1694,6 +1710,31 @@ public class rbnutilities extends java.lang.Object
 		}
 	}
 
+	// fast way to check integer
+	// https://stackoverflow.com/questions/237159/whats-the-best-way-to-check-if-a-string-represents-an-integer-in-java
+	protected static Integer tryParseInt(String s) {
+		if (s == null || s.isEmpty()) return null;
+
+		int i = 0;
+		int len = s.length();
+		int sign = 1;
+
+		if (s.charAt(0) == '-') {
+			if (len == 1) return null;
+			sign = -1;
+			i = 1;
+		}
+
+		int result = 0;
+		for (; i < len; i++) {
+			char c = s.charAt(i);
+			if (c < '0' || c > '9') return null;
+			result = result * 10 + (c - '0');
+		}
+
+		return sign * result;
+	}
+
 	public static void allSatisfyingTuples(ArgTerm[] args, int[] intvec, ArgTerm[] vars, TreeSet<int[]> ts, int d) {
 		if (intvec.length != args.length)
 			throw new IllegalArgumentException("Tuple of wrong length!");
@@ -1704,12 +1745,8 @@ public class rbnutilities extends java.lang.Object
 			if (args[i].isGround()) {
 				String val = args[i].argEval();
 				if (val == null) return;
-				try {
-					int intVal = Integer.parseInt(val);
-					if (intVal != intvec[i]) return;
-				} catch (NumberFormatException e) {
-					return;
-				}
+				Integer intVal = tryParseInt(val);
+				if (intVal == null || intVal != intvec[i]) return;
 			}
 		}
 
@@ -2110,14 +2147,25 @@ public class rbnutilities extends java.lang.Object
 		if (vars.length != args.length)
 			System.out.println("calling rbnutilities.array_substitute with unmatched arguments");
 
-		ArgTerm[] result = new ArgTerm[arr.length];
-		for (int i = 0; i < arr.length; i++) {
-			ArgTerm current = arr[i];
-			for (int j = 0; j < vars.length; j++) {
-				current = current.substitute(vars[j], args[j]);
-			}
+		if (vars.length == 0 || arr.length == 0) {
+			return arr.clone();
+		}
+		int arrLen = arr.length;
+		int varLen = vars.length;
 
-			result[i] = current;
+		if (varLen == 0 || arrLen == 0)
+			return arr.clone();
+		ArgTerm[] result = new ArgTerm[arrLen];
+		for (int i = 0; i < arrLen; i++) {
+			ArgTerm term = arr[i];
+			ArgTerm replaced = term;
+			for (int j = 0; j < varLen; j++) {
+				if (term.equals(vars[j])) {
+					replaced = new VarTerm(args[j]);
+					break;
+				}
+			}
+			result[i] = replaced;
 		}
 		return result;
 	}

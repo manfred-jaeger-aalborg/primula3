@@ -1,6 +1,6 @@
 package RBNLearning;
 
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.Vector;
@@ -10,7 +10,7 @@ public class Gradient_TreeMap extends Gradient{
 
     TreeMap<String,double[]> gradient;
 
-    public Gradient_TreeMap(Hashtable<String,Integer> params){
+    public Gradient_TreeMap(HashMap<String,Integer> params){
         parameter_to_idx = params;
         gradient = new TreeMap<String,double[]>();
     }

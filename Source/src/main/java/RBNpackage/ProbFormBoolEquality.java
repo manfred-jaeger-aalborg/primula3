@@ -28,7 +28,7 @@ public class ProbFormBoolEquality extends ProbFormBool {
 	
 	@Override
 	public int evaluatesTo(RelStruc A, OneStrucData inst,
-			boolean usesampleinst, Hashtable<String, GroundAtom> atomhasht)
+			boolean usesampleinst, HashMap<String, GroundAtom> atomhasht)
 			throws RBNCompatibilityException {
 		return evaluatesTo(A);
 	}
@@ -67,7 +67,7 @@ public class ProbFormBoolEquality extends ProbFormBool {
 //			boolean useCurrentPvals,
 //    		GroundAtomList mapatoms,
 //    		boolean useCurrentMvals,
-//    		Hashtable<String,Double> evaluated) throws RBNCompatibilityException {
+//    		HashMap<String,Double> evaluated) throws RBNCompatibilityException {
 //		ProbFormBoolEquality thissubstituted = (ProbFormBoolEquality)this.substitute(vars,tuple);
 //		if (!thissubstituted.isGround())
 //			throw new IllegalArgumentException("Attempt to evaluate non-ground equality");
@@ -83,10 +83,10 @@ public class ProbFormBoolEquality extends ProbFormBool {
 			boolean useCurrentCvals, 
     		// String[] numrelparameters,
     		boolean useCurrentPvals,
-    		Hashtable<Rel,GroundAtomList> mapatoms,
+    		HashMap<Rel,GroundAtomList> mapatoms,
     		boolean useCurrentMvals,
-    		Hashtable<String,Object[]> evaluated,
-    		Hashtable<String,Integer> params,
+    		HashMap<String,Object[]> evaluated,
+    		HashMap<String,Integer> params,
     		int returntype,
     		boolean valonly,
     		Profiler profiler)
@@ -109,9 +109,9 @@ public class ProbFormBoolEquality extends ProbFormBool {
 	
 	@Override
 	public double[] evalSample(RelStruc A, 
-			Hashtable<String,PFNetworkNode> atomhasht, 
+			HashMap<String,PFNetworkNode> atomhasht, 
 			OneStrucData inst, 
-			Hashtable<String,double[]> evaluated,
+			HashMap<String,double[]> evaluated,
 			long[] timers)
 					throws RBNCompatibilityException {
 		return new double[] {evaluate(A, null)};

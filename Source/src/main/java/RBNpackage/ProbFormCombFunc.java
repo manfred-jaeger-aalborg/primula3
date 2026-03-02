@@ -482,10 +482,10 @@ public class ProbFormCombFunc extends CPModel implements ProbForm {
 			boolean useCurrentCvals, 
 			// String[] numrelparameters,
 			boolean useCurrentPvals,
-			Hashtable<Rel,GroundAtomList> mapatoms,
+			HashMap<Rel,GroundAtomList> mapatoms,
 			boolean useCurrentMvals,
-			Hashtable<String,Object[]> evaluated,
-			Hashtable<String,Integer> params,
+			HashMap<String,Object[]> evaluated,
+			HashMap<String,Integer> params,
 			int returntype,
 			boolean valonly,
 			Profiler profiler)
@@ -614,24 +614,24 @@ public class ProbFormCombFunc extends CPModel implements ProbForm {
 //			}
 //			else {
 //				long timebeforehashcreate = System.currentTimeMillis();
-//				result[1]=new Hashtable<String,Double>();
+//				result[1]=new HashMap<String,Double>();
 //				TreeSet<String> donekeys = new TreeSet<String>();
 //				for (int j=0; j<combargs.size(); j++) {
-//					for (String p: ((Hashtable<String,Double>)combargs.elementAt(j)[1]).keySet())
+//					for (String p: ((HashMap<String,Double>)combargs.elementAt(j)[1]).keySet())
 //					{
 //						if (!donekeys.contains(p)) {
 //							double[] derivs = new double[combargs.size()];
 //							/* The elements in combargs.elementAt(0),...,combargs.elementAt(j-1) had a
 //							 * 0 derivative for parameter p */
 //							for (int h=j; h<combargs.size(); h++) {
-//								Double di = ((Hashtable<String,Double>)combargs.elementAt(h)[1]).get(p);
+//								Double di = ((HashMap<String,Double>)combargs.elementAt(h)[1]).get(p);
 //								if (di==null)
 //									derivs[h]=0.0;
 //								else
 //									derivs[h]=di;
 //							}
 //							donekeys.add(p);
-//							((Hashtable<String,Double>)result[1]).put(p,mycomb.evaluateGrad(vals, derivs));
+//							((HashMap<String,Double>)result[1]).put(p,mycomb.evaluateGrad(vals, derivs));
 //						}
 //					}
 //
@@ -654,9 +654,9 @@ public class ProbFormCombFunc extends CPModel implements ProbForm {
 	}	
 	
 	public  double[] evalSample(RelStruc A, 
-			Hashtable<String,PFNetworkNode> atomhasht, 
+			HashMap<String,PFNetworkNode> atomhasht,
 			OneStrucData inst, 
-    		Hashtable<String,double[]> evaluated,
+    		HashMap<String,double[]> evaluated,
 			long[] timers)
 			throws RBNCompatibilityException
 	{
@@ -704,7 +704,7 @@ public class ProbFormCombFunc extends CPModel implements ProbForm {
 		return result;
 	}
 
-	public int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, Hashtable atomhasht)
+	public int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, HashMap atomhasht)
 			throws RBNCompatibilityException
 	{
 		/* First create an argument vector for the combination function
@@ -828,65 +828,159 @@ public class ProbFormCombFunc extends CPModel implements ProbForm {
 	//		return result;
 	//	}
 
-	public String asString(int syntax, int depth, RelStruc A, boolean paramsAsValue,boolean usealias)
-	/* precedes string representation of formula with depth many
-	 * tabs (to obtain a multi-line output with suitable indentations).
-	 */ 
-	{
+//	public String asString(int syntax, int depth, RelStruc A, boolean paramsAsValue,boolean usealias)
+//	/* precedes string representation of formula with depth many
+//	 * tabs (to obtain a multi-line output with suitable indentations).
+//	 */
+//	{
+//		if (usealias && this.getAlias() != null)
+//			return this.getAlias();
+//		String result="";
+//		String tabstring = "";
+//		for (int i=0;i<depth;i++)
+//			tabstring = tabstring +" ";
+//
+//		int newdepth=0;
+//		String newtabstring = "";
+//
+//
+//		switch (syntax){
+//		case Primula.CLASSICSYNTAX:
+//			if (depth >= 0){
+//				newdepth = depth + mycomb.name.length();
+//				for (int i=0;i<newdepth;i++)
+//					newtabstring = newtabstring +" ";
+//				result =   mycomb.name+"{";
+//				for (int i = 0; i<pfargs.length-1; i++)
+//				{
+//					result = result +'\n' + newtabstring + " " + pfargs[i].asString(syntax, newdepth ,A,paramsAsValue,usealias) + ",";
+//				}
+//				if (pfargs.length >= 1)
+//					result = result +'\n' + newtabstring + " "+pfargs[pfargs.length-1].asString(syntax, newdepth + 1, A,paramsAsValue,usealias);
+//				result = result + '\n' + newtabstring + " " + "|" + rbnutilities.arrayToString(quantvars) + " : ";
+//				result =  result +cconstr.asString(Primula.CLASSICSYNTAX,0,A,paramsAsValue,usealias);
+//				result =  result +'\n' + newtabstring + "}";
+//			}
+//			else // depth =-1
+//			{
+//				result =   mycomb.name+"{";
+//				for (int i = 0; i<pfargs.length-1; i++)
+//				{
+//					result = result +" " + pfargs[i].asString(syntax, -1 ,A,paramsAsValue,usealias) + ",";
+//				}
+//				if (pfargs.length >= 1)
+//					result = result + " " +pfargs[pfargs.length-1].asString(syntax, -1, A,  paramsAsValue,usealias);
+//				result = result + " " + "|" + rbnutilities.arrayToString(quantvars) + " : ";
+//				result =  result +cconstr.asString(Primula.CLASSICSYNTAX,0,A,paramsAsValue,usealias) + "}";
+//			}
+//			break;
+//		case Primula.CHERRYSYNTAX:
+//			result = "COMBINE " ;
+//			if (pfargs.length >= 1)
+//				result = result  + pfargs[0].asString(syntax, depth+8 ,A,paramsAsValue,usealias);
+//			for (int i = 1; i<pfargs.length; i++)
+//			{
+//				result = result + "," +'\n' + tabstring + "        " + pfargs[i].asString(syntax, depth+8 ,A,  paramsAsValue,usealias) ;
+//			}
+//			result = result + '\n' + tabstring + "WITH " + mycomb.name;
+//			result = result + '\n' + tabstring + "FORALL " +  rbnutilities.arrayToString(quantvars);
+//			result = result + '\n' + tabstring + "WHERE " + cconstr.asString(Primula.CHERRYSYNTAX,0,A, paramsAsValue,usealias) ;
+//		}
+//		return result;
+//	}
+
+	public String asString(int syntax, int depth, RelStruc A,
+						   boolean paramsAsValue, boolean usealias) {
+
 		if (usealias && this.getAlias() != null)
 			return this.getAlias();
-		String result="";
+
+		StringBuilder sb = new StringBuilder();
+
 		String tabstring = "";
-		for (int i=0;i<depth;i++)
-			tabstring = tabstring +" ";
-
-		int newdepth=0;
-		String newtabstring = "";
-
-
-		switch (syntax){
-		case Primula.CLASSICSYNTAX:
-			if (depth >= 0){
-				newdepth = depth + mycomb.name.length();	
-				for (int i=0;i<newdepth;i++)
-					newtabstring = newtabstring +" ";
-				result =   mycomb.name+"{";
-				for (int i = 0; i<pfargs.length-1; i++)
-				{
-					result = result +'\n' + newtabstring + " " + pfargs[i].asString(syntax, newdepth ,A,paramsAsValue,usealias) + ",";
-				}
-				if (pfargs.length >= 1) 
-					result = result +'\n' + newtabstring + " "+pfargs[pfargs.length-1].asString(syntax, newdepth + 1, A,paramsAsValue,usealias);
-				result = result + '\n' + newtabstring + " " + "|" + rbnutilities.arrayToString(quantvars) + " : ";
-				result =  result +cconstr.asString(Primula.CLASSICSYNTAX,0,A,paramsAsValue,usealias);
-				result =  result +'\n' + newtabstring + "}";
-			}
-			else // depth =-1
-			{
-				result =   mycomb.name+"{";
-				for (int i = 0; i<pfargs.length-1; i++)
-				{
-					result = result +" " + pfargs[i].asString(syntax, -1 ,A,paramsAsValue,usealias) + ",";
-				}
-				if (pfargs.length >= 1) 
-					result = result + " " +pfargs[pfargs.length-1].asString(syntax, -1, A,  paramsAsValue,usealias);
-				result = result + " " + "|" + rbnutilities.arrayToString(quantvars) + " : ";
-				result =  result +cconstr.asString(Primula.CLASSICSYNTAX,0,A,paramsAsValue,usealias) + "}";
-			}
-			break;
-		case Primula.CHERRYSYNTAX:
-			result = "COMBINE " ;
-			if (pfargs.length >= 1) 
-				result = result  + pfargs[0].asString(syntax, depth+8 ,A,paramsAsValue,usealias);
-			for (int i = 1; i<pfargs.length; i++)
-			{
-				result = result + "," +'\n' + tabstring + "        " + pfargs[i].asString(syntax, depth+8 ,A,  paramsAsValue,usealias) ;
-			}
-			result = result + '\n' + tabstring + "WITH " + mycomb.name;
-			result = result + '\n' + tabstring + "FORALL " +  rbnutilities.arrayToString(quantvars);
-			result = result + '\n' + tabstring + "WHERE " + cconstr.asString(Primula.CHERRYSYNTAX,0,A, paramsAsValue,usealias) ; 
+		if (depth > 0) {
+			StringBuilder t = new StringBuilder(depth);
+			for (int i = 0; i < depth; i++) t.append(' ');
+			tabstring = t.toString();
 		}
-		return result;
+
+		switch (syntax) {
+			case Primula.CLASSICSYNTAX:
+				if (depth >= 0) {
+					int newdepth = depth + mycomb.name.length();
+					StringBuilder nt = new StringBuilder(newdepth);
+					for (int i = 0; i < newdepth; i++) nt.append(' ');
+					String newtabstring = nt.toString();
+
+					sb.append(mycomb.name).append('{');
+
+					for (int i = 0; i < pfargs.length - 1; i++) {
+						sb.append('\n')
+								.append(newtabstring)
+								.append(' ')
+								.append(pfargs[i].asString(syntax, newdepth, A, paramsAsValue, usealias))
+								.append(',');
+					}
+
+					if (pfargs.length >= 1) {
+						sb.append('\n').append(newtabstring).append(' ').append(pfargs[pfargs.length - 1].asString(syntax, newdepth + 1, A, paramsAsValue, usealias));
+					}
+
+					sb.append('\n')
+							.append(newtabstring)
+							.append(" |")
+							.append(rbnutilities.arrayToString(quantvars))
+							.append(" : ")
+							.append(cconstr.asString(Primula.CLASSICSYNTAX, 0, A, paramsAsValue, usealias))
+							.append('\n')
+							.append(newtabstring)
+							.append('}');
+
+				} else {
+					sb.append(mycomb.name).append('{');
+					for (int i = 0; i < pfargs.length - 1; i++) {
+						sb.append(' ').append(pfargs[i].asString(syntax, -1, A, paramsAsValue, usealias)).append(',');
+					}
+
+					if (pfargs.length >= 1) {
+						sb.append(' ').append(pfargs[pfargs.length - 1].asString(syntax, -1, A, paramsAsValue, usealias));
+					}
+
+					sb.append(" |").append(rbnutilities.arrayToString(quantvars)).append(" : ").append(cconstr.asString(Primula.CLASSICSYNTAX, 0, A, paramsAsValue, usealias)).append('}');
+				}
+				break;
+
+			case Primula.CHERRYSYNTAX:
+
+				sb.append("COMBINE ");
+
+				if (pfargs.length >= 1) {
+					sb.append(pfargs[0].asString(syntax, depth + 8, A, paramsAsValue, usealias));
+				}
+
+				for (int i = 1; i < pfargs.length; i++) {
+					sb.append(',')
+							.append('\n')
+							.append(tabstring)
+							.append("        ")
+							.append(pfargs[i].asString(syntax, depth + 8, A, paramsAsValue, usealias));
+				}
+
+				sb.append('\n')
+						.append(tabstring)
+						.append("WITH ")
+						.append(mycomb.name)
+						.append('\n')
+						.append(tabstring)
+						.append("FORALL ")
+						.append(rbnutilities.arrayToString(quantvars))
+						.append('\n')
+						.append(tabstring)
+						.append("WHERE ")
+						.append(cconstr.asString(Primula.CHERRYSYNTAX, 0, A, paramsAsValue, usealias));
+		}
+
+		return sb.toString();
 	}
 
 

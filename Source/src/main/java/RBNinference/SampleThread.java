@@ -64,7 +64,7 @@ public class SampleThread extends Thread{
 	private InferenceModule inferenceModule;
 	public SampleThread(InferenceModule infmodule,
 			PFNetwork pfn,
-			Hashtable<Rel,GroundAtomList> queryatoms,
+			HashMap<Rel,GroundAtomList> queryatoms,
 //			int num_subsamples_param,
 			boolean[] logmode_param,
 			BufferedWriter logwriter_param){

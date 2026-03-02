@@ -24,11 +24,21 @@ public abstract class ArgTerm {
     public abstract Set<String> varsEqual(ArgTerm other);
 
     protected static boolean isInt(String s) {
-        try {
-            Integer.parseInt(s);
-            return true;
-        } catch (NumberFormatException e) {
-            return false;
+        if (s == null || s.isEmpty()) return false;
+
+        int i = 0;
+        int len = s.length();
+
+        if (s.charAt(0) == '-') {
+            if (len == 1) return false;
+            i = 1;
         }
+
+        for (; i < len; i++) {
+            char c = s.charAt(i);
+            if (c < '0' || c > '9') return false;
+        }
+
+        return true;
     }
 }

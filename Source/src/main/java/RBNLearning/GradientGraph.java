@@ -40,7 +40,7 @@ import RBNinference.*;
  * recursively evaluating the probability formulas corresponding to the ground atoms in the 
  * Instantiations.  Identical ground (sub-) formulas obtained from the evaluation of different 
  * instantiated ground atoms are included only once in the GradientGraphO. For this purpose a 
- * hashtable allNodes for the nodes is maintained. The keys for the nodes are constructed as 
+ * HashMap allNodes for the nodes is maintained. The keys for the nodes are constructed as 
  * strings consisting of a concatenation of the index of the data case with the string representation
  * of the ground probability formula.
  * 
@@ -94,7 +94,7 @@ public abstract class GradientGraph{
 	protected Primula myPrimula;
 	protected GradientGraphOptions myggoptions;
 
-	private Hashtable<String,GGCPMNode> allNodes;
+	private HashMap<String,GGCPMNode> allNodes;
 	
 	/* Maximum identifier value currently assigned to a node;
 	 * 
@@ -120,14 +120,14 @@ public abstract class GradientGraph{
 	//Vector<GGAtomMaxNode> maxindicators; /* All the indicators for atoms to be maximized */
 	Vector<GGConstantNode> paramNodes; /* All the constant (i.e. parameter) nodes */
 
-	 /* Hashtable containing all the parameters as keys, with an integer index as value. 
+	 /* HashMap containing all the parameters as keys, with an integer index as value.
 	  * This  is constructed
 		 * before the vector paramNodes is constructed. It is needed already
 		 * in the construction of the nodes of the graph. The Integer indices in this 
-		 * hashtable must correspond to the order in paramNodes: 
+		 * HashMap must correspond to the order in paramNodes: 
 		 * paramNodes.elementAt(parameters.get("pname")).paramname() = "pname" 
 		 */
-	Hashtable<String,Integer> parameters;
+	 HashMap<String,Integer> parameters;
 
 	/* Minima and maxima for the parameters */
 	double[][] minmaxbounds;
@@ -143,7 +143,7 @@ public abstract class GradientGraph{
 	 * Same as InferenceModule.queryatoms
 	 * 
 	 */
-	Hashtable<Rel,GroundAtomList> mapatoms;
+	HashMap<Rel,GroundAtomList> mapatoms;
 	
 	/* For estimating likelihood and gradient from Gibbs sampling
 	 * values for unobserved atoms: 'numchains' Markov chains are 
@@ -186,9 +186,9 @@ public abstract class GradientGraph{
 
 	public GradientGraph(Primula mypr, 
 			RelData data, 
-			Hashtable<String,Integer> params,
+			HashMap<String,Integer> params,
 			GradientGraphOptions go, 
-			Hashtable<Rel,GroundAtomList> mapats, 
+			HashMap<Rel,GroundAtomList> mapats,
 			int m,
 			Boolean showInfoInPrimula)
 	throws RBNCompatibilityException
@@ -253,7 +253,7 @@ public abstract class GradientGraph{
 		return parameters.size();
 	}
 
-	public Hashtable<String,Integer> parameters(){
+	public HashMap<String,Integer> parameters(){
 		return parameters;
 	}
 
@@ -603,7 +603,7 @@ public abstract class GradientGraph{
 	}
 	
 
-	public abstract Hashtable<Rel,int[]> getMapVals();
+	public abstract HashMap<Rel,int[]> getMapVals();
 	
 //	public OneStrucData getMapValuesAsInst(int[] instvals){
 ////		int[] instvals = getMapVals();

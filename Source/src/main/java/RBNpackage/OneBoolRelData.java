@@ -50,22 +50,45 @@ public class OneBoolRelData extends OneRelData {
 	 */
 	 //public String defaultval;
 
-	
-	 private TreeSet<int[]> trueAtoms;  
-	 private TreeSet<int[]> falseAtoms; 
-	 
+		// small class inside for fast lookup of trueatoms and false atoms
+		// this maintains the compatibility and do not break the treeset order: is needed?
+	private static final class IntArrayWrapper {
+		final int[] data;
+		final int hash;
+
+		IntArrayWrapper(int[] data) {
+			this.data = data;
+			this.hash = Arrays.hashCode(data);
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (!(o instanceof IntArrayWrapper)) return false;
+			return Arrays.equals(data, ((IntArrayWrapper)o).data);
+		}
+
+		@Override
+		public int hashCode() {
+			return hash;
+		}
+	}
+
+ 	private TreeSet<int[]> trueAtoms;
+ 	private TreeSet<int[]> falseAtoms;
+	private HashSet<IntArrayWrapper> trueLookup;
+	private HashSet<IntArrayWrapper> falseLookup;
 	 /*
 		 * Contains for each argument (position) of this relation
-		 * a HashMap that maps node (integer) identifiers to the set of 
+		 * a HashMap that maps node (integer) identifiers to the set of
 		 * tuples contained in trueAtoms
-		 * 
+		 *
 		 * Example: this.arity=2,
-		 * Then trueAtomsIndex[1].get(3) returns a the tree set of pairs 
+		 * Then trueAtomsIndex[1].get(3) returns a the tree set of pairs
 		 * contained in trueAtoms with 3 in the second position.
 		 */
 	 protected  HashMap<Integer,TreeSet<int[]>>[] trueAtomsIndex;
-	 protected  HashMap<Integer,TreeSet<int[]>>[] falseAtomsIndex; 
-	 
+	 protected  HashMap<Integer,TreeSet<int[]>>[] falseAtomsIndex;
+
 	/* For relations of arity 0 (globals): r()=true is
 	 * represented by trueAtoms = ([0]) , falseAtoms = ();
 	 * r() = false is represented by trueAtoms = (), falseAtoms = ([0])
@@ -74,16 +97,16 @@ public class OneBoolRelData extends OneRelData {
 
 	public OneBoolRelData() {
 	}
-	
-	
+
+
 	public OneBoolRelData(BoolRel r, String dv)
 	{
-		
+
 //		rel = r;
 //		defaultval = dv;
-		
+
 		super(r,dv);
-		
+
 		trueAtoms = new TreeSet<int[]>(new IntArrayComparator());
 		falseAtoms = new TreeSet<int[]>(new IntArrayComparator());
 		trueAtomsIndex = (HashMap<Integer,TreeSet<int[]>>[]) new HashMap[r.arity];
@@ -92,8 +115,9 @@ public class OneBoolRelData extends OneRelData {
 			trueAtomsIndex[i]=new HashMap<Integer,TreeSet<int[]>>();
 			falseAtomsIndex[i]=new HashMap<Integer,TreeSet<int[]>>();
 		}
-		
-		
+
+		trueLookup = new HashSet<>();
+		falseLookup = new HashSet<>();
 	}
 
 	public OneBoolRelData(BoolRel r, String dv, TreeSet<int[]> tats, TreeSet<int[]> fats){
@@ -108,11 +132,43 @@ public class OneBoolRelData extends OneRelData {
 //			trueAtomsIndex[i]=new HashMap<Integer,TreeSet<int[]>>();
 //			falseAtomsIndex[i]=new HashMap<Integer,TreeSet<int[]>>();
 //		}
+
+		trueLookup  = buildLookup(trueAtoms);
+		falseLookup = buildLookup(falseAtoms);
+
 		makeIndex(true);
 		makeIndex(false);
-		
 	}
-	
+
+	private static HashSet<IntArrayWrapper> buildLookup(TreeSet<int[]> atoms) {
+		HashSet<IntArrayWrapper> lookup = new HashSet<>(atoms.size() * 2);
+		for (int[] t : atoms) {
+			lookup.add(new IntArrayWrapper(t));
+		}
+		return lookup;
+	}
+
+	private void addToLookup(int[] tuple, boolean tv) {
+		if (tv) trueLookup.add(new IntArrayWrapper(tuple));
+		else    falseLookup.add(new IntArrayWrapper(tuple));
+	}
+
+	private void removeFromLookup(int[] tuple, boolean tv) {
+		if (tv) trueLookup.remove(new IntArrayWrapper(tuple));
+		else    falseLookup.remove(new IntArrayWrapper(tuple));
+	}
+
+	private void rebuildLookup(boolean tv) {
+		if (tv) trueLookup  = buildLookup(trueAtoms);
+		else    falseLookup = buildLookup(falseAtoms);
+	}
+
+	private boolean lookupContains(int[] tuple, boolean tv) {
+		IntArrayWrapper key = new IntArrayWrapper(tuple);
+		return tv ? trueLookup.contains(key) : falseLookup.contains(key);
+	}
+
+
 	public OneBoolRelData copy(){
 
 		OneBoolRelData result = new OneBoolRelData(this.rel(),this.dv());
@@ -121,34 +177,38 @@ public class OneBoolRelData extends OneRelData {
 			result.trueAtoms.add(rbnutilities.clonearray(it.next()));
 		for (Iterator<int[]> it = this.falseAtoms.iterator();it.hasNext();)
 			result.falseAtoms.add(rbnutilities.clonearray(it.next()));
+		result.trueLookup  = buildLookup(result.trueAtoms);
+		result.falseLookup = buildLookup(result.falseAtoms);
 		result.makeIndex(true);
 		result.makeIndex(false);
 		return result;
 	}
-	
-	
+
+
 	/* Returns 1 if this global relation was not already set to
 	 * tv; 0 else;
 	 */
-	int setGlobal(boolean tv){
+	int setGlobal(boolean tv) {
 		int result = 0;
-		if (rel.arity != 0){
+		if (rel.arity != 0) {
 			throw new RuntimeException("setGlobal applied to relation of arity >0");
 		}
-		if (tv){
-			if (trueAtoms.size()==0){
-				falseAtoms = new TreeSet<int[]>(new IntArrayComparator());
+		if (tv) {
+			if (trueAtoms.size() == 0) {
+				falseAtoms  = new TreeSet<>(new IntArrayComparator());
+				falseLookup = new HashSet<>();
 				trueAtoms.add(new int[1]);
+				trueLookup.add(new IntArrayWrapper(new int[1]));
 				result = 1;
 			}
-		}
-		else {
-			if (falseAtoms.size()==0){
-				trueAtoms = new TreeSet<int[]>(new IntArrayComparator());
+		} else {
+			if (falseAtoms.size() == 0) {
+				trueAtoms  = new TreeSet<>(new IntArrayComparator());
+				trueLookup = new HashSet<>();
 				falseAtoms.add(new int[1]);
+				falseLookup.add(new IntArrayWrapper(new int[1]));
 				result = 1;
-			}			
-
+			}
 		}
 		return result;
 	}
@@ -156,7 +216,7 @@ public class OneBoolRelData extends OneRelData {
 	void add(OneBoolRelData obrd){
 		if (! this.rel().equals(obrd.rel()))
 			System.out.println("Warning: adding incompatible relation data in OneNumRelData");
-		
+
 		TreeSet<int[]> obrdalltrue = obrd.allTrue();
 		for (Iterator<int[]> i = obrdalltrue.iterator(); i.hasNext();)
 			add(i.next(),true);
@@ -176,7 +236,7 @@ public class OneBoolRelData extends OneRelData {
 		}
 	}
 
-	/* adds tuple; 
+	/* adds tuple;
 	 * Returns -1 if tuple was already there, otherwise 1
 	 */
 	public int add(int[] tuple, boolean tv)
@@ -196,20 +256,21 @@ public class OneBoolRelData extends OneRelData {
 			return -1;
 		else {
 			atoms.add(tuple);
-			addToIndex(tuple,index);
+			addToLookup(tuple, tv);
+			addToIndex(tuple, index);
 			return 1;
 		}
 	}
 
 
-	/** Returns all the atoms instantiated to true as 
+	/** Returns all the atoms instantiated to true as
 	 * a vector of int[]. Objects are represented by
 	 * their internal index
-	 * 
-	 * NOTE: calling classes should be modified so that this can 
-	 * be returned as 
+	 *
+	 * NOTE: calling classes should be modified so that this can
+	 * be returned as
 	 * the TreeSet
-	 */ 
+	 */
 	public TreeSet<int[]> allTrue(){
 		return trueAtoms;
 	}
@@ -243,17 +304,17 @@ public class OneBoolRelData extends OneRelData {
 		return falseAtoms.size();
 	}
 
-	/** Returns all the atoms instantiated to false as 
+	/** Returns all the atoms instantiated to false as
 	 * a vector of int[]. Objects are represented by
 	 * their internal index
-	 * 
+	 *
 	 * For the case that the defaultvalue of this relation is "false",
 	 * one needs to supply as argument the input structure
-	 */ 
+	 */
 	public TreeSet<int[]> allFalse(RelStruc rs){
 		TreeSet<int[]> result = new TreeSet<int[]>(new IntArrayComparator());
 		if (defaultval.equals("?"))
-			result=falseAtoms; 
+			result=falseAtoms;
 		else { // defaultval = "false"
 			if (rs != null){
 				Vector<int[]> elementsForCoordinate = new Vector<int[]>();
@@ -263,11 +324,8 @@ public class OneBoolRelData extends OneRelData {
 				}
 
 				int[][] candidatetuples = rbnutilities.cartesProd(elementsForCoordinate);
-				int[] nextatom;
-				for (int i=0;i< candidatetuples.length ;i++){
-					nextatom = candidatetuples[i];
-					if (!trueAtoms.contains(nextatom))
-						result.add(nextatom);
+				for (int[] nextatom : candidatetuples){
+					if (!lookupContains(nextatom, true)) result.add(nextatom);
 				}
 			}
 			else // rs == null
@@ -282,19 +340,18 @@ public class OneBoolRelData extends OneRelData {
 	 */
 	public Vector<int[]>  allUnInstantiated(int d){
 		Vector<int[]>  result = new Vector<int[]> ();
-		int[] nextatom;
 		for (int i=0;i< MyMathOps.intPow(d,rel.getArity());i++){
-			nextatom = rbnutilities.indexToTuple(i,rel.getArity(),d);
-			if (!trueAtoms.contains(nextatom) && !falseAtoms.contains(nextatom))
+			int[] nextatom = rbnutilities.indexToTuple(i,rel.getArity(),d);
+			if (!lookupContains(nextatom, true) && !lookupContains(nextatom, false))
 				result.add(nextatom);
 		}
 		return result;
 	}
 
-	/** Returns all the atoms instantiated to true as 
+	/** Returns all the atoms instantiated to true as
 	 * a vector of strings. Objects are represented by
 	 * their name in structure A
-	 */ 
+	 */
 	public Vector<String> allTrueAtoms(RelStruc A){
 		Vector<String>  result = new Vector<String> ();
 		for (Iterator<int[]> it = trueAtoms.iterator();it.hasNext();){
@@ -303,10 +360,10 @@ public class OneBoolRelData extends OneRelData {
 		return result;
 	}
 
-	/** Returns all the atoms instantiated to false as 
+	/** Returns all the atoms instantiated to false as
 	 * a vector of strings. Objects are represented by
 	 * their name in structure A
-	 */ 
+	 */
 //	public Vector<String>  allFalse(RelStruc A){
 //		Vector<String>  result = new Vector<String> ();
 //		for (Iterator<int[]> it = falseAtoms.iterator();it.hasNext();){
@@ -315,10 +372,10 @@ public class OneBoolRelData extends OneRelData {
 //		return result;
 //	}
 
-	/** Delete all atoms containing a 
+	/** Delete all atoms containing a
 	 * @param a
 	 */
-	
+
 
 	// TODO this should be re-implemented using the index
 	public void delete(int a){
@@ -343,36 +400,42 @@ public class OneBoolRelData extends OneRelData {
 			trueAtoms.remove(atomsforremoval.elementAt(i));
 		
 		}
+
+		rebuildLookup(true);
+		rebuildLookup(false);
+
 		makeIndex(true);
 		makeIndex(false);
 	}
 
 	protected void delete(int[] tuple,boolean tv)
 	{
-		TreeSet<int[]> atoms;
-		HashMap<Integer,TreeSet<int[]>>[] index;
-
-		if (this.rel().arity==0) {
+		if (this.rel().arity == 0) {
 			if (tv) {
-				trueAtoms=new TreeSet<int[]>();
-			}
-			else {
-				falseAtoms=new TreeSet<int[]>();
+				trueAtoms  = new TreeSet<>();
+				trueLookup = new HashSet<>();
+			} else {
+				falseAtoms  = new TreeSet<>();
+				falseLookup = new HashSet<>();
 			}
 			return;
 		}
+
+		TreeSet<int[]> atoms;
+		HashMap<Integer,TreeSet<int[]>>[] index;
+
 		if (tv) {
 			atoms = trueAtoms;
-			index=trueAtomsIndex;
+			index = trueAtomsIndex;
 		}
 		else {
 			atoms = falseAtoms;
-			index=falseAtomsIndex;
+			index = falseAtomsIndex;
 		}
 
 		atoms.remove(tuple);
+		removeFromLookup(tuple, tv);
 		removeFromIndex(tuple, index);
-
 	}
 
 
@@ -419,31 +482,23 @@ public class OneBoolRelData extends OneRelData {
 		return result;
 	}
 
-	public int valueOf(int[] tuple)
-	{
-		if (rel.arity ==0){
-			if (trueAtoms.size() > 0)
-				return 1;
-			if (falseAtoms.size() >0)
-				return 0;
+	public int valueOf(int[] tuple) {
+		if (rel.arity == 0) {
+			if (!trueAtoms.isEmpty()) return 1;
+			if (!falseAtoms.isEmpty()) return 0;
 			return -1;
 		}
-		else {
-			int result = -1;
-			if (trueAtoms.contains(tuple))
-				result = 1;
-			if (falseAtoms.contains(tuple))
-				result = 0;
-			if (result == -1 && defaultval.equals("false"))
-				result =0;
-			return result;
-		}
+
+		if (lookupContains(tuple, true))  return 1;
+		if (lookupContains(tuple, false)) return 0;
+		if (defaultval.equals("false"))   return 0;
+		return -1;
 	}
 
 //	public double valueOf(int[] tuple){
 //		return (double)truthValueOf(tuple);
 //	}
-	
+
 	public boolean isEmpty(){
 		if (trueAtoms.size()>0 || falseAtoms.size()>0) return false;
 		else return true;
@@ -469,7 +524,7 @@ public class OneBoolRelData extends OneRelData {
 		if (trueAtoms.size()>0){
 			Element dl = el.addElement("d");
 			dl.addAttribute("rel", rel.name.name);
-			for (Iterator<int[]> it = trueAtoms.iterator();it.hasNext();){		
+			for (Iterator<int[]> it = trueAtoms.iterator();it.hasNext();){
 				if (rel.arity > 0)
 					argstring=argstring+   struc.namesAt(it.next()) ;
 				else
@@ -494,15 +549,15 @@ public class OneBoolRelData extends OneRelData {
 				{
 					argstring=argstring+ "()";
 					it.next();
-				}		
+				}
 			}
 			df.addAttribute("args", argstring);
 			df.addAttribute("val", "false");
 		}
 
 	}
-	
-	
+
+
 
 	/**
 	 * Replaces all arguments b of trueAtoms and falseAtoms lists
@@ -513,8 +568,8 @@ public class OneBoolRelData extends OneRelData {
 	public void shiftArgs(int a){
 		int[] currtuple;
 		int[] oldcurrtuple;
-		
-		
+
+
 		ArrayList<Boolean> bools = new ArrayList<Boolean>();
 		bools.add(true);
 		bools.add(false);
@@ -522,7 +577,7 @@ public class OneBoolRelData extends OneRelData {
 		for (Iterator<Boolean> b=bools.iterator();b.hasNext();) {
 			Vector<int[]> tuplesforremoval = new Vector<int[]>();
 			Vector<int[]> tuplesforinsertion = new Vector<int[]>();
-			
+
 			boolean bval = b.next();
 			TreeSet<int[]> atoms = null;
 			if (bval) {
@@ -537,7 +592,7 @@ public class OneBoolRelData extends OneRelData {
 
 				if(rbnutilities.arrayCompare(oldcurrtuple, currtuple) !=0){
 					tuplesforremoval.add(oldcurrtuple);
-					tuplesforinsertion.add(currtuple);	
+					tuplesforinsertion.add(currtuple);
 				}
 			}
 			for(int i=0;i <tuplesforremoval.size();i++ ){
@@ -547,17 +602,19 @@ public class OneBoolRelData extends OneRelData {
 				atoms.add(tuplesforinsertion.elementAt(i));
 			}
 		}
-		
+		rebuildLookup(true);
+		rebuildLookup(false);
+
 		makeIndices();
 	}
-	
+
 	 public OneBoolRelData negativeSample(int pc, RelStruc rs){
 		 if (this.defaultval.equals("false")){
 			 	int[] nexttup;
 			 	double rand;
 			 	TreeSet<int[]> newFalseAtoms = new TreeSet<int[]>(new IntArrayComparator());
 			 	TreeSet<int[]> falseats = this.allFalse(rs);
-			 	
+
 			 	for (Iterator <int[]> it = falseats.iterator(); it.hasNext(); ){
 			 		nexttup = it.next();
 			 		rand = Math.random();
@@ -575,27 +632,27 @@ public class OneBoolRelData extends OneRelData {
 			 return this;
 		 }
 	 }
-	 
+
 	 public OneBoolRelData[] randomSplit(int numfolds, RelStruc rs){
 		 OneBoolRelData[] result = new OneBoolRelData[numfolds];
-		 
-		 Vector<TreeSet<int[]>> trueats = new Vector<TreeSet<int[]>>();	
+
+		 Vector<TreeSet<int[]>> trueats = new Vector<TreeSet<int[]>>();
 		 for (int i=0;i<numfolds;i++)
 			 trueats.add(new TreeSet<int[]>(new IntArrayComparator()));
-		 Vector<TreeSet<int[]>> falseats = new Vector<TreeSet<int[]>>();	
+		 Vector<TreeSet<int[]>> falseats = new Vector<TreeSet<int[]>>();
 		 for (int i=0;i<numfolds;i++)
 			 falseats.add(new TreeSet<int[]>(new IntArrayComparator()));
-		 
+
 		 for (Iterator<int[]> it = trueAtoms.iterator(); it.hasNext();){
 			 trueats.elementAt(randomGenerators.randInt(0, numfolds-1)).add(it.next());
 		 }
-		 
+
 		 if (this.defaultval.equals("?")){
 			 for (Iterator<int[]> it = falseAtoms.iterator(); it.hasNext();){
 				 falseats.elementAt(randomGenerators.randInt(0, numfolds-1)).add(it.next());
 			 }
 		 }
-			 
+
 		 if (this.defaultval.equals("false")){
 			 TreeSet<int[]> falseatsasvec = this.allFalse(rs);
 			 for (Iterator <int[]> it = falseatsasvec.iterator(); it.hasNext(); )
@@ -606,7 +663,7 @@ public class OneBoolRelData extends OneRelData {
 			 result[i].makeIndex(false);
 			 result[i].makeIndex(true);
 		 }
-		 
+
 		 return result;
 	 }
 
@@ -636,18 +693,20 @@ public class OneBoolRelData extends OneRelData {
 		 for (Iterator<int[]> it = atoms.iterator(); it.hasNext();){
 			 int[] tup = it.next();
 			 addToIndex(tup,result);
-		 } 
+		 }
 		 return result;
 	 }
 
-	 private void makeIndex(boolean tv) {
-		 if (tv) {
-			 trueAtomsIndex= makeIndex(trueAtoms);
-		 }
-		 else{
-			 falseAtomsIndex= makeIndex(falseAtoms);
-		 }
-	 }
+	private void makeIndex(boolean tv) {
+		if (tv) {
+			trueAtomsIndex = makeIndex(trueAtoms);
+			trueLookup     = buildLookup(trueAtoms);
+		} else {
+			falseAtomsIndex = makeIndex(falseAtoms);
+			falseLookup     = buildLookup(falseAtoms);
+			falseLookup     = buildLookup(falseAtoms);
+		}
+	}
 
 	 private void makeIndices() {
 		 makeIndex(true);
@@ -799,7 +858,7 @@ public class OneBoolRelData extends OneRelData {
 //			 idx[i].get(tup[i]).add(tup);
 //		 }
 //	 }
-	 
+
 //	 private void removeFromIndex(int[] tup, HashMap<Integer,TreeSet<int[]>>[] idx) {
 //		 for (int i=0;i<rel.arity;i++) {
 //				 TreeSet<int[]>ts=idx[i].get(tup[i]);

@@ -120,10 +120,10 @@ public class CatGnn extends CPModel {
                              int gradindx,
                              boolean useCurrentCvals,
                              boolean useCurrentPvals,
-                             Hashtable<Rel, GroundAtomList> mapatoms,
+                             HashMap<Rel, GroundAtomList> mapatoms,
                              boolean useCurrentMvals,
-                             Hashtable<String, Object[]> evaluated,
-                             Hashtable<String, Integer> params,
+                             HashMap<String, Object[]> evaluated,
+                             HashMap<String, Integer> params,
                              int returntype,
                              boolean valonly,
                              Profiler profiler)
@@ -172,7 +172,7 @@ public class CatGnn extends CPModel {
     }
 
     @Override
-    public double[] evalSample(RelStruc A, Hashtable<String, PFNetworkNode> atomhasht, OneStrucData inst, Hashtable<String,double[]> evaluated, long[] timers) throws RBNCompatibilityException {
+    public double[] evalSample(RelStruc A, HashMap<String, PFNetworkNode> atomhasht, OneStrucData inst, HashMap<String,double[]> evaluated, long[] timers) throws RBNCompatibilityException {
         if (!isInitialized) {
             this.gnnPy.initGnnData(this, A, inst);
             isInitialized = true;
@@ -215,7 +215,7 @@ public class CatGnn extends CPModel {
     }
 
     @Override
-    public int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, Hashtable<String, GroundAtom> atomhasht) throws RBNCompatibilityException {
+    public int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, HashMap<String, GroundAtom> atomhasht) throws RBNCompatibilityException {
         return 0;
     }
 

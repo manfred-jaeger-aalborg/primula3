@@ -9,8 +9,7 @@ public class VarTerm extends ArgTerm {
 
     public VarTerm(String name) {
         if (name == null) throw new IllegalArgumentException("Variable name cannot be null");
-//        if (name.contains("+") || name.contains("-") || name.contains("=") || name.contains("(") || name.contains(")")) throw new IllegalArgumentException("Variable name cannot contain expressions +, -, =, (, or )");
-        if (!name.matches("^[a-zA-Z0-9]+$")) throw new IllegalArgumentException("Variable name must be alphanumeric: " + name);
+        if (!isAlphanumeric(name)) throw new IllegalArgumentException("Variable name must be alphanumeric: " + name);
 
         this.name = name;
     }
@@ -74,6 +73,14 @@ public class VarTerm extends ArgTerm {
     @Override
     public boolean isGround() {
         return isInt(name);
+    }
+
+    private static boolean isAlphanumeric(String s) {
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (!Character.isLetterOrDigit(c)) return false;
+        }
+        return true;
     }
 
     @Override

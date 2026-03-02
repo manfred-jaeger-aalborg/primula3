@@ -68,7 +68,7 @@ public class RiverPollutionMAP {
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();
 
-            Hashtable<Rel, int[]> bestMapVals = im.getMapthr().getBestMapVals();
+            HashMap<Rel, int[]> bestMapVals = im.getMapthr().getBestMapVals();
 
             String[] vals = new String[]{val_name};
             int[] res = bestMapVals.get(tmp_query);

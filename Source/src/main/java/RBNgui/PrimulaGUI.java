@@ -1238,14 +1238,17 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_pollution_model.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/simple_subbasin_new.rdef";
 
-//        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_pollution-gibbs.rbn";
-//        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_network_gibbs.rdef";
+        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_pollution-gibbs.rbn";
+        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/simple_subbasin_new_gibbs.rdef";
 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/RSE/primula/model_rbn_small.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/RSE/primula/simulation_graph_0_small.rdef";
 
-        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/GNN-homophily/Cora/cora_rbn.rbn";
-        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/GNN-homophily/Cora/rdef/cora_nodeconst_homProp_0.rdef";
+//        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/GNN-homophily/Cora/cora.rbn";
+//        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/GNN-homophily/Cora/rdef/cora_nodeconst_homProp_0.rdef";
+
+//        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/GNN-homophily/Texas/texas.rbn";
+//        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/GNN-homophily/Texas/texas_nodeconst_homProp_0.rdef";
         primula.srsfile = new File(rstinputfilestring);
         primula.rbnfile = new File(rbninputfilestring);
 

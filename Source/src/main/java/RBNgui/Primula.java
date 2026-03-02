@@ -32,7 +32,7 @@ import myio.StringOps;
 
 import java.io.*;
 import java.util.HashMap;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
 
@@ -163,12 +163,12 @@ public class Primula {
 	String[][] parameternumrels;
 	
 	/* All parameters to be optimized (RBN params and ground numerical relation atoms)
-	 * mapped to an integer index by this hashtable */
-	Hashtable<String,Integer> parameters;
+	 * mapped to an integer index by this HashMap */
+	HashMap<String,Integer> parameters;
 	
 	/*
 	 *  2d array that contains for all parameters the relevant maximum and minimum bounds
-	 *  First index is the index of a parameter according to the parameters hashtable
+	 *  First index is the index of a parameter according to the parameters HashMap
 	 */
 	double[][] minmaxbounds;
 	
@@ -530,7 +530,7 @@ public class Primula {
 		rels.addTuples(nrelparams,nrelvalues);
 	}
 
-	public void setParameters(Hashtable<String,Integer> paramidx,double[]paramvalues) {
+	public void setParameters(HashMap<String,Integer> paramidx,double[]paramvalues) {
 		for (String par: paramidx.keySet()) {
 			if (isRBNParameter(par))
 				rbn.setParameter(par, paramvalues[paramidx.get(par)]);
@@ -550,7 +550,7 @@ public class Primula {
 		return result;
 	}
 
-	public double[] getParameterVals(Hashtable<String,Integer> paramidx) {
+	public double[] getParameterVals(HashMap<String,Integer> paramidx) {
 		double[] result = new double[paramidx.size()];
 		for (String par: paramidx.keySet()) {
 			if (isRBNParameter(par))
@@ -569,8 +569,8 @@ public class Primula {
 	}
 
 	// this function makes use of the GUI to select the parameters
-	public Hashtable<String,Integer> makeParameterIndexGUI() {
-		this.parameters = new Hashtable<String, Integer>();
+	public HashMap<String,Integer> makeParameterIndexGUI() {
+		this.parameters = new HashMap<String, Integer>();
 		int pidx = 0; // the index of the next parameter added to parameters
 		for (int i = 0; i < rbnparameters.length; i++) {
 			parameters.put(rbnparameters[i], pidx);
@@ -580,8 +580,8 @@ public class Primula {
 		return createParameterInput(pidx, parameternumrels);
 	}
 
-	public Hashtable<String,Integer> makeParameterIndex() {
-		this.parameters = new Hashtable<String, Integer>();
+	public HashMap<String,Integer> makeParameterIndex() {
+		this.parameters = new HashMap<String, Integer>();
 		int pidx = 0; // the index of the next parameter added to parameters
 		for (int i = 0; i < rbnparameters.length; i++) {
 			parameters.put(rbnparameters[i], pidx);
@@ -591,7 +591,7 @@ public class Primula {
 		return createParameterInput(pidx, parameternumrels);
 	}
 
-	public Hashtable<String,Integer> createParameterInput(int pidx, String[][] parameternumrels) {
+	public HashMap<String,Integer> createParameterInput(int pidx, String[][] parameternumrels) {
 		/* Cannot handle learning numerical input relations for
 		 * data with multiple input domains: check this and throw
 		 * exception
@@ -628,7 +628,7 @@ public class Primula {
 	public double[][] makeMinMaxBounds(){
 		/*
 		 *  Create a 2d array that contains for all parameters the relevant maximum and minimum bounds
-		 *  First index is the index of a parameter according to the parameters hashtable
+		 *  First index is the index of a parameter according to the parameters HashMap
 		 */
 		this.minmaxbounds = new double[parameters.size()][2];
 		int pidx;

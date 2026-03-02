@@ -1,6 +1,6 @@
 package RBNpackage;
 
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Vector;
 import java.util.TreeSet;
 
@@ -62,7 +62,7 @@ public class ProbFormBoolAtom extends ProbFormBool {
 //    		boolean useCurrentPvals,
 //    		GroundAtomList mapatoms,
 //    		boolean useCurrentMvals,
-//    		Hashtable<String,Double> evaluated)
+//    		HashMap<String,Double> evaluated)
 //	{			
 //		
 //		double result = pfatom.evaluate(A, inst, vars, tuple, useCurrentCvals, 
@@ -88,10 +88,10 @@ public class ProbFormBoolAtom extends ProbFormBool {
 			int gradindx,
 			boolean useCurrentCvals, 
     		boolean useCurrentPvals,
-    		Hashtable<Rel,GroundAtomList> mapatoms,
+    		HashMap<Rel,GroundAtomList> mapatoms,
     		boolean useCurrentMvals,
-    		Hashtable<String,Object[]> evaluated,
-    		Hashtable<String,Integer>params,
+    		HashMap<String,Object[]> evaluated,
+    		HashMap<String,Integer>params,
     		int returntype,
     		boolean valonly,
     		Profiler profiler)
@@ -128,7 +128,7 @@ public class ProbFormBoolAtom extends ProbFormBool {
 	
 	@Override
 	public int evaluatesTo(RelStruc A, OneStrucData inst,
-			boolean usesampleinst, Hashtable<String,GroundAtom> atomhasht)
+			boolean usesampleinst, HashMap<String,GroundAtom> atomhasht)
 					throws RBNCompatibilityException {
 		int result =  pfatom.evaluatesTo(A,inst,usesampleinst,atomhasht);
 		if (result == -1)
@@ -154,9 +154,9 @@ public class ProbFormBoolAtom extends ProbFormBool {
 
 	@Override
 	public  double[] evalSample(RelStruc A, 
-			Hashtable<String,PFNetworkNode> atomhasht, 
+			HashMap<String,PFNetworkNode> atomhasht, 
 			OneStrucData inst, 
-    		Hashtable<String,double[]> evaluated,
+    		HashMap<String,double[]> evaluated,
 			long[] timers)
 			throws RBNCompatibilityException{
 		String key = null;

@@ -201,7 +201,7 @@ public class ising {
             im.getMapthr().join();
 
             // collect results
-            Hashtable<Rel, int[]> bestMapVals = im.getMapthr().getBestMapVals();
+            HashMap<Rel, int[]> bestMapVals = im.getMapthr().getBestMapVals();
 
             String[] vals = new String[]{"POS","NEG"};
             int[] res = bestMapVals.get(tmp_query);

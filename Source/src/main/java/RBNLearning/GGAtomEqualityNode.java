@@ -6,7 +6,7 @@ import RBNExceptions.RBNNaNException;
 import RBNpackage.*;
 import RBNpackage.VarTermPackage.ArgTerm;
 
-import java.util.Hashtable;
+import java.util.HashMap;
 
 public class GGAtomEqualityNode extends GGCPMNode{
 
@@ -14,15 +14,15 @@ public class GGAtomEqualityNode extends GGCPMNode{
     
     public GGAtomEqualityNode(GradientGraphO gg,
 							  CPModel pf,
-                              Hashtable<String,GGCPMNode> allnodes,
+                              HashMap<String,GGCPMNode> allnodes,
                               RelStruc A,
                               OneStrucData I,
                               int inputcaseno,
                               int observcaseno,
-                              Hashtable<String,Integer> parameters,
+                              HashMap<String,Integer> parameters,
                               boolean useCurrentPvals,
-                              Hashtable<Rel, GroundAtomList> mapatoms,
-                              Hashtable<String,Object[]>  evaluated) throws RBNCompatibilityException {
+                              HashMap<Rel, GroundAtomList> mapatoms,
+                              HashMap<String,Object[]>  evaluated) throws RBNCompatibilityException {
         super(gg,pf,A,I);
 
         evalOfPFs = new double[2];

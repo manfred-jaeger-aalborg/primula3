@@ -76,8 +76,8 @@ public class ProbFormMacroCall extends CPModel implements ProbForm {
 
 	@Override
 	public Object[] evaluate(RelStruc A, OneStrucData inst, ArgTerm[] vars, int[] tuple, int gradindx, boolean useCurrentCvals,
-			boolean useCurrentPvals, Hashtable<Rel,GroundAtomList> mapatoms, boolean useCurrentMvals,
-			Hashtable<String, Object[]> evaluated, Hashtable<String, Integer> params, int returntype, boolean valonly,
+			boolean useCurrentPvals, HashMap<Rel,GroundAtomList> mapatoms, boolean useCurrentMvals,
+			HashMap<String, Object[]> evaluated, HashMap<String, Integer> params, int returntype, boolean valonly,
 			Profiler profiler) throws RBNCompatibilityException {
 
 		Boolean profile = (profiler != null);
@@ -126,9 +126,9 @@ public class ProbFormMacroCall extends CPModel implements ProbForm {
 
 	@Override
 	public double[] evalSample(RelStruc A, 
-			Hashtable<String,PFNetworkNode> atomhasht, 
+			HashMap<String,PFNetworkNode> atomhasht, 
 			OneStrucData inst, 
-    		Hashtable<String,double[]> evaluated,
+    		HashMap<String,double[]> evaluated,
 			long[] timers)
 			throws RBNCompatibilityException {
 		setpf();
@@ -137,7 +137,7 @@ public class ProbFormMacroCall extends CPModel implements ProbForm {
 
 	@Override
 	public int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst,
-			Hashtable<String, GroundAtom> atomhasht) throws RBNCompatibilityException {
+			HashMap<String, GroundAtom> atomhasht) throws RBNCompatibilityException {
 		setpf();
 		return pf_sub.evaluatesTo(A, inst, usesampleinst, atomhasht);
 	}

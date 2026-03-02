@@ -21,7 +21,7 @@ public class MapThread extends GGThread {
 	boolean running;
     private GnnPy gnnPy;
 //    private final boolean gnnIntegration;
-	private Hashtable<Rel,int[]> bestMapVals;
+	private HashMap<Rel,int[]> bestMapVals;
 	private double[] bestLikelihood;
 
     public boolean isSampling;
@@ -54,7 +54,7 @@ public class MapThread extends GGThread {
 			gg.setLearnModule(myLearnModule);
 		}
 
-		Hashtable<Rel,int[]> newmapvals = new Hashtable<>();
+		HashMap<Rel,int[]> newmapvals = new HashMap<>();
 		
 		int maxrestarts = myinfmodule.getMAPRestarts();
 		int currentRestarts = 1;
@@ -210,7 +210,7 @@ public class MapThread extends GGThread {
 		return this.running;
 	}
 
-	public Hashtable<Rel, int[]> getBestMapVals() {
+	public HashMap<Rel, int[]> getBestMapVals() {
 		return bestMapVals;
 	}
 

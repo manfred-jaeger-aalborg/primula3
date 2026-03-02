@@ -43,4 +43,16 @@ public class TypeInteger extends Type{
     public String getName(){
 	return "Integer";
     }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof TypeInteger)) return false;
+        return true;
+    }
 }

@@ -10,7 +10,7 @@ import RBNpackage.VarTermPackage.VarTerm;
 import RBNutilities.rbnutilities;
 // import jdk.incubator.vector.VectorOperators;
 
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.TreeSet;
 import java.util.Vector;
 
@@ -44,7 +44,7 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
 
     @Override
     public int evaluatesTo(RelStruc A, OneStrucData inst,
-                           boolean usesampleinst, Hashtable<String, GroundAtom> atomhasht)
+                           boolean usesampleinst, HashMap<String, GroundAtom> atomhasht)
             throws RBNCompatibilityException {
         return evaluatesTo(A);
     }
@@ -134,10 +134,10 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
                              boolean useCurrentCvals,
                              // String[] numrelparameters,
                              boolean useCurrentPvals,
-                             Hashtable<Rel, GroundAtomList> mapatoms,
+                             HashMap<Rel, GroundAtomList> mapatoms,
                              boolean useCurrentMvals,
-                             Hashtable<String, Object[]> evaluated,
-                             Hashtable<String, Integer> params,
+                             HashMap<String, Object[]> evaluated,
+                             HashMap<String, Integer> params,
                              int returntype,
                              boolean valonly,
                              Profiler profiler) {
@@ -189,9 +189,9 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
 
     @Override
     public double[] evalSample(RelStruc A,
-                               Hashtable<String, PFNetworkNode> atomhasht,
+                               HashMap<String, PFNetworkNode> atomhasht,
                                OneStrucData inst,
-                               Hashtable<String, double[]> evaluated,
+                               HashMap<String, double[]> evaluated,
                                long[] timers)
             throws RBNCompatibilityException {
 

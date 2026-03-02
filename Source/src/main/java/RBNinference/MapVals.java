@@ -35,16 +35,16 @@ public class MapVals extends Observable {
 		}
 	}
 	
-	private Hashtable<Rel,m_vals> all_m_vals;
+	private HashMap<Rel,m_vals> all_m_vals;
 	
 	private int restarts;
 	private String llstring;
 	
 	
-	public MapVals(Hashtable<Rel,GroundAtomList> qatoms){
+	public MapVals(HashMap<Rel,GroundAtomList> qatoms){
 	    restarts = 0;
 	    llstring = "";
-		all_m_vals = new Hashtable<Rel,m_vals>();
+		all_m_vals = new HashMap<Rel,m_vals>();
 		for (Rel r: qatoms.keySet()) {
 			all_m_vals.put(r,new m_vals(qatoms.get(r).size()));
 		}
@@ -64,7 +64,7 @@ public class MapVals extends Observable {
 		return all_m_vals.get(r).getMV();
 	}
 	
-	public void setMVs(Hashtable<Rel,int[]> mvalshasht) {
+	public void setMVs(HashMap<Rel,int[]> mvalshasht) {
 		for (Rel r: mvalshasht.keySet()) {
 			int[] vals = mvalshasht.get(r);
 			for (int i =0; i<vals.length;i++)

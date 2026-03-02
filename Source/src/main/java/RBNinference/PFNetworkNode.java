@@ -41,7 +41,7 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
 	 * sample -- not used in all modes for sampling
 	 */
 
-	protected String sampleparentconfig_string; /* String representation (used as key in Hashtables)
+	protected String sampleparentconfig_string; /* String representation (used as key in HashMaps)
 	 * of sampleparentconfig
 	 */
 
@@ -142,7 +142,7 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
 	 * 
 	 * Return -1 if the state of this PFNetworkNode is not determined in the given context.
 	 */
-	public abstract int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, Hashtable atomhasht)
+	public abstract int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, HashMap atomhasht)
 			throws RBNCompatibilityException;
 
 
@@ -156,7 +156,7 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
 
 	public  void initializeForSampling(int sampleordmode,
 			int adaptivemode,
-			Hashtable<Rel,GroundAtomList> queryatoms,
+			HashMap<Rel,GroundAtomList> queryatoms,
 			int num_subsamples_minmax,
 			int num_subsamples_adapt)
 	{
@@ -179,7 +179,7 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
 	public boolean isLocallyConsistent(RelStruc A,
 			OneStrucData inst,
 			boolean usesampleinst,
-			Hashtable atomhasht,
+			HashMap atomhasht,
 			int val)
 					throws RBNCompatibilityException
 	{
@@ -262,7 +262,7 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
 			OneStrucData inst,
 			Vector instnodes,
 			boolean usesampleinst,
-			Hashtable atomhasht)
+			HashMap atomhasht)
 					throws RBNCompatibilityException,RBNInconsistentEvidenceException,RBNBadSampleException
 	{
 		//System.out.println("propdet");
@@ -362,11 +362,11 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
 	 * return 1.0.
 	 */
 	public void sample(RelStruc A,
-			Hashtable<String,PFNetworkNode> atomhasht,
+			HashMap<String,PFNetworkNode> atomhasht,
 			OneStrucData inst,
 			int sampleordmode,
 			int adaptivemode,
-			Hashtable<String,double[]> evaluated,
+			HashMap<String,double[]> evaluated,
 			long[] timers,
 			boolean verbose)
 					throws RBNCompatibilityException,RBNInconsistentEvidenceException,RBNBadSampleException
@@ -383,18 +383,18 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
 
 	/* Not all arguments are needed for implementation of this abstract method in all subclasses! */
 	public abstract void sampleForward(RelStruc A,
-			Hashtable<String,PFNetworkNode> atomhasht,
+			HashMap<String,PFNetworkNode> atomhasht,
 			OneStrucData inst,
 			int adaptivemode,
-			Hashtable<String,double[]> evaluated,
+			HashMap<String,double[]> evaluated,
 			long[] timers)
 					throws RBNCompatibilityException;
 
 	public  void sampleRipple(RelStruc A,
-			Hashtable<String,PFNetworkNode> atomhasht,
+			HashMap<String,PFNetworkNode> atomhasht,
 			OneStrucData inst,
 			int adaptivemode,
-			Hashtable<String,double[]> evaluated,
+			HashMap<String,double[]> evaluated,
 			long[] timers,
 			boolean verbose)
 					throws RBNCompatibilityException,RBNInconsistentEvidenceException,RBNBadSampleException
@@ -447,9 +447,9 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
 	 * instantiation
 	 */
 	public abstract void setDistrProb(RelStruc A, 
-			Hashtable<String,PFNetworkNode> atomhasht,
+			HashMap<String,PFNetworkNode> atomhasht,
 			OneStrucData inst,
-			Hashtable<String,double[]> evaluated,
+			HashMap<String,double[]> evaluated,
 			long[] timers)
 					throws RBNCompatibilityException;
 

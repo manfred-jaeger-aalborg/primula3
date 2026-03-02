@@ -132,7 +132,7 @@ public class LearnThread extends GGThread {
 			 * atoms
 			 * 
 			 */
-			Hashtable<String, Integer> parameters;
+			HashMap<String, Integer> parameters;
 			String[][] parameternumrels;
 			// set parameters with and without the GUI
 			if (myLearnModule.getLearnModuleGUI() != null) {
@@ -306,7 +306,7 @@ public class LearnThread extends GGThread {
 
 	private double[] doOneRestartStochGrad(RelStruc A,
 			String[][] parameternumrels,
-			Hashtable<String,Integer> parameters,
+			HashMap<String,Integer> parameters,
 			double[][] minmaxbounds,
 			Boolean isfirstrestart,
 			Boolean usegradientgraphs,
@@ -549,7 +549,7 @@ public class LearnThread extends GGThread {
 	private double[] doOneRestartBatch(GradientGraph gg,
 			RelStruc A,
 			String[][] parameternumrels,
-			Hashtable<String,Integer> parameters,
+			HashMap<String,Integer> parameters,
 			Boolean isfirstrestart)
 					throws RBNNaNException,RBNCompatibilityException
 	{
@@ -637,7 +637,7 @@ public class LearnThread extends GGThread {
 //	}
 
 
-	private GradientGraphO buildGGO(Hashtable<String,Integer> parameters,double[][] minmaxbounds,
+	private GradientGraphO buildGGO(HashMap<String,Integer> parameters,double[][] minmaxbounds,
 			Boolean showInfoInPrimula,RelData datafold){
 		GradientGraphO gg = null;
 		if (showInfoInPrimula && myprimula.getPrimulaGUI() != null)
@@ -685,7 +685,7 @@ public class LearnThread extends GGThread {
 			myprimula.getRBN().setRandomParameterVals();
 			if (myLearnModule.ggrandominit())
 				A.setRandom(parameternumrels,scale);
-			lik = getLossAndGradient(data, myprimula.getRBN(), new Hashtable<String,Integer>(),true ,profiler)[0][0];
+			lik = getLossAndGradient(data, myprimula.getRBN(), new HashMap<String,Integer>(),true ,profiler)[0][0];
 			System.out.println("# log-likelihood " + lik);	
 			if (lik == Double.NEGATIVE_INFINITY){
 				tries++;
@@ -705,7 +705,7 @@ public class LearnThread extends GGThread {
 	 */
 	private double[][] getLossAndGradient(RelData data, 
 			RBN rbn, 
-			Hashtable<String,Integer> parameters, 
+			HashMap<String,Integer> parameters, 
 			boolean lossonly, 
 			Profiler profiler) 
 			throws RBNCompatibilityException
@@ -730,9 +730,9 @@ public class LearnThread extends GGThread {
 		 	for (int observcaseno=0; observcaseno<rdoi.numObservations(); observcaseno++){
 		 		osd = rdoi.oneStrucDataAt(observcaseno);
 
-				Hashtable<String,Object[]>  evaluated = null;
+				HashMap<String,Object[]>  evaluated = null;
 				if (myLearnModule.getUseMemoize())
-					evaluated = new Hashtable<String,Object[]>();
+					evaluated = new HashMap<String,Object[]>();
 				for (int i=0; i<rbn.NumPFs(); i++){
 					CPModel nextcpm = rbn.cpmod_prelements_At(i);
 					ArgTerm[] vars = rbn.arguments_prels_At(i);
@@ -796,8 +796,8 @@ public class LearnThread extends GGThread {
 //									}
 //								}
 //								else { //ProbForm.RETURN_SPARSE
-//									for (String par: ((Hashtable<String,Double>)grad).keySet()){
-//										pdp = ((Hashtable<String,Double>)grad).get(par);
+//									for (String par: ((HashMap<String,Double>)grad).keySet()){
+//										pdp = ((HashMap<String,Double>)grad).get(par);
 //										if (nextrel instanceof BoolRel && val==0)
 //											pdp*=-1;
 //										int ii = parameters.get(par);
@@ -817,7 +817,7 @@ public class LearnThread extends GGThread {
 			double[] current, 
 			double[] gradient, 
 			RelData data, 
-			Hashtable<String,Integer> parameters,
+			HashMap<String,Integer> parameters,
 			RBN rbn, 
 			int lossfunc, 
 			Profiler profiler) {

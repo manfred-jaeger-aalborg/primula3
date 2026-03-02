@@ -216,7 +216,7 @@ public class ProbFormConvComb extends CPModel implements ProbForm{
 //    		boolean useCurrentPvals,
 //    		GroundAtomList mapatoms,
 //    		boolean useCurrentMvals,
-//    		Hashtable<String,Double> evaluated)
+//    		HashMap<String,Double> evaluated)
 //	throws RBNCompatibilityException
 //	{
 //		double ev1 = F1.evaluate(A,inst,vars,tuple,useCurrentCvals,numrelparameters,useCurrentPvals,
@@ -264,10 +264,10 @@ public class ProbFormConvComb extends CPModel implements ProbForm{
 			boolean useCurrentCvals, 
 			// String[] numrelparameters,
 			boolean useCurrentPvals,
-			Hashtable<Rel,GroundAtomList> mapatoms,
+			HashMap<Rel,GroundAtomList> mapatoms,
 			boolean useCurrentMvals,
-			Hashtable<String,Object[]> evaluated,
-			Hashtable<String,Integer> params,
+		    HashMap<String,Object[]> evaluated,
+			HashMap<String,Integer> params,
 			int returntype,
 			boolean valonly,
 			Profiler profiler)
@@ -372,10 +372,10 @@ public class ProbFormConvComb extends CPModel implements ProbForm{
 //			}
 //		}
 //		else {
-//			result[1]=new Hashtable<String,Double>();
-//			Hashtable<String,Double> r1g = (Hashtable<String,Double>)r1[1];
-//			Hashtable<String,Double> r2g = (Hashtable<String,Double>)r2[1];
-//			Hashtable<String,Double> r3g = (Hashtable<String,Double>)r3[1];
+//			result[1]=new HashMap<String,Double>();
+//			HashMap<String,Double> r1g = (HashMap<String,Double>)r1[1];
+//			HashMap<String,Double> r2g = (HashMap<String,Double>)r2[1];
+//			HashMap<String,Double> r3g = (HashMap<String,Double>)r3[1];
 //
 //
 //
@@ -396,7 +396,7 @@ public class ProbFormConvComb extends CPModel implements ProbForm{
 //					r3gp = 0.0;
 //
 //				double gp=r1gp*r2v+r1v*r2gp+(1-r1v)*r3gp-r1gp*r3v;
-//				((Hashtable<String,Double>)result[1]).put(p,gp);
+//				((HashMap<String,Double>)result[1]).put(p,gp);
 //			}
 //		}
 	}
@@ -412,9 +412,9 @@ public class ProbFormConvComb extends CPModel implements ProbForm{
 	}
 
 	public  double[] evalSample(RelStruc A, 
-			Hashtable<String,PFNetworkNode> atomhasht, 
+			HashMap<String,PFNetworkNode> atomhasht,
 			OneStrucData inst, 
-    		Hashtable<String,double[]> evaluated,
+    		HashMap<String,double[]> evaluated,
 			long[] timers)
 	throws RBNCompatibilityException
 	{
@@ -460,7 +460,7 @@ public class ProbFormConvComb extends CPModel implements ProbForm{
 	}
 
 
-	public int evaluatesTo(RelStruc A,OneStrucData inst, boolean usesampleinst, Hashtable atomhasht)
+	public int evaluatesTo(RelStruc A,OneStrucData inst, boolean usesampleinst, HashMap atomhasht)
 	throws RBNCompatibilityException
 	{	
 		//System.out.println("evaluatesTo for " + this.asString());

@@ -357,10 +357,10 @@ public class TorchInputPf {
                              int gradindx,
                              boolean useCurrentCvals,
                              boolean useCurrentPvals,
-                             Hashtable<Rel,GroundAtomList> mapatoms,
+                             HashMap<Rel,GroundAtomList> mapatoms,
                              boolean useCurrentMvals,
-                             Hashtable<String,Object[]> evaluated,
-                             Hashtable<String,Integer> params,
+                             HashMap<String,Object[]> evaluated,
+                             HashMap<String,Integer> params,
                              int returntype,
                              boolean valonly,
                              Profiler profiler)

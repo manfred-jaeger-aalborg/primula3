@@ -197,7 +197,7 @@ public class RiverPollution {
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();
 
-            Hashtable<Rel, int[]> bestMapVals = im.getMapthr().getBestMapVals();
+            HashMap<Rel, int[]> bestMapVals = im.getMapthr().getBestMapVals();
 
             String[] vals = new String[]{val_name};
             int[] res = bestMapVals.get(tmp_query);
@@ -232,7 +232,7 @@ public class RiverPollution {
             // Save values
             OneStrucData result = new OneStrucData();
             result.setParentRelStruc(primula.getRels());
-            Enumeration<Rel> e = bestMapVals.keys();
+            Enumeration<Rel> e = (Enumeration<Rel>) bestMapVals.keySet();
             while (e.hasMoreElements()) {
                 Rel rel = e.nextElement();
                 int[] nodes = bestMapVals.get(rel);

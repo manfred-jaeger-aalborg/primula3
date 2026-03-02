@@ -57,16 +57,16 @@ public class GGSoftMaxNode extends GGCPMNode{
 
 	/** cpmsm must be ground ! */
 	public GGSoftMaxNode(GradientGraphO gg,
-			CatModelSoftMax cpmsm, 
-			Hashtable<String,GGCPMNode> allnodes, 
+			CatModelSoftMax cpmsm,
+			HashMap<String,GGCPMNode> allnodes,
 			RelStruc A, 
 			OneStrucData I,
 			int inputcaseno,
 			int observcaseno,
-			Hashtable<String,Integer> parameters,
+		 	HashMap<String,Integer> parameters,
 			boolean useCurrentPvals,
-			Hashtable<Rel,GroundAtomList> mapatoms,
-			Hashtable<String,Object[]>  evaluated )
+		 	HashMap<Rel,GroundAtomList> mapatoms,
+		 	HashMap<String,Object[]>  evaluated )
 					throws RBNCompatibilityException
 	{
 		super(gg,cpmsm,A,I);

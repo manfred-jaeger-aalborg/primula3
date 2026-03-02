@@ -81,10 +81,10 @@ public class CatModelSoftMax extends CPModel {
 			int gradindx,
 			boolean useCurrentCvals,
 			boolean useCurrentPvals, 
-			Hashtable<Rel,GroundAtomList> mapatoms, 
+			HashMap<Rel,GroundAtomList> mapatoms, 
 			boolean useCurrentMvals,
-			Hashtable<String, Object[]> evaluated, 
-			Hashtable<String, Integer> params, 
+			HashMap<String, Object[]> evaluated, 
+			HashMap<String, Integer> params, 
 			int returntype, 
 			boolean valonly,
 			Profiler profiler) throws RBNCompatibilityException {
@@ -155,9 +155,9 @@ public class CatModelSoftMax extends CPModel {
 //							* (((double[]) evaluatedpfs[gradindx][1])[k] * valsum - derivsum) / Math.pow(valsum, 2);
 //				}
 //			} else { // returntype ProbForm.RETURN_SPARSE
-//				result[1] = new Hashtable<String, Double>();
-//				for (String nextpar : ((Hashtable<String, Double>) evaluatedpfs[gradindx][1]).keySet()) {
-//					((Hashtable<String, Double>) result[1]).put(nextpar,
+//				result[1] = new HashMap<String, Double>();
+//				for (String nextpar : ((HashMap<String, Double>) evaluatedpfs[gradindx][1]).keySet()) {
+//					((HashMap<String, Double>) result[1]).put(nextpar,
 //							Math.exp(((double) evaluatedpfs[gradindx][0]))
 //									* (((double[]) evaluatedpfs[gradindx][1])[params.get(nextpar)] * valsum - derivsum) / Math.pow(valsum, 2));
 //				}
@@ -167,8 +167,8 @@ public class CatModelSoftMax extends CPModel {
 	}
 
 	@Override
-	public double[] evalSample(RelStruc A, Hashtable<String, PFNetworkNode> atomhasht, OneStrucData inst,
-			Hashtable<String, double[]> evaluated, long[] timers) throws RBNCompatibilityException {
+	public double[] evalSample(RelStruc A, HashMap<String, PFNetworkNode> atomhasht, OneStrucData inst,
+			HashMap<String, double[]> evaluated, long[] timers) throws RBNCompatibilityException {
 		
 		String key = null;
 		
@@ -228,7 +228,7 @@ public class CatModelSoftMax extends CPModel {
 	}
 
 	@Override
-	public int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, Hashtable<String, GroundAtom> atomhasht) throws RBNCompatibilityException {
+	public int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, HashMap<String, GroundAtom> atomhasht) throws RBNCompatibilityException {
 		return 0;
 	}
 

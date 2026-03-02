@@ -204,7 +204,7 @@ public class ProbFormConstant extends CPModel implements ProbForm
 //    		boolean useCurrentPvals,
 //    		GroundAtomList mapatoms,
 //    		boolean useCurrentMvals,
-//    		Hashtable<String,Double> evaluated)
+//    		HashMap<String,Double> evaluated)
 //	{
 //		if (paramname != "" && !useCurrentCvals && rbnutilities.arrayContains(parameters, paramname))
 //			return Double.NaN;
@@ -221,10 +221,10 @@ public class ProbFormConstant extends CPModel implements ProbForm
 			boolean useCurrentCvals, 
     		// String[] numrelparameters,
     		boolean useCurrentPvals,
-    		Hashtable<Rel,GroundAtomList> mapatoms,
+    		HashMap<Rel,GroundAtomList> mapatoms,
     		boolean useCurrentMvals,
-    		Hashtable<String,Object[]> evaluated,
-    		Hashtable<String,Integer> params,
+    		HashMap<String,Object[]> evaluated,
+    		HashMap<String,Integer> params,
     		int returntype,
     		boolean valonly,
     		Profiler profiler)
@@ -252,9 +252,9 @@ public class ProbFormConstant extends CPModel implements ProbForm
 //					((double[])result[1])[i]=1.0;
 //			}
 //			else {
-//				result[1] = new Hashtable<String,Double>();
+//				result[1] = new HashMap<String,Double>();
 //				if (paramname != "")
-//					((Hashtable<String,Double>)result[1]).put(paramname,1.0);
+//					((HashMap<String,Double>)result[1]).put(paramname,1.0);
 //			}
 		}
 
@@ -263,9 +263,9 @@ public class ProbFormConstant extends CPModel implements ProbForm
 	}
 	
 	public  double[] evalSample(RelStruc A, 
-			Hashtable<String,PFNetworkNode> atomhasht, 
+			HashMap<String,PFNetworkNode> atomhasht, 
 			OneStrucData inst, 
-    		Hashtable<String,double[]> evaluated,
+    		HashMap<String,double[]> evaluated,
 			long[] timers){
 		return new double[] {cval};
 	}
@@ -278,7 +278,7 @@ public class ProbFormConstant extends CPModel implements ProbForm
 			return -1;
 	}
 
-	public  int evaluatesTo(RelStruc A,OneStrucData inst, boolean usesampleinst, Hashtable atomhasht){
+	public  int evaluatesTo(RelStruc A,OneStrucData inst, boolean usesampleinst, HashMap atomhasht){
 		return evaluatesTo(A);
 	}
 

@@ -45,15 +45,15 @@ public class GGConvCombNode extends GGCPMNode{
 	/** pf must be a ground ProbForm ! */
 	public GGConvCombNode(GradientGraphO gg,
 						  	CPModel pf,
-							Hashtable<String,GGCPMNode> allnodes,
+							HashMap<String,GGCPMNode> allnodes,
 							RelStruc A,
 							OneStrucData I,
 							int inputcaseno,
 							int observcaseno,
-							Hashtable<String,Integer> parameters,
+						  	HashMap<String,Integer> parameters,
 							boolean useCurrentPvals,
-							Hashtable<Rel,GroundAtomList> mapatoms,
-							Hashtable<String,Object[]>  evaluated )
+						  	HashMap<Rel,GroundAtomList> mapatoms,
+						  	HashMap<String,Object[]>  evaluated )
 			throws RBNCompatibilityException {
 		super(gg,pf,A,I);
 	

@@ -33,25 +33,20 @@ public class IntArrayComparator implements Comparator{
      *         -1 if arr1.length <  arr2.length or arr1.length =  arr2.length and arr1 < arr2 in lexical order
      *          1 otherwise
      */
-    public  int compare( Object arr1, Object arr2 ){    		
-	if (((int[])arr1).length < ((int[])arr2).length)
-	    return -1;
-	if (((int[])arr1).length > ((int[])arr2).length)
-	    return 1;
-	int result = 0;
-	boolean done = false;
-	int i =0;    
-	while (!done && i<((int[])arr1).length){
-	    if (((int[])arr1)[i]<((int[])arr2)[i]){
-		result = -1;
-		done = true;
-	    }
-	    if (((int[])arr1)[i]>((int[])arr2)[i]){
-		result = 1;
-		done = true;
-	    }
-	    i++;
+	public int compare(Object arr1, Object arr2) {
+		int[] a1 = (int[]) arr1;
+		int[] a2 = (int[]) arr2;
+
+		// Compare lengths first
+		if (a1.length < a2.length) return -1;
+		if (a1.length > a2.length) return 1;
+
+		// Lexical comparison
+		for (int i = 0; i < a1.length; i++) {
+			if (a1[i] < a2[i]) return -1;
+			if (a1[i] > a2[i]) return 1;
+		}
+
+		return 0; // arrays are equal
 	}
-	return result;
-    }
 }

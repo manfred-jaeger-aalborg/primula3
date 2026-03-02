@@ -30,6 +30,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.TreeSet;
 import java.util.Vector;
+import java.util.Map;
+import java.util.HashMap;
 
 import RBNpackage.VarTermPackage.ArgTerm;
 import org.dom4j.Element;
@@ -81,7 +83,12 @@ public class OneStrucData {
 	 * (This seems so far unused and untested ...)
 	 */
 	double weight =1;
-	
+
+	// fast lookup maps
+	private final Map<Rel, OneBoolRelData> boolIndex;
+	private final Map<Rel, OneNumRelData> numIndex;
+	private final Map<Rel, OneCatRelData> catIndex;
+
 	public OneStrucData(){
 		allonebooldata=new Vector<OneBoolRelData>();
 		allonenumdata = new Vector<OneNumRelData>();
@@ -91,19 +98,36 @@ public class OneStrucData {
 		allreltypes.add(this.allonebooldata);
 		allreltypes.add(this.allonenumdata);
 		allreltypes.add(this.allonecatdata);
+
+		boolIndex = new HashMap<Rel, OneBoolRelData>();
+		numIndex = new HashMap<Rel, OneNumRelData>();
+		catIndex = new HashMap<Rel, OneCatRelData>();
 	}
 
 	public OneStrucData(OneStrucData toCopy){
 		allonebooldata=new Vector<OneBoolRelData>();
 		allonenumdata = new Vector<OneNumRelData>();
 		allonecatdata = new Vector<OneCatRelData>();
+		boolIndex = new HashMap<Rel, OneBoolRelData>();
+		numIndex = new HashMap<Rel, OneNumRelData>();
+		catIndex = new HashMap<Rel, OneCatRelData>();
+
 		if( toCopy != null ){
-			for (int i=0;i<toCopy.allonebooldata.size();i++)
-				allonebooldata.add(toCopy.allonebooldata.elementAt(i).copy());
-			for (int i=0;i<toCopy.allonenumdata.size();i++)
-				allonenumdata.add(toCopy.allonenumdata.elementAt(i).copy());
-			for (int i=0;i<toCopy.allonecatdata.size();i++)
-				allonecatdata.add(toCopy.allonecatdata.elementAt(i).copy());
+			for (int i=0;i<toCopy.allonebooldata.size();i++){
+				OneBoolRelData copy = toCopy.allonebooldata.elementAt(i).copy();
+				allonebooldata.add(copy);
+				boolIndex.put(copy.rel(), copy);
+			}
+			for (int i=0;i<toCopy.allonenumdata.size();i++){
+				OneNumRelData copy = toCopy.allonenumdata.elementAt(i).copy();
+				allonenumdata.add(copy);
+				numIndex.put(copy.rel(), copy);
+			}
+			for (int i=0;i<toCopy.allonecatdata.size();i++){
+				OneCatRelData copy = toCopy.allonecatdata.elementAt(i).copy();
+				allonecatdata.add(copy);
+				catIndex.put(copy.rel(), copy);
+			}
 		}
 		allreltypes = new Vector<Vector<? extends OneRelData>>();
 		allreltypes.add(this.allonebooldata);
@@ -123,25 +147,81 @@ public class OneStrucData {
 		allreltypes.add(this.allonebooldata);
 		allreltypes.add(this.allonenumdata);
 		allreltypes.add(this.allonecatdata);
+
+		boolIndex = new HashMap<Rel, OneBoolRelData>();
+		numIndex = new HashMap<Rel, OneNumRelData>();
+		catIndex = new HashMap<Rel, OneCatRelData>();
+
+		// populate indexes from provided vectors
+		for (OneBoolRelData obd: allonebooldata) boolIndex.put(obd.rel(), obd);
+		for (OneNumRelData ond: allonenumdata) numIndex.put(ond.rel(), ond);
+		for (OneCatRelData ocd: allonecatdata) catIndex.put(ocd.rel(), ocd);
+	}
+
+	private OneBoolRelData boolLookupWithFallback(Rel r) {
+		if (r == null) return null;
+		OneBoolRelData res = boolIndex.get(r);
+		if (res != null) return res;
+		for (int i=0;i<allonebooldata.size();i++){
+			OneBoolRelData d = allonebooldata.elementAt(i);
+			if (d.rel().equals(r)) {
+				boolIndex.put(r, d); // cache for next time
+				return d;
+			}
+		}
+		return null;
+	}
+
+	private OneNumRelData numLookupWithFallback(Rel r) {
+		if (r == null) return null;
+		OneNumRelData res = numIndex.get(r);
+		if (res != null) return res;
+		for (int i=0;i<allonenumdata.size();i++){
+			OneNumRelData d = allonenumdata.elementAt(i);
+			if (d.rel().equals(r)) {
+				numIndex.put(r, d);
+				return d;
+			}
+		}
+		return null;
+	}
+
+	private OneCatRelData catLookupWithFallback(Rel r) {
+		if (r == null) return null;
+		OneCatRelData res = catIndex.get(r);
+		if (res != null) return res;
+		for (int i=0;i<allonecatdata.size();i++){
+			OneCatRelData d = allonecatdata.elementAt(i);
+			if (d.rel().equals(r)) {
+				catIndex.put(r, d);
+				return d;
+			}
+		}
+		return null;
 	}
 
 	public void add(OneBoolRelData ord){
-		if (findInBoolRel(ord.rel())==null)
-		allonebooldata.add(ord);
+		if (findInBoolRel(ord.rel())==null) {
+			allonebooldata.add(ord);
+			boolIndex.put(ord.rel(), ord);
+		}
 		else
-			System.out.println("Attempt to add data for " + ord.rel().name() + 
+			System.out.println("Attempt to add data for " + ord.rel().name() +
 					" to OneStrucData already containing data for this relation");
 	}
 	
 	public void add(OneNumRelData ord){
 		allonenumdata.add(ord);
+		numIndex.put(ord.rel(), ord);
 	}
 
 	public void add(OneCatRelData ord){
-		if (findInCatRel(ord.rel())==null)
-		allonecatdata.add(ord);
+		if (findInCatRel(ord.rel())==null) {
+			allonecatdata.add(ord);
+			catIndex.put(ord.rel(), ord);
+		}
 		else
-			System.out.println("Attempt to add data for " + ord.rel().name() + 
+			System.out.println("Attempt to add data for " + ord.rel().name() +
 					" to OneStrucData already containing data for this relation");
 	}
 	
@@ -155,24 +235,30 @@ public class OneStrucData {
 			OneNumRelData oldonrd = findInNumRel(addonrd.rel());
 			if (oldonrd != null)
 				oldonrd.add(addonrd);
-			else
+			else {
 				allonenumdata.add(allnumrels.elementAt(i));
+				numIndex.put(addonrd.rel(), addonrd);
+			}
 		}
 		for (int i=0;i<allboolrels.size();i++){
 			OneBoolRelData addobrd = allboolrels.elementAt(i);
 			OneBoolRelData oldobrd = findInBoolRel(addobrd.rel());
 			if (oldobrd != null)
 				oldobrd.add(addobrd);
-			else
+			else {
 				allonebooldata.add(allboolrels.elementAt(i));
+				boolIndex.put(addobrd.rel(), addobrd);
+			}
 		}
 		for (int i=0;i<allcatrels.size();i++){
 			OneCatRelData addocrd = allcatrels.elementAt(i);
 			OneCatRelData oldocrd = findInCatRel(addocrd.rel());
 			if (oldocrd != null)
 				oldocrd.add(addocrd);
-			else
+			else {
 				allonecatdata.add(allcatrels.elementAt(i));
+				catIndex.put(addocrd.rel(), addocrd);
+			}
 		}
 	}
 
@@ -242,27 +328,15 @@ public class OneStrucData {
 	}
  
 	public OneNumRelData findInNumRel(Rel r){
-		for (int i=0;i<allonenumdata.size();i++){
-			if (allonenumdata.elementAt(i).rel().equals(r))
-				return allonenumdata.elementAt(i);
-		}
-		return null;
+		return numLookupWithFallback(r);
 	}
-	
+
 	public OneBoolRelData findInBoolRel(Rel r){
-		for (int i=0;i<allonebooldata.size();i++){
-			if (allonebooldata.elementAt(i).rel().equals(r))
-				return allonebooldata.elementAt(i);
-		}
-		return null;
+		return boolLookupWithFallback(r);
 	}
 
 	public OneCatRelData findInCatRel(Rel r){
-		for (int i=0;i<allonecatdata.size();i++){
-			if (allonecatdata.elementAt(i).rel().equals(r))
-				return allonecatdata.elementAt(i);
-		}
-		return null;
+		return catLookupWithFallback(r);
 	}
 	/* finding relations based only on name --
 	 * unsafe if there are two relations with the same name 
@@ -351,6 +425,7 @@ public class OneStrucData {
 		if (thisrelinst == null){
 			thisrelinst = new OneBoolRelData(r,dv);
 			allonebooldata.add(thisrelinst);
+			boolIndex.put(r, thisrelinst);
 		}
 		if (r.arity == 0)
 			return thisrelinst.setGlobal(tv);
@@ -370,6 +445,7 @@ public class OneStrucData {
 		if (thisrelinst == null){
 			thisrelinst = new OneNumRelData(r,v);
 			allonenumdata.add(thisrelinst);
+			numIndex.put(r, thisrelinst);
 		}
 		if (r.arity == 0)
 			return thisrelinst.setGlobal(v);
@@ -388,6 +464,7 @@ public class OneStrucData {
 		if (thisrelinst == null){
 			thisrelinst = new OneCatRelData(r,dv);
 			allonecatdata.add(thisrelinst);
+			catIndex.put(r, thisrelinst);
 		}
 		if (r.arity == 0)
 			return thisrelinst.setGlobal(v);
@@ -408,6 +485,7 @@ public class OneStrucData {
 		else{
 			thisrelinst = new OneCatRelData(r,dv);
 			allonecatdata.add(thisrelinst);
+			catIndex.put(r, thisrelinst);
 			thisrelinst.add(tuples,v);
 		}
 	}
@@ -423,6 +501,7 @@ public class OneStrucData {
 		else{
 			thisrelinst = new OneBoolRelData(r,dv);
 			allonebooldata.add(thisrelinst);
+			boolIndex.put(r, thisrelinst);
 			thisrelinst.add(tuples,tv);
 		}
 	}
@@ -448,13 +527,17 @@ public class OneStrucData {
 	 */
 	public void add(BoolRel r, String dv){
 		if (findInBoolRel(r)==null){
-			allonebooldata.add(new OneBoolRelData(r,dv));
+			OneBoolRelData obd = new OneBoolRelData(r,dv);
+			allonebooldata.add(obd);
+			boolIndex.put(r, obd);
 		}
 	}
 	
 	public void add(CatRel r, String dv){
 		if (findInCatRel(r)==null){
-			allonecatdata.add(new OneCatRelData(r,dv));
+			OneCatRelData ocd = new OneCatRelData(r,dv);
+			allonecatdata.add(ocd);
+			catIndex.put(r, ocd);
 		}
 	}
 	
@@ -749,12 +832,18 @@ public class OneStrucData {
 	public void delete(Rel r){
 		OneRelData thisrelinst = find(r);
 		if (thisrelinst != null){
-			if (thisrelinst instanceof OneBoolRelData)
+			if (thisrelinst instanceof OneBoolRelData) {
 				allonebooldata.remove(thisrelinst);
-			if (thisrelinst instanceof OneNumRelData)
+				boolIndex.remove(thisrelinst.rel());
+			}
+			if (thisrelinst instanceof OneNumRelData) {
 				allonenumdata.remove(thisrelinst);
-			if (thisrelinst instanceof OneCatRelData)
+				numIndex.remove(thisrelinst.rel());
+			}
+			if (thisrelinst instanceof OneCatRelData) {
 				allonecatdata.remove(thisrelinst);
+				catIndex.remove(thisrelinst.rel());
+			}
 		}
 		else
 			System.out.println("relation not found");
@@ -762,24 +851,30 @@ public class OneStrucData {
 	
 	public void delete(BoolRel r){
 		OneBoolRelData thisrelinst = findInBoolRel(r);
-		if (thisrelinst != null)
-			allonebooldata.remove(find(r));
+		if (thisrelinst != null) {
+			allonebooldata.remove(thisrelinst);
+			boolIndex.remove(r);
+		}
 		else
 			System.out.println("relation not found");
 	}
 	
 	public void delete(NumRel r){
 		OneNumRelData thisrelinst = findInNumRel(r);
-		if (thisrelinst != null)
-			allonenumdata.remove(find(r));
+		if (thisrelinst != null) {
+			allonenumdata.remove(thisrelinst);
+			numIndex.remove(r);
+		}
 		else
 			System.out.println("relation not found");
 	}
 
 	public void delete(CatRel r){
 		OneCatRelData thisrelinst = findInCatRel(r);
-		if (thisrelinst != null)
-			allonecatdata.remove(find(r));
+		if (thisrelinst != null) {
+			allonecatdata.remove(thisrelinst);
+			catIndex.remove(r);
+		}
 		else
 			System.out.println("relation not found");
 	}
@@ -800,14 +895,23 @@ public class OneStrucData {
 
 	public OneStrucData copy(){
 		OneStrucData result = new OneStrucData();
-		for (int i=0;i<this.allonebooldata.size();i++)
-			result.allonebooldata.add(this.allonebooldata.elementAt(i).copy());
+		for (int i=0;i<this.allonebooldata.size();i++) {
+			OneBoolRelData copy = this.allonebooldata.elementAt(i).copy();
+			result.allonebooldata.add(copy);
+			result.boolIndex.put(copy.rel(), copy);
+		}
 
-		for (int i=0;i<this.allonenumdata.size();i++)
-			result.allonenumdata.add(this.allonenumdata.elementAt(i).copy());
-		
-		for (int i=0;i<this.allonecatdata.size();i++)
-			result.allonecatdata.add(this.allonecatdata.elementAt(i).copy());
+		for (int i=0;i<this.allonenumdata.size();i++){
+			OneNumRelData copy = this.allonenumdata.elementAt(i).copy();
+			result.allonenumdata.add(copy);
+			result.numIndex.put(copy.rel(), copy);
+		}
+
+		for (int i=0;i<this.allonecatdata.size();i++){
+			OneCatRelData copy = this.allonecatdata.elementAt(i).copy();
+			result.allonecatdata.add(copy);
+			result.catIndex.put(copy.rel(), copy);
+		}
 
 		result.allreltypes = new Vector<Vector<? extends OneRelData>>();
 		result.allreltypes.add(result.allonebooldata);
@@ -928,33 +1032,37 @@ public class OneStrucData {
 	 */
 	public double valueOf(Rel r, int[] tuple)
 	{
-		OneNumRelData thisnumrelinst = findInNumRel(r);
-		if (thisnumrelinst != null)
-		{
-			Double n = thisnumrelinst.valueOf(tuple);
-			if(n != null)
-				return n;
-			else 
-				return Double.NaN;
-				
+		if(r instanceof NumRel) {
+			OneNumRelData thisnumrelinst = findInNumRel(r);
+			if (thisnumrelinst != null) {
+				Double n = thisnumrelinst.valueOf(tuple);
+				if (n != null)
+					return n;
+				else
+					return Double.NaN;
+
+			}
 		}
-		OneBoolRelData thisboolrelinst = findInBoolRel(r);
-		if (thisboolrelinst != null)
-		{
-			int tv = thisboolrelinst.valueOf(tuple);
-			if (tv != -1)
-				return (double)tv;
-			else 
-				return Double.NaN;
+		if (r instanceof BoolRel) {
+			OneBoolRelData thisboolrelinst = findInBoolRel(r);
+			if (thisboolrelinst != null) {
+				int tv = thisboolrelinst.valueOf(tuple);
+				if (tv != -1)
+					return (double) tv;
+				else
+					return Double.NaN;
+			}
 		}
-		OneCatRelData thiscatrelinst = findInCatRel(r);
-		if (thiscatrelinst != null)
-		{
-			int tv = thiscatrelinst.valueOf(tuple);
-			if (tv != -1)
-				return (double)tv;
-			else 
-				return Double.NaN;
+		if (r instanceof CatRel) {
+			OneCatRelData thiscatrelinst = findInCatRel(r);
+			if (thiscatrelinst != null) {
+				int tv = thiscatrelinst.valueOf(tuple);
+				if (tv != -1)
+					return (double) tv;
+				else
+					return Double.NaN;
+			}
+			return Double.NaN;
 		}
 		return Double.NaN;
 	}
@@ -1323,16 +1431,25 @@ public class OneStrucData {
 
 	
 	public void addRelation(BoolRel r, String dv){
-		if (find(r) == null)
-			allonebooldata.add(new OneBoolRelData(r,dv));
+		if (find(r) == null) {
+			OneBoolRelData obd = new OneBoolRelData(r,dv);
+			allonebooldata.add(obd);
+			boolIndex.put(r, obd);
+		}
 	}
 	public void addRelation(NumRel r, Double v){
-		if (find(r) == null)
-			allonenumdata.add(new OneNumRelData(r,v));
+		if (find(r) == null) {
+			OneNumRelData ond = new OneNumRelData(r,v);
+			allonenumdata.add(ond);
+			numIndex.put(r, ond);
+		}
 	}
 	public void addRelation(CatRel r, String dv){
-		if (find(r) == null)
-			allonecatdata.add(new OneCatRelData(r,dv));
+		if (find(r) == null) {
+			OneCatRelData ocd = new OneCatRelData(r,dv);
+			allonecatdata.add(ocd);
+			catIndex.put(r, ocd);
+		}
 	}
 
 	public OneBoolRelData booldataAt(int i){
@@ -1468,6 +1585,10 @@ public class OneStrucData {
 		allreltypes.add(this.allonebooldata);
 		allreltypes.add(this.allonenumdata);
 		allreltypes.add(this.allonecatdata);
+
+		boolIndex.clear();
+		numIndex.clear();
+		catIndex.clear();
 	}
 	
 	/* Initialize  with empty interpretations of the

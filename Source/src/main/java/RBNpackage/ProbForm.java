@@ -40,7 +40,7 @@ public interface ProbForm
 	int PFCONVCOMB = 3;
 	int PFCONST = 4;
 
-	/* flags for data type of computed gradients: array or hashtable
+	/* flags for data type of computed gradients: array or HashMap
 	 */
 	int RETURN_ARRAY=0;
 	int RETURN_SPARSE=1;
@@ -57,10 +57,10 @@ public interface ProbForm
     		boolean useCurrentCvals, 
     		//String[] numrelparameters,
     		boolean useCurrentPvals,
-    		Hashtable<Rel,GroundAtomList> mapatoms,
+    		HashMap<Rel,GroundAtomList> mapatoms,
     		boolean useCurrentMvals,
-    		Hashtable<String,Object[]> evaluated,
-    		Hashtable<String,Integer> params,
+    		HashMap<String,Object[]> evaluated,
+    		HashMap<String,Integer> params,
     		int returntype,
     		boolean valonly,
     		Profiler profiler)throws RBNCompatibilityException;
@@ -78,7 +78,7 @@ public interface ProbForm
      * instantiation instasosd, but w.r.t. to sampleinst fields at 
      * PFNetworkNodes which are accessible via atomhasht
      */
-    int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, Hashtable<String,GroundAtom> atomhasht)
+    int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, HashMap<String,GroundAtom> atomhasht)
 	throws RBNCompatibilityException;
 
     int evaluatesTo(RelStruc A) throws RBNCompatibilityException;

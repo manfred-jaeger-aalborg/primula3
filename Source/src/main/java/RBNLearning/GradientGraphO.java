@@ -44,7 +44,7 @@ import myio.StringOps;
  * recursively evaluating the probability formulas corresponding to the ground atoms in the
  * Instantiations.  Identical ground (sub-) formulas obtained from the evaluation of different
  * instantiated ground atoms are included only once in the GradientGraphO. For this purpose a
- * hashtable allNodes for the nodes is maintained. The keys for the nodes are constructed as
+ * HashMap allNodes for the nodes is maintained. The keys for the nodes are constructed as
  * strings consisting of a concatenation of the index of the data case with the string representation
  * of the ground probability formula.
  *
@@ -64,7 +64,7 @@ import myio.StringOps;
 public class GradientGraphO extends GradientGraph{
 
 
-	private Hashtable<String,GGCPMNode> allNodes;
+	private HashMap<String,GGCPMNode> allNodes;
 
 	/* Maximum identifier value currently assigned to a node;
 	 *
@@ -74,7 +74,7 @@ public class GradientGraphO extends GradientGraph{
 
 	GGLikelihoodNode llnode;
 	Vector<GGAtomSumNode> sumindicators; /* All the indicators for atoms to be summed over */
-	Hashtable<Rel,Vector<GGAtomMaxNode>> maxindicators; /* for given rel, contains the GGAtomMaxNodes in the same order as
+	HashMap<Rel,Vector<GGAtomMaxNode>> maxindicators; /* for given rel, contains the GGAtomMaxNodes in the same order as
 	defined by the GroundAtomList mapatoms.get(rel) */
 
 
@@ -93,7 +93,6 @@ public class GradientGraphO extends GradientGraph{
 	private int maxitersa;
 
 	// https://stackoverflow.com/questions/4573123/java-updating-text-in-the-command-line-without-a-new-line
-	// for now the function will not be integrated (merging conflicts)
 	private static void printProgress(long startTime, long total, long current) {
 		long eta = current == 0 ? 0 :
 			(total - current) * (System.currentTimeMillis() - startTime) / current;
@@ -121,10 +120,10 @@ public class GradientGraphO extends GradientGraph{
 
 	public GradientGraphO(Primula mypr,
 			RelData data,
-			Hashtable<String,Integer> params,
+			HashMap<String,Integer> params,
 			double[][] mmbds,
 			GradientGraphOptions go,
-			Hashtable<Rel,GroundAtomList> mapats,
+			HashMap<Rel,GroundAtomList> mapats,
 			int m,
 			Boolean showInfoInPrimula)
 					throws RBNCompatibilityException
@@ -139,12 +138,12 @@ public class GradientGraphO extends GradientGraph{
 		this.minmaxbounds=mmbds;
 
 		//parameters = myPrimula.getParamNumRels();
-		allNodes = new Hashtable<String,GGCPMNode>();
+		allNodes = new HashMap<String,GGCPMNode>();
 
 
 		sumindicators = new Vector<GGAtomSumNode>();
 		//maxindicators = new Vector<GGAtomMaxNode>();
-		maxindicators = new Hashtable<Rel,Vector<GGAtomMaxNode>> ();
+		maxindicators = new HashMap<Rel,Vector<GGAtomMaxNode>> ();
 
 		int inputcaseno;
 		int observcaseno;
@@ -222,10 +221,10 @@ public class GradientGraphO extends GradientGraph{
 			long startTime = System.currentTimeMillis();
 			int count = 0;
 			for (Rel narel: mapatoms.keySet()) {
-				System.out.println(narel.name() + " " + mapatoms.get(narel).size());
+//				System.out.println(narel.name() + " " + mapatoms.get(narel).size());
 				for (int qano=0; qano<mapatoms.get(narel).size(); qano++){
-					System.out.println( "\t\t" + mapatoms.get(narel).atomAt(qano).asString());
-					System.out.println(count);
+//					System.out.println( "\t\t" + mapatoms.get(narel).atomAt(qano).asString());
+//					System.out.println(count);
 					count++;
 					nextatom = mapatoms.get(narel).atomAt(qano);
 					narel = nextatom.rel();
@@ -261,7 +260,7 @@ public class GradientGraphO extends GradientGraph{
 							true,
 							nextatom.asString(),
 							mapatoms,
-							null); /* TODO: optimization with a non-null Hashtable here */
+							null); /* TODO: optimization with a non-null HashMap here */
 
 					fnode.setMyatom(nextatom.asString());
 
@@ -291,6 +290,8 @@ public class GradientGraphO extends GradientGraph{
 							myPrimula.getPrimulaGUI().appendMessageThis("X");
 						currentpercentage++;
 					}
+
+					printProgress(startTime, mapatoms.get(narel).size(), qano+1);
 				}
 				if (myggoptions.ggverbose())
 					System.out.println("\t-uga map-query atoms constructed in: " + (System.currentTimeMillis()-((double)startTime))/1000.0 + " sec.");
@@ -307,13 +308,12 @@ public class GradientGraphO extends GradientGraph{
 		int numNodes = 0;
 		long startTime = System.currentTimeMillis();
 		for (inputcaseno=0; inputcaseno<data.size(); inputcaseno++){
-
 			rdoi = data.caseAt(inputcaseno);
 			A = rdoi.inputDomain();
 			for (observcaseno=0; observcaseno<rdoi.numObservations(); observcaseno++){
 				osd = rdoi.oneStrucDataAt(observcaseno);
 
-				Hashtable<String,Object[]>  evaluated = new Hashtable<String,Object[]>();
+				HashMap<String,Object[]>  evaluated = new HashMap<String,Object[]>();
 				//System.out.println("\t\tnum rbn pfs: " + rbn.NumPFs());
 				for (int i=0; i<rbn.NumPFs(); i++){
 					nextcpm = rbn.cpmod_prelements_At(i);
@@ -326,8 +326,9 @@ public class GradientGraphO extends GradientGraph{
 //					if (debugPrint) {
 //						System.out.println("next rel: " + nextrel.name());
 //						System.out.println();}
-					for (int k=0;k<inrel.size();k++){
-						nexttup = (int[])inrel.elementAt(k);
+					List<int[]> inrelList = inrel;
+					for (int k=0;k<inrelList.size();k++){
+						nexttup = inrelList.get(k);
 						int instvalue = (int)osd.valueOf(nextrel,nexttup); // A bit complicated; should directly get
 						// from osd instantiated and their values.
 //						if (vars.length == 0)
@@ -336,14 +337,14 @@ public class GradientGraphO extends GradientGraph{
 						atomstring = nextrel.name()+StringOps.arrayToString((int[])inrel.elementAt(k),"(",")");
 						//							System.out.print("\r\t\t\tcurrent atom: " + atomstring);
 //						if (debugPrint)
-//							printProgress(startTimeProg, inrel.size(), k+1); // we keep deatciate for now
+						printProgress(startTimeProg, inrel.size(), k+1); // we keep deatciate for now
 
 						/* check whether this atom has already been included as an upper ground atom node because
 						 * it is a map atom
 						 */
 						// TODO: check correct handling of mapatoms that are also instantiated by the evidence!
-						if (mapatoms == null || mapatoms.get(nextrel)==null || !mapatoms.get(nextrel).contains(nextrel,nexttup)){
-
+						GroundAtomList mapList = (mapatoms != null) ? mapatoms.get(nextrel) : null;
+						if (mapList == null || !mapList.contains(nextrel, nexttup)) {
 							Object pfeval = groundnextcpm.evaluate(A,
 									osd,
 									new ArgTerm[0],
@@ -420,7 +421,6 @@ public class GradientGraphO extends GradientGraph{
 							}
 						} /* if (!mapatoms.contains(nextrel,nexttup)) */
 					} /* for (int k=0;k<inrel.size();k++) */
-											System.gc();
 					//System.out.println();
 				} /* for int i; i<rbn.NumPFs()*/
 			} /* int j=0; j<rdoi.numObservations(); */
@@ -465,7 +465,7 @@ public class GradientGraphO extends GradientGraph{
 					true,
 					at.asString(),
 					mapatoms,
-					null); /* TODO: optimization with a non-null Hashtable here */
+					null); /* TODO: optimization with a non-null HashMap here */
 			llnode.addToChildren(fnode);
 			fnode.setIsuga(true);
 			fnode.setMyatom(at.asString());
@@ -708,10 +708,10 @@ public class GradientGraphO extends GradientGraph{
 		llnode.resetValue(sno);
 		if (!valueonly)
 			llnode.resetGradient(sno);
-		Enumeration<GGCPMNode> e = allNodes.elements();
+		Iterator<GGCPMNode> e = allNodes.values().iterator();
 		GGNode ggn;
-		while (e.hasMoreElements()){
-			ggn = (GGNode)e.nextElement();
+		while (e.hasNext()) {
+			ggn = (GGNode)e.next();
 			ggn.resetValue(sno);
 			if (!valueonly)
 				ggn.resetGradient(sno);
@@ -1157,7 +1157,6 @@ public class GradientGraphO extends GradientGraph{
 				break;
 			}
 	//		evaluateLikelihoodAndPartDerivs(true);
-	//		printProgressBar(num_flipped, scored_atoms.size(), currentLogLikelihood());
 		}
 
 		if (myggoptions.ggverbose()) {
@@ -1342,7 +1341,7 @@ public class GradientGraphO extends GradientGraph{
 		double bestlikelihood = Double.NEGATIVE_INFINITY;
 		int noimprovements = 0;
 
-		Hashtable<Rel,int[]> bestMapVals = new Hashtable<>();
+		HashMap<Rel,int[]> bestMapVals = new HashMap<>();
 
 		Iterator<GGAtomMaxNode> it = scored_atoms.iterator();while (it.hasNext() && num_flipped < max_iter && !terminate) {
 			if (num_iter < 2)
@@ -1961,24 +1960,6 @@ public class GradientGraphO extends GradientGraph{
 		return avgEnergyDiff * 10; // Start with temp ~10x average energy change
 	}
 
-	public static void printProgressBar(int current, int total, double curll) {
-		int progressBarLength = 40;
-		double progressPercentage = (double) current / total;
-		int filledBars = (int) (progressBarLength * progressPercentage);
-
-		StringBuilder progressBar = new StringBuilder("[");
-		for (int i = 0; i < filledBars; i++) {
-			progressBar.append("#");
-		}
-		for (int i = filledBars; i < progressBarLength; i++) {
-			progressBar.append("-");
-		}
-		progressBar.append("]");
-
-		String percentageText = String.format("%.2f%%", progressPercentage * 100);
-		System.out.print("\rProgress: " + progressBar.toString() + " " + percentageText + " (" + current + "/" + total + ") - current log-ll: " + curll);
-	}
-
 	public double mapInference(GGThread mythread) throws RBNNaNException{
 		boolean terminate = false;
 		double score = 0;
@@ -2079,7 +2060,6 @@ public class GradientGraphO extends GradientGraph{
 		}
 
 		System.out.println();
-		resetValues(null, true);
 		evaluateLikelihoodAndPartDerivs(true);
 		curll = currentLogLikelihood();
 		System.out.println("final log-likelihood= " + curll);
@@ -2207,8 +2187,9 @@ public class GradientGraphO extends GradientGraph{
 		}
 		if (verbose >5){
 			GGNode nextggn;
-			for (Enumeration<String> e = allNodes.keys();e.hasMoreElements();){
-				String nextkey = e.nextElement();
+			Iterator<String> iterator = allNodes.keySet().iterator();
+			while (iterator.hasNext()) {
+				String nextkey = iterator.next();
 				nextggn = (GGNode)allNodes.get(nextkey);
 				System.out.println("**** Node " + "   " + nextggn.identifier()+ "   "  +nextggn.getClass().getName() + '\n' + nextkey + "   " );
 				if (nextggn instanceof GGCPMNode) {
@@ -2229,8 +2210,9 @@ public class GradientGraphO extends GradientGraph{
 
 	public void showAllNodes2(RelStruc A) {
 		GGNode nextggn;
-		for (Enumeration<String> e = allNodes.keys();e.hasMoreElements();){
-			String nextkey = e.nextElement();
+		Iterator<String> iterator = allNodes.keySet().iterator();
+		while (iterator.hasNext()) {
+			String nextkey = iterator.next();
 			nextggn = (GGNode)allNodes.get(nextkey);
 			System.out.println("**** Node" + " " + nextggn.identifier()+ "   "  +nextggn.getClass().getName() + '\n' + nextkey);
 
@@ -2945,10 +2927,11 @@ public int numberOfMaxIndicators() {
 /** Returns the number of links in the graph */
 public int numberOfEdges(){
 	int result = llnode.childrenSize();
-	Enumeration e = allNodes.elements();
+	Iterator<GGCPMNode> iterator = allNodes.values().iterator();
 
-	while (e.hasMoreElements())
-		result = result + ((GGNode)e.nextElement()).childrenSize();
+	while (iterator.hasNext()) {
+		result += iterator.next().childrenSize();
+	}
 
 	return result;
 }
@@ -3020,9 +3003,9 @@ public GGAtomMaxNode findInMaxindicators(GroundAtom at){
 }
 
 
-public Hashtable<Rel,int[]> getMapVals(){
+public HashMap<Rel,int[]> getMapVals(){
 
-	Hashtable<Rel,int[]> result = new Hashtable<Rel,int[]>();
+	HashMap<Rel,int[]> result = new HashMap<Rel,int[]>();
 
 	for (Rel r: mapatoms.keySet()) {
 		int[] rvals = new int[mapatoms.get(r).size()];
@@ -3198,7 +3181,7 @@ private TreeSet<GGAtomMaxNode> maxind_as_ts(){
 		return paramNodes;
 	}
 
-	public Hashtable<Rel, Vector<GGAtomMaxNode>> getMaxindicators() {
+	public HashMap<Rel, Vector<GGAtomMaxNode>> getMaxindicators() {
 	return maxindicators;
 }
 

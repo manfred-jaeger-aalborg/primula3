@@ -1049,9 +1049,9 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
         }
         else if(source == delAllQueryAtomButton){
             inferenceModuleCore.queryModels=new Vector<QueryTableModel>();
-            inferenceModuleCore.queryatoms = new Hashtable<Rel, GroundAtomList>();
+            inferenceModuleCore.queryatoms = new HashMap<Rel, GroundAtomList>();
             inferenceModuleCore.relList = new Vector<Rel>();
-            inferenceModuleCore.relIndex = new Hashtable<String,Integer>();
+            inferenceModuleCore.relIndex = new HashMap<String,Integer>();
             this.buildQueryatomsTables(inferenceModuleCore.queryModels);
         }
         else if( source == settingsSampling ){
@@ -1492,7 +1492,7 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
         inferenceModuleCore.readRBNRelations();
         //instasosd.reset();
         inferenceModuleCore.instantiationsListModel.clear();
-        inferenceModuleCore.queryatoms=new Hashtable<Rel,GroundAtomList>();
+        inferenceModuleCore.queryatoms=new HashMap<Rel,GroundAtomList>();
         inferenceModuleCore.queryModels=new Vector<QueryTableModel>();
         elementNamesList.clearSelection();
         infoMessage.setText(" ");
@@ -1613,7 +1613,7 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
         inferenceModuleCore.readElementNames();
         //instasosd.reset();
         inferenceModuleCore.instantiationsListModel.clear();
-        inferenceModuleCore.queryatoms=new Hashtable<Rel,GroundAtomList>();
+        inferenceModuleCore.queryatoms=new HashMap<Rel,GroundAtomList>();
         inferenceModuleCore.queryModels=new Vector<QueryTableModel>();
 //		infoMessage.setText(" ");
         el_pos=0;

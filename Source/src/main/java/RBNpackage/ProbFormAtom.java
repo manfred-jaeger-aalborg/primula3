@@ -130,33 +130,44 @@ public class ProbFormAtom extends CPModel implements ProbForm {
 //		return result;
 //	}
 
-	public String asString(int syntax, int depth, RelStruc A, boolean paramsAsValue, boolean usealias) {
-		if (usealias && this.getAlias() != null)
-			return this.getAlias();
-		String tabstring = "";
-		for (int i = 0; i < depth; i++)
-			tabstring = tabstring + " ";
-		return tabstring + this.asString(A);
+	public String asString(int syntax, int depth, RelStruc A, boolean paramsAsValue, boolean useAlias) {
+		String alias = this.getAlias();
+		if (useAlias && alias != null) {
+			return alias;
+		}
+		String base = this.asString(A);
+		if (depth <= 0) {
+			return base;
+		}
+
+		StringBuilder sb = new StringBuilder(depth + base.length());
+		for (int i = 0; i < depth; i++) {
+			sb.append(' ');
+		}
+		sb.append(base);
+		return sb.toString();
 	}
 
 	public String asString(RelStruc A) {
-		String result = relation.printname();
-		result = result.concat("(");
-		for (int i = 0; i < arguments.length - 1; i++) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(relation.printname());
+		sb.append("(");
+		for (int i = 0; i < arguments.length; i++) {
+			if (i > 0) {
+				sb.append(",");
+			}
 			String argStr = arguments[i].argEval();
-			if (argStr != null && rbnutilities.IsInteger(argStr) && A != null && !(getRelation().getTypes()[i] instanceof TypeInteger))
-				result = result.concat(A.nameAt(Integer.parseInt(argStr)) + ",");
-			else
-				result = result.concat(arguments[i].toString() + ",");
+			if (argStr != null
+					&& rbnutilities.IsInteger(argStr)
+					&& A != null
+					&& !(getRelation().getTypes()[i] instanceof TypeInteger)) {
+				sb.append(A.nameAt(Integer.parseInt(argStr)));
+			} else {
+				sb.append(arguments[i].toString());
+			}
 		}
-		if (arguments.length > 0) {
-			String argStr = arguments[arguments.length - 1].toString();
-			if (argStr != null && rbnutilities.IsInteger(argStr) && A != null && !(getRelation().getTypes()[arguments.length - 1] instanceof TypeInteger))
-				result = result.concat(A.nameAt(Integer.parseInt(argStr)));
-			else
-				result = result.concat(arguments[arguments.length - 1].toString());
-		}
-		return result.concat(")");
+		sb.append(")");
+		return sb.toString();
 	}
 
 	/** Returns the ground atom if this ProbForm represents a ground atom;
@@ -205,7 +216,7 @@ public class ProbFormAtom extends CPModel implements ProbForm {
 		return -1; // not predefined 
 	}
 
-	public int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, Hashtable atomhasht)
+	public int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, HashMap atomhasht)
 			throws RBNCompatibilityException{
 		if (relation.ispredefined())
 			return evaluatesTo(A);
@@ -290,7 +301,7 @@ public class ProbFormAtom extends CPModel implements ProbForm {
 				0,
 				false,
 				false,
-				new Hashtable<Rel,GroundAtomList>(),
+				new HashMap<Rel,GroundAtomList>(),
 				false,
 				null,
 				null,
@@ -380,7 +391,7 @@ public class ProbFormAtom extends CPModel implements ProbForm {
 //    		boolean useCurrentPvals,
 //    		GroundAtomList mapatoms,
 //    		boolean useCurrentMvals,
-//    		Hashtable<String,Double> evaluated)
+//    		HashMap<String,Double> evaluated)
 //	{			
 //		String key="";
 //		
@@ -428,10 +439,10 @@ public class ProbFormAtom extends CPModel implements ProbForm {
 			boolean useCurrentCvals, 
     		// String[] numrelparameters,
     		boolean useCurrentPvals,
-    		Hashtable<Rel,GroundAtomList> mapatoms,
+    		HashMap<Rel,GroundAtomList> mapatoms,
     		boolean useCurrentMvals,
-    		Hashtable<String,Object[]> evaluated,
-    		Hashtable<String,Integer> params,
+    		HashMap<String,Object[]> evaluated,
+    		HashMap<String,Integer> params,
     		int returntype,
     		boolean valonly,
     		Profiler profiler)
@@ -482,10 +493,12 @@ public class ProbFormAtom extends CPModel implements ProbForm {
 			}
 		}
 		else if (relation.ispredefined()) {
-			String thisstr = substituted.asString(A);
+			String thisstr = "";
 			Integer i = null;
-			if (params != null)
+			if (params != null && params.size()>0) {
+				thisstr = substituted.asString(A);
 				i = params.get(thisstr);
+			}
 
 			if (i==null || useCurrentPvals)
 				result[0] = A.valueOf(relation, rbnutilities.argTermArrayToIntArray(substituted.getArguments()));
@@ -497,17 +510,20 @@ public class ProbFormAtom extends CPModel implements ProbForm {
 					result[1] = new Gradient_Array(params);
 				else
 					result[1] = new Gradient_TreeMap(params);
-				if (i != null)
+				if (i != null) {
+					if (thisstr.equals(""))
+						thisstr = substituted.asString(A);
 					((Gradient) result[1]).set_part_deriv(thisstr, new double[]{1.0});
+				}
 //				if (returntype==ProbForm.RETURN_ARRAY) {
 //					result[1]=new double[params.size()];
 //					if (i!=null)
 //						((double[])result[1])[i] = 1.0;
 //				}
 //				else {
-//					result[1]=new Hashtable<String,Double>();
+//					result[1]=new HashMap<String,Double>();
 //					if (i!= null)
-//						((Hashtable<String,Double>)result[1]).put(thisstr, 1.0);
+//						((HashMap<String,Double>)result[1]).put(thisstr, 1.0);
 //				}
 			}
 		} // else if (relation.ispredefined())
@@ -522,9 +538,9 @@ public class ProbFormAtom extends CPModel implements ProbForm {
 
 
 	public double[] evalSample(RelStruc A,
-			Hashtable<String,PFNetworkNode> atomhasht, 
+			HashMap<String,PFNetworkNode> atomhasht, 
 			OneStrucData inst, 
-    		Hashtable<String,double[]> evaluated,
+    		HashMap<String,double[]> evaluated,
 			long[] timers)
 			throws RBNCompatibilityException{
 		

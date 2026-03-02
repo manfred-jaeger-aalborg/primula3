@@ -430,7 +430,7 @@ public class LearnModule implements GradientGraphOptions
 		data=myprimula.getReldata();
 	}
 
-	public void setParameters(Hashtable<String,Integer> params){
+	public void setParameters(HashMap<String,Integer> params){
 		parammodel.setParameters(params);
 		if (this.learnModuleGUI!=null)
 			this.learnModuleGUI.getParametertable().updateUI();

@@ -121,17 +121,17 @@ public abstract class GGCPMNode extends GGNode{
 
 	public static GGCPMNode constructGGPFN(GradientGraphO gg,
 			CPModel cpm, 
-			Hashtable<String,GGCPMNode> allnodes, 
+			HashMap<String,GGCPMNode> allnodes,
 			RelStruc A, 
 			OneStrucData I,
 			int inputcaseno,
 			int observcaseno,
-			Hashtable<String,Integer> parameters,
+			HashMap<String,Integer> parameters,
 			boolean useCurrentPvals,
 			boolean isuga,
 			String uganame,
-			Hashtable<Rel,GroundAtomList> mapatoms,
-			Hashtable<String,Object[]>  evaluated )
+		    HashMap<Rel,GroundAtomList> mapatoms,
+			HashMap<String,Object[]>  evaluated )
 					throws RuntimeException,RBNCompatibilityException
 	{
 
@@ -410,6 +410,7 @@ public abstract class GGCPMNode extends GGNode{
 
 
 	public abstract boolean isBoolean();
+
 	public TreeSet<GGCPMNode> parents(){
 		return parents;
 	}

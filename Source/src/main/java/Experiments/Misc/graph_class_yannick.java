@@ -14,7 +14,7 @@ import RBNutilities.rbnutilities;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Vector;
 
 public class graph_class_yannick {
@@ -203,7 +203,7 @@ public class graph_class_yannick {
             im.getMapthr().join();
 
             // collect results
-            Hashtable<Rel, int[]> bestMapVals = im.getMapthr().getBestMapVals();
+            HashMap<Rel, int[]> bestMapVals = im.getMapthr().getBestMapVals();
             // print results
             System.out.println("\nMAP INFERENCE RESULTS:\n");
             for (GroundAtomList gal: gal_vec) {

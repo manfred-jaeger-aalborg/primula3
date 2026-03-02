@@ -41,8 +41,8 @@ public class BayesConstructor extends java.lang.Object {
 
 
 	private Vector<BNNode> complexnodes;
-	private Hashtable<String,BNNode> groundatomhasht;
-	private Hashtable<String,BNNode> simplenodehasht;
+	private HashMap<String,BNNode> groundatomhasht;
+	private HashMap<String,BNNode> simplenodehasht;
 //	private boolean[] isolatedzeroind;
 	private BayesNetInt bni;
 	private int numnodes = 0;
@@ -144,7 +144,7 @@ public class BayesConstructor extends java.lang.Object {
 		if (querymode == Primula.OPTION_NOT_QUERY_SPECIFIC)
 			buildInitialGAHT(evidencemode, nodetype , isolatedzeronodesmode);
 		else { // Primula.OPTION_QUERY_SPECIFIC
-			groundatomhasht = new Hashtable<String,BNNode>();
+			groundatomhasht = new HashMap<String,BNNode>();
 			Stack<BNNode> toprocess = new Stack<BNNode>();
 			
 			/* A set containing all the relations that are represented by atoms in 
@@ -156,7 +156,7 @@ public class BayesConstructor extends java.lang.Object {
 			TreeSet<Rel> relset = new TreeSet<Rel>();
 			
 			
-			/* Start by adding all queryatoms to groundatomhashtable, and also put them on stack of nodes whose parents still 
+			/* Start by adding all queryatoms to groundatomHashMap, and also put them on stack of nodes whose parents still 
 			 * have to be added
 			 */
 			for (GroundAtom ga: queryatoms.allAtoms()) {
@@ -324,7 +324,7 @@ public class BayesConstructor extends java.lang.Object {
 	private void buildInitialGAHT(int evidencemode, int nodetype ,int isolatedzeronodesmode)
 	throws RBNCompatibilityException,RBNIllegalArgumentException
 	{
-		groundatomhasht = new Hashtable<String,BNNode>();
+		groundatomhasht = new HashMap<String,BNNode>();
 
 		/* Generate all ground atoms
 		 */
@@ -406,8 +406,9 @@ public class BayesConstructor extends java.lang.Object {
 		BNNode nextpar;
 		BNNode newgatn;
 		int nodeindex = 0;
-		for (Enumeration<BNNode> e=groundatomhasht.elements();e.hasMoreElements();){
-			newgatn = e.nextElement();
+		Iterator<BNNode> e = groundatomhasht.values().iterator();
+		while (e.hasNext()){
+			newgatn = e.next();
 			parvec = (Vector<GroundAtom>)parentvecs.elementAt(nodeindex);
 			for (int j=0;j<parvec.size();j++){
 				nextpar = groundatomhasht.get(((GroundAtom)parvec.elementAt(j)).asString());
@@ -421,8 +422,9 @@ public class BayesConstructor extends java.lang.Object {
 
 	private Vector<BNNode> exportnodes(int isolatedzeronodesmode){
 		Vector<BNNode> result = new Vector<BNNode>();
-		for (Enumeration<BNNode> e=groundatomhasht.elements();e.hasMoreElements();) {
-			BNNode nextn = e.nextElement();
+		Iterator<BNNode> e = groundatomhasht.values().iterator();
+		while (e.hasNext()){
+			BNNode nextn = e.next();
 			switch (isolatedzeronodesmode) {
 				case Primula.OPTION_NOT_ELIMINATE_ISOLATED_ZERO_NODES:{
 					result.add(nextn);
@@ -826,7 +828,7 @@ public class BayesConstructor extends java.lang.Object {
 					true,
 					null,
 					false,
-					new Hashtable<String,Object[]>(),
+					new HashMap<String,Object[]>(),
 					null,
 					ProbForm.RETURN_ARRAY,
 					true,
@@ -843,7 +845,7 @@ public class BayesConstructor extends java.lang.Object {
 						true,
 						null,
 						false,
-						new Hashtable<String,Object[]>(),
+						new HashMap<String,Object[]>(),
 						null,
 						ProbForm.RETURN_ARRAY,
 						true,
@@ -909,9 +911,10 @@ public class BayesConstructor extends java.lang.Object {
 			break;
 		}
 		}
-		
-		for (Enumeration<BNNode> e=groundatomhasht.elements();e.hasMoreElements();){
-			currentnode = (ComplexBNGroundAtomNode)e.nextElement();
+
+		Iterator<BNNode> e=groundatomhasht.values().iterator();
+		while (e.hasNext()){
+			currentnode = (ComplexBNGroundAtomNode)e.next();
 			parvec = (Vector<GroundAtom>)parentvecs.elementAt(nodeindex);
 			nodeindex++;
 			cpmodel = currentnode.cpmodel;
@@ -921,7 +924,7 @@ public class BayesConstructor extends java.lang.Object {
 			/* turn complexnode into simplenode
 			 */
 			cpt = (double[][])makeCPT(cpmodel,strucarg,inst,parvec)[0];
-			
+
 			newgatn = new SimpleBNGroundAtomNode(atom,
 					name,
 					cpt,
@@ -937,7 +940,7 @@ public class BayesConstructor extends java.lang.Object {
 			++myProgress;//keith cascio 20060515
 		}// (Enumeration<BNNode> e=groundatomhasht.elements();e.hasMoreElements();)
 
-		
+
 		/* Second pass over groundatomhasht:
 		 * set parents and children
 		 */
@@ -960,8 +963,9 @@ public class BayesConstructor extends java.lang.Object {
 		 */
 
 		complexnodes = new Vector();
-		for (Enumeration<BNNode> e=groundatomhasht.elements();e.hasMoreElements();)
-			complexnodes.add(e.nextElement());
+		Iterator<BNNode> e=groundatomhasht.values().iterator();
+		while (e.hasNext())
+			complexnodes.add(e.next());
 
 		while (complexnodes.size() > 0)
 		{
@@ -1011,16 +1015,17 @@ public class BayesConstructor extends java.lang.Object {
 		Vector<Vector<GroundAtom>> parentvecs = new Vector<Vector<GroundAtom>>(); // Vector of Vector of ground Atoms
 		Vector<GroundAtom> parvec = null;
 		BNNode newgatn;
-		for (Enumeration<BNNode> e=groundatomhasht.elements();e.hasMoreElements();){
+		Iterator<BNNode> e=groundatomhasht.values().iterator();
+		while (e.hasNext()) {
 			TreeSet<String> macrosdone = new TreeSet<String>();
 			switch (evidencemode){
 			case Primula.OPTION_NOT_EVIDENCE_CONDITIONED:{
-				newgatn = e.nextElement();
+				newgatn = e.next();
 				parvec = newgatn.cpmodel().makeParentVec(strucarg, new OneStrucData() ,macrosdone);
 				break;
 			}
 			case Primula.OPTION_EVIDENCE_CONDITIONED:{
-				newgatn = e.nextElement();
+				newgatn = e.next();
 				parvec = newgatn.cpmodel().makeParentVec(strucarg,instarg,macrosdone);
 				break;
 			}
@@ -1033,7 +1038,7 @@ public class BayesConstructor extends java.lang.Object {
 
 
 	private void substituteNode(BNNode oldnode,BNNode newnode)
-	// replaces pointers to oldnode in hashtable and
+	// replaces pointers to oldnode in HashMap and
 	// parent lists of the children of oldnode with
 	// pointers to newnode
 	{
@@ -2553,9 +2558,9 @@ public class BayesConstructor extends java.lang.Object {
 
 	/** Utility method for debugging **/
 	private void showGAHT(){
-		BNNode nextbnn;
-		for (Enumeration<BNNode> e=groundatomhasht.elements();e.hasMoreElements();){
-			nextbnn = e.nextElement();
+		Iterator<BNNode> iterator = groundatomhasht.values().iterator();
+		while (iterator.hasNext()) {
+			BNNode nextbnn = iterator.next();
 			System.out.println(((GroundAtomNodeInt)nextbnn).myatom().asString());
 		}
 		System.out.println();

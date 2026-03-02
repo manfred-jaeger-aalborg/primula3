@@ -105,7 +105,7 @@ public abstract class CPModel
      * -the first component is the Double value of this formula (for ProbForm), or the array of probabilities (for CatModel).
      * -if returntype==this.RETURN_ARRAY, then the second component is an array containing the gradient with components 
      *  according to the order defined in params
-     * -if returntype==this.RETURN_SPARSE, then the second component is a Hashtable<String,double> with parameter names as keys,
+     * -if returntype==this.RETURN_SPARSE, then the second component is a HashMap<String,double> with parameter names as keys,
      *  and partial derivatives as values 
      *   
      * gradindx is the index of the categorical value for which the gradient is calculated. This is only relevant when
@@ -123,10 +123,10 @@ public abstract class CPModel
     		boolean useCurrentCvals, 
     		//String[] numrelparameters,
     		boolean useCurrentPvals,
-    		Hashtable<Rel,GroundAtomList> mapatoms,
+			HashMap<Rel,GroundAtomList> mapatoms,
     		boolean useCurrentMvals,
-    		Hashtable<String,Object[]> evaluated,
-    		Hashtable<String,Integer> params,
+    		HashMap<String,Object[]> evaluated,
+			HashMap<String,Integer> params,
     		int returntype,
     		boolean valonly, // true for gnn
     		Profiler profiler)
@@ -149,10 +149,10 @@ public abstract class CPModel
      * For scalar cpm's returns scalar value as one-element array
      *
      */
-    public abstract double[] evalSample(RelStruc A, 
-    		Hashtable<String,PFNetworkNode> atomhasht, 
+    public abstract double[] evalSample(RelStruc A,
+    		HashMap<String,PFNetworkNode> atomhasht,
     		OneStrucData inst, 
-    		Hashtable<String,double[]> evaluated,
+    		HashMap<String,double[]> evaluated,
     		long[] timers)
 	throws RBNCompatibilityException;
 
@@ -177,7 +177,7 @@ public abstract class CPModel
      * instantiation instasosd, but w.r.t. to sampleinst fields at
      * PFNetworkNodes which are accessible via atomhasht
      */
-	public abstract int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, Hashtable<String,GroundAtom> atomhasht)
+	public abstract int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, HashMap<String,GroundAtom> atomhasht)
 			throws RBNCompatibilityException;
 
 	public abstract int evaluatesTo(RelStruc A) throws RBNCompatibilityException;
