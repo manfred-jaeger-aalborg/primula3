@@ -131,13 +131,22 @@ public class LearnThread extends GGThread {
 			 * atoms
 			 * 
 			 */
-			String[][] parameternumrels = myprimula.getParamNumRelsGUI();
-
-			Hashtable<String,Integer> parameters = myprimula.makeParameterIndexGUI();
-			
+			Hashtable<String, Integer> parameters;
+			String[][] parameternumrels;
+			// set parameters with and without the GUI
+			if (myLearnModule.getLearnModuleGUI() != null) {
+				parameternumrels = myprimula.getParamNumRelsGUI();
+				parameters = myprimula.makeParameterIndexGUI();
+			} else {
+				parameters = myprimula.makeParameterIndex();
+				if (parameters.size() == 0) {
+					throw new RBNRuntimeException("No parameters to learn");
+				}
+				parameternumrels = myprimula.getParamNumRels();
+			}
+			parammodel.setParameters(parameters);
 			double[][] minmaxbounds = myprimula.makeMinMaxBounds();
 
-			parammodel.setParameters(parameters);
 			parammodel.fireTableDataChanged();
 			if (parametertable != null)
 				parametertable.updateUI();

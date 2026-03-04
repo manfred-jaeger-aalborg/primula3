@@ -152,7 +152,7 @@ public class GradientGraphO extends GradientGraph{
 		CPModel nextcpm;
 		int[] nexttup;
 
-
+		this.initGnnPy(rbn);
 
 		//		/* Determine how many of the parameters are rbn parameters
 		//		 * NOTE: it is required that in parameters all rbn parameters come
@@ -336,9 +336,6 @@ public class GradientGraphO extends GradientGraph{
 						 */
 						// TODO: check correct handling of mapatoms that are also instantiated by the evidence!
 						if (mapatoms == null || mapatoms.get(nextrel)==null || !mapatoms.get(nextrel).contains(nextrel,nexttup)){
-
-//							if (groundnextcpm instanceof CPMGnn && ((CPMGnn) groundnextcpm).getGnnPy() == null)
-//								((CPMGnn) groundnextcpm).setGnnPy(tempGNN);
 
 							Object pfeval = groundnextcpm.evaluate(A,
 									osd,
@@ -611,17 +608,7 @@ public class GradientGraphO extends GradientGraph{
 				myPrimula.getPrimulaGUI().showMessageThis("");
 			}
 		}
-		//showAllNodes(6,null);
 
-//		if (tempGNN != null) {
-//			tempGNN.closeInterpreter();
-//			this.gnnPy = null;
-//		}
-		//		System.out.println("Calls to constructGGPFN:" + profiler.constructGGPFNcalls);
-		//		System.out.println("Found nodes:" + profiler.foundnodes);
-		//		System.out.println("Time 1:" + profiler.time1);
-		//		System.out.println("Time 2:" + profiler.time2);
-		//		System.out.println("Count 1:" + profiler.count1);
 		if (myggoptions.ggverbose()) {
 			System.out.println("#Ground atoms:" + llnode.childrenSize());
 			System.out.println("#Sum atoms:" + sumindicators.size());
@@ -771,27 +758,25 @@ public class GradientGraphO extends GradientGraph{
 				mxnode.setRandomInst();
 			}
 			/* Now find initial values for the k Markov chains */
-			for (int k=0;k<numchains && !abortforsum;k++){
+			for (int k=0;k<numchains && !abortforsum;k++) {
 				successforsum = false;
-				while (!successforsum && !abortforsum){
+				while (!successforsum && !abortforsum) {
 					resetValues(k*windowsize,true);
-
-				for (int i=0;i<sumindicators.size();i++){
-					sumindicators.elementAt(i).setRandomSampleVal(k*windowsize);
-				}
-
+					for (int i=0;i<sumindicators.size();i++) {
+						sumindicators.elementAt(i).setRandomSampleVal(k*windowsize);
+					}
 					llnode.evaluate(k*windowsize);
 					double lik = llnode.loglikelihood(k*windowsize);
 					if (lik!=Double.NEGATIVE_INFINITY)
 						successforsum=true;
-					else{
+					else {
 						failcountforsum++;
 						if (failcountforsum > maxfailcountforsum)
 							abortforsum = true;
 					}
 				}
 			}
-			if (abortforsum){
+			if (abortforsum) {
 				failcount++;
 				if (failcount > maxfailcount)
 					abort = true;
@@ -1634,6 +1619,10 @@ public class GradientGraphO extends GradientGraph{
 		double score = 0;
 		double oldll = 0;
 		int itcount = 0;
+
+		// reset all the python-related data
+		this.initGnnPy(this.myPrimula.getRBN());
+
 		Boolean gotinit = initIndicators(mythread);
 		if (!gotinit) {
 			System.out.println("No successful initialization of max/sum indicators");
@@ -1925,7 +1914,7 @@ protected double[] thetasearch(double[] currenttheta, GGThread mythread, int ful
 	double newllikhood;
 
 	if(Double.isInfinite(llikhood)){
-		result[currenttheta.length+3]=Double.NEGATIVE_INFINITY;
+		result[currenttheta.length+2]=Double.NEGATIVE_INFINITY;
 		System.out.println("Zero likelihood at initial parameters");
 		return result;
 	}
@@ -1958,7 +1947,6 @@ protected double[] thetasearch(double[] currenttheta, GGThread mythread, int ful
 
 		switch (myggoptions.ggascentstrategy()){
 		case LearnModule.AscentAdagrad:
-
 			direction = getDirectionAscentAdagrad(gradient);
 			break;
 		case LearnModule.AscentDirectGradient:
@@ -1974,7 +1962,6 @@ protected double[] thetasearch(double[] currenttheta, GGThread mythread, int ful
 			}
 
 			direction = getDirectionLBFGS(gradient,lbfgs_iterationcount);
-
 			break;
 		case LearnModule.AscentFletcherReeves:
 			direction = getDirectionFletcherReeves(gradient,oldgradient,olddirection);
@@ -2055,8 +2042,8 @@ protected double[] thetasearch(double[] currenttheta, GGThread mythread, int ful
 		if (Double.isNaN(currenttheta[i]))
 			System.out.println("learned NaN");
 	}
-	result[currenttheta.length]=newlikelihood;
-	result[currenttheta.length+1]=newlikelihood/llnode.numChildren();
+	result[currenttheta.length] = newlikelihood;
+	result[currenttheta.length+1] = newlikelihood/llnode.numChildren();
 	result[currenttheta.length+2] = llnode.loglikelihood();
 
 	long timespent = System.currentTimeMillis()-timestart;

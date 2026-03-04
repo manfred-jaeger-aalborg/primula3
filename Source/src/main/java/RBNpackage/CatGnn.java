@@ -179,7 +179,7 @@ public class CatGnn extends CPModel {
             this.gnnPy.initGnnData(this, A, inst);
             isInitialized = true;
         }
-        double[] resGnn = gnnPy.evalSample_gnn(this, A, atomhasht, inst);
+        double[] resGnn = gnnPy.evalSample_gnn(this, atomhasht);
         if (this.numvals() == 1) {
             double[] resultArray =  new double[] {1-resGnn[0],resGnn[0]};
             return resultArray;

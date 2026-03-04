@@ -757,13 +757,14 @@ switch(parseno){
     throw new Error("Missing return statement in function");
 }
 
-  final public CatGnn CatGnn() throws ParseException, RBNIllegalArgumentException {Token tk1;
+  final public CatGnn CatGnn() throws ParseException, RBNIllegalArgumentException {Token tk1 = null;
     Token tk2;
     Vector<String> freeVals;
     String configPath;
     int numVals = 1;
     List<TorchInputSpecs> forInputs = new ArrayList<>();;
     List<Rel> attrs;
+    List<Rel> edgeAttrs = new ArrayList<>();
     Rel attrRel;
     BoolRel edgeRel;
     List<TorchInputRels> combineClauses = new ArrayList<>();
@@ -777,15 +778,26 @@ numVals = Integer.parseInt(tk1.image);
     freeVals = UntypedArguments();
     label_10:
     while (true) {
-      jj_consume_token(ATTR);
-      jj_consume_token(X);
+      jj_consume_token(TYPEDICT);
+      jj_consume_token(NODEFEAT);
       attrs = AttrList();
-      jj_consume_token(EDGE);
+      jj_consume_token(EDGEGRAPH);
       tk2 = jj_consume_token(Name);
-edgeRel = (BoolRel) reader.getRelFromSignature(tk2.image);
-            TorchInputSpecs tis = new TorchInputSpecs(attrs, edgeRel);
-            forInputs.add(tis);
       if (jj_2_58(3)) {
+        jj_consume_token(EDGEATTR);
+        edgeAttrs = AttrList();
+      } else {
+        ;
+      }
+edgeRel = (BoolRel) reader.getRelFromSignature(tk2.image);
+                if (edgeAttrs.size() > 0) {
+                    TorchInputSpecs tis = new TorchInputSpecs(attrs, edgeRel, edgeAttrs);
+                    forInputs.add(tis);
+                } else {
+                    TorchInputSpecs tis = new TorchInputSpecs(attrs, edgeRel, null);
+                    forInputs.add(tis);
+                }
+      if (jj_2_59(3)) {
         ;
       } else {
         break label_10;
@@ -795,7 +807,7 @@ edgeRel = (BoolRel) reader.getRelFromSignature(tk2.image);
 combineClauses.add(pf);
     label_11:
     while (true) {
-      if (jj_2_59(3)) {
+      if (jj_2_60(3)) {
         ;
       } else {
         break label_11;
@@ -1300,6 +1312,14 @@ parseno = pn;
     finally { jj_save(58, xla); }
   }
 
+  private boolean jj_2_60(int xla)
+ {
+    jj_la = xla; jj_lastpos = jj_scanpos = token;
+    try { return (!jj_3_60()); }
+    catch(LookaheadSuccess ls) { return true; }
+    finally { jj_save(59, xla); }
+  }
+
   private boolean jj_3R_CombinationFuncClassic_369_9_28()
  {
     if (jj_scan_token(CombinationFunction)) return true;
@@ -1380,16 +1400,16 @@ parseno = pn;
     return false;
   }
 
-  private boolean jj_3R_CombinationFunc_351_11_48()
- {
-    if (jj_3R_CombinationFuncProd_421_9_31()) return true;
-    return false;
-  }
-
-  private boolean jj_3_59()
+  private boolean jj_3_60()
  {
     if (jj_scan_token(14)) return true;
     if (jj_3R_CombinationTorchRels_679_9_38()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_CombinationFunc_351_11_48()
+ {
+    if (jj_3R_CombinationFuncProd_421_9_31()) return true;
     return false;
   }
 
@@ -1404,6 +1424,13 @@ parseno = pn;
   private boolean jj_3R_CombinationFunc_350_11_47()
  {
     if (jj_3R_CombinationFuncSum_448_9_30()) return true;
+    return false;
+  }
+
+  private boolean jj_3_58()
+ {
+    if (jj_scan_token(EDGEATTR)) return true;
+    if (jj_3R_AttrList_647_5_37()) return true;
     return false;
   }
 
@@ -1438,7 +1465,7 @@ parseno = pn;
 
   private boolean jj_3_6()
  {
-    if (jj_3R_CatGnn_714_5_16()) return true;
+    if (jj_3R_CatGnn_715_5_16()) return true;
     return false;
   }
 
@@ -1465,10 +1492,10 @@ parseno = pn;
     return false;
   }
 
-  private boolean jj_3_58()
+  private boolean jj_3_59()
  {
-    if (jj_scan_token(ATTR)) return true;
-    if (jj_scan_token(X)) return true;
+    if (jj_scan_token(TYPEDICT)) return true;
+    if (jj_scan_token(NODEFEAT)) return true;
     if (jj_3R_AttrList_647_5_37()) return true;
     return false;
   }
@@ -1499,7 +1526,7 @@ parseno = pn;
     return false;
   }
 
-  private boolean jj_3R_CatGnn_714_5_16()
+  private boolean jj_3R_CatGnn_715_5_16()
  {
     if (jj_scan_token(COMPUTEWITHTORCH)) return true;
     if (jj_3R_PathDec_666_9_46()) return true;
@@ -1884,6 +1911,11 @@ parseno = pn;
   private boolean jj_3R_AttrList_647_5_37()
  {
     if (jj_scan_token(Name)) return true;
+    Token xsp;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_56()) { jj_scanpos = xsp; break; }
+    }
     return false;
   }
 
@@ -2192,7 +2224,7 @@ parseno = pn;
 	private static void jj_la1_init_1() {
 	   jj_la1_1 = new int[] {};
 	}
-  final private JJCalls[] jj_2_rtns = new JJCalls[59];
+  final private JJCalls[] jj_2_rtns = new JJCalls[60];
   private boolean jj_rescan = false;
   private int jj_gc = 0;
 
@@ -2398,7 +2430,7 @@ parseno = pn;
   /** Generate ParseException. */
   public ParseException generateParseException() {
 	 jj_expentries.clear();
-	 boolean[] la1tokens = new boolean[53];
+	 boolean[] la1tokens = new boolean[54];
 	 if (jj_kind >= 0) {
 	   la1tokens[jj_kind] = true;
 	   jj_kind = -1;
@@ -2415,7 +2447,7 @@ parseno = pn;
 		 }
 	   }
 	 }
-	 for (int i = 0; i < 53; i++) {
+	 for (int i = 0; i < 54; i++) {
 	   if (la1tokens[i]) {
 		 jj_expentry = new int[1];
 		 jj_expentry[0] = i;
@@ -2449,7 +2481,7 @@ parseno = pn;
 
   private void jj_rescan_token() {
 	 jj_rescan = true;
-	 for (int i = 0; i < 59; i++) {
+	 for (int i = 0; i < 60; i++) {
 	   try {
 		 JJCalls p = jj_2_rtns[i];
 
@@ -2516,6 +2548,7 @@ parseno = pn;
 			   case 56: jj_3_57(); break;
 			   case 57: jj_3_58(); break;
 			   case 58: jj_3_59(); break;
+			   case 59: jj_3_60(); break;
 			 }
 		   }
 		   p = p.next;
