@@ -417,7 +417,7 @@ public abstract class GGCPMNode extends GGNode{
 	public void addToParents(GGCPMNode ggn){
 		parents.add(ggn);
 	}
-	
+
 	/** Returns the set of all ancestors of this node
 	 * in the Graph
 	 * @return
@@ -453,8 +453,10 @@ public abstract class GGCPMNode extends GGNode{
 		if (ancestors == null) 
 			ancestors = ancestors();
 
-		for (GGNode anc: ancestors)
+		for (GGNode anc: ancestors) {
 			anc.resetValue(sno);
+			anc.resetGradient(sno);
+		}
 	}
 
 	/** Re-evaluates all ancestor nodes of this node. 

@@ -441,6 +441,7 @@ public class LearnThread extends GGThread {
 					}
 					epochobj+=batchobj;
 
+					System.out.println(rbnutilities.arrayToString(gradient));
 					firstmomentest = rbnutilities.arrayAdd(
 							rbnutilities.arrayScalMult(firstmomentest, beta1), 
 							rbnutilities.arrayScalMult(gradient,1- beta1));

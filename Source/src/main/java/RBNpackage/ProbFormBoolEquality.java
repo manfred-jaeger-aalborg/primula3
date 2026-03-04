@@ -80,14 +80,15 @@ public class ProbFormBoolEquality extends ProbFormBool {
     		boolean valonly,
     		Profiler profiler)
 	{			
-//		if (!valonly)
-//			System.out.println("Warning: trying to evaluate gradient for Boolean ProbForm" + this.makeKey(A));
+
 		Object[] result = new Object[2];
-		
-		if (returntype == ProbForm.RETURN_SPARSE)
-			result[1] = new Gradient_TreeMap(params);
-		else result[1] = new Gradient_Array(params);
-		
+
+		if (!valonly) {
+			if (returntype == ProbForm.RETURN_SPARSE)
+				result[1] = new Gradient_TreeMap(params);
+			else result[1] = new Gradient_Array(params);
+		}
+
 		ProbFormBoolEquality thissubstituted = (ProbFormBoolEquality)this.substitute(vars,tuple);
 		if (!thissubstituted.isGround())
 			throw new IllegalArgumentException("Attempt to evaluate non-ground equality");

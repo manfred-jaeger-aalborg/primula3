@@ -1916,7 +1916,6 @@ protected double[] thetasearch(double[] currenttheta, GGThread mythread, int ful
 	double[] llgains = new double[llwindow];
 	for (int i=0;i<llgains.length;i++)
 		llgains[i]=Double.POSITIVE_INFINITY;
-
 	int itcounter =0;
 	int maxiterations = myggoptions.getMaxIterations();
 	int lbfgs_iterationcount =0;
@@ -1948,6 +1947,7 @@ protected double[] thetasearch(double[] currenttheta, GGThread mythread, int ful
 
 		gradient = llnode.gradientAsDouble();
 
+		System.out.println("Gradient:"+ rbnutilities.arrayToString(gradient));
 		/* If the gradient at llnode is not representable as a standard double vector
 		 * (usually only when useloglik == false) then gradient now is a scaled version of the actual
 		 * gradient. When useloglik == true, then this will usually not cause any loss
@@ -1980,8 +1980,11 @@ protected double[] thetasearch(double[] currenttheta, GGThread mythread, int ful
 			direction = getDirectionFletcherReeves(gradient,oldgradient,olddirection);
 		}
 
+		System.out.println("Direction:"+ rbnutilities.arrayToString(direction));
+
 		double gtimesd = rbnutilities.arrayDotProduct(rbnutilities.normalizeDoubleArray(gradient),
 				rbnutilities.normalizeDoubleArray(direction));
+		System.out.println("Direction*Gradient: {}" + gtimesd);
 
 		/****************************************
 		 * call linesearch
@@ -1989,6 +1992,7 @@ protected double[] thetasearch(double[] currenttheta, GGThread mythread, int ful
 
 		currenttheta = linesearch(currenttheta, constrainedDirection(currenttheta,direction), mythread);
 
+		System.out.println("currenttheta:"+ rbnutilities.arrayToString(currenttheta));
 		// If there was no progress on this linesearch, then this may
 		// have been caused by the lbfgs direction being too orthogonal to
 		// the gradient.
@@ -2150,6 +2154,9 @@ protected double[] linesearch(double[] oldthetas,
 	if (iszero(gradient))
 		return oldthetas;
 
+	System.out.println("linesearch with direction"+rbnutilities.arrayToString(gradient));
+	System.out.println("current theta: "+ rbnutilities.arrayToString(oldthetas));
+
 	//		/* check whether the gradient is of the form (0,...,0,1,0,...0), i.e.,
 	//		 * optimzation is w.r.t. to the single parameter at the '1' index
 	//		 */
@@ -2182,6 +2189,7 @@ protected double[] linesearch(double[] oldthetas,
 	 */
 	double lambda = getAlphaBound(gradient, oldthetas);
 
+	
 	/* In case no bound is encountered in the direction of gradient,
 	 * determine a lambda so that the likelihood at leftbound + lambda*gradient
 	 * is less than the likelihood at leftbound
