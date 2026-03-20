@@ -12,11 +12,18 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
-
 public class NodeClassification {
 
     private static final String BASE_PATH =
             "/nfs/home/cs.aau.dk/lz50rg/dev/homophily/map-exp/all_datastes/";
+
+    private static final String[] DATASET_NAMES = {
+            "Wisconsin", "Texas", "Cornell", "Cora", "CiteSeer", "PubMed", "chameleon", "squirrel", "Actor"
+    };
+    private static final int[] DATASET_CLASSES = {
+            5, 5, 5, 7, 6, 3, 5, 5, 5
+    };
+    private static final int SPLITS = 10;
 
     private static String[] buildClassNames(int numClasses) {
         String[] names = new String[numClasses];
@@ -48,19 +55,23 @@ public class NodeClassification {
     }
 
     public static void main(String[] args) throws IOException {
-        if (args.length < 3) {
-            System.err.println("Usage: RunOneJob <datasetName> <splitIndex> <numClasses>");
+        if (args.length < 1) {
+            System.err.println("Usage: RunOneJob <taskId>");
             System.exit(2);
         }
 
-        String datasetName = args[0];
-        int index = Integer.parseInt(args[1]);
-        int numClasses = Integer.parseInt(args[2]);
+        int taskId = Integer.parseInt(args[0]);
+
+        int datasetIdx = taskId / SPLITS;
+        int index = taskId % SPLITS;
+        String datasetName = DATASET_NAMES[datasetIdx];
+        int numClasses = DATASET_CLASSES[datasetIdx];
+
         String[] class_names = buildClassNames(numClasses);
         String classValString = String.join(",", class_names);
 
-        System.out.println("Dataset: " + datasetName + "  split: " + index
-                + "  classes: " + numClasses);
+        System.out.println("Task " + taskId + ": dataset=" + datasetName
+                + ", split=" + index + ", classes=" + numClasses);
 
         Primula primula = new Primula();
         primula.loadSparseRelFile(new File(
