@@ -178,16 +178,16 @@ public class ProbFormCombFunc extends CPModel implements ProbForm {
 
 	}
 
-	public VarTerm[] freevars()
+	public ArgTerm[] freevars()
 	{
-		VarTerm result[]={};
+		ArgTerm result[]={};
 		// first collect all the free variables from the pfargs formulas
 		for (int i = 0 ; i<pfargs.length ; i++)
 			result = rbnutilities.arraymerge(result, pfargs[i].freevars());
 		// add the variables in the constraint:
 		result = rbnutilities.arraymerge(result, cconstr.freevars());
 		// subtract the variables in quantvars
-		result = (VarTerm[]) rbnutilities.arraysubstraction(result, rbnutilities.getVarsFromArgs(quantvars));
+		result = rbnutilities.arraysubstraction(result, rbnutilities.getVarsFromArgs(quantvars));
 		return result;
 	}
 

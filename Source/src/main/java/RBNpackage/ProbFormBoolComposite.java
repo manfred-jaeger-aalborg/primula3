@@ -279,8 +279,8 @@ public class ProbFormBoolComposite extends ProbFormBool {
 	}
 
 	@Override
-	public VarTerm[] freevars() {
-		VarTerm[] result = components[0].freevars();
+	public ArgTerm[] freevars() {
+		ArgTerm[] result = components[0].freevars();
 		for (int i=1;i<components.length;i++)
 			result = rbnutilities.arraymerge(result,components[i].freevars());
 		return result;

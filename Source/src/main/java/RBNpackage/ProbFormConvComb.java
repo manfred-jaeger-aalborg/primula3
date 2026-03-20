@@ -68,9 +68,9 @@ public class ProbFormConvComb extends CPModel implements ProbForm{
 	}
 
 
-	public VarTerm[] freevars()
+	public ArgTerm[] freevars()
 	{
-		VarTerm result[];
+		ArgTerm result[];
 		result = rbnutilities.arraymerge(F1.freevars(),F2.freevars());
 		result = rbnutilities.arraymerge(result,F3.freevars());
 		return result;
