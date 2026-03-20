@@ -1489,6 +1489,8 @@ public class GradientGraphO extends GradientGraph{
 			if (myggoptions.ggverbose())
 				System.out.print(ugas.get(i).getMyatom() + " ");
 		}
+		if (myggoptions.ggverbose())
+			System.out.println();
 		return values;
 	}
 
@@ -2712,6 +2714,9 @@ protected double[] linesearch(double[] oldthetas,
 
 		double bounddist = mymath.MyMathOps.euclDist(rightbound,leftbound)/(rbnutilities.euclidNorm(rightbound)*rbnutilities.euclidNorm(leftbound));
 
+		if (Double.isNaN(bounddist) || Double.isInfinite(bounddist)) {
+			throw new RBNNaNException("NaN or infinite bound distance");
+		}
 
 		if ( bounddist < myggoptions.getLineDistThresh())
 			terminate = true;

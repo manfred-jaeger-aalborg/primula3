@@ -77,6 +77,26 @@ public class GGAtomMaxNode extends GGAtomNode{
 		}
 	}
 
+//			for (GGCPMNode parent : parents) {
+//			GGGnnNode p = isGnnNode(parent);
+//			if (p != null) {
+//				p.setCurrentInstPy(currentInst, this);
+//				break;
+//			}
+//		}
+
+	// recursive check
+	private GGGnnNode isGnnNode(GGCPMNode node) {
+		for (GGCPMNode parent : node.parents) {
+			if (parent instanceof GGGnnNode) {
+				return (GGGnnNode) parent;
+			} else if (isGnnNode(parent) != null) {
+				return (GGGnnNode) parent;
+			}
+		}
+		return null;
+	}
+
 	///* A value that represents the contribution of this node with its
 	//* current instantiation value to the likelihood. Used as a selection
 	//* heuristic for flipping instantiation values during MAP inference

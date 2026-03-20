@@ -1735,15 +1735,15 @@ public class rbnutilities extends java.lang.Object
 		return sign * result;
 	}
 
-	public static void allSatisfyingTuples(ArgTerm[] args, int[] intvec, ArgTerm[] vars, TreeSet<int[]> ts, int d) {
-		if (intvec.length != args.length)
+	public static void allSatisfyingTuples(ArgTerm[] mixedvec, int[] intvec, ArgTerm[] vars, TreeSet<int[]> ts, int d) {
+		if (intvec.length != mixedvec.length)
 			throw new IllegalArgumentException("Tuple of wrong length!");
 
 		/* Test whether the integer components in mixedvec match with
 		 * intvec */
-		for (int i = 0; i < args.length; i++) {
-			if (args[i].isGround()) {
-				String val = args[i].argEval();
+		for (int i = 0; i < mixedvec.length; i++) {
+			if (mixedvec[i].isGround()) {
+				String val = mixedvec[i].argEval();
 				if (val == null) return;
 				Integer intVal = tryParseInt(val);
 				if (intVal == null || intVal != intvec[i]) return;
@@ -1754,9 +1754,9 @@ public class rbnutilities extends java.lang.Object
 		for (int i = 0; i < indexInVars.length; i++)
 			indexInVars[i] = -1;
 
-		for (int i = 0; i < args.length; i++) {
-			if (!args[i].isGround()) {
-				String argName = args[i].argEval();
+		for (int i = 0; i < mixedvec.length; i++) {
+			if (!mixedvec[i].isGround()) {
+				String argName = mixedvec[i].argEval();
 				int nextindex = -1;
 
 				for (int j = 0; j < vars.length; j++) {
@@ -2147,27 +2147,34 @@ public class rbnutilities extends java.lang.Object
 		if (vars.length != args.length)
 			System.out.println("calling rbnutilities.array_substitute with unmatched arguments");
 
-		if (vars.length == 0 || arr.length == 0) {
-			return arr.clone();
-		}
 		int arrLen = arr.length;
 		int varLen = vars.length;
 
 		if (varLen == 0 || arrLen == 0)
 			return arr.clone();
-		ArgTerm[] result = new ArgTerm[arrLen];
+
+		VarTerm[] replacements = new VarTerm[varLen];
+		for (int i = 0; i < varLen; i++)
+			replacements[i] = new VarTerm(args[i]);
+
+		ArgTerm[] result = null;
+
 		for (int i = 0; i < arrLen; i++) {
 			ArgTerm term = arr[i];
-			ArgTerm replaced = term;
+
 			for (int j = 0; j < varLen; j++) {
 				if (term.equals(vars[j])) {
-					replaced = new VarTerm(args[j]);
+
+					if (result == null)
+						result = arr.clone();
+
+					result[i] = replacements[j];
 					break;
 				}
 			}
-			result[i] = replaced;
 		}
-		return result;
+
+		return result == null ? arr.clone() : result;
 	}
 
 	private static boolean isInt(String s) {

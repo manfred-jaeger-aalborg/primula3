@@ -32,7 +32,6 @@ public class CatGnn extends CPModel {
 //    List<TorchInputRels> gnnGroundCombinedClausesFlatted;
 
     TypedTorchPf typedTorchPf;
-    TypedTorchPf groundTypedTorchPf;
 
     // if is set to true, means that the GNN is for categorical output, if false is boolean
     private boolean categorical;
@@ -131,7 +130,7 @@ public class CatGnn extends CPModel {
 
         // CHECK IF THIS DOES NOT BREAK INFERENCE WITH MAP or MCMC
 
-        for (TorchInputPf inps: groundTypedTorchPf.getCombines()) {
+        for (TorchInputPf inps: getTypedTorchPf().getCombines()) {
             Object[] res = inps.evaluate(A, inst, vars, tuple, gradindx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly, profiler);
             // if res[0] contains NaN return res
             if (res[0] instanceof Double) {
@@ -186,11 +185,11 @@ public class CatGnn extends CPModel {
     }
 
     @Override
-    public VarTerm[] freevars() {
+    public ArgTerm[] freevars() {
         System.out.println("freevars code");
 //        return rbnutilities.NonIntOnly(new String[]{this.argument}); // convert
-        for (TorchInputPf inps: groundTypedTorchPf.getCombines()) {
-            VarTerm[] res = inps.freevars();
+        for (TorchInputPf inps: getTypedTorchPf().getCombines()) {
+            ArgTerm[] res = inps.freevars();
             if (res.length > 0)
                 return res;
         }
@@ -200,7 +199,7 @@ public class CatGnn extends CPModel {
     @Override
     public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone) throws RBNCompatibilityException {
         Vector result = new Vector();
-        for (TorchInputPf inps: groundTypedTorchPf.getCombines()) {
+        for (TorchInputPf inps: getTypedTorchPf().getCombines()) {
             CPModel nextprobform;
             int[][] subslist = A.allTrue(inps.getCconstr(), inps.getQuantvars());
 
@@ -257,7 +256,6 @@ public class CatGnn extends CPModel {
         else
             result = new CatGnn(this.configModelPath, this.arguments, this.numvals, this.gnnInputs, newpf, this.outTypes, false);
 
-        result.groundTypedTorchPf = newpf;
         result.setGnnPy(this.getGnnPy());
 
         if (vars.length != 0)
@@ -281,7 +279,6 @@ public class CatGnn extends CPModel {
         else
             result = new CatGnn(this.configModelPath, this.arguments, this.numvals, this.gnnInputs, newpf, this.outTypes, false);
 
-        result.groundTypedTorchPf = newpf;
         result.setGnnPy(this.getGnnPy());
 
         if (vars.length != 0)
@@ -304,7 +301,6 @@ public class CatGnn extends CPModel {
         else
             result = new CatGnn(this.configModelPath, this.arguments, this.numvals, this.gnnInputs, newpf, this.outTypes, false);
 
-        result.groundTypedTorchPf = newpf;
         result.setGnnPy(this.getGnnPy());
 
         if (vars.length != 0)
@@ -327,7 +323,6 @@ public class CatGnn extends CPModel {
         else
             result = new CatGnn(this.configModelPath, this.arguments, this.numvals, this.gnnInputs, newpf, this.outTypes, false);
 
-        result.groundTypedTorchPf = newpf;
         result.setGnnPy(this.getGnnPy());
 
         if (vars.length != 0)
@@ -350,7 +345,6 @@ public class CatGnn extends CPModel {
         else
             result = new CatGnn(this.configModelPath, this.arguments, this.numvals, this.gnnInputs, newpf, this.outTypes, false);
 
-        result.groundTypedTorchPf = newpf;
         result.setGnnPy(this.getGnnPy());
 
         if (vars.length != 0)
@@ -372,7 +366,7 @@ public class CatGnn extends CPModel {
     public TreeSet<Rel> parentRels() {
 //        System.out.println("parentRels code 1");
         TreeSet<Rel> result = new TreeSet<Rel>();
-        for (TorchInputPf inps: groundTypedTorchPf.getCombines()) {
+        for (TorchInputPf inps: getTypedTorchPf().getCombines()) {
             result.addAll(inps.parentRels());
         }
         return result;
@@ -383,14 +377,10 @@ public class CatGnn extends CPModel {
         System.out.println("parentRels code 2");
         TreeSet<Rel> result = new TreeSet<Rel>();
         assert !processed.isEmpty(); // when it is used?
-        for (TorchInputPf inps: groundTypedTorchPf.getCombines()) {
+        for (TorchInputPf inps: getTypedTorchPf().getCombines()) {
             result.addAll(inps.parentRels());
         }
         return result;
-    }
-
-    public TypedTorchPf getGroundTypedTorchPf() {
-        return groundTypedTorchPf;
     }
 
     public TypedTorchPf getTypedTorchPf() {

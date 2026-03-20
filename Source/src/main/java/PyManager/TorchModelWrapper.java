@@ -208,7 +208,7 @@ public class TorchModelWrapper {
                         modelRef, flatX, xShape, flatEdge, numEdges, withgradients, flatEA, eaShape
                 );
                 long endTime = System.nanoTime();
-//                System.out.println("Operation took " + ((endTime - startTime) / 1_000_000.0) + " milliseconds");
+                System.out.println("forward took " + ((endTime - startTime) / 1_000_000.0) + " milliseconds");
 
                 List<Object> pyTuple = (List<Object>) pythonResult;
                 NDArray outArray = (NDArray) pyTuple.get(0);
