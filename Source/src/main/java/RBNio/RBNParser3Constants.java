@@ -13,61 +13,61 @@ public interface RBNParser3Constants {
   /** RegularExpression Id. */
   int EOLtoken = 3;
   /** RegularExpression Id. */
-  int EOL = 27;
+  int EOL = 28;
   /** RegularExpression Id. */
-  int CombinationFunction = 28;
+  int CombinationFunction = 29;
   /** RegularExpression Id. */
-  int WIFWIF = 29;
+  int WIFWIF = 30;
   /** RegularExpression Id. */
-  int WIFTHEN = 30;
+  int WIFTHEN = 31;
   /** RegularExpression Id. */
-  int WIFELSE = 31;
+  int WIFELSE = 32;
   /** RegularExpression Id. */
-  int COMBCOMB = 32;
+  int COMBCOMB = 33;
   /** RegularExpression Id. */
-  int COMBWITH = 33;
+  int COMBWITH = 34;
   /** RegularExpression Id. */
-  int COMBFORALL = 34;
+  int COMBFORALL = 35;
   /** RegularExpression Id. */
-  int COMBWHERE = 35;
+  int COMBWHERE = 36;
   /** RegularExpression Id. */
-  int SOFTMAX = 36;
+  int SOFTMAX = 37;
   /** RegularExpression Id. */
-  int COMPUTEWITHTORCH = 37;
+  int COMPUTEWITHTORCH = 38;
   /** RegularExpression Id. */
-  int UsingRels = 38;
+  int UsingRels = 39;
   /** RegularExpression Id. */
-  int FORNUMLAYERS = 39;
+  int FORNUMLAYERS = 40;
   /** RegularExpression Id. */
-  int ForFreeVars = 40;
+  int ForFreeVars = 41;
   /** RegularExpression Id. */
-  int ForOutTypes = 41;
+  int ForOutTypes = 42;
   /** RegularExpression Id. */
-  int WithNumValues = 42;
+  int WithNumValues = 43;
   /** RegularExpression Id. */
-  int TYPEDICT = 43;
+  int TYPEDICT = 44;
   /** RegularExpression Id. */
-  int NODEFEAT = 44;
+  int NODEFEAT = 45;
   /** RegularExpression Id. */
-  int EDGEGRAPH = 45;
+  int EDGEGRAPH = 46;
   /** RegularExpression Id. */
-  int EDGEATTR = 46;
+  int EDGEATTR = 47;
   /** RegularExpression Id. */
-  int USINGTORCH = 47;
+  int USINGTORCH = 48;
   /** RegularExpression Id. */
-  int Name = 48;
+  int Name = 49;
   /** RegularExpression Id. */
-  int Path = 49;
+  int Path = 50;
   /** RegularExpression Id. */
-  int MULT = 50;
+  int MULT = 51;
   /** RegularExpression Id. */
-  int PLUS = 51;
+  int PLUS = 52;
   /** RegularExpression Id. */
-  int MINUS = 52;
+  int MINUS = 53;
   /** RegularExpression Id. */
-  int Digits = 53;
+  int Digits = 54;
   /** RegularExpression Id. */
-  int NonNegNumber = 54;
+  int NonNegNumber = 55;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -91,6 +91,7 @@ public interface RBNParser3Constants {
     "\"(\"",
     "\")\"",
     "\",\"",
+    "\"pp\"",
     "\"[\"",
     "\"]\"",
     "\"#\"",

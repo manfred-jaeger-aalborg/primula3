@@ -193,7 +193,7 @@ ArgTerm ArgExpr() :
 {
     left = ArgPrimary()
     (
-        <PLUS> right = ArgPrimary() { left = new IntPlus(left, right); }
+        "pp" right = ArgPrimary() { left = new IntPlus(left, right); }
 //      | "-" right = ArgPrimary() { left = new IntMinus(left, right); }
     )*
     { return left; }
@@ -798,8 +798,10 @@ CatGnn ReadCatGnn(RBNReader3.ParsedTypedAtom parsedat) throws RBNIllegalArgument
 //    outTypes = UntypedArguments()
 {
     numVals = (int) parsedat.rel().numvals();
+    if (parsedat.rel() instanceof BoolRel)
+        numVals=1;
     freeVals = parsedat.args();
-    outTypes = parsedat.rel.getTypes();
+    outTypes = parsedat.pargs.types();
 }
 
     (

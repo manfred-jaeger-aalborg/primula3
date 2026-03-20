@@ -177,7 +177,7 @@ parsedArgs.add(t);
       } else {
         break label_3;
       }
-      jj_consume_token(PLUS);
+      jj_consume_token(15);
       right = ArgPrimary();
 left = new IntPlus(left, right);
     }
@@ -256,9 +256,9 @@ args.add(new VarTerm(tok.image));
 }
 
   final public String TypeDeclaration() throws ParseException {Token tok;
-    jj_consume_token(15);
-    tok = jj_consume_token(Name);
     jj_consume_token(16);
+    tok = jj_consume_token(Name);
+    jj_consume_token(17);
 {if ("" != null) return tok.image;}
     throw new Error("Missing return statement in function");
 }
@@ -296,11 +296,11 @@ parsedpfconst = new ProbFormConstant(-Double.parseDouble(tok.image));
   final public ProbFormConstant Parameter() throws ParseException {ProbFormConstant parsedpfconst;
  Token tok;
     if (jj_2_31(3)) {
-      jj_consume_token(17);
+      jj_consume_token(18);
       tok = jj_consume_token(Name);
 {if ("" != null) return new ProbFormConstant("#" + tok.image);}
     } else if (jj_2_32(3)) {
-      jj_consume_token(18);
+      jj_consume_token(19);
       tok = jj_consume_token(Name);
 {if ("" != null) return new ProbFormConstant("$" + tok.image);}
     } else {
@@ -365,7 +365,7 @@ switch(parseno){
  CPModel pf3;
     jj_consume_token(12);
     pf1 = ProbForm();
-    jj_consume_token(19);
+    jj_consume_token(20);
     pf2 = ProbForm();
     jj_consume_token(14);
     pf3 = ProbForm();
@@ -426,17 +426,17 @@ switch(parseno){
   ProbFormBool cc = new ProbFormBoolConstant(true);
     // grammar
             tok = jj_consume_token(CombinationFunction);
-    jj_consume_token(20);
-    pflist = ProbFormList();
     jj_consume_token(21);
+    pflist = ProbFormList();
+    jj_consume_token(22);
     arglist = ArgList();
-    jj_consume_token(19);
+    jj_consume_token(20);
     if (jj_2_39(3)) {
       cc = BoolFormula();
     } else {
       ;
     }
-    jj_consume_token(22);
+    jj_consume_token(23);
 switch(parseno){
         case 1:
                 {if ("" != null) return null;}
@@ -675,7 +675,7 @@ ProbFormBool nextpfb;
 comps.add(nextpfb);
     label_8:
     while (true) {
-      jj_consume_token(23);
+      jj_consume_token(24);
       nextpfb = BoolFormula();
 comps.add(nextpfb);
       if (jj_2_60(3)) {
@@ -696,7 +696,7 @@ ProbFormBool nextpfb;
 comps.add(nextpfb);
     label_9:
     while (true) {
-      jj_consume_token(21);
+      jj_consume_token(22);
       nextpfb = BoolFormula();
 comps.add(nextpfb);
       if (jj_2_61(3)) {
@@ -712,10 +712,10 @@ comps.add(nextpfb);
 
   final public ProbFormBoolConstant BoolConstant() throws ParseException {
     if (jj_2_62(3)) {
-      jj_consume_token(24);
+      jj_consume_token(25);
 {if ("" != null) return new ProbFormBoolConstant(true);}
     } else if (jj_2_63(3)) {
-      jj_consume_token(25);
+      jj_consume_token(26);
 {if ("" != null) return new ProbFormBoolConstant(false);}
     } else {
       jj_consume_token(-1);
@@ -725,7 +725,7 @@ comps.add(nextpfb);
 }
 
   final public ProbFormBool BoolNegation() throws ParseException, RBNIllegalArgumentException {ProbFormBool pfb;
-    jj_consume_token(26);
+    jj_consume_token(27);
     pfb = BoolPrimary();
 pfb.toggleSign();
   {if ("" != null) return pfb;}
@@ -789,9 +789,9 @@ r = reader.getRelFromSignature(tk.image);
 }
 
   final public String PathDec() throws ParseException {Token tok;
-    jj_consume_token(15);
-    tok = jj_consume_token(Path);
     jj_consume_token(16);
+    tok = jj_consume_token(Path);
+    jj_consume_token(17);
 {if ("" != null) return tok.image;}
     throw new Error("Missing return statement in function");
 }
@@ -871,8 +871,10 @@ switch(parseno) {
     jj_consume_token(COMPUTEWITHTORCH);
     configPath = PathDec();
 numVals = (int) parsedat.rel().numvals();
+    if (parsedat.rel() instanceof BoolRel)
+        numVals=1;
     freeVals = parsedat.args();
-    outTypes = parsedat.rel.getTypes();
+    outTypes = parsedat.pargs.types();
     label_11:
     while (true) {
       jj_consume_token(TYPEDICT);
@@ -1537,7 +1539,7 @@ parseno = pn;
  {
     if (jj_scan_token(12)) return true;
     if (jj_3R_BoolFormula_554_5_21()) return true;
-    if (jj_scan_token(21)) return true;
+    if (jj_scan_token(22)) return true;
     return false;
   }
 
@@ -1551,7 +1553,7 @@ parseno = pn;
  {
     if (jj_scan_token(12)) return true;
     if (jj_3R_BoolFormula_554_5_21()) return true;
-    if (jj_scan_token(23)) return true;
+    if (jj_scan_token(24)) return true;
     return false;
   }
 
@@ -1611,7 +1613,7 @@ parseno = pn;
  {
     if (jj_scan_token(12)) return true;
     if (jj_3R_ProbForm_124_9_15()) return true;
-    if (jj_scan_token(19)) return true;
+    if (jj_scan_token(20)) return true;
     if (jj_3R_ProbForm_124_9_15()) return true;
     if (jj_scan_token(14)) return true;
     if (jj_3R_ProbForm_124_9_15()) return true;
@@ -1698,7 +1700,7 @@ parseno = pn;
 
   private boolean jj_3R_PathDec_724_9_50()
  {
-    if (jj_scan_token(15)) return true;
+    if (jj_scan_token(16)) return true;
     if (jj_scan_token(Path)) return true;
     return false;
   }
@@ -1965,14 +1967,14 @@ parseno = pn;
 
   private boolean jj_3_32()
  {
-    if (jj_scan_token(18)) return true;
+    if (jj_scan_token(19)) return true;
     if (jj_scan_token(Name)) return true;
     return false;
   }
 
   private boolean jj_3_31()
  {
-    if (jj_scan_token(17)) return true;
+    if (jj_scan_token(18)) return true;
     if (jj_scan_token(Name)) return true;
     return false;
   }
@@ -2070,6 +2072,13 @@ parseno = pn;
     return false;
   }
 
+  private boolean jj_3_69()
+ {
+    if (jj_scan_token(14)) return true;
+    if (jj_3R_CombinationTorchRels_742_5_43()) return true;
+    return false;
+  }
+
   private boolean jj_3R_Constant_266_9_23()
  {
     Token xsp;
@@ -2088,29 +2097,22 @@ parseno = pn;
     return false;
   }
 
-  private boolean jj_3_69()
- {
-    if (jj_scan_token(14)) return true;
-    if (jj_3R_CombinationTorchRels_742_5_43()) return true;
-    return false;
-  }
-
   private boolean jj_3R_BoolNegation_650_3_38()
  {
-    if (jj_scan_token(26)) return true;
+    if (jj_scan_token(27)) return true;
     if (jj_3R_BoolPrimary_540_5_39()) return true;
     return false;
   }
 
   private boolean jj_3_63()
  {
-    if (jj_scan_token(25)) return true;
+    if (jj_scan_token(26)) return true;
     return false;
   }
 
   private boolean jj_3_62()
  {
-    if (jj_scan_token(24)) return true;
+    if (jj_scan_token(25)) return true;
     return false;
   }
 
@@ -2127,9 +2129,9 @@ parseno = pn;
 
   private boolean jj_3R_TypeDeclaration_257_9_26()
  {
-    if (jj_scan_token(15)) return true;
-    if (jj_scan_token(Name)) return true;
     if (jj_scan_token(16)) return true;
+    if (jj_scan_token(Name)) return true;
+    if (jj_scan_token(17)) return true;
     return false;
   }
 
@@ -2167,7 +2169,7 @@ parseno = pn;
 
   private boolean jj_3_61()
  {
-    if (jj_scan_token(21)) return true;
+    if (jj_scan_token(22)) return true;
     if (jj_3R_BoolFormula_554_5_21()) return true;
     return false;
   }
@@ -2175,6 +2177,13 @@ parseno = pn;
   private boolean jj_3_25()
  {
     if (jj_3R_TypeDeclaration_257_9_26()) return true;
+    return false;
+  }
+
+  private boolean jj_3_68()
+ {
+    if (jj_scan_token(EDGEATTR)) return true;
+    if (jj_3R_AttrList_705_5_42()) return true;
     return false;
   }
 
@@ -2187,13 +2196,6 @@ parseno = pn;
     Token xsp;
     xsp = jj_scanpos;
     if (jj_3_40()) jj_scanpos = xsp;
-    return false;
-  }
-
-  private boolean jj_3_68()
- {
-    if (jj_scan_token(EDGEATTR)) return true;
-    if (jj_3R_AttrList_705_5_42()) return true;
     return false;
   }
 
@@ -2221,9 +2223,17 @@ parseno = pn;
     return false;
   }
 
+  private boolean jj_3_70()
+ {
+    if (jj_scan_token(TYPEDICT)) return true;
+    if (jj_scan_token(NODEFEAT)) return true;
+    if (jj_3R_AttrList_705_5_42()) return true;
+    return false;
+  }
+
   private boolean jj_3_60()
  {
-    if (jj_scan_token(23)) return true;
+    if (jj_scan_token(24)) return true;
     if (jj_3R_BoolFormula_554_5_21()) return true;
     return false;
   }
@@ -2231,14 +2241,6 @@ parseno = pn;
   private boolean jj_3_57()
  {
     if (jj_scan_token(Name)) return true;
-    return false;
-  }
-
-  private boolean jj_3_70()
- {
-    if (jj_scan_token(TYPEDICT)) return true;
-    if (jj_scan_token(NODEFEAT)) return true;
-    if (jj_3R_AttrList_705_5_42()) return true;
     return false;
   }
 
@@ -2294,15 +2296,15 @@ parseno = pn;
   private boolean jj_3R_CombinationFuncClassic_410_9_31()
  {
     if (jj_scan_token(CombinationFunction)) return true;
-    if (jj_scan_token(20)) return true;
-    if (jj_3R_ProbFormList_529_9_41()) return true;
     if (jj_scan_token(21)) return true;
+    if (jj_3R_ProbFormList_529_9_41()) return true;
+    if (jj_scan_token(22)) return true;
     if (jj_3R_ArgList_181_5_35()) return true;
-    if (jj_scan_token(19)) return true;
+    if (jj_scan_token(20)) return true;
     Token xsp;
     xsp = jj_scanpos;
     if (jj_3_39()) jj_scanpos = xsp;
-    if (jj_scan_token(22)) return true;
+    if (jj_scan_token(23)) return true;
     return false;
   }
 
@@ -2425,7 +2427,7 @@ parseno = pn;
 
   private boolean jj_3_19()
  {
-    if (jj_scan_token(PLUS)) return true;
+    if (jj_scan_token(15)) return true;
     if (jj_3R_ArgPrimary_208_5_25()) return true;
     return false;
   }
@@ -2714,7 +2716,7 @@ parseno = pn;
   /** Generate ParseException. */
   public ParseException generateParseException() {
 	 jj_expentries.clear();
-	 boolean[] la1tokens = new boolean[55];
+	 boolean[] la1tokens = new boolean[56];
 	 if (jj_kind >= 0) {
 	   la1tokens[jj_kind] = true;
 	   jj_kind = -1;
@@ -2731,7 +2733,7 @@ parseno = pn;
 		 }
 	   }
 	 }
-	 for (int i = 0; i < 55; i++) {
+	 for (int i = 0; i < 56; i++) {
 	   if (la1tokens[i]) {
 		 jj_expentry = new int[1];
 		 jj_expentry[0] = i;
