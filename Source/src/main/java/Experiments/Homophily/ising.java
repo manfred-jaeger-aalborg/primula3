@@ -43,13 +43,13 @@ public class ising {
     }
 
     public static void main(String[] args) {
-        String N = "32";
-        String J = "0.5";
+        String N = "64";
+        String J = "-0.5";
         String Jb = "0.0";
         String temp = "0.4";
         Boolean node_const= true;
-        String expName = "HP_noisy";
-        String model = "GGCN_raf";
+        String expName = "HP";
+        String model = "GCN";
         String r = "0";
 
 //        J = args[0];
@@ -63,99 +63,16 @@ public class ising {
         System.out.println("**************************");
 
         Primula primula = new Primula();
-        primula.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
-        primula.setScriptPath("/Users/lz50rg/Dev/primula-workspace/primula3/Source/python/");
-        primula.setScriptName("load_gnn");
 
-        Map<String, Object> load_gnn_set = new HashMap<>();
-        load_gnn_set.put("sdataset", "ising");
-        load_gnn_set.put("base_path", "/Users/lz50rg/Dev/homophily/experiments/ising/trained/");
-//        load_gnn_set.put("model", "GGCN_raf");
-//        load_gnn_set.put("model", "GraphNet");
-//        load_gnn_set.put("model", "MLP");
-        load_gnn_set.put("model", model);
-        load_gnn_set.put("nfeat", 1);
-        load_gnn_set.put("nlayers", 2);
-        load_gnn_set.put("nclass", 2);
-
-        if (model.equals("MLP"))
-            load_gnn_set.put("nhid", 32);
-        else
-            load_gnn_set.put("nhid", 16);
-
-        load_gnn_set.put("N", Integer.valueOf(N));
-        load_gnn_set.put("J", Double.valueOf(J));
-        load_gnn_set.put("Jb", Double.valueOf(Jb));
-        load_gnn_set.put("temp", Double.valueOf(temp));
-        load_gnn_set.put("iter", 4);
-        load_gnn_set.put("r", r);
-        load_gnn_set.put("noisy", false);
-
-        primula.setLoadGnnSet(load_gnn_set);
-
-        File srsfile = null;
-        if (node_const)
-            srsfile = new File("/Users/lz50rg/Dev/homophily/experiments/ising/rdef/ising_" + N + "_" + J + "_" + Jb + "_" + temp + "_" + "4_nodeconst_" + expName + ".rdef");
-        else
-            srsfile = new File("/Users/lz50rg/Dev/homophily/experiments/ising/rdef/ising_" + N + "_" + J + "_" + Jb + "_" + temp + "_" + "4.rdef");
+//        File srsfile = new File("/Users/lz50rg/Dev/homophily/experiments/ising/rdef/ising_" + N + "_" + J + "_" + Jb + "_" + temp + "_" + "4.rdef");
+        File srsfile = new File("/Users/lz50rg/Dev/NeSy-for-graph-data/hetero-hom-experiments/ising/rdef/ising_64_-0.5_0.0_0.4_4095_nodeconst_HP.rdef");
         System.out.println(srsfile);
         primula.loadSparseRelFile(srsfile);
 
-        // create rbn
-        ArrayList<ArrayList<Rel>> attrs_rels = new ArrayList<>();
-        Rel[] inp_rel = new Rel[1];
-        for (int i = 0; i < 1; i++) {
-            inp_rel[i] = new NumRel("attr" + i, 1);
-        }
-        attrs_rels.add(
-                new ArrayList<Rel>(
-                        Arrays.asList(
-                                inp_rel
-                        )
-                )
-        );
 
-        BoolRel edgeRel = new BoolRel("edge", 2, typeStringToArray("node,node",2));
-        ArrayList<Rel> edge_attr = new ArrayList<>();
-        edge_attr.add(edgeRel);
-        edge_attr.get(0).setInout(Rel.PREDEFINED);
+        File rbnfile = new File("/Users/lz50rg/Dev/primula-workspace/primula3/Examples/GNN-homophily/Ising/ising.rbn");
 
-        RBNPreldef gnn_rbn = new  RBNPreldef(
-                new CatRel("CAT", 1, typeStringToArray("node",1), valStringToArray("POS,NEG")),
-                new ArgTerm[]{new VarTerm("v")},
-                new CatGnn(new ArgTerm[]{new VarTerm("v")},
-                        load_gnn_set.get("model")+"ising",
-                        -1,
-                        2,
-                        attrs_rels,
-                        edge_attr,
-                        "node",
-                        true
-                )
-        );
-
-        File input_file = null;
-        if (node_const)
-//            input_file = new File("/Users/lz50rg/Dev/homophily/experiments/ising/const_ising_glob.rbn");
-            input_file = new File("/Users/lz50rg/Dev/homophily/experiments/rbn_constraints/const_nodeconst.rbn");
-        else
-            input_file = new File("/Users/lz50rg/Dev/homophily/experiments/ising/const_ising.rbn");
-
-        System.out.println(input_file);
-        RBN file_rbn = new RBN(input_file, primula.getSignature());
-        RBNPreldef[] preledef = file_rbn.prelements();
-
-        RBN manual_rbn = new RBN(2, 0);
-        manual_rbn.insertPRel(gnn_rbn, 0);
-        manual_rbn.insertPRel(preledef[0], 1);
-
-//        RBN manual_rbn = new RBN(1, 0);
-//        manual_rbn.insertPRel(gnn_rbn, 0);
-
-        // add the rbn to primula
-        primula.setRbn(manual_rbn);
-        primula.getInstantiation().init(manual_rbn);
-        primula.setRbnparameters(manual_rbn.parameters());
+        primula.loadRBNFunction(rbnfile);
 
         // the relation to query
         CatRel tmp_query = new CatRel("CAT", 1, typeStringToArray("node",1), valStringToArray("POS,NEG"));
@@ -193,10 +110,6 @@ public class ising {
 
             // perform map inference
             im.setNumRestarts(1);
-            im.setNumChains(0);
-            im.setWindowSize(0);
-            im.setMapSearchAlg(2);
-            im.setNumIterGreedyMap(50000);
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();
 
@@ -258,11 +171,7 @@ public class ising {
             long end = System.currentTimeMillis();
             System.out.println("time: " + (float)((end - start)));
 
-            String pred_node_path = null;
-            if (node_const)
-                pred_node_path = "/Users/lz50rg/Dev/homophily/experiments/ising/pred_labels/pred_labels_" + load_gnn_set.get("model") + "_" + N + "_" + J + "_" + Jb + "_" + temp + "_nodeconst_" + expName + ".txt";
-            else
-                pred_node_path = "/Users/lz50rg/Dev/homophily/experiments/ising/pred_labels/pred_labels_" + load_gnn_set.get("model") + "_" + N + "_" + J + "_" + Jb + "_" + temp + ".txt";
+            String pred_node_path = "/Users/lz50rg/Dev/homophily/experiments/ising/pred_labels/pred_labels_" + model + "_" + N + "_" + J + "_" + Jb + "_" + temp + expName + ".txt";
 
             try (FileWriter writer = new FileWriter(pred_node_path)) {
                 for (int i = 0; i < gt_class.length; i++) {

@@ -535,7 +535,7 @@ public class GnnPy {
         String outType = cpmGnn.getOutTypes()[0].getName();
         int nodeIndex = (cpmGnn.getArguments().equals("[]") || cpmGnn.getArguments().equals("")) ? 0 : getNodeByType(relToNodeMap, outType, Integer.parseInt(cpmGnn.getArguments()[0].argEval())); // TODO right now only the frist arg is used
         if (nodeIndex == -1) {
-            throw new RuntimeException("Could not find node of type " + outType + " with index " + cpmGnn.getArguments());
+            throw new RuntimeException("Could not find node of type " + outType + " with index " + cpmGnn.getArguments() + " maybe you forgot to add the type to the probability definition of the GNN! pf([type] arg, ...) = ");
         }
         resultCopy[0] = outProbsFull[nodeIndex];
         return resultCopy;
