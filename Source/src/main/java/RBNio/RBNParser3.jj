@@ -56,13 +56,25 @@ SKIP :
 }
 
 
-
 void ReadRBN()  throws RBNIllegalArgumentException:
 {}
 {// grammar
 	( MacroDefinition() | ProbRelDefinition() )+
 }
 
+// include "-" in Name
+String ComplexName() :
+{
+    Token t;
+    StringBuilder sb = new StringBuilder();
+}
+{
+    t = <Name> { sb.append(t.image); }
+    (
+        <MINUS> t = <Name> { sb.append("-").append(t.image); }
+    )*
+    { return sb.toString(); }
+}
 
 void MacroDefinition()  throws RBNIllegalArgumentException:
 {
@@ -121,7 +133,7 @@ CPModel ProbForm()  throws RBNIllegalArgumentException:
 }
 {// grammar
 	( LOOKAHEAD(Atom() "=" ) parsedpf= BoolCatEquality()
-	| LOOKAHEAD(<Name> "=" Atom()) parsedpf= BoolCatEquality()
+	| LOOKAHEAD(ComplexName() "=" Atom()) parsedpf= BoolCatEquality()
  	| LOOKAHEAD(Atom()) parsedpf=Atom()
  	| LOOKAHEAD(<WIFWIF>) parsedpf = ConvCombinationCherry()
 	| LOOKAHEAD(ConvCombination()) parsedpf=ConvCombination()
@@ -136,26 +148,25 @@ CPModel ProbForm()  throws RBNIllegalArgumentException:
 RBNReader3.ParsedUnTypedAtom UntypedAtom(boolean ismacro) throws RBNIllegalArgumentException:
 {
   Vector<ArgTerm> args;
-  Token tok;
+  String relname;
   Rel rel;
 }
 {// grammar
-	tok = <Name> args = UntypedArguments()
+	relname = ComplexName()
+    args = UntypedArguments()
 	{
-	 return reader.new ParsedUnTypedAtom(tok.image, args, ismacro);
+	 return reader.new ParsedUnTypedAtom(relname, args, ismacro);
 	}
 }
 
 RBNReader3.ParsedTypedAtom TypedAtom(boolean ismacro) throws RBNIllegalArgumentException:
 {
-	Token tok;
 	RBNReader3.ParsedTypedArguments args;
 	int arity;
 	String relname;
 }
 {// grammar
-	tok=<Name>
-	{relname = tok.image;}
+	relname = ComplexName()
 	args = TypedArguments()
 	{arity = args.arity();
 	 return  reader.new ParsedTypedAtom(relname,args,ismacro);
@@ -283,13 +294,15 @@ ProbFormConstant NumericConstant():
 
 ProbFormConstant  Parameter():
 {ProbFormConstant parsedpfconst;
+ String paramName;
  Token tok;}
 {// grammar
-	("#" tok = <Name>
-	 {return new ProbFormConstant("#" + tok.image);}
+	("#"
+    paramName = ComplexName()
+	 {return new ProbFormConstant("#" + paramName);}
 	|
-	"$" tok = <Name>
-	 {return new ProbFormConstant("$" + tok.image);}
+	"$" paramName = ComplexName()
+	 {return new ProbFormConstant("$" + paramName);}
 	)
 }
 
@@ -537,7 +550,7 @@ Vector<CPModel> ProbFormList()  throws RBNIllegalArgumentException:
 ProbFormBool BoolPrimary()  throws RBNIllegalArgumentException:
 {ProbFormBool pf;}
 {// grammar
-    ( LOOKAHEAD(<Name> "(") pf = BoolAtom()
+    ( LOOKAHEAD(ComplexName() "(") pf = BoolAtom()
     | LOOKAHEAD(ArgExpr() "=")  pf = BoolEquality()
     | LOOKAHEAD(ArgExpr() (<LT> | <GT>))  pf = BoolComparison()
     | LOOKAHEAD( "(" BoolFormula() "&"  )pf = BoolAnd()
@@ -580,15 +593,15 @@ ProbFormBoolEquality BoolEquality()  throws RBNIllegalArgumentException:
 	{return new ProbFormBoolEquality(term1,term2,true);}
 }
 
-ProbFormBoolComparison BoolComparison()  throws RBNIllegalArgumentException:
+ProbFormBoolVarComparison BoolComparison() throws RBNIllegalArgumentException:
 {
- ArgTerm term1;
- ArgTerm term2;
- Token op;
+    ArgTerm term1;
+    ArgTerm term2;
+    Token op;
 }
 {// grammar
     term1 = ArgExpr() (op = <GT> | op = <LT>) term2 = ArgExpr()
-	{return new ProbFormBoolComparison(term1,term2,op.image,true);}
+    { return new ProbFormBoolVarComparison(term1, term2, op.image, true); }
 }
 
 ProbFormBoolAtomEquality BoolCatEquality() throws RBNIllegalArgumentException :
@@ -597,7 +610,7 @@ ProbFormBoolAtomEquality BoolCatEquality() throws RBNIllegalArgumentException :
  Object tok2;
 }
 {// grammar
-	(tok1=UntypedAtom(false) | tok1=<Name>.image) "=" (tok2=UntypedAtom(false) | tok2=<Name>.image)
+	(tok1=UntypedAtom(false) | tok1=ComplexName()) "=" (tok2=UntypedAtom(false) | tok2=ComplexName())
     {
         switch(parseno) {
         case 1:
@@ -714,16 +727,16 @@ List<Rel> AttrList() throws RBNIllegalArgumentException:
     Rel r;
 }
 {
-    tk = <Name>
+    attr = ComplexName()
     {
-        r = reader.getRelFromSignature(tk.image);
+        r = reader.getRelFromSignature(attr);
         attrs.add(r);
     }
     (
         ","
-        tk = <Name>
+        attr = ComplexName()
         {
-            r = reader.getRelFromSignature(tk.image);
+            r = reader.getRelFromSignature(attr);
             attrs.add(r);
         }
     )*
@@ -786,7 +799,7 @@ TorchInputPf CombinationTorchRels() throws RBNIllegalArgumentException:
 CatGnn ReadCatGnn(RBNReader3.ParsedTypedAtom parsedat) throws RBNIllegalArgumentException :
 {
     Token tk1 = null;
-    Token tk2;
+    String tk2;
     ArgTerm[] freeVals;
     Type[] outTypes;
     String configPath;
@@ -819,12 +832,12 @@ CatGnn ReadCatGnn(RBNReader3.ParsedTypedAtom parsedat) throws RBNIllegalArgument
     (
         <TYPEDICT>
             <NODEFEAT> attrs = AttrList()
-            <EDGEGRAPH> tk2 = <Name>
+            <EDGEGRAPH> tk2 = ComplexName()
             (
                 <EDGEATTR> edgeAttrs = AttrList()
             )?
             {
-                edgeRel = (BoolRel) reader.getRelFromSignature(tk2.image);
+                edgeRel = (BoolRel) reader.getRelFromSignature(tk2);
                 if (edgeAttrs.size() > 0) {
                     TorchInputSpecs tis = new TorchInputSpecs(attrs.get(0).getTypesAsString(), attrs, edgeRel, edgeAttrs);
                     forInputs.add(tis);
@@ -955,7 +968,7 @@ TOKEN:{
 }
 
 TOKEN : {
-    <Name: ["a"-"z","A"-"Z"] (["a"-"z","A"-"Z","0"-"9","-","_"])* >
+    <Name: ["a"-"z","A"-"Z"] (["a"-"z","A"-"Z","0"-"9","_"])* >
 }
 
 //TOKEN : {

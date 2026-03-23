@@ -143,6 +143,7 @@ public class RDEFReader {
 			Color col;
 			String valtype;
 			String catvalues;
+			String maxInteger;
 			
 			Rel r;
 			
@@ -159,7 +160,8 @@ public class RDEFReader {
 				argtypes = reldec.attributeValue("argtypes");
 				valtype = reldec.attributeValue("valtype");
 				catvalues = reldec.attributeValue("values");
-				
+				maxInteger = reldec.attributeValue("maxInteger");
+
 //				int[] colrgb = StringOps.stringToIntArray(reldec.attributeValue("color"));
 //				System.out.println(rbnutilities.arrayToString(colrgb));
 //				col = new Color(colrgb[0],colrgb[1],colrgb[2]);
@@ -174,11 +176,11 @@ public class RDEFReader {
 				
 				
 				if(valtype.equals("boolean")){
-					r = new BoolRel(rname,rarity,typeStringToArray(argtypes,rarity));
+					r = new BoolRel(rname,rarity,typeStringToArray(argtypes,rarity,maxInteger));
 					r.setColor(col);
 				}
 				else if (valtype.equals("categorical")){
-					r = new CatRel(rname,rarity,typeStringToArray(argtypes,rarity),valStringToArray(catvalues));
+					r = new CatRel(rname,rarity,typeStringToArray(argtypes,rarity,maxInteger),valStringToArray(catvalues));
 				}
 				else if (valtype.equals("numeric")){
 					double min;
@@ -192,7 +194,7 @@ public class RDEFReader {
 					}
 					else max = Double.POSITIVE_INFINITY;
 					
-					r = new NumRel(rname,rarity,typeStringToArray(argtypes,rarity),min,max);
+					r = new NumRel(rname,rarity,typeStringToArray(argtypes,rarity,maxInteger),min,max);
 					r.setColor(col);
 				}
 				else
@@ -569,7 +571,7 @@ public class RDEFReader {
 		return result;
 	}
 
-	private Type[] typeStringToArray(String ts, int arity){
+	private Type[] typeStringToArray(String ts, int arity, String maxInt){
 		Type[] result = new Type[arity];
 		String nexttype;
 		int nextcomma;
@@ -587,7 +589,10 @@ public class RDEFReader {
 			if (nexttype.equals("Domain"))
 				result[i]=new TypeDomain();
 			else if (nexttype.equals("Integer")) {
-				result[i] = new TypeInteger();
+				if (maxInt != null)
+					result[i] = new TypeInteger(Integer.parseInt(maxInt));
+				else
+					result[i] = new TypeInteger();
 			} else
 				result[i]=new TypeRel(nexttype);
 		}

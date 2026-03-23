@@ -5,7 +5,6 @@ import PyManager.*;
 import RBNpackage.*;
 import java.util.*;
 import RBNpackage.VarTermPackage.*;
-import myio.StringOps;
 import RBNExceptions.*;
 
 /** Token Manager. */
@@ -231,7 +230,7 @@ private int jjMoveNfa_0(int startState, int curPos)
             switch(jjstateSet[--i])
             {
                case 164:
-                  if ((0x3ff200000000000L & l) != 0L)
+                  if ((0x3ff000000000000L & l) != 0L)
                   {
                      if (kind > 48)
                         kind = 48;
@@ -241,7 +240,7 @@ private int jjMoveNfa_0(int startState, int curPos)
                      { jjCheckNAdd(217); }
                   break;
                case 129:
-                  if ((0x3ff200000000000L & l) != 0L)
+                  if ((0x3ff000000000000L & l) != 0L)
                   {
                      if (kind > 48)
                         kind = 48;
@@ -357,7 +356,7 @@ private int jjMoveNfa_0(int startState, int curPos)
                      jjstateSet[jjnewStateCnt++] = 68;
                   break;
                case 215:
-                  if ((0x3ff200000000000L & l) == 0L)
+                  if ((0x3ff000000000000L & l) == 0L)
                      break;
                   if (kind > 48)
                      kind = 48;

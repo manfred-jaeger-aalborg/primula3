@@ -45,8 +45,6 @@ public abstract class RelStruc implements Cloneable{
 	public static int BLP_FORMAT = 1;
 	public static int MLN_FORMAT = 2;
 
-	public final int maxIntegerValue = 20;
-
 	private Signature sig;
 
 	/* Domain of structure is
@@ -607,8 +605,8 @@ public abstract class RelStruc implements Cloneable{
 	{
 		int[] result = null;
 		if (rtype instanceof TypeInteger) {
-			result = new int[maxIntegerValue + 1];
-			for (int i = 0; i <= maxIntegerValue; i++)
+			result = new int[((TypeInteger) rtype).getMaxInt() + 1];
+			for (int i = 0; i <= ((TypeInteger) rtype).getMaxInt(); i++)
 				result[i] = i;
 		}
 
@@ -645,6 +643,26 @@ public abstract class RelStruc implements Cloneable{
 	 */
 	public int[][] allTrue(ProbFormBool cc, String[] vars)// the elements of vars must be distinct!
 	throws IllegalArgumentException,RBNCompatibilityException
+	{
+		int k = vars.length;
+		int m = rbnutilities.IntPow(dom,k);
+		Vector<int[]> prelimarray = new Vector<int[]>();
+
+		for (int i=0; i<m ; i++)
+		{
+			int[] thistuple = rbnutilities.indexToTuple(i,k,dom);
+
+			if (cc.evaluatesTo(this) == 1)
+				prelimarray.add(thistuple);
+		}
+
+		int[][] result = new int[prelimarray.size()][k];
+		for (int i =0; i<result.length; i++) result[i]=prelimarray.elementAt(i);
+		return result;
+	}
+
+	public int[][] allTrue(ProbFormBool cc, String[] vars, int maxInt)// the elements of vars must be distinct!
+			throws IllegalArgumentException,RBNCompatibilityException
 	{
 		int k = vars.length;
 		int m = rbnutilities.IntPow(dom,k);

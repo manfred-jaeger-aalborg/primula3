@@ -119,14 +119,33 @@ public class SparseRelStruc extends RelStruc {
 	// 	}
 	//     }
 
-
 	/* Overrides the default implementation
 	 */
 	public int[][] allTrue(ProbFormBool cc, String[] vars)// the elements of vars must be distinct!
+			throws IllegalArgumentException,RBNCompatibilityException
+	{
+
+		TreeSet<int[]> prelimResult = allTrueAsTreeSet(cc,vars,0);
+
+		int[][] result = new int[prelimResult.size()][vars.length];
+		Iterator<int[]> it = prelimResult.iterator();
+		int index = 0;
+		int[] nextIntArr;
+		while (it.hasNext()){
+			nextIntArr=it.next();
+			result[index]=nextIntArr;
+			index++;
+		}
+		return result;
+	}
+
+	/* Overrides the default implementation
+	 */
+	public int[][] allTrue(ProbFormBool cc, String[] vars, int maxInt)// the elements of vars must be distinct!
 	throws IllegalArgumentException,RBNCompatibilityException
 	{
 
-		TreeSet<int[]> prelimResult = allTrueAsTreeSet(cc,vars);
+		TreeSet<int[]> prelimResult = allTrueAsTreeSet(cc,vars,maxInt);
 
 		int[][] result = new int[prelimResult.size()][vars.length];
 		Iterator<int[]> it = prelimResult.iterator();
@@ -145,7 +164,7 @@ public class SparseRelStruc extends RelStruc {
 			throws IllegalArgumentException,RBNCompatibilityException
 	{
 
-		TreeSet<int[]> prelimResult = allTrueAsTreeSet(cc, vars);
+		TreeSet<int[]> prelimResult = allTrueAsTreeSet(cc, vars, 0);
 
 		int[][] result = new int[prelimResult.size()][vars.length];
 		Iterator<int[]> it = prelimResult.iterator();
@@ -363,18 +382,18 @@ public class SparseRelStruc extends RelStruc {
 //		return result;
 //	}
 
-public TreeSet<int[]> allTrueAsTreeSet(ProbFormBool cc, String[] vars)
+public TreeSet<int[]> allTrueAsTreeSet(ProbFormBool cc, String[] vars, int maxInt)
 			throws IllegalArgumentException, RBNCompatibilityException {
 
 		ArgTerm[] argTermVars = new ArgTerm[vars.length];
 		for (int i = 0; i < vars.length; i++) {
 			argTermVars[i] = new VarTerm(vars[i]);
 		}
-		return allTrueAsTreeSet(cc, argTermVars);
+		return allTrueAsTreeSet(cc, argTermVars, maxInt);
 	}
 
 
-	public TreeSet<int[]> allTrueAsTreeSet(ProbFormBool cc, ArgTerm[] vars)
+	public TreeSet<int[]> allTrueAsTreeSet(ProbFormBool cc, ArgTerm[] vars, int maxInt)
 			throws IllegalArgumentException,RBNCompatibilityException
 	{
 		//System.out.println("allTrueAsTreeSet for " + cc.asString());
@@ -411,13 +430,10 @@ public TreeSet<int[]> allTrueAsTreeSet(ProbFormBool cc, String[] vars)
 			}
 
 			if (hasIntTerm) {
-				int[] maxValues = new int[vars.length];
-				for (int i = 0; i < maxValues.length; i++) {
-					maxValues[i] = maxIntegerValue;
-				}
-
 				List<int[]> allCombs = new ArrayList<>();
-				rbnutilities.generate(maxValues, new int[maxValues.length], 0, allCombs);
+				int[] maxarray = new int[vars.length];
+				Arrays.fill(maxarray, maxInt);
+				rbnutilities.generate(maxarray, new int[maxarray.length], 0, allCombs);
 
 				for (int[] comb : allCombs) {
 					ProbFormBoolEquality instantiated = (ProbFormBoolEquality) cc;
@@ -444,7 +460,7 @@ public TreeSet<int[]> allTrueAsTreeSet(ProbFormBool cc, String[] vars)
 		if (cc instanceof ProbFormBoolComposite)
 		{
 			for (int i=0;i < ((ProbFormBoolComposite)cc).numComponents();i++){
-				TreeSet<int[]> nexttreeset = allTrueAsTreeSet(((ProbFormBoolComposite) cc).componentAt(i),vars);
+				TreeSet<int[]> nexttreeset = allTrueAsTreeSet(((ProbFormBoolComposite) cc).componentAt(i),vars, maxInt);
 				if (i==0)
 					result = nexttreeset;
 				else{

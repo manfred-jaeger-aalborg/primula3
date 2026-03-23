@@ -389,7 +389,20 @@ public class ProbFormCombFunc extends CPModel implements ProbForm {
 		Vector result = new Vector();
 		CPModel nextprobform;
 
-		int[][] subslist = A.allTrue(cconstr, rbnutilities.getVarsFromArgs(quantvars));
+		int maxValue = Integer.MAX_VALUE;
+		for (int i=0; i<pfargs.length; i++) {
+			if (pfargs[i] instanceof ProbFormAtom) {
+				Type[] types = ((ProbFormAtom) pfargs[i]).getRelation().getTypes();
+				for (int j=0; j<types.length; j++) {
+					if (types[j] instanceof TypeInteger)
+						maxValue = Math.min(maxValue, ((TypeInteger) types[j]).getMaxInt());
+				}
+			}
+			if (maxValue == Integer.MAX_VALUE)
+				maxValue = 0;
+		}
+
+		int[][] subslist = A.allTrue(cconstr, rbnutilities.getVarsFromArgs(quantvars), maxValue);
 
 		for (int i=0; i<pfargs.length; i++)
 		{
