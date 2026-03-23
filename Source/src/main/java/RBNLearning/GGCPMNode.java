@@ -252,6 +252,10 @@ public abstract class GGCPMNode extends GGNode{
 
 			}
 
+			if (cpm instanceof ProbFormBoolVarComparison) {
+				result = new GGConstantNode(gg,cpm,A,I);
+				((GGConstantNode)result).setCurrentParamVal(((ProbFormBoolVarComparison)cpm).evaluate(A,I));
+			}
 			if (cpm instanceof CatGnn || cpm instanceof CatGnnBool) {
 				result = new GGGnnNode(gg,cpm,allnodes,A,I,inputcaseno,observcaseno,parameters,useCurrentPvals,mapatoms,evaluated);
 			}

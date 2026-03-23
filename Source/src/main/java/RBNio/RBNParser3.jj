@@ -18,7 +18,6 @@ import PyManager.*;
 import RBNpackage.*;
 import java.util.*;
 import RBNpackage.VarTermPackage.*;
-import myio.StringOps;
 import RBNExceptions.*;
 
 public class RBNParser3{
@@ -124,6 +123,7 @@ CPModel ProbForm()  throws RBNIllegalArgumentException:
 	( LOOKAHEAD(Atom() "=" ) parsedpf= BoolCatEquality()
 	| LOOKAHEAD(<Name> "=" Atom()) parsedpf= BoolCatEquality()
  	| LOOKAHEAD(Atom()) parsedpf=Atom()
+ 	| LOOKAHEAD(<WIFWIF>) parsedpf = ConvCombinationCherry()
 	| LOOKAHEAD(ConvCombination()) parsedpf=ConvCombination()
 	| LOOKAHEAD(CombinationFunc()) parsedpf=CombinationFunc()
 	| parsedpf=BoolFormula()
@@ -193,8 +193,8 @@ ArgTerm ArgExpr() :
 {
     left = ArgPrimary()
     (
-        "pp" right = ArgPrimary() { left = new IntPlus(left, right); }
-//      | "-" right = ArgPrimary() { left = new IntMinus(left, right); }
+        <PLUS> right = ArgPrimary() { left = new IntPlus(left, right); }
+      | <MINUS> right = ArgPrimary() { left = new IntMinus(left, right); }
     )*
     { return left; }
 }
@@ -334,9 +334,9 @@ ProbFormConvComb ConvCombination()  throws RBNIllegalArgumentException:
 {ProbFormConvComb pf;
 }
 {
-	( pf = ConvCombinationClassic()
-	| pf = ConvCombinationCherry()
-	)
+    ( LOOKAHEAD(<WIFWIF>) pf = ConvCombinationCherry()
+    | pf = ConvCombinationClassic()
+    )
 	{switch(parseno){
 	case 1:
 		return null;
@@ -539,6 +539,7 @@ ProbFormBool BoolPrimary()  throws RBNIllegalArgumentException:
 {// grammar
     ( LOOKAHEAD(<Name> "(") pf = BoolAtom()
     | LOOKAHEAD(ArgExpr() "=")  pf = BoolEquality()
+    | LOOKAHEAD(ArgExpr() (<LT> | <GT>))  pf = BoolComparison()
     | LOOKAHEAD( "(" BoolFormula() "&"  )pf = BoolAnd()
     | LOOKAHEAD( "(" BoolFormula() "|"  )pf = BoolOr()
     | "(" pf = BoolFormula() ")"
@@ -577,6 +578,17 @@ ProbFormBoolEquality BoolEquality()  throws RBNIllegalArgumentException:
 {// grammar
     term1 = ArgExpr() "=" term2 = ArgExpr()
 	{return new ProbFormBoolEquality(term1,term2,true);}
+}
+
+ProbFormBoolComparison BoolComparison()  throws RBNIllegalArgumentException:
+{
+ ArgTerm term1;
+ ArgTerm term2;
+ Token op;
+}
+{// grammar
+    term1 = ArgExpr() (op = <GT> | op = <LT>) term2 = ArgExpr()
+	{return new ProbFormBoolComparison(term1,term2,op.image,true);}
 }
 
 ProbFormBoolAtomEquality BoolCatEquality() throws RBNIllegalArgumentException :
@@ -972,6 +984,14 @@ TOKEN:{
 
 TOKEN:{
 	<MINUS: "-" >
+}
+
+TOKEN:{
+	<GT: ">" >
+}
+
+TOKEN:{
+	<LT: "<" >
 }
 //TOKEN: {<ProbabilityValue: ("0"|"1") ("." (["0"-"9"])*)?
 //			   | "." (["0"-"9"])+ >

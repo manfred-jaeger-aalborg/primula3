@@ -2143,38 +2143,24 @@ public class rbnutilities extends java.lang.Object
 		return result;
 	}
 
-	public static ArgTerm[] array_substitute(ArgTerm[] arr, ArgTerm[] vars, int[] args) {
-		if (vars.length != args.length)
+	public static ArgTerm[] array_substitute(ArgTerm[] arr, ArgTerm[] olds, int[] news) {
+		if (olds.length != news.length)
 			System.out.println("calling rbnutilities.array_substitute with unmatched arguments");
 
-		int arrLen = arr.length;
-		int varLen = vars.length;
-
-		if (varLen == 0 || arrLen == 0)
-			return arr.clone();
-
-		VarTerm[] replacements = new VarTerm[varLen];
-		for (int i = 0; i < varLen; i++)
-			replacements[i] = new VarTerm(args[i]);
-
-		ArgTerm[] result = null;
-
-		for (int i = 0; i < arrLen; i++) {
-			ArgTerm term = arr[i];
-
-			for (int j = 0; j < varLen; j++) {
-				if (term.equals(vars[j])) {
-
-					if (result == null)
-						result = arr.clone();
-
-					result[i] = replacements[j];
-					break;
-				}
-			}
+		ArgTerm[] newsTerms = new ArgTerm[news.length];
+		for (int i = 0; i < news.length; i++) {
+			newsTerms[i] = new VarTerm(String.valueOf(news[i]));
 		}
 
-		return result == null ? arr.clone() : result;
+		ArgTerm[] result = new ArgTerm[arr.length];
+		for (int i = 0; i < arr.length; i++) {
+			ArgTerm current = arr[i];
+			for (int j = 0; j < olds.length; j++) {
+				current = current.substitute(olds[j], newsTerms[j]);
+			}
+			result[i] = current;
+		}
+		return result;
 	}
 
 	private static boolean isInt(String s) {

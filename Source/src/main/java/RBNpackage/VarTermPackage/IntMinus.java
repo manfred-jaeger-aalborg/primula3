@@ -3,9 +3,9 @@ package RBNpackage.VarTermPackage;
 import java.util.HashSet;
 import java.util.Set;
 
-public class IntPlus extends IntOp {
+public class IntMinus extends IntOp {
 
-    public IntPlus(ArgTerm left, ArgTerm right) {
+    public IntMinus(ArgTerm left, ArgTerm right) {
         this.left = left;
         this.right = right;
     }
@@ -13,7 +13,7 @@ public class IntPlus extends IntOp {
     @Override
     public String argEval() {
         // if is grounded it will return the expression evaluated, otherwise return the non-grounded string
-        if (left.isGround() && right.isGround()) return Integer.toString(Integer.parseInt(left.argEval()) + Integer.parseInt(right.argEval()));
+        if (left.isGround() && right.isGround()) return Integer.toString(Integer.parseInt(left.argEval()) - Integer.parseInt(right.argEval()));
         return toString();
     }
 
@@ -22,8 +22,8 @@ public class IntPlus extends IntOp {
         ArgTerm newLeft = left.substitute(var, replacement);
         ArgTerm newRight = right.substitute(var, replacement);
         if (newLeft.isGround() && newRight.isGround())
-            return new VarTerm(Integer.parseInt(newLeft.argEval()) + Integer.parseInt(newRight.argEval()));
-        return new IntPlus(newLeft, newRight);
+            return new VarTerm(Integer.parseInt(newLeft.argEval()) - Integer.parseInt(newRight.argEval()));
+        return new IntMinus(newLeft, newRight);
     }
 
     @Override
@@ -31,8 +31,8 @@ public class IntPlus extends IntOp {
         ArgTerm newLeft = left.substitute(var, replacement);
         ArgTerm newRight = right.substitute(var, replacement);
         if (newLeft.isGround() && newRight.isGround())
-            return new VarTerm(Integer.parseInt(newLeft.argEval()) + Integer.parseInt(newRight.argEval()));
-        return new IntPlus(newLeft, newRight);
+            return new VarTerm(Integer.parseInt(newLeft.argEval()) - Integer.parseInt(newRight.argEval()));
+        return new IntMinus(newLeft, newRight);
     }
 
     @Override
@@ -40,8 +40,8 @@ public class IntPlus extends IntOp {
         ArgTerm newLeft = left.substitute(var, replacement);
         ArgTerm newRight = right.substitute(var, replacement);
         if (newLeft.isGround() && newRight.isGround())
-            return new VarTerm(Integer.parseInt(newLeft.argEval()) + Integer.parseInt(newRight.argEval()));
-        return new IntPlus(newLeft, newRight);
+            return new VarTerm(Integer.parseInt(newLeft.argEval()) - Integer.parseInt(newRight.argEval()));
+        return new IntMinus(newLeft, newRight);
     }
 
     @Override
@@ -51,11 +51,11 @@ public class IntPlus extends IntOp {
 
     @Override
     public ArgTerm clone() {
-        return new IntPlus(left.clone(), right.clone());
+        return new IntMinus(left.clone(), right.clone());
     }
 
     public String toString() {
-        return "(" + left + "+" + right + ")";
+        return "(" + left + "-" + right + ")";
     }
 
     @Override
