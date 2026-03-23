@@ -304,11 +304,38 @@ public class TorchInputPf {
         }
     }
 
-    public String makeKey(ArgTerm[] vars, int[] args, Boolean nosub){
+//    public String makeKey(ArgTerm[] vars, int[] args, Boolean nosub){
+//        if (nosub) {
+//            return this.asString(Primula.CLASSICSYNTAX, 0, null, false, true);
+//        }
+//        else return this.substitute(vars,args).asString(Primula.CLASSICSYNTAX, 0, null, false, true);
+//    }
+
+    public String makeKey(ArgTerm[] vars, int[] args, Boolean nosub) {
+        int hash;
+
         if (nosub) {
-            return this.asString(Primula.CLASSICSYNTAX, 0, null, false, true);
+            hash = computeHash(this);
+        } else {
+            TorchInputPf sub = this.substitute(vars, args);
+            hash = computeHash(sub);
         }
-        else return this.substitute(vars,args).asString(Primula.CLASSICSYNTAX, 0, null, false, true);
+
+        return Integer.toHexString(hash);
+    }
+
+    private int computeHash(TorchInputPf obj) {
+        int result = 1;
+
+        result = 31 * result + Arrays.hashCode(obj.pfargs);
+        result = 31 * result + Arrays.hashCode(obj.quantvars);
+        result = 31 * result + Objects.hashCode(obj.cconstr);
+
+        result = 31 * result + Arrays.hashCode(obj.pfargsNode);
+        result = 31 * result + Arrays.hashCode(obj.pfargsEdge);
+        result = 31 * result + Arrays.hashCode(obj.pfargsEdgeAttr);
+
+        return result;
     }
 
     public String asString(int syntax, int depth, RelStruc A, boolean paramsAsValue,boolean usealias)
@@ -363,13 +390,13 @@ public class TorchInputPf {
 
         String key = "";
 
-        if (evaluated != null) {
-            key = this.makeKey(vars, tuple, false);
-            Object[] d = evaluated.get(key);
-            if (d != null) {
-                return d;
-            }
-        }
+//        if (evaluated != null) {
+//            key = this.makeKey(vars, tuple, false);
+//            Object[] d = evaluated.get(key);
+//            if (d != null) {
+//                return d;
+//            }
+//        }
 
         TorchInputPf subspfcf = this.substitute(vars, tuple);
 

@@ -110,6 +110,10 @@ public class GGGnnNode extends GGCPMNode {
             }
         }
 
+        edge_dict.clear();
+        buildEdgeMatrices();
+        pruneNonNaN(evalOfEdgeByType);
+
         // evaluate all the atom entries whose node ids are present in the subgraph
         for (String pftype : ttpf.getTypedNames()) {
             for (TorchInputPf tip : ttpf.getCombines(pftype)) {
@@ -135,6 +139,11 @@ public class GGGnnNode extends GGCPMNode {
             }
         }
 
+
+        edgeAttr_dict.clear();
+        buildEdgeAttrMatrices(0);
+        pruneNonNaN(evalOfEdgeAttrByType);
+
         // evaluate only this node
         if (nodeMappingByType.isEmpty()) {
             for (String pftype : ttpf.getTypedNames()) {
@@ -153,7 +162,9 @@ public class GGGnnNode extends GGCPMNode {
             }
         }
 
-        buildInputMatrices(0);
+        x_dict.clear();
+        buildNodeFeatureMatrices(0);
+        inputVersion++;
         // only keep NaN entries in the eval maps since those are the only ones we need to resolve during gradient computation
         retainOnlyNaNEntries();
     }
@@ -213,7 +224,7 @@ public class GGGnnNode extends GGCPMNode {
                 child.addToParents(this);
             }
             else {
-                typeMap.put(subkey, new EvalEntry(groundsubpf, argNodes, evalValue, tuple, probFormIdx));
+                typeMap.put(subkey, new EvalEntry(null, argNodes, evalValue, tuple, probFormIdx));
             }
         }
     }
