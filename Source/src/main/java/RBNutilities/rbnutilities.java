@@ -2147,16 +2147,12 @@ public class rbnutilities extends java.lang.Object
 		if (olds.length != news.length)
 			System.out.println("calling rbnutilities.array_substitute with unmatched arguments");
 
-		ArgTerm[] newsTerms = new ArgTerm[news.length];
-		for (int i = 0; i < news.length; i++) {
-			newsTerms[i] = new VarTerm(String.valueOf(news[i]));
-		}
-
 		ArgTerm[] result = new ArgTerm[arr.length];
+
 		for (int i = 0; i < arr.length; i++) {
 			ArgTerm current = arr[i];
 			for (int j = 0; j < olds.length; j++) {
-				current = current.substitute(olds[j], newsTerms[j]);
+				current = current.substitute(olds[j], news[j]);
 			}
 			result[i] = current;
 		}
