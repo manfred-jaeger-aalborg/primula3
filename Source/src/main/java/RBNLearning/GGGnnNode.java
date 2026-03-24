@@ -33,12 +33,6 @@ public class GGGnnNode extends GGCPMNode {
     private final Map<String, Map<String, EvalEntry>> evalOfEdgeAttrByType = new HashMap<>();
     private final Map<String, Map<String, EvalEntry>> evalOfEdgeByType = new HashMap<>();
 
-    // Keys use the legacy "pftype|subkey" composite form so callers using
-    // getEntriesForType() on the returned map continue to work unchanged.
-    private Map<String, EvalEntry> evalOfNodesView = null;
-    private Map<String, EvalEntry> evalOfEdgeAttrView = null;
-    private Map<String, EvalEntry> evalOfEdgeView = null;
-
     private final Set<GGCPMNode> childrenSet = new LinkedHashSet<>();
 
     private final Map<String, double[][]> x_dict = new HashMap<>();
@@ -402,6 +396,11 @@ public class GGGnnNode extends GGCPMNode {
                 evaluate(i);
             return null;
         }
+
+        if (this.depends_on_sample && is_evaluated_val_for_samples[sno])
+            return this.values_for_samples[sno];
+        if (!this.depends_on_sample && is_evaluated_val_for_samples[0])
+            return this.values_for_samples[0];
 
         double[] result = null;
 

@@ -2028,8 +2028,12 @@ public class GradientGraphO extends GradientGraph{
 //				else
 //					score = mapSearchRecursiveWrap(mythread, flip, this.lookaheadSearch);
 
+				long start = System.nanoTime();
 				score = mapSearchRecursiveWrap(mythread, flip, this.lookaheadSearch, 1);
 				evaluateLikelihoodAndPartDerivs(true);
+
+				long durationNs = System.nanoTime() - start;
+				System.out.println("mapSearchRecursiveWrap time: " + durationNs / 1_000_000.0 + " ms");
 			} else if (mapSearchAlg == 3) {
 				score = mapSearchSampling(mythread, maxind_as_list());
 				terminate = true;
