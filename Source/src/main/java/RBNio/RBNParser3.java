@@ -898,8 +898,15 @@ switch(parseno) {
     TypedTorchPf tti = new TypedTorchPf();
     TorchInputPf tri;
     List<List<TorchInputPf>> combineClausesType = new ArrayList<>();
+    boolean optimOneinp = false;
     jj_consume_token(COMPUTEWITHTORCH);
     configPath = PathDec();
+    if (jj_2_74(3)) {
+      jj_consume_token(OPTIMINPUT);
+optimOneinp = true;
+    } else {
+      ;
+    }
 numVals = (int) parsedat.rel().numvals();
     if (parsedat.rel() instanceof BoolRel)
         numVals=1;
@@ -912,7 +919,7 @@ numVals = (int) parsedat.rel().numvals();
       attrs = AttrList();
       jj_consume_token(EDGEGRAPH);
       tk2 = jj_consume_token(Name);
-      if (jj_2_74(3)) {
+      if (jj_2_75(3)) {
         jj_consume_token(EDGEATTR);
         edgeAttrs = AttrList();
       } else {
@@ -931,7 +938,7 @@ List<TorchInputPf> combineClauses = new ArrayList<>();
 combineClauses.add(tri);
       label_12:
       while (true) {
-        if (jj_2_75(3)) {
+        if (jj_2_76(3)) {
           ;
         } else {
           break label_12;
@@ -942,7 +949,7 @@ combineClauses.add(tri);
       }
 combineClausesType.add(combineClauses);
                 tti.addCombine(attrs.get(0).getTypesAsString(), combineClauses);
-      if (jj_2_76(3)) {
+      if (jj_2_77(3)) {
         ;
       } else {
         break label_11;
@@ -956,7 +963,7 @@ switch(parseno)
             case 2:
                 if (numVals == 1)
                     {if ("" != null) return new CatGnnBool(configPath, freeVals, forInputs, tti, outTypes, true);}
-                {if ("" != null) return new CatGnn(configPath, freeVals, numVals, forInputs, tti, outTypes, true);}
+                {if ("" != null) return new CatGnn(configPath, freeVals, numVals, forInputs, tti, outTypes, optimOneinp, true);}
         }
     throw new Error("Missing return statement in function");
 }
@@ -1582,6 +1589,14 @@ parseno = pn;
     finally { jj_save(75, xla); }
   }
 
+  private boolean jj_2_77(int xla)
+ {
+    jj_la = xla; jj_lastpos = jj_scanpos = token;
+    try { return (!jj_3_77()); }
+    catch(LookaheadSuccess ls) { return true; }
+    finally { jj_save(76, xla); }
+  }
+
   private boolean jj_3R_ConvCombinationCherry_372_9_61()
  {
     if (jj_scan_token(WIFWIF)) return true;
@@ -1685,9 +1700,9 @@ parseno = pn;
     if (jj_3R_ArgExpr_193_5_24()) return true;
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_scan_token(54)) {
+    if (jj_scan_token(55)) {
     jj_scanpos = xsp;
-    if (jj_scan_token(53)) return true;
+    if (jj_scan_token(54)) return true;
     }
     return false;
   }
@@ -1708,7 +1723,7 @@ parseno = pn;
 
   private boolean jj_3_8()
  {
-    if (jj_3R_ReadCatGnn_802_5_17()) return true;
+    if (jj_3R_ReadCatGnn_803_5_17()) return true;
     return false;
   }
 
@@ -2136,6 +2151,13 @@ parseno = pn;
     return false;
   }
 
+  private boolean jj_3_76()
+ {
+    if (jj_scan_token(14)) return true;
+    if (jj_3R_CombinationTorchRels_753_5_42()) return true;
+    return false;
+  }
+
   private boolean jj_3_44()
  {
     if (jj_scan_token(MULT)) return true;
@@ -2146,13 +2168,6 @@ parseno = pn;
   private boolean jj_3_4()
  {
     if (jj_scan_token(COMPUTEWITHTORCH)) return true;
-    return false;
-  }
-
-  private boolean jj_3_75()
- {
-    if (jj_scan_token(14)) return true;
-    if (jj_3R_CombinationTorchRels_753_5_42()) return true;
     return false;
   }
 
@@ -2242,6 +2257,13 @@ parseno = pn;
     return false;
   }
 
+  private boolean jj_3_75()
+ {
+    if (jj_scan_token(EDGEATTR)) return true;
+    if (jj_3R_AttrList_716_5_41()) return true;
+    return false;
+  }
+
   private boolean jj_3_30()
  {
     if (jj_3R_NumericConstant_274_9_27()) return true;
@@ -2270,13 +2292,6 @@ parseno = pn;
  {
     if (jj_scan_token(21)) return true;
     if (jj_3R_BoolFormula_554_5_21()) return true;
-    return false;
-  }
-
-  private boolean jj_3_74()
- {
-    if (jj_scan_token(EDGEATTR)) return true;
-    if (jj_3R_AttrList_716_5_41()) return true;
     return false;
   }
 
@@ -2319,20 +2334,20 @@ parseno = pn;
     return false;
   }
 
+  private boolean jj_3_77()
+ {
+    if (jj_scan_token(TYPEDICT)) return true;
+    if (jj_scan_token(NODEFEAT)) return true;
+    if (jj_3R_AttrList_716_5_41()) return true;
+    return false;
+  }
+
   private boolean jj_3_43()
  {
     if (jj_scan_token(COMBFORALL)) return true;
     if (jj_3R_ArgList_180_5_34()) return true;
     if (jj_scan_token(COMBWHERE)) return true;
     if (jj_3R_BoolFormula_554_5_21()) return true;
-    return false;
-  }
-
-  private boolean jj_3_76()
- {
-    if (jj_scan_token(TYPEDICT)) return true;
-    if (jj_scan_token(NODEFEAT)) return true;
-    if (jj_3R_AttrList_716_5_41()) return true;
     return false;
   }
 
@@ -2391,6 +2406,12 @@ parseno = pn;
     return false;
   }
 
+  private boolean jj_3_74()
+ {
+    if (jj_scan_token(OPTIMINPUT)) return true;
+    return false;
+  }
+
   private boolean jj_3_61()
  {
     if (jj_scan_token(LT)) return true;
@@ -2416,7 +2437,7 @@ parseno = pn;
     return false;
   }
 
-  private boolean jj_3R_ReadCatGnn_802_5_17()
+  private boolean jj_3R_ReadCatGnn_803_5_17()
  {
     if (jj_scan_token(COMPUTEWITHTORCH)) return true;
     if (jj_3R_PathDec_735_9_50()) return true;
@@ -2673,7 +2694,7 @@ parseno = pn;
 	private static void jj_la1_init_1() {
 	   jj_la1_1 = new int[] {};
 	}
-  final private JJCalls[] jj_2_rtns = new JJCalls[76];
+  final private JJCalls[] jj_2_rtns = new JJCalls[77];
   private boolean jj_rescan = false;
   private int jj_gc = 0;
 
@@ -2879,7 +2900,7 @@ parseno = pn;
   /** Generate ParseException. */
   public ParseException generateParseException() {
 	 jj_expentries.clear();
-	 boolean[] la1tokens = new boolean[57];
+	 boolean[] la1tokens = new boolean[58];
 	 if (jj_kind >= 0) {
 	   la1tokens[jj_kind] = true;
 	   jj_kind = -1;
@@ -2896,7 +2917,7 @@ parseno = pn;
 		 }
 	   }
 	 }
-	 for (int i = 0; i < 57; i++) {
+	 for (int i = 0; i < 58; i++) {
 	   if (la1tokens[i]) {
 		 jj_expentry = new int[1];
 		 jj_expentry[0] = i;
@@ -2930,7 +2951,7 @@ parseno = pn;
 
   private void jj_rescan_token() {
 	 jj_rescan = true;
-	 for (int i = 0; i < 76; i++) {
+	 for (int i = 0; i < 77; i++) {
 	   try {
 		 JJCalls p = jj_2_rtns[i];
 
@@ -3014,6 +3035,7 @@ parseno = pn;
 			   case 73: jj_3_74(); break;
 			   case 74: jj_3_75(); break;
 			   case 75: jj_3_76(); break;
+			   case 76: jj_3_77(); break;
 			 }
 		   }
 		   p = p.next;

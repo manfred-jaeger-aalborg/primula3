@@ -797,10 +797,18 @@ CatGnn ReadCatGnn(RBNReader3.ParsedTypedAtom parsedat) throws RBNIllegalArgument
     TypedTorchPf tti = new TypedTorchPf();
     TorchInputPf tri;
     List<List<TorchInputPf>> combineClausesType = new ArrayList<>();
+    boolean optimOneinp = false;
 }
 {
     <COMPUTEWITHTORCH>
     configPath = PathDec()
+
+    (
+        <OPTIMINPUT>
+        {optimOneinp = true;}
+    )?
+
+
 //    <WithNumValues>
 //    tk1 = <NonNegNumber> { numVals = Integer.parseInt(tk1.image); }
 //    <ForFreeVars>
@@ -861,7 +869,7 @@ CatGnn ReadCatGnn(RBNReader3.ParsedTypedAtom parsedat) throws RBNIllegalArgument
             case 2:
                 if (numVals == 1)
                     return new CatGnnBool(configPath, freeVals, forInputs, tti, outTypes, true);
-                return new CatGnn(configPath, freeVals, numVals, forInputs, tti, outTypes, true);
+                return new CatGnn(configPath, freeVals, numVals, forInputs, tti, outTypes, optimOneinp, true);
         }
     }
 }
@@ -951,6 +959,10 @@ TOKEN : {
 
 TOKEN:{
 	<USINGTORCH: "usingtorch" | "USINGTORCH" | "UsingTorch" | "Usingtorch" >
+}
+
+TOKEN : {
+    <OPTIMINPUT: "optimizeforoneinput" | "OPTIMIZEFORONEINPUT" >
 }
 
 TOKEN : {

@@ -214,21 +214,7 @@ public class GnnPy {
             torchModel = loadTorchModel(interpreter, currentCatGnn, scriptPath);
 
         try {
-            // Quick hash-based check first
-            if (checkValuesDictCache(x_dict, edge_dict, edge_attr, idGnn) && currentResult[0] != null){
-                if (valonly)
-                    return currentResult;
-
-                // if gradients are not present, recompute
-                if (!valonly && currentResult[1] != null)
-                    return currentResult;
-            }
-
-            // Update cache with the latest input
-            updateCache(x_dict, edge_dict, edge_attr, idGnn);
-            // perform the forward to the model
-            currentResult = torchModel.forward(currentNodeAttrDict, currentEdgeDict, currentEdgeAttrDict, gnnInputs, !valonly);
-            return currentResult;
+            return torchModel.forward(x_dict, edge_dict, edge_attr, gnnInputs, !valonly);
         } catch (JepException e) {
             System.err.println("Failed to execute inference: " + e);
             return null;
@@ -1413,14 +1399,14 @@ public class GnnPy {
         if (!valonly)
             throw new RuntimeException("Not implemented. Use evaluate_gnnGradients instead. Try with Gradient Graph");
 
-        Object[] result = inferModelHetero(xdict, edgedict, edgeattrdict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), true);
+        Object[] result = inferModelHetero(xdict, edgedict, edgeattrdict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), true).clone();
 
         String outType = cpmGnn.getOutTypes()[0].getName();
         int nodeIndex = (cpmGnn.getArguments().equals("[]") || cpmGnn.getArguments().equals("")) ? 0 : cpmGnn.getNodeIndexIfPresent(outType, Integer.parseInt(cpmGnn.getArguments()[0].argEval()));
         if (nodeIndex == -1) {
             throw new RuntimeException("Could not find node of type " + outType + " with index " + cpmGnn.getArguments() + " maybe you forgot to add the type to the probability definition of the GNN! pf([type] arg, ...) = ");
         }
-        result[0] = result[nodeIndex];
+        result[0] = ((Object[]) result[0])[nodeIndex];
         return result;
     }
 

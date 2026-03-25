@@ -13,6 +13,7 @@ import RBNutilities.rbnutilities;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class CatGnn extends CPModel {
     // the order of attributes need to be respected! this order will be used for the gnn encoding
@@ -34,16 +35,12 @@ public class CatGnn extends CPModel {
     private boolean categorical;
     private int numvals;
     private static boolean isInitialized = false;
-    // this variable is used to set the inference for node or graph classification. Keyword: "node" or "graph"
-    private String gnn_inference;
-    private int numLayers;
-    private TorchModelWrapper torchModel;
+
     Type[] outTypes;
 
     private RelStruc lastDictA = null;
     private OneStrucData lastDictInst = null;
     private int lastDictInstHash = 0;
-    private int lastDictAHash = 0;
     private Object[] lastDicts = null;
 
     private long dictVersion = 0;
@@ -51,20 +48,22 @@ public class CatGnn extends CPModel {
 
     private Map<String, Map<Integer, Integer>> nodeMappingByType;
 
+    private boolean optimizeForInput;
+
+    private static final Map<Long, Object[]> sharedDictCache = new ConcurrentHashMap<>();
+
     public CatGnn(ArgTerm[] arguments, String gnnId, int numLayers, int numvals, ArrayList input_attr, ArrayList edge_attr, String gnn_inference, boolean oneHotEncoding) {
         this.arguments = arguments;
         this.gnnId = gnnId;
         this.categorical = true;
         this.numvals = numvals;
-        this.numLayers = numLayers;
         this.input_attr = input_attr;
         this.edge_attr = edge_attr;
         this.oneHotEncoding = oneHotEncoding;
-        this.gnn_inference = gnn_inference;
         isInitialized = false;
     }
 
-    public CatGnn(String configModelPath, ArgTerm[] arguments, int numVals, List<TorchInputSpecs> inputs, TypedTorchPf typedTorchPf, Type[] outTypes, boolean withGnnPy) {
+    public CatGnn(String configModelPath, ArgTerm[] arguments, int numVals, List<TorchInputSpecs> inputs, TypedTorchPf typedTorchPf, Type[] outTypes, boolean optimOneInp, boolean withGnnPy) {
         File f = new File(configModelPath);
         // get a file name without extension
         int lastIndexOfDot = f.getName().lastIndexOf('.');
@@ -89,10 +88,15 @@ public class CatGnn extends CPModel {
             this.gnnPy = new GnnPy(this, f.getParent());
 
         isInitialized = false;
+        optimizeForInput = optimOneInp;
     }
 
     //eval-result holder
     private record InputEntry(List<int[]> argNodes, double evalValue, int pfIdx) {}
+
+    private long sharedDictKey(RelStruc A, OneStrucData inst) {
+        return  Objects.hash(gnnInputs.hashCode(), A.hashCode(), inst.hashCode());
+    }
 
     // very similar logic to GGGnnNode
     public Object[] buildInputDicts(RelStruc A,
@@ -110,6 +114,19 @@ public class CatGnn extends CPModel {
                                     boolean valonly,
                                     Profiler profiler)
             throws RBNCompatibilityException {
+
+        if (isOptimizeForOneInput()) {
+            long key = sharedDictKey(A, inst);
+            Object[] cached = sharedDictCache.get(key);
+            if (cached != null) {
+                // restore nodeMappingByType so getNodeIndexIfPresent works on this instance
+                Map<String, Map<Integer, Integer>> sharedMapping = (Map<String, Map<Integer, Integer>>) cached[3];
+                this.nodeMappingByType = sharedMapping;
+                // x_dict, edge_dict, edgeAttr_dict
+                Object[] result = new Object[]{cached[0], cached[1], cached[2]};
+                return result;
+            }
+        }
 
         if (isCacheValid(A, inst)) {
             return lastDicts;
@@ -301,12 +318,15 @@ public class CatGnn extends CPModel {
         }
 
         Object[] result = new Object[]{x_dict, edge_dict, edgeAttr_dict};
+        if (isOptimizeForOneInput()) {
+            Object[] toCache = new Object[]{x_dict, edge_dict, edgeAttr_dict, nodeMappingByType};
+            sharedDictCache.put(sharedDictKey(A, inst), toCache);
+        }
 
         // store cache
         lastDicts = result;
         lastDictA = A;
         lastDictInst = inst;
-        lastDictAHash = System.identityHashCode(A);
         lastDictInstHash = inst != null ? inst.hashCode() : 0;
         cachedDictVersion = dictVersion;
         return result;
@@ -567,6 +587,9 @@ public class CatGnn extends CPModel {
 
     public void invalidateDictCache() {
         dictVersion++;
+        if (isOptimizeForOneInput()) {
+            sharedDictCache.clear();
+        }
     }
 
     public Integer getNodeIndexIfPresent(String type, int nodeId) {
@@ -630,7 +653,6 @@ public class CatGnn extends CPModel {
                     return res;
                 }
             }
-
         }
 
         CatGnn subCatGnn = null;
@@ -683,14 +705,12 @@ public class CatGnn extends CPModel {
 
     @Override
     public ArgTerm[] freevars() {
-        System.out.println("freevars code");
-//        return rbnutilities.NonIntOnly(new String[]{this.argument}); // convert
+        Vector<ArgTerm> freevars = new Vector<>();
         for (TorchInputPf inps: getTypedTorchPf().getCombines()) {
-            ArgTerm[] res = inps.freevars();
-            if (res.length > 0)
-                return res;
+            ArgTerm[] res = inps.getCconstr().freevars();
+            freevars.addAll(Arrays.asList(res));
         }
-        return new VarTerm[0];
+        return freevars.toArray(new ArgTerm[0]);
     }
 
     @Override
@@ -751,7 +771,7 @@ public class CatGnn extends CPModel {
         if (this instanceof CatGnnBool)
             result = new CatGnnBool(this.configModelPath, this.arguments, this.gnnInputs, newpf, this.outTypes, false);
         else
-            result = new CatGnn(this.configModelPath, this.arguments, this.numvals, this.gnnInputs, newpf, this.outTypes, false);
+            result = new CatGnn(this.configModelPath, this.arguments, this.numvals, this.gnnInputs, newpf, this.outTypes, this.isOptimizeForOneInput(), false);
 
         result.setGnnPy(this.getGnnPy());
 
@@ -774,7 +794,7 @@ public class CatGnn extends CPModel {
         if (this instanceof CatGnnBool)
             result = new CatGnnBool(this.configModelPath, this.arguments, this.gnnInputs, newpf, this.outTypes, false);
         else
-            result = new CatGnn(this.configModelPath, this.arguments, this.numvals, this.gnnInputs, newpf, this.outTypes, false);
+            result = new CatGnn(this.configModelPath, this.arguments, this.numvals, this.gnnInputs, newpf, this.outTypes, this.isOptimizeForOneInput(), false);
 
         result.setGnnPy(this.getGnnPy());
 
@@ -796,7 +816,7 @@ public class CatGnn extends CPModel {
         if (this instanceof CatGnnBool)
             result = new CatGnnBool(this.configModelPath, this.arguments, this.gnnInputs, newpf, this.outTypes, false);
         else
-            result = new CatGnn(this.configModelPath, this.arguments, this.numvals, this.gnnInputs, newpf, this.outTypes, false);
+            result = new CatGnn(this.configModelPath, this.arguments, this.numvals, this.gnnInputs, newpf, this.outTypes, this.isOptimizeForOneInput(), false);
 
         result.setGnnPy(this.getGnnPy());
 
@@ -818,7 +838,7 @@ public class CatGnn extends CPModel {
         if (this instanceof CatGnnBool)
             result = new CatGnnBool(this.configModelPath, this.arguments, this.gnnInputs, newpf, this.outTypes, false);
         else
-            result = new CatGnn(this.configModelPath, this.arguments, this.numvals, this.gnnInputs, newpf, this.outTypes, false);
+            result = new CatGnn(this.configModelPath, this.arguments, this.numvals, this.gnnInputs, newpf, this.outTypes, this.isOptimizeForOneInput(), false);
 
         result.setGnnPy(this.getGnnPy());
 
@@ -840,7 +860,7 @@ public class CatGnn extends CPModel {
         if (this instanceof CatGnnBool)
             result = new CatGnnBool(this.configModelPath, this.arguments, this.gnnInputs, newpf, this.outTypes, false);
         else
-            result = new CatGnn(this.configModelPath, this.arguments, this.numvals, this.gnnInputs, newpf, this.outTypes, false);
+            result = new CatGnn(this.configModelPath, this.arguments, this.numvals, this.gnnInputs, newpf, this.outTypes, this.isOptimizeForOneInput(), false);
 
         result.setGnnPy(this.getGnnPy());
 
@@ -916,4 +936,8 @@ public class CatGnn extends CPModel {
     public boolean isBoolean() { return !categorical; }
 
     public Type[] getOutTypes() { return outTypes; }
+
+    public boolean isOptimizeForOneInput() {
+        return optimizeForInput;
+    }
 }

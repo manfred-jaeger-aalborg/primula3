@@ -17,7 +17,7 @@ public class CatGnnBool extends CatGnn {
     }
 
     public CatGnnBool(String configModelPath, ArgTerm[] freeVals, List<TorchInputSpecs> inputs, TypedTorchPf typedTorchPf, Type[] outTypes, boolean withGnnPy) {
-        super(configModelPath, freeVals, 1, inputs, typedTorchPf, outTypes, withGnnPy);
+        super(configModelPath, freeVals, 1, inputs, typedTorchPf, outTypes, false, withGnnPy);
     }
 
     @Override

@@ -1,10 +1,7 @@
 package RBNLearning;
 
-import PyManager.GnnPy;
+import PyManager.*;
 import PyManager.PyUtils.EvalEntry;
-import PyManager.TorchInputPf;
-import PyManager.TorchInputSpecs;
-import PyManager.TypedTorchPf;
 import RBNExceptions.RBNCompatibilityException;
 import RBNExceptions.RBNNaNException;
 import RBNpackage.*;
@@ -12,6 +9,7 @@ import RBNpackage.VarTermPackage.ArgTerm;
 import RBNpackage.VarTermPackage.VarTerm;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class GGGnnNode extends GGCPMNode {
 
@@ -57,6 +55,7 @@ public class GGGnnNode extends GGCPMNode {
 
     // Cached output
     private double[] cachedResult = null;
+    private static final Map<Long, Object[]> sharedDictCache = new ConcurrentHashMap<>();
 
     public GGGnnNode(GradientGraphO gg,
                      CPModel cpm,
@@ -83,6 +82,17 @@ public class GGGnnNode extends GGCPMNode {
         getGnnPy().setGradientGraph(gg);
 
         TypedTorchPf ttpf = cpmgnn.getTypedTorchPf();
+
+//        boolean optimizeOneInput = cpmgnn.isOptimizeForOneInput();
+        // if true, we should construct the input matrix for one instance only and share
+        if (cpmgnn.isOptimizeForOneInput()) {
+            long key = sharedDictKey();
+            Object[] cached = sharedDictCache.get(key);
+            if (cached != null) {
+                restoreMatricesFromCache(cached);
+                return;
+            }
+        }
 
         // construct the children of this Gradient Graph node by evaluating all the pf for node, edge, and edge attr
 
@@ -158,6 +168,17 @@ public class GGGnnNode extends GGCPMNode {
 
         x_dict.clear();
         buildNodeFeatureMatrices(0);
+
+        if (cpmgnn.isOptimizeForOneInput()) {
+            long key = sharedDictKey();
+            Object[] cached = sharedDictCache.get(key);
+            if (cached != null) {
+                restoreMatricesFromCache(cached);
+            } else {
+                sharedDictCache.put(key, snapshotMatricesForCache());
+            }
+        }
+
         inputVersion++;
         // only keep NaN entries in the eval maps since those are the only ones we need to resolve during gradient computation
         retainOnlyNaNEntries();
@@ -227,6 +248,52 @@ public class GGGnnNode extends GGCPMNode {
         evalOfNodesByType.clear();
         evalOfEdgeAttrByType.clear();
         evalOfEdgeByType.clear();
+    }
+
+    private long sharedDictKey() {
+        return this.cpmgnn.getGnnInputs().hashCode();
+    }
+
+    private void restoreMatricesFromCache(Object[] cached) {
+        x_dict.clear();
+        x_dict.putAll((Map<String, double[][]>) cached[0]);
+        edge_dict.clear();
+        edge_dict.putAll((Map<String, ArrayList<ArrayList<Integer>>>) cached[1]);
+        edgeAttr_dict.clear();
+        edgeAttr_dict.putAll((Map<String, double[][]>) cached[2]);
+        nodeMappingByType.clear();
+        nodeMappingByType.putAll((Map<String, Map<Integer, Integer>>) cached[3]);
+    }
+
+    private Object[] snapshotMatricesForCache() {
+        Map<String, double[][]> xSnap = new HashMap<>();
+        for (Map.Entry<String, double[][]> e : x_dict.entrySet()) {
+            double[][] src = e.getValue();
+            double[][] copy = new double[src.length][];
+            for (int i = 0; i < src.length; i++) copy[i] = src[i].clone();
+            xSnap.put(e.getKey(), copy);
+        }
+
+        Map<String, ArrayList<ArrayList<Integer>>> edgeSnap = new HashMap<>();
+        for (Map.Entry<String, ArrayList<ArrayList<Integer>>> e : edge_dict.entrySet()) {
+            ArrayList<ArrayList<Integer>> lists = new ArrayList<>();
+            for (ArrayList<Integer> list : e.getValue()) lists.add(new ArrayList<>(list));
+            edgeSnap.put(e.getKey(), lists);
+        }
+
+        Map<String, double[][]> eaSnap = new HashMap<>();
+        for (Map.Entry<String, double[][]> e : edgeAttr_dict.entrySet()) {
+            double[][] src = e.getValue();
+            double[][] copy = new double[src.length][];
+            for (int i = 0; i < src.length; i++) copy[i] = src[i].clone();
+            eaSnap.put(e.getKey(), copy);
+        }
+
+        return new Object[]{xSnap, edgeSnap, eaSnap, nodeMappingByType};
+    }
+
+    public static void clearSharedDictCache() {
+        sharedDictCache.clear();
     }
 
     // Call this right after buildInputMatrices(0) in the constructor
