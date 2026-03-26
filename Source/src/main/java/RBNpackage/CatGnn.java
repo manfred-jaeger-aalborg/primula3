@@ -192,7 +192,7 @@ public class CatGnn extends CPModel {
                         if (argNodes == null) continue;
 
                         // look-up only, skip if node not in subgraph
-                        if (!remapNodeToCompact(argNodes, pftype, nodeMappingByType, nextIndexByType, false))
+                        if (!remapNodeToCompact(argNodes, pftype, nodeMappingByType, nextIndexByType, true))
                             continue;
 
                         double val = evalGroundPf(ground, A, inst, vars, tuple, gradindx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly, profiler);
@@ -497,7 +497,7 @@ public class CatGnn extends CPModel {
                 argNode[0] = getOrAssignIdx(nodeMapping, nextIndex, pftype, argNode[0]);
             } else {
                 Integer mapped = lookupOrNull(nodeMapping, pftype, argNode[0]);
-                if (mapped == null) return false; // node not in subgraph → skip
+                if (mapped == null) return false; // node not in subgraph, skip
                 argNode[0] = mapped;
             }
         }
