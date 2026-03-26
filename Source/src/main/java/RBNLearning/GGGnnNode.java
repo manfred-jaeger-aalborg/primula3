@@ -129,7 +129,7 @@ public class GGGnnNode extends GGCPMNode {
                             evalOfNodesByType, tip, gg, i, allnodes, A, I,
                             inputcaseno, observcaseno, parameters,
                             useCurrentPvals, mapatoms, evaluated,
-                            false);
+                            true);
                 }
 
                 for (int i = 0; i < tip.getPfargsEdgeAttr().length; i++) {
