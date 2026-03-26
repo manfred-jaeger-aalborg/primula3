@@ -51,6 +51,7 @@ public class CatGnn extends CPModel {
     private boolean optimizeForInput;
 
     private static final Map<Long, Object[]> sharedDictCache = new ConcurrentHashMap<>();
+    private static final Map<Long, Boolean> sharedEvalInputs = new ConcurrentHashMap<>();
 
     public CatGnn(ArgTerm[] arguments, String gnnId, int numLayers, int numvals, ArrayList input_attr, ArrayList edge_attr, String gnn_inference, boolean oneHotEncoding) {
         this.arguments = arguments;
@@ -645,14 +646,26 @@ public class CatGnn extends CPModel {
 
         // CHECK IF THIS DOES NOT BREAK INFERENCE WITH MAP or MCMC
 
-        for (TorchInputPf inps: getTypedTorchPf().getCombines()) {
-            Object[] res = inps.evaluate(A, inst, vars, tuple, gradindx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly, profiler);
-            // if res[0] contains NaN return res
-            if (res[0] instanceof Double) {
-                if (Double.isNaN((Double) res[0])) {
-                    return res;
+        // remove this later!
+        if (isOptimizeForOneInput()) {
+            long key = sharedDictKey(A, inst);
+            Boolean cached = sharedEvalInputs.get(key);
+            if (cached != null && cached) {
+                return new Object[]{Double.NaN};
+            }
+
+            if (cached == null) {
+                for (TorchInputPf inps : getTypedTorchPf().getCombines()) {
+                    Object[] res = inps.evaluate(A, inst, vars, tuple, gradindx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly, profiler);
+                    // if res[0] contains NaN return res
+                    if (res[0] instanceof Double) {
+                        if (Double.isNaN((Double) res[0])) {
+                            return res;
+                        }
+                    }
                 }
             }
+            sharedEvalInputs.put(key, false);
         }
 
         CatGnn subCatGnn = null;
