@@ -21,6 +21,14 @@ public abstract class ArgTerm {
         return new HashSet<>();
     }
 
+    public abstract LinearForm linearize();
+
+    protected abstract int evalWithZeroVars();
+
+    public int getInt() {
+        return evalWithZeroVars();
+    }
+
     public abstract Set<String> varsEqual(ArgTerm other);
 
     protected static boolean isInt(String s) {

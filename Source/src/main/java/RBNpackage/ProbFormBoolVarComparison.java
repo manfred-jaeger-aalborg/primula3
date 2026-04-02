@@ -11,21 +11,21 @@ import RBNLearning.*;
 
 public class ProbFormBoolVarComparison extends ProbFormBool {
 
-    private ArgTerm term1, term2;
+    private ArgTerm left, right;
     final private String LT_OP = "<";
     final private String GT_OP = ">";
     private String op; // ">" or "<"
 
     public ProbFormBoolVarComparison(ArgTerm t1, ArgTerm t2, String op, boolean s) {
-        term1 = t1;
-        term2 = t2;
+        left = t1;
+        right = t2;
         this.op = op;
         sign = s;
     }
 
     public ProbFormBoolVarComparison(ArgTerm t1, ArgTerm t2, String op) {
-        term1 = t1;
-        term2 = t2;
+        left = t1;
+        right = t2;
         this.op = op;
         sign = true;
     }
@@ -41,8 +41,8 @@ public class ProbFormBoolVarComparison extends ProbFormBool {
     public int evaluatesTo(RelStruc A) throws RBNCompatibilityException {
         if (!isGround())
             return -1;
-        int v1 = Integer.parseInt(term1.argEval());
-        int v2 = Integer.parseInt(term2.argEval());
+        int v1 = Integer.parseInt(left.argEval());
+        int v2 = Integer.parseInt(right.argEval());
         boolean tv;
         if (op.equals(LT_OP))
             tv = v1 < v2;
@@ -61,11 +61,11 @@ public class ProbFormBoolVarComparison extends ProbFormBool {
     public String asString(int syntax, int depth, RelStruc A, boolean paramsAsValue, boolean usealias) {
         if (usealias && this.getAlias() != null)
             return this.getAlias();
-        return "[" + term1.toString() + op + term2.toString() + "]";
+        return "[" + left.toString() + op + right.toString() + "]";
     }
 
     public String asString() {
-        return "[" + term1.toString() + op + term2.toString() + "]";
+        return "[" + left.toString() + op + right.toString() + "]";
     }
 
     @Override
@@ -98,8 +98,8 @@ public class ProbFormBoolVarComparison extends ProbFormBool {
         ProbFormBoolVarComparison thissubstituted = (ProbFormBoolVarComparison) this.substitute(vars, tuple);
         if (!thissubstituted.isGround())
             throw new IllegalArgumentException("Attempt to evaluate non-ground comparison");
-        int v1 = Integer.parseInt(thissubstituted.term1.argEval());
-        int v2 = Integer.parseInt(thissubstituted.term2.argEval());
+        int v1 = Integer.parseInt(thissubstituted.left.argEval());
+        int v2 = Integer.parseInt(thissubstituted.right.argEval());
         boolean tv;
         if (op.equals(LT_OP))
             tv = v1 < v2;
@@ -136,7 +136,7 @@ public class ProbFormBoolVarComparison extends ProbFormBool {
 
     @Override
     public VarTerm[] freevars() {
-        ArgTerm[] bothterms = {term1, term2};
+        ArgTerm[] bothterms = {left, right};
         return rbnutilities.NonIntOnly(bothterms);
     }
 
@@ -159,13 +159,13 @@ public class ProbFormBoolVarComparison extends ProbFormBool {
     public CPModel substitute(String[] vars, int[] args) {
         if (vars.length != args.length)
             System.out.println("ProbFormBoolComparison.substitute: vars: " + rbnutilities.arrayToString(vars) + "   args: " + rbnutilities.arrayToString(args));
-        ArgTerm termx = term1;
-        ArgTerm sterm1 = term1;
-        ArgTerm sterm2 = term2;
+        ArgTerm termx = left;
+        ArgTerm sterm1 = left;
+        ArgTerm sterm2 = right;
         for (int j = 0; j < vars.length; j++) {
             if (termx.equals(vars[j])) sterm1 = new VarTerm(args[j]);
         }
-        termx = term2;
+        termx = right;
         for (int j = 0; j < vars.length; j++) {
             if (termx.equals(vars[j])) sterm2 = new VarTerm(args[j]);
         }
@@ -179,13 +179,13 @@ public class ProbFormBoolVarComparison extends ProbFormBool {
     public CPModel substitute(String[] vars, String[] args) {
         if (vars.length != args.length)
             System.out.println("ProbFormBoolComparison.substitute: vars: " + rbnutilities.arrayToString(vars) + "   args: " + rbnutilities.arrayToString(args));
-        ArgTerm termx = term1;
-        ArgTerm sterm1 = term1;
-        ArgTerm sterm2 = term2;
+        ArgTerm termx = left;
+        ArgTerm sterm1 = left;
+        ArgTerm sterm2 = right;
         for (int j = 0; j < vars.length; j++) {
             if (termx.equals(vars[j])) sterm1 = new VarTerm(args[j]);
         }
-        termx = term2;
+        termx = right;
         for (int j = 0; j < vars.length; j++) {
             if (termx.equals(vars[j])) sterm2 = new VarTerm(args[j]);
         }
@@ -199,16 +199,16 @@ public class ProbFormBoolVarComparison extends ProbFormBool {
     public CPModel substitute(String[] vars, ArgTerm[] args) {
         if (vars.length != args.length)
             System.out.println("ProbFormBoolComparison.substitute: vars: " + rbnutilities.arrayToString(vars) + "   args: " + rbnutilities.arrayToString(args));
-        ArgTerm termx = term1;
-        ArgTerm sterm1 = term1;
-        ArgTerm sterm2 = term2;
+        ArgTerm termx = left;
+        ArgTerm sterm1 = left;
+        ArgTerm sterm2 = right;
         for (int j = 0; j < vars.length; j++) {
             for (String vs : termx.getVariables()) {
                 if (vs.equals(vars[j]))
                     sterm1 = sterm1.substitute(vars[j], args[j]);
             }
         }
-        termx = term2;
+        termx = right;
         for (int j = 0; j < vars.length; j++) {
             for (String vs : termx.getVariables()) {
                 if (vs.equals(vars[j]))
@@ -225,15 +225,15 @@ public class ProbFormBoolVarComparison extends ProbFormBool {
     public CPModel substitute(ArgTerm[] vars, ArgTerm[] args) {
         if (vars.length != args.length)
             System.out.println("ProbFormBoolComparison.substitute: vars: " + rbnutilities.arrayToString(vars) + "   args: " + rbnutilities.arrayToString(args));
-        ArgTerm termx = term1;
-        ArgTerm sterm1 = term1;
-        ArgTerm sterm2 = term2;
+        ArgTerm termx = left;
+        ArgTerm sterm1 = left;
+        ArgTerm sterm2 = right;
         for (int j = 0; j < vars.length; j++) {
             Set<String> sameVars = termx.varsEqual(vars[j]);
             if (sameVars.size() > 0)
                 sterm1 = sterm1.substitute(vars[j], args[j]);
         }
-        termx = term2;
+        termx = right;
         for (int j = 0; j < vars.length; j++) {
             Set<String> sameVars = termx.varsEqual(vars[j]);
             if (sameVars.size() > 0)
@@ -249,15 +249,15 @@ public class ProbFormBoolVarComparison extends ProbFormBool {
     public CPModel substitute(ArgTerm[] vars, int[] args) {
         if (vars.length != args.length)
             System.out.println("ProbFormBoolComparison.substitute: vars: " + rbnutilities.arrayToString(vars) + "   args: " + rbnutilities.arrayToString(args));
-        ArgTerm termx = term1;
-        ArgTerm sterm1 = term1;
-        ArgTerm sterm2 = term2;
+        ArgTerm termx = left;
+        ArgTerm sterm1 = left;
+        ArgTerm sterm2 = right;
         for (int j = 0; j < vars.length; j++) {
             Set<String> sameVars = termx.varsEqual(vars[j]);
             if (sameVars.size() > 0)
                 sterm1 = sterm1.substitute(vars[j], args[j]);
         }
-        termx = term2;
+        termx = right;
         for (int j = 0; j < vars.length; j++) {
             Set<String> sameVars = termx.varsEqual(vars[j]);
             if (sameVars.size() > 0)
@@ -269,12 +269,12 @@ public class ProbFormBoolVarComparison extends ProbFormBool {
         return result;
     }
 
-    public ArgTerm term1() {
-        return term1;
+    public ArgTerm getLeft() {
+        return left;
     }
 
-    public ArgTerm term2() {
-        return term2;
+    public ArgTerm getRight() {
+        return right;
     }
 
     public String op() {
@@ -282,7 +282,7 @@ public class ProbFormBoolVarComparison extends ProbFormBool {
     }
 
     private boolean isGround() {
-        return term1.isGround() && term2.isGround();
+        return left.isGround() && right.isGround();
     }
 
     public CPModel toStandardPF(boolean recursive) {
@@ -291,13 +291,13 @@ public class ProbFormBoolVarComparison extends ProbFormBool {
 
     public ArgTerm[] terms() {
         ArgTerm[] result = new ArgTerm[2];
-        result[0] = term1;
-        result[1] = term2;
+        result[0] = left;
+        result[1] = right;
         return result;
     }
 
     public ProbFormBoolVarComparison clone() {
-        return new ProbFormBoolVarComparison(term1, term2, op, sign);
+        return new ProbFormBoolVarComparison(left, right, op, sign);
     }
 
     public void updateSig(Signature s) {

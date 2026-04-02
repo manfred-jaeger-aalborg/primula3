@@ -661,26 +661,6 @@ public abstract class RelStruc implements Cloneable{
 		return result;
 	}
 
-	public int[][] allTrue(ProbFormBool cc, String[] vars, int maxInt)// the elements of vars must be distinct!
-			throws IllegalArgumentException,RBNCompatibilityException
-	{
-		int k = vars.length;
-		int m = rbnutilities.IntPow(dom,k);
-		Vector<int[]> prelimarray = new Vector<int[]>();
-
-		for (int i=0; i<m ; i++)
-		{
-			int[] thistuple = rbnutilities.indexToTuple(i,k,dom);
-
-			if (cc.evaluatesTo(this) == 1)
-				prelimarray.add(thistuple);
-		}
-
-		int[][] result = new int[prelimarray.size()][k];
-		for (int i =0; i<result.length; i++) result[i]=prelimarray.elementAt(i);
-		return result;
-	}
-
 	public int[][] allTrue(ProbFormBool cc, ArgTerm[] vars)
 			throws IllegalArgumentException, RBNCompatibilityException
 	{

@@ -18,6 +18,16 @@ public class IntPlus extends IntOp {
     }
 
     @Override
+    public LinearForm linearize() {
+        return left.linearize().add(right.linearize());
+    }
+
+    @Override
+    protected int evalWithZeroVars() {
+        return left.evalWithZeroVars() + right.evalWithZeroVars();
+    }
+
+    @Override
     public ArgTerm substitute(String var, ArgTerm replacement) {
         ArgTerm newLeft = left.substitute(var, replacement);
         ArgTerm newRight = right.substitute(var, replacement);
