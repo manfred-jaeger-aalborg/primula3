@@ -160,7 +160,7 @@ public abstract class GGAtomNode extends GGCPMNode{
 			}
 		}
 		addMeToIndicators(myuppergroundatom);
-		allugas.add(myuppergroundatom); // TODO check if this works
+		allugas.add(myuppergroundatom);
 	}
 	
 	public Vector<GGCPMNode> getAllugas(){

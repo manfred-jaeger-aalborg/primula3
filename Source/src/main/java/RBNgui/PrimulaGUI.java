@@ -1236,11 +1236,14 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/toy_dataset/model_ea.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/toy_dataset/toy.rdef";
 
-//        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_pollution_model.rbn";
-//        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/simple_subbasin_new.rdef";
+        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_pollution_model.rbn";
+        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/simple_subbasin_new.rdef";
 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_pollution-gibbs.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/simple_subbasin_new_gibbs.rdef";
+
+//        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_network_gibbs.rdef";
+
 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/RSE/primula/model_rbn_small.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/RSE/primula/simulation_graph_0_small.rdef";
@@ -1270,7 +1273,7 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
         }
         PrimulaGUI win = new PrimulaGUI(new Primula());
 		SamiamManager.centerWindow( win );
-        win.loadDefaults();
+//        win.loadDefaults();
 		win.setVisible(true);
     }
 }

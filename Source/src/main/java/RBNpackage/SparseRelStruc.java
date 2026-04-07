@@ -119,11 +119,10 @@ public class SparseRelStruc extends RelStruc {
 	// 	}
 	//     }
 
-
 	/* Overrides the default implementation
 	 */
 	public int[][] allTrue(ProbFormBool cc, String[] vars)// the elements of vars must be distinct!
-	throws IllegalArgumentException,RBNCompatibilityException
+			throws IllegalArgumentException,RBNCompatibilityException
 	{
 
 		TreeSet<int[]> prelimResult = allTrueAsTreeSet(cc,vars);
@@ -140,7 +139,8 @@ public class SparseRelStruc extends RelStruc {
 		return result;
 	}
 
-
+	/* Overrides the default implementation
+	 */
 	public int[][] allTrue(ProbFormBool cc, ArgTerm[] vars)// the elements of vars must be distinct!
 			throws IllegalArgumentException,RBNCompatibilityException
 	{
@@ -411,25 +411,9 @@ public TreeSet<int[]> allTrueAsTreeSet(ProbFormBool cc, String[] vars)
 			}
 
 			if (hasIntTerm) {
-				int[] maxValues = new int[vars.length];
-				for (int i = 0; i < maxValues.length; i++) {
-					maxValues[i] = maxIntegerValue;
-				}
-
-				List<int[]> allCombs = new ArrayList<>();
-				rbnutilities.generate(maxValues, new int[maxValues.length], 0, allCombs);
-
-				for (int[] comb : allCombs) {
-					ProbFormBoolEquality instantiated = (ProbFormBoolEquality) cc;
-					ArgTerm[] newargs = new ArgTerm[vars.length];
-					for (int i = 0; i < comb.length; i++) {
-						newargs[i] = new VarTerm(comb[i]);
-					}
-
-					instantiated = (ProbFormBoolEquality) instantiated.substitute(vars, newargs);
-					if (instantiated.evaluatesTo(this) == 1) {
-						result.add(comb);
-					}
+				TreeSet<int[]> solutions = solve(((ProbFormBoolEquality) cc).term1(), ((ProbFormBoolEquality) cc).term2(), vars);
+				for (int[] sol : solutions) {
+					result.add(sol);
 				}
 			} else {
 				int[][] alltrue = new int[dom][2];
@@ -440,6 +424,31 @@ public TreeSet<int[]> allTrueAsTreeSet(ProbFormBool cc, String[] vars)
 				for (int i = 0; i < alltrue.length; i++)
 					rbnutilities.allSatisfyingTuples(((ProbFormBoolEquality) cc).terms(), alltrue[i], vars, result, dom);
 			}
+		}
+		if (cc instanceof ProbFormBoolVarComparison) {
+
+			ArgTerm left = ((ProbFormBoolVarComparison) cc).getLeft();
+			ArgTerm right = ((ProbFormBoolVarComparison) cc).getRight();
+			String op = ((ProbFormBoolVarComparison) cc).op();
+
+			for (int i = 0; i < mymath.MyMathOps.intPow(dom, vars.length); i++) {
+				int[] tuple = rbnutilities.indexToTuple(i, vars.length, dom);
+
+				ArgTerm subLeft = left;
+				ArgTerm subRight = right;
+				for (int j = 0; j < vars.length; j++) {
+					subLeft = subLeft.substitute(vars[j], tuple[j]);
+					subRight = subRight.substitute(vars[j], tuple[j]);
+				}
+
+				if (subLeft.isGround() && subRight.isGround()) {
+					int v1 = Integer.parseInt(subLeft.argEval());
+					int v2 = Integer.parseInt(subRight.argEval());
+					boolean tv = op.equals("<") ? v1 < v2 : v1 > v2;
+					if (tv) result.add(tuple);
+				}
+			}
+
 		}
 		if (cc instanceof ProbFormBoolComposite)
 		{
@@ -499,7 +508,72 @@ public TreeSet<int[]> allTrueAsTreeSet(ProbFormBool cc, String[] vars)
 			throw new IllegalArgumentException("Index out of bounds");
 	}
 
+	public static TreeSet<int[]> solve(ArgTerm left, ArgTerm right, ArgTerm[] vars) {
+		// left - right = 0
+		LinearForm diff = left.linearize().subtract(right.linearize());
 
+		Map<String, Integer> coeffs = diff.getCoefficients();
+		int constant = diff.getConstant();
+
+		if (isInfinite(coeffs)) {
+			System.out.println("Infinite solutions exist.");
+			return null;
+		}
+
+		// solve finite search space using backtracking
+		List<Map<String, Integer>> solutions = new ArrayList<>();
+		List<String> varNames = new ArrayList<>(coeffs.keySet());
+		backtrack(0, varNames, coeffs, constant, new HashMap<>(), solutions);
+
+		// return the TreeSet of solutions
+		TreeSet<int[]> result = new TreeSet<>(new IntArrayComparator());
+		for (Map<String, Integer> solution : solutions) {
+			int[] row = new int[vars.length];
+			for (int i = 0; i < vars.length; i++) {
+				row[i] = solution.getOrDefault(vars[i].argEval(), 0);
+			}
+			result.add(row);
+		}
+
+		return result;
+	}
+
+	private static void backtrack(int idx, List<String> vars, Map<String, Integer> coeffs,
+								  int currentSum, Map<String, Integer> currentAssign,
+								  List<Map<String, Integer>> solutions) {
+		if (idx == vars.size()) {
+			if (currentSum == 0) {
+				solutions.add(new HashMap<>(currentAssign));
+			}
+			return;
+		}
+
+		String var = vars.get(idx);
+		int c = coeffs.get(var);
+
+		for (int val = 0; ; val++) {
+			int contribution = c * val;
+
+			currentAssign.put(var, val);
+			backtrack(idx + 1, vars, coeffs, currentSum + contribution, currentAssign, solutions);
+
+			// safe bound
+			if (val > 1000) {
+				throw new RuntimeException("safe bound reaced");
+			}
+
+		}
+	}
+
+	private static boolean isInfinite(Map<String, Integer> coeffs) {
+		boolean hasPos = false;
+		boolean hasNeg = false;
+		for (int c : coeffs.values()) {
+			if (c > 0) hasPos = true;
+			if (c < 0) hasNeg = true;
+		}
+		return hasPos && hasNeg;
+	}
 
 
 	/** returns this node's attributes and tuples **/

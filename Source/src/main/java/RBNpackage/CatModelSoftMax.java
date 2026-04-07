@@ -206,8 +206,8 @@ public class CatModelSoftMax extends CPModel {
 	}
 
 	@Override
-	public VarTerm[] freevars() {
-		VarTerm result[] = new VarTerm[0];
+	public ArgTerm[] freevars() {
+		ArgTerm result[] = new VarTerm[0];
 		for (int i = 0;i<probforms.size();i++)
 			result= rbnutilities.arraymerge(result,probforms.elementAt(i).freevars());
 		return result;

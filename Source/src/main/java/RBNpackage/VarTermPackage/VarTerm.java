@@ -1,6 +1,7 @@
 package RBNpackage.VarTermPackage;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -81,6 +82,17 @@ public class VarTerm extends ArgTerm {
             if (!Character.isLetterOrDigit(c)) return false;
         }
         return true;
+    }
+
+    @Override
+    public LinearForm linearize() {
+        if (isGround()) return new LinearForm(Map.of(), Integer.parseInt(name));
+        return new LinearForm(Map.of(name, 1), 0);
+    }
+
+    @Override
+    protected int evalWithZeroVars() {
+        return isGround() ? Integer.parseInt(name) : 0;
     }
 
     @Override

@@ -11,11 +11,11 @@ import java.util.List;
 public class PyUtils {
 
     public record EvalEntry(
-            Object evaluatedNode,  // GGCPMNode or CPModel (known value)
-            List<int[]> argNodes,       // node index pairs / singles
-            double      evalValue,      // evaluated probability
-            int[]       tuple,          // substitution tuple
-            int         probFormIdx     // column position
+            Object evaluatedNode,   // GGCPMNode or CPModel (known value)
+            List<int[]> argNodes,   // node index pairs / singles
+            double evalValue,       // evaluated probability
+            int[] tuple,            // substitution tuple
+            int probFormIdx         // column position
     ) {}
 
     public static double[][] convertTo2D(double[] inputArray, int rows, int cols) {

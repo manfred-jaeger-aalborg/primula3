@@ -4,10 +4,12 @@ import RBNpackage.CatGnn;
 import jep.MainInterpreter;
 import jep.SharedInterpreter;
 import java.io.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class JepManager {
     // Thread-local to ensure each thread gets its own interpreter
     private static final ThreadLocal<SharedInterpreter> threadLocalInterpreter = new ThreadLocal<>();
+    private static final AtomicBoolean shutdownHookAdded = new AtomicBoolean(false);
 
     /**
      * Initializes the Jep interpreter by setting the Jep library path.
@@ -99,6 +101,8 @@ public class JepManager {
     }
 
     public static void addShutdownHook() {
-        Runtime.getRuntime().addShutdownHook(new Thread(JepManager::closeInterpreter));
+        if (shutdownHookAdded.compareAndSet(false, true)) {
+            Runtime.getRuntime().addShutdownHook(new Thread(JepManager::closeInterpreter));
+        }
     }
 }

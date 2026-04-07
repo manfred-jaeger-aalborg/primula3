@@ -56,16 +56,16 @@ public class TorchInputPf {
         cconstr = cc;
     }
 
-    public VarTerm[] freevars()
+    public ArgTerm[] freevars()
     {
-        VarTerm result[]={};
+        ArgTerm result[]={};
         // first collect all the free variables from the pfargs formulas
         for (int i = 0 ; i<pfargs.length ; i++)
             result = rbnutilities.arraymerge(result,pfargs[i].freevars());
         // add the variables in the constraint:
         result = rbnutilities.arraymerge(result,cconstr.freevars());
         // subtract the variables in quantvars
-        result = (VarTerm[]) rbnutilities.arraysubstraction(result,quantvars);
+        result = (ArgTerm[]) rbnutilities.arraysubstraction(result,quantvars);
         return result;
     }
 
@@ -162,8 +162,7 @@ public class TorchInputPf {
             subpfargs[i]=subpfargs[i].substitute(vars,args);
 
         subcconstr = (ProbFormBool)subcconstr.substitute(vars,args);
-        result = new TorchInputPf(subpfargs, subpfargsNode, subpfargsEdge, subpfargsEdgeAttr, newquantvarsAsArgTerm, subcconstr);
-        return result;
+        return new TorchInputPf(subpfargs, subpfargsNode, subpfargsEdge, subpfargsEdgeAttr, newquantvarsAsArgTerm, subcconstr);
     }
 
     public TorchInputPf substitute(String[] vars, ArgTerm[] args)
@@ -215,9 +214,7 @@ public class TorchInputPf {
         //Perform substitution on cconstr
         subcconstr = (ProbFormBool)subcconstr.substitute(vars,args);
 
-        result = new TorchInputPf(subpfargs, subpfargsNode, subpfargsEdge, subpfargsEdgeAttr, quantvars, subcconstr);
-
-        return result;
+        return new TorchInputPf(subpfargs, subpfargsNode, subpfargsEdge, subpfargsEdgeAttr, newquantvarsAsArgTerm, subcconstr);
     }
 
     public TorchInputPf substitute(ArgTerm[] vars, int[] args) {
@@ -243,8 +240,7 @@ public class TorchInputPf {
             subpfargsEdgeAttr[i]=subpfargs[idxShared];
 
         ProbFormBool subcconstr = (ProbFormBool)cconstr.substitute(vars,args);
-        TorchInputPf result = new TorchInputPf(subpfargs, subpfargsNode, subpfargsEdge, subpfargsEdgeAttr, quantvars, subcconstr);
-        return result;
+        return new TorchInputPf(subpfargs, subpfargsNode, subpfargsEdge, subpfargsEdgeAttr, quantvars, subcconstr);
     }
 
     public TorchInputPf substitute(ArgTerm[] vars, ArgTerm[] args)
@@ -285,8 +281,7 @@ public class TorchInputPf {
             subpfargsEdgeAttr[i]=subpfargs[idxShared];
 
         subcconstr = (ProbFormBool)subcconstr.substitute(vars,args);
-        result = new TorchInputPf(subpfargs, subpfargsNode, subpfargsEdge, subpfargsEdgeAttr, quantvars, subcconstr);
-        return result;
+        return new TorchInputPf(subpfargs, subpfargsNode, subpfargsEdge, subpfargsEdgeAttr, newquantvars, subcconstr);
     }
 
     public TreeSet<Rel> parentRels(){
@@ -309,11 +304,38 @@ public class TorchInputPf {
         }
     }
 
-    public String makeKey(ArgTerm[] vars, int[] args, Boolean nosub){
+//    public String makeKey(ArgTerm[] vars, int[] args, Boolean nosub){
+//        if (nosub) {
+//            return this.asString(Primula.CLASSICSYNTAX, 0, null, false, true);
+//        }
+//        else return this.substitute(vars,args).asString(Primula.CLASSICSYNTAX, 0, null, false, true);
+//    }
+
+    public String makeKey(ArgTerm[] vars, int[] args, Boolean nosub) {
+        int hash;
+
         if (nosub) {
-            return this.asString(Primula.CLASSICSYNTAX, 0, null, false, true);
+            hash = computeHash(this);
+        } else {
+            TorchInputPf sub = this.substitute(vars, args);
+            hash = computeHash(sub);
         }
-        else return this.substitute(vars,args).asString(Primula.CLASSICSYNTAX, 0, null, false, true);
+
+        return Integer.toHexString(hash);
+    }
+
+    private int computeHash(TorchInputPf obj) {
+        int result = 1;
+
+        result = 31 * result + Arrays.hashCode(obj.pfargs);
+        result = 31 * result + Arrays.hashCode(obj.quantvars);
+        result = 31 * result + Objects.hashCode(obj.cconstr);
+
+        result = 31 * result + Arrays.hashCode(obj.pfargsNode);
+        result = 31 * result + Arrays.hashCode(obj.pfargsEdge);
+        result = 31 * result + Arrays.hashCode(obj.pfargsEdgeAttr);
+
+        return result;
     }
 
     public String asString(int syntax, int depth, RelStruc A, boolean paramsAsValue,boolean usealias)
@@ -368,15 +390,19 @@ public class TorchInputPf {
 
         String key = "";
 
-        if (evaluated != null) {
-            key = this.makeKey(vars, tuple, false);
-            Object[] d = evaluated.get(key);
-            if (d != null) {
-                return d;
-            }
-        }
+//        if (evaluated != null) {
+//            key = this.makeKey(vars, tuple, false);
+//            Object[] d = evaluated.get(key);
+//            if (d != null) {
+//                return d;
+//            }
+//        }
 
         TorchInputPf subspfcf = this.substitute(vars, tuple);
+
+//        TorchInputPf subspfcf2 = this.substitute(new String[]{"v1"}, tuple);
+//        System.out.println(subspfcf2);
+
 
         int[][] subslist = tuplesSatisfyingCConstr(A, vars, tuple);
 

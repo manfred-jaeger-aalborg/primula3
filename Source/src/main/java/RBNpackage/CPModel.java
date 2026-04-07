@@ -157,7 +157,7 @@ public abstract class CPModel
 	throws RBNCompatibilityException;
 
     /** returns the free variables of the model */
-    public abstract VarTerm[] freevars();
+    public abstract ArgTerm[] freevars();
     
 //    /** returns the vector of (ground!) Atoms on which the
 //     * evaluation of the model depends
@@ -276,8 +276,12 @@ public abstract class CPModel
 
 	@Override
 	public int hashCode() {
-		String k = this.asString(Primula.CLASSICSYNTAX, 0, null, false, true);
-		return (k == null) ? 0 : k.hashCode();
+		return System.identityHashCode(this);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return this == obj;
 	}
 }
 

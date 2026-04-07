@@ -121,6 +121,45 @@ public class SmallDouble implements Comparator{
 		return result;
 	}
 
+	public static void multiplyInPlace(double[] sd1, double d2) {
+		double mainprod = sd1[0] * d2;
+		int addtofactor = (int) sd1[1];
+
+		if (mainprod > 0.0 && mainprod < 1.0E-20) {
+			mainprod *= 1.0E20;;
+			addtofactor += 20;
+		}
+
+		sd1[0] = mainprod;
+		sd1[1] = addtofactor;
+	}
+
+	public static void multiplyInPlace(double[] sd1, double[] sd2) {
+		double mainprod = sd1[0] * sd2[0];
+		int addtofactor = (int) (sd1[1] + sd2[1]);
+
+		if (mainprod > 0.0 && mainprod < 1.0E-20) {
+			mainprod *= 1.0E20;
+			addtofactor += 20;
+		}
+
+		sd1[0] = mainprod;
+		sd1[1] = addtofactor;
+	}
+
+	public static void multiplyInPlace(Double[] sd1, Double[] sd2) {
+		double mainprod = sd1[0] * sd2[0];
+		int addtofactor = (int) (sd1[1] + sd2[1]);
+
+		if (mainprod > 0.0 && mainprod < 1.0E-20) {
+			mainprod *= 1.0E20;
+			addtofactor += 20;
+		}
+
+		sd1[0] = mainprod;
+		sd1[1] = (double) addtofactor;
+	}
+
 	public static double[] multiply(double[] sd1, Double[] sd2){
 		double[] result = new double[2];
 		double mainprod = sd1[0]*sd2[0];

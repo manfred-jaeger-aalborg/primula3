@@ -1,10 +1,7 @@
 package RBNLearning;
 
-import PyManager.GnnPy;
+import PyManager.*;
 import PyManager.PyUtils.EvalEntry;
-import PyManager.TorchInputPf;
-import PyManager.TorchInputSpecs;
-import PyManager.TypedTorchPf;
 import RBNExceptions.RBNCompatibilityException;
 import RBNExceptions.RBNNaNException;
 import RBNpackage.*;
@@ -12,6 +9,7 @@ import RBNpackage.VarTermPackage.ArgTerm;
 import RBNpackage.VarTermPackage.VarTerm;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class GGGnnNode extends GGCPMNode {
 
@@ -28,10 +26,10 @@ public class GGGnnNode extends GGCPMNode {
     private final Map<String, Map<Integer, Integer>> nodeMappingByType = new HashMap<>();
     private final Map<String, Integer> nextIndexByType = new HashMap<>();
 
-    // "pftype|subkey" -> EvalEntry.
-    private final Map<String, EvalEntry> evalOfNodes = new HashMap<>();
-    private final Map<String, EvalEntry> evalOfEdgeAttr = new HashMap<>();
-    private final Map<String, EvalEntry> evalOfEdge = new HashMap<>();
+    // Internal storage: pftype -> subkey -> EvalEntry
+    private final Map<String, Map<String, EvalEntry>> evalOfNodesByType = new HashMap<>();
+    private final Map<String, Map<String, EvalEntry>> evalOfEdgeAttrByType = new HashMap<>();
+    private final Map<String, Map<String, EvalEntry>> evalOfEdgeByType = new HashMap<>();
 
     private final Set<GGCPMNode> childrenSet = new LinkedHashSet<>();
 
@@ -39,12 +37,15 @@ public class GGGnnNode extends GGCPMNode {
     private final Map<String, ArrayList<ArrayList<Integer>>> edge_dict = new HashMap<>();
     private final Map<String, double[][]> edgeAttr_dict = new HashMap<>();
 
-    /** Node-feature matrices, keyed by pftype. Rebuilt on every {@link #evaluate} call. */
-    public Map<String, double[][]>                    getXDict()        { return Collections.unmodifiableMap(x_dict);        }
-    /** Edge-index lists, keyed by pftype. Each value is [sourceList, destList]. */
-    public Map<String, ArrayList<ArrayList<Integer>>> getEdgeDict()     { return Collections.unmodifiableMap(edge_dict);     }
-    /** Edge-attribute matrices, keyed by pftype. Rebuilt on every {@link #evaluate} call. */
-    public Map<String, double[][]>                    getEdgeAttrDict() { return Collections.unmodifiableMap(edgeAttr_dict); }
+    public Map<String, double[][]> getXDict() {
+        return Collections.unmodifiableMap(x_dict);
+    }
+    public Map<String, ArrayList<ArrayList<Integer>>> getEdgeDict() {
+        return Collections.unmodifiableMap(edge_dict);
+    }
+    public Map<String, double[][]> getEdgeAttrDict() {
+        return Collections.unmodifiableMap(edgeAttr_dict);
+    }
 
     // Increment whenever input matrices logically change
     private long inputVersion = 0;
@@ -53,7 +54,8 @@ public class GGGnnNode extends GGCPMNode {
     private long cachedVersion = -1;
 
     // Cached output
-    private double[] cachedResult = null;;
+    private double[] cachedResult = null;
+    private static final Map<Long, Object[]> sharedDictCache = new ConcurrentHashMap<>();
 
     public GGGnnNode(GradientGraphO gg,
                      CPModel cpm,
@@ -79,7 +81,18 @@ public class GGGnnNode extends GGCPMNode {
         setGnnPy(cpmgnn.getGnnPy());
         getGnnPy().setGradientGraph(gg);
 
-        TypedTorchPf ttpf = cpmgnn.getGroundTypedTorchPf();
+        TypedTorchPf ttpf = cpmgnn.getTypedTorchPf();
+
+//        boolean optimizeOneInput = cpmgnn.isOptimizeForOneInput();
+        // if true, we should construct the input matrix for one instance only and share
+        if (cpmgnn.isOptimizeForOneInput()) {
+            long key = sharedDictKey();
+            Object[] cached = sharedDictCache.get(key);
+            if (cached != null) {
+                restoreMatricesFromCache(cached);
+                return;
+            }
+        }
 
         // construct the children of this Gradient Graph node by evaluating all the pf for node, edge, and edge attr
 
@@ -93,13 +106,17 @@ public class GGGnnNode extends GGCPMNode {
                 for (int i = 0; i < tip.getPfargsEdge().length; i++) {
                     evaluateForAllTuples(
                             Mode.EDGE, pftype, subslist, tip.getPfargsEdgeAt(i),
-                            evalOfEdge, tip, gg, i, allnodes, A, I,
+                            evalOfEdgeByType, tip, gg, i, allnodes, A, I,
                             inputcaseno, observcaseno, parameters,
                             useCurrentPvals, mapatoms, evaluated,
                             true);
                 }
             }
         }
+
+        edge_dict.clear();
+        buildEdgeMatrices();
+        pruneNonNaN(evalOfEdgeByType);
 
         // evaluate all the atom entries whose node ids are present in the subgraph
         for (String pftype : ttpf.getTypedNames()) {
@@ -109,22 +126,27 @@ public class GGGnnNode extends GGCPMNode {
                 for (int i = 0; i < tip.getPfargsNode().length; i++) {
                     evaluateForAllTuples(
                             Mode.NODE, pftype, subslist, tip.getPfargsNodeAt(i),
-                            evalOfNodes, tip, gg, i, allnodes, A, I,
+                            evalOfNodesByType, tip, gg, i, allnodes, A, I,
                             inputcaseno, observcaseno, parameters,
                             useCurrentPvals, mapatoms, evaluated,
-                            false);
+                            true);
                 }
 
                 for (int i = 0; i < tip.getPfargsEdgeAttr().length; i++) {
                     evaluateForAllTuples(
                             Mode.EDGE_ATTR, pftype, subslist, tip.getPfargsEdgeAttrAt(i),
-                            evalOfEdgeAttr, tip, gg, i, allnodes, A, I,
+                            evalOfEdgeAttrByType, tip, gg, i, allnodes, A, I,
                             inputcaseno, observcaseno, parameters,
                             useCurrentPvals, mapatoms, evaluated,
                             false);
                 }
             }
         }
+
+
+        edgeAttr_dict.clear();
+        buildEdgeAttrMatrices(0);
+        pruneNonNaN(evalOfEdgeAttrByType);
 
         // evaluate only this node
         if (nodeMappingByType.isEmpty()) {
@@ -135,7 +157,7 @@ public class GGGnnNode extends GGCPMNode {
                     for (int i = 0; i < tip.getPfargsNode().length; i++) {
                         evaluateForAllTuples(
                                 Mode.NODE, pftype, subslist, tip.getPfargsNodeAt(i),
-                                evalOfNodes, tip, gg, i, allnodes, A, I,
+                                evalOfNodesByType, tip, gg, i, allnodes, A, I,
                                 inputcaseno, observcaseno, parameters,
                                 useCurrentPvals, mapatoms, evaluated,
                                 true);
@@ -144,7 +166,22 @@ public class GGGnnNode extends GGCPMNode {
             }
         }
 
-        buildInputMatrices(0);
+        x_dict.clear();
+        buildNodeFeatureMatrices(0);
+
+        if (cpmgnn.isOptimizeForOneInput()) {
+            long key = sharedDictKey();
+            Object[] cached = sharedDictCache.get(key);
+            if (cached != null) {
+                restoreMatricesFromCache(cached);
+            } else {
+                sharedDictCache.put(key, snapshotMatricesForCache());
+            }
+        }
+
+        inputVersion++;
+        // only keep NaN entries in the eval maps since those are the only ones we need to resolve during gradient computation
+        retainOnlyNaNEntries();
     }
 
 
@@ -153,7 +190,7 @@ public class GGGnnNode extends GGCPMNode {
             String pftype,
             int[][] tuples,
             CPModel nextsubpf,
-            Map<String, EvalEntry> target,
+            Map<String, Map<String, EvalEntry>> target,
             TorchInputPf tip,
             GradientGraphO gg,
             int probFormIdx,
@@ -187,18 +224,91 @@ public class GGGnnNode extends GGCPMNode {
                     mapatoms, false, evaluated,
                     parameters, ProbForm.RETURN_ARRAY, true, null)[0];
 
-            String key = pftype + "|" + groundsubpf.makeKey(A);
+            String subkey = groundsubpf.makeKey(A);
+
+            String internedPftype = pftype.intern();
+            Map<String, EvalEntry> typeMap = target.computeIfAbsent(internedPftype, k -> new HashMap<>());
 
             if (Double.isNaN(evalValue)) {
                 GGCPMNode child = GGCPMNode.constructGGPFN(gg, groundsubpf, allnodes, A, I, inputcaseno, observcaseno, parameters, false, false, "", mapatoms, evaluated);
+                typeMap = target.computeIfAbsent(internedPftype, k -> new HashMap<>());
                 if (childrenSet.add(child)) {
                     children.add(child);
-                    target.put(key, new EvalEntry(child, argNodes, evalValue, tuple, probFormIdx));
+                    typeMap.put(subkey, new EvalEntry(child, argNodes, evalValue, tuple, probFormIdx));
                 }
                 child.addToParents(this);
-            } else {
-                target.put(key, new EvalEntry(groundsubpf, argNodes, evalValue, tuple, probFormIdx));
             }
+            else {
+                typeMap.put(subkey, new EvalEntry(null, argNodes, evalValue, tuple, probFormIdx));
+            }
+        }
+    }
+
+    private void clearEvalMaps() {
+        evalOfNodesByType.clear();
+        evalOfEdgeAttrByType.clear();
+        evalOfEdgeByType.clear();
+    }
+
+    private long sharedDictKey() {
+        return this.cpmgnn.getGnnInputs().hashCode();
+    }
+
+    private void restoreMatricesFromCache(Object[] cached) {
+        x_dict.clear();
+        x_dict.putAll((Map<String, double[][]>) cached[0]);
+        edge_dict.clear();
+        edge_dict.putAll((Map<String, ArrayList<ArrayList<Integer>>>) cached[1]);
+        edgeAttr_dict.clear();
+        edgeAttr_dict.putAll((Map<String, double[][]>) cached[2]);
+        nodeMappingByType.clear();
+        nodeMappingByType.putAll((Map<String, Map<Integer, Integer>>) cached[3]);
+    }
+
+    private Object[] snapshotMatricesForCache() {
+        Map<String, double[][]> xSnap = new HashMap<>();
+        for (Map.Entry<String, double[][]> e : x_dict.entrySet()) {
+            double[][] src = e.getValue();
+            double[][] copy = new double[src.length][];
+            for (int i = 0; i < src.length; i++) copy[i] = src[i].clone();
+            xSnap.put(e.getKey(), copy);
+        }
+
+        Map<String, ArrayList<ArrayList<Integer>>> edgeSnap = new HashMap<>();
+        for (Map.Entry<String, ArrayList<ArrayList<Integer>>> e : edge_dict.entrySet()) {
+            ArrayList<ArrayList<Integer>> lists = new ArrayList<>();
+            for (ArrayList<Integer> list : e.getValue()) lists.add(new ArrayList<>(list));
+            edgeSnap.put(e.getKey(), lists);
+        }
+
+        Map<String, double[][]> eaSnap = new HashMap<>();
+        for (Map.Entry<String, double[][]> e : edgeAttr_dict.entrySet()) {
+            double[][] src = e.getValue();
+            double[][] copy = new double[src.length][];
+            for (int i = 0; i < src.length; i++) copy[i] = src[i].clone();
+            eaSnap.put(e.getKey(), copy);
+        }
+
+        return new Object[]{xSnap, edgeSnap, eaSnap, nodeMappingByType};
+    }
+
+    public static void clearSharedDictCache() {
+        sharedDictCache.clear();
+    }
+
+    // Call this right after buildInputMatrices(0) in the constructor
+    private void retainOnlyNaNEntries() {
+        pruneNonNaN(evalOfNodesByType);
+        pruneNonNaN(evalOfEdgeAttrByType);
+        pruneNonNaN(evalOfEdgeByType);
+    }
+
+    private static void pruneNonNaN(Map<String, Map<String, EvalEntry>> map) {
+        Iterator<Map.Entry<String, Map<String, EvalEntry>>> outer = map.entrySet().iterator();
+        while (outer.hasNext()) {
+            Map<String, EvalEntry> inner = outer.next().getValue();
+            inner.entrySet().removeIf(e -> !Double.isNaN(e.getValue().evalValue()));
+            if (inner.isEmpty()) outer.remove();
         }
     }
 
@@ -207,9 +317,9 @@ public class GGGnnNode extends GGCPMNode {
     private List<int[]> resolveArgNodes(Mode mode, CPModel groundsubpf, CPModel nextsubpf, int[] tuple, ArgTerm[] quantvars)
             throws RBNCompatibilityException {
         return switch (mode) {
-            case NODE      -> resolveNodeArgs     (groundsubpf, nextsubpf, tuple, quantvars);
-            case EDGE_ATTR -> resolveEdgeAttrArgs (groundsubpf, tuple);
-            case EDGE      -> resolveEdgeArgs     (groundsubpf);
+            case NODE -> resolveNodeArgs(groundsubpf, nextsubpf, tuple, quantvars);
+            case EDGE_ATTR -> resolveEdgeAttrArgs(groundsubpf, tuple);
+            case EDGE -> resolveEdgeArgs(groundsubpf);
         };
     }
 
@@ -249,20 +359,15 @@ public class GGGnnNode extends GGCPMNode {
         return tuple[1];
     }
 
-
     private List<int[]> resolveEdgeAttrArgs(CPModel groundsubpf, int[] tuple) {
-        // edge-attribute rows are identified by their position in the tuple list
-        // store the raw index (j) only for 2-argument atoms, otherwise -1
-        int idx;
-        if (groundsubpf instanceof ProbFormAtom pfa)
-            idx = pfa.getArguments().length == 2 ? Arrays.hashCode(tuple) : -1;
-        else if (groundsubpf instanceof ProbFormMacroCall pmc)
-            idx = pmc.args().length == 2 ? Arrays.hashCode(tuple) : -1;
-        else if (groundsubpf instanceof ProbFormConstant)
-            idx = -1;
-        else
-            idx = Arrays.hashCode(tuple);
-        return List.of(new int[]{idx});
+        if (groundsubpf instanceof ProbFormConstant)
+            return List.of(new int[]{-1});
+
+        // For any 2-argument form, store the raw node ids as (src, dst)
+        if (tuple.length == 2)
+            return List.of(new int[]{tuple[0], tuple[1]});
+
+        return List.of(new int[]{-1});
     }
 
     private List<int[]> resolveEdgeArgs(CPModel groundsubpf) throws RBNCompatibilityException {
@@ -288,41 +393,54 @@ public class GGGnnNode extends GGCPMNode {
                 "EDGEGRAPH supports ProbFormAtom or ProbFormBoolComposite with 2 arguments");
     }
 
+    // remap all node ids in argNodes to compact indices starting from 0, separately for each type, and according to the nodes present in the subgraph of this GGGnnNode
     private boolean remapToCompactIndices(Mode mode, List<int[]> argNodes, String pftype, CPModel nextsubpf, boolean assignNewIndices) {
         int compIdx = 0;
         for (int[] argNode : argNodes) {
             if (argNode[0] < 0) { compIdx++; continue; }
 
-            if (mode != Mode.EDGE) {
-                if (assignNewIndices) {
-                    argNode[0] = getOrAssignNodeIndex(pftype, argNode[0]);
-                } else {
-                    Integer mapped = getNodeIndexIfPresent(pftype, argNode[0]);
-                    if (mapped == null) return false;  // outside this subgraph, skip tuple
-                    argNode[0] = mapped;
+            switch (mode) {
+                case NODE -> {
+                    if (assignNewIndices) {
+                        argNode[0] = getOrAssignNodeIndex(pftype, argNode[0]);
+                    } else {
+                        Integer mapped = getNodeIndexIfPresent(pftype, argNode[0]);
+                        if (mapped == null) return false;  // outside this subgraph, skip tuple
+                        argNode[0] = mapped;
+                    }
                 }
-            } else {
-                if (nextsubpf instanceof ProbFormAtom pfa && pfa.getArguments().length == 2) {
-                    argNode[0] = assignNewIndices
-                            ? getOrAssignNodeIndex(pfa.getRelation().getTypes()[0].getName(), argNode[0])
-                            : lookupOrFail(pfa.getRelation().getTypes()[0].getName(), argNode[0]);
-                    argNode[1] = assignNewIndices
-                            ? getOrAssignNodeIndex(pfa.getRelation().getTypes()[1].getName(), argNode[1])
-                            : lookupOrFail(pfa.getRelation().getTypes()[1].getName(), argNode[1]);
+                case EDGE_ATTR -> {
+                    if (argNode.length == 2 && argNode[0] >= 0) {
+                        Integer src = getNodeIndexIfPresent(pftype, argNode[0]);
+                        Integer dst = getNodeIndexIfPresent(pftype, argNode[1]);
+                        if (src == null || dst == null) return false;
+                        argNode[0] = src;
+                        argNode[1] = dst;
+                    }
+                }
+                case EDGE -> {
+                    if (nextsubpf instanceof ProbFormAtom pfa && pfa.getArguments().length == 2) {
+                        argNode[0] = assignNewIndices
+                                ? getOrAssignNodeIndex(pfa.getRelation().getTypes()[0].getName(), argNode[0])
+                                : lookupOrFail(pfa.getRelation().getTypes()[0].getName(), argNode[0]);
+                        argNode[1] = assignNewIndices
+                                ? getOrAssignNodeIndex(pfa.getRelation().getTypes()[1].getName(), argNode[1])
+                                : lookupOrFail(pfa.getRelation().getTypes()[1].getName(), argNode[1]);
 
-                    if (argNode[0] < 0 || argNode[1] < 0) return false;
+                        if (argNode[0] < 0 || argNode[1] < 0) return false;
 
-                } else if (nextsubpf instanceof ProbFormBoolComposite composite
-                        && composite.componentAt(compIdx) instanceof ProbFormBoolAtom atom) {
+                    } else if (nextsubpf instanceof ProbFormBoolComposite composite
+                            && composite.componentAt(compIdx) instanceof ProbFormBoolAtom atom) {
 
-                    argNode[0] = assignNewIndices
-                            ? getOrAssignNodeIndex(atom.getRelation().getTypes()[0].getName(), argNode[0])
-                            : lookupOrFail(atom.getRelation().getTypes()[0].getName(), argNode[0]);
-                    argNode[1] = assignNewIndices
-                            ? getOrAssignNodeIndex(atom.getRelation().getTypes()[1].getName(), argNode[1])
-                            : lookupOrFail(atom.getRelation().getTypes()[1].getName(), argNode[1]);
+                        argNode[0] = assignNewIndices
+                                ? getOrAssignNodeIndex(atom.getRelation().getTypes()[0].getName(), argNode[0])
+                                : lookupOrFail(atom.getRelation().getTypes()[0].getName(), argNode[0]);
+                        argNode[1] = assignNewIndices
+                                ? getOrAssignNodeIndex(atom.getRelation().getTypes()[1].getName(), argNode[1])
+                                : lookupOrFail(atom.getRelation().getTypes()[1].getName(), argNode[1]);
 
-                    if (argNode[0] < 0 || argNode[1] < 0) return false;
+                        if (argNode[0] < 0 || argNode[1] < 0) return false;
+                    }
                 }
             }
             compIdx++;
@@ -345,6 +463,11 @@ public class GGGnnNode extends GGCPMNode {
                 evaluate(i);
             return null;
         }
+
+        if (this.depends_on_sample && is_evaluated_val_for_samples[sno])
+            return this.values_for_samples[sno];
+        if (!this.depends_on_sample && is_evaluated_val_for_samples[0])
+            return this.values_for_samples[0];
 
         double[] result = null;
 
@@ -391,6 +514,11 @@ public class GGGnnNode extends GGCPMNode {
         Gradient result = gradient_for_samples.get(idx);
         result.reset();
 
+        // update matrices with the current sno so that NaN entries
+        // (child nodes) are resolved against the correct sample
+        resolveNaNEntries(sno);
+        inputVersion++;
+
         Object[] outres = gnnPy.GGevaluate_gnnGradients(sno, A, inst, cpmgnn, this);
         @SuppressWarnings("unchecked")
         Map<String, double[][]> grads = (Map<String, double[][]>) outres[1];
@@ -408,17 +536,107 @@ public class GGGnnNode extends GGCPMNode {
         edge_dict.clear();
         edgeAttr_dict.clear();
 
-        buildEdgeMatrices();          // topology first — no sno needed
+        buildEdgeMatrices();          // topology first, no sno needed
         buildNodeFeatureMatrices(init);
         buildEdgeAttrMatrices(init);
         inputVersion++;
+    }
+
+    // used to update only the elements that are NaN in the matrices
+    // when computing the gradients, the new elements are not updated like MAP
+    // we need to call the evaluate function
+    private void resolveNaNEntries(Integer sno) {
+        resolveNaNNodes(sno);
+        resolveNaNEdgeAttrs(sno);
+    }
+
+    private void resolveNaNNodes(Integer sno) {
+        for (TorchInputSpecs spec : cpmgnn.getGnnInputs()) {
+            String pftype = spec.getType();
+            Map<String, EvalEntry> nanEntries = evalOfNodesByType.get(pftype);
+            if (nanEntries == null || nanEntries.isEmpty()) continue;
+
+            double[][] mat = x_dict.get(pftype);
+            if (mat == null) continue;
+
+            @SuppressWarnings("unchecked")
+            List<Rel> nodeAttrs = (List<Rel>) spec.getNodeAttributes();
+            if (nodeAttrs == null || nodeAttrs.isEmpty()) continue;
+
+            // pre-compute column offsets once
+            int[] startIndices = computeStartIndices(nodeAttrs);
+
+            for (EvalEntry entry : nanEntries.values()) {
+                double value = resolveEvalValue(entry, sno);
+                if (Double.isNaN(value)) continue;
+
+                int argNode = entry.argNodes().get(0)[0];
+                int pfIdx = (int) entry.probFormIdx();
+                Rel r = nodeAttrs.get(pfIdx);
+
+                if (argNode < 0) {
+                    for (int row = 0; row < mat.length; row++)
+                        writeFeatureCell(mat, row, startIndices[pfIdx], (int) value, r, cpmgnn.isOneHotEncoding());
+                } else {
+                    writeFeatureCell(mat, argNode, startIndices[pfIdx], (int) value, r, cpmgnn.isOneHotEncoding());
+                }
+            }
+        }
+    }
+
+    private void resolveNaNEdgeAttrs(Integer sno) {
+        for (TorchInputSpecs spec : cpmgnn.getGnnInputs()) {
+            String pftype = spec.getType();
+            Map<String, EvalEntry> nanEntries = evalOfEdgeAttrByType.get(pftype);
+            if (nanEntries == null || nanEntries.isEmpty()) continue;
+
+            double[][] mat = edgeAttr_dict.get(pftype);
+            if (mat == null) continue;
+
+            @SuppressWarnings("unchecked")
+            List<Rel> edgeAttrs = (List<Rel>) spec.getEdgeAttributes();
+            if (edgeAttrs == null || edgeAttrs.isEmpty()) continue;
+
+            int[] startIndices = computeStartIndices(edgeAttrs);
+            String edgeKey = spec.getEdgeRelation().name();
+
+            for (EvalEntry entry : nanEntries.values()) {
+                double value = resolveEvalValue(entry, sno);
+                if (Double.isNaN(value)) continue;
+
+                int pfIdx = (int) entry.probFormIdx();
+                Rel r = edgeAttrs.get(pfIdx);
+                int[] endpoints = entry.argNodes().get(0);
+
+                if (endpoints.length < 2 || endpoints[0] < 0) {
+                    for (int row = 0; row < mat.length; row++)
+                        writeFeatureCell(mat, row, startIndices[pfIdx], (int) value, r, cpmgnn.isOneHotEncoding());
+                } else {
+                    int edgeRow = findEdgeRow(edgeKey, endpoints[0], endpoints[1]);
+                    if (edgeRow >= 0)
+                        writeFeatureCell(mat, edgeRow, startIndices[pfIdx], (int) value, r, cpmgnn.isOneHotEncoding());
+                }
+            }
+        }
+    }
+
+    private int[] computeStartIndices(List<Rel> attrs) {
+        int[] starts = new int[attrs.size()];
+        int offset = 0;
+        for (int i = 0; i < attrs.size(); i++) {
+            starts[i] = offset;
+            Rel r = attrs.get(i);
+            offset += (cpmgnn.isOneHotEncoding() && r instanceof CatRel) ? (int) r.numvals() : 1;
+        }
+        return starts;
     }
 
     private void buildEdgeMatrices() {
         for (TorchInputSpecs spec : cpmgnn.getGnnInputs()) {
             String pftype = spec.getType();
             String edgeKey = spec.getEdgeRelation().name();   // matches edgesToDict / GGconstructInputGraph
-            Map<String, EvalEntry> edgeTable = getEntriesForType(evalOfEdge, pftype);
+            // Direct lookup into the nested map — no HashMap copy, no prefix scan
+            Map<String, EvalEntry> edgeTable = evalOfEdgeByType.getOrDefault(pftype, Collections.emptyMap());
 
             ArrayList<Integer> sources = new ArrayList<>();
             ArrayList<Integer> dests = new ArrayList<>();
@@ -469,7 +687,8 @@ public class GGGnnNode extends GGCPMNode {
                 startIndex += (r instanceof CatRel) ? (int) r.numvals() : 1;
             }
 
-            Map<String, EvalEntry> nodesTable = getEntriesForType(evalOfNodes, pftype);
+            // Direct lookup — no HashMap copy, no prefix scan
+            Map<String, EvalEntry> nodesTable = evalOfNodesByType.getOrDefault(pftype, Collections.emptyMap());
             int uniqueNodes = nextIndexByType.getOrDefault(pftype, 0);
             if (uniqueNodes == 0) uniqueNodes = 1;  // always allocate at least one row
 
@@ -481,6 +700,10 @@ public class GGGnnNode extends GGCPMNode {
             for (EvalEntry entry : nodesTable.values()) {
                 int argNode = entry.argNodes().get(0)[0];
                 double value = resolveEvalValue(entry, sno);
+                if (Double.isNaN(value)) {
+                    // stop constructing for now, we need to wait for the child node to be evaluated to get the value
+                    continue;
+                }
 
                 int pfIdx = (int) entry.probFormIdx();
                 int startingIdx = startIndices[pfIdx];
@@ -526,20 +749,20 @@ public class GGGnnNode extends GGCPMNode {
                 startIndex += (r instanceof CatRel) ? (int) r.numvals() : 1;
             }
 
-            // Number of edges for this type — sourced from the already-built edge_dict.
-            // Key must match buildEdgeMatrices: edgeRelation.name(), not pftype.
             String edgeKey = spec.getEdgeRelation().name();
             ArrayList<ArrayList<Integer>> edgeList = edge_dict.get(edgeKey);
-            int num_edges = (edgeList != null && !edgeList.isEmpty())
-                    ? edgeList.get(0).size() : 1;
+            int num_edges = (edgeList != null && !edgeList.isEmpty()) ? edgeList.get(0).size() : 1;
             if (num_edges == 0) num_edges = 1;
 
-            Map<String, EvalEntry> edgeAttrTable = getEntriesForType(evalOfEdgeAttr, pftype);
+            Map<String, EvalEntry> edgeAttrTable = evalOfEdgeAttrByType.getOrDefault(pftype, Collections.emptyMap());
             double[][] matrix = createZeroMatrix(num_edges, num_col);
 
             for (EvalEntry entry : edgeAttrTable.values()) {
-                int argEdge = entry.argNodes().get(0)[0];
+                int[] endpoints = entry.argNodes().get(0);
                 double value = resolveEvalValue(entry, sno);
+
+                if (Double.isNaN(value)) // stop constructing for now, we need to wait for the child node to be evaluated to get the value
+                    continue;
 
                 int pfIdx = (int) entry.probFormIdx();
                 int startingIdx = startIndices[pfIdx];
@@ -553,11 +776,14 @@ public class GGGnnNode extends GGCPMNode {
                     cellValue = value;
                 }
 
-                if (argEdge < 0) {
+                if (endpoints.length < 2 || endpoints[0] < 0) {
+                    // constant — broadcast to all edge rows
                     for (int row = 0; row < num_edges; row++)
                         matrix[row][col] = cellValue;
                 } else {
-                    matrix[argEdge][col] = cellValue;
+                    int edgeRow = findEdgeRow(edgeKey, endpoints[0], endpoints[1]);
+                    if (edgeRow >= 0)
+                        matrix[edgeRow][col] = cellValue;
                 }
             }
             edgeAttr_dict.put(pftype, matrix);
@@ -572,7 +798,12 @@ public class GGGnnNode extends GGCPMNode {
         double value = entry.evalValue();
         if (Double.isNaN(value)) {
             GGCPMNode child = (GGCPMNode) entry.evaluatedNode();
-            value = child.evaluate(sno)[0];
+            try {
+                // can happen that the child cannot be evaluated because the child is not still initialized
+                value = child.evaluate(sno)[0];
+            } catch (Exception e) {
+                value = Double.NaN;
+            }
         }
         return value;
     }
@@ -584,11 +815,12 @@ public class GGGnnNode extends GGCPMNode {
     // this function returns the next available index starting from zero
     public int getOrAssignNodeIndex(String type, int nodeId) {
         Objects.requireNonNull(type, "type must not be null");
+        String internedType = type.intern();
         return nodeMappingByType
-                .computeIfAbsent(type, t -> new HashMap<>())
+                .computeIfAbsent(internedType, t -> new HashMap<>())
                 .computeIfAbsent(nodeId, id -> {
-                    int next = nextIndexByType.getOrDefault(type, 0);
-                    nextIndexByType.put(type, next + 1);
+                    int next = nextIndexByType.getOrDefault(internedType, 0);
+                    nextIndexByType.put(internedType, next + 1);
                     return next;
                 });
     }
@@ -598,35 +830,11 @@ public class GGGnnNode extends GGCPMNode {
         return mapping != null ? mapping.get(nodeId) : null;
     }
 
-    // Maps use composite keys "pftype|subkey".
-    // Use getEntriesForType() to get only entries for a specific pftype,
-    // with the prefix already stripped
-    /** Keys use the composite form {@code "pftype|subkey"}. */
-    public Map<String, EvalEntry> getEvalOfNodes()    { return Collections.unmodifiableMap(evalOfNodes);    }
-    public Map<String, EvalEntry> getEvalOfEdgeAttr() { return Collections.unmodifiableMap(evalOfEdgeAttr); }
-    public Map<String, EvalEntry> getEvalOfEdge()     { return Collections.unmodifiableMap(evalOfEdge);     }
-
-    public static Map<String, EvalEntry> getEntriesForType(Map<String, EvalEntry> map, String pftype) {
-        if (map == null || pftype == null) return Collections.emptyMap();
-        String prefix = pftype + "|";
-        Map<String, EvalEntry> result = new HashMap<>();
-        for (Map.Entry<String, EvalEntry> e : map.entrySet())
-            if (e.getKey().startsWith(prefix))
-                result.put(e.getKey().substring(prefix.length()), e.getValue());
-        return result;
-    }
-
-    // -------------------------------------------------------------------------
-    // Incremental matrix updates (called from GnnPy.setCurrentInstPy)
-    // -------------------------------------------------------------------------
-
     /**
+     * Incremental matrix updates (called from GnnPy.setCurrentInstPy)
      * Updates exactly the one cell (or one-hot slice) that corresponds to
-     * {@code currentMaxNode}'s atom in whichever of the three feature matrices
-     * owns it.  Much cheaper than a full {@link #buildInputMatrices} rebuild.
-     *
-     * @param currentInst  the new categorical / boolean / numeric value
-     * @param currentMaxNode  the atom node whose value just changed
+     * currentMaxNode's atom in whichever of the three feature matrices
+     * owns it. This saves computations instead of reconstructing the entire matrices every time an atom changes
      */
     public void setCurrentInstPy(int currentInst, GGAtomMaxNode currentMaxNode) {
         Rel rel = currentMaxNode.myatom().rel();
@@ -638,13 +846,11 @@ public class GGGnnNode extends GGCPMNode {
     }
 
     /**
-     * Updates a cell in {@link #x_dict} when {@code rel} is a node-attribute relation
-     * (unary atom, 1-argument).
-     *
-     * @return {@code true} if the update was handled and the caller should stop.
+     * Updates a cell in x_dict when rel is a node-attribute relation
+     * (unary atom, 1-argument)
+     * return early if the GGAtomMaxNode's atom is not in the GnnInputs or if the corresponding matrix
      */
-    private boolean updateNodeAttribute(Rel rel, GGAtomMaxNode currentMaxNode,
-                                        int currentInst, boolean oneHot) {
+    private boolean updateNodeAttribute(Rel rel, GGAtomMaxNode currentMaxNode, int currentInst, boolean oneHot) {
         if (currentMaxNode.myatom().args().length != 1) return false;
 
         for (TorchInputSpecs spec : cpmgnn.getGnnInputs()) {
@@ -673,11 +879,9 @@ public class GGGnnNode extends GGCPMNode {
     }
 
     /**
-     * Updates {@link #edge_dict} when {@code rel} is a binary edge-defining relation.
-     * Adds or removes the edge (src→dst) based on {@code currentInst}:
-     * 1 / true → ensure the edge is present; 0 / false → ensure it is absent.
-     *
-     * @return {@code true} if the update was handled and the caller should stop.
+     * Updates the edge_index when rel is a binary edge-defining relation.
+     * Adds or removes the edge (src->dst) based on currentInst:
+     * 1 / true -> ensure the edge is present; 0 / false -> ensure it is absent.
      */
     private boolean updateEdgeIndex(Rel rel, GGAtomMaxNode currentMaxNode, int currentInst) {
         if (currentMaxNode.myatom().args().length != 2) return false;
@@ -694,7 +898,7 @@ public class GGGnnNode extends GGCPMNode {
             int rawSrc = currentMaxNode.myatom().args()[0];
             int rawDst = currentMaxNode.myatom().args()[1];
 
-            // Translate original ids to compact indices.
+            // Translate original ids to compact indices
             String srcType = rel.getTypes()[0].getName();
             String dstType = rel.getTypes()[1].getName();
             Integer src = getNodeIndexIfPresent(srcType, rawSrc);
@@ -704,7 +908,7 @@ public class GGGnnNode extends GGCPMNode {
             ArrayList<Integer> sources = edgeList.get(0);
             ArrayList<Integer> dests = edgeList.get(1);
 
-            // Find existing position (if any).
+            // Find existing position (if any)
             int existingIdx = -1;
             for (int i = 0; i < sources.size(); i++) {
                 if (sources.get(i) == src && dests.get(i) == dst) {
@@ -726,12 +930,7 @@ public class GGGnnNode extends GGCPMNode {
         return false;
     }
 
-    /**
-     * Updates a cell in {@link #edgeAttr_dict} when {@code rel} is an edge-attribute
-     * relation (binary atom, 2-arguments).
-     *
-     * @return {@code true} if the update was handled and the caller should stop.
-     */
+    // Updates a cell in edgeAttr_dict when rel is an edge-attribute relation (binary atom, 2-arguments)
     private boolean updateEdgeAttribute(Rel rel, GGAtomMaxNode currentMaxNode, int currentInst, boolean oneHot) {
         if (currentMaxNode.myatom().args().length != 2) return false;
 
@@ -747,7 +946,7 @@ public class GGGnnNode extends GGCPMNode {
                     double[][] mat = edgeAttr_dict.get(spec.getType());
                     if (mat == null) return false;
 
-                    // Locate the edge row by matching compact src/dst in edge_dict.
+                    // Locate the edge row by matching compact src/dst in edge_dict
                     int rawSrc = currentMaxNode.myatom().args()[0];
                     int rawDst = currentMaxNode.myatom().args()[1];
                     String srcType = rel.getTypes()[0].getName();
@@ -822,9 +1021,9 @@ public class GGGnnNode extends GGCPMNode {
         GGGnnNode o = (GGGnnNode) obj;
         return Objects.equals(nodeMappingByType, o.nodeMappingByType)
                 && Objects.equals(nextIndexByType, o.nextIndexByType)
-                && Objects.equals(evalOfNodes, o.evalOfNodes)
-                && Objects.equals(evalOfEdgeAttr, o.evalOfEdgeAttr)
-                && Objects.equals(evalOfEdge, o.evalOfEdge);
+                && Objects.equals(evalOfNodesByType, o.evalOfNodesByType)
+                && Objects.equals(evalOfEdgeAttrByType, o.evalOfEdgeAttrByType)
+                && Objects.equals(evalOfEdgeByType, o.evalOfEdgeByType);
     }
 
     @Override
@@ -834,9 +1033,9 @@ public class GGGnnNode extends GGCPMNode {
         h = 31 * h + Objects.hashCode(gnnPy);
         h = 31 * h + Objects.hashCode(nodeMappingByType);
         h = 31 * h + Objects.hashCode(nextIndexByType);
-        h = 31 * h + Objects.hashCode(evalOfNodes);
-        h = 31 * h + Objects.hashCode(evalOfEdgeAttr);
-        h = 31 * h + Objects.hashCode(evalOfEdge);
+        h = 31 * h + Objects.hashCode(evalOfNodesByType);
+        h = 31 * h + Objects.hashCode(evalOfEdgeAttrByType);
+        h = 31 * h + Objects.hashCode(evalOfEdgeByType);
         return h;
     }
 }

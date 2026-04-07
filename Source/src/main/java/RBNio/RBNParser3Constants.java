@@ -55,19 +55,25 @@ public interface RBNParser3Constants {
   /** RegularExpression Id. */
   int USINGTORCH = 47;
   /** RegularExpression Id. */
-  int Name = 48;
+  int OPTIMINPUT = 48;
   /** RegularExpression Id. */
-  int Path = 49;
+  int Name = 49;
   /** RegularExpression Id. */
-  int MULT = 50;
+  int Path = 50;
   /** RegularExpression Id. */
-  int PLUS = 51;
+  int MULT = 51;
   /** RegularExpression Id. */
-  int MINUS = 52;
+  int PLUS = 52;
   /** RegularExpression Id. */
-  int Digits = 53;
+  int MINUS = 53;
   /** RegularExpression Id. */
-  int NonNegNumber = 54;
+  int GT = 54;
+  /** RegularExpression Id. */
+  int LT = 55;
+  /** RegularExpression Id. */
+  int Digits = 56;
+  /** RegularExpression Id. */
+  int NonNegNumber = 57;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -124,11 +130,14 @@ public interface RBNParser3Constants {
     "<EDGEGRAPH>",
     "<EDGEATTR>",
     "<USINGTORCH>",
+    "<OPTIMINPUT>",
     "<Name>",
     "<Path>",
     "\"*\"",
     "\"+\"",
     "\"-\"",
+    "\">\"",
+    "\"<\"",
     "<Digits>",
     "<NonNegNumber>",
   };

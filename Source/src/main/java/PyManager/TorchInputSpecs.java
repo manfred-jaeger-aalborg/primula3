@@ -56,4 +56,24 @@ public class TorchInputSpecs {
     public String getType() {
         return type;
     }
+
+    @Override
+    public int hashCode() {
+        int result = (type != null ? type.hashCode() : 0);
+        result = 31 * result + (nodeAttributes != null ? nodeAttributes.hashCode() : 0);
+        result = 31 * result + (edgeRelation != null ? edgeRelation.hashCode() : 0);
+        result = 31 * result + (edgeAttributes != null ? edgeAttributes.hashCode() : 0);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof TorchInputSpecs)) return false;
+        TorchInputSpecs that = (TorchInputSpecs) o;
+        return Objects.equals(type, that.type) &&
+                Objects.equals(nodeAttributes, that.nodeAttributes) &&
+                Objects.equals(edgeRelation, that.edgeRelation) &&
+                Objects.equals(edgeAttributes, that.edgeAttributes);
+    }
 }

@@ -25,10 +25,17 @@ package RBNpackage;
 
 
 public class TypeInteger extends Type{
-    
+
+    private int maxInt;
     
     public TypeInteger(){
-	name = "Integer";
+        name = "Integer";
+        maxInt = 20; // if not specified, default to 20
+    }
+
+    public TypeInteger(int maxInt){
+        name = "Integer";
+        this.maxInt = maxInt;
     }
 
     /** Returns integer vector [0,1,...,maxindex]
@@ -43,6 +50,8 @@ public class TypeInteger extends Type{
     public String getName(){
 	return "Integer";
     }
+
+    public int getMaxInt(){ return maxInt; }
 
     @Override
     public int hashCode() {

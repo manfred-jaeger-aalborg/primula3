@@ -19,12 +19,7 @@ public class TorchModelWrapper {
     private Map<String, Integer> cachedEdgeCounts = null;
 
     // primitive single-type cache
-    private float[] cachedFlatX = null;
-    private int[] cachedXShape = null;
-    private int[] cachedFlatEdge = null;
-    private int cachedNumEdges = 0;
-    private float[] cachedFlatEA = null;
-    private int[] cachedEAShape = null;
+    private Object[] cachedResult = new Object[2];
 
     public TorchModelWrapper(String modelName, String modelClassName, SharedInterpreter interpreter) {
         this.modelName = modelName;
@@ -118,15 +113,7 @@ public class TorchModelWrapper {
     private static int hashMatrixDict(Map<String, double[][]> dict) {
         int h = 0;
         for (double[][] m : dict.values()) {
-            int rows = m.length;
-            int cols = (rows == 0) ? 0 : m[0].length;
-            h = 31 * h + rows;
-            h = 31 * h + cols;
-            for (int i = 0; i < rows; i++) {
-                for (int j = 0; j < cols; j++) {
-                    h = 31 * h + Double.hashCode(m[i][j]);
-                }
-            }
+            h = 31 * h + Arrays.deepHashCode(m);
         }
         return h;
     }
@@ -135,17 +122,12 @@ public class TorchModelWrapper {
         int h = 0;
         for (ArrayList<ArrayList<Integer>> edges : dict.values()) {
             if (edges == null || edges.isEmpty()) continue;
-            ArrayList<Integer> src = edges.get(0);
-            ArrayList<Integer> dst = edges.get(1);
-            int num = src.size();
-            h = 31 * h + num;
-            for (int v : src) h = 31 * h + v;
-            for (int v : dst) h = 31 * h + v;
+            h = 31 * h + edges.hashCode();
         }
         return h;
     }
 
-    public Object[] forward(Map<String, double[][]> xDict,
+    public synchronized Object[] forward(Map<String, double[][]> xDict,
                             Map<String, ArrayList<ArrayList<Integer>>> edgeDict,
                             Map<String, double[][]> edge_attr,
                             List<TorchInputSpecs> gnnInputs,
@@ -169,12 +151,7 @@ public class TorchModelWrapper {
                 int[] eaShape = null;
 
                 if (reuseFlat) {
-                    flatX = cachedFlatX;
-                    xShape = cachedXShape;
-                    flatEdge = cachedFlatEdge;
-                    numEdges = cachedNumEdges;
-                    flatEA = cachedFlatEA;
-                    eaShape = cachedEAShape;
+                    return cachedResult;
                 } else {
                     flatX = flattenMatrix(xData);
                     xShape = new int[]{xData.length, xData.length > 0 ? xData[0].length : 0};
@@ -192,12 +169,6 @@ public class TorchModelWrapper {
                     }
 
                     // store for reuse
-                    cachedFlatX = flatX;
-                    cachedXShape = xShape;
-                    cachedFlatEdge = flatEdge;
-                    cachedNumEdges = numEdges;
-                    cachedFlatEA = flatEA;
-                    cachedEAShape = eaShape;
                     lastFlattenHash = curHash;
                 }
 
@@ -208,7 +179,7 @@ public class TorchModelWrapper {
                         modelRef, flatX, xShape, flatEdge, numEdges, withgradients, flatEA, eaShape
                 );
                 long endTime = System.nanoTime();
-//                System.out.println("Operation took " + ((endTime - startTime) / 1_000_000.0) + " milliseconds");
+//                System.out.println("forward took " + ((endTime - startTime) / 1_000_000.0) + " milliseconds");
 
                 List<Object> pyTuple = (List<Object>) pythonResult;
                 NDArray outArray = (NDArray) pyTuple.get(0);
@@ -250,11 +221,12 @@ public class TorchModelWrapper {
                         modelRef, flatXData[0], flatXData[1], flatEdgeData[0], flatEdgeData[1], edgeRels
                 );
                 long endTime = System.nanoTime();
-//                System.out.println("Operation took " + ((endTime - startTime) / 1_000_000.0) + " milliseconds");
+                System.out.println("Operation took " + ((endTime - startTime) / 1_000_000.0) + " milliseconds");
 
                 NDArray outArray = (NDArray) pythonResult;
                 result[0] = convertNDArrayTo2D(outArray);
             }
+            cachedResult = result;
             return result;
 
         } catch (JepException e) {

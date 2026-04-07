@@ -341,7 +341,7 @@ public class InferenceModule implements GradientGraphOptions {
 			idx++;
 		}
 
-		this.numIterGreedyMap = 1;
+		this.numIterGreedyMap = myprimula.getReldata().caseAt(0).inputDomain().domSize();
 		this.mapSearchAlg = 2;
 	}
 
@@ -453,6 +453,7 @@ public class InferenceModule implements GradientGraphOptions {
 			((GradientGraphO) gg).setSampleSizeScoring(sampleSizeScoring);
 			((GradientGraphO) gg).setLookaheadSearch(lookaheadSearch);
 			((GradientGraphO) gg).setMaxIterSA(maxIterSA);
+			((GradientGraphO) gg).setNumIterGreedyMap(numIterGreedyMap);
 			((GradientGraphO) gg).load_gnn_settings(myprimula.getLoadGnnSet());
 			mapthr = new MapThread(this, myprimula, (GradientGraphO) gg);
 			mapthr.start();
