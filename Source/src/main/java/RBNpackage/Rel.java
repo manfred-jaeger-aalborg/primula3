@@ -30,6 +30,8 @@ import java.util.Objects;
 import java.util.Vector;
 import org.dom4j.Element;
 
+import javax.swing.*;
+
 
 public abstract class Rel implements Serializable, Comparable<Rel>{
 
@@ -204,6 +206,18 @@ public abstract class Rel implements Serializable, Comparable<Rel>{
   	public Type[] getTypes(){
   		return argtypes;
   	}
+
+	  public Boolean[] getIntTypeMask(){
+		Boolean[] result = new Boolean[argtypes.length];
+		for (int i=0;i<argtypes.length;i++) {
+			if ( argtypes[i] instanceof TypeInteger) {
+				result[i] = true;
+			} else
+				result[i] = false;
+		}
+		return result;
+	  }
+
 
   	public String getTypesAsString(){
   		String result = "";

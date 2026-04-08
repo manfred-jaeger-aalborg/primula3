@@ -352,13 +352,13 @@ public class OneBoolRelData extends OneRelData {
 	 * a vector of strings. Objects are represented by
 	 * their name in structure A
 	 */
-	public Vector<String> allTrueAtoms(RelStruc A){
-		Vector<String>  result = new Vector<String> ();
-		for (Iterator<int[]> it = trueAtoms.iterator();it.hasNext();){
-			result.add(A.namesAt(it.next()));
-		}
-		return result;
-	}
+//	public Vector<String> allTrueAtoms(RelStruc A){
+//		Vector<String>  result = new Vector<String> ();
+//		for (Iterator<int[]> it = trueAtoms.iterator();it.hasNext();){
+//			result.add(A.namesAt(it.next()));
+//		}
+//		return result;
+//	}
 
 	/** Returns all the atoms instantiated to false as
 	 * a vector of strings. Objects are represented by
@@ -526,7 +526,7 @@ public class OneBoolRelData extends OneRelData {
 			dl.addAttribute("rel", rel.name.name);
 			for (Iterator<int[]> it = trueAtoms.iterator();it.hasNext();){
 				if (rel.arity > 0)
-					argstring=argstring+   struc.namesAt(it.next()) ;
+					argstring=argstring+   struc.namesAt(it.next(),rel.getIntTypeMask()) ;
 				else
 				{
 					argstring=argstring+ "()";
@@ -544,7 +544,7 @@ public class OneBoolRelData extends OneRelData {
 			argstring = "";
 			for (Iterator<int[]> it = falseAtoms.iterator();it.hasNext();){
 				if (rel.arity > 0)
-					argstring=argstring+ struc.namesAt(it.next()) ;
+					argstring=argstring+ struc.namesAt(it.next(),rel.getIntTypeMask()) ;
 				else
 				{
 					argstring=argstring+ "()";

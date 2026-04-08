@@ -41,6 +41,8 @@ import org.dom4j.Element;
 import org.dom4j.Document;
 import org.dom4j.io.SAXReader;
 
+import javax.swing.*;
+
 
 public class RDEFReader {
 
@@ -278,13 +280,14 @@ public class RDEFReader {
 		for (int i=0;i<numinitrels.size();i++)
 			result.add(new OneNumRelData(numinitrels.elementAt(i).rel(),numinitrels.elementAt(i).dv()));
 
-		int relarity = 0;
 		
 		for ( Iterator i = datael.elementIterator("d"); i.hasNext();) {
 			Element nextdat = (Element) i.next();
 			
 			Rel currentrel = result.find(nextdat.attributeValue("rel")).rel();
-			
+			int relarity = currentrel.getArity();
+			Boolean[] relIntMask = currentrel.getIntTypeMask();
+
 			String argstr = nextdat.attributeValue("args");
 			
 			
@@ -324,8 +327,6 @@ public class RDEFReader {
 				else{ // The o2,o43)(o33,0437)...(o4,o74) case
 					String[][] argarr = myio.StringOps.stringToStringMatrix(argstr);
 
-					relarity = currentrel.getArity();
-
 					if (relarity == 0 ){
 						intargs = new int[1][1];
 						intargs[0][0]=0;
@@ -336,7 +337,10 @@ public class RDEFReader {
 						else intargs = new int[0][];
 						for (int tupno =0; tupno<argarr.length; tupno++){
 							for (int k = 0;k<argarr[tupno].length;k++){
-								Integer intval = (Integer)(namehasht.get(argarr[tupno][k])[0]);
+								Integer intval;
+								if (!relIntMask[k])
+									intval = (Integer)(namehasht.get(argarr[tupno][k])[0]);
+								else intval = Integer.parseInt(argarr[tupno][k]);
 								if (intval == null){
 									/* If the rdef contains a domain declaration, or a RelStruc argument is 
 									 * given, then namehasht must contain all names encountered in the data

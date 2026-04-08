@@ -151,7 +151,28 @@ public abstract class RelStruc implements Cloneable{
 		result = result +")";
 		return result;
 	}
+	public String namesAt (int[] args,Boolean[] intMask){
+		String[] arrayresult=namesAtAsArray(args,intMask);
 
+		String result = "(";
+
+		for (int i=0;i<args.length-1;i++)
+			result = result + arrayresult[i] + ",";
+		if (args.length>0)
+			result = result + arrayresult[args.length-1];
+		result = result +")";
+		return result;
+	}
+
+	public String[] namesAtAsArray (int[] args, Boolean[] intMask){
+		String[] result = new String[args.length];
+		for (int i=0;i<args.length;i++)
+			if (!intMask[i])
+				result[i]=nameAt(args[i]);
+			else
+				result[i]=Integer.toString(args[i]);
+		return result;
+	}
 	public String[] namesAtAsArray (int[] args){
 		String[] result = new String[args.length];
 		for (int i=0;i<args.length;i++)

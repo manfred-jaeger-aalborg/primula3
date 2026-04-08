@@ -359,8 +359,16 @@ public class ProbFormConvComb extends CPModel implements ProbForm{
 			double pd2=r2g.get_part_deriv(par)[0];
 			double pd3=r3g.get_part_deriv(par)[0];
 
-
-			((Gradient)result[1]).set_part_deriv(par, new double[] {pd1*r2v+r1v*pd2+(1-r1v)*pd3-pd1*r3v});
+			double pderiv=0;
+			if (r2v != 0)
+				pderiv += pd1*r2v;
+			if (r1v != 0)
+				pderiv += pd2*r1v;
+			if (r1v != 1 && pd3!=0)
+				pderiv += (1-r1v)*pd3;
+			if (r3v != 0 && pd1 !=0)
+				pderiv -= pd1*r3v;
+			((Gradient)result[1]).set_part_deriv(par, new double[] {pderiv});
 		}
 //		if (returntype == ProbForm.RETURN_ARRAY) {
 //			result[1]=new double[params.size()];
