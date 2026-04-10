@@ -543,15 +543,15 @@ public class GnnPy {
             torchModel = loadTorchModel(interpreter, currentCatGnn, scriptPath);
 
         Object[] resultCopy = null;
-        Object[] cached = basicStructCacheGet(inst, cpmGnn.getGnnId(), false);
-        if (cached != null && cached[0] != null) {
-            resultCopy = cached.clone();
-            return resultCopy;
-        }
+//        Object[] cached = basicStructCacheGet(inst, cpmGnn.getGnnId(), false);
+//        if (cached != null && cached[0] != null) {
+//            resultCopy = cached.clone();
+//            return resultCopy;
+//        }
 
-        OneStrucData onsd = new OneStrucData(A.getmydata().copy());
-        sampledRelGobal = new SparseRelStruc(A.getNames(), onsd, A.getCoords(), A.signature());
-        sampledRelGobal.getmydata().add(inst.copy());
+//        OneStrucData onsd = new OneStrucData(A.getmydata().copy());
+//        sampledRelGobal = new SparseRelStruc(A.getNames(), onsd, A.getCoords(), A.signature());
+//        sampledRelGobal.getmydata().add(inst.copy());
 
         if (GGboolRel == null) {
             GGboolRel = new Vector<>();

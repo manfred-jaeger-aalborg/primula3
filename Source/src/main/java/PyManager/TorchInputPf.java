@@ -390,19 +390,15 @@ public class TorchInputPf {
 
         String key = "";
 
-//        if (evaluated != null) {
-//            key = this.makeKey(vars, tuple, false);
-//            Object[] d = evaluated.get(key);
-//            if (d != null) {
-//                return d;
-//            }
-//        }
+        if (evaluated != null) {
+            key = this.makeKey(vars, tuple, false);
+            Object[] d = evaluated.get(key);
+            if (d != null) {
+                return d;
+            }
+        }
 
         TorchInputPf subspfcf = this.substitute(vars, tuple);
-
-//        TorchInputPf subspfcf2 = this.substitute(new String[]{"v1"}, tuple);
-//        System.out.println(subspfcf2);
-
 
         int[][] subslist = tuplesSatisfyingCConstr(A, vars, tuple);
 

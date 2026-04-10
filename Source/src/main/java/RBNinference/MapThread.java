@@ -64,6 +64,7 @@ public class MapThread extends GGThread {
 
 		double averageTimeRestarts = 0;
 		double bestTimeRestarts = Double.POSITIVE_INFINITY;
+		long startMap = System.currentTimeMillis();
 		while (running && ((maxrestarts == -1) || (currentRestarts <= maxrestarts))) {
 			long startrestart = System.currentTimeMillis();
 			try {
@@ -105,14 +106,15 @@ public class MapThread extends GGThread {
 				throw new RuntimeException(e);
 			}
 		}
+		long endMap = System.currentTimeMillis();
+		System.out.println("MAP search finished in " + (endMap - startMap) / 1000.0 + " s");
 		System.out.println("Average time for " + (currentRestarts-1) + " restarts: " + (averageTimeRestarts / (currentRestarts-1) / 1000.0) + " s");
-		System.out.println("Best time for " + (currentRestarts-1) + " restarts: " + (bestTimeRestarts / 1000.0) + " s");
-
 		System.out.println("Best log-likelihood found: " + oldll);
 
 		// save res as pickle
-		String path = "/Users/lz50rg/Dev/football/res.pkl";
-		// createInputs(onsd, path);
+//		String path = "/Users/lz50rg/Dev/dinga/fairmofsyncondition/res.pkl";
+//		String path = "/Users/lz50rg/Dev/RSE/res.pkl";
+//		createInputs(onsd, path);
 
         this.isSampling = false;
 	}

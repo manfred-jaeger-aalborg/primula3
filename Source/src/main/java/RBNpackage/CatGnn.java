@@ -644,8 +644,6 @@ public class CatGnn extends CPModel {
                              Profiler profiler)
             throws RBNCompatibilityException {
 
-        // CHECK IF THIS DOES NOT BREAK INFERENCE WITH MAP or MCMC
-
         // remove this later!
         if (isOptimizeForOneInput()) {
             long key = sharedDictKey(A, inst);
