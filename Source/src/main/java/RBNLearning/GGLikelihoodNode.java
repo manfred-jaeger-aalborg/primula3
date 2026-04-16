@@ -441,7 +441,7 @@ public  class GGLikelihoodNode extends GGNode{
 
 			small_gradient=new double[thisgg.numberOfParameters()][2];
 			for (int i=0;i<thisgg.windowsize*thisgg.numchains;i++) 
-				SmallDouble.addArray(small_gradient, small_gradients_for_samples[i]);
+				small_gradient = SmallDouble.addArray(small_gradient, small_gradients_for_samples[i]);
 			small_gradient = SmallDouble.divide(small_gradient, thisgg.windowsize*thisgg.numchains );		
 
 			return small_gradient;
