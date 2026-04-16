@@ -42,9 +42,9 @@ public class TorchModelWrapper {
                     param = next(model.parameters(), None)
                     return param.device if param is not None else torch.device("cpu")
                 
-                def forward_single_fast_(model, flat_x, x_shape, flat_edge, num_edges, with_gradients, flat_ea, ea_shape):
+                def forward_single_fast_(model, flat_x, x_shape, flat_edge, num_edges, with_gradients, flat_ea, ea_shape, target_class=None):
                     device = _get_device(model)
-                    
+                    model.eval()
                     # Reshape features and edges without copying memory
                     xi = torch.as_tensor(flat_x, dtype=torch.float32, device=device).view(x_shape[0], x_shape[1])
                     if num_edges > 0:
@@ -56,19 +56,42 @@ public class TorchModelWrapper {
                     if flat_ea is not None:
                         ea = torch.as_tensor(flat_ea, dtype=torch.float32, device=device).view(ea_shape[0], ea_shape[1])
 
-                    if with_gradients:
-                        xi.requires_grad_(True)
-                        if ea is not None:
-                            ea.requires_grad_(True)
-                        
-                        out = model(xi, ei, ea) if ea is not None else model(xi, ei)
-                        out.sum().backward()
-                        
-                        x_grad = xi.grad.detach().cpu().numpy() if xi.grad is not None else None
-                        ea_grad = ea.grad.detach().cpu().numpy() if (ea is not None and ea.grad is not None) else None
-                        return out.detach().cpu().numpy(), x_grad, ea_grad
+                    if with_gradients:                        
+                        N = xi.shape[0]
+                    
+                        if target_class is not None and target_class >= 0:
+                            def fn_x(x_):
+                                out_ = model(x_, ei, ea) if ea is not None else model(x_, ei)
+                                return out_[:, target_class]
+                    
+                            with torch.enable_grad():
+                                out = model(xi, ei, ea) if ea is not None else model(xi, ei)
+                                J_x = jacobian(fn_x, xi)
+                    
+                            x_grads = torch.stack([J_x[j, j, :] for j in range(N)]).cpu().numpy()
+                            if ea is not None:
+                                def fn_ea(ea_):
+                                    out_ = model(xi, ei, ea_)
+                                    return out_[:, target_class]
+                    
+                                J_ea = jacobian(fn_ea, ea)
+                                ea_grads = J_ea.sum(dim=0).cpu().numpy()
+                            else:
+                                ea_grads = None
+                        else:
+                            def fn_x_all(x_):
+                                out_ = model(x_, ei, ea) if ea is not None else model(x_, ei)
+                                return out_.mean(dim=1)
+                    
+                            with torch.enable_grad():
+                                out = model(xi, ei, ea) if ea is not None else model(xi, ei)
+                                J_x = jacobian(fn_x_all, xi)
+                    
+                            x_grads = torch.stack([J_x[j, j, :] for j in range(N)]).cpu().numpy()
+                            ea_grads = None
+                    
+                        return out.detach().cpu().numpy(), x_grads, ea_grads                    
                     else:
-                        model.eval()
                         with torch.no_grad():
                             out = model(xi, ei, ea) if ea is not None else model(xi, ei)
                         return out.cpu().numpy(), None, None
@@ -131,11 +154,11 @@ public class TorchModelWrapper {
                             Map<String, ArrayList<ArrayList<Integer>>> edgeDict,
                             Map<String, double[][]> edge_attr,
                             List<TorchInputSpecs> gnnInputs,
-                            boolean withgradients) {
+                            boolean withgradients, Integer targetClass) {
         Object[] result = new Object[2];
 
         // compute a hash of the three inputs so we can reuse flattened arrays
-        int curHash = Objects.hash(hashMatrixDict(xDict), hashEdgeDict(edgeDict), hashMatrixDict(edge_attr));
+        int curHash = Objects.hash(hashMatrixDict(xDict), hashEdgeDict(edgeDict), hashMatrixDict(edge_attr), targetClass);
         boolean reuseFlat = (curHash == lastFlattenHash);
 
         try {
@@ -150,7 +173,7 @@ public class TorchModelWrapper {
                 float[] flatEA = null;
                 int[] eaShape = null;
 
-                if (reuseFlat) {
+                if (reuseFlat && cachedResult[1] != null) {
                     return cachedResult;
                 } else {
                     flatX = flattenMatrix(xData);
@@ -176,7 +199,7 @@ public class TorchModelWrapper {
                 long startTime = System.nanoTime();
                 Object pythonResult = modelInterpreter.invoke(
                         "forward_single_fast_",
-                        modelRef, flatX, xShape, flatEdge, numEdges, withgradients, flatEA, eaShape
+                        modelRef, flatX, xShape, flatEdge, numEdges, withgradients, flatEA, eaShape, targetClass
                 );
                 long endTime = System.nanoTime();
 //                System.out.println("forward took " + ((endTime - startTime) / 1_000_000.0) + " milliseconds");

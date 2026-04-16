@@ -78,6 +78,7 @@ public class JepManager {
                                 import torch
                                 import numpy as np
                                 from torch_geometric.data import Data, HeteroData
+                                from torch.autograd.functional import jacobian
                                 import sys
                                 """);
             }

@@ -576,9 +576,9 @@ public class GGGnnNode extends GGCPMNode {
 
                 if (argNode < 0) {
                     for (int row = 0; row < mat.length; row++)
-                        writeFeatureCell(mat, row, startIndices[pfIdx], (int) value, r, cpmgnn.isOneHotEncoding());
+                        writeFeatureCell(mat, row, startIndices[pfIdx], value, r, cpmgnn.isOneHotEncoding());
                 } else {
-                    writeFeatureCell(mat, argNode, startIndices[pfIdx], (int) value, r, cpmgnn.isOneHotEncoding());
+                    writeFeatureCell(mat, argNode, startIndices[pfIdx], value, r, cpmgnn.isOneHotEncoding());
                 }
             }
         }
@@ -610,11 +610,11 @@ public class GGGnnNode extends GGCPMNode {
 
                 if (endpoints.length < 2 || endpoints[0] < 0) {
                     for (int row = 0; row < mat.length; row++)
-                        writeFeatureCell(mat, row, startIndices[pfIdx], (int) value, r, cpmgnn.isOneHotEncoding());
+                        writeFeatureCell(mat, row, startIndices[pfIdx], value, r, cpmgnn.isOneHotEncoding());
                 } else {
                     int edgeRow = findEdgeRow(edgeKey, endpoints[0], endpoints[1]);
                     if (edgeRow >= 0)
-                        writeFeatureCell(mat, edgeRow, startIndices[pfIdx], (int) value, r, cpmgnn.isOneHotEncoding());
+                        writeFeatureCell(mat, edgeRow, startIndices[pfIdx], value, r, cpmgnn.isOneHotEncoding());
                 }
             }
         }
@@ -968,13 +968,13 @@ public class GGGnnNode extends GGCPMNode {
     }
 
 
-    private void writeFeatureCell(double[][] mat, int row, int colOffset, int value, Rel rel, boolean oneHot) {
+    private void writeFeatureCell(double[][] mat, int row, int colOffset, double value, Rel rel, boolean oneHot) {
         double[] matRow = mat[row];
         if (rel instanceof CatRel) {
             if (oneHot) {
                 int numVals = (int) rel.numvals();
                 Arrays.fill(matRow, colOffset, colOffset + numVals, 0.0);
-                matRow[colOffset + value] = 1.0;
+                matRow[colOffset + (int) value] = 1.0;
             } else {
                 matRow[colOffset] = value;
             }
@@ -1013,6 +1013,10 @@ public class GGGnnNode extends GGCPMNode {
     public int outDim() {
         System.out.println("outDim still needs to be implemented for GGGnnNode");
         return 0;
+    }
+
+    public Map<String, Map<Integer, Integer>> getNodeMappingByType() {
+        return Collections.unmodifiableMap(nodeMappingByType);
     }
 
     public boolean equals(Object obj) {

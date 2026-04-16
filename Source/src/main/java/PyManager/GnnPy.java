@@ -207,14 +207,15 @@ public class GnnPy {
                                      Map<String, double[][]> edge_attr,
                                      List<TorchInputSpecs> gnnInputs,
                                      String idGnn,
-                                     boolean valonly) {
+                                     boolean valonly,
+                                     Integer targetCalss) {
 
         SharedInterpreter interpreter = JepManager.getInterpreter(true);
         if (torchModel.getModelInterpreter() != interpreter)
             torchModel = loadTorchModel(interpreter, currentCatGnn, scriptPath);
 
         try {
-            return torchModel.forward(x_dict, edge_dict, edge_attr, gnnInputs, !valonly);
+            return torchModel.forward(x_dict, edge_dict, edge_attr, gnnInputs, !valonly, targetCalss);
         } catch (JepException e) {
             System.err.println("Failed to execute inference: " + e);
             return null;
@@ -512,7 +513,7 @@ public class GnnPy {
             Map<String, ArrayList<ArrayList<Integer>>> edge_dict = lastEdgeDict;
             Map<String, double[][]> edge_attr = lastEdgeAttrDict;
 
-            Object[] result = inferModelHetero(x_dict, edge_dict, edge_attr, cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), valonly);
+            Object[] result = inferModelHetero(x_dict, edge_dict, edge_attr, cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), valonly, null);
             resultCopy = result.clone();
             basicStructCachePut(inst, cpmGnn.getGnnId(), resultCopy);
         }
@@ -567,44 +568,60 @@ public class GnnPy {
 //        Map<String, double[][]> edgeAttr_dict = (Map<String, double[][]>) inputGraph[2];
 //
 //        Object[] result = inferModelHetero(x_dict, edge_dict, edgeAttr_dict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), false);
+        Integer instval = null;
+        if (ggcpmNode.getInstval() != null)
+            instval = ggcpmNode.instval(sno);
 
-        Object[] result = inferModelHetero(ggcnn.getXDict(), ggcnn.getEdgeDict(), ggcnn.getEdgeAttrDict(), cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), false);
+        Object[] result = inferModelHetero(ggcnn.getXDict(), ggcnn.getEdgeDict(), ggcnn.getEdgeAttrDict(), cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), false, instval);
         resultCopy = result.clone();
 
 
         // write the returned gradients in the format used by the GradientGraph
         Map<String, double[][]> resGrads = (Map<String, double[][]>) resultCopy[1];
         Map<String, double[][]> outGrads = new HashMap<>();
-        for (TorchInputSpecs pair : cpmGnn.getGnnInputs()) {
-            ArrayList<Rel> subList = (ArrayList<Rel>) pair.getNodeAttributes();
-            int relIdx = 0;
+
+        for (TorchInputSpecs spec : cpmGnn.getGnnInputs()) {
+            String pftype = spec.getType();
+            boolean oneHot = cpmGnn.isOneHotEncoding();
+            Map<Integer, Integer> compactToOriginal = buildReverseMapping(ggcnn.getNodeMappingByType(), pftype);
+
+            // Node attribute gradients
+            ArrayList<Rel> nodeAttrs = (ArrayList<Rel>) spec.getNodeAttributes();
             double[][] xGrads = resGrads.get("x");
-            for (Rel rel : subList) {
-                if (rel instanceof NumRel) {
-                    for (int i = 0; i < xGrads.length; i++) {
-                        String atomString = rel.name() + "(" + i + ")";
-                        double[][] relGrad = new double[1][1];
-                        relGrad[0][0] = xGrads[i][relIdx];
-                        outGrads.put(atomString, relGrad);
+            if (xGrads != null && nodeAttrs != null) {
+                int[] startIndices = computeGradStartIndices(nodeAttrs, oneHot);
+                for (int pfIdx = 0; pfIdx < nodeAttrs.size(); pfIdx++) {
+                    Rel rel = nodeAttrs.get(pfIdx);
+                    if (!(rel instanceof NumRel)) continue;
+                    int col = startIndices[pfIdx];
+                    for (int compactIdx = 0; compactIdx < xGrads.length; compactIdx++) {
+                        Integer originalId = compactToOriginal.get(compactIdx);
+                        if (originalId == null) continue;
+                        outGrads.put(rel.name() + "(" + originalId + ")", scalarGrad(xGrads[compactIdx][col]));
                     }
                 }
-                relIdx++;
             }
 
-            subList = (ArrayList<Rel>) pair.getEdgeAttributes();
-            relIdx = 0;
+            // edge attribute gradients
+            ArrayList<Rel> edgeAttrs = (ArrayList<Rel>) spec.getEdgeAttributes();
             double[][] eaGrads = resGrads.get("ea");
-            if (eaGrads != null) {
-                for (Rel rel : subList) {
-                    if (rel instanceof NumRel) {
-                        for (int i = 0; i < eaGrads.length; i++) {
-                            String atomString = rel.name() + "(" + ggcnn.getEdgeDict().get(pair.getEdgeRelation().name()).get(0).get(i) + "," + ggcnn.getEdgeDict().get(pair.getEdgeRelation().name()).get(1).get(i) + ")";
-                            double[][] relGrad = new double[1][1];
-                            relGrad[0][0] = eaGrads[i][relIdx];
-                            outGrads.put(atomString, relGrad);
-                        }
+            ArrayList<ArrayList<Integer>> edgeList = ggcnn.getEdgeDict().get(spec.getEdgeRelation().name());
+            if (eaGrads != null && edgeAttrs != null && edgeList != null && edgeList.size() >= 2) {
+                int[] startIndices = computeGradStartIndices(edgeAttrs, oneHot);
+                Map<Integer, Integer> srcRev = buildReverseMapping(ggcnn.getNodeMappingByType(), spec.getEdgeRelation().getTypes()[0].getName());
+                Map<Integer, Integer> dstRev = buildReverseMapping(ggcnn.getNodeMappingByType(), spec.getEdgeRelation().getTypes()[1].getName());
+                ArrayList<Integer> sources = edgeList.get(0);
+                ArrayList<Integer> dests   = edgeList.get(1);
+                for (int pfIdx = 0; pfIdx < edgeAttrs.size(); pfIdx++) {
+                    Rel rel = edgeAttrs.get(pfIdx);
+                    if (!(rel instanceof NumRel)) continue;
+                    int col = startIndices[pfIdx];
+                    for (int edgeRow = 0; edgeRow < eaGrads.length && edgeRow < sources.size(); edgeRow++) {
+                        Integer origSrc = srcRev.get(sources.get(edgeRow));
+                        Integer origDst = dstRev.get(dests.get(edgeRow));
+                        if (origSrc == null || origDst == null) continue;
+                        outGrads.put(rel.name() + "(" + origSrc + "," + origDst + ")", scalarGrad(eaGrads[edgeRow][col]));
                     }
-                    relIdx++;
                 }
             }
         }
@@ -619,6 +636,34 @@ public class GnnPy {
         resultCopy[1] = outGrads;
         basicStructCachePut(inst, cpmGnn.getGnnId(), resultCopy);
         return resultCopy;
+    }
+
+    /** Inverts nodeMappingByType[pftype]: compactIdx -> originalNodeId */
+    private static Map<Integer, Integer> buildReverseMapping(
+            Map<String, Map<Integer, Integer>> nodeMappingByType, String pftype) {
+        Map<Integer, Integer> fwd = nodeMappingByType.get(pftype);
+        if (fwd == null) return Collections.emptyMap();
+        Map<Integer, Integer> rev = new HashMap<>(fwd.size());
+        for (Map.Entry<Integer, Integer> e : fwd.entrySet())
+            rev.put(e.getValue(), e.getKey());   // compact -> original
+        return rev;
+    }
+
+    // Column start offset for each attribute, respecting one-hot width
+    private static int[] computeGradStartIndices(List<Rel> attrs, boolean oneHot) {
+        int[] starts = new int[attrs.size()];
+        int offset = 0;
+        for (int i = 0; i < attrs.size(); i++) {
+            starts[i] = offset;
+            Rel r = attrs.get(i);
+            offset += (oneHot && r instanceof CatRel) ? (int) r.numvals() : 1;
+        }
+        return starts;
+    }
+
+    /** Wraps a scalar gradient in the double[1][1] format expected by the GradientGraph. */
+    private static double[][] scalarGrad(double value) {
+        return new double[][]{{value}};
     }
 
 
@@ -669,7 +714,7 @@ public class GnnPy {
                 edge_attr = updateAttrDict(edge_attr, cpmGnn, ggcpmNode, true);
             }
 
-            Object[] result = inferModelHetero(x_dict, edge_dict, edge_attr, cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), false);
+            Object[] result = inferModelHetero(x_dict, edge_dict, edge_attr, cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), false, null);
             resultCopy = result.clone();
 
             Map<String, double[][]> resGrads = (Map<String, double[][]>) resultCopy[1];
@@ -1370,7 +1415,7 @@ public class GnnPy {
         CatGnn cpm = (CatGnn) cpmGnn;
         GGGnnNode ggcnn = (GGGnnNode) ggcpmGnn;
 
-        Object[] result = inferModelHetero(xdict, edgedict, edgeattrdict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), true);
+        Object[] result = inferModelHetero(xdict, edgedict, edgeattrdict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), true, null);
         double[][] outProbs = (double[][]) result[0];
 
         if (cpmGnn.getArguments().equals("[]") || cpmGnn.getArguments().equals(""))
@@ -1399,7 +1444,7 @@ public class GnnPy {
         if (!valonly)
             throw new RuntimeException("Not implemented. Use evaluate_gnnGradients instead. Try with Gradient Graph");
 
-        Object[] result = inferModelHetero(xdict, edgedict, edgeattrdict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), true).clone();
+        Object[] result = inferModelHetero(xdict, edgedict, edgeattrdict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), true, null).clone();
 
         String outType = cpmGnn.getOutTypes()[0].getName();
         int nodeIndex = (cpmGnn.getArguments().equals("[]") || cpmGnn.getArguments().equals("")) ? 0 : cpmGnn.getNodeIndexIfPresent(outType, Integer.parseInt(cpmGnn.getArguments()[0].argEval()));
@@ -1422,7 +1467,7 @@ public class GnnPy {
                                         boolean valonly) {
 
         Map<String, ArrayList<ArrayList<Integer>>> convertedEdgeDict = toEdgeDictList(edge_dict);
-        return inferModelHetero(x_dict, convertedEdgeDict, edge_attr, gnnInputs, idGnn, valonly);
+        return inferModelHetero(x_dict, convertedEdgeDict, edge_attr, gnnInputs, idGnn, valonly, null);
     }
 
     /**
@@ -1605,7 +1650,7 @@ public class GnnPy {
         GGedgeAttrDict = initEdgeAttrdict(cpmGnn, relToEdgeAttrMap, GGsampledRel);
         updateEdgeInputDictForSampling(GGedgeAttrDict, relToEdgeAttrMap, cpmGnn, atomhasht);
 
-        Object[] result = inferModelHetero(GGnodeAttrDict, GGedgeDict, GGedgeAttrDict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), true);
+        Object[] result = inferModelHetero(GGnodeAttrDict, GGedgeDict, GGedgeAttrDict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), true, null);
         if (cpmGnn.getArguments().equals("[]") || cpmGnn.getArguments().equals(""))
             return (double[]) result[0];
 
