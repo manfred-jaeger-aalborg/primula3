@@ -270,9 +270,11 @@ public class LearnThread extends GGThread {
 //					case LearnModule.AscentTwoPhase:
 //						results = doOneRestartBatch(gg,A,parameternumrels,parameters,rest==0);
 					}
+				} catch (RBNCompatibilityException e) {
+					System.out.println(e);
+				} catch (RBNNaNException e) {
+					System.out.println(e);
 				}
-				catch (RBNCompatibilityException e) {System.out.println(e);}
-				catch (RBNNaNException e) {System.out.println(e);}
 
 				newlik = results[results.length-1];
 				System.out.println("# Likelihood: " + newlik);
@@ -399,6 +401,13 @@ public class LearnThread extends GGThread {
 							gg = buildGGO(parameters,minmaxbounds,
 									isfirstrestart && isfirstloop,databatches[i]);
 							System.out.println("done build GG " + (i+1) + "/" + databatches.length);
+
+							if (gg.numberOfIndicators() > 0) {
+								boolean gotinit = gg.initIndicators(Thread.currentThread());
+								if (!gotinit) {
+									System.out.println("Warning: Failed to initialize indicators for batch " + i);
+								}
+							}
 							gg.evaluateLikelihoodAndPartDerivs(false);
 							System.out.println("done evaluate GG " + (i+1) + "/" + databatches.length);
 
@@ -407,7 +416,18 @@ public class LearnThread extends GGThread {
 						else {
 							gg=allggs[i];
 							gg.setParametersFromAandRBN();
-							gg.resetValues(null, false);
+
+							if (gg.numberOfIndicators() > 0) {
+								for (int k=0;k< gg.numchains ;k++) {
+									int sno = k * gg.windowsize + gg.windowindex;
+									gg.resetValues(sno, false);
+								}
+
+								for (int j = 0; j < gg.windowsize; j++)
+									gg.gibbsSample(Thread.currentThread());
+							} else
+								gg.resetValues(null, false);
+
 							gg.evaluateLikelihoodAndPartDerivs(false);
 						}
 //					}
@@ -489,6 +509,11 @@ public class LearnThread extends GGThread {
 					myprimula.setParameters(parameters,newparamvals);
 					if (usegradientgraphs)
 						gg.setParametersFromAandRBN();
+
+//					if (usegradientgraphs && gg.numberOfIndicators() > 0) {
+//						for (int j = 0; j < gg.windowsize; j++)
+//							gg.gibbsSample(Thread.currentThread());
+//					}
 				} // switch (myLearnModule.threadascentstrategy()){
 
 				batchcount++;
@@ -500,10 +525,10 @@ public class LearnThread extends GGThread {
 				terminate = true;
 				System.out.println("Warning: NaN values in current parameter values; terminate stochastic gradient");
 			}
-
-					
+			boolean best = false;
 			if (epochobj > bestobj){
 				bestobj = epochobj;
+				best = true;
 				bestresult = Arrays.copyOf(newparamvals, newparamvals.length+4);
 			}
 			if (lastobj<epochobj && Math.abs((epochobj-lastobj)/lastobj)> myLearnModule.getLLikThresh())
@@ -520,8 +545,12 @@ public class LearnThread extends GGThread {
 				long tick = System.currentTimeMillis();
 				long totalt = tick-startiterations;
 				long epocht = tick - startepoch;
-
-				System.out.println("\t" + itcount + "\t" +  (epocht/1000.0) + "s\t" + (totalt/1000) + "s\t" + rbnutilities.euclidDist(beforeepochparamvals, newparamvals) + "\t" +   epochobj + "\t" + tries);
+				double steps = rbnutilities.euclidDist(beforeepochparamvals, newparamvals);
+				System.out.print("\t" + itcount + "\t" +  (epocht/1000.0) + "s\t" + (totalt/1000) + "s\t" + steps + "\t" +   epochobj + "\t" + tries);
+				if (best)
+					System.out.print("\t BEST OBJ\n");
+				else
+					System.out.print("\n");
 				break;
 			}
 		
@@ -687,7 +716,7 @@ public class LearnThread extends GGThread {
 				A.setRandom(parameternumrels,scale);
 			lik = getLossAndGradient(data, myprimula.getRBN(), new HashMap<String,Integer>(),true ,profiler)[0][0];
 			System.out.println("# log-likelihood " + lik);	
-			if (lik == Double.NEGATIVE_INFINITY){
+			if (lik == Double.NEGATIVE_INFINITY){ //  || Double.isNaN(lik)
 				tries++;
 				scale=0.5*scale;
 			} else if (lik == 0.0) {
