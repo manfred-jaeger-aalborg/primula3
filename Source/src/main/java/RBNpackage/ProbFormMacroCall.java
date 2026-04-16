@@ -171,8 +171,9 @@ public class ProbFormMacroCall extends CPModel implements ProbForm {
 	public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone) 
 			throws RBNCompatibilityException {
 		String mykey = this.makeKey((String[]) null,null,true);
-		if (macrosdone.contains(mykey))
-			return new Vector<GroundAtom>();
+
+		if (macrosdone.contains(mykey)){
+			return new Vector<GroundAtom>();}
 		else {
 			macrosdone.add(mykey);
 			setpf();

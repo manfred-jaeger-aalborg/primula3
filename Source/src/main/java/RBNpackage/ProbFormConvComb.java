@@ -132,23 +132,29 @@ public class ProbFormConvComb extends CPModel implements ProbForm{
 	public  Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone)
 	throws RBNCompatibilityException
 	{
-		Vector<GroundAtom> atomvec1 = F1.makeParentVec(A,inst,macrosdone);
-		Vector<GroundAtom> atomvec2 = F2.makeParentVec(A,inst,macrosdone);
-		Vector<GroundAtom> atomvec3 = F3.makeParentVec(A,inst,macrosdone);
-		Vector<GroundAtom> result = atomvec1;
-		double v1,v2,v3;
-	    
-		v1=(Double)F1.evaluate(A,inst,new ArgTerm[0],new int[0],0,false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
-		v2=(Double)F2.evaluate(A,inst,new ArgTerm[0],new int[0],0,false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
-		v3=(Double)F3.evaluate(A,inst,new ArgTerm[0],new int[0],0,false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
 
+		// Here need to "forget" the macrosdone, because must construct the parents for each component F1,F2,F3
+		// (with possible overlap)
+		// Since otherwise the elimination of parents of 'irrelevant' Fi may also eliminate the
+		// parents of relevant Fi
+		Vector<GroundAtom> atomvec1 = F1.makeParentVec(A,inst,new TreeSet<String>());
+		double v1=(Double)F1.evaluate(A,inst,new ArgTerm[0],new int[0],0,false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
 		if (!Double.isNaN(v1))
 			atomvec1 = new Vector<GroundAtom>();
 
+		Vector<GroundAtom> atomvec2;
 		if (v1==0)
 			atomvec2 = new Vector<GroundAtom>();
+		else atomvec2 = F2.makeParentVec(A,inst,new TreeSet<String>());
+
+		Vector<GroundAtom> atomvec3;
 		if (v1==1)
 			atomvec3 = new Vector<GroundAtom>();
+		else atomvec3 = F3.makeParentVec(A,inst,new TreeSet<String>());
+
+		double v2=(Double)F2.evaluate(A,inst,new ArgTerm[0],new int[0],0,false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
+		double v3=(Double)F3.evaluate(A,inst,new ArgTerm[0],new int[0],0,false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
+
 
 		if ((v2==v3) && !Double.isNaN(v2))
 		{
@@ -157,7 +163,7 @@ public class ProbFormConvComb extends CPModel implements ProbForm{
 			atomvec3 = new Vector<GroundAtom>();
 		}
 
-		result = atomvec1;
+		Vector<GroundAtom>  result = atomvec1;
 		result = rbnutilities.combineAtomVecs(result,atomvec2);
 		result = rbnutilities.combineAtomVecs(result,atomvec3);
 		return result;

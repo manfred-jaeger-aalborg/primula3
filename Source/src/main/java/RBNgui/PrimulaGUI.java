@@ -88,7 +88,7 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
      * @uml.property  name="constructCPTBN"
      * @uml.associationEnd  multiplicity="(1 1)"
      */
-    private JMenuItem constructCPTBN    = new JMenuItem("Construct Bayesian Network");
+    private JMenuItem constructCPTBN = new JMenuItem("Construct Bayesian Network");
     /**
      * @uml.property  name="saveRBN"
      * @uml.associationEnd  multiplicity="(1 1)"
@@ -1216,8 +1216,14 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/Community/community_softclus_2c.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/Community/zachary.rdef";
 
-        String rbninputfilestring = "/home/jaeger/B/Primula/primula3/Examples/InformationDiffusion/IntArg/mc-param.rbn";
-        String rstinputfilestring = "/home/jaeger/B/Primula/primula3/Examples/InformationDiffusion/IntArg/mc-200s.rdef";
+//        String rbninputfilestring = "/home/jaeger/B/Primula/primula3/Examples/InformationDiffusion/IntArg/mc.rbn";
+//        String rstinputfilestring = "/home/jaeger/B/Primula/primula3/Examples/InformationDiffusion/IntArg/mc.rdef";
+
+        String rbninputfilestring = "/home/jaeger/B/Primula/Examples/Water/water_timed.rbn";
+        String rstinputfilestring = "/home/jaeger/B/Primula/Examples/Water/water_int_s.rdef";
+
+//        String rbninputfilestring = "/home/jaeger/B/Primula/primula3/Examples/InformationDiffusion/IntArg/mc.rbn";
+//        String rstinputfilestring = "/home/jaeger/B/Primula/primula3/Examples/InformationDiffusion/IntArg/mc.rdef";
 
 //        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/InformationDiffusion/zachary_cascade_basic_3.rdef";
 
