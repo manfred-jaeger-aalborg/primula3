@@ -445,9 +445,20 @@ public class GGCombFuncNode extends GGCPMNode{
 			sum = sum + childvals[i];
 			childgrads.add(children.elementAt(i).evaluateGradient(idx));
 		}
-		double esum = Math.exp(sum);
+//		double esum = Math.exp(sum);
 		// Watch: can be issues with infinite values ...?
-		
+//		https://stackoverflow.com/questions/51976461/optimal-way-of-defining-a-numerically-stable-sigmoid-function-for-a-list-in-pyth
+
+		// this solves overflow with exp
+		double sigma;
+		if (sum >= 0)
+			sigma = 1.0 / (1.0 + Math.exp(-sum));
+		else {
+			double es = Math.exp(sum);
+			sigma = es / (1.0 + es);
+		}
+		double dsigma = sigma * (1.0 - sigma);
+
 		for (String param: this.myparameters) {
 			double partderiv = 0;
 			for (int i=0;i<children.size();i++){
@@ -455,7 +466,8 @@ public class GGCombFuncNode extends GGCPMNode{
 				if (childgrad != null)
 					partderiv+=childgrad[0];
 			}
-			partderiv *= (esum/Math.pow(1+esum,2));
+//			partderiv *= (esum/Math.pow(1+esum,2));
+			partderiv *= dsigma;
 			result.set_part_deriv(param, new double[] {partderiv});
 		}
 
@@ -524,10 +536,11 @@ public class GGCombFuncNode extends GGCPMNode{
 		return result;
 	}
 
-	private Gradient computeGradientESUM(Integer idx )
-			throws RBNNaNException{
-		System.out.println("Gradient for ESUM not implemented");
-		return null;
+//	private Gradient computeGradientESUM(Integer idx)
+//			throws RBNNaNException{
+//		System.out.println("Gradient for ESUM not implemented");
+//		return null;
+
 //		TreeMap<String,double[]> result = new TreeMap<String,double[]>();
 //		double val = this.evaluate(idx)[0];
 //
@@ -538,6 +551,30 @@ public class GGCombFuncNode extends GGCPMNode{
 //		result = result*derivsum;
 //
 //		return result;
+//	}
+
+	private Gradient computeGradientESUM(Integer idx)
+			throws RBNNaNException {
+		Gradient result = gradient_for_samples.get(idx);
+		result.reset();
+
+		double val = this.evaluate(idx)[0];
+
+		Vector<Gradient> childgrads = new Vector<Gradient>();
+		for (int i = 0; i < children.size(); i++)
+			childgrads.add(children.elementAt(i).evaluateGradient(idx));
+
+		for (String param : this.myparameters) {
+			double derivsum = 0;
+			for (int i = 0; i < children.size(); i++) {
+				double[] childderiv = childgrads.elementAt(i).get_part_deriv(param);
+				if (childderiv != null)
+					derivsum += childderiv[0];
+			}
+			result.set_part_deriv(param, new double[] {-val * derivsum});
+		}
+
+		return result;
 	}
 
 	private Gradient computeGradientSUM(Integer idx )
