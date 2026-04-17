@@ -128,27 +128,38 @@ public class GGCombFuncNode extends GGCPMNode{
 		}/* for (int i=0; i<pfcomb.numPFargs(); i++) */
 		valuesOfSubPFs = vals.asArray();
 		switch (typeOfComb){
-		case CombFunc.NOR:
-			aggregateOfSubPFs = 1;
-			for (int i=0;i<valuesOfSubPFs.length;i++)
-				aggregateOfSubPFs = aggregateOfSubPFs*(1-valuesOfSubPFs[i]);
-			break;
-		case CombFunc.LREG:
-			aggregateOfSubPFs = 0;
-			for (int i=0;i<valuesOfSubPFs.length;i++)
-				aggregateOfSubPFs = aggregateOfSubPFs +valuesOfSubPFs[i] ;
-			break;
-		case CombFunc.LLREG: // same as for LREG
-			aggregateOfSubPFs = 0;
-			for (int i=0;i<valuesOfSubPFs.length;i++)
-				aggregateOfSubPFs = aggregateOfSubPFs +valuesOfSubPFs[i] ;
-			break;
-		case CombFunc.PROD: 
-			aggregateOfSubPFs = 1;
-			for (int i=0;i<valuesOfSubPFs.length;i++)
-				aggregateOfSubPFs = aggregateOfSubPFs*valuesOfSubPFs[i];
-			break;	
-		}	
+			// all of the combination function types should be contained in a list or something similar
+			case CombFunc.NOR:
+				aggregateOfSubPFs = 1;
+				for (int i=0;i<valuesOfSubPFs.length;i++)
+					aggregateOfSubPFs = aggregateOfSubPFs*(1-valuesOfSubPFs[i]);
+				break;
+			case CombFunc.LREG:
+				aggregateOfSubPFs = 0;
+				for (int i=0;i<valuesOfSubPFs.length;i++)
+					aggregateOfSubPFs = aggregateOfSubPFs +valuesOfSubPFs[i] ;
+				break;
+			case CombFunc.LLREG: // same as for LREG
+				aggregateOfSubPFs = 0;
+				for (int i=0;i<valuesOfSubPFs.length;i++)
+					aggregateOfSubPFs = aggregateOfSubPFs +valuesOfSubPFs[i] ;
+				break;
+			case CombFunc.PROD:
+				aggregateOfSubPFs = 1;
+				for (int i=0;i<valuesOfSubPFs.length;i++)
+					aggregateOfSubPFs = aggregateOfSubPFs*valuesOfSubPFs[i];
+				break;
+			case CombFunc.INVSUM:
+				aggregateOfSubPFs = 0;
+				for (int i = 0; i < valuesOfSubPFs.length; i++)
+					aggregateOfSubPFs = aggregateOfSubPFs + valuesOfSubPFs[i];
+				break;
+			case CombFunc.ESUM:
+				aggregateOfSubPFs = 0;
+				for (int i = 0; i < valuesOfSubPFs.length; i++)
+					aggregateOfSubPFs = aggregateOfSubPFs + valuesOfSubPFs[i];
+				break;
+			}
 		
 	}
 
@@ -156,30 +167,30 @@ public class GGCombFuncNode extends GGCPMNode{
 	private double computeCombFunc(double[] args){
 		double result = 0;
 		switch (typeOfComb){
-		case CombFunc.NOR:
-			result = thisgg.computeCombFunc(CombFunc.NOR,args);
-			break;
-		case CombFunc.MEAN: 
-			result = thisgg.computeCombFunc(CombFunc.MEAN,args);
-			break;
-		case CombFunc.INVSUM:
-			result = thisgg.computeCombFunc(CombFunc.INVSUM,args);;
-			break;
-		case CombFunc.ESUM:
-			result = thisgg.computeCombFunc(CombFunc.ESUM,args);;
-			break;
-		case CombFunc.LREG:
-			result = thisgg.computeCombFunc(CombFunc.LREG,args);;
-			break;
-		case CombFunc.LLREG:
-			result = thisgg.computeCombFunc(CombFunc.LLREG,args);;
-			break;
-		case CombFunc.SUM:
-			result = thisgg.computeCombFunc(CombFunc.SUM,args);;
-			break;
-		case CombFunc.PROD:
-			result = thisgg.computeCombFunc(CombFunc.PROD,args);;
-			break;
+			case CombFunc.NOR:
+				result = thisgg.computeCombFunc(CombFunc.NOR,args);
+				break;
+			case CombFunc.MEAN:
+				result = thisgg.computeCombFunc(CombFunc.MEAN,args);
+				break;
+			case CombFunc.INVSUM:
+				result = thisgg.computeCombFunc(CombFunc.INVSUM,args);;
+				break;
+			case CombFunc.ESUM:
+				result = thisgg.computeCombFunc(CombFunc.ESUM,args);;
+				break;
+			case CombFunc.LREG:
+				result = thisgg.computeCombFunc(CombFunc.LREG,args);;
+				break;
+			case CombFunc.LLREG:
+				result = thisgg.computeCombFunc(CombFunc.LLREG,args);;
+				break;
+			case CombFunc.SUM:
+				result = thisgg.computeCombFunc(CombFunc.SUM,args);;
+				break;
+			case CombFunc.PROD:
+				result = thisgg.computeCombFunc(CombFunc.PROD,args);;
+				break;
 		}
 		return result;
 	}
@@ -512,11 +523,13 @@ public class GGCombFuncNode extends GGCPMNode{
 		Gradient result = gradient_for_samples.get(idx);
 		result.reset();
 
-		double sumValue = 0.0;
+		double sumValue = aggregateOfSubPFs;
 		for (int i=0; i<children.size(); i++) {
 			sumValue += children.elementAt(i).evaluate(idx)[0];
 		}
-
+		if (sumValue == 0.0) {
+			System.err.println("computeGradientINVSUM: sumValue is zero, gradient undefined!");
+		}
 		if (sumValue == 1.0) {
 			for (String param : this.myparameters) {
 				result.set_part_deriv(param, new double[] {0.0});
