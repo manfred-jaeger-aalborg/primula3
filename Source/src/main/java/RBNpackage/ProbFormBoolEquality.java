@@ -140,9 +140,9 @@ public class ProbFormBoolEquality extends ProbFormBool {
 		
 		double value = evaluate(A, null);
 		if (value == 1) 
-			return new ProbFormBoolConstant(false);
-		else 
 			return new ProbFormBoolConstant(true);
+		else 
+			return new ProbFormBoolConstant(false);
 	}
 
 	@Override
