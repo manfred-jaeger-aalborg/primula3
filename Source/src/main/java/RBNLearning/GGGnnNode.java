@@ -326,13 +326,23 @@ public class GGGnnNode extends GGCPMNode {
     private List<int[]> resolveNodeArgs(CPModel groundsubpf, CPModel nextsubpf, int[] tuple, ArgTerm[] quantvars)
             throws RBNCompatibilityException {
 
-        int nodeId;
+        int nodeId=-1;
         if (groundsubpf instanceof ProbFormAtom pfa) {
-            nodeId = pfa.getArguments().length == 1 ? Integer.parseInt(pfa.getArguments()[0].argEval()) : -1;
-
+            ArgTerm[] args = pfa.getArguments();
+            Type[] types = pfa.getRelation().getTypes();
+            List<Integer> nodeIds = new ArrayList<>();
+            for (int i = 0; i < args.length; i++) {
+                if (!(types[i] instanceof TypeInteger)) {  // not Integer
+                    nodeIds.add(Integer.parseInt(args[i].argEval()));
+                }
+            }
+            if (nodeIds.size() == 1)
+                return List.of(new int[]{nodeIds.get(0)});
         } else if (groundsubpf instanceof ProbFormMacroCall pmc) {
-            nodeId = pmc.args().length == 1 ? Integer.parseInt(pmc.args()[0].argEval()) : -1;
-
+            if (pmc.args().length > 1) {
+                // for now we use the first argument as the node id
+                return List.of(new int[]{Integer.parseInt(pmc.args()[0].argEval())});
+            }
         } else if (groundsubpf instanceof ProbFormCombFunc) {
             if (tuple.length == 1) {
                 nodeId = tuple[0];
@@ -675,8 +685,8 @@ public class GGGnnNode extends GGCPMNode {
                 Rel r = subList.get(i);
                 num_col += (r instanceof CatRel && cpmgnn.isOneHotEncoding()) ? (int) r.numvals() : 1;
 
-                if (r.getTypes().length > 1)
-                    throw new RuntimeException("More than one type for node attribute " + r.name());
+//                if (r.getTypes().length > 1)
+//                    throw new RuntimeException("More than one type for node attribute " + r.name());
                 if (nodeType == null)
                     nodeType = r.getTypes()[0];
                 else if (!nodeType.equals(r.getTypes()[0]))
