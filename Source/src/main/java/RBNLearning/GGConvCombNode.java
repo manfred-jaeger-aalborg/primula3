@@ -134,9 +134,9 @@ public class GGConvCombNode extends GGCPMNode{
 
 		
 		double r = 0;
-		GGCPMNode F0 = children.elementAt(0);
-		GGCPMNode F1 = children.elementAt(1);
-		GGCPMNode F2 = children.elementAt(2);
+		GGCPMNode F0 = children.get(0);
+		GGCPMNode F1 = children.get(1);
+		GGCPMNode F2 = children.get(2);
 
 		double f0val;
 		double f1val;
@@ -268,9 +268,9 @@ public class GGConvCombNode extends GGCPMNode{
 		double[] childvals=new double[3];
 		Vector<Gradient> childgradients = new Vector<Gradient>();
 		for (int i=0;i<3;i++) {
-			if (children.elementAt(i)!=null) {
-				childvals[i]=children.elementAt(i).evaluate(idx)[0];
-				childgradients.add(children.elementAt(i).evaluateGradient(sno));
+			if (children.get(i)!=null) {
+				childvals[i]=children.get(i).evaluate(idx)[0];
+				childgradients.add(children.get(i).evaluateGradient(sno));
 			}
 			else {
 				childvals[i]=evalOfSubPFs[i];

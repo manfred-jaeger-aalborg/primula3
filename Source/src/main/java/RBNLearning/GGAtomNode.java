@@ -53,7 +53,7 @@ public abstract class GGAtomNode extends GGCPMNode{
 	 * value of this indicator. The converse of GGProbFormNode.mymaxindicators 
 	 * and GGProbFormNode.mysumindicators 
 	 */
-	protected Vector<GGCPMNode> allugas;
+	protected ArrayList<GGCPMNode> allugas;
 	
 	public GGAtomNode(GradientGraphO gg,
 			CPModel pf,
@@ -68,7 +68,7 @@ public abstract class GGAtomNode extends GGCPMNode{
 		observcaseno = observcasenoarg;
 //		currentInst = -1;
 		myuppergroundatom = null;
-		allugas = new Vector<GGCPMNode>();
+		allugas = new ArrayList<GGCPMNode>();
 		if (!(pf instanceof ProbFormAtom)){
 			System.out.println("Cannot create GGAtomNode from ProbForm " + pf.asString(Primula.CLASSICSYNTAX,0,null,false,false));
 		}
@@ -152,7 +152,7 @@ public abstract class GGAtomNode extends GGCPMNode{
 	public abstract void addMeToIndicators(GGCPMNode ggpfn);
 	
 	public void setAllugas(){
-		TreeSet<GGNode> ancs = this.ancestors();
+		TreeSet<GGNode> ancs = this.ancestors(true);
 		for (GGNode nextggn: ancs){
 			if (nextggn instanceof GGCPMNode && ((GGCPMNode)nextggn).isuga()){
 				allugas.add((GGCPMNode)nextggn);
@@ -163,7 +163,7 @@ public abstract class GGAtomNode extends GGCPMNode{
 		allugas.add(myuppergroundatom);
 	}
 	
-	public Vector<GGCPMNode> getAllugas(){
+	public ArrayList<GGCPMNode> getAllugas(){
 		return allugas;
 	}
 	

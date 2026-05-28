@@ -72,7 +72,7 @@ public class GGCombFuncNode extends GGCPMNode{
 		//thisgg.profiler.time1 +=(System.currentTimeMillis()-starttime);
 		//System.out.println("tt1:" + thisgg.profiler.time1);
 				
-		children = new Vector<GGCPMNode>();
+		children = new ArrayList<GGCPMNode>();
 
 
 		/* For all probability formulas in the argument of the combination function, and all
@@ -212,11 +212,12 @@ public class GGCombFuncNode extends GGCPMNode{
 
 		
 		/* Construct an argument array for the combination function: */
-		double[] args = new double[valuesOfSubPFs.length+ children.size()];
+		int childrensize = children.size();
+		double[] args = new double[valuesOfSubPFs.length + childrensize];
 		for (int i=0;i<valuesOfSubPFs.length;i++)
 			args[i]=valuesOfSubPFs[i];
-		for (int i=0;i<children.size();i++)
-			args[i+valuesOfSubPFs.length]= children.elementAt(i).evaluate(sno)[0];
+		for (int i=0;i<childrensize;i++)
+			args[i+valuesOfSubPFs.length]= children.get(i).evaluate(sno)[0];
 		double r = computeCombFunc(args);
 		if (Double.isNaN(r))
 			System.out.println("result = NaN in evaluate for comb.func " );
@@ -359,9 +360,9 @@ public class GGCombFuncNode extends GGCPMNode{
         Vector<Gradient> childgrads = new Vector<Gradient>();
         double[] childvals = new double[children.size()];
         for (int i=0;i<children.size();i++) {
-        		childvals[i]=children.elementAt(i).evaluate(idx)[0];
+        		childvals[i]=children.get(i).evaluate(idx)[0];
                 factor = factor*(1-childvals[i]);
-                childgrads.add(children.elementAt(i).evaluateGradient(idx));
+                childgrads.add(children.get(i).evaluateGradient(idx));
         }
         if (factor == 0)
         	return result;
@@ -395,9 +396,9 @@ public class GGCombFuncNode extends GGCPMNode{
         Vector<Gradient> childgrads = new Vector<Gradient>();
         double[] childvals = new double[children.size()];
         for (int i=0;i<children.size();i++) {
-        		childvals[i]=children.elementAt(i).evaluate(idx)[0];
+        		childvals[i]=children.get(i).evaluate(idx)[0];
                 factor = factor*childvals[i];
-                childgrads.add(children.elementAt(i).evaluateGradient(idx));
+                childgrads.add(children.get(i).evaluateGradient(idx));
         }
         
         
@@ -432,7 +433,7 @@ public class GGCombFuncNode extends GGCPMNode{
 		for (String param: this.myparameters) {
 			double partderiv = 0;
 			for (int i=0;i<children.size();i++)
-				partderiv = partderiv + children.elementAt(i).evaluateGradient(idx).get_part_deriv(param)[0];
+				partderiv = partderiv + children.get(i).evaluateGradient(idx).get_part_deriv(param)[0];
 
 			partderiv = partderiv/(valuesOfSubPFs.length + children.size());
         	result.set_part_deriv(param, new double[] {partderiv});
@@ -452,9 +453,9 @@ public class GGCombFuncNode extends GGCPMNode{
         double[] childvals = new double[children.size()];
         
 		for (int i=0;i<children.size();i++){
-			childvals[i]=children.elementAt(i).evaluate(idx)[0];
+			childvals[i]=children.get(i).evaluate(idx)[0];
 			sum = sum + childvals[i];
-			childgrads.add(children.elementAt(i).evaluateGradient(idx));
+			childgrads.add(children.get(i).evaluateGradient(idx));
 		}
 //		double esum = Math.exp(sum);
 		// Watch: can be issues with infinite values ...?
@@ -525,7 +526,7 @@ public class GGCombFuncNode extends GGCPMNode{
 
 		double sumValue = aggregateOfSubPFs;
 		for (int i=0; i<children.size(); i++) {
-			sumValue += children.elementAt(i).evaluate(idx)[0];
+			sumValue += children.get(i).evaluate(idx)[0];
 		}
 		if (sumValue == 0.0) {
 			System.err.println("computeGradientINVSUM: sumValue is zero, gradient undefined!");
@@ -538,7 +539,7 @@ public class GGCombFuncNode extends GGCPMNode{
 			for (String param : this.myparameters) {
 				double partderiv = 0;
 				for (int i = 0; i < children.size(); i++) {
-					double[] childderiv = children.elementAt(i).evaluateGradient(idx).get_part_deriv(param);
+					double[] childderiv = children.get(i).evaluateGradient(idx).get_part_deriv(param);
 					if (childderiv != null)
 						partderiv += childderiv[0];
 				}
@@ -575,7 +576,7 @@ public class GGCombFuncNode extends GGCPMNode{
 
 		Vector<Gradient> childgrads = new Vector<Gradient>();
 		for (int i = 0; i < children.size(); i++)
-			childgrads.add(children.elementAt(i).evaluateGradient(idx));
+			childgrads.add(children.get(i).evaluateGradient(idx));
 
 		for (String param : this.myparameters) {
 			double derivsum = 0;
@@ -599,7 +600,7 @@ public class GGCombFuncNode extends GGCPMNode{
 		for (String param: this.myparameters) {
 			double partderiv = 0;
 			for (int i=0;i<children.size();i++) {
-				double[] childderiv = children.elementAt(i).evaluateGradient(idx).get_part_deriv(param);
+				double[] childderiv = children.get(i).evaluateGradient(idx).get_part_deriv(param);
 				if (childderiv != null)
 					partderiv = partderiv + childderiv[0];
 			}

@@ -89,7 +89,7 @@ public class GGAtomEqualityNode extends GGCPMNode{
         	if (!Double.isNaN(evalOfPFs[i]))
         		both_sides[i]=evalOfPFs[i];
         	else
-        		both_sides[i]=children.elementAt(i).evaluate(sno)[0]; // child is scalar
+        		both_sides[i]=children.get(i).evaluate(sno)[0]; // child is scalar
         }
         if (both_sides[0] == both_sides[1])
         	value[0] = 1.0;

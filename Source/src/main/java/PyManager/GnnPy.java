@@ -1068,7 +1068,7 @@ public class GnnPy {
 
     // if edgeAttrs is true, use to update the edgeAttrs matrix, else for node attributes
     public Map<String, double[][]> updateAttrDict(Map<String, double[][]> inputDict, CatGnn cpmGnn, GGCPMNode ggcpmNode, boolean edgeAttrs) {
-        Vector<GGCPMNode> children = ggcpmNode.getChildren();
+        ArrayList<GGCPMNode> children = ggcpmNode.getChildren();
         // collect all the nodes of the GNN
         Set<GGCPMNode> uniqueChildren = new HashSet<>(children);
         for (GGCPMNode llchild : mygg.getllchildred()) {
@@ -1369,7 +1369,7 @@ public class GnnPy {
     }
 
     public Map<String, ArrayList<ArrayList<Integer>>> updateEdgeDict(Map<String, ArrayList<ArrayList<Integer>>> edge_dict, CatGnn cpmGnn,  GGCPMNode ggcpmNode) {
-        Vector<GGCPMNode> childred = ggcpmNode.getChildren();
+        ArrayList<GGCPMNode> childred = ggcpmNode.getChildren();
         TreeSet<Rel> parentRels = cpmGnn.parentRels();
         for (TorchInputSpecs pair : cpmGnn.getGnnInputs()) {
             Rel edge = pair.getEdgeRelation();

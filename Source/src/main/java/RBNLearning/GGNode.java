@@ -31,9 +31,9 @@ public abstract class GGNode implements Comparable<GGNode>{
 
 	/** The gradient graph that this node belongs to */
 	GradientGraphO thisgg;
-	
 
-	Vector<GGCPMNode> children;
+
+	ArrayList<GGCPMNode> children;
 	
 	Integer identifier;
 	
@@ -54,13 +54,13 @@ public abstract class GGNode implements Comparable<GGNode>{
 	/**
 	 * Flag for whether this node depends on an unknown atom, i.e., has a AtomSumNode as a descendant
 	 */
-	Boolean depends_on_sample = false;
+	boolean depends_on_sample = false;
 	
-	public Boolean getDepends_on_sample() {
+	public boolean getDepends_on_sample() {
 		return depends_on_sample;
 	}
 
-	public void setDepends_on_sample(Boolean depends_on_sample) {
+	public void setDepends_on_sample(boolean depends_on_sample) {
 		this.depends_on_sample = depends_on_sample;
 	}
 
@@ -86,11 +86,11 @@ public abstract class GGNode implements Comparable<GGNode>{
 	 * if this.depends_on_sample == false, then the dimension is
 	 * 1 
 	 */	
-	Boolean[] is_evaluated_val_for_samples;
+	boolean[] is_evaluated_val_for_samples;
 
     /* Same for the evaluation of the gradient
      */
-	Boolean[] is_evaluated_grad_for_samples;
+	boolean[] is_evaluated_grad_for_samples;
 
 
 	/* For nodes depending on a sum node: evaluation relative 
@@ -140,7 +140,7 @@ public abstract class GGNode implements Comparable<GGNode>{
 	
 	public GGNode(GradientGraphO gg){
 		thisgg = gg;
-		children = new Vector<GGCPMNode>();
+		children = new ArrayList<GGCPMNode>();
 		identifier = Integer.valueOf(gg.getNextId());
 		values_for_samples = null;
 		myparameters=new TreeSet<String>();
@@ -210,12 +210,12 @@ public abstract class GGNode implements Comparable<GGNode>{
 					resetValue(i);
 			}
 			else {
-				is_evaluated_val_for_samples[sno]=false;
+				is_evaluated_val_for_samples[sno] = false;
 				values_for_samples[sno] = null;
 			}
 		}
 		else {
-			is_evaluated_val_for_samples[0]=false;
+			is_evaluated_val_for_samples[0] = false;
 			values_for_samples[0] = null;
 		}
 	}
@@ -346,8 +346,8 @@ public abstract class GGNode implements Comparable<GGNode>{
 		else
 			dim =1;
 		values_for_samples = new double[dim][];
-		is_evaluated_val_for_samples = new Boolean[dim];
-		is_evaluated_grad_for_samples = new Boolean[dim];
+		is_evaluated_val_for_samples = new boolean[dim];
+		is_evaluated_grad_for_samples = new boolean[dim];
 		for (int i=0;i<dim;i++) {
 			values_for_samples[i]=null;
 			is_evaluated_val_for_samples[i]=false;
@@ -378,9 +378,9 @@ public abstract class GGNode implements Comparable<GGNode>{
 		return (outDim==1);
 	}
 
-	public Vector<GGCPMNode> getChildren() { return children; }
+	public ArrayList<GGCPMNode> getChildren() { return children; }
 
-	public Boolean[] getIs_evaluated_val_for_samples() {
+	public boolean[] getIs_evaluated_val_for_samples() {
 		return is_evaluated_val_for_samples;
 	}
 }

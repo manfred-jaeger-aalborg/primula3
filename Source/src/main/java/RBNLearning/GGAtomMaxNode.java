@@ -187,12 +187,12 @@ public class GGAtomMaxNode extends GGAtomNode{
 				// sample again the nodes after flipping.
 				if (thisgg.sumindicators.size() > 0) {
 					if (maxSample!=0)
-						for (int j = 0; j < maxSample; j++) thisgg.gibbsSample(mythread, this.ancestors());
+						for (int j = 0; j < maxSample; j++) thisgg.gibbsSample(mythread, this.ancestors(true));
 					else
-						for (int j = 0; j < thisgg.windowsize; j++) thisgg.gibbsSample(mythread, this.ancestors());
+						for (int j = 0; j < thisgg.windowsize; j++) thisgg.gibbsSample(mythread, this.ancestors(true));
 				}
-					// for (int j=0; j<thisgg.windowsize; j++) thisgg.gibbsSample(mythread); run this for the gibb sampling on all the sumnodes
-				reEvaluateUpstream(null);
+				// for (int j=0; j<thisgg.windowsize; j++) thisgg.gibbsSample(mythread); run this for the gibb sampling on all the sumnodes
+				reEvaluateUpstreamNoLL(null, false);
 				newll = SmallDouble.log(thisgg.llnode.evaluate(null, maxSample, allugas,true,false,null));
 				fs=newll-oldll;
 				if (fs>highscore) {
@@ -205,43 +205,9 @@ public class GGAtomMaxNode extends GGAtomNode{
 		// Reset to original configuration
 		this.setCurrentInst(ci);
 		if (thisgg.sumindicators.size() > 0)
-			for (int j=0; j<thisgg.windowsize; j++) thisgg.gibbsSample(mythread, this.ancestors());
-		reEvaluateUpstream(null);
+			for (int j=0; j<thisgg.windowsize; j++) thisgg.gibbsSample(mythread, this.ancestors(true));
+		reEvaluateUpstreamNoLL(null, false);
 	}
-	
-//	public void setScore(int scoremode){
-//
-//		GGCPMNode nextuga;
-//		double nextscore;
-//		
-//		if (scoremode == USELLSCORE){
-//			System.out.println("Compute score for " + this.getMyatom());
-//			
-//			double[] oldvalues = new double[allugas.size()];
-//			double oldll = GradientGraphO.computePartialLikelihood(allugas,oldvalues);
-//			
-//			
-//			System.out.println("values for ugas: old="  
-//			+ StringOps.arrayToString(oldvalues, "(", ")") );
-//			toggleCurrentInst();
-//			reEvaluateUpstream();
-//			
-//			double[] newvalues = new double[allugas.size()];		
-//			double newll = GradientGraphO.computePartialLikelihood(allugas,newvalues);
-//			
-//			System.out.println("   new="  
-//					+ StringOps.arrayToString(newvalues, "(", ")")  );
-//			
-//			toggleCurrentInst();
-//			reEvaluateUpstream();
-//			
-//			score=0;
-//			for (int i=0;i<allugas.size();i++){
-//				score = score + Math.log( oldvalues[i]/newvalues[i]);
-//			}
-//			System.out.println("result = " + score);
-	//		}
-	//	}
 
 	public double[] evaluate(Integer sno) {
 		return new double[] {Double.valueOf(currentInst)};
@@ -259,6 +225,12 @@ public class GGAtomMaxNode extends GGAtomNode{
 		super.reEvaluateUpstream(sno);
 		// Also need to re-evaluate the upper ground atom node, which
 		// usually is not an ancestor of this in the gradient graph
+		this.getMyUga().resetValue(sno);
+		this.getMyUga().evaluate(sno);
+	}
+
+	public void reEvaluateUpstreamNoLL(Integer sno, boolean resetGrad){
+		super.reEvaluateUpstreamNoLL(sno, resetGrad);
 		this.getMyUga().resetValue(sno);
 		this.getMyUga().evaluate(sno);
 	}

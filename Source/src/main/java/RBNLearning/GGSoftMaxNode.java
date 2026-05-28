@@ -140,8 +140,8 @@ public class GGSoftMaxNode extends GGCPMNode{
 		double[] valsofpfs = new double[this.outDim];
 		
 		for (int i=0;i<this.outDim;i++) {
-			if (children.elementAt(i)!=null)
-				valsofpfs[i] = children.elementAt(i).evaluate(sno)[0]; // return the first element, all the children 
+			if (children.get(i)!=null)
+				valsofpfs[i] = children.get(i).evaluate(sno)[0]; // return the first element, all the children
 			                                                           // must be scalar! (scalar values for the softmax function)
 			else
 				valsofpfs[i] = evalOfPFs[i];
@@ -198,8 +198,8 @@ public class GGSoftMaxNode extends GGCPMNode{
 		for (String param: this.myparameters) {
 			double[][] childpds = new double[children.size()][];
 			for (int i=0;i<children.size();i++) {
-				if (children.elementAt(i)!=null)
-					childpds[i]=children.elementAt(i).evaluateGradient(sno).get_part_deriv(param);
+				if (children.get(i)!=null)
+					childpds[i]=children.get(i).evaluateGradient(sno).get_part_deriv(param);
 			}
 
 			double[] partderiv = new double[this.outDim];

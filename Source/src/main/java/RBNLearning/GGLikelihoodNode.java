@@ -203,7 +203,7 @@ public  class GGLikelihoodNode extends GGNode{
 	 */
 	public double[] evaluate(Integer sno,
 			int smallSample,
-			Vector<GGCPMNode> batchelements,
+			ArrayList<GGCPMNode> batchelements,
 			boolean incremental,
 			boolean updatelik,
 			double[][] oldsmallls)
@@ -424,7 +424,7 @@ public  class GGLikelihoodNode extends GGNode{
 	 * batchelements contains the children that are 
 	 * used (as a current data batch).
 	 */
-	private double[][] evaluateSmallGrad(Integer sno, Vector<GGCPMNode> batchelements)
+	private double[][] evaluateSmallGrad(Integer sno, ArrayList<GGCPMNode> batchelements)
 			throws RBNNaNException
 	{
 

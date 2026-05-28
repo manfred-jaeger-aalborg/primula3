@@ -34,7 +34,7 @@ public abstract class GGCPMNode extends GGNode{
 
 	TreeSet<GGCPMNode> parents;
 	TreeSet<GGNode> ancestors; // Includes the likelihood node
-
+	ArrayList<GGNode> ancestorsNoLL; // DO NOT includes the likelihood node
 
 	//String probformasstring;
 
@@ -77,12 +77,12 @@ public abstract class GGCPMNode extends GGNode{
 	/* If this is an Upper Ground Atom Node: the set of all IndicatorMaxNodes on whose value 
 	 * this node depends. Otherwise null.
 	 */
-	private Vector<GGAtomMaxNode> mymaxindicators;
+	private ArrayList<GGAtomMaxNode> mymaxindicators;
 
 	/* If this is an Upper Ground Atom Node: the set of all IndicatorSumNodes on whose value 
 	 * this node depends. Otherwise null.
 	 */
-	private Vector<GGAtomSumNode> mysumindicators;
+	private ArrayList<GGAtomSumNode> mysumindicators;
 
 
 
@@ -105,8 +105,8 @@ public abstract class GGCPMNode extends GGNode{
 		myindicator = null;
 		myatom ="";
 		instval = null;
-		mymaxindicators = new Vector<GGAtomMaxNode>();
-		mysumindicators = new Vector<GGAtomSumNode>();	
+		mymaxindicators = new ArrayList<GGAtomMaxNode>();
+		mysumindicators = new ArrayList<GGAtomSumNode>();
 		isuga = false;
 		outDim = cpm.numvals();
 		//		dependsOnParam = new boolean[gg.numberOfParameters()];
@@ -373,10 +373,10 @@ public abstract class GGCPMNode extends GGNode{
 		mysumindicators.add(addthis);
 	}
 
-	public Vector<GGAtomMaxNode> getMaxIndicators(){
+	public ArrayList<GGAtomMaxNode> getMaxIndicators(){
 		return mymaxindicators;
 	}
-	public Vector<GGAtomSumNode> getSumIndicators(){
+	public ArrayList<GGAtomSumNode> getSumIndicators(){
 		return mysumindicators;
 	}
 
@@ -427,18 +427,28 @@ public abstract class GGCPMNode extends GGNode{
 	 * in the Graph
 	 * @return
 	 */
-	public TreeSet<GGNode> ancestors(){
+	public TreeSet<GGNode> ancestors(boolean includeLL){
 		TreeSet<GGNode> result = new TreeSet<GGNode>();
 		for (GGCPMNode nextggn:parents){
 			result.add((GGCPMNode)nextggn);
 			nextggn.collectAncestors(result);
 		}
-		result.add(thisgg.llnode);
+		if (includeLL)
+			result.add(thisgg.llnode);
+		return result;
+	}
+
+	public ArrayList<GGNode> ancestorsNoLL(){
+		ArrayList<GGNode> result = new ArrayList<>();
+		for (GGCPMNode nextggn:parents){
+			result.add((GGCPMNode)nextggn);
+			nextggn.collectAncestorsNoLL(result);
+		}
 		return result;
 	}
 
 	public void setAncestors(){
-		ancestors = ancestors();
+		ancestors = ancestors(true);
 	}
 
 	public void deleteAncestors(){
@@ -454,13 +464,34 @@ public abstract class GGCPMNode extends GGNode{
 		}
 	}
 
+	private void collectAncestorsNoLL(ArrayList<GGNode> ancests){
+		for (GGCPMNode nextggn: parents){
+			if (!ancests.contains(nextggn)){
+				ancests.add(nextggn);
+				nextggn.collectAncestorsNoLL(ancests);
+			}
+		}
+	}
+
 	public void resetUpstream(Integer sno) {
 		if (ancestors == null) 
-			ancestors = ancestors();
+			ancestors = ancestors(true);
 
 		for (GGNode anc: ancestors) {
 			anc.resetValue(sno);
 			anc.resetGradient(sno);
+		}
+	}
+
+	// we do not reset/evaluate the likelihoodnode
+	public void resetUpstreamNoLL(Integer sno, boolean resetGrad) {
+		if (ancestorsNoLL == null)
+			ancestorsNoLL = ancestorsNoLL();
+
+		for (GGNode anc: ancestorsNoLL) {
+			anc.resetValue(sno);
+			if (resetGrad)
+				anc.resetGradient(sno);
 		}
 	}
 
@@ -475,6 +506,14 @@ public abstract class GGCPMNode extends GGNode{
 		resetUpstream(sno);
 
 		for (GGNode anc: ancestors)
+			anc.evaluate(sno);
+	}
+
+	// as reEvaluateUpstream, but without including also the likelihood node
+	public void reEvaluateUpstreamNoLL(Integer sno, boolean resetGrad){
+		resetUpstreamNoLL(sno, resetGrad);
+
+		for (GGNode anc: ancestorsNoLL)
 			anc.evaluate(sno);
 	}
 
