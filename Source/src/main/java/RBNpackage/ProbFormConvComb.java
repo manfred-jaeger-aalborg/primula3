@@ -143,18 +143,23 @@ public class ProbFormConvComb extends CPModel implements ProbForm{
 			atomvec1 = new Vector<GroundAtom>();
 
 		Vector<GroundAtom> atomvec2;
-		if (v1==0)
-			atomvec2 = new Vector<GroundAtom>();
-		else atomvec2 = F2.makeParentVec(A,inst,new TreeSet<String>());
-
 		Vector<GroundAtom> atomvec3;
-		if (v1==1)
+		double v2 = 0.0;
+		double v3 = 0.0;
+
+		if (v1==0) {
+			atomvec2 = new Vector<GroundAtom>();
+		} else {
+			atomvec2 = F2.makeParentVec(A, inst, new TreeSet<String>());
+			v2 = (Double) F2.evaluate(A, inst, new ArgTerm[0], new int[0], 0, false, false, null, false, null, null, ProbForm.RETURN_SPARSE, true, null)[0];
+		}
+
+		if (v1==1) {
 			atomvec3 = new Vector<GroundAtom>();
-		else atomvec3 = F3.makeParentVec(A,inst,new TreeSet<String>());
-
-		double v2=(Double)F2.evaluate(A,inst,new ArgTerm[0],new int[0],0,false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
-		double v3=(Double)F3.evaluate(A,inst,new ArgTerm[0],new int[0],0,false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
-
+		} else {
+			atomvec3 = F3.makeParentVec(A, inst, new TreeSet<String>());
+			v3=(Double)F3.evaluate(A,inst,new ArgTerm[0],new int[0],0,false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
+		}
 
 		if ((v2==v3) && !Double.isNaN(v2))
 		{
@@ -284,148 +289,101 @@ public class ProbFormConvComb extends CPModel implements ProbForm{
 		
 		String key="";
 		if (evaluated != null) {
-			key = this.makeKey(vars,tuple,false);		
-			//System.out.print("debug: looking for " + key);
+			key = this.makeKey(vars,tuple,false);
 			Object[] d = evaluated.get(key);
 			if (d!=null) {
-				//System.out.println("debug:  yes found");
 				if (profile)
 					profiler.addTime(Profiler.NUM_EVALUATE_OLD, 1);
 				return d; 
 			}
 		}
-	//System.out.println("debug:   not found");
 
-	ProbFormConvComb subspfcf = (ProbFormConvComb)this.substitute(vars,tuple);
+		Object[] result = new Object[2];
 
-	//		String key="";
-	//		if (evaluated != null) {
-	//			key = subspfcf.makeKey(A);		
-	//			System.out.print("looking for " + key);
-	//			Object[] d = evaluated.get(key);
-	//			if (d!=null) {
-	//				System.out.println("  yes found");
-	//				return d; 
-	//			}
-	//		}
-	//		System.out.println("   not found");
+		Object[] r1= F1.evaluate(A, inst, vars, tuple, gradinx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly,profiler);
+		double r1v = (double)r1[0];
 
-	Object[] result = new Object[2];
+		Object[] r2 = null;
+		double r2v = 0;
+		Object[] r3 = null;
+		double r3v = 0;
 
-	Object[] r1= F1.evaluate(A, inst, vars, tuple, gradinx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly,profiler);
-	Object[] r2= F2.evaluate(A, inst, vars, tuple, gradinx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly,profiler);
-	Object[] r3= F3.evaluate(A, inst, vars, tuple, gradinx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly,profiler);
+		// avoid computing r2 or r3 iff we have 0 or 1 values in r1
+		if (r1v == 1) {
+			r2= F2.evaluate(A, inst, vars, tuple, gradinx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly,profiler);
+			r2v = (double)r2[0];
+			result[0] = r2v;
+		} else if (r1v == 0) {
+			r3= F3.evaluate(A, inst, vars, tuple, gradinx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly,profiler);
+			r3v = (double)r3[0];
+			result[0] = r3v;
+		} else {
+			r2 = F2.evaluate(A, inst, vars, tuple, gradinx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly, profiler);
+			r2v = (double) r2[0];
+			r3 = F3.evaluate(A, inst, vars, tuple, gradinx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly, profiler);
+			r3v = (double) r3[0];
 
-	double r1v = (double)r1[0];
-	double r2v = (double)r2[0];
-	double r3v = (double)r3[0];
+			/* The value: */
+			if (Double.isNaN(r1v)) {
+				if (r2v == r3v)
+					result[0] = r2v;
+				else
+					result[0] = Double.NaN;
+			}
 
+			if ((r1v != 0) && (Double.isNaN(r2v)))
+				result[0] = Double.NaN;
 
-	/* The value: */
-	if (Double.isNaN(r1v)) {
-		if (r2v==r3v)
-			result[0]= r2v;
-		else
-			result[0]= Double.NaN;
-	}
+			if ((r1v != 1) && (Double.isNaN(r3v)))
+				result[0] = Double.NaN;
 
-	if ((r1v != 0) && (Double.isNaN(r2v)) )
-		result[0]= Double.NaN;
+			double firstterm = 0;
+			double secondterm = 0;
 
-	if ((r1v != 1) && (Double.isNaN(r3v)) )
-		result[0]= Double.NaN;
+			if (r1v == 0 || r2v == 0)
+				firstterm = 0;
+			else firstterm = r1v * r2v;
 
-	double firstterm =0;
-	double secondterm =0;
+			if (r1v == 1 || r3v == 0)
+				secondterm = 0;
+			else secondterm = (1 - r1v) * r3v;
 
-	if (r1v==0 || r2v==0)
-		firstterm =0;
-	else firstterm = r1v*r2v;
-
-	if (r1v == 1 || r3v==0)
-		secondterm =0;
-	else secondterm = (1-r1v)*r3v;
-
-	result[0]= firstterm + secondterm;
-
-	/* The derivatives */
-	if (!valonly) {
-		Gradient r1g = (Gradient)r1[1];
-		Gradient r2g = (Gradient)r2[1];
-		Gradient r3g = (Gradient)r3[1];
-
-		result[1]=null;
-		if (returntype == ProbForm.RETURN_ARRAY)
-			result[1]=new Gradient_Array(params);
-		else
-			result[1]= new Gradient_TreeMap(params);
-
-		for (String par: params.keySet()) {
-			double pd1=r1g.get_part_deriv(par)[0];
-			double pd2=r2g.get_part_deriv(par)[0];
-			double pd3=r3g.get_part_deriv(par)[0];
-
-			double pderiv=0;
-			if (r2v != 0)
-				pderiv += pd1*r2v;
-			if (r1v != 0)
-				pderiv += pd2*r1v;
-			if (r1v != 1 && pd3!=0)
-				pderiv += (1-r1v)*pd3;
-			if (r3v != 0 && pd1 !=0)
-				pderiv -= pd1*r3v;
-			((Gradient)result[1]).set_part_deriv(par, new double[] {pderiv});
+			result[0] = firstterm + secondterm;
 		}
-//		if (returntype == ProbForm.RETURN_ARRAY) {
-//			result[1]=new double[params.size()];
-//			double[] r1g = (double[])r1[1];
-//			double[] r2g = (double[])r2[1];
-//			double[] r3g = (double[])r3[1];
-//			for (int i=0;i<params.size();i++) {
-//				((double[])result[1])[i]=r1g[i]*r2v+r1v*r2g[i]+(1-r1v)*r3g[i]-r1g[i]*r3v;
-//			}
-//		}
-//		else {
-//			result[1]=new HashMap<String,Double>();
-//			HashMap<String,Double> r1g = (HashMap<String,Double>)r1[1];
-//			HashMap<String,Double> r2g = (HashMap<String,Double>)r2[1];
-//			HashMap<String,Double> r3g = (HashMap<String,Double>)r3[1];
-//
-//
-//
-//			TreeSet<String> allkeys = new TreeSet<String>(r1g.keySet());
-//			allkeys.addAll(r2g.keySet());
-//			allkeys.addAll(r3g.keySet());
-//
-//			for (String p: allkeys) {
-//				Double r1gp = r1g.get(p);
-//				Double r2gp = r2g.get(p);
-//				Double r3gp = r3g.get(p);
-//
-//				if (r1gp == null)
-//					r1gp = 0.0;
-//				if (r2gp == null)
-//					r2gp = 0.0;
-//				if (r3gp == null)
-//					r3gp = 0.0;
-//
-//				double gp=r1gp*r2v+r1v*r2gp+(1-r1v)*r3gp-r1gp*r3v;
-//				((HashMap<String,Double>)result[1]).put(p,gp);
-//			}
-//		}
-	}
-	if (evaluated != null) {
-		//System.out.println("ProbFormConvComb: adding to evaluated: " + key + " = " + result[0] );
 
-		evaluated.put(key, result);
+		/* The derivatives */
+		if (!valonly) {
+			Gradient r1g = (Gradient) r1[1];
+			Gradient r2g = (r2 != null) ? (Gradient) r2[1] : null;
+			Gradient r3g = (r3 != null) ? (Gradient) r3[1] : null;
+
+			result[1] = (returntype == ProbForm.RETURN_ARRAY) ? new Gradient_Array(params) : new Gradient_TreeMap(params);
+
+			for (String par : params.keySet()) {
+				double pd1 = r1g.get_part_deriv(par)[0];
+				double pd2 = (r2g != null) ? r2g.get_part_deriv(par)[0] : 0;
+				double pd3 = (r3g != null) ? r3g.get_part_deriv(par)[0] : 0;
+
+				double pderiv = 0;
+				if (r2v != 0) pderiv += pd1 * r2v;
+				if (r1v != 0) pderiv += pd2 * r1v;
+				if (r1v != 1 && pd3 != 0) pderiv += (1 - r1v) * pd3;
+				if (r3v != 0 && pd1 != 0) pderiv -= pd1 * r3v;
+
+				((Gradient) result[1]).set_part_deriv(par, new double[]{pderiv});
+			}
+		}
+
+		if (evaluated != null) {
+			evaluated.put(key, result);
+		}
+
+		if (profile)
+			profiler.addTime(Profiler.NUM_EVALUATE_NEW, 1);
+		return result;
 	}
 
-	if (profile)
-		profiler.addTime(Profiler.NUM_EVALUATE_NEW, 1);
-	return result;
-	}
-
-	public  double[] evalSample(RelStruc A, 
+	public  double[] evalSample(RelStruc A,
 			HashMap<String,PFNetworkNode> atomhasht,
 			OneStrucData inst, 
     		HashMap<String,double[]> evaluated,
