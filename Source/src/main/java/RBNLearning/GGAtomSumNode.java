@@ -45,6 +45,8 @@ public class GGAtomSumNode extends GGAtomNode{
 	 * 
 	 */
 
+	private int lastUpstreamEvaluatedVal = -1;
+
 
 	public GGAtomSumNode(GradientGraphO gg,
 			CPModel pf,
@@ -75,6 +77,14 @@ public class GGAtomSumNode extends GGAtomNode{
 	public void setRandomSampleVal(int sno) {
 		int currentInst = (int)(Math.random()*myatom.rel().numvals());
 		values_for_samples[sno] = new double[] {(double) currentInst};
+	}
+
+	public void setLastUpstreamVal(int val) {
+		lastUpstreamEvaluatedVal = val;
+	}
+
+	public int getLastUpstreamVal() {
+		return lastUpstreamEvaluatedVal;
 	}
 
 //	/** Sets value in sno's sample to current instantiation */
