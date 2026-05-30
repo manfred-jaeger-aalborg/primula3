@@ -53,10 +53,11 @@ public class ProbFormMacroCall extends CPModel implements ProbForm {
 		}
 		if (arguments.length > 0) {
 			String argStr = arguments[arguments.length - 1].argEval();
-			if (argStr != null && rbnutilities.IsInteger(argStr) && A != null)
-				result = result.concat(A.nameAt(Integer.parseInt(argStr)));
-			else
-				result = result.concat(arguments[arguments.length - 1].toString());
+			// if we cannot know the type (if is Integer or not) how we can use A.nameAt ?
+//			if (argStr != null && rbnutilities.IsInteger(argStr) && A != null)
+//				result = result.concat(A.nameAt(Integer.parseInt(argStr)));
+//			else
+			result = result.concat(arguments[arguments.length - 1].toString());
 		}
 		result = result.concat(")");
 		return result;
