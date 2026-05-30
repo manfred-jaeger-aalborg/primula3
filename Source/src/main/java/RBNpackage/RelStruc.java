@@ -656,13 +656,57 @@ public abstract class RelStruc implements Cloneable{
 		return result;
 	}
 
+	/* The following is only a default implementation of
+	 * allTrue that does not make use of the specific representation
+	 * of relations in RelStruc
+	 */
+	public int[][] allTrue(ProbFormBool cc, String[] vars)// the elements of vars must be distinct!
+			throws IllegalArgumentException,RBNCompatibilityException
+	{
+		int k = vars.length;
+		int m = rbnutilities.IntPow(dom,k);
+		Vector<int[]> prelimarray = new Vector<int[]>();
+
+		for (int i=0; i<m ; i++)
+		{
+			int[] thistuple = rbnutilities.indexToTuple(i,k,dom);
+
+			if (cc.evaluatesTo(this) == 1)
+				prelimarray.add(thistuple);
+		}
+
+		int[][] result = new int[prelimarray.size()][k];
+		for (int i =0; i<result.length; i++) result[i]=prelimarray.elementAt(i);
+		return result;
+	}
+
+
+	public int[][] allTrue(ProbFormBool cc, ArgTerm[] vars)// the elements of vars must be distinct!
+			throws IllegalArgumentException,RBNCompatibilityException
+	{
+		int k = vars.length;
+		int m = rbnutilities.IntPow(dom, k);
+		Vector<int[]> prelimarray = new Vector<int[]>();
+
+		for (int i = 0; i < m; i++)
+		{
+			int[] thistuple = rbnutilities.indexToTuple(i, k, dom);
+
+			if (cc.evaluatesTo(this) == 1)
+				prelimarray.add(thistuple);
+		}
+
+		int[][] result = new int[prelimarray.size()][k];
+		for (int i = 0; i < result.length; i++) result[i] = prelimarray.elementAt(i);
+		return result;
+	}
 
 	
 	/* The following is only a default implementation of
 	 * allTrue that does not make use of the specific representation
 	 * of relations in RelStruc
 	 */
-	public int[][] allTrue(ProbFormBool cc, String[] vars)// the elements of vars must be distinct!
+	public int[][] allTrue(ProbFormBool cc, String[] vars, int maxInteger)// the elements of vars must be distinct!
 	throws IllegalArgumentException,RBNCompatibilityException
 	{
 		int k = vars.length;
@@ -682,7 +726,7 @@ public abstract class RelStruc implements Cloneable{
 		return result;
 	}
 
-	public int[][] allTrue(ProbFormBool cc, ArgTerm[] vars)
+	public int[][] allTrue(ProbFormBool cc, ArgTerm[] vars, int maxInteger)
 			throws IllegalArgumentException, RBNCompatibilityException
 	{
 		int k = vars.length;

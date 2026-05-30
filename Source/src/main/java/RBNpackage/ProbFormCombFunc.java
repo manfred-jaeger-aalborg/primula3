@@ -388,7 +388,9 @@ public class ProbFormCombFunc extends CPModel implements ProbForm {
 		//System.out.println("makeParentVec for " + this.asString() + ": ");
 		Vector result = new Vector();
 		CPModel nextprobform;
-		int[][] subslist = A.allTrue(cconstr, rbnutilities.getVarsFromArgs(quantvars));
+
+		int maxInteger = maxInteger();
+		int[][] subslist = A.allTrue(cconstr, rbnutilities.getVarsFromArgs(quantvars), maxInteger);
 
 		for (int i=0; i<pfargs.length; i++)
 		{
@@ -401,6 +403,27 @@ public class ProbFormCombFunc extends CPModel implements ProbForm {
 		return result;
 	}
 
+	// we need to find the max integer value in the pfargs parents
+	// the minumum of the parents
+	public int maxInteger() {
+		int maxInteger=Integer.MAX_VALUE;
+		for (int i=0; i<pfargs.length; i++) {
+			TreeSet<Rel> parents = pfargs[i].parentRels();
+			for (Rel r: parents) {
+				for (Type t: r.getTypes()) {
+					if (t instanceof TypeInteger) {
+						((TypeInteger) t).getMaxInt();
+						if (maxInteger > ((TypeInteger) t).getMaxInt())
+							maxInteger = ((TypeInteger) t).getMaxInt();
+					}
+				}
+			}
+		}
+		if (maxInteger == Integer.MAX_VALUE) {
+			return 0;
+		}
+		return maxInteger;
+	}
 
 	//	public ProbForm conditionEvidence(OneStrucData instasosd)
 	//	{

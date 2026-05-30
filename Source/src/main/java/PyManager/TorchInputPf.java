@@ -365,7 +365,27 @@ public class TorchInputPf {
     public int[][] tuplesSatisfyingCConstr(RelStruc A, ArgTerm[] vars, int[] tuple)
             throws RBNCompatibilityException {
         ProbFormBool subscc = (ProbFormBool)this.cconstr.substitute(vars,tuple);
-        return  A.allTrue(subscc,quantvars);
+        return  A.allTrue(subscc,quantvars,maxInteger());
+    }
+
+    public int maxInteger() {
+        int maxInteger=Integer.MAX_VALUE;
+        for (int i=0; i<pfargs.length; i++) {
+            TreeSet<Rel> parents = pfargs[i].parentRels();
+            for (Rel r: parents) {
+                for (Type t: r.getTypes()) {
+                    if (t instanceof TypeInteger) {
+                        ((TypeInteger) t).getMaxInt();
+                        if (maxInteger > ((TypeInteger) t).getMaxInt())
+                            maxInteger = ((TypeInteger) t).getMaxInt();
+                    }
+                }
+            }
+        }
+        if (maxInteger == Integer.MAX_VALUE) {
+            return 0;
+        }
+        return maxInteger;
     }
 
     /**

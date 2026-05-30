@@ -156,28 +156,31 @@ public class CatGnn extends CPModel {
                             continue;
 
                         double val = evalGroundPf(ground, A, inst, vars, tuple, gradindx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly, profiler);
-                        evalEdge.computeIfAbsent(pftype.intern(), k -> new HashMap<>()).put(ground.makeKey(A), new InputEntry(argNodes, val, pi));
+                        String edgeRelKey = edgePf instanceof ProbFormAtom ePfa ? ePfa.getRelation().name() : pftype;
+                        evalEdge.computeIfAbsent(edgeRelKey, k -> new HashMap<>()).put(ground.makeKey(A), new InputEntry(argNodes, val, pi));
                     }
                 }
             }
         }
 
-        // Build edge_dict
+        // Build edge_dict — one entry per edge relation name
         Map<String, ArrayList<ArrayList<Integer>>> edge_dict = new HashMap<>();
         for (TorchInputSpecs spec : gnnInputs) {
-            ArrayList<Integer> srcs = new ArrayList<>(), dsts = new ArrayList<>();
-            for (InputEntry e : evalEdge.getOrDefault(spec.getType(), Collections.emptyMap()).values()) {
-                for (int[] ep : e.argNodes())
-                    if (ep.length == 2 && ep[0] >= 0 && ep[1] >= 0) {
-                        srcs.add(ep[0]);
-                        dsts.add(ep[1]);
-                    }
-            }
-            ArrayList<ArrayList<Integer>> el = new ArrayList<>();
-            el.add(srcs);
-            el.add(dsts);
             if (spec.getEdgeRelation() != null)
-                edge_dict.put(spec.getEdgeRelation().name(), el);
+                edge_dict.computeIfAbsent(spec.getEdgeRelation().name(), k -> {
+                    ArrayList<ArrayList<Integer>> el = new ArrayList<>();
+                    el.add(new ArrayList<>()); el.add(new ArrayList<>()); return el;
+                });
+        }
+        for (Map.Entry<String, Map<String, InputEntry>> eEntry : evalEdge.entrySet()) {
+            String edgeKey = eEntry.getKey();
+            ArrayList<Integer> srcs = new ArrayList<>(), dsts = new ArrayList<>();
+            for (InputEntry e : eEntry.getValue().values())
+                for (int[] ep : e.argNodes())
+                    if (ep.length == 2 && ep[0] >= 0 && ep[1] >= 0) { srcs.add(ep[0]); dsts.add(ep[1]); }
+            ArrayList<ArrayList<Integer>> el = new ArrayList<>();
+            el.add(srcs); el.add(dsts);
+            edge_dict.put(edgeKey, el);
         }
 
         // NODES only for nodes already in the subgraph
@@ -1033,7 +1036,7 @@ public class CatGnn extends CPModel {
         Vector result = new Vector();
         for (TorchInputPf inps: getTypedTorchPf().getCombines()) {
             CPModel nextprobform;
-            int[][] subslist = A.allTrue(inps.getCconstr(), inps.getQuantvars());
+            int[][] subslist = A.allTrue(inps.getCconstr(), inps.getQuantvars(), maxInteger());
 
             for (int i = 0; i < inps.getPfargs().length; i++) {
                 for (int j = 0; j < subslist.length; j++) {
@@ -1043,6 +1046,26 @@ public class CatGnn extends CPModel {
             }
         }
         return result;
+    }
+
+    public int maxInteger() {
+        int maxInteger=Integer.MAX_VALUE;
+        for (TorchInputPf inps: getTypedTorchPf().getCombines()) {
+            TreeSet<Rel> parents = inps.parentRels();
+            for (Rel r: parents) {
+                for (Type t: r.getTypes()) {
+                    if (t instanceof TypeInteger) {
+                        ((TypeInteger) t).getMaxInt();
+                        if (maxInteger > ((TypeInteger) t).getMaxInt())
+                            maxInteger = ((TypeInteger) t).getMaxInt();
+                    }
+                }
+            }
+        }
+        if (maxInteger == Integer.MAX_VALUE) {
+            return 0;
+        }
+        return maxInteger;
     }
 
     @Override
