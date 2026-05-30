@@ -124,6 +124,7 @@ public class CatModelSoftMax extends CPModel {
 		for (int i = 0; i < probforms.size(); i++) {
 			probabilities[i] = Math.exp((double) evaluatedpfs[i][0]) / valsum;
 		}
+		result[0] = probabilities;
 
 		if (!valonly) {
 			result[1] = null;
