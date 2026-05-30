@@ -119,15 +119,15 @@ CPModel ProbForm()  throws RBNIllegalArgumentException:
 {CPModel parsedpf;
 }
 {// grammar
-	( LOOKAHEAD(Atom() "=" ) parsedpf= BoolCatEquality()
+	( LOOKAHEAD(Atom() "=" ) parsedpf = BoolCatEquality()
 	| LOOKAHEAD(<Name> "=" Atom()) parsedpf= BoolCatEquality()
  	| LOOKAHEAD(Atom()) parsedpf=Atom()
  	| LOOKAHEAD(<WIFWIF>) parsedpf = ConvCombinationCherry()
 	| LOOKAHEAD(ConvCombination()) parsedpf=ConvCombination()
 	| LOOKAHEAD(CombinationFunc()) parsedpf=CombinationFunc()
+	| parsedpf=Constant()
 	| parsedpf=BoolFormula()
 	| parsedpf=MacroCall()
-	| parsedpf=Constant()
 	)
 	{return parsedpf;}
 }
@@ -533,11 +533,14 @@ Vector<CPModel> ProbFormList()  throws RBNIllegalArgumentException:
 	{return pflist;}
 }
 
-ProbFormBool BoolPrimary()  throws RBNIllegalArgumentException:
+ProbFormBool BoolFormula()  throws RBNIllegalArgumentException:
 {ProbFormBool pf;}
 {// grammar
-    ( LOOKAHEAD(<Name> "(") pf = BoolAtom()
+    (LOOKAHEAD(Atom() "=" ) pf = BoolCatEquality()
+    | LOOKAHEAD(<Name> "=" Atom()) pf = BoolCatEquality()
+    |   LOOKAHEAD(<Name> "(") pf = BoolAtom()
     | LOOKAHEAD(ArgExpr() "=")  pf = BoolEquality()
+    | pf = BoolNegation()
     | LOOKAHEAD(ArgExpr() (<LT> | <GT>))  pf = BoolComparison()
     | LOOKAHEAD( "(" BoolFormula() "&"  )pf = BoolAnd()
     | LOOKAHEAD( "(" BoolFormula() "|"  )pf = BoolOr()
@@ -548,14 +551,14 @@ ProbFormBool BoolPrimary()  throws RBNIllegalArgumentException:
     {return pf;}
 }
 
-ProbFormBool BoolFormula() throws RBNIllegalArgumentException:
-{ ProbFormBool pf; }
-{
-    ( pf = BoolNegation()
-    | pf = BoolPrimary()
-    )
-    { return pf; }
-}
+//ProbFormBool BoolFormula() throws RBNIllegalArgumentException:
+//{ ProbFormBool pf; }
+//{
+//    ( pf = BoolNegation()
+//    | pf = BoolPrimary()
+//    )
+//    { return pf; }
+//}
 
 
 ProbFormBoolAtom BoolAtom()  throws RBNIllegalArgumentException:
@@ -658,7 +661,7 @@ ProbFormBoolConstant BoolConstant():
 ProbFormBool BoolNegation()  throws RBNIllegalArgumentException:
 {ProbFormBool pfb;}
 { //grammar
-  "~" pfb = BoolPrimary()
+  "~" pfb = BoolFormula()
   {pfb.toggleSign();
   return pfb;}
 }
@@ -782,10 +785,30 @@ TorchInputPf CombinationTorchRels() throws RBNIllegalArgumentException:
     }
 }
 
+String readTypes():
+{
+    String types = "";
+    Token tk;
+}
+{
+    tk = <Name>
+    {
+        types += tk.image;
+    }
+    (
+        ","
+        tk = <Name>
+        {
+            types += "," + tk.image;
+        }
+    )*
+    { return types; }
+}
+
 CatGnn ReadCatGnn(RBNReader3.ParsedTypedAtom parsedat) throws RBNIllegalArgumentException :
 {
     Token tk1 = null;
-    Token tk2;
+    Token tk2 = null;
     ArgTerm[] freeVals;
     Type[] outTypes;
     String configPath;
@@ -798,6 +821,7 @@ CatGnn ReadCatGnn(RBNReader3.ParsedTypedAtom parsedat) throws RBNIllegalArgument
     TorchInputPf tri;
     List<List<TorchInputPf>> combineClausesType = new ArrayList<>();
     boolean optimOneinp = false;
+    String typeDict = "";
 }
 {
     <COMPUTEWITHTORCH>
@@ -824,19 +848,28 @@ CatGnn ReadCatGnn(RBNReader3.ParsedTypedAtom parsedat) throws RBNIllegalArgument
 }
 
     (
-        <TYPEDICT>
+        <TYPEDICT> (typeDict=readTypes())?
             <NODEFEAT> attrs = AttrList()
-            <EDGEGRAPH> tk2 = <Name>
+            (
+                <EDGEGRAPH> tk2 = <Name>
+            )?
             (
                 <EDGEATTR> edgeAttrs = AttrList()
             )?
             {
-                edgeRel = (BoolRel) reader.getRelFromSignature(tk2.image);
+                edgeRel = null;
+                if (tk2 != null) {
+                    edgeRel = (BoolRel) reader.getRelFromSignature(tk2.image);
+                }
+
+                if (typeDict.equals("")) {
+                    typeDict = attrs.get(0).getTypesAsString(); // if not specified, use the first element to infer the type
+                }
                 if (edgeAttrs.size() > 0) {
-                    TorchInputSpecs tis = new TorchInputSpecs(attrs.get(0).getTypesAsString(), attrs, edgeRel, edgeAttrs);
+                    TorchInputSpecs tis = new TorchInputSpecs(typeDict, attrs, edgeRel, edgeAttrs);
                     forInputs.add(tis);
                 } else {
-                    TorchInputSpecs tis = new TorchInputSpecs(attrs.get(0).getTypesAsString(), attrs, edgeRel, null);
+                    TorchInputSpecs tis = new TorchInputSpecs(typeDict, attrs, edgeRel, null);
                     forInputs.add(tis);
                 }
             }
@@ -856,7 +889,8 @@ CatGnn ReadCatGnn(RBNReader3.ParsedTypedAtom parsedat) throws RBNIllegalArgument
             )*
             {
                 combineClausesType.add(combineClauses);
-                tti.addCombine(attrs.get(0).getTypesAsString(), combineClauses);
+                tti.addCombine(typeDict, combineClauses);
+                typeDict = "";
             }
     )+
 
