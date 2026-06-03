@@ -378,7 +378,24 @@ public class rbnutilities extends java.lang.Object
     		result[stringarg1.length + i]=stringarg2[i];
     	return result;
     }
-    
+
+	public static VarTerm[] arrayConcatenate(VarTerm[] stringarg1, VarTerm[] stringarg2){
+		VarTerm[] result = new VarTerm[stringarg1.length + stringarg2.length];
+		for (int i=0;i<stringarg1.length;i++)
+			result[i]=stringarg1[i];
+		for (int i=0;i<stringarg2.length;i++)
+			result[stringarg1.length + i]=stringarg2[i];
+		return result;
+	}
+
+	public static int[] arrayConcatenate(int[] stringarg1, int[] stringarg2){
+		int[] result = new int[stringarg1.length + stringarg2.length];
+		for (int i=0;i<stringarg1.length;i++)
+			result[i]=stringarg1[i];
+		for (int i=0;i<stringarg2.length;i++)
+			result[stringarg1.length + i]=stringarg2[i];
+		return result;
+	}
     public static short[] arrayConcatenate(short[] stringarg1, short[] stringarg2){
     	short[] result = new short[stringarg1.length + stringarg2.length];
     	for (int i=0;i<stringarg1.length;i++)
@@ -452,7 +469,7 @@ public class rbnutilities extends java.lang.Object
 			Set<VarTerm> toRemove = new HashSet<>(Arrays.asList((VarTerm[]) term2));
 			LinkedHashSet<VarTerm> set = new LinkedHashSet<>();
 			for (VarTerm t : (VarTerm[]) term1)
-				if (!toRemove.contains(t.getName()))
+				if (!toRemove.contains(new VarTerm(t.getName())))
 					set.add(t);
 			return set.toArray(new VarTerm[0]);
 		}
@@ -1986,10 +2003,20 @@ public class rbnutilities extends java.lang.Object
     public static TreeSet treeSetIntersection(TreeSet ts1, TreeSet ts2) {
     	if (!ts1.comparator().getClass().equals( ts2.comparator().getClass()))
     		throw new RBNRuntimeException("Cannot intersect two tree sets with different comparators");
+		// Find the smaller of the two tree sets
+		TreeSet tssmall,tslarge;
+		if (ts1.size()<ts2.size()){
+			tssmall = ts1;
+			tslarge = ts2;
+		}
+		else{
+			tssmall = ts2;
+			tslarge = ts1;
+		}
     	TreeSet result = new TreeSet(ts1.comparator());
-		for (Iterator<int[]> it = ts1.iterator(); it.hasNext();){
+		for (Iterator<int[]> it = tssmall.iterator(); it.hasNext();){
 			Object nextel = it.next();
-			if( ts2.contains(nextel))
+			if( tslarge.contains(nextel))
 				result.add(nextel);
 		}
     	return result;
@@ -2002,7 +2029,52 @@ public class rbnutilities extends java.lang.Object
     	}
     	return result;
     }
-    
+
+	public static int getIndexOf(VarTerm[] tarr, VarTerm t)
+			/* Returns the index of the appearance of t in in tarr
+			*throws error if t does not occur in tarr
+			 */
+			throws RBNRuntimeException
+	{
+		for  (int i=0;i<tarr.length;i++) {
+		if (tarr[i].equals(t))
+			return i;
+	}
+	throw new RBNRuntimeException("Cannot find element in "+tarr);
+	}
+
+	public static int[] getIndicesOf(VarTerm[] tarr, VarTerm[] tsub){
+		int[] idxs = new int[tsub.length];
+		for (int i=0;i<tsub.length;i++)
+			idxs[i]=getIndexOf(tarr, tsub[i]);
+		return idxs;
+	}
+
+	public static int[] sliceTuple(int[] tup, int[] idxs)
+	{
+		int[] result = new int[idxs.length];
+		for (int i=0;i<idxs.length;i++)
+			result[i] = tup[idxs[i]];
+		return result;
+	}
+	public static TreeSet<int[]> treeSetSlice(TreeSet<int[]> ts, VarTerm[] tsvars, VarTerm[] slicevars )
+			throws RBNRuntimeException
+	/*
+	* ts is a treeset containing int tuples that represent groundings of tsvars (length of tsvars equals length of the tuples
+	* in ts). slicevars is a subset of tsvars. Returns a treeset that contains all distinct groundings for slicevars contained
+	* in ts.
+	 */
+	{	int[] idxs = new int[slicevars.length];
+		for (int i=0;i<slicevars.length;i++)
+			idxs[i]=getIndexOf(tsvars, slicevars[i]);
+		TreeSet<int[]> result = new TreeSet<int[]>(new IntArrayComparator());
+		for (Iterator<int[]> it = ts.iterator(); it.hasNext();) {
+			result.add(  sliceTuple(it.next(),idxs));
+		}
+		return result;
+	}
+
+
     /* Returns list of domain element names corresponding to
      * the indices in idxs as a single comma-separated string
      * (used in BayesConstructor).
