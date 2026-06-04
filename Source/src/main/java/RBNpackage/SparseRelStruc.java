@@ -432,7 +432,7 @@ public class SparseRelStruc extends RelStruc {
 	public TreeSet<int[]> allTrueAsTreeSet(ProbFormBool cc, ArgTerm[] vars, int maxInteger)
 			throws IllegalArgumentException,RBNCompatibilityException
 	{
-		//System.out.println("allTrueAsTreeSet for " + cc.asString());
+		//System.out.print("allTrueAsTreeSet for " + cc.asString(0,0,this,true,true) + " ... ");
 		TreeSet<int[]> result = new TreeSet<int[]>(new IntArrayComparator());
 
 		if (cc instanceof ProbFormBoolConstant){
@@ -615,13 +615,18 @@ public class SparseRelStruc extends RelStruc {
 					break;
 				case ProbFormBool.OPERATORAND:
 					VarTerm[] varsdone = new VarTerm[0]; // Subset of vars for which groundings have already been computed
+					boolean[] posdone = null;
 					TreeSet<int[]> intsfordone = new TreeSet<int[]>(new IntArrayComparator()) ;
 					TreeSet<int[]> newints;
 
 					for (int i = 0; i < ((ProbFormBoolComposite) cc).numComponents(); i++) {
 						ProbFormBool pfb = ((ProbFormBoolComposite) cc).componentAt(i);
 						VarTerm[] fvars = (VarTerm[]) pfb.freevars();
+						/* Maintain consisten variable orderings with the top level vars argument*/
+						fvars=rbnutilities.alignAT(vars,fvars);
+
 						VarTerm[] newvar = (VarTerm[]) rbnutilities.arraysubstraction(fvars,varsdone);
+						boolean[] newpos = rbnutilities.makePosVec( vars, newvar);
 						VarTerm[] commonvar = (VarTerm[]) rbnutilities.arraysubstraction(fvars, newvar);
 						int[] indxs = rbnutilities.getIndicesOf(varsdone, commonvar);
 
@@ -630,22 +635,31 @@ public class SparseRelStruc extends RelStruc {
 
 						if (i==0){
 							varsdone=fvars;
+							posdone=rbnutilities.makePosVec( vars,varsdone);
 							intsfordone= allTrueAsTreeSet((ProbFormBool) pfb, fvars);
 						}
 						else {
 							for (int[] nextint : intsfordone) {
 								int[] commonint = rbnutilities.sliceTuple(nextint, indxs);
-								if (tuplesdone.containsKey(commonint))
-									newints = tuplesdone.get(commonint);
-								else {
-									newints = allTrueAsTreeSet((ProbFormBool) pfb.substitute(commonvar, commonint), newvar);
-									todo: case newvar empty
-									tuplesdone.put(commonint, newints);
+								if (newvar.length==0) {
+									if (pfb.substitute(commonvar,commonint).evaluatesTo(this)==1)
+										newintsfordone.add(nextint);
+
 								}
-								for (int[] addint : newints)
-									newintsfordone.add(rbnutilities.arrayConcatenate(nextint, addint));
+								else {
+									if (tuplesdone.containsKey(commonint))
+										newints = tuplesdone.get(commonint);
+									else {
+										newints = allTrueAsTreeSet((ProbFormBool) pfb.substitute(commonvar, commonint), newvar);
+										tuplesdone.put(commonint, newints);
+									}
+									for (int[] addint : newints)
+										newintsfordone.add(rbnutilities.arrayPosMerge(nextint, posdone, addint,newpos ));
+								}
 							}
 							varsdone = rbnutilities.arrayConcatenate(varsdone, newvar);
+							varsdone=rbnutilities.alignAT(vars,varsdone);
+							posdone=rbnutilities.makePosVec(vars,varsdone);
 							intsfordone = newintsfordone;
 						}
 					}
@@ -666,6 +680,7 @@ public class SparseRelStruc extends RelStruc {
 			}
 			result = notresult;
 		}
+		//System.out.println("returning " + result.size() + " tuples");
 		return result;
 	}
 

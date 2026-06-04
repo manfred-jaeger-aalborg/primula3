@@ -174,6 +174,48 @@ public class rbnutilities extends java.lang.Object
         return result;
     }
 
+	public static boolean[] makePosVec(ArgTerm[] master, VarTerm[] subs){
+		boolean[] result = new boolean[master.length];
+		for (int i=0;i<master.length;i++)
+		    {
+			if (arrayContains(subs,master[i]))
+				result[i]=true;
+		    }
+		return result;
+	}
+
+	public static int[] arrayPosMerge(int[] vals1, boolean[] pos1, int[] vals2, boolean[] pos2){
+		/*
+		pos1 pos2 are 0/1 vectors of the same length that do not have 1s in the same positions.
+		vals1, vals2 are integer vectors; The length of a vals vector is equal to the number of 1s in the
+		corresponding pos vector.
+		Returns an interleaved merge of vals1 and vals2, where the order is determined by the pos vectors
+		Example:
+		vals1=[3,7] pos1=[0,1,0,1], vals2=[1], pos2=[0,0,1,0]
+		Result: [3,1,7]
+		The pos vectors can be longer than the sum of the lengths of the vals vectors  (then have shared
+		0s is some positions)
+		 */
+		int[] result = new int[vals1.length+vals2.length];
+		int next1=0;
+		int next2=0;
+		int nextout=0;
+		for (int i=0;i<pos1.length;i++){
+			if (pos1[i]){
+				result[nextout]=vals1[next1];
+				next1++;
+				nextout++;
+			}
+			else if (pos2[i]){
+				result[nextout]=vals2[next2];
+				next2++;
+				nextout++;
+			}
+		}
+		return result;
+	}
+
+
 	public static VarTerm[] arraymerge(VarTerm[] term1, VarTerm[] term2) {
 		// relies on equals() and hashCode() of the objects in the arguments
 		LinkedHashSet<VarTerm> set = new LinkedHashSet<>();
@@ -241,8 +283,15 @@ public class rbnutilities extends java.lang.Object
     	}
     	return false;
     }
-    
-    public static int arrayContainsAt(String[] arr, String ii){
+
+	public static boolean arrayContains(ArgTerm[] arr, ArgTerm ii){
+		for (int i=0;i<arr.length;i++){
+			if (arr[i].equals(ii)) return true;
+		}
+		return false;
+	}
+
+	public static int arrayContainsAt(String[] arr, String ii){
     	int result = -1;
     	for (int i=0;i<arr.length;i++){
     		if (arr[i].equals(ii)) result=i;
@@ -2048,6 +2097,22 @@ public class rbnutilities extends java.lang.Object
 		for (int i=0;i<tsub.length;i++)
 			idxs[i]=getIndexOf(tarr, tsub[i]);
 		return idxs;
+	}
+
+	public static VarTerm[] alignAT(ArgTerm[] master, ArgTerm[] tosort){
+				/*
+				tosort is a subset of master; Returns a permuted copy of tosort where the relative
+				order of VarTerms coincides with the order in master; Assumes all elements are distinct in each array
+				 */
+		VarTerm[] result= new VarTerm[tosort.length];
+		int nextidx =0;
+		for (int i=0;i<master.length;i++){
+			if (arrayContains(tosort,master[i])) {
+				result[nextidx] =(VarTerm) master[i];
+				nextidx++;
+			}
+		}
+		return result;
 	}
 
 	public static int[] sliceTuple(int[] tup, int[] idxs)
