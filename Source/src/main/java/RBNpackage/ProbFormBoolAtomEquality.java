@@ -91,6 +91,11 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
         String arg1str = "";
         String arg2str = "";
 
+        if (!(arg1 instanceof ProbFormAtom) && !(arg2 instanceof ProbFormAtom) ) {
+            // if both are not probform then its from a predefined value
+            return arg1 + " = " + arg2;
+        }
+
         if (arg1 instanceof ProbFormAtom)
             arg1str = ((ProbFormAtom) arg1).asString(syntax, depth, A, paramsAsValue, usealias);
         else {
@@ -258,11 +263,11 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
         Vector<GroundAtom> result = new Vector<GroundAtom>();
         GroundAtom par1 = null, par2 = null;
 
-        if (arg1 instanceof ProbFormAtom) {
+        if (arg1 instanceof ProbFormAtom && !((ProbFormAtom) arg1).getRelation().ispredefined()) {
             par1 = ((ProbFormAtom) arg1).atom();
             result.add(par1);
         }
-        if (arg2 instanceof ProbFormAtom) {
+        if (arg2 instanceof ProbFormAtom && !((ProbFormAtom) arg2).getRelation().ispredefined()) {
             par2 = ((ProbFormAtom) arg2).atom();
             if (par1 == null || (par1 != null && !par1.equals(par2)))
                 result.add(par2);
