@@ -24,17 +24,17 @@ class HeteroGraph(nn.Module):
                 conv_dict = {
                     ('sub', 'downstream', 'sub'): SAGEConv(in_sub, hidden_dims, aggr=sage_aggr),
                     ('agr', 'downstream_agr', 'sub'): SAGEConv((in_hru_agr, in_sub), hidden_dims, aggr=sage_aggr),
-                    ('sub', 'upstream_agr', 'agr'): SAGEConv((in_sub, in_hru_agr), hidden_dims),
+                    # ('sub', 'upstream_agr', 'agr'): SAGEConv((in_sub, in_hru_agr), hidden_dims),
                     ('urb', 'downstream_urb', 'sub'): SAGEConv((in_hru_urb, in_sub), hidden_dims, aggr=sage_aggr),
-                    ('sub', 'upstream_urb', 'urb'): SAGEConv((in_sub, in_hru_urb), hidden_dims)
+                    # ('sub', 'upstream_urb', 'urb'): SAGEConv((in_sub, in_hru_urb), hidden_dims)
                 }
             else:
                 conv_dict = {
                     ('sub', 'downstream', 'sub'): SAGEConv(self.out_dim_sub, hidden_dims),
                     ('agr', 'downstream_agr', 'sub'): SAGEConv((in_hru_agr, self.out_dim_sub), hidden_dims, aggr=sage_aggr),
-                    ('sub', 'upstream_agr', 'agr'): SAGEConv((self.out_dim_sub, in_hru_agr), hidden_dims),
+                    # ('sub', 'upstream_agr', 'agr'): SAGEConv((self.out_dim_sub, in_hru_agr), hidden_dims),
                     ('urb', 'downstream_urb', 'sub'): SAGEConv((in_hru_urb, self.out_dim_sub), hidden_dims, aggr=sage_aggr),
-                    ('sub', 'upstream_urb', 'urb'): SAGEConv((self.out_dim_sub, in_hru_urb), hidden_dims)
+                    # ('sub', 'upstream_urb', 'urb'): SAGEConv((self.out_dim_sub, in_hru_urb), hidden_dims)
                 }
 
             self.layers.append(HeteroConv(conv_dict, aggr=self.heteroAggr))
@@ -64,7 +64,7 @@ class HeteroGraph(nn.Module):
 def load_model():
     model = HeteroGraph(in_sub= 2, in_hru_agr=5, in_hru_urb=10, hidden_dims=20, out_dims=3, num_layers=2, batch_norm=True).to("cpu")
     model.load_state_dict(torch.load(
-        '/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/model_l21e5_bn.pt',
+        '/Users/lz50rg/Dev/NeSy-for-graph-data/water-hawqs-github/weights-models/model_l21e5_bn.pt',
         map_location="cpu",
         weights_only=True
     ))

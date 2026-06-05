@@ -1219,8 +1219,18 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
 //        String rbninputfilestring = "/home/jaeger/B/Primula/primula3/Examples/InformationDiffusion/IntArg/mc.rbn";
 //        String rstinputfilestring = "/home/jaeger/B/Primula/primula3/Examples/InformationDiffusion/IntArg/mc.rdef";
 
-        String rbninputfilestring = "/home/jaeger/B/Primula/Examples/Water/water_timed.rbn";
-        String rstinputfilestring = "/home/jaeger/B/Primula/Examples/Water/water_int_s.rdef";
+//        String rbninputfilestring = "/home/jaeger/B/Primula/Examples/Water/water_timed.rbn";
+//        String rstinputfilestring = "/home/jaeger/B/Primula/Examples/Water/water_int_s.rdef";
+
+//        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/LTL/water_timed.rbn";
+//        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/LTL/water_int_s.rdef";
+
+//        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/LTL/toyex/gnn_water.rbn";
+//        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/LTL/toyex/output_network_small.rdef";
+
+        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/LTL/uppaal/gnn_water_g_id.rbn";
+        String rstinputfilestring = "/Users/lz50rg/Dev/temporal-logic/uppaal/temprdef/basin_cfg_20_g.rdef";
+
 
 //        String rbninputfilestring = "/home/jaeger/B/Primula/primula3/Examples/InformationDiffusion/IntArg/mc.rbn";
 //        String rstinputfilestring = "/home/jaeger/B/Primula/primula3/Examples/InformationDiffusion/IntArg/mc.rdef";
@@ -1230,25 +1240,30 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/InformationDiffusion/IntArg/independent_cascade.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/InformationDiffusion/IntArg/independent_cascade.rdef";
 
+//        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/NumericOptim/water_pollution_model.rbn";
+//        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/NumericOptim/output_network.rdef";
+
 //        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/Dummy/rbn.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/Dummy/rdef.rdef";
 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/InformationDiffusion/TemporalGNN/independent_cascade_gnn.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/InformationDiffusion/TemporalGNN/zachary_cascade_uniform_simple.rdef";
 
-//        String rbninputfilestring = "/Users/lz50rg/Dev/RSE/primula/model.rbn";
-//        String rstinputfilestring = "/Users/lz50rg/Dev/RSE/primula/simulation_graph_0.rdef";
-//
+//        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/NumericOptim/water_pollution_model_gibbs.rbn";
+//        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/NumericOptim/output_network_gibbs.rdef";
+
+//        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/InformationDiffusion/IntArg/mc.rbn";
+//        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/InformationDiffusion/IntArg/mc.rdef";
+
 //        String rbninputfilestring = "/Users/lz50rg/Dev/toy_dataset/model_ea.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/toy_dataset/toy.rdef";
 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_pollution_model.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/simple_subbasin_new.rdef";
+
 //        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_pollution-gibbs.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/simple_subbasin_new_gibbs.rdef";
-
 //        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_network_gibbs.rdef";
-
 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/RSE/primula/model_rbn_small.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/RSE/primula/simulation_graph_0_small.rdef";

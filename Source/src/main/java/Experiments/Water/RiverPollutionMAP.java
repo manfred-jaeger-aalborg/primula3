@@ -45,9 +45,8 @@ public class RiverPollutionMAP {
     public static void main(String[] args) {
         Primula primula = new Primula();
 
-        primula.loadSparseRelFile(new File("/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/simple_subbasin_new.rdef"));
-        primula.loadRBNFunction(new File("/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_pollution_model.rbn"));
-
+        primula.loadSparseRelFile(new File("/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_network_gibbs.rdef"));
+        primula.loadRBNFunction(new File("/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_pollution-gibbs.rbn"));
 
         Vector<GroundAtomList> gal_vec = new Vector<>();
         RelStruc input_struct = primula.getRels();

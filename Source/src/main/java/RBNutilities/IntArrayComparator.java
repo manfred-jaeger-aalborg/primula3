@@ -37,6 +37,9 @@ public class IntArrayComparator implements Comparator{
 		int[] a1 = (int[]) arr1;
 		int[] a2 = (int[]) arr2;
 
+		if (a1 == null || a2 == null)
+			System.err.println("Null array in IntArrayComparator.compare");
+
 		// Compare lengths first
 		if (a1.length < a2.length) return -1;
 		if (a1.length > a2.length) return 1;

@@ -24,14 +24,4 @@ public class CatGnnBool extends CatGnn {
     public int numvals() {
         return 1;
     }
-
-    @Override
-    public int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, HashMap<String, GroundAtom> atomhasht) throws RBNCompatibilityException {
-        return 0;
-    }
-
-    @Override
-    public int evaluatesTo(RelStruc A) throws RBNCompatibilityException {
-        return 0;
-    }
 }

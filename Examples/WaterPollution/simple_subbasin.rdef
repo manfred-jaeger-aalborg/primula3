@@ -14,6 +14,7 @@
       <Rel name="SubType" arity="1" argtypes="sub" valtype="categorical" values="RES,SUB" default="?" type="predefined" color="(0,0,0)"/>
       <Rel name="LandUse" arity="1" argtypes="agr" valtype="categorical" values="CORN,COSY,PAST,SOYB" default="?" type="probabilistic" color="(0,70,0)"/>
       <Rel name="Pollution" arity="1" argtypes="sub" valtype="categorical" values="LOW,MED,HIG" default="?" type="probabilistic" color="(0,0,0)"/>
+        <Rel name="all_const" arity="1" argtypes="sub" valtype="boolean" default="?" type="probabilistic" color="(180,20,20)" />
    </Relations>
    <Data>
       <DataForInputDomain>
@@ -51,7 +52,7 @@
             <d rel="SubType" args="(0)(1)(2)" val="SUB"/>
          </PredefinedRels>
          <ProbabilisticRelsCase>
-
+                <d rel="all_const" args="(0)(1)(2)" val="true" />
          </ProbabilisticRelsCase>
       </DataForInputDomain>
    </Data>

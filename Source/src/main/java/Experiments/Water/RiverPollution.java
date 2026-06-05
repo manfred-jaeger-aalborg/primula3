@@ -56,125 +56,14 @@ public class RiverPollution {
 
         System.out.println("exp: " + expNum + " constr: " + constStrength);
         Primula primula = new Primula();
-        primula.setPythonHome("/Users/lz50rg/miniconda3/envs/torch/bin/python");
-        primula.setScriptPath("/Users/lz50rg/Dev/primula-workspace/primula3/Source/python");
-        primula.setScriptName("load_gnn");
 
-        Map<String, Object> load_gnn_set = new HashMap<>();
-        load_gnn_set.put("model", "riverGNN");
-        load_gnn_set.put("sdataset", "pollution");
-        load_gnn_set.put("base_path", "/Users/lz50rg/Dev/water-hawqs/models/");
-        primula.setLoadGnnSet(load_gnn_set);
-
-        File srsfile = new File("/Users/lz50rg/Dev/water-hawqs/src/water-network-const.rdef");
-        primula.loadSparseRelFile(srsfile);
+        primula.loadSparseRelFile(new File("/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_network_gibbs.rdef"));
+//        primula.loadSparseRelFile(new File("/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/simple_subbasin.rdef"));
+        primula.loadRBNFunction(new File("/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_pollution-gibbs.rbn"));
 
         String val_name = "CORN,COSY,PAST,SOYB";
-
-        ArrayList<ArrayList<Rel>> attrs_rels = new ArrayList<>();
-        attrs_rels.add(
-                new ArrayList<Rel>(
-                        Arrays.asList(
-                            new CatRel("LandUse", 1, typeStringToArray("hru_agr", 1), valStringToArray(val_name)),
-                            new NumRel("AreaAgr", 1, typeStringToArray("hru_agr", 1))
-                        )
-                )
-        );
-        attrs_rels.add(
-                new ArrayList<Rel>(
-                        Arrays.asList(
-                                new CatRel("LandUseUrb", 1, typeStringToArray("hru_urb", 1), valStringToArray("BERM,FESC,FRSD,FRST,RIWF,RIWN,UPWF,UPWN,WATR")),
-                                new NumRel("AreaUrb", 1, typeStringToArray("hru_urb", 1))
-                        )
-                )
-        );
-        attrs_rels.add(
-                new ArrayList<Rel>(
-                    Arrays.asList(
-                        new CatRel("SubType", 1, typeStringToArray("sub", 1), valStringToArray("RES,SUB"))
-                    )
-                )
-        );
-
-        // set LandUse as probabilistic
-        attrs_rels.get(0).get(0).setInout(Rel.PROBABILISTIC);
-
-        BoolRel agrsub = new BoolRel("hru_agr_to_sub", 2, typeStringToArray("hru_agr,sub",2));
-        BoolRel urbsub = new BoolRel("hru_urb_to_sub", 2, typeStringToArray("hru_urb,sub",2));
-        BoolRel subsub = new BoolRel("sub_to_sub", 2, typeStringToArray("sub,sub",2));
-        ArrayList<Rel> edge_attr = new ArrayList<>();
-        edge_attr.add(agrsub);
-        edge_attr.add(urbsub);
-        edge_attr.add(subsub);
-        edge_attr.get(0).setInout(Rel.PREDEFINED);
-        edge_attr.get(1).setInout(Rel.PREDEFINED);
-        edge_attr.get(2).setInout(Rel.PREDEFINED);
-
-        RBNPreldef gnn_rbn = new  RBNPreldef(
-                new CatRel("Pollution", 1, typeStringToArray("sub",1), valStringToArray("LOW,MED,HIG")),
-                new ArgTerm[]{new VarTerm("v")},
-                new CatGnn(new ArgTerm[]{new VarTerm("v")},
-                        "HeteroGraphpollution",
-                        2,
-                        3,
-                        attrs_rels,
-                        edge_attr,
-                        "node",
-                        true
-                )
-        );
-
-        Vector<CPModel> softmax = new Vector<>();
-        for (int i = 0; i < 4; i++) {
-            softmax.add(new ProbFormConstant(0.5));
-        }
-
-        RBNPreldef gnn_attr = new  RBNPreldef(
-                new CatRel("LandUse", 1, typeStringToArray("hru_agr", 1), valStringToArray(val_name)),
-                new ArgTerm[]{new VarTerm("v")},
-                new CatModelSoftMax(softmax)
-        );
-
-//        RBN file_rbn = new RBN(new File("/Users/lz50rg/Dev/water-hawqs/water_count_linear.rbn"), primula.getSignature());
-//        RBNPreldef[] riverrbn = file_rbn.prelements();
-//        RBN manual_rbn = new RBN(5, 0);
-//        manual_rbn.insertPRel(gnn_rbn, 0);
-//        manual_rbn.insertPRel(gnn_attr, 1);
-//        manual_rbn.insertPRel(riverrbn[0], 2);
-//        manual_rbn.insertPRel(riverrbn[2], 3);
-//        RBNPreldef const0 = riverrbn[1];
-//        ((ProbFormConvComb) const0.cpmod()).f3().setCvals("", constStrength);
-//        manual_rbn.insertPRel(const0, 4);
-
-//        RBN file_rbn = new RBN(new File("/Users/lz50rg/Dev/water-hawqs/water_count_sub.rbn"), primula.getSignature());
-//        RBNPreldef[] riverrbn = file_rbn.prelements();
-//        RBN manual_rbn = new RBN(4, 0);
-//        manual_rbn.insertPRel(gnn_rbn, 0);
-//        manual_rbn.insertPRel(gnn_attr, 1);
-//        manual_rbn.insertPRel(riverrbn[0], 2);
-//        manual_rbn.insertPRel(riverrbn[1], 3);
-
-        RBN file_rbn = new RBN(new File("/Users/lz50rg/Dev/water-hawqs/water_rbn_const.rbn"), primula.getSignature());
-        RBNPreldef[] riverrbn = file_rbn.prelements();
-        RBN manual_rbn = new RBN(3, 0);
-        manual_rbn.insertPRel(gnn_rbn, 0);
-        manual_rbn.insertPRel(gnn_attr, 1);
-        RBNPreldef const0 = riverrbn[0];
-        ((ProbFormConvComb) const0.cpmod()).f1().setCvals("", constStrength);
-        manual_rbn.insertPRel(const0, 2);
-
-//        RBN file_rbn = new RBN(new File("/Users/lz50rg/Dev/water-hawqs/water_rbn.rbn"), primula.getSignature());
-//        RBNPreldef[] riverrbn = file_rbn.prelements();
-//        RBN manual_rbn = new RBN(3, 0);
-//        for (int i = 0; i < 3; i++) {
-//            manual_rbn.insertPRel(riverrbn[i], i);
-//        }
-
-        primula.setRbn(manual_rbn);
-        primula.getInstantiation().init(manual_rbn);
-        primula.setRbnparameters(manual_rbn.parameters());
         
-        CatRel tmp_query = new CatRel("LandUse", 1, typeStringToArray("hru_agr", 1), valStringToArray(val_name));
+        CatRel tmp_query = new CatRel("LandUse", 1, typeStringToArray("agr", 1), valStringToArray(val_name));
         tmp_query.setInout(Rel.PROBABILISTIC);
 
         try {
@@ -189,11 +78,13 @@ public class RiverPollution {
                     gal.add(tmp_query, new int[]{mat[i][0]});
             }
             im.addQueryAtoms(tmp_query, gal);
-            im.setMapSearchAlg(3);
-            im.setNumIterGreedyMap(150);
+            im.setMapSearchAlg(2);
+            im.setBatchSearchSize(10);
+            im.setCandidateSampleSize(400);
+
             im.setNumRestarts(1);
-            im.setWindowSize(100);
-            im.setNumChains(4);
+            im.setWindowSize(50);
+            im.setNumChains(5);
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();
 
@@ -207,20 +98,33 @@ public class RiverPollution {
 
             // count how many crops type has been assigned
             Map<String, Integer> values_count = new HashMap<>();
+            Map<String, Double> areas_per_crop = new HashMap<>();
             List<String> crops = Arrays.asList(val_name.split(","));
             for (int i = 0; i < 4; i++) {
                 values_count.put(crops.get(i), 0);
+                areas_per_crop.put(crops.get(i), 0.);
             }
+
 
 //            PrintWriter writer = new PrintWriter("best_txt_graph_" + expNum + ".txt", "UTF-8");
 //            writer.println("constr: " + constStrength);
+
+            OneNumRelData areas=null;
+            for (OneNumRelData onr: input_struct.getmydata().getAllonenumdata()) {
+                if (onr.rel().name().contains("AreaAgr")) {
+                    areas = onr;
+                    break;
+                }
+            }
+
             System.out.println("\nMAP INFERENCE RESULTS:\n");
             for (int i = 0; i < gal.size(); i++) {
 //                writer.println(gal.atomAt(i).args()[0] + " : " + res[i]);
                 System.out.println(gal.atomAt(i).rel().toString() + "(" + gal.atomAt(i).args()[0] + "): " + res[i]);
                 values_count.put(crops.get(res[i]), values_count.get(crops.get(res[i]))+1);
+                double ar = areas.valueOf(gal.atomAt(i).args());
+                areas_per_crop.put(crops.get(res[i]), areas_per_crop.get(crops.get(res[i])) + ar);
             }
-
 
             System.out.println("Final GG logLikelihood: " + GG.currentLogLikelihood());
 
@@ -228,53 +132,54 @@ public class RiverPollution {
             System.out.println("time: " + (float)((end - start)));
 
             System.out.println(values_count);
+            System.out.println(areas_per_crop);
 
             // Save values
-            OneStrucData result = new OneStrucData();
-            result.setParentRelStruc(primula.getRels());
-            Enumeration<Rel> e = (Enumeration<Rel>) bestMapVals.keySet();
-            while (e.hasMoreElements()) {
-                Rel rel = e.nextElement();
-                int[] nodes = bestMapVals.get(rel);
-                for (int i = 0; i < nodes.length; i++) {
-                    result.add(new GroundAtom(gal.atomAt(i).rel(), gal.atomAt(i).args), bestMapVals.get(rel)[i],"?");
-                }
-            }
-            primula.getInstantiation().add(result);
-            // ------------------------------------
-
-            im.deleteQueryAtoms();
-            BoolRel queryRel = new BoolRel("constr", 0);
-            primula.getInstantiation().delete(queryRel, new int[0]);
-
-            GroundAtomList queryGround = new GroundAtomList();
-            if (queryRel.getArity()==0) {
-                queryGround.add(new GroundAtom(queryRel,new int[0]));
-            }
-            im.addQueryAtom(queryRel, queryGround, 0);
-
-            im.startSampleThread();
-            System.out.println("Start sampling...");
-
-            double size = 0;
-            double oldsize = -1;
-            System.out.println("Sampling ...");
-            while (size < 40000) {
-                size = im.getSamThr().getNumsamp();
-                if (oldsize != size) {
-                    oldsize = size;
-                    if (size % 10000 == 0)
-                        System.out.println("Sample size: " + size);
-                }
-            }
-
-            im.stopSampleThread();
-            im.getSampthr().join();
-            SampleProbs finalSprobs = im.getSampthr().getSprobs();
-            System.out.println(Arrays.deepToString(finalSprobs.getProbs(queryRel)));
-//            writer.println("constr: " + Arrays.deepToString(finalSprobs.getProbs(queryRel)));
-//            writer.close();
-            System.exit( 0 );
+//            OneStrucData result = new OneStrucData();
+//            result.setParentRelStruc(primula.getRels());
+//            Enumeration<Rel> e = (Enumeration<Rel>) bestMapVals.keySet();
+//            while (e.hasMoreElements()) {
+//                Rel rel = e.nextElement();
+//                int[] nodes = bestMapVals.get(rel);
+//                for (int i = 0; i < nodes.length; i++) {
+//                    result.add(new GroundAtom(gal.atomAt(i).rel(), gal.atomAt(i).args), bestMapVals.get(rel)[i],"?");
+//                }
+//            }
+//            primula.getInstantiation().add(result);
+//            // ------------------------------------
+//
+//            im.deleteQueryAtoms();
+//            BoolRel queryRel = new BoolRel("constr", 0);
+//            primula.getInstantiation().delete(queryRel, new int[0]);
+//
+//            GroundAtomList queryGround = new GroundAtomList();
+//            if (queryRel.getArity()==0) {
+//                queryGround.add(new GroundAtom(queryRel,new int[0]));
+//            }
+//            im.addQueryAtom(queryRel, queryGround, 0);
+//
+//            im.startSampleThread();
+//            System.out.println("Start sampling...");
+//
+//            double size = 0;
+//            double oldsize = -1;
+//            System.out.println("Sampling ...");
+//            while (size < 40000) {
+//                size = im.getSamThr().getNumsamp();
+//                if (oldsize != size) {
+//                    oldsize = size;
+//                    if (size % 10000 == 0)
+//                        System.out.println("Sample size: " + size);
+//                }
+//            }
+//
+//            im.stopSampleThread();
+//            im.getSampthr().join();
+//            SampleProbs finalSprobs = im.getSampthr().getSprobs();
+//            System.out.println(Arrays.deepToString(finalSprobs.getProbs(queryRel)));
+////            writer.println("constr: " + Arrays.deepToString(finalSprobs.getProbs(queryRel)));
+////            writer.close();
+//            System.exit( 0 );
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } catch (RBNIllegalArgumentException e) {

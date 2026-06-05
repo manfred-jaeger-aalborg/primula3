@@ -14,15 +14,35 @@ import java.util.*;
 
 public class NodeClassification {
 
-    private static final String BASE_PATH =
-            "/nfs/home/cs.aau.dk/lz50rg/dev/homophily/map-exp/all_datastes/";
+//    private static final String BASE_PATH = "/nfs/home/cs.aau.dk/lz50rg/dev/homophily/map-exp/all_datasets/";
+    private static final String BASE_PATH = "/Users/lz50rg/Dev/NeSy-for-graph-data/hetero-hom-experiments/all_datasets/";
+
+//    private static final String[] DATASET_NAMES = {
+//            "Wisconsin",
+//            "Texas",
+//            "Cornell",
+//            "Cora",
+//            "CiteSeer",
+//            "Actor",
+//            "chameleon",
+//            "squirrel",
+//            "PubMed",
+//    };
+//    private static final int[] DATASET_CLASSES = {5, 5, 5, 7, 6, 5, 5, 5, 3};
 
     private static final String[] DATASET_NAMES = {
-            "Wisconsin", "Texas", "Cornell", "Cora", "CiteSeer", "PubMed", "chameleon", "squirrel", "Actor"
+            "Cornell"
     };
     private static final int[] DATASET_CLASSES = {
-            5, 5, 5, 7, 6, 3, 5, 5, 5
+            5
     };
+
+    // private static final String[] DATASET_NAMES = {
+    //         "Cora","PubMed"
+    // };
+    // private static final int[] DATASET_CLASSES = {
+    //         7, 3
+    // };
     private static final int SPLITS = 10;
 
     private static String[] buildClassNames(int numClasses) {
@@ -60,12 +80,22 @@ public class NodeClassification {
             System.exit(2);
         }
 
+        System.out.println("JAVA MAX HEAP: " + Runtime.getRuntime().maxMemory() / 1e9);
         int taskId = Integer.parseInt(args[0]);
+        String model = args[1];
 
         int datasetIdx = taskId / SPLITS;
         int index = taskId % SPLITS;
-        String datasetName = DATASET_NAMES[datasetIdx];
-        int numClasses = DATASET_CLASSES[datasetIdx];
+
+        String datasetName = "";
+        int numClasses = 0;
+        if (args.length == 4) {
+            datasetName = args[2];
+            numClasses = Integer.parseInt(args[3]);
+        } else {
+            datasetName = DATASET_NAMES[datasetIdx];
+            numClasses = DATASET_CLASSES[datasetIdx];
+        }
 
         String[] class_names = buildClassNames(numClasses);
         String classValString = String.join(",", class_names);
@@ -74,19 +104,22 @@ public class NodeClassification {
                 + ", split=" + index + ", classes=" + numClasses);
 
         Primula primula = new Primula();
-        primula.loadSparseRelFile(new File(
-                BASE_PATH + "rdef/" + datasetName + "_rdef_homProp_" + index + ".rdef"));
-        primula.loadRBNFunction(new File(
-                BASE_PATH + "rbn/" + datasetName + "_" + index + ".rbn"));
+        primula.loadSparseRelFile(new File(BASE_PATH + "rdef/" + datasetName + "_rdef_homProp_" + index + ".rdef"));
 
-        CatRel tmp_query = new CatRel("CAT", 1,
-                typeStringToArray("node", 1), valStringToArray(classValString));
+        if (model.equals("GCN")) {
+            primula.loadRBNFunction(new File(BASE_PATH + "rbn/" + datasetName + "_" + index + ".rbn"));
+        } else if (model.equals("GGCN")) {
+            primula.loadRBNFunction(new File(BASE_PATH + "rbn/GGCN_" + datasetName + "_" + index + ".rbn"));
+        }
+
+        CatRel tmp_query = new CatRel("CAT", 1, typeStringToArray("node", 1), valStringToArray(classValString));
         tmp_query.setInout(Rel.PROBABILISTIC);
 
         RelStruc input_struct = primula.getRels();
         Vector<GroundAtomList> gal_vec = new Vector<>();
 
         try {
+            long startTime = System.nanoTime();
             InferenceModule im = primula.createInferenceModule();
 
             OneBoolRelData query_nodes = primula.getRels().getData().findInBoolRel("test_nodes");
@@ -106,12 +139,21 @@ public class NodeClassification {
             System.out.println("Number of query nodes: " + gal_vec.get(0).size());
 
             im.addQueryAtoms(tmp_query, gal_vec.get(0));
-            im.setNumRestarts(5);
+            im.setNumRestarts(3);
             GradientGraph GG = im.startMapThread();
             im.getMapthr().join();
 
             HashMap<Rel, int[]> bestMapVals = im.getMapthr().getBestMapVals();
             int[] res = bestMapVals.get(tmp_query);
+
+            long endTime = System.nanoTime();
+            double totalTimeSec = (endTime - startTime) / 1e9;
+
+            Runtime runtime = Runtime.getRuntime();
+            runtime.gc();
+
+            long usedMemoryBytes = runtime.totalMemory() - runtime.freeMemory();
+            double usedMemoryMB = usedMemoryBytes / (1024.0 * 1024.0);
 
             ArrayList<ArrayList<Integer>> pred_res = new ArrayList<>();
             for (int i = 0; i < numClasses; i++) pred_res.add(new ArrayList<>());
@@ -130,8 +172,7 @@ public class NodeClassification {
 
             // Ground truth
             OneStrucData onsd = new OneStrucData(primula.getRels().getmydata().copy());
-            SparseRelStruc sampledRel = new SparseRelStruc(primula.getRels().getNames(), onsd,
-                    primula.getRels().getCoords(), primula.getRels().signature());
+            SparseRelStruc sampledRel = new SparseRelStruc(primula.getRels().getNames(), onsd, primula.getRels().getCoords(), primula.getRels().signature());
             sampledRel.getmydata().add(primula.getInstantiation().copy());
 
             OneBoolRelData[] gt_class = new OneBoolRelData[numClasses];
@@ -154,7 +195,13 @@ public class NodeClassification {
                     + "  Accuracy: " + String.format("%.4f", accuracy));
 
             // Write results
-            String path_lab = BASE_PATH + "prim-res/" + datasetName + "_" + index + ".txt";
+            String path_lab = null;
+            if (model.equals("GCN")) {
+                path_lab = BASE_PATH + "prim-res/" + datasetName + "_" + index + ".txt";
+            } else if (model.equals("GGCN")) {
+                path_lab = BASE_PATH + "prim-res/GGCN_" + datasetName + "_" + index + ".txt";
+            }
+
             try (FileWriter writer = new FileWriter(path_lab)) {
                 writer.write("node,predicted_class,ground_class\n");
                 for (int i = 0; i < numClasses; i++) {
@@ -168,8 +215,7 @@ public class NodeClassification {
                                 break;
                             }
                         }
-                        writer.write(primula.getRels().namesAtAsArray(new int[]{nodeVal})[0]
-                                + "," + predictedClass + "," + i + "\n");
+                        writer.write(primula.getRels().namesAtAsArray(new int[]{nodeVal})[0] + "," + predictedClass + "," + i + "\n");
                     }
                 }
                 writer.write("\nSummary\n");
@@ -177,18 +223,28 @@ public class NodeClassification {
                 writer.write("Correct Predictions: " + correctPredictions + "\n");
                 writer.write("Accuracy: " + String.format("%.4f", accuracy) + "\n");
                 writer.write("Log-Likelihood: " + GG.currentLogLikelihood() + "\n");
+                writer.write("Inference Time (s): " + String.format("%.4f", totalTimeSec) + "\n");
+                writer.write("Memory Used (MB): " + String.format("%.2f", usedMemoryMB) + "\n");
+            } catch (IOException e) {
+                System.err.println("Error writing to file: " + e.getMessage());
+                e.printStackTrace();
+                System.exit(1);
             }
-            System.out.println("Results saved to: " + path_lab);
 
+            System.out.println("Results saved to: " + path_lab);
+            System.exit(0);
         } catch (InterruptedException e) {
             System.err.println("Inference interrupted: " + e.getMessage());
             e.printStackTrace();
+            System.exit(1);
         } catch (RBNIllegalArgumentException e) {
             System.err.println("RBN error: " + e.getMessage());
             e.printStackTrace();
+            System.exit(1);
         } catch (Exception e) {
             System.err.println("Unexpected error: " + e.getMessage());
             e.printStackTrace();
+            System.exit(1);
         }
 
         System.exit(0);

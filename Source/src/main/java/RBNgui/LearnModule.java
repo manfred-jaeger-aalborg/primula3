@@ -201,14 +201,14 @@ public class LearnModule implements GradientGraphOptions
 		numbatches =50;
 		splitmode = RelData.SPLIT_ACROSS_DOMAINS;
 		dampingfac =0.99;
-		numchains = 10;
-//		windowsize = 20;
+		numchains = 20;
+		windowsize = 20;
 		maxfails = 5;
 		maxiterations = 200;
 		linedistancethresh = 0.0001;
 //		linelikelihoodthresh = 0.001;
-		likelihoodwindow = 5;
-		llikhoodthresh = 0.00005;
+		likelihoodwindow = 300;
+		llikhoodthresh = 0.000001;
 		gradientdistancethresh = 0.001;
 		paramratiothresh = 0.0;
 		omitrounds = 3;
@@ -294,7 +294,7 @@ public class LearnModule implements GradientGraphOptions
 	}
 
 	public int getWindowSize(){
-		return likelihoodwindow;
+		return windowsize;
 	}
 
 	public void setRestarts(Integer rs){

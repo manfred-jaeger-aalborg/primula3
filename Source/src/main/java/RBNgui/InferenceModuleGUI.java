@@ -969,6 +969,12 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
         inferenceModuleCore.setInferenceModuleGUI(this);
         myprimula = evidenceModule.myprimula;
         myprimulaGUI = evidenceModule.myprimula.myprimulaGUI;
+        this.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                inferenceModuleCore.closeInference();
+            }
+        });
         setupUI();
     }
 

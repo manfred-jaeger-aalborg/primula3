@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <root>
    <Relations>
       <Rel name="node" arity="1" argtypes="Domain" valtype="boolean" default="false" type="predefined" color="(198,17,16)"/>
@@ -10,6 +9,11 @@
       <Rel name="initial" arity="1" argtypes="time" valtype="boolean" default="false" type="predefined" color="(255,145,0)"/>
       <Rel name="receiveinfo" arity="2" argtypes="node,time" valtype="boolean" default="?" type="probabilistic" color="(198,17,16)"/>
       <Rel name="hasinfo" arity="2" argtypes="node,time" valtype="boolean" default="?" type="probabilistic" color="(198,17,16)"/>
+
+      <Rel name="eventually_hasinfo" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic" color="(198,17,16)"/>
+      <Rel name="IFaGetsInfoThenEventuallyB" arity="2" argtypes="node,node" valtype="boolean" default="?" type="probabilistic" color="(198,17,16)"/>
+      <!-- <Rel name="eventuallyHI" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic" color="(198,17,16)"/>
+      <Rel name="eventuallyHI" arity="1" argtypes="node" valtype="boolean" default="?" type="probabilistic" color="(198,17,16)"/> -->
    </Relations>
    <Data>
       <DataForInputDomain>

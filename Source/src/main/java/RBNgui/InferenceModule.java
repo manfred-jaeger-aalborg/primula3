@@ -280,10 +280,7 @@ public class InferenceModule implements GradientGraphOptions {
 	 */
 	protected String logfilename = "";
 	private Observer valueObserver;
-	private String modelPath;
-	private String scriptPath;
-	private String scriptName;
-	private String pythonHome;
+
 	List<MapThread> threads;
 	int num_threads;
 	// set the Map Seach Algorithm used during map inference
@@ -294,6 +291,8 @@ public class InferenceModule implements GradientGraphOptions {
 	// the number of iteration for the greedy search algorithm
 	private int numIterGreedyMap;
 	private int lookaheadSearch;
+	private boolean scoreNegative;
+	private int candidateSampleSize;
 
 	/**
 	 * @uml.property  name="settingssamplingwindowopen"
@@ -323,6 +322,8 @@ public class InferenceModule implements GradientGraphOptions {
 		maxIterSA = 100;
 		sampleSizeScoring = 0;
 		lookaheadSearch = 3;
+		candidateSampleSize = 0;
+		scoreNegative = false;
 
 		readElementNames();
 		readRBNRelations();
@@ -382,7 +383,7 @@ public class InferenceModule implements GradientGraphOptions {
 				this.queryatoms,
 				samplelogmode,
 				logwriter);
-
+//		sampthr.setDaemon(true);
 		sampthr.start();
 		return sampthr;
 	}
@@ -391,6 +392,29 @@ public class InferenceModule implements GradientGraphOptions {
         sampling = false;
         sampthr.setRunning(false);
     }
+
+	public void closeInference() {
+		if (sampthr != null && sampthr.isAlive()) {
+			sampthr.setRunning(false);
+			sampthr.interrupt();
+
+			try {
+				sampthr.join(1000);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+		}
+		if (mapthr != null && mapthr.isAlive()) {
+			mapthr.setRunning(false);
+			mapthr.interrupt();
+			try {
+				mapthr.join(1000);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+		}
+		System.out.println("Inference Module shut down");
+	}
 
     public void setQueryAtoms(HashMap<Rel,GroundAtomList> atomsList) {
         this.queryatoms = atomsList;
@@ -454,7 +478,8 @@ public class InferenceModule implements GradientGraphOptions {
 			((GradientGraphO) gg).setLookaheadSearch(lookaheadSearch);
 			((GradientGraphO) gg).setMaxIterSA(maxIterSA);
 			((GradientGraphO) gg).setNumIterGreedyMap(numIterGreedyMap);
-			((GradientGraphO) gg).load_gnn_settings(myprimula.getLoadGnnSet());
+			((GradientGraphO) gg).setScoreNegative(scoreNegative);
+			((GradientGraphO) gg).setCandidateSampleSize(candidateSampleSize);
 			mapthr = new MapThread(this, myprimula, (GradientGraphO) gg);
 			mapthr.start();
 
@@ -1477,6 +1502,10 @@ public class InferenceModule implements GradientGraphOptions {
 	public void setInferenceModuleGUI(InferenceModuleGUI inferenceModuleGUI) {
 		this.inferenceModuleGUI = inferenceModuleGUI;
 	}
+
+	public void setCandidateSampleSize(int candidateSampleSize) { this.candidateSampleSize = candidateSampleSize; }
+
+	public void setScoreNegative(boolean scoreNegative) { this.scoreNegative = scoreNegative; }
 
 	public void addQueryAtom(Rel rel, GroundAtomList atstoadd, Integer idx) {
 		idx=relIndex.size();

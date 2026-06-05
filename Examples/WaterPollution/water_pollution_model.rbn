@@ -23,14 +23,6 @@ Pollution([sub]v) = COMPUTEWITHTORCH [/Users/lz50rg/Dev/primula-workspace/primul
                                 downstream_agr(la,lb) 
                         USINGTORCH FORALL la,lb WHERE (downstream(lb, v) & downstream_agr(la, lb))
 
-                        % third-layer
-                        % COMBINE 
-                        %     NODEFEAT
-                        %         LandUse(la),AreaAgr(la)
-                        %     EDGEGRAPH
-                        %         downstream_agr(la,lb) 
-                        % USINGTORCH FORALL la,lb,lc WHERE ((downstream(lb, lc) & downstream_agr(la, lb)) & downstream(lc,v))
-
                     TYPEDICT
                         NODEFEAT LandUseUrb, AreaUrb
                         EDGEGRAPH downstream_urb

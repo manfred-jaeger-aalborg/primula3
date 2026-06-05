@@ -448,72 +448,72 @@ public class LearnThread extends GGThread {
 				
 				// At the moment only option Adam implemented in stochastic gradient !
 				switch (myLearnModule.threadascentstrategy()){
-				case LearnModule.AscentAdam:
-					if (usegradientgraphs) {
-						gradient = gg.getGradient();
-						batchobj=gg.currentLogLikelihood();
-//						batchconfusion = gg.getConfusionDouble();
-//						batchaccuracy = gg.getAccuracy();
-//						for (int j=0;j<parameters.length;j++)
-//							System.out.println(parameters[j] + "  "  + gradient[j] + "  " + lossgrad[2][j]);
-//						System.out.println();
-					}
-					else {
-						
-						double[][] lossgrad = getLossAndGradient(databatches[i],
-								myprimula.getRBN(),
-								parameters,
-								false,
-								profiler);
+					case LearnModule.AscentAdam:
+						if (usegradientgraphs) {
+							gradient = gg.getGradient();
+							batchobj=gg.currentLogLikelihood();
+	//						batchconfusion = gg.getConfusionDouble();
+	//						batchaccuracy = gg.getAccuracy();
+	//						for (int j=0;j<parameters.length;j++)
+	//							System.out.println(parameters[j] + "  "  + gradient[j] + "  " + lossgrad[2][j]);
+	//						System.out.println();
+						}
+						else {
 
-						gradient = lossgrad[1];
-						batchobj= lossgrad[0][0];
-					}
-					epochobj+=batchobj;
+							double[][] lossgrad = getLossAndGradient(databatches[i],
+									myprimula.getRBN(),
+									parameters,
+									false,
+									profiler);
 
-					firstmomentest = rbnutilities.arrayAdd(
-							rbnutilities.arrayScalMult(firstmomentest, beta1), 
-							rbnutilities.arrayScalMult(gradient,1- beta1));
-					/* update biased second raw moment estimate */
-					secondmomentest = rbnutilities.arrayAdd(
-							rbnutilities.arrayScalMult(secondmomentest,  beta2), 
-							rbnutilities.arrayScalMult(rbnutilities.arrayCompMultiply(gradient, gradient),1- beta2));
-					/* Compute bias-corrected first moment estimate: 
-					 * We are here using itcount as the time counter. Thus, "time"
-					 * is incremented only after completion of a full run through
-					 * all data batches, not after every data batch */
-					mhat = rbnutilities.arrayScalMult(firstmomentest, 1/(1-Math.pow( beta1,itcount)));
-					//System.out.println("mhat: " + rbnutilities.arrayToString(mhat, 0, 10));
-					
-					/* Compute bias-corrected second moment estimate: */
-					vhat = rbnutilities.arrayScalMult(secondmomentest, 1/(1-Math.pow( beta2,itcount)));
-					//System.out.println("vhat: " + rbnutilities.arrayToString(vhat, 0, 10));
-					incrementvec = rbnutilities.arrayCompDivide(mhat, 
-							rbnutilities.arrayAddConst(rbnutilities.arraySQRT(vhat), epsilon));
-					
-					
-					
-//					System.out.print("cosine(increment,gradient) " 
-//					+ rbnutilities.arrayDotProduct(rbnutilities.normalizeDoubleArray(incrementvec),rbnutilities.normalizeDoubleArray(gradient))); 
-					
-					/* Proper ADAM: */
-					newparamvals = rbnutilities.arrayAdd(oldparamvals,
-							rbnutilities.arrayScalMult(incrementvec,alpha));
-					newparamvals=rbnutilities.clip(newparamvals,minmaxbounds);
-					
-//					System.out.println("old" +'\t' + "grad" + '\t' + "incr" + '\t' + "new");
-//					for (int ii=0;ii<gradient.length;ii++)
-//						System.out.println(oldparamvals[ii]+ "\t" + gradient[ii]+ "\t" + incrementvec[ii] + "\t" + newparamvals[ii]);
+							gradient = lossgrad[1];
+							batchobj= lossgrad[0][0];
+						}
+						epochobj+=batchobj;
 
-					//System.out.println(itcount + "\t" + rbnutilities.euclidDist(oldparamvals, newparamvals) + "\t" +   batchobj + "\t" + batchaccuracy );
-					myprimula.setParameters(parameters,newparamvals);
-					if (usegradientgraphs)
-						gg.setParametersFromAandRBN();
+						firstmomentest = rbnutilities.arrayAdd(
+								rbnutilities.arrayScalMult(firstmomentest, beta1),
+								rbnutilities.arrayScalMult(gradient,1- beta1));
+						/* update biased second raw moment estimate */
+						secondmomentest = rbnutilities.arrayAdd(
+								rbnutilities.arrayScalMult(secondmomentest,  beta2),
+								rbnutilities.arrayScalMult(rbnutilities.arrayCompMultiply(gradient, gradient),1- beta2));
+						/* Compute bias-corrected first moment estimate:
+						 * We are here using itcount as the time counter. Thus, "time"
+						 * is incremented only after completion of a full run through
+						 * all data batches, not after every data batch */
+						mhat = rbnutilities.arrayScalMult(firstmomentest, 1/(1-Math.pow( beta1,itcount)));
+						//System.out.println("mhat: " + rbnutilities.arrayToString(mhat, 0, 10));
 
-//					if (usegradientgraphs && gg.numberOfIndicators() > 0) {
-//						for (int j = 0; j < gg.windowsize; j++)
-//							gg.gibbsSample(Thread.currentThread());
-//					}
+						/* Compute bias-corrected second moment estimate: */
+						vhat = rbnutilities.arrayScalMult(secondmomentest, 1/(1-Math.pow( beta2,itcount)));
+						//System.out.println("vhat: " + rbnutilities.arrayToString(vhat, 0, 10));
+						incrementvec = rbnutilities.arrayCompDivide(mhat,
+								rbnutilities.arrayAddConst(rbnutilities.arraySQRT(vhat), epsilon));
+
+
+
+	//					System.out.print("cosine(increment,gradient) "
+	//					+ rbnutilities.arrayDotProduct(rbnutilities.normalizeDoubleArray(incrementvec),rbnutilities.normalizeDoubleArray(gradient)));
+
+						/* Proper ADAM: */
+						newparamvals = rbnutilities.arrayAdd(oldparamvals,
+								rbnutilities.arrayScalMult(incrementvec,alpha));
+						newparamvals=rbnutilities.clip(newparamvals,minmaxbounds);
+
+	//					System.out.println("old" +'\t' + "grad" + '\t' + "incr" + '\t' + "new");
+	//					for (int ii=0;ii<gradient.length;ii++)
+	//						System.out.println(oldparamvals[ii]+ "\t" + gradient[ii]+ "\t" + incrementvec[ii] + "\t" + newparamvals[ii]);
+
+						//System.out.println(itcount + "\t" + rbnutilities.euclidDist(oldparamvals, newparamvals) + "\t" +   batchobj + "\t" + batchaccuracy );
+						myprimula.setParameters(parameters,newparamvals);
+						if (usegradientgraphs)
+							gg.setParametersFromAandRBN();
+
+	//					if (usegradientgraphs && gg.numberOfIndicators() > 0) {
+	//						for (int j = 0; j < gg.windowsize; j++)
+	//							gg.gibbsSample(Thread.currentThread());
+	//					}
 				} // switch (myLearnModule.threadascentstrategy()){
 
 				batchcount++;
