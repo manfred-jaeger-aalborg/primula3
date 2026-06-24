@@ -221,6 +221,9 @@ public class GradientGraphO extends GradientGraph{
 		 */
 		if (myggoptions.ggverbose())
 			System.out.println("Building GG:");
+		HashMap<String, Object[]> evaluated = new HashMap<>();
+
+		long startTimeGGconst = System.currentTimeMillis();
 		if (mode == MAPMODE || mode == LEARNANDMAPMODE){
 			int[] naargs;
 			GroundAtom nextatom;
@@ -270,7 +273,7 @@ public class GradientGraphO extends GradientGraph{
 							true,
 							nextatom.asString(),
 							mapatoms,
-							null); /* TODO: optimization with a non-null HashMap here */
+							evaluated); /* TODO: optimization with a non-null HashMap here */
 
 					fnode.setMyatom(nextatom.asString());
 
@@ -323,7 +326,7 @@ public class GradientGraphO extends GradientGraph{
 			for (observcaseno=0; observcaseno<rdoi.numObservations(); observcaseno++){
 				osd = rdoi.oneStrucDataAt(observcaseno);
 
-				HashMap<String,Object[]>  evaluated = new HashMap<String,Object[]>();
+//				HashMap<String,Object[]>  evaluated = new HashMap<String,Object[]>();
 				//System.out.println("\t\tnum rbn pfs: " + rbn.NumPFs());
 				for (int i=0; i<rbn.NumPFs(); i++){
 					nextcpm = rbn.cpmod_prelements_At(i);
@@ -630,6 +633,7 @@ public class GradientGraphO extends GradientGraph{
 				myPrimula.getPrimulaGUI().showMessageThis("");
 			}
 		}
+		System.out.println("GG construction time: " + (endConstruct-startTimeGGconst)/1000.0 + " sec.");
 
 		if (myggoptions.ggverbose()) {
 			System.out.println("#Ground atoms:" + llnode.childrenSize());
