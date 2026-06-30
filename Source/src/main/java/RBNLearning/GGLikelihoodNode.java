@@ -268,14 +268,15 @@ public  class GGLikelihoodNode extends GGNode{
 						oldlsum = SmallDouble.divide(oldlsum, smallSample*thisgg.numchains);
 					}
 					double[] ratio = SmallDouble.divide(small_likelihood_sum, oldlsum);
-					SmallDouble.multiplyInPlace(small_likelihood, ratio);
-//					small_likelihood = SmallDouble.multiply(small_likelihood, ratio);
+//					SmallDouble.multiplyInPlace(small_likelihood, ratio);
+					small_likelihood = SmallDouble.multiply(small_likelihood, ratio);
 				}
 				else
 					small_likelihood=small_likelihood_sum.clone();
+				return small_likelihood;
 			}
 
-			return small_likelihood;
+			return small_likelihood_sum;
 		}
 
 		/*

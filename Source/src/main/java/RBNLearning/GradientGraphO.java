@@ -1812,6 +1812,10 @@ public class GradientGraphO extends GradientGraph{
 			toInvalidate.addAll(uga.getMaxIndicators());
 		scoredQueue.removeAll(toInvalidate);
 
+		if (windowsize * numchains > 0) {
+			llnode.resetValue(null);
+			llnode.evaluate(null);
+		}
 		double newll = SmallDouble.log(llnode.evaluate(null, 0, unionUgas, true, false, null));
 		double[] newvalues = getUgasValues(unionUgas);
 		if (newll == 0) {
@@ -2006,6 +2010,10 @@ public class GradientGraphO extends GradientGraph{
 		});
 
 		// Evaluate new likelihood and values over union
+		if (windowsize * numchains > 0) {
+			llnode.resetValue(null);
+			llnode.evaluate(null);
+		}
 		double newll = SmallDouble.log(llnode.evaluate(null, 0, unionUgas, true, false, null));
 		double[] newvalues = getUgasValues(unionUgas);
 		if (newll == 0) {
@@ -2078,7 +2086,7 @@ public class GradientGraphO extends GradientGraph{
 			// collect all the childred of the ugaSet and add to ugaSet
 			for (GGCPMNode uga : unionUgas) {
 				for (GGAtomMaxNode mx2 : uga.getMaxIndicators()) {
-					mxSet.add(mx2);
+					mxSetN.add(mx2);
 				}
 			}
 			// invalidate flipped atoms cached score
@@ -2344,10 +2352,10 @@ public class GradientGraphO extends GradientGraph{
 				score = mapSearchRecursiveWrapNew(mythread, flip, lookaheadSearch, batchSearchSize, candidateSampleSize, scoreNegative);
 //				evaluateLikelihoodAndPartDerivs(true);
 				long durationNs = System.nanoTime() - start;
-				avgMapWrapTime += durationNs / 1_000_000.0;
+				avgMapWrapTime += durationNs / 1_000_000_000.0;
 				callWrap++;
 				if (myggoptions.ggverbose())
-					System.out.println("mapSearchRecursiveWrap time: " + durationNs / 1_000_000.0 + " ms");
+					System.out.println("mapSearchRecursiveWrap time: " + durationNs / 1_000_000_000.0 + " s");
 			} else if (mapSearchAlg == 3) {
 				score = mapSearchSampling(mythread, maxind_as_list());
 				terminate = true;
