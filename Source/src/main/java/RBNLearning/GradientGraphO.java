@@ -1455,7 +1455,10 @@ public class GradientGraphO extends GradientGraph{
 			if (ugas.get(i).getSumIndicators().size()>0) {
 				for (int j = 0; j < windowsize*numchains; j++) {
 					int childinst = ugas.get(i).instval(j);
-					double[] childval = ugas.get(i).values_for_samples[0];
+					int selidx = 0;
+					if (ugas.get(i).depends_on_sample)
+						selidx = j;
+					double[] childval = ugas.get(i).values_for_samples[selidx];
 					if (!ugas.get(i).isBoolean()) {
 						values[i] += childval[childinst];
 					} else {
@@ -1943,7 +1946,7 @@ public class GradientGraphO extends GradientGraph{
 		}
 
 		// Early return rule: if any selected atom has negative score, return
-		if (keepNegative) {
+		if (!keepNegative) {
 			for (GGAtomMaxNode sel : selected) {
 				if (sel.getScore() <= 0) {
 					if (myggoptions.ggverbose()) {
@@ -2051,6 +2054,8 @@ public class GradientGraphO extends GradientGraph{
 				System.out.println(depthS + "2 returning " + currentllratio);
 			return currentllratio;
 		}
+
+		System.out.println(depthS + "current ratio: " + currentllratio);
 
 		// Add all selected atoms to alreadyflipped (so recursive steps won't reuse them)
 		for (GGAtomMaxNode sel : selected) alreadyflipped.add(sel);

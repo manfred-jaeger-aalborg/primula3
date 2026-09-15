@@ -184,6 +184,8 @@ public abstract class GradientGraph{
 	double[][] graddiffhistory = null;
 	double[] rhos = null;
 
+	public double bestll;
+
 	public GradientGraph(Primula mypr, 
 			RelData data, 
 			HashMap<String,Integer> params,

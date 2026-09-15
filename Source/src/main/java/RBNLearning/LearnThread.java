@@ -34,6 +34,7 @@ import java.util.*;
 import javax.swing.*;
 
 import java.text.*;
+import java.io.*;
 
 public class LearnThread extends GGThread {
 
@@ -330,6 +331,20 @@ public class LearnThread extends GGThread {
 		
 		if (!initParams(A,databatches[0],parameternumrels,null))
 			return null;
+
+//		BufferedWriter lossLogWriter = null;
+//		if (myLearnModule.threadascentstrategy() == LearnModule.AscentAdam) {
+//			try {
+//				lossLogWriter = new BufferedWriter(new FileWriter("adam_loss.txt", !isfirstrestart));
+//				if (isfirstrestart) {
+//					lossLogWriter.write("#iteration\tobjective");
+//					lossLogWriter.newLine();
+//				}
+//			} catch (IOException e) {
+//				System.out.println("Warning: could not open loss log file: " + e.getMessage());
+//				lossLogWriter = null;
+//			}
+//		}
 	
 		
 		/* Initialize ascent strategy specific variables:*/
@@ -352,7 +367,7 @@ public class LearnThread extends GGThread {
 
 		double epochobj = Double.NEGATIVE_INFINITY;
 		double[] epochconfusion = null; 
-		double batchaccuracy;
+		double batchaccuracy = 0;
 		double batchobj = Double.NEGATIVE_INFINITY;
 		double[] batchconfusion = null; 
 		double lastobj = Double.NEGATIVE_INFINITY;
@@ -452,8 +467,8 @@ public class LearnThread extends GGThread {
 						if (usegradientgraphs) {
 							gradient = gg.getGradient();
 							batchobj=gg.currentLogLikelihood();
-	//						batchconfusion = gg.getConfusionDouble();
-	//						batchaccuracy = gg.getAccuracy();
+//							batchconfusion = gg.getConfusionDouble();
+//							batchaccuracy = gg.getAccuracy();
 	//						for (int j=0;j<parameters.length;j++)
 	//							System.out.println(parameters[j] + "  "  + gradient[j] + "  " + lossgrad[2][j]);
 	//						System.out.println();
@@ -505,7 +520,7 @@ public class LearnThread extends GGThread {
 	//					for (int ii=0;ii<gradient.length;ii++)
 	//						System.out.println(oldparamvals[ii]+ "\t" + gradient[ii]+ "\t" + incrementvec[ii] + "\t" + newparamvals[ii]);
 
-						//System.out.println(itcount + "\t" + rbnutilities.euclidDist(oldparamvals, newparamvals) + "\t" +   batchobj + "\t" + batchaccuracy );
+//						System.out.println(itcount + "\t" + rbnutilities.euclidDist(oldparamvals, newparamvals) + "\t" +   batchobj + "\t" + batchaccuracy );
 						myprimula.setParameters(parameters,newparamvals);
 						if (usegradientgraphs)
 							gg.setParametersFromAandRBN();
@@ -551,6 +566,18 @@ public class LearnThread extends GGThread {
 					System.out.print("\t BEST OBJ\n");
 				else
 					System.out.print("\n");
+
+
+//				if (lossLogWriter != null) {
+//					try {
+//						lossLogWriter.write(itcount + "\t" + epochobj);
+//						lossLogWriter.newLine();
+//						lossLogWriter.flush();
+//					} catch (IOException e) {
+//						System.out.println("Warning: failed to write loss log entry: " + e.getMessage());
+//					}
+//				}
+
 				break;
 			}
 		
@@ -561,6 +588,14 @@ public class LearnThread extends GGThread {
 			terminate = (terminate || tries == myLearnModule.getLikelihoodWindow() || itcount == myLearnModule.getMaxIterations());
 		} // while (!terminate && !isstopped())
 
+
+//		if (lossLogWriter != null) {
+//			try {
+//				lossLogWriter.close();
+//			} catch (IOException e) {
+//				System.out.println("Warning: failed to close loss log file: " + e.getMessage());
+//			}
+//		}
 		
 		System.out.println("#Iterations: " + batchcount);
 		/* Don't use 3 components of resultvector here */

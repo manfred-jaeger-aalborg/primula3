@@ -445,7 +445,9 @@ public class ProbFormCombFunc extends CPModel implements ProbForm {
 		//System.out.println("condition Evidence for " + this.asString());
 		ProbForm nextcondpfarg;
 
-		int[][] subslist = A.allTrue(cconstr, rbnutilities.getVarsFromArgs(quantvars));
+		int maxInteger = maxInteger();
+		int[][] subslist = A.allTrue(cconstr, rbnutilities.getVarsFromArgs(quantvars), maxInteger);
+//		int[][] subslist = A.allTrue(cconstr, rbnutilities.getVarsFromArgs(quantvars));
 
 		double[] condpfargs =new double[pfargs.length*subslist.length];
 		boolean allconstant = true;
@@ -486,7 +488,9 @@ public class ProbFormCombFunc extends CPModel implements ProbForm {
 		 * However, when there are no a,b in A with l(a,b), and r(a) true or undetermined in the
 		 * data, then this formula (in this context) does not actually depend on #t
 		 */
-		int[][] subslist = A.allTrue(cconstr, rbnutilities.getVarsFromArgs(quantvars));
+//		int[][] subslist = A.allTrue(cconstr, rbnutilities.getVarsFromArgs(quantvars));
+		int maxInteger = maxInteger();
+		int[][] subslist = A.allTrue(cconstr, rbnutilities.getVarsFromArgs(quantvars), maxInteger);
 		for (int i=0; i<pfargs.length; i++){
 			for (int j=0; j<subslist.length; j++){
 				result = (result || pfargs[i].substitute(quantvars,subslist[j]).dependsOn(variable,A,data)); 
@@ -695,11 +699,13 @@ public class ProbFormCombFunc extends CPModel implements ProbForm {
 			}
 		}	
 		
-		long inittime; 
+		long inittime;
 		/* Same code as in evaluate and evaluatesTo: */
 		ProbFormBool scc = this.cconstr;
 		inittime=System.currentTimeMillis();
-		int[][] subslist = A.allTrue(scc, rbnutilities.getVarsFromArgs(quantvars));
+//		int[][] subslist = A.allTrue(scc, rbnutilities.getVarsFromArgs(quantvars));
+		int maxInteger = maxInteger();
+		int[][] subslist = A.allTrue(scc, rbnutilities.getVarsFromArgs(quantvars), maxInteger);
 		timers[3]=timers[3]+System.currentTimeMillis()-inittime;
 
 		//System.out.println("evalSample for " + this.makeKey(new String[0],new int[0],false));
@@ -739,7 +745,9 @@ public class ProbFormCombFunc extends CPModel implements ProbForm {
 		 * that satisfy the cconstr
 		 */
 
-		int[][] subslist = A.allTrue(scc, rbnutilities.getVarsFromArgs(quantvars));
+//		int[][] subslist = A.allTrue(scc, rbnutilities.getVarsFromArgs(quantvars));
+		int maxInteger = maxInteger();
+		int[][] subslist = A.allTrue(scc, rbnutilities.getVarsFromArgs(quantvars), maxInteger);
 
 		/* Initialize array of arguments for combination functin */
 		int[] combargs = new int[this.pfargs.length*subslist.length];
@@ -776,7 +784,9 @@ public class ProbFormCombFunc extends CPModel implements ProbForm {
 		 * generate list of all substitution tuples for quantvars
 		 * that satisfy the cconstr
 		 */
-		int[][] subslist = A.allTrue(scc, rbnutilities.getVarsFromArgs(quantvars));
+		int maxInteger = maxInteger();
+		int[][] subslist = A.allTrue(scc, rbnutilities.getVarsFromArgs(quantvars), maxInteger);
+//		int[][] subslist = A.allTrue(scc, rbnutilities.getVarsFromArgs(quantvars));
 
 		/* Initialize array of arguments for combination functin */
 		int[] combargs = new int[this.pfargs.length*subslist.length];
@@ -1040,7 +1050,9 @@ public class ProbFormCombFunc extends CPModel implements ProbForm {
 	public CPModel sEval(RelStruc A)
 			throws RBNCompatibilityException
 	{
-		int[][] subslist = A.allTrue(cconstr, rbnutilities.getVarsFromArgs(quantvars));
+		int maxInteger = maxInteger();
+		int[][] subslist = A.allTrue(cconstr, rbnutilities.getVarsFromArgs(quantvars), maxInteger);
+//		int[][] subslist = A.allTrue(cconstr, rbnutilities.getVarsFromArgs(quantvars));
 
 		CPModel[]  sevalpfargs = new CPModel[pfargs.length*subslist.length];
 		for (int i = 0; i<pfargs.length; i++){
@@ -1060,7 +1072,9 @@ public class ProbFormCombFunc extends CPModel implements ProbForm {
 			throws RBNCompatibilityException
 	{
 		ProbFormBool subscc = (ProbFormBool)this.cconstr.substitute(vars,tuple);
-		return  A.allTrue(subscc, rbnutilities.getVarsFromArgs(quantvars));
+		int maxInteger = maxInteger();
+		return A.allTrue(subscc, rbnutilities.getVarsFromArgs(quantvars), maxInteger);
+//		return  A.allTrue(subscc, rbnutilities.getVarsFromArgs(quantvars));
 
 	}
 

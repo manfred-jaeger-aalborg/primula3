@@ -323,7 +323,7 @@ public class InferenceModule implements GradientGraphOptions {
 		sampleSizeScoring = 0;
 		lookaheadSearch = 3;
 		candidateSampleSize = 0;
-		scoreNegative = false;
+		scoreNegative = true;
 
 		readElementNames();
 		readRBNRelations();

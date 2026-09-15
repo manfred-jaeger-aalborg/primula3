@@ -60,7 +60,7 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
         }
         if (arg2 instanceof ProbFormAtom)
             a2 = ((ProbFormAtom) arg2).evaluatesTo(A);
-        else if (arg1 instanceof Integer) {
+        else if (arg2 instanceof Integer) {
             a2 = (int) arg2;
         }
 

@@ -110,6 +110,7 @@ public class MapThread extends GGThread {
 		System.out.println("MAP search finished in " + (endMap - startMap) / 1000.0 + " s");
 		System.out.println("Average time for " + (currentRestarts-1) + " restarts: " + (averageTimeRestarts / (currentRestarts-1) / 1000.0) + " s");
 		System.out.println("Best log-likelihood found: " + oldll);
+		gg.bestll = oldll;
 
 		// save res as pickle
 //		String path = "/Users/lz50rg/Dev/dinga/fairmofsyncondition/res.pkl";
