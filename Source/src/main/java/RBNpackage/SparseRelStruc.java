@@ -636,7 +636,7 @@ public class SparseRelStruc extends RelStruc {
 						if (i==0){
 							varsdone=fvars;
 							posdone=rbnutilities.makePosVec( vars,varsdone);
-							intsfordone= allTrueAsTreeSet((ProbFormBool) pfb, fvars);
+							intsfordone= allTrueAsTreeSet((ProbFormBool) pfb, fvars, maxInteger);
 						}
 						else {
 							for (int[] nextint : intsfordone) {
@@ -650,7 +650,7 @@ public class SparseRelStruc extends RelStruc {
 									if (tuplesdone.containsKey(commonint))
 										newints = tuplesdone.get(commonint);
 									else {
-										newints = allTrueAsTreeSet((ProbFormBool) pfb.substitute(commonvar, commonint), newvar);
+										newints = allTrueAsTreeSet((ProbFormBool) pfb.substitute(commonvar, commonint), newvar, maxInteger);
 										tuplesdone.put(commonint, newints);
 									}
 									for (int[] addint : newints)
