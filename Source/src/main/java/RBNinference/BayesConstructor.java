@@ -449,7 +449,7 @@ public class BayesConstructor extends java.lang.Object {
 	throws RBNCompatibilityException,RBNCyclicException,RBNIllegalArgumentException
 	{
 
-		myprimulaGUI.showMessage("construct PF network...");
+		myprimula.showMessage("construct PF network...");
 		/* The following lines all operate on
 		 * groundatomhasht
 		 */
@@ -483,7 +483,7 @@ public class BayesConstructor extends java.lang.Object {
 		for (int i=0;i<allnodes.size();i++)
 			((BNNode)allnodes.elementAt(i)).visited[0]=false;
 		setDepths(allnodes);
-		myprimulaGUI.appendMessage("done");
+		myprimula.appendMessage("done");
 
 		return new PFNetwork(myprimula,allnodes,strucarg,instarg);
 
@@ -553,7 +553,7 @@ public class BayesConstructor extends java.lang.Object {
 			myProgressMax += estRemainder;
 			/** ... keith cascio */
 
-			myprimulaGUI.showMessage("construct CPT network...");
+			myprimula.showMessage("construct CPT network...");
 			
 			
 			buildInitialGAHT(querymode, evidencemode, COMPLNODE,isolatedzeronodesmode );
@@ -645,7 +645,7 @@ public class BayesConstructor extends java.lang.Object {
 			
 			
 			if (layoutmode == Primula.OPTION_LAYOUT){
-				PrimulaGUI.appendMessage("layout...");
+				myprimula.appendMessage("layout...");
 				// 	    // Set depths of nodes, includes acyclicity check
 				int[] maxlevels = setDepths(exportnodes);
 
@@ -692,7 +692,7 @@ public class BayesConstructor extends java.lang.Object {
 
 			
 			
-			PrimulaGUI.appendMessage("export...");
+			myprimula.appendMessage("export...");
 
 			switch (bnsystem){
 			case Primula.OPTION_JAVABAYES: bni = new BayesNetIntBIF(bnoutputfile);break;
@@ -721,9 +721,9 @@ public class BayesConstructor extends java.lang.Object {
 			}
 
 			bni.open();
-			PrimulaGUI.appendMessage("done");
+			myprimula.appendMessage("done");
 		}catch( InterruptedException interruptedexception ){
-			PrimulaGUI.appendMessage( "interrupted" );
+			myprimula.appendMessage( "interrupted" );
 			return false;
 		}
 
@@ -1483,7 +1483,7 @@ public class BayesConstructor extends java.lang.Object {
 		try{
 			argtuples = strucarg.allTrue(ccon, rbnutilities.getVarsFromArgs(qvars));
 		}
-		catch( RBNCompatibilityException e ){myprimulaGUI.showMessage(e.toString());};
+		catch( RBNCompatibilityException e ){myprimula.showMessage(e.toString());};
 		for (int i=0;i<argpfs.length;i++){
 			for (int j=0;j<argtuples.length;j++){
 				nextpf = argpfs[i].substitute(qvars,argtuples[j]);

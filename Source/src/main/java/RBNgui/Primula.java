@@ -344,14 +344,8 @@ public class Primula {
 			getInstFromReldata();
 		}catch (Exception ex){
 			rels = null;
-			srsfile = null;
-			if (getPrimulaGUI() != null) {
-				myprimulaGUI.rstsrc.setText("");
-				myprimulaGUI.showMessage(ex.toString());
-			}
+			showMessage(ex.toString());
 		}
-		if (getPrimulaGUI() != null)
-			getPrimulaGUI().getDatasrcfilename().setText(srsfile.getName());
 	}
 
 
@@ -361,29 +355,17 @@ public class Primula {
 		if(instasosd.isEmpty() && queryatoms.isEmpty()){
 			rbn = new RBN(input_file, this.sig);
 			rbnfile = input_file;
-			if (getPrimulaGUI() != null)
-				getPrimulaGUI().getRbnfilename().setText(rbnfile.getName());
 			Rel.resetTheColorCounters();
-			if(isEvModuleOpen)
-				evidenceModule.getInferenceModuleGUI().updateRBNRelations();
 		}
 		else{
 			try{
 				rbn = new RBN(input_file, this.sig);
 				rbnfile = input_file;
-				if (getPrimulaGUI() != null)
-					getPrimulaGUI().getRbnfilename().setText(rbnfile.getName());
 			}catch (Exception ex){
-				System.err.println(ex);
 				rbn = null;
 				rbnfile = null;
-				if (getPrimulaGUI() != null) {
-					getPrimulaGUI().getRbnfilename().setText("");
-					getPrimulaGUI().showMessage(ex.toString());
-				}
+				showMessage(ex.toString());
 			}
-			if(isEvModuleOpen)
-				evidenceModule.getInferenceModuleGUI().updateRBNRelations();
 		}
 
 
@@ -724,6 +706,18 @@ public class Primula {
 	public void setPrimulaGUI(PrimulaGUI myprimulaGUI) { this.myprimulaGUI = myprimulaGUI; }
 
 	public PrimulaGUI getPrimulaGUI() { return myprimulaGUI; }
+
+	/** Message to the user: in the GUI if there is one, otherwise on the console. */
+	public void showMessage(String message) {
+		if (myprimulaGUI != null) myprimulaGUI.showMessageThis(message);
+		else System.out.println(message);
+	}
+
+	/** Same as showMessage, without starting a new line. */
+	public void appendMessage(String message) {
+		if (myprimulaGUI != null) myprimulaGUI.appendMessageThis(message);
+		else System.out.print(message);
+	}
 
 	private void loadDefaults() throws RBNIllegalArgumentException {
 

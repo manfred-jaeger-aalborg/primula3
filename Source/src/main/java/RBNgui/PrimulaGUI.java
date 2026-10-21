@@ -816,7 +816,7 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
                     datasrcfilename.setText("");
                     Rel.resetTheColorCounters();
                     primula.loadSparseRelFile(primula.rdeffile);
-                    datasrcfilename.setText(primula.rdeffile.getName());
+                    datasrcfilename.setText(primula.getRels() != null ? primula.rdeffile.getName() : "");
 
                     if(primula.isEvModuleOpen)
                         evidenceModuleGUI.newElementNames();
@@ -841,8 +841,10 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
             int value = relmodelFileChooser.showDialog(this, "Load");
             if (value == JFileChooser.APPROVE_OPTION) {
                 File selectedFile = relmodelFileChooser.getSelectedFile();
-                if (myFilterRBN.accept(selectedFile))
+                if (myFilterRBN.accept(selectedFile)) {
                     primula.loadRBNFunction(selectedFile);
+                    showLoadedRBN();
+                }
                 else if (myFilterMLN.accept(selectedFile)){
                     File mlnFile = selectedFile;
                     relmodelFileChooser.resetChoosableFileFilters();
@@ -1039,7 +1041,9 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
             String pathRST = "./holmes_2.rst";
             String pathRBN = "./holmes_2.rbn";
             primula.loadSparseRelFile( primula.srsfile = new File( pathRST ) );
+            datasrcfilename.setText(primula.getRels() != null ? primula.srsfile.getName() : "");
             primula.loadRBNFunction( new File( pathRBN ) );
+            showLoadedRBN();
             evModule.doClick();
             //evidenceModule.aceCompile();
             //evidenceModule.getACEControl().getActionCompile().actionPerformed( null );
@@ -1121,6 +1125,13 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
 
     public JTextField getRbnfilename() {
         return rbnfilename;
+    }
+
+    /** Updates the GUI after primula.loadRBNFunction: file name and the relations of the inference module. */
+    private void showLoadedRBN() {
+        rbnfilename.setText(primula.rbnfile != null ? primula.rbnfile.getName() : "");
+        if (Primula.isEvModuleOpen)
+            primula.evidenceModule.getInferenceModuleGUI().updateRBNRelations();
     }
 
     @Override
@@ -1228,9 +1239,11 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/LTL/toyex/gnn_water.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/LTL/toyex/output_network_small.rdef";
 
-        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/LTL/uppaal/gnn_water_g_id.rbn";
-        String rstinputfilestring = "/Users/lz50rg/Dev/temporal-logic/uppaal/temprdef/basin_cfg_20_g.rdef";
+//        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/LTL/uppaal/gnn_water_g_id.rbn";
+//        String rstinputfilestring = "/Users/lz50rg/Dev/temporal-logic/uppaal/temprdef/basin_cfg_20_g.rdef";
 
+//        String rbninputfilestring = "/Users/lz50rg/Dev/NeSy-for-graph-data/hetero-hom-experiments/ising/rbns/ac_parametric.rbn";
+//        String rstinputfilestring = "/Users/lz50rg/Dev/NeSy-for-graph-data/hetero-hom-experiments/ising/rdef/ising_32_-0.7_0.3_0.4_4_nodeconst_HP.rdef";
 
 //        String rbninputfilestring = "/home/jaeger/B/Primula/primula3/Examples/InformationDiffusion/IntArg/mc.rbn";
 //        String rstinputfilestring = "/home/jaeger/B/Primula/primula3/Examples/InformationDiffusion/IntArg/mc.rdef";
@@ -1249,35 +1262,23 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/InformationDiffusion/TemporalGNN/independent_cascade_gnn.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/InformationDiffusion/TemporalGNN/zachary_cascade_uniform_simple.rdef";
 
-//        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/NumericOptim/water_pollution_model_gibbs.rbn";
-//        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/NumericOptim/output_network_gibbs.rdef";
-
-//        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/InformationDiffusion/IntArg/mc.rbn";
-//        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/InformationDiffusion/IntArg/mc.rdef";
-
-//        String rbninputfilestring = "/Users/lz50rg/Dev/toy_dataset/model_ea.rbn";
-//        String rstinputfilestring = "/Users/lz50rg/Dev/toy_dataset/toy.rdef";
-
 //        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_pollution_model.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/simple_subbasin_new.rdef";
+
+        String rbninputfilestring = "/Users/lz50rg/Dev/temporal-logic/primula_out_basic/pollution_basic.rbn";
+        String rstinputfilestring = "/Users/lz50rg/Dev/temporal-logic/primula_out_basic/variant_005.rdef";
 
 //        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_pollution-gibbs.rbn";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/simple_subbasin_new_gibbs.rdef";
 //        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/water_network_gibbs.rdef";
 
-//        String rbninputfilestring = "/Users/lz50rg/Dev/RSE/primula/model_rbn_small.rbn";
-//        String rstinputfilestring = "/Users/lz50rg/Dev/RSE/primula/simulation_graph_0_small.rdef";
-
-//        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/GNN-homophily/Cora/cora.rbn";
-//        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/GNN-homophily/Cora/rdef/cora_nodeconst_homProp_0.rdef";
-
-//        String rbninputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/GNN-homophily/Texas/texas.rbn";
-//        String rstinputfilestring = "/Users/lz50rg/Dev/primula-workspace/primula3/Examples/GNN-homophily/Texas/texas_nodeconst_homProp_0.rdef";
         primula.srsfile = new File(rstinputfilestring);
         primula.rbnfile = new File(rbninputfilestring);
 
         primula.loadSparseRelFile(primula.srsfile);
+        datasrcfilename.setText(primula.getRels() != null ? primula.srsfile.getName() : "");
         primula.loadRBNFunction(primula.rbnfile);
+        showLoadedRBN();
     }
 
     public static void main( String[] args ) throws RBNIllegalArgumentException {
@@ -1293,7 +1294,7 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
         }
         PrimulaGUI win = new PrimulaGUI(new Primula());
 		SamiamManager.centerWindow( win );
-        win.loadDefaults();
+//        win.loadDefaults();
 		win.setVisible(true);
     }
 }

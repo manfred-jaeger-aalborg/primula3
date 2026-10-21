@@ -211,8 +211,7 @@ public class GradientGraphO extends GradientGraph{
 		int processedcounter = 0;
 		int currentpercentage = 0;
 		if (showInfoInPrimula)
-			if (myPrimula.getPrimulaGUI() != null)
-				myPrimula.getPrimulaGUI().appendMessageThis("0%");
+			myPrimula.appendMessage("0%");
 
 
 
@@ -299,8 +298,7 @@ public class GradientGraphO extends GradientGraph{
 					ggmn.setUGA(fnode);
 					processedcounter++;
 					if (showInfoInPrimula && (10*processedcounter)/ugacounter > currentpercentage){
-						if (myPrimula.getPrimulaGUI() != null)
-							myPrimula.getPrimulaGUI().appendMessageThis("X");
+						myPrimula.appendMessage("X");
 						currentpercentage++;
 					}
 					if (myggoptions.ggverbose())
@@ -429,8 +427,7 @@ public class GradientGraphO extends GradientGraph{
 							}
 							processedcounter++;
 							if (showInfoInPrimula && (10*processedcounter)/ugacounter > currentpercentage){
-								if (myPrimula.getPrimulaGUI() != null)
-									myPrimula.getPrimulaGUI().appendMessageThis("X");
+								myPrimula.appendMessage("X");
 								currentpercentage++;
 							}
 						} /* if (!mapatoms.contains(nextrel,nexttup)) */
@@ -444,8 +441,7 @@ public class GradientGraphO extends GradientGraph{
 			System.out.println("\t-finished constructing " + numNodes + " nodes in " + (System.currentTimeMillis()-((double)startTime))/1000.0 + " sec.");
 
 		if (showInfoInPrimula)
-			if (myPrimula.getPrimulaGUI() != null)
-				myPrimula.getPrimulaGUI().appendMessageThis("100%");
+			myPrimula.appendMessage("100%");
 
 		/* Construct ProbFormNodes for all SumIndicator nodes.
 		 */
@@ -623,15 +619,13 @@ public class GradientGraphO extends GradientGraph{
 
 		long endConstruct = System.currentTimeMillis();
 		if (showInfoInPrimula){
-			if (myPrimula.getPrimulaGUI() != null) {
-				myPrimula.getPrimulaGUI().showMessageThis("#Ground atoms:" + llnode.childrenSize());
-				myPrimula.getPrimulaGUI().showMessageThis("#Sum atoms:" + sumindicators.size());
-				myPrimula.getPrimulaGUI().showMessageThis("#Max atoms:" + this.numberOfMaxIndicators());
-				myPrimula.getPrimulaGUI().showMessageThis("#Internal nodes:" + allNodes.size());
-				System.out.println("GG construction time: " + (endConstruct-startTime)/1000.0 + " sec.");
-				//myPrimula.showMessageThis("#Links:" + numLinks());
-				myPrimula.getPrimulaGUI().showMessageThis("");
-			}
+			myPrimula.showMessage("#Ground atoms:" + llnode.childrenSize());
+			myPrimula.showMessage("#Sum atoms:" + sumindicators.size());
+			myPrimula.showMessage("#Max atoms:" + this.numberOfMaxIndicators());
+			myPrimula.showMessage("#Internal nodes:" + allNodes.size());
+			System.out.println("GG construction time: " + (endConstruct-startTime)/1000.0 + " sec.");
+			//myPrimula.showMessageThis("#Links:" + numLinks());
+			myPrimula.showMessage("");
 		}
 		System.out.println("GG construction time: " + (endConstruct-startTimeGGconst)/1000.0 + " sec.");
 
@@ -2805,8 +2799,7 @@ public double[] learnParameters(GGThread mythread, int fullorincremental, boolea
 			if (initIndicators(mythread))
 				success = true;
 			else {
-				if (myPrimula.getPrimulaGUI() != null)
-					myPrimula.getPrimulaGUI().showMessageThis("Failed to sample missing values");
+				myPrimula.showMessage("Failed to sample missing values");
 			}
 		}
 		if (verbose)
