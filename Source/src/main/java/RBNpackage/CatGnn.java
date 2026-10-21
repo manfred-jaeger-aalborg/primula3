@@ -516,10 +516,11 @@ public class CatGnn extends CPModel {
                 return List.of(new int[]{nodeIds.get(0)});
 
             nodeId = pfa.getArguments().length == 1 ? Integer.parseInt(pfa.getArguments()[0].argEval()) : -1;
-        } else if (ground instanceof ProbFormMacroCall pmc) {
-            int[] nodeIds = macroNodeArgIds(pmc, A);
-            // first node argument, wherever it is in the call; only integer args, e.g. @season(t): broadcast
-            if (nodeIds.length > 0) return List.of(new int[]{nodeIds[0]});
+        } else if (ground instanceof ProbFormMacroCall pmc && pf instanceof ProbFormMacroCall pmcPf) {
+            // the node is one of the macro arguments, see macroNodeId
+            Integer id = macroNodeId(pmc, pmcPf, qv);
+            if (id == null) return null; // not about one node: skip
+            nodeId = id;
         } else if (ground instanceof ProbFormConstant) {
             nodeId = -1; // broadcast
         } else {
@@ -530,32 +531,6 @@ public class CatGnn extends CPModel {
             else return null;
         }
         return List.of(new int[]{nodeId});
-    }
-
-    /**
-     * Raw ids of the call arguments that are nodes, in call order. Macro heads are usually untyped
-     * (@LOW(v,t)), so an argument counts as a node if the expanded body uses its value at a
-     * non-integer position of some atom, e.g. v in PollutionZero(v) or Pollution(v,t-1).
-     * An argument declared integer in the macro head is never a node.
-     */
-    private static int[] macroNodeArgIds(ProbFormMacroCall pmc, RelStruc A) throws RBNCompatibilityException {
-        Set<Integer> nodeVals = new HashSet<>();
-        for (GroundAtom ga : pmc.makeParentVec(A, new OneStrucData(), new TreeSet<>())) {
-            Type[] types = ga.rel().getTypes();
-            int[] args = ga.args();
-            for (int i = 0; i < args.length; i++)
-                if (!(types[i] instanceof TypeInteger)) nodeVals.add(args[i]);
-        }
-
-        ArgTerm[] callArgs = pmc.args();
-        Type[] declared = pmc.macro().types();
-        List<Integer> out = new ArrayList<>();
-        for (int i = 0; i < callArgs.length; i++) {
-            if (declared != null && i < declared.length && declared[i] instanceof TypeInteger) continue;
-            int v = Integer.parseInt(callArgs[i].argEval());
-            if (nodeVals.contains(v)) out.add(v);
-        }
-        return out.stream().mapToInt(Integer::intValue).toArray();
     }
 
     /**
@@ -573,6 +548,38 @@ public class CatGnn extends CPModel {
             nodeId = sub[i];
         }
         return nodeId != null ? nodeId : queryNodeId(queryArgs);
+    }
+
+    /**
+     * Raw node id of a macro call used as NODEFEAT, i.e. which argument is the node the feature describes.
+     * ground: the grounded call, pf: the same call before grounding, qv: the FORALL variables of the clause.
+     *   1. arguments declared [Integer] in the macro head are never the node
+     *   2. of the others, the FORALL variable:          @triple(v,n) FORALL n  -> n
+     *   3. no FORALL variable among them, the first:    @double(v)             -> v
+     *   4. all arguments [Integer]: -1 (broadcast)
+     *   5. several different FORALL variables: null (not about one node)
+     */
+    public static Integer macroNodeId(ProbFormMacroCall ground, ProbFormMacroCall pf, ArgTerm[] qv) {
+        Type[] types = pf.macro().types();
+        ArgTerm[] args = pf.args();
+
+        // 1.
+        List<Integer> candidates = new ArrayList<>();
+        for (int i = 0; i < args.length; i++)
+            if (!(types[i] instanceof TypeInteger)) candidates.add(i);
+        if (candidates.isEmpty()) return -1; // 4.
+
+        // 2. and 5.
+        Integer chosen = null;
+        for (int i : candidates)
+            for (ArgTerm q : qv)
+                if (q.argEval().equals(args[i].argEval())) {
+                    if (chosen != null && !args[chosen].argEval().equals(args[i].argEval())) return null;
+                    chosen = i;
+                }
+        // 3.
+        if (chosen == null) chosen = candidates.get(0);
+        return Integer.parseInt(ground.args()[chosen].argEval());
     }
 
     /** Raw node id of the query atom, e.g. 1 for CAT(1); -1 if it has no arguments. Only the first argument is used. */

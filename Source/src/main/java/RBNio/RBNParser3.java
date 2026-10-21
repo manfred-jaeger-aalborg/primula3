@@ -228,7 +228,8 @@ left = new IntMinus(left, right);
       }
 if (typestr != null)
             {
-                types.add(new TypeRel(typestr));
+                // [Integer]t: integer argument (e.g. a time step), [x]v: argument of type x
+                types.add(typestr.equals("Integer") ? new TypeInteger() : new TypeRel(typestr));
                 typestr = null;
             }
             else {types.add(new TypeDomain());}
@@ -248,7 +249,7 @@ args.add(new VarTerm(tok.image));
           ;
         }
 if (typestr != null) {
-                types.add(new TypeRel(typestr));
+                types.add(typestr.equals("Integer") ? new TypeInteger() : new TypeRel(typestr));
                 typestr = null;
                         }
                     else {

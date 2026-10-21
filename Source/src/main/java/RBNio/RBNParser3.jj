@@ -224,7 +224,8 @@ RBNReader3.ParsedTypedArguments TypedArguments():
 		{
             if (typestr != null)
             {
-                types.add(new TypeRel(typestr));
+                // [Integer]t: integer argument (e.g. a time step), [x]v: argument of type x
+                types.add(typestr.equals("Integer") ? new TypeInteger() : new TypeRel(typestr));
                 typestr = null;
             }
             else {types.add(new TypeDomain());}
@@ -235,7 +236,7 @@ RBNReader3.ParsedTypedArguments TypedArguments():
 	    ( "," (typestr = TypeDeclaration())?
 		{
             if (typestr != null) {
-                types.add(new TypeRel(typestr));
+                types.add(typestr.equals("Integer") ? new TypeInteger() : new TypeRel(typestr));
                 typestr = null;
 			}
 		    else {

@@ -152,7 +152,7 @@ public class ProbFormMacroCall extends CPModel implements ProbForm {
 	@Override
 	public VarTerm[] freevars() {
 		HashSet<String> s = new HashSet<>();
-		for (ArgTerm t : macro.arguments) {
+			for (ArgTerm t : arguments) {
 			Set<String> vars = t.getVariables();
 			if (vars != null) s.addAll(vars);
 		}

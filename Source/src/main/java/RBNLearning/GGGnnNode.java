@@ -339,11 +339,13 @@ public class GGGnnNode extends GGCPMNode {
             }
             if (nodeIds.size() == 1)
                 return List.of(new int[]{nodeIds.get(0)});
-        } else if (groundsubpf instanceof ProbFormMacroCall pmc) {
-            if (pmc.args().length > 1) {
-                // for now we use the first argument as the node id
-                return List.of(new int[]{Integer.parseInt(pmc.args()[0].argEval())});
-            }
+        } else if (groundsubpf instanceof ProbFormMacroCall pmc && nextsubpf instanceof ProbFormMacroCall pmcPf) {
+            // the node is one of the macro arguments, same rule as CatGnn
+            Integer id = CatGnn.macroNodeId(pmc, pmcPf, quantvars);
+            if (id == null)
+                throw new RBNCompatibilityException("NODEFEAT " + nextsubpf.asString(0, 0, A, false, false)
+                        + " has more than one FORALL variable as node argument, cannot tell which node it describes");
+            nodeId = id;
         } else if (groundsubpf instanceof ProbFormConstant) {
             nodeId = -1;
         } else {

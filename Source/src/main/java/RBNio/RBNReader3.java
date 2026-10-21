@@ -47,7 +47,7 @@ public class RBNReader3{
 		{
 			Rel r = null;
 			if (isMacro)
-				r = new BoolRel(relname,pa.arity());
+				r = new BoolRel(relname,pa.arity(),pa.types()); // keep the declared types, e.g. @m([node]u, [Integer]t)
 			else {
 				r = sig.getRelByName(relname);
 				if (r==null) {
