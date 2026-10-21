@@ -408,14 +408,6 @@ public class Primula {
 		return new SparseRelStruc(rels.getNames(),instasosd.copy(),rels.getCoords(),sig);
 	}
 
-	// this function makes use of the GUI to select the parameters
-	public String[][] getParamNumRelsGUI(){
-		if (isLrnModuleOpen && learnModule.getLearnModuleGUI() != null)
-			return learnModule.getLearnModuleGUI().getSelectedNumRels();
-		else
-			return new String[0][0];
-	}
-
 	public String[][] getParamNumRels(){
 		if (paramnumrels == null)
 			return new String[0][0];
@@ -550,18 +542,6 @@ public class Primula {
 			return false;
 	}
 
-	// this function makes use of the GUI to select the parameters
-	public HashMap<String,Integer> makeParameterIndexGUI() {
-		this.parameters = new HashMap<String, Integer>();
-		int pidx = 0; // the index of the next parameter added to parameters
-		for (int i = 0; i < rbnparameters.length; i++) {
-			parameters.put(rbnparameters[i], pidx);
-			pidx++;
-		}
-		String[][] parameternumrels = this.getParamNumRelsGUI();
-		return createParameterInput(pidx, parameternumrels);
-	}
-
 	public HashMap<String,Integer> makeParameterIndex() {
 		this.parameters = new HashMap<String, Integer>();
 		int pidx = 0; // the index of the next parameter added to parameters
@@ -692,6 +672,14 @@ public class Primula {
 			isLrnModuleOpen = true;
 		}
 		return learnModule;
+	}
+
+	/** LearnModule that shows the parameters of a MAP run: also in a window, without the data tab, if there is a GUI. */
+	public LearnModule openLearnModuleForMap(){
+		LearnModule lm = openLearnModule();
+		if (myprimulaGUI != null)
+			myprimulaGUI.openLearnModuleGUI(lm).disableDataTab();
+		return lm;
 	}
 
 	public LearnModule createLearnModule() {

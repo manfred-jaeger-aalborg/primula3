@@ -449,7 +449,7 @@ public class BayesConstructor extends java.lang.Object {
 	throws RBNCompatibilityException,RBNCyclicException,RBNIllegalArgumentException
 	{
 
-		myprimula.showMessage("construct PF network...");
+		showMessage("construct PF network...");
 		/* The following lines all operate on
 		 * groundatomhasht
 		 */
@@ -483,7 +483,7 @@ public class BayesConstructor extends java.lang.Object {
 		for (int i=0;i<allnodes.size();i++)
 			((BNNode)allnodes.elementAt(i)).visited[0]=false;
 		setDepths(allnodes);
-		myprimula.appendMessage("done");
+		appendMessage("done");
 
 		return new PFNetwork(myprimula,allnodes,strucarg,instarg);
 
@@ -513,7 +513,14 @@ public class BayesConstructor extends java.lang.Object {
 				}
 				msg                 += "\nClick \""+captionIgnore+"\" to ignore the Primula decompose mode and continue construction without decomposition.\nClick \"Cancel\" to abort construction.";
 
-				int result = JOptionPane.showConfirmDialog( myprimulaGUI, msg, "Model Not Decomposable", options );
+				int result;
+				if (myprimula != null && myprimula.getPrimulaGUI() != null)
+					result = JOptionPane.showConfirmDialog( myprimulaGUI, msg, "Model Not Decomposable", options );
+				else {
+					// no GUI to ask: continue without decomposition
+					showMessage("The model is not decomposable: construction continues without decomposition.");
+					result = JOptionPane.NO_OPTION;
+				}
 				if( result == JOptionPane.CANCEL_OPTION ) return false;
 				else{
 					decomposemode = Primula.OPTION_NOT_DECOMPOSE;
@@ -553,7 +560,7 @@ public class BayesConstructor extends java.lang.Object {
 			myProgressMax += estRemainder;
 			/** ... keith cascio */
 
-			myprimula.showMessage("construct CPT network...");
+			showMessage("construct CPT network...");
 			
 			
 			buildInitialGAHT(querymode, evidencemode, COMPLNODE,isolatedzeronodesmode );
@@ -645,7 +652,7 @@ public class BayesConstructor extends java.lang.Object {
 			
 			
 			if (layoutmode == Primula.OPTION_LAYOUT){
-				myprimula.appendMessage("layout...");
+				appendMessage("layout...");
 				// 	    // Set depths of nodes, includes acyclicity check
 				int[] maxlevels = setDepths(exportnodes);
 
@@ -692,7 +699,7 @@ public class BayesConstructor extends java.lang.Object {
 
 			
 			
-			myprimula.appendMessage("export...");
+			appendMessage("export...");
 
 			switch (bnsystem){
 			case Primula.OPTION_JAVABAYES: bni = new BayesNetIntBIF(bnoutputfile);break;
@@ -721,9 +728,9 @@ public class BayesConstructor extends java.lang.Object {
 			}
 
 			bni.open();
-			myprimula.appendMessage("done");
+			appendMessage("done");
 		}catch( InterruptedException interruptedexception ){
-			myprimula.appendMessage( "interrupted" );
+			appendMessage( "interrupted" );
 			return false;
 		}
 
@@ -1483,7 +1490,7 @@ public class BayesConstructor extends java.lang.Object {
 		try{
 			argtuples = strucarg.allTrue(ccon, rbnutilities.getVarsFromArgs(qvars));
 		}
-		catch( RBNCompatibilityException e ){myprimula.showMessage(e.toString());};
+		catch( RBNCompatibilityException e ){showMessage(e.toString());};
 		for (int i=0;i<argpfs.length;i++){
 			for (int j=0;j<argtuples.length;j++){
 				nextpf = argpfs[i].substitute(qvars,argtuples[j]);
@@ -2595,4 +2602,15 @@ public class BayesConstructor extends java.lang.Object {
 	}
 
 	public void setMyprimulaGUI(PrimulaGUI myprimulaGUI) { this.myprimulaGUI = myprimulaGUI; }
+
+	// messages through Primula (GUI or console); on the console if there is no Primula
+	private void showMessage(String message) {
+		if (myprimula != null) myprimula.showMessage(message);
+		else System.out.println(message);
+	}
+
+	private void appendMessage(String message) {
+		if (myprimula != null) myprimula.appendMessage(message);
+		else System.out.print(message);
+	}
 }

@@ -252,6 +252,7 @@ public class LearnModuleGUI extends JFrame implements ActionListener, MouseListe
         }
 
         if (source == learnButton) {
+            myprimula.setParamNumRels(getSelectedNumRels());
             this.learnModule.startLearning();
         }
         if (source == stoplearnButton) {
@@ -361,5 +362,13 @@ public class LearnModuleGUI extends JFrame implements ActionListener, MouseListe
 
     public JTextField getTextnumrestarts() {
         return textnumrestarts;
+    }
+
+    /** Called from the learning thread: updates the widgets on the Swing thread. */
+    public void showRestarts(String restarts) {
+        SwingUtilities.invokeLater(() -> {
+            textnumrestarts.setText(restarts);
+            parametertable.updateUI();
+        });
     }
 }

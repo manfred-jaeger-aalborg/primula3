@@ -445,12 +445,8 @@ public class InferenceModule implements GradientGraphOptions {
 			RelData evidence = new RelData(myprimula.getRels(),myprimula.getInstantiation());
 			int mode;
 
-			HashMap<String,Integer> parameters = new HashMap<>();
-			if (inferenceModuleGUI != null)
-				parameters = myprimula.makeParameterIndexGUI();
-			else {
-				parameters = myprimula.makeParameterIndex();
-			}
+			// the numeric relations to learn are set with myprimula.setParamNumRels (the GUI sets its selection)
+			HashMap<String,Integer> parameters = myprimula.makeParameterIndex();
 
 //			String[] rbnparams = myprimula.getRBN().parameters();
 //			HashMap<String,Integer> rbnparamidx = new HashMap<String,Integer>();

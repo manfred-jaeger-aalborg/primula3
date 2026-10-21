@@ -45,11 +45,7 @@ public class MapThread extends GGThread {
 		 * there are any free parameters in the model
 		 */
 		if (gg.parameters().size() > 0){
-			myLearnModule = myprimula.openLearnModule();
-			if (myprimula.getPrimulaGUI() != null) {
-				LearnModuleGUI myLearnModuleGUI = myprimula.getPrimulaGUI().openLearnModuleGUI(myLearnModule);
-				myLearnModuleGUI.disableDataTab();
-			}
+			myLearnModule = myprimula.openLearnModuleForMap();
 			myLearnModule.setParameters(gg.parameters());
 			gg.setLearnModule(myLearnModule);
 		}

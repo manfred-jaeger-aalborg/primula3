@@ -436,6 +436,12 @@ public class LearnModule implements GradientGraphOptions
 			this.learnModuleGUI.getParametertable().updateUI();
 	}
 	
+	/** Number of restarts and current estimates, shown in the GUI if there is one. */
+	public void showRestarts(String restarts){
+		if (this.learnModuleGUI!=null)
+			this.learnModuleGUI.showRestarts(restarts);
+	}
+
 	public void setParameterValues(double[] pvals, double ll){
 		parammodel.setParameterEstimates(pvals, ll);
 		if (this.learnModuleGUI!=null)
@@ -596,12 +602,6 @@ public class LearnModule implements GradientGraphOptions
 		}
 
 		lthread = new LearnThread(myprimula, data, learndata, parammodel, this);
-
-		if (this.getLearnModuleGUI() != null) {
-			lthread.setNumrestartsfield(this.getLearnModuleGUI().getTextnumrestarts());
-			lthread.setParametertable(this.getLearnModuleGUI().getParametertable());
-		}
-
 		lthread.start();
 	}
 	

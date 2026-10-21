@@ -1116,6 +1116,9 @@ public class InferenceModuleGUI extends JFrame implements Observer, ActionListen
             inferenceModuleCore.evaluateAccuracy();
         }
         else if (source == startMap){
+            // numeric relations selected in the learn module, if it is open
+            LearnModuleGUI lmGUI = Primula.isLrnModuleOpen ? myprimula.learnModule.getLearnModuleGUI() : null;
+            myprimula.setParamNumRels(lmGUI != null ? lmGUI.getSelectedNumRels() : new String[0][0]);
             inferenceModuleCore.startMapThread();
         }
         else if (source == setMapVals){

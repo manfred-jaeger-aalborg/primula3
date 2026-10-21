@@ -933,7 +933,8 @@ public class PrimulaGUI extends JFrame implements PrimulaUIInt, ActionListener, 
                                 primula.rels,
                                 primula.instasosd,
                                 primula.queryatoms,
-                                primula.bnoutfile);
+                                primula.bnoutfile,
+                                primula);
                     }
                     constructor.constructCPTNetwork(primula.evidencemode,
                             primula.querymode,

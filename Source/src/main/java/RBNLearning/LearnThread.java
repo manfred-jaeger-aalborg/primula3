@@ -31,8 +31,6 @@ import RBNutilities.*;
 import RBNinference.*;
 import java.util.*;
 
-import javax.swing.*;
-
 import java.text.*;
 import java.io.*;
 
@@ -51,8 +49,6 @@ public class LearnThread extends GGThread {
 	RelData[] databatches;
 	RelData alldata;
 	ParameterTableModel parammodel;
-	JTable parametertable;
-	JTextField numrestartsfield;
 	DecimalFormat timeformat = new DecimalFormat("#.##");
 
 
@@ -88,26 +84,6 @@ public class LearnThread extends GGThread {
 	Profiler profiler;
 	
 	public LearnThread(Primula mypr,
-			RelData ad,
-			RelData[] d, 
-			ParameterTableModel parmod,
-			JTable partab,
-			JTextField nrest,
-			LearnModule mylm){
-		myprimula = mypr;
-		myLearnModule = mylm;
-		databatches = d;
-		alldata = ad;
-		parammodel = parmod;
-		parametertable = partab;
-		numrestartsfield = nrest;
-		threadascentstrategy = myLearnModule.threadascentstrategy();
-		profiler = new Profiler();
-		//		ggascentstrategy = myLearnModule.ggascentstrategy();
-	}
-
-	// constructor without GUI dependence
-	public LearnThread(Primula mypr,
 					   RelData ad,
 					   RelData[] d,
 					   ParameterTableModel parmod,
@@ -119,8 +95,6 @@ public class LearnThread extends GGThread {
 		parammodel = parmod;
 		threadascentstrategy = myLearnModule.threadascentstrategy();
 		profiler = new Profiler();
-		parametertable = null;
-		numrestartsfield = null;
 	}
 
 	public void run() throws RBNRuntimeException
@@ -135,26 +109,18 @@ public class LearnThread extends GGThread {
 			 */
 			HashMap<String, Integer> parameters;
 			String[][] parameternumrels;
-			// set parameters with and without the GUI
-			if (myLearnModule.getLearnModuleGUI() != null) {
-				parameternumrels = myprimula.getParamNumRelsGUI();
-				parameters = myprimula.makeParameterIndexGUI();
-			} else {
-				parameters = myprimula.makeParameterIndex();
-				if (parameters.size() == 0) {
-					throw new RBNRuntimeException("No parameters to learn");
-				}
-				parameternumrels = myprimula.getParamNumRels();
+			// the numeric relations to learn are set with myprimula.setParamNumRels (the GUI sets its selection)
+			parameters = myprimula.makeParameterIndex();
+			if (parameters.size() == 0 && myLearnModule.getLearnModuleGUI() == null) {
+				throw new RBNRuntimeException("No parameters to learn");
 			}
+			parameternumrels = myprimula.getParamNumRels();
 			parammodel.setParameters(parameters);
 			double[][] minmaxbounds = myprimula.makeMinMaxBounds();
 
 			parammodel.fireTableDataChanged();
-			if (parametertable != null)
-				parametertable.updateUI();
 			// boolean computeLikOnly = (parameters.length == 0);
-			if (numrestartsfield != null)
-				numrestartsfield.setText("" );
+			myLearnModule.showRestarts("");
 			double[] paramvals = new double[parameters.size()+1];
 
 //			if (threadascentstrategy == LearnModule.AscentBlock){
@@ -289,10 +255,7 @@ public class LearnThread extends GGThread {
 					parammodel.setEstimates(paramvals);
 				}
 				rest++;
-				if (numrestartsfield != null)
-					numrestartsfield.setText(""+rest);
-				if (parametertable != null)
-					parametertable.updateUI();
+				myLearnModule.showRestarts(""+rest);
 			} // while (!isstopped() && (rest < myLearnModule.getRestarts() 
 
 			profiler.addTime(Profiler.TIME_RESTARTS, System.currentTimeMillis()-beforerestarts);
@@ -889,11 +852,4 @@ public class LearnThread extends GGThread {
 		return null;
 	}
 
-	public void setParametertable(JTable parametertable) {
-		this.parametertable = parametertable;
-	}
-
-	public void setNumrestartsfield(JTextField numrestartsfield) {
-		this.numrestartsfield = numrestartsfield;
-	}
 }
