@@ -2373,30 +2373,40 @@ public class rbnutilities extends java.lang.Object
 	
 	public static int sampledValue(double[] cpr) {
 		/* For probability vector cpr, returns the index of the value sampled
-		 * according to the cpr probabilities.
-		 * 
+		 * according to the cpr probabilities. The draw is scaled by the actual sum of cpr,
+		 * so a vector that sums to slightly less (or more) than 1, e.g. a float32
+		 * softmax from a torch model, is sampled proportionally and never runs past
+		 * the last index.
 		 */
-		int result=0;
-		double probsum =cpr[0];
-		double rand=Math.random();
-		for (int i=0; i< cpr.length && probsum<rand;i++) { 
+		double total = 0;
+		for (double p : cpr)
+			total += p;
+		double rand = Math.random() * total;
+		int result = 0;
+		double probsum = cpr[0];
+		while (probsum < rand && result < cpr.length - 1) {
 			result++;
-			probsum+=cpr[i+1];
+			probsum += cpr[result];
 		}
 		return result;
 	}
 	
 	public static int sampledValue(Double[] cpr) {
 		/* For probability vector cpr, returns the index of the value sampled
-		 * according to the cpr probabilities.
-		 * 
+		 * according to the cpr probabilities. The draw is scaled by the actual sum of cpr,
+		 * so a vector that sums to slightly less (or more) than 1 -- e.g. a float32
+		 * softmax from a torch model -- is sampled proportionally and never runs past
+		 * the last index.
 		 */
-		int result=0;
-		double probsum =cpr[0];
-		double rand=Math.random();
-		for (int i=0; i< cpr.length && probsum<rand;i++) { 
+		double total = 0;
+		for (Double p : cpr)
+			total += p;
+		double rand = Math.random() * total;
+		int result = 0;
+		double probsum = cpr[0];
+		while (probsum < rand && result < cpr.length - 1) {
 			result++;
-			probsum+=cpr[i+1];
+			probsum += cpr[result];
 		}
 		return result;
 	}

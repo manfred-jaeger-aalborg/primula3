@@ -250,8 +250,9 @@ public class GGGnnNode extends GGCPMNode {
         evalOfEdgeByType.clear();
     }
 
+    // same key as CatGnn.sharedDictKey: the same RBN on another structure must not reuse the graph
     private long sharedDictKey() {
-        return this.cpmgnn.getGnnInputs().hashCode();
+        return Objects.hash(this.cpmgnn.getGnnInputs().hashCode(), A.hashCode(), inst.hashCode());
     }
 
     private void restoreMatricesFromCache(Object[] cached) {
@@ -343,16 +344,19 @@ public class GGGnnNode extends GGCPMNode {
                 // for now we use the first argument as the node id
                 return List.of(new int[]{Integer.parseInt(pmc.args()[0].argEval())});
             }
-        } else if (groundsubpf instanceof ProbFormCombFunc) {
-            if (tuple.length == 1) {
-                nodeId = tuple[0];
-            } else if (tuple.length == 2) {
+        } else if (groundsubpf instanceof ProbFormConstant) {
+            nodeId = -1;
+        } else {
+            // any other formula, WIF ..., COMBINE ...
+            Integer id = CatGnn.nodeOfFeature(nextsubpf, quantvars, tuple, cpmgnn.getArguments());
+            if (id != null) {
+                nodeId = id;
+            } else if (groundsubpf instanceof ProbFormCombFunc && tuple.length == 2) {
                 nodeId = resolveReferringArg(groundsubpf, nextsubpf, quantvars, tuple);
             } else {
-                throw new RBNCompatibilityException("Wrong number of arguments for substitution");
+                throw new RBNCompatibilityException("NODEFEAT " + nextsubpf.asString(0, 0, A, false, false)
+                        + " depends on more than one FORALL variable, cannot tell which node it describes");
             }
-        } else {
-            nodeId = -1;  // ProbFormConstant and any unknown type
         }
         return List.of(new int[]{nodeId});
     }
@@ -480,6 +484,12 @@ public class GGGnnNode extends GGCPMNode {
             return this.values_for_samples[0];
 
         double[] result = null;
+
+        // inputs that depend on sampled atoms: write the values of sample sno into the matrices
+        if (this.depends_on_sample) {
+            resolveNaNEntries(sno);
+            inputVersion++;
+        }
 
         if (cpmgnn instanceof CatGnn) {
             if (isCacheValid()) {
@@ -897,11 +907,11 @@ public class GGGnnNode extends GGCPMNode {
         if (currentMaxNode.myatom().args().length != 2) return false;
 
         for (TorchInputSpecs spec : cpmgnn.getGnnInputs()) {
-            @SuppressWarnings("unchecked")
-            List<Rel> edgeRels = (List<Rel>) spec.getEdgeRelation();
-            if (edgeRels == null || !edgeRels.contains(rel)) continue;
+            // the spec has a single edge relation (a BoolRel), not a list
+            BoolRel edgeRel = spec.getEdgeRelation();
+            if (edgeRel == null || !edgeRel.equals(rel)) continue;
 
-            String edgeKey = spec.getEdgeRelation().name();
+            String edgeKey = edgeRel.name();
             ArrayList<ArrayList<Integer>> edgeList = edge_dict.get(edgeKey);
             if (edgeList == null || edgeList.size() < 2) return false;
 
@@ -911,21 +921,16 @@ public class GGGnnNode extends GGCPMNode {
             // Translate original ids to compact indices
             String srcType = rel.getTypes()[0].getName();
             String dstType = rel.getTypes()[1].getName();
-            Integer src = getNodeIndexIfPresent(srcType, rawSrc);
-            Integer dst = getNodeIndexIfPresent(dstType, rawDst);
-            if (src == null || dst == null) return false;
+            Integer srcIdx = getNodeIndexIfPresent(srcType, rawSrc);
+            Integer dstIdx = getNodeIndexIfPresent(dstType, rawDst);
+            if (srcIdx == null || dstIdx == null) return false;
+            // int, not Integer: == on two Integer objects compares references
+            int src = srcIdx, dst = dstIdx;
 
             ArrayList<Integer> sources = edgeList.get(0);
             ArrayList<Integer> dests = edgeList.get(1);
 
-            // Find existing position (if any)
-            int existingIdx = -1;
-            for (int i = 0; i < sources.size(); i++) {
-                if (sources.get(i) == src && dests.get(i) == dst) {
-                    existingIdx = i;
-                    break;
-                }
-            }
+            int existingIdx = findEdgeRow(edgeKey, src, dst);
 
             boolean edgeShouldExist = (currentInst != 0);
             if (edgeShouldExist && existingIdx < 0) {

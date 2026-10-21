@@ -78,7 +78,14 @@ public class SampleThread extends Thread{
 			while (running.get()) {
 				checkPause();
 
-				pfn.sampleInst(subsind, false);
+				try {
+					pfn.sampleInst(subsind, false);
+				} catch (RBNInconsistentEvidenceException e) {
+					// This one sample attempt could not be reconciled with the
+					// pinned evidence (common with ripple sampling on rare
+					// conditioning events) -- discard it and keep sampling,
+					// rather than letting the whole thread die.
+				}
 				numsamp++;
 				subsind = (subsind < num_subsamples - 1) ? subsind + 1 : 0;
 

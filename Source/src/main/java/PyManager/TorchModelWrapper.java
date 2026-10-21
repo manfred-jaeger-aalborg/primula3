@@ -43,7 +43,7 @@ public class TorchModelWrapper {
                     param = next(model.parameters(), None)
                     return param.device if param is not None else torch.device("cpu")
                 
-                def forward_single_fast_(model, flat_x, x_shape, flat_edge, num_edges, with_gradients, flat_ea, ea_shape, target_class=None):
+                def forward_single_fast_(model, flat_x, x_shape, flat_edge, num_edges, with_gradients, flat_ea, ea_shape, target_row=None):
                     device = _get_device(model)
                     model.eval()
                     xi = torch.as_tensor(flat_x, dtype=torch.float32, device=device).view(x_shape[0], x_shape[1])
@@ -56,41 +56,26 @@ public class TorchModelWrapper {
                     if flat_ea is not None:
                         ea = torch.as_tensor(flat_ea, dtype=torch.float32, device=device).view(ea_shape[0], ea_shape[1])
 
-                    if with_gradients:                        
-                        N = xi.shape[0]
-                    
-                        if target_class is not None and target_class >= 0:
-                            def fn_x(x_):
-                                out_ = model(x_, ei, ea) if ea is not None else model(x_, ei)
-                                return out_[:, target_class]
-                    
-                            with torch.enable_grad():
-                                out = model(xi, ei, ea) if ea is not None else model(xi, ei)
-                                J_x = jacobian(fn_x, xi)
-                    
-                            x_grads = torch.stack([J_x[j, j, :] for j in range(N)]).cpu().numpy()
-                            if ea is not None:
-                                def fn_ea(ea_):
-                                    out_ = model(xi, ei, ea_)
-                                    return out_[:, target_class]
-                    
-                                J_ea = jacobian(fn_ea, ea)
-                                ea_grads = J_ea.sum(dim=0).cpu().numpy()
-                            else:
-                                ea_grads = None
-                        else:
-                            def fn_x_all(x_):
-                                out_ = model(x_, ei, ea) if ea is not None else model(x_, ei)
-                                return out_.mean(dim=1)
-                    
-                            with torch.enable_grad():
-                                out = model(xi, ei, ea) if ea is not None else model(xi, ei)
-                                J_x = jacobian(fn_x_all, xi)
-                    
-                            x_grads = torch.stack([J_x[j, j, :] for j in range(N)]).cpu().numpy()
-                            ea_grads = None
-                    
-                        return out.detach().cpu().numpy(), x_grads, ea_grads                    
+                    if with_gradients:
+                        # gradients of the target node's output only: x_grads[c, k, f] = d out[target_row, c] / d x[k, f]
+                        # (and the same for edge attributes). One backward pass per class.
+                        if target_row is None or target_row < 0:
+                            raise ValueError("forward_single_fast_: gradients need the target row")
+                        with torch.enable_grad():
+                            xg = xi.detach().clone().requires_grad_(True)
+                            eag = ea.detach().clone().requires_grad_(True) if ea is not None else None
+                            out = model(xg, ei, eag) if eag is not None else model(xg, ei)
+                            row = out[target_row] if out.dim() == 2 else out[target_row:target_row + 1]
+                            inputs = [xg] if eag is None else [xg, eag]
+                            x_grads, ea_grads = [], []
+                            for c in range(row.shape[0]):
+                                g = torch.autograd.grad(row[c], inputs, retain_graph=True, allow_unused=True)
+                                x_grads.append(g[0] if g[0] is not None else torch.zeros_like(xg))
+                                if eag is not None:
+                                    ea_grads.append(g[1] if g[1] is not None else torch.zeros_like(eag))
+                        x_grads = torch.stack(x_grads).cpu().numpy()
+                        ea_grads = torch.stack(ea_grads).cpu().numpy() if eag is not None else None
+                        return out.detach().cpu().numpy(), x_grads, ea_grads
                     else:
                         with torch.no_grad():
                             out = model(xi, ei, ea) if ea is not None else model(xi, ei)
@@ -180,9 +165,10 @@ public class TorchModelWrapper {
                                          Map<String, ArrayList<ArrayList<Integer>>> edgeDict,
                                          Map<String, double[][]> edge_attr,
                                          List<TorchInputSpecs> gnnInputs,
-                                         boolean withgradients, Integer targetClass) {
+                                         boolean withgradients, Integer targetRow) {
 
-        int curHash = Objects.hash(hashMatrixDict(xDict), hashEdgeDict(edgeDict), hashMatrixDict(edge_attr), targetClass);
+        // targetRow: row of x whose output the gradients are taken of (only used when withgradients)
+        int curHash = Objects.hash(hashMatrixDict(xDict), hashEdgeDict(edgeDict), hashMatrixDict(edge_attr), targetRow);
         boolean reuseFlat = (curHash == lastFlattenHash);
 
         try {
@@ -196,7 +182,8 @@ public class TorchModelWrapper {
                 float[] flatEA = null;
                 int[] eaShape = null;
 
-                if (reuseFlat && cachedHomoResult[1] != null) {
+                // reuse only if the cached result has what this call needs
+                if (reuseFlat && cachedHomoResult[0] != null && (!withgradients || cachedHomoResult[1] != null)) {
                     return cachedHomoResult;
                 }
 
@@ -219,7 +206,7 @@ public class TorchModelWrapper {
 
                 Object pythonResult = modelInterpreter.invoke(
                         "forward_single_fast_",
-                        modelRef, flatX, xShape, flatEdge, numEdges, withgradients, flatEA, eaShape, targetClass
+                        modelRef, flatX, xShape, flatEdge, numEdges, withgradients, flatEA, eaShape, targetRow
                 );
 
                 List<Object> pyTuple = (List<Object>) pythonResult;
@@ -227,11 +214,13 @@ public class TorchModelWrapper {
                 cachedHomoResult[0] = convertNDArrayTo2D(outArray);
                 correctBinaryOutput(cachedHomoResult[0], outArray.getDimensions());
 
+                // gradients: [class][row][col], see forward_single_fast_
+                cachedHomoResult[1] = null;  // never keep gradients of an older input
                 if (withgradients) {
-                    Map<String, double[][]> gradsDict = new HashMap<>();
-                    if (pyTuple.get(1) != null) gradsDict.put("x", convertNDArrayTo2D((NDArray) pyTuple.get(1)));
-                    if (pyTuple.get(2) != null) gradsDict.put("ea", convertNDArrayTo2D((NDArray) pyTuple.get(2)));
-                    cachedHomoResult[1] = gradsDict.isEmpty() ? null : gradsDict;
+                    Map<String, double[][][]> gradsDict = new HashMap<>();
+                    if (pyTuple.get(1) != null) gradsDict.put("x", convertNDArrayTo3D((NDArray) pyTuple.get(1)));
+                    if (pyTuple.get(2) != null) gradsDict.put("ea", convertNDArrayTo3D((NDArray) pyTuple.get(2)));
+                    cachedHomoResult[1] = gradsDict;
                 }
 
                 return cachedHomoResult;
@@ -357,6 +346,17 @@ public class TorchModelWrapper {
         if (dims.length == 2) return PyUtils.convertTo2D(flatData, dims[0], dims[1]);
         if (dims.length == 1) return new double[][]{flatData};
         throw new RuntimeException("Invalid output shape: " + Arrays.toString(dims));
+    }
+
+    private double[][][] convertNDArrayTo3D(NDArray array) {
+        double[] flat = PyUtils.toDoubleArray(array.getData());
+        int[] dims = array.getDimensions();
+        if (dims.length != 3) throw new RuntimeException("Expected 3-D gradients, got shape " + Arrays.toString(dims));
+        double[][][] out = new double[dims[0]][][];
+        int block = dims[1] * dims[2];
+        for (int c = 0; c < dims[0]; c++)
+            out[c] = PyUtils.convertTo2D(Arrays.copyOfRange(flat, c * block, (c + 1) * block), dims[1], dims[2]);
+        return out;
     }
 
     private void correctBinaryOutput(Object outputObj, int[] dims) {

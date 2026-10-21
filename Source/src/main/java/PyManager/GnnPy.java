@@ -208,14 +208,14 @@ public class GnnPy {
                                      List<TorchInputSpecs> gnnInputs,
                                      String idGnn,
                                      boolean valonly,
-                                     Integer targetCalss) {
+                                     Integer targetRow) {
 
         SharedInterpreter interpreter = JepManager.getInterpreter(true);
         if (torchModel.getModelInterpreter() != interpreter)
             torchModel = loadTorchModel(interpreter, currentCatGnn, scriptPath);
 
         try {
-            return torchModel.forward(x_dict, edge_dict, edge_attr, gnnInputs, !valonly, targetCalss);
+            return torchModel.forward(x_dict, edge_dict, edge_attr, gnnInputs, !valonly, targetRow);
         } catch (JepException e) {
             System.err.println("Failed to execute inference: " + e);
             return null;
@@ -568,16 +568,20 @@ public class GnnPy {
 //        Map<String, double[][]> edgeAttr_dict = (Map<String, double[][]>) inputGraph[2];
 //
 //        Object[] result = inferModelHetero(x_dict, edge_dict, edgeAttr_dict, cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), false);
-        Integer instval = null;
-        if (ggcpmNode.getInstval() != null)
-            instval = ggcpmNode.instval(sno);
+        // row of x that holds this node: the gradients are taken of its output only
+        int nodeIndex = 0;
+        if (!(cpmGnn.getArguments().equals("[]") || cpmGnn.getArguments().equals(""))) {
+            String outType = cpmGnn.getOutTypes()[0].getName();
+            nodeIndex = ggcnn.getNodeIndexIfPresent(outType, Integer.parseInt(cpmGnn.getArguments()[0].argEval()));
+        }
 
-        Object[] result = inferModelHetero(ggcnn.getXDict(), ggcnn.getEdgeDict(), ggcnn.getEdgeAttrDict(), cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), false, instval);
+        Object[] result = inferModelHetero(ggcnn.getXDict(), ggcnn.getEdgeDict(), ggcnn.getEdgeAttrDict(), cpmGnn.getGnnInputs(), cpmGnn.getGnnId(), false, nodeIndex);
         resultCopy = result.clone();
 
 
-        // write the returned gradients in the format used by the GradientGraph
-        Map<String, double[][]> resGrads = (Map<String, double[][]>) resultCopy[1];
+        // write the returned gradients in the format used by the GradientGraph:
+        // one value per output class, d out[nodeIndex, c] / d input (GGLikelihoodNode picks the observed class)
+        Map<String, double[][][]> resGrads = (Map<String, double[][][]>) resultCopy[1];
         Map<String, double[][]> outGrads = new HashMap<>();
 
         for (TorchInputSpecs spec : cpmGnn.getGnnInputs()) {
@@ -587,24 +591,24 @@ public class GnnPy {
 
             // Node attribute gradients
             ArrayList<Rel> nodeAttrs = (ArrayList<Rel>) spec.getNodeAttributes();
-            double[][] xGrads = resGrads.get("x");
+            double[][][] xGrads = resGrads.get("x");
             if (xGrads != null && nodeAttrs != null) {
                 int[] startIndices = computeGradStartIndices(nodeAttrs, oneHot);
                 for (int pfIdx = 0; pfIdx < nodeAttrs.size(); pfIdx++) {
                     Rel rel = nodeAttrs.get(pfIdx);
                     if (!(rel instanceof NumRel)) continue;
                     int col = startIndices[pfIdx];
-                    for (int compactIdx = 0; compactIdx < xGrads.length; compactIdx++) {
+                    for (int compactIdx = 0; compactIdx < xGrads[0].length; compactIdx++) {
                         Integer originalId = compactToOriginal.get(compactIdx);
                         if (originalId == null) continue;
-                        outGrads.put(rel.name() + "(" + originalId + ")", scalarGrad(xGrads[compactIdx][col]));
+                        outGrads.put(rel.name() + "(" + originalId + ")", perClassGrad(xGrads, compactIdx, col));
                     }
                 }
             }
 
             // edge attribute gradients
             ArrayList<Rel> edgeAttrs = (ArrayList<Rel>) spec.getEdgeAttributes();
-            double[][] eaGrads = resGrads.get("ea");
+            double[][][] eaGrads = resGrads.get("ea");
             ArrayList<ArrayList<Integer>> edgeList = ggcnn.getEdgeDict().get(spec.getEdgeRelation().name());
             if (eaGrads != null && edgeAttrs != null && edgeList != null && edgeList.size() >= 2) {
                 int[] startIndices = computeGradStartIndices(edgeAttrs, oneHot);
@@ -616,22 +620,17 @@ public class GnnPy {
                     Rel rel = edgeAttrs.get(pfIdx);
                     if (!(rel instanceof NumRel)) continue;
                     int col = startIndices[pfIdx];
-                    for (int edgeRow = 0; edgeRow < eaGrads.length && edgeRow < sources.size(); edgeRow++) {
+                    for (int edgeRow = 0; edgeRow < eaGrads[0].length && edgeRow < sources.size(); edgeRow++) {
                         Integer origSrc = srcRev.get(sources.get(edgeRow));
                         Integer origDst = dstRev.get(dests.get(edgeRow));
                         if (origSrc == null || origDst == null) continue;
-                        outGrads.put(rel.name() + "(" + origSrc + "," + origDst + ")", scalarGrad(eaGrads[edgeRow][col]));
+                        outGrads.put(rel.name() + "(" + origSrc + "," + origDst + ")", perClassGrad(eaGrads, edgeRow, col));
                     }
                 }
             }
         }
 
         double[][] outProbsFull = (double[][]) resultCopy[0];
-        int nodeIndex = 0;
-        if (!(cpmGnn.getArguments().equals("[]") || cpmGnn.getArguments().equals(""))) {
-            String outType = cpmGnn.getOutTypes()[0].getName();
-            nodeIndex = ggcnn.getNodeIndexIfPresent(outType, Integer.parseInt(cpmGnn.getArguments()[0].argEval()));
-        }
         resultCopy[0] = outProbsFull[nodeIndex];
         resultCopy[1] = outGrads;
         basicStructCachePut(inst, cpmGnn.getGnnId(), resultCopy);
@@ -661,9 +660,11 @@ public class GnnPy {
         return starts;
     }
 
-    /** Wraps a scalar gradient in the double[1][1] format expected by the GradientGraph. */
-    private static double[][] scalarGrad(double value) {
-        return new double[][]{{value}};
+    /** grads[c][row][col] for every class c, wrapped as double[1][numClasses] for the GradientGraph. */
+    private static double[][] perClassGrad(double[][][] grads, int row, int col) {
+        double[] perClass = new double[grads.length];
+        for (int c = 0; c < grads.length; c++) perClass[c] = grads[c][row][col];
+        return new double[][]{perClass};
     }
 
 

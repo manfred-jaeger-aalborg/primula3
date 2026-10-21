@@ -470,7 +470,8 @@ public class InferenceModule implements GradientGraphOptions {
 					queryatoms,
 					mode,
 					true);
-			((GradientGraphO) gg).setNumChains(numchains);
+			if (numchains > 0)
+				((GradientGraphO) gg).setNumChains(numchains);
 			((GradientGraphO) gg).setWindowSize(windowsize);
 			((GradientGraphO) gg).setMapSearchAlg(mapSearchAlg);
 			((GradientGraphO) gg).setBatchSearchSize(batchSearchSize);

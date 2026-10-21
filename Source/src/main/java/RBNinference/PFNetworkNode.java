@@ -434,8 +434,8 @@ public abstract class PFNetworkNode extends BNNode implements GroundAtomNodeInt{
 					// Set value with uniform probability (no conditional distribution used!)
 					//System.out.println(" (3) ");
 					double rand = Math.random();
-					sampleinst = (int)rand*this.numvalues;
-					thissampleprob = 1/this.numvalues;
+					sampleinst = (int)(rand*this.numvalues);
+					thissampleprob = 1.0/this.numvalues;
 				}
 
 			}
