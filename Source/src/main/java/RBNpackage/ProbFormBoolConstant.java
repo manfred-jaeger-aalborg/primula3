@@ -1,12 +1,14 @@
 package RBNpackage;
 
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Vector;
 import java.util.TreeSet;
 
 import RBNExceptions.RBNCompatibilityException;
 import RBNLearning.*;
 import RBNinference.PFNetworkNode;
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 
 /* represents 'false' if sign=true, else represents
  * 'true'
@@ -30,7 +32,7 @@ public class ProbFormBoolConstant extends ProbFormBool {
 	}
 
 	@Override
-	public ProbForm conditionEvidence(RelStruc A, OneStrucData inst)
+	public CPModel conditionEvidence(RelStruc A, OneStrucData inst)
 			throws RBNCompatibilityException {
 		return new ProbFormBoolConstant(sign);
 	}
@@ -41,7 +43,7 @@ public class ProbFormBoolConstant extends ProbFormBool {
 //			boolean useCurrentPvals,
 //    		GroundAtomList mapatoms,
 //    		boolean useCurrentMvals,
-//    		Hashtable<String,Double> evaluated) throws RBNCompatibilityException {
+//    		HashMap<String,Double> evaluated) throws RBNCompatibilityException {
 //		if (sign)
 //			return 1;
 //		else
@@ -49,16 +51,17 @@ public class ProbFormBoolConstant extends ProbFormBool {
 //	}
 
 	public Object[] evaluate(RelStruc A, 
-			OneStrucData inst, 
-			String[] vars, 
-			int[] tuple, 
+			OneStrucData inst,
+			ArgTerm[] vars,
+			int[] tuple,
+			int gradindx,
 			boolean useCurrentCvals, 
     		// String[] numrelparameters,
     		boolean useCurrentPvals,
-    		Hashtable<Rel,GroundAtomList> mapatoms,
+    		HashMap<Rel,GroundAtomList> mapatoms,
     		boolean useCurrentMvals,
-    		Hashtable<String,Object[]> evaluated,
-    		Hashtable<String,Integer> params,
+    		HashMap<String,Object[]> evaluated,
+    		HashMap<String,Integer> params,
     		int returntype,
     		boolean valonly,
     		Profiler profiler)
@@ -90,9 +93,9 @@ public class ProbFormBoolConstant extends ProbFormBool {
 	
 	@Override
 	public double[] evalSample(RelStruc A, 
-			Hashtable<String,PFNetworkNode> atomhasht, 
+			HashMap<String,PFNetworkNode> atomhasht, 
 			OneStrucData inst, 
-    		Hashtable<String,double[]> evaluated,
+    		HashMap<String,double[]> evaluated,
 			long[] timers)
 		throws RBNCompatibilityException {
 		if (sign)
@@ -103,7 +106,7 @@ public class ProbFormBoolConstant extends ProbFormBool {
 
 	@Override
 	public int evaluatesTo(RelStruc A, OneStrucData inst,
-			boolean usesampleinst, Hashtable atomhasht)
+			boolean usesampleinst, HashMap atomhasht)
 			throws RBNCompatibilityException {
 		if (sign)
 			return 1;
@@ -120,8 +123,8 @@ public class ProbFormBoolConstant extends ProbFormBool {
 	}
 
 	@Override
-	public String[] freevars() {
-		return new String[0];
+	public VarTerm[] freevars() {
+		return new VarTerm[0];
 	}
 
 //	@Override
@@ -138,12 +141,12 @@ public class ProbFormBoolConstant extends ProbFormBool {
 
 
 	@Override
-	public ProbForm sEval(RelStruc A) throws RBNCompatibilityException {
+	public CPModel sEval(RelStruc A) throws RBNCompatibilityException {
 		return new ProbFormBoolConstant(sign);
 	}
 
 	@Override
-	public ProbForm substitute(String[] vars, int[] args) {
+	public CPModel substitute(String[] vars, int[] args) {
 		ProbFormBoolConstant result = new ProbFormBoolConstant(sign);
 		if (this.alias != null)
 			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
@@ -151,14 +154,38 @@ public class ProbFormBoolConstant extends ProbFormBool {
 	}
 
 	@Override
-	public ProbForm substitute(String[] vars, String[] args) {
+	public CPModel substitute(String[] vars, String[] args) {
 		ProbFormBoolConstant result = new ProbFormBoolConstant(sign);
 		if (this.alias != null)
 			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
 		return result;
 	}
 
-	public ProbForm toStandardPF(boolean recursive)  {
+	@Override
+	public CPModel substitute(String[] vars, ArgTerm[] args) {
+		ProbFormBoolConstant result = new ProbFormBoolConstant(sign);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	@Override
+	public CPModel substitute(ArgTerm[] vars, ArgTerm[] args) {
+		ProbFormBoolConstant result = new ProbFormBoolConstant(sign);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	@Override
+	public CPModel substitute(ArgTerm[] vars, int[] args) {
+		ProbFormBoolConstant result = new ProbFormBoolConstant(sign);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	public CPModel toStandardPF(boolean recursive)  {
 		double value = 0;
 		if (sign) value =1;
 		return new ProbFormConstant(value);
@@ -177,5 +204,10 @@ public class ProbFormBoolConstant extends ProbFormBool {
 	
 	public TreeSet<Rel> parentRels(TreeSet<String> processed){
 		return new TreeSet<Rel>();	
+	}
+
+	@Override
+	public int numvals() {
+		return 2;
 	}
 }

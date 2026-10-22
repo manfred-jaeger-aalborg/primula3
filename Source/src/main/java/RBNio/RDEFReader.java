@@ -34,18 +34,21 @@ import RBNExceptions.*;
 import RBNLearning.*;
 import RBNgui.Primula;
 
+import com.sun.jdi.IntegerType;
 import myio.*;
 
 import org.dom4j.Element;
 import org.dom4j.Document;
 import org.dom4j.io.SAXReader;
 
+import javax.swing.*;
+
 
 public class RDEFReader {
 
 	public static final int READONESTRUC =0;
 	public static final int READRELDATA =1;
-	
+
 	private Primula myprimula;
 	
 	private static class stringKeyPairComparator implements Comparator{
@@ -142,6 +145,7 @@ public class RDEFReader {
 			Color col;
 			String valtype;
 			String catvalues;
+			String maxInteger;
 			
 			Rel r;
 			
@@ -158,7 +162,8 @@ public class RDEFReader {
 				argtypes = reldec.attributeValue("argtypes");
 				valtype = reldec.attributeValue("valtype");
 				catvalues = reldec.attributeValue("values");
-				
+				maxInteger = reldec.attributeValue("maxInteger");
+
 //				int[] colrgb = StringOps.stringToIntArray(reldec.attributeValue("color"));
 //				System.out.println(rbnutilities.arrayToString(colrgb));
 //				col = new Color(colrgb[0],colrgb[1],colrgb[2]);
@@ -173,11 +178,11 @@ public class RDEFReader {
 				
 				
 				if(valtype.equals("boolean")){
-					r = new BoolRel(rname,rarity,typeStringToArray(argtypes,rarity));
+					r = new BoolRel(rname,rarity,typeStringToArray(argtypes,rarity,maxInteger));
 					r.setColor(col);
 				}
 				else if (valtype.equals("categorical")){
-					r = new CatRel(rname,rarity,typeStringToArray(argtypes,rarity),valStringToArray(catvalues));
+					r = new CatRel(rname,rarity,typeStringToArray(argtypes,rarity,maxInteger),valStringToArray(catvalues));
 				}
 				else if (valtype.equals("numeric")){
 					double min;
@@ -191,7 +196,7 @@ public class RDEFReader {
 					}
 					else max = Double.POSITIVE_INFINITY;
 					
-					r = new NumRel(rname,rarity,typeStringToArray(argtypes,rarity),min,max);
+					r = new NumRel(rname,rarity,typeStringToArray(argtypes,rarity,maxInteger),min,max);
 					r.setColor(col);
 				}
 				else
@@ -275,13 +280,14 @@ public class RDEFReader {
 		for (int i=0;i<numinitrels.size();i++)
 			result.add(new OneNumRelData(numinitrels.elementAt(i).rel(),numinitrels.elementAt(i).dv()));
 
-		int relarity = 0;
 		
 		for ( Iterator i = datael.elementIterator("d"); i.hasNext();) {
 			Element nextdat = (Element) i.next();
 			
 			Rel currentrel = result.find(nextdat.attributeValue("rel")).rel();
-			
+			int relarity = currentrel.getArity();
+			Boolean[] relIntMask = currentrel.getIntTypeMask();
+
 			String argstr = nextdat.attributeValue("args");
 			
 			
@@ -321,8 +327,6 @@ public class RDEFReader {
 				else{ // The o2,o43)(o33,0437)...(o4,o74) case
 					String[][] argarr = myio.StringOps.stringToStringMatrix(argstr);
 
-					relarity = currentrel.getArity();
-
 					if (relarity == 0 ){
 						intargs = new int[1][1];
 						intargs[0][0]=0;
@@ -333,7 +337,10 @@ public class RDEFReader {
 						else intargs = new int[0][];
 						for (int tupno =0; tupno<argarr.length; tupno++){
 							for (int k = 0;k<argarr[tupno].length;k++){
-								Integer intval = (Integer)(namehasht.get(argarr[tupno][k])[0]);
+								Integer intval;
+								if (!relIntMask[k])
+									intval = (Integer)(namehasht.get(argarr[tupno][k])[0]);
+								else intval = Integer.parseInt(argarr[tupno][k]);
 								if (intval == null){
 									/* If the rdef contains a domain declaration, or a RelStruc argument is 
 									 * given, then namehasht must contain all names encountered in the data
@@ -568,7 +575,7 @@ public class RDEFReader {
 		return result;
 	}
 
-	private Type[] typeStringToArray(String ts, int arity){
+	private Type[] typeStringToArray(String ts, int arity, String maxInt){
 		Type[] result = new Type[arity];
 		String nexttype;
 		int nextcomma;
@@ -585,7 +592,12 @@ public class RDEFReader {
 			}
 			if (nexttype.equals("Domain"))
 				result[i]=new TypeDomain();
-			else
+			else if (nexttype.equals("Integer")) {
+				if (maxInt != null)
+					result[i] = new TypeInteger(Integer.parseInt(maxInt));
+				else
+					result[i] = new TypeInteger();
+			} else
 				result[i]=new TypeRel(nexttype);
 		}
 		return result;

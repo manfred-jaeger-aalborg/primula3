@@ -28,6 +28,7 @@ import java.util.*;
 import RBNpackage.*;
 import RBNgui.*;
 import RBNExceptions.*;
+import RBNpackage.VarTermPackage.ArgTerm;
 
 
 /** In a GGConvCombNode the children vector has exactly
@@ -43,18 +44,17 @@ public class GGConvCombNode extends GGCPMNode{
 
 	/** pf must be a ground ProbForm ! */
 	public GGConvCombNode(GradientGraphO gg,
-			ProbForm pf, 
-			Hashtable<String,GGCPMNode> allnodes, 
-			RelStruc A, 
-			OneStrucData I,
-			int inputcaseno,
-			int observcaseno,
-			Hashtable<String,Integer> parameters,
-			boolean useCurrentPvals,
-			Hashtable<Rel,GroundAtomList> mapatoms,
-    		Hashtable<String,Object[]>  evaluated )
-					throws RBNCompatibilityException
-					{
+						  	CPModel pf,
+							HashMap<String,GGCPMNode> allnodes,
+							RelStruc A,
+							OneStrucData I,
+							int inputcaseno,
+							int observcaseno,
+						  	HashMap<String,Integer> parameters,
+							boolean useCurrentPvals,
+						  	HashMap<Rel,GroundAtomList> mapatoms,
+						  	HashMap<String,Object[]>  evaluated )
+			throws RBNCompatibilityException {
 		super(gg,pf,A,I);
 	
 		evalOfSubPFs = new double[3];
@@ -62,8 +62,9 @@ public class GGConvCombNode extends GGCPMNode{
 		for (int i = 0; i<3; i++){
 			evalOfSubPFs[i]= (double)((ProbFormConvComb)pf).subPF(i+1).evaluate(A, 
 					I , 
-					new String[0], 
-					new int[0] , 
+					new ArgTerm[0],
+					new int[0] ,
+					0,
 					false,
 					useCurrentPvals,
 					mapatoms,
@@ -133,9 +134,9 @@ public class GGConvCombNode extends GGCPMNode{
 
 		
 		double r = 0;
-		GGCPMNode F0 = children.elementAt(0);
-		GGCPMNode F1 = children.elementAt(1);
-		GGCPMNode F2 = children.elementAt(2);
+		GGCPMNode F0 = children.get(0);
+		GGCPMNode F1 = children.get(1);
+		GGCPMNode F2 = children.get(2);
 
 		double f0val;
 		double f1val;
@@ -267,9 +268,9 @@ public class GGConvCombNode extends GGCPMNode{
 		double[] childvals=new double[3];
 		Vector<Gradient> childgradients = new Vector<Gradient>();
 		for (int i=0;i<3;i++) {
-			if (children.elementAt(i)!=null) {
-				childvals[i]=children.elementAt(i).evaluate(idx)[0];
-				childgradients.add(children.elementAt(i).evaluateGradient(sno));
+			if (children.get(i)!=null) {
+				childvals[i]=children.get(i).evaluate(idx)[0];
+				childgradients.add(children.get(i).evaluateGradient(sno));
 			}
 			else {
 				childvals[i]=evalOfSubPFs[i];

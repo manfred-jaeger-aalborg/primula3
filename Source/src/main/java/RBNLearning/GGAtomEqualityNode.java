@@ -4,24 +4,25 @@ import java.util.*;
 import RBNExceptions.RBNCompatibilityException;
 import RBNExceptions.RBNNaNException;
 import RBNpackage.*;
+import RBNpackage.VarTermPackage.ArgTerm;
 
-import java.util.Hashtable;
+import java.util.HashMap;
 
 public class GGAtomEqualityNode extends GGCPMNode{
 
     double[] evalOfPFs;
     
     public GGAtomEqualityNode(GradientGraphO gg,
-                              ProbForm pf,
-                              Hashtable<String,GGCPMNode> allnodes,
+							  CPModel pf,
+                              HashMap<String,GGCPMNode> allnodes,
                               RelStruc A,
                               OneStrucData I,
                               int inputcaseno,
                               int observcaseno,
-                              Hashtable<String,Integer> parameters,
+                              HashMap<String,Integer> parameters,
                               boolean useCurrentPvals,
-                              Hashtable<Rel, GroundAtomList> mapatoms,
-                              Hashtable<String,Object[]>  evaluated) throws RBNCompatibilityException {
+                              HashMap<Rel, GroundAtomList> mapatoms,
+                              HashMap<String,Object[]>  evaluated) throws RBNCompatibilityException {
         super(gg,pf,A,I);
 
         evalOfPFs = new double[2];
@@ -33,8 +34,9 @@ public class GGAtomEqualityNode extends GGCPMNode{
         	else { // o is ProbFormAtom
         		evalOfPFs[i]=(double)((ProbFormAtom)o).evaluate(A, 
     					I , 
-    					new String[0], 
-    					new int[0] , 
+    					new ArgTerm[0],
+    					new int[0],
+						0,
     					false,
     					useCurrentPvals,
     					mapatoms,
@@ -87,7 +89,7 @@ public class GGAtomEqualityNode extends GGCPMNode{
         	if (!Double.isNaN(evalOfPFs[i]))
         		both_sides[i]=evalOfPFs[i];
         	else
-        		both_sides[i]=children.elementAt(i).evaluate(sno)[0]; // child is scalar
+        		both_sides[i]=children.get(i).evaluate(sno)[0]; // child is scalar
         }
         if (both_sides[0] == both_sides[1])
         	value[0] = 1.0;

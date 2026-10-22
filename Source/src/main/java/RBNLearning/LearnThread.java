@@ -26,13 +26,13 @@ package RBNLearning;
 import RBNExceptions.*;
 import RBNpackage.*;
 import RBNgui.*;
+import RBNpackage.VarTermPackage.ArgTerm;
 import RBNutilities.*;
 import RBNinference.*;
 import java.util.*;
 
-import javax.swing.*;
-
 import java.text.*;
+import java.io.*;
 
 public class LearnThread extends GGThread {
 
@@ -49,8 +49,6 @@ public class LearnThread extends GGThread {
 	RelData[] databatches;
 	RelData alldata;
 	ParameterTableModel parammodel;
-	JTable parametertable;
-	JTextField numrestartsfield;
 	DecimalFormat timeformat = new DecimalFormat("#.##");
 
 
@@ -86,26 +84,6 @@ public class LearnThread extends GGThread {
 	Profiler profiler;
 	
 	public LearnThread(Primula mypr,
-			RelData ad,
-			RelData[] d, 
-			ParameterTableModel parmod,
-			JTable partab,
-			JTextField nrest,
-			LearnModule mylm){
-		myprimula = mypr;
-		myLearnModule = mylm;
-		databatches = d;
-		alldata = ad;
-		parammodel = parmod;
-		parametertable = partab;
-		numrestartsfield = nrest;
-		threadascentstrategy = myLearnModule.threadascentstrategy();
-		profiler = new Profiler();
-		//		ggascentstrategy = myLearnModule.ggascentstrategy();
-	}
-
-	// constructor without GUI dependence
-	public LearnThread(Primula mypr,
 					   RelData ad,
 					   RelData[] d,
 					   ParameterTableModel parmod,
@@ -117,8 +95,6 @@ public class LearnThread extends GGThread {
 		parammodel = parmod;
 		threadascentstrategy = myLearnModule.threadascentstrategy();
 		profiler = new Profiler();
-		parametertable = null;
-		numrestartsfield = null;
 	}
 
 	public void run() throws RBNRuntimeException
@@ -131,28 +107,20 @@ public class LearnThread extends GGThread {
 			 * atoms
 			 * 
 			 */
-			Hashtable<String, Integer> parameters;
+			HashMap<String, Integer> parameters;
 			String[][] parameternumrels;
-			// set parameters with and without the GUI
-			if (myLearnModule.getLearnModuleGUI() != null) {
-				parameternumrels = myprimula.getParamNumRelsGUI();
-				parameters = myprimula.makeParameterIndexGUI();
-			} else {
-				parameters = myprimula.makeParameterIndex();
-				if (parameters.size() == 0) {
-					throw new RBNRuntimeException("No parameters to learn");
-				}
-				parameternumrels = myprimula.getParamNumRels();
+			// the numeric relations to learn are set with myprimula.setParamNumRels (the GUI sets its selection)
+			parameters = myprimula.makeParameterIndex();
+			if (parameters.size() == 0 && myLearnModule.getLearnModuleGUI() == null) {
+				throw new RBNRuntimeException("No parameters to learn");
 			}
+			parameternumrels = myprimula.getParamNumRels();
 			parammodel.setParameters(parameters);
 			double[][] minmaxbounds = myprimula.makeMinMaxBounds();
 
 			parammodel.fireTableDataChanged();
-			if (parametertable != null)
-				parametertable.updateUI();
 			// boolean computeLikOnly = (parameters.length == 0);
-			if (numrestartsfield != null)
-				numrestartsfield.setText("" );
+			myLearnModule.showRestarts("");
 			double[] paramvals = new double[parameters.size()+1];
 
 //			if (threadascentstrategy == LearnModule.AscentBlock){
@@ -269,9 +237,11 @@ public class LearnThread extends GGThread {
 //					case LearnModule.AscentTwoPhase:
 //						results = doOneRestartBatch(gg,A,parameternumrels,parameters,rest==0);
 					}
+				} catch (RBNCompatibilityException e) {
+					System.out.println(e);
+				} catch (RBNNaNException e) {
+					System.out.println(e);
 				}
-				catch (RBNCompatibilityException e) {System.out.println(e);}
-				catch (RBNNaNException e) {System.out.println(e);}
 
 				newlik = results[results.length-1];
 				System.out.println("# Likelihood: " + newlik);
@@ -285,10 +255,7 @@ public class LearnThread extends GGThread {
 					parammodel.setEstimates(paramvals);
 				}
 				rest++;
-				if (numrestartsfield != null)
-					numrestartsfield.setText(""+rest);
-				if (parametertable != null)
-					parametertable.updateUI();
+				myLearnModule.showRestarts(""+rest);
 			} // while (!isstopped() && (rest < myLearnModule.getRestarts() 
 
 			profiler.addTime(Profiler.TIME_RESTARTS, System.currentTimeMillis()-beforerestarts);
@@ -305,7 +272,7 @@ public class LearnThread extends GGThread {
 
 	private double[] doOneRestartStochGrad(RelStruc A,
 			String[][] parameternumrels,
-			Hashtable<String,Integer> parameters,
+			HashMap<String,Integer> parameters,
 			double[][] minmaxbounds,
 			Boolean isfirstrestart,
 			Boolean usegradientgraphs,
@@ -327,6 +294,20 @@ public class LearnThread extends GGThread {
 		
 		if (!initParams(A,databatches[0],parameternumrels,null))
 			return null;
+
+//		BufferedWriter lossLogWriter = null;
+//		if (myLearnModule.threadascentstrategy() == LearnModule.AscentAdam) {
+//			try {
+//				lossLogWriter = new BufferedWriter(new FileWriter("adam_loss.txt", !isfirstrestart));
+//				if (isfirstrestart) {
+//					lossLogWriter.write("#iteration\tobjective");
+//					lossLogWriter.newLine();
+//				}
+//			} catch (IOException e) {
+//				System.out.println("Warning: could not open loss log file: " + e.getMessage());
+//				lossLogWriter = null;
+//			}
+//		}
 	
 		
 		/* Initialize ascent strategy specific variables:*/
@@ -349,7 +330,7 @@ public class LearnThread extends GGThread {
 
 		double epochobj = Double.NEGATIVE_INFINITY;
 		double[] epochconfusion = null; 
-		double batchaccuracy;
+		double batchaccuracy = 0;
 		double batchobj = Double.NEGATIVE_INFINITY;
 		double[] batchconfusion = null; 
 		double lastobj = Double.NEGATIVE_INFINITY;
@@ -398,6 +379,13 @@ public class LearnThread extends GGThread {
 							gg = buildGGO(parameters,minmaxbounds,
 									isfirstrestart && isfirstloop,databatches[i]);
 							System.out.println("done build GG " + (i+1) + "/" + databatches.length);
+
+							if (gg.numberOfIndicators() > 0) {
+								boolean gotinit = gg.initIndicators(Thread.currentThread());
+								if (!gotinit) {
+									System.out.println("Warning: Failed to initialize indicators for batch " + i);
+								}
+							}
 							gg.evaluateLikelihoodAndPartDerivs(false);
 							System.out.println("done evaluate GG " + (i+1) + "/" + databatches.length);
 
@@ -406,7 +394,18 @@ public class LearnThread extends GGThread {
 						else {
 							gg=allggs[i];
 							gg.setParametersFromAandRBN();
-							gg.resetValues(null, false);
+
+							if (gg.numberOfIndicators() > 0) {
+								for (int k=0;k< gg.numchains ;k++) {
+									int sno = k * gg.windowsize + gg.windowindex;
+									gg.resetValues(sno, false);
+								}
+
+								for (int j = 0; j < gg.windowsize; j++)
+									gg.gibbsSample(Thread.currentThread());
+							} else
+								gg.resetValues(null, false);
+
 							gg.evaluateLikelihoodAndPartDerivs(false);
 						}
 //					}
@@ -427,68 +426,72 @@ public class LearnThread extends GGThread {
 				
 				// At the moment only option Adam implemented in stochastic gradient !
 				switch (myLearnModule.threadascentstrategy()){
-				case LearnModule.AscentAdam:
-					if (usegradientgraphs) {
-						gradient = gg.getGradient();
-						batchobj=gg.currentLogLikelihood();
-//						batchconfusion = gg.getConfusionDouble();
-//						batchaccuracy = gg.getAccuracy();
-//						for (int j=0;j<parameters.length;j++)
-//							System.out.println(parameters[j] + "  "  + gradient[j] + "  " + lossgrad[2][j]);
-//						System.out.println();
-					}
-					else {
-						
-						double[][] lossgrad = getLossAndGradient(databatches[i],
-								myprimula.getRBN(),
-								parameters,
-								false,
-								profiler);
+					case LearnModule.AscentAdam:
+						if (usegradientgraphs) {
+							gradient = gg.getGradient();
+							batchobj=gg.currentLogLikelihood();
+//							batchconfusion = gg.getConfusionDouble();
+//							batchaccuracy = gg.getAccuracy();
+	//						for (int j=0;j<parameters.length;j++)
+	//							System.out.println(parameters[j] + "  "  + gradient[j] + "  " + lossgrad[2][j]);
+	//						System.out.println();
+						}
+						else {
 
-						gradient = lossgrad[1];
-						batchobj= lossgrad[0][0];
-					}
-					epochobj+=batchobj;
+							double[][] lossgrad = getLossAndGradient(databatches[i],
+									myprimula.getRBN(),
+									parameters,
+									false,
+									profiler);
 
-					System.out.println(rbnutilities.arrayToString(gradient));
-					firstmomentest = rbnutilities.arrayAdd(
-							rbnutilities.arrayScalMult(firstmomentest, beta1), 
-							rbnutilities.arrayScalMult(gradient,1- beta1));
-					/* update biased second raw moment estimate */
-					secondmomentest = rbnutilities.arrayAdd(
-							rbnutilities.arrayScalMult(secondmomentest,  beta2), 
-							rbnutilities.arrayScalMult(rbnutilities.arrayCompMultiply(gradient, gradient),1- beta2));
-					/* Compute bias-corrected first moment estimate: 
-					 * We are here using itcount as the time counter. Thus, "time"
-					 * is incremented only after completion of a full run through
-					 * all data batches, not after every data batch */
-					mhat = rbnutilities.arrayScalMult(firstmomentest, 1/(1-Math.pow( beta1,itcount)));
-					//System.out.println("mhat: " + rbnutilities.arrayToString(mhat, 0, 10));
-					
-					/* Compute bias-corrected second moment estimate: */
-					vhat = rbnutilities.arrayScalMult(secondmomentest, 1/(1-Math.pow( beta2,itcount)));
-					//System.out.println("vhat: " + rbnutilities.arrayToString(vhat, 0, 10));
-					incrementvec = rbnutilities.arrayCompDivide(mhat, 
-							rbnutilities.arrayAddConst(rbnutilities.arraySQRT(vhat), epsilon));
-					
-					
-					
-//					System.out.print("cosine(increment,gradient) " 
-//					+ rbnutilities.arrayDotProduct(rbnutilities.normalizeDoubleArray(incrementvec),rbnutilities.normalizeDoubleArray(gradient))); 
-					
-					/* Proper ADAM: */
-					newparamvals = rbnutilities.arrayAdd(oldparamvals,
-							rbnutilities.arrayScalMult(incrementvec,alpha));
-					newparamvals=rbnutilities.clip(newparamvals,minmaxbounds);
-					
-//					System.out.println("old" +'\t' + "grad" + '\t' + "incr" + '\t' + "new");
-//					for (int ii=0;ii<gradient.length;ii++)
-//						System.out.println(oldparamvals[ii]+ "\t" + gradient[ii]+ "\t" + incrementvec[ii] + "\t" + newparamvals[ii]);
+							gradient = lossgrad[1];
+							batchobj= lossgrad[0][0];
+						}
+						epochobj+=batchobj;
 
-					//System.out.println(itcount + "\t" + rbnutilities.euclidDist(oldparamvals, newparamvals) + "\t" +   batchobj + "\t" + batchaccuracy );
-					myprimula.setParameters(parameters,newparamvals);
-					if (usegradientgraphs)
-						gg.setParametersFromAandRBN();
+						firstmomentest = rbnutilities.arrayAdd(
+								rbnutilities.arrayScalMult(firstmomentest, beta1),
+								rbnutilities.arrayScalMult(gradient,1- beta1));
+						/* update biased second raw moment estimate */
+						secondmomentest = rbnutilities.arrayAdd(
+								rbnutilities.arrayScalMult(secondmomentest,  beta2),
+								rbnutilities.arrayScalMult(rbnutilities.arrayCompMultiply(gradient, gradient),1- beta2));
+						/* Compute bias-corrected first moment estimate:
+						 * We are here using itcount as the time counter. Thus, "time"
+						 * is incremented only after completion of a full run through
+						 * all data batches, not after every data batch */
+						mhat = rbnutilities.arrayScalMult(firstmomentest, 1/(1-Math.pow( beta1,itcount)));
+						//System.out.println("mhat: " + rbnutilities.arrayToString(mhat, 0, 10));
+
+						/* Compute bias-corrected second moment estimate: */
+						vhat = rbnutilities.arrayScalMult(secondmomentest, 1/(1-Math.pow( beta2,itcount)));
+						//System.out.println("vhat: " + rbnutilities.arrayToString(vhat, 0, 10));
+						incrementvec = rbnutilities.arrayCompDivide(mhat,
+								rbnutilities.arrayAddConst(rbnutilities.arraySQRT(vhat), epsilon));
+
+
+
+	//					System.out.print("cosine(increment,gradient) "
+	//					+ rbnutilities.arrayDotProduct(rbnutilities.normalizeDoubleArray(incrementvec),rbnutilities.normalizeDoubleArray(gradient)));
+
+						/* Proper ADAM: */
+						newparamvals = rbnutilities.arrayAdd(oldparamvals,
+								rbnutilities.arrayScalMult(incrementvec,alpha));
+						newparamvals=rbnutilities.clip(newparamvals,minmaxbounds);
+
+	//					System.out.println("old" +'\t' + "grad" + '\t' + "incr" + '\t' + "new");
+	//					for (int ii=0;ii<gradient.length;ii++)
+	//						System.out.println(oldparamvals[ii]+ "\t" + gradient[ii]+ "\t" + incrementvec[ii] + "\t" + newparamvals[ii]);
+
+//						System.out.println(itcount + "\t" + rbnutilities.euclidDist(oldparamvals, newparamvals) + "\t" +   batchobj + "\t" + batchaccuracy );
+						myprimula.setParameters(parameters,newparamvals);
+						if (usegradientgraphs)
+							gg.setParametersFromAandRBN();
+
+	//					if (usegradientgraphs && gg.numberOfIndicators() > 0) {
+	//						for (int j = 0; j < gg.windowsize; j++)
+	//							gg.gibbsSample(Thread.currentThread());
+	//					}
 				} // switch (myLearnModule.threadascentstrategy()){
 
 				batchcount++;
@@ -500,10 +503,10 @@ public class LearnThread extends GGThread {
 				terminate = true;
 				System.out.println("Warning: NaN values in current parameter values; terminate stochastic gradient");
 			}
-
-					
+			boolean best = false;
 			if (epochobj > bestobj){
 				bestobj = epochobj;
+				best = true;
 				bestresult = Arrays.copyOf(newparamvals, newparamvals.length+4);
 			}
 			if (lastobj<epochobj && Math.abs((epochobj-lastobj)/lastobj)> myLearnModule.getLLikThresh())
@@ -520,8 +523,24 @@ public class LearnThread extends GGThread {
 				long tick = System.currentTimeMillis();
 				long totalt = tick-startiterations;
 				long epocht = tick - startepoch;
+				double steps = rbnutilities.euclidDist(beforeepochparamvals, newparamvals);
+				System.out.print("\t" + itcount + "\t" +  (epocht/1000.0) + "s\t" + (totalt/1000) + "s\t" + steps + "\t" +   epochobj + "\t" + tries);
+				if (best)
+					System.out.print("\t BEST OBJ\n");
+				else
+					System.out.print("\n");
 
-				System.out.println("\t" + itcount + "\t" +  (epocht/1000.0) + "s\t" + (totalt/1000) + "s\t" + rbnutilities.euclidDist(beforeepochparamvals, newparamvals) + "\t" +   epochobj + "\t" + tries);
+
+//				if (lossLogWriter != null) {
+//					try {
+//						lossLogWriter.write(itcount + "\t" + epochobj);
+//						lossLogWriter.newLine();
+//						lossLogWriter.flush();
+//					} catch (IOException e) {
+//						System.out.println("Warning: failed to write loss log entry: " + e.getMessage());
+//					}
+//				}
+
 				break;
 			}
 		
@@ -532,6 +551,14 @@ public class LearnThread extends GGThread {
 			terminate = (terminate || tries == myLearnModule.getLikelihoodWindow() || itcount == myLearnModule.getMaxIterations());
 		} // while (!terminate && !isstopped())
 
+
+//		if (lossLogWriter != null) {
+//			try {
+//				lossLogWriter.close();
+//			} catch (IOException e) {
+//				System.out.println("Warning: failed to close loss log file: " + e.getMessage());
+//			}
+//		}
 		
 		System.out.println("#Iterations: " + batchcount);
 		/* Don't use 3 components of resultvector here */
@@ -549,7 +576,7 @@ public class LearnThread extends GGThread {
 	private double[] doOneRestartBatch(GradientGraph gg,
 			RelStruc A,
 			String[][] parameternumrels,
-			Hashtable<String,Integer> parameters,
+			HashMap<String,Integer> parameters,
 			Boolean isfirstrestart)
 					throws RBNNaNException,RBNCompatibilityException
 	{
@@ -637,11 +664,11 @@ public class LearnThread extends GGThread {
 //	}
 
 
-	private GradientGraphO buildGGO(Hashtable<String,Integer> parameters,double[][] minmaxbounds,
+	private GradientGraphO buildGGO(HashMap<String,Integer> parameters,double[][] minmaxbounds,
 			Boolean showInfoInPrimula,RelData datafold){
 		GradientGraphO gg = null;
-		if (showInfoInPrimula && myprimula.getPrimulaGUI() != null)
-			myprimula.getPrimulaGUI().showMessageThis("Building Gradient Graph ...");
+		if (showInfoInPrimula)
+			myprimula.showMessage("Building Gradient Graph ...");
 		double timestart=System.currentTimeMillis();
 		try{
 			gg = new GradientGraphO(myprimula,
@@ -656,8 +683,8 @@ public class LearnThread extends GGThread {
 		catch (RBNCompatibilityException ex){System.out.println(ex);}
 		double timediff = (System.currentTimeMillis()-timestart)/1000;
 
-		if (showInfoInPrimula && myprimula.getPrimulaGUI() != null)
-			myprimula.getPrimulaGUI().showMessageThis("Construction time: " + timeformat.format(timediff) +"s" +'\n' );
+		if (showInfoInPrimula)
+			myprimula.showMessage("Construction time: " + timeformat.format(timediff) +"s" +'\n' );
 		return gg;
 	}
 
@@ -685,9 +712,9 @@ public class LearnThread extends GGThread {
 			myprimula.getRBN().setRandomParameterVals();
 			if (myLearnModule.ggrandominit())
 				A.setRandom(parameternumrels,scale);
-			lik = getLossAndGradient(data, myprimula.getRBN(), new Hashtable<String,Integer>(),true ,profiler)[0][0];
+			lik = getLossAndGradient(data, myprimula.getRBN(), new HashMap<String,Integer>(),true ,profiler)[0][0];
 			System.out.println("# log-likelihood " + lik);	
-			if (lik == Double.NEGATIVE_INFINITY){
+			if (lik == Double.NEGATIVE_INFINITY){ //  || Double.isNaN(lik)
 				tries++;
 				scale=0.5*scale;
 			} else if (lik == 0.0) {
@@ -705,7 +732,7 @@ public class LearnThread extends GGThread {
 	 */
 	private double[][] getLossAndGradient(RelData data, 
 			RBN rbn, 
-			Hashtable<String,Integer> parameters, 
+			HashMap<String,Integer> parameters, 
 			boolean lossonly, 
 			Profiler profiler) 
 			throws RBNCompatibilityException
@@ -730,12 +757,12 @@ public class LearnThread extends GGThread {
 		 	for (int observcaseno=0; observcaseno<rdoi.numObservations(); observcaseno++){
 		 		osd = rdoi.oneStrucDataAt(observcaseno);
 
-				Hashtable<String,Object[]>  evaluated = null;
+				HashMap<String,Object[]>  evaluated = null;
 				if (myLearnModule.getUseMemoize())
-					evaluated = new Hashtable<String,Object[]>();
+					evaluated = new HashMap<String,Object[]>();
 				for (int i=0; i<rbn.NumPFs(); i++){
 					CPModel nextcpm = rbn.cpmod_prelements_At(i);
-					String[] vars = rbn.arguments_prels_At(i);
+					ArgTerm[] vars = rbn.arguments_prels_At(i);
 					Rel nextrel = rbn.relAt(i);
 					Vector<int[]> inrel = osd.allInstantiated(nextrel);
 					for (int[] tuple: inrel) {
@@ -796,8 +823,8 @@ public class LearnThread extends GGThread {
 //									}
 //								}
 //								else { //ProbForm.RETURN_SPARSE
-//									for (String par: ((Hashtable<String,Double>)grad).keySet()){
-//										pdp = ((Hashtable<String,Double>)grad).get(par);
+//									for (String par: ((HashMap<String,Double>)grad).keySet()){
+//										pdp = ((HashMap<String,Double>)grad).get(par);
 //										if (nextrel instanceof BoolRel && val==0)
 //											pdp*=-1;
 //										int ii = parameters.get(par);
@@ -817,7 +844,7 @@ public class LearnThread extends GGThread {
 			double[] current, 
 			double[] gradient, 
 			RelData data, 
-			Hashtable<String,Integer> parameters,
+			HashMap<String,Integer> parameters,
 			RBN rbn, 
 			int lossfunc, 
 			Profiler profiler) {
@@ -825,11 +852,4 @@ public class LearnThread extends GGThread {
 		return null;
 	}
 
-	public void setParametertable(JTable parametertable) {
-		this.parametertable = parametertable;
-	}
-
-	public void setNumrestartsfield(JTextField numrestartsfield) {
-		this.numrestartsfield = numrestartsfield;
-	}
 }

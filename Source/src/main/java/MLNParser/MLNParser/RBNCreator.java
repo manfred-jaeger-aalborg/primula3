@@ -5,6 +5,8 @@
 package MLNParser.MLNParser;
 
 import RBNpackage.*;
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 import myio.StringOps;
 import MLNExceptions.NoSuchRelationException;
 import MLNExceptions.BadArityException;
@@ -25,7 +27,7 @@ public class RBNCreator {
 	private File mlnfile;
 	
     private RBN network;
-    private Vector<ProbForm> formulas;
+    private Vector<CPModel> formulas;
     private Map<String, BoolRel> relations;// the relations are stored here not to be repeated
     private Vector<String> probabilisticRelations;
     
@@ -43,7 +45,7 @@ public class RBNCreator {
 //    
     public RBNCreator(File mlnf) {
     	mlnfile = mlnf;
-        formulas = new Vector<ProbForm>();
+        formulas = new Vector<CPModel>();
         relations = new TreeMap<String, BoolRel>();
         types = new TreeMap<String, DeclaredType>();
         
@@ -124,50 +126,50 @@ public class RBNCreator {
                 
     }
     
-    public ProbForm createNot(ProbForm formula) {
+    public CPModel createNot(CPModel formula) {
         // !!a is translated to ((a:0,1):0,1)
         return new ProbFormConvComb(formula, new ProbFormConstant(0), new ProbFormConstant(1));
     }
 
-    public ProbForm createAnd(ProbForm firstPart, ProbForm secondPart) {
+    public CPModel createAnd(CPModel firstPart, CPModel secondPart) {
         // a ^ b ^ c is translated to (c:(b:a,0),0)
         return new ProbFormConvComb(secondPart, firstPart, new ProbFormConstant(0));
     }
 
-    public ProbForm createOr(ProbForm firstPart, ProbForm secondPart) {
+    public CPModel createOr(CPModel firstPart, CPModel secondPart) {
         // a v b v c is translated to ((a:1,b):1,c)
         return new ProbFormConvComb(firstPart, new ProbFormConstant(1), secondPart);
     }
 
-    public ProbForm createImplies(ProbForm firstPart, ProbForm secondPart) {
+    public CPModel createImplies(CPModel firstPart, CPModel secondPart) {
         //a => b => c is translated to ((a:b,1):c,1)
         return new ProbFormConvComb(firstPart, secondPart, new ProbFormConstant(1));
     }
 
-    public ProbForm createIfOnlyIf(ProbForm firstPart, ProbForm secondPart) {
+    public CPModel createIfOnlyIf(CPModel firstPart, CPModel secondPart) {
         // a <=> b <=> c is translated to ((a:b,(b:0,1)):c,(c:0,1))
         return new ProbFormConvComb(firstPart, secondPart,
                 new ProbFormConvComb(secondPart, new ProbFormConstant(0), new ProbFormConstant(1)));
     }
 
-    public ProbForm createExistential(ProbForm formula, Vector<String> quantargs) {
+    public CPModel createExistential(CPModel formula, Vector<String> quantargs) {
         // Exists x f(x,y) is translated to n-or{f(x,y)|x:}
-    	ProbForm[] formargs = new ProbForm[1];
+        CPModel[] formargs = new CPModel[1];
     	formargs[0]=formula;
         return new ProbFormCombFunc(new CombFuncNOr(), 
         		formargs, 
-        		StringOps.stringVectorToArray(quantargs) , 
+        		StringOps.stringVectorToArgArray(quantargs) ,
         		new ProbFormBoolConstant(true));
     }
 
-    public ProbForm createUniversal(ProbForm formula, Vector<String> quantargs) {
+    public CPModel createUniversal(CPModel formula, Vector<String> quantargs) {
         // Forall x f(x,y) is translated to (n-or{(f(x,y):0,1)|x:}:0,1)
-    	ProbForm[] formargs = new ProbForm[1];
+        CPModel[] formargs = new CPModel[1];
     	formargs[0]=new ProbFormConvComb(formula,new ProbFormConstant(0.0),new ProbFormConstant(1.0));
         return new ProbFormConvComb(
         		new ProbFormCombFunc(new CombFuncNOr(), 
         		formargs, 
-        		StringOps.stringVectorToArray(quantargs) , 
+        		StringOps.stringVectorToArgArray(quantargs),
         		new ProbFormBoolConstant(true)),
         		new ProbFormConstant(0.0),
         		new ProbFormConstant(1.0));
@@ -202,7 +204,7 @@ public class RBNCreator {
     }
     
 
-    public ProbForm createFormulaRelation(ParsedRelation relation)
+    public CPModel createFormulaRelation(ParsedRelation relation)
             throws NoSuchRelationException, BadArityException {
         Rel rel = relations.get(relation.getRelationName());
         if (rel == null) {
@@ -221,7 +223,7 @@ public class RBNCreator {
         
     }
     
-    public ProbForm createFormulaEquality(String var1, String var2){
+    public CPModel createFormulaEquality(String var1, String var2){
     	return new ProbFormBoolEquality(var1,var2,true);
     }
     
@@ -236,7 +238,7 @@ public class RBNCreator {
     return null;
     }*/
 
-    public ProbForm createWeightFormula(ProbForm formula, String tokenImage) {
+    public CPModel createWeightFormula(CPModel formula, String tokenImage) {
         double weight = 0;
         if (tokenImage.equals("")) {
             formula = new ProbFormConvComb(formula, new ProbFormConstant(1), new ProbFormConstant(0));
@@ -266,9 +268,9 @@ public class RBNCreator {
         relationsForArtificial.get(currentForm).add(relation);
     }
     
-    public Type[] checkFreeVars(ProbForm formula){
+    public Type[] checkFreeVars(CPModel formula){
         try{
-            String[] freevars = formula.freevars();
+            ArgTerm[] freevars = formula.freevars();
             Type[] freetypes = new Type[freevars.length];
             Type[] typesOfRelation;
             for(int i=0;i<freevars.length;i++){
@@ -283,7 +285,7 @@ public class RBNCreator {
                                 freetypes[i]=typesOfRelation[numArg];
                             }else{
                                 if(freetypes[i]!=typesOfRelation[numArg])
-                                    throw new DifferentTypesException(freetypes[i],relations.get(rel.getRelationName()),freevars[i]);
+                                    throw new DifferentTypesException(freetypes[i],relations.get(rel.getRelationName()),freevars[i].toString());
                             }
                         }
                 }
@@ -354,7 +356,7 @@ public class RBNCreator {
         /*create the artificial relations
          */ 
         this.currentForm=0;
-        for (ProbForm formula : formulas) {
+        for (CPModel formula : formulas) {
             Type[] freetypes = this.checkFreeVars(formula);
             BoolRel relation = new BoolRel("MLNRel" + currentForm,formula.freevars().length,freetypes);
             
@@ -370,9 +372,9 @@ public class RBNCreator {
         Vector<BoolRel> rels = new Vector(relations.values());
         for (BoolRel rel: rels){
             if(probabilisticRelations.contains(rel.printname())){
-                String[] args = new String[rel.getArity()];
+                ArgTerm[] args = new ArgTerm[rel.getArity()];
                 for (int i=0;i<args.length;i++)
-                	args[i]="x" + i;
+                	args[i]=new VarTerm( "x" + i);
                 
                 RBNPreldef pdef=new RBNPreldef(rel,args,new ProbFormConstant(0.5));
                 network.insertPRel(pdef, currentForm);
@@ -382,7 +384,7 @@ public class RBNCreator {
         }
     }
 
-    public void addNewRelationFormula(ProbForm formula) {
+    public void addNewRelationFormula(CPModel formula) {
         formulas.add(formula);
     }
     public Map<String,DeclaredType> getDeclaredTypes(){
@@ -405,7 +407,7 @@ public class RBNCreator {
         this.types = types;
     }
     
-    public Vector<ProbForm> getFormulas(){
+    public Vector<CPModel> getFormulas(){
     	return formulas;
     }
 }

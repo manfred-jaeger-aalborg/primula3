@@ -31,11 +31,13 @@ import RBNLearning.Gradient_Array;
 import RBNLearning.Gradient_TreeMap;
 import RBNgui.Primula;
 import RBNinference.PFNetworkNode;
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 import RBNutilities.*;
 import RBNLearning.Profiler;
 
 
-public class ProbFormCombFunc extends ProbForm{
+public class ProbFormCombFunc extends CPModel implements ProbForm {
 
 	/**
 	 * @uml.property  name="mycomb"
@@ -46,11 +48,11 @@ public class ProbFormCombFunc extends ProbForm{
 	 * @uml.property  name="pfargs"
 	 * @uml.associationEnd  multiplicity="(0 -1)"
 	 */
-	private ProbForm pfargs[];
+	private CPModel pfargs[];
 	/**
 	 * @uml.property  name="quantvars" multiplicity="(0 -1)" dimension="1"
 	 */
-	private String quantvars[];
+	private ArgTerm quantvars[];
 	/**
 	 * @uml.property  name="cconstr"
 	 * @uml.associationEnd  
@@ -71,11 +73,11 @@ public class ProbFormCombFunc extends ProbForm{
 		return mycomb;
 	}
 
-	public ProbForm[] getPfargs() {
+	public CPModel[] getPfargs() {
 		return pfargs;
 	}
 
-	public String[] getQuantvars() {
+	public ArgTerm[] getQuantvars() {
 		return quantvars;
 	}
 
@@ -91,45 +93,44 @@ public class ProbFormCombFunc extends ProbForm{
 	{}
 
 	/** Creates new ProbFormCombFunc */
-	public ProbFormCombFunc(CombFunc mc,ProbForm[] pfa, String[] qvars, ProbFormBool cc) 
+	public ProbFormCombFunc(CombFunc mc, CPModel[] pfa, ArgTerm[] qvars, ProbFormBool cc)
 			throws IllegalArgumentException
 			{
-		// Construct SSymbs and RSymbs
-		//		SSymbs = new Rel[0];
-		//		RSymbs = new Rel[0];
+				// Construct SSymbs and RSymbs
+				//		SSymbs = new Rel[0];
+				//		RSymbs = new Rel[0];
 
-		//		if (pfa.length > 0)
-		//			for (int i = 0; i<pfa.length; i++)
-		//			{
-		//				rbnutilities.arraymerge(SSymbs,pfa[i].SSymbs);
-		//				rbnutilities.arraymerge(RSymbs,pfa[i].RSymbs);
-		//			}
-		//		SSymbs = rbnutilities.arraymerge(SSymbs,cc.SSymbs);
+				//		if (pfa.length > 0)
+				//			for (int i = 0; i<pfa.length; i++)
+				//			{
+				//				rbnutilities.arraymerge(SSymbs,pfa[i].SSymbs);
+				//				rbnutilities.arraymerge(RSymbs,pfa[i].RSymbs);
+				//			}
+				//		SSymbs = rbnutilities.arraymerge(SSymbs,cc.SSymbs);
 
-		// Construct mycomb
-		mycomb = mc;
-		if (mc instanceof CombFuncNOr) mycombInt = CombFunc.NOR;
-		if (mc instanceof CombFuncMean) mycombInt = CombFunc.MEAN;
-		if (mc instanceof CombFuncInvsum) mycombInt = CombFunc.INVSUM;
-		if (mc instanceof CombFuncESum) mycombInt = CombFunc.ESUM;
-		if (mc instanceof CombFuncLReg) mycombInt = CombFunc.LREG;
-		if (mc instanceof CombFuncLLReg) mycombInt = CombFunc.LLREG;
-		if (mc instanceof CombFuncSum) mycombInt = CombFunc.SUM;
-		if (mc instanceof CombFuncProd) mycombInt = CombFunc.PROD;
+				// Construct mycomb
+				mycomb = mc;
+				if (mc instanceof CombFuncNOr) mycombInt = CombFunc.NOR;
+				if (mc instanceof CombFuncMean) mycombInt = CombFunc.MEAN;
+				if (mc instanceof CombFuncInvsum) mycombInt = CombFunc.INVSUM;
+				if (mc instanceof CombFuncESum) mycombInt = CombFunc.ESUM;
+				if (mc instanceof CombFuncLReg) mycombInt = CombFunc.LREG;
+				if (mc instanceof CombFuncLLReg) mycombInt = CombFunc.LLREG;
+				if (mc instanceof CombFuncSum) mycombInt = CombFunc.SUM;
+				if (mc instanceof CombFuncProd) mycombInt = CombFunc.PROD;
 
 
-		// Construct pfargs
-		pfargs = pfa; 
-		// Construct quantvars
-		quantvars = qvars;
-		// Construct cconstr
-		cconstr = cc;
-
+				// Construct pfargs
+				pfargs = pfa;
+				// Construct quantvars
+				quantvars = qvars;
+				// Construct cconstr
+				cconstr = cc;
 			}
 
-	public ProbFormCombFunc(String mc,ProbForm[] pfa, String[] qvars, ProbFormBool cc) 
+	public ProbFormCombFunc(String mc,CPModel[] pfa, ArgTerm[] qvars, ProbFormBool cc)
 			throws IllegalArgumentException
-			{
+		{
 
 		// Construct SSymbs and RSymbs
 		//		SSymbs = new Rel[0];
@@ -175,18 +176,18 @@ public class ProbFormCombFunc extends ProbForm{
 		// Construct cconstr
 		cconstr = cc;
 
-			}
+	}
 
-	public  String[] freevars()
+	public ArgTerm[] freevars()
 	{
-		String result[]={};
+		ArgTerm result[]={};
 		// first collect all the free variables from the pfargs formulas
 		for (int i = 0 ; i<pfargs.length ; i++)
-			result = rbnutilities.arraymerge(result,pfargs[i].freevars());
+			result = rbnutilities.arraymerge(result, pfargs[i].freevars());
 		// add the variables in the constraint:
-		result = rbnutilities.arraymerge(result,cconstr.freevars());
+		result = rbnutilities.arraymerge(result, cconstr.freevars());
 		// subtract the variables in quantvars
-		result = rbnutilities.arraysubstraction(result,quantvars);
+		result = rbnutilities.arraysubstraction(result, rbnutilities.getVarsFromArgs(quantvars));
 		return result;
 	}
 
@@ -200,7 +201,7 @@ public class ProbFormCombFunc extends ProbForm{
 		return result;
 	}
 
-	public ProbForm substitute(String[] vars, int[] args)
+	public CPModel substitute(String[] vars, int[] args)
 	{
 		ProbFormCombFunc result;
 		ProbFormBool subcconstr = null;
@@ -210,12 +211,16 @@ public class ProbFormCombFunc extends ProbForm{
 		 * substitution values from vars and args
 		 */
 		String[] subsvars;
-		subsvars = rbnutilities.arraysubstraction(vars,quantvars);
+		// take all the variables in quantvars
+		// e.g., if quantvars are not only simple VarTerm (the parser should not permit this)
+		// FORALL (t+1), a
+		// getArgumentsAsString(quantvars): t, a
+		subsvars = rbnutilities.arraysubstraction(vars, rbnutilities.getVarsFromArgs(quantvars));
 		int[] subsargs = rbnutilities.CorrArraySubstraction(subsvars,vars,args);
 
 
 		// Perform substitution on pfargs
-		ProbForm[]  subpfargs = new ProbForm[pfargs.length];
+		CPModel[]  subpfargs = new CPModel[pfargs.length];
 		for (int i = 0; i<pfargs.length; i++)
 			subpfargs[i]=pfargs[i].substitute(subsvars,subsargs);
 		//Perform substitution on cconstr
@@ -228,33 +233,36 @@ public class ProbFormCombFunc extends ProbForm{
 		return result;
 	}
 
-	public ProbForm substitute(String[] vars, String[] args)
+	public CPModel substitute(String[] vars, String[] args)
 	{
 		ProbFormCombFunc result;
-		ProbForm[]  subpfargs = new ProbForm[pfargs.length];
+		CPModel[]  subpfargs = new CPModel[pfargs.length];
 		ProbFormBool subcconstr = null;
 
 
 		// Rename all the variables bound 
 		// by combination function
-		String[] freev = freevars();
-		String[] reserved = new String[vars.length+args.length+freev.length];
+		ArgTerm[] freev = freevars();
+		Vector<String> reservedvec = new Vector<>();
 		for (int i = 0;i<vars.length;i++)
-			reserved[i]=vars[i];
+			reservedvec.add(vars[i]);
 		for (int i = 0;i<args.length;i++)
-			reserved[vars.length+i]=args[i];
-		for (int i = 0;i<freev.length;i++)
-			reserved[vars.length+args.length+i]=freev[i];
+			reservedvec.add(args[i]);
+		for (int i = 0;i<freev.length;i++) {
+			for (String vs : freev[i].getVariables())
+				reservedvec.add(vs);
+		}
+		String[] reserved = reservedvec.toArray(new String[0]);
 
-		String[] newquantvars = rbnutilities.NewVariables(reserved,quantvars.length);
+		String[] newquantvars = rbnutilities.NewVariables(reserved, rbnutilities.getVarsFromArgs(quantvars).length);
+		ArgTerm[] newquantvarsAsArgTerm = new ArgTerm[newquantvars.length];
+		for (int i = 0; i<newquantvars.length; i++)
+			newquantvarsAsArgTerm[i] = new VarTerm(newquantvars[i]);
 
 		for (int i = 0; i<pfargs.length; i++)
-		{
-			subpfargs[i]=pfargs[i].substitute(quantvars,newquantvars);
-		}
+			subpfargs[i]=pfargs[i].substitute(rbnutilities.getVarsFromArgs(quantvars),newquantvars);
 
-
-		subcconstr = (ProbFormBool)cconstr.substitute(quantvars,newquantvars);
+		subcconstr = (ProbFormBool)cconstr.substitute(quantvars, newquantvarsAsArgTerm);
 
 		// Now perform the original substitution
 		for (int i = 0; i<pfargs.length; i++)
@@ -263,12 +271,112 @@ public class ProbFormCombFunc extends ProbForm{
 		}
 
 		subcconstr = (ProbFormBool)subcconstr.substitute(vars,args);
-		result = new ProbFormCombFunc(mycomb.name,subpfargs,newquantvars,subcconstr);
+		result = new ProbFormCombFunc(mycomb.name, subpfargs, newquantvarsAsArgTerm, subcconstr);
 		if (this.alias != null)
 			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
 		return result;
 	}
 
+	@Override
+	public CPModel substitute(String[] vars, ArgTerm[] args)
+	{
+		ProbFormCombFunc result;
+		CPModel[]  subpfargs = new CPModel[pfargs.length];
+		ProbFormBool subcconstr = null;
+
+		// Rename all the variables bound
+		// by combination function
+		ArgTerm[] freev = freevars();
+		Vector<String> reservedvec = new Vector<>();
+		for (int i = 0;i<vars.length;i++)
+			reservedvec.add(vars[i]);
+		for (int i = 0;i<args.length;i++) {
+			for (String vs : args[i].getVariables())
+				reservedvec.add(vs);
+		}
+		for (int i = 0;i<freev.length;i++) {
+			for (String vs : freev[i].getVariables())
+				reservedvec.add(vs);
+		}
+		String[] reserved = reservedvec.toArray(new String[0]);
+
+		String[] newquantvars = rbnutilities.NewVariables(reserved, rbnutilities.getVarsFromArgs(quantvars).length);
+		ArgTerm[] newquantvarsAsArgTerm = new ArgTerm[newquantvars.length];
+		for (int i = 0; i<newquantvars.length; i++)
+			newquantvarsAsArgTerm[i] = new VarTerm(newquantvars[i]);
+
+		for (int i = 0; i<pfargs.length; i++)
+			subpfargs[i]=pfargs[i].substitute(rbnutilities.getVarsFromArgs(quantvars),newquantvars);
+
+		subcconstr = (ProbFormBool)cconstr.substitute(quantvars, newquantvarsAsArgTerm);
+
+		// Now perform the original substitution
+		for (int i = 0; i<pfargs.length; i++)
+			subpfargs[i]=subpfargs[i].substitute(vars,args);
+
+		subcconstr = (ProbFormBool)subcconstr.substitute(vars,args);
+		result = new ProbFormCombFunc(mycomb.name, subpfargs, newquantvarsAsArgTerm, subcconstr);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	@Override
+	public CPModel substitute(ArgTerm[] vars, ArgTerm[] args) {
+		ProbFormCombFunc result;
+		CPModel[]  subpfargs = new CPModel[pfargs.length];
+		ProbFormBool subcconstr = null;
+
+		// Rename all the variables bound
+		// by combination function
+		ArgTerm[] freev = freevars();
+		ArgTerm[] reserved = new ArgTerm[vars.length+args.length+freev.length];
+		for (int i = 0;i<vars.length;i++)
+			reserved[i]=vars[i];
+		for (int i = 0;i<args.length;i++)
+			reserved[vars.length+i]=args[i];
+		for (int i = 0;i<freev.length;i++)
+			reserved[vars.length+args.length+i]= freev[i];
+
+		ArgTerm[] newquantvars = rbnutilities.NewVariables(reserved, rbnutilities.getVarsFromArgs(quantvars).length);
+
+		for (int i = 0; i<pfargs.length; i++)
+			subpfargs[i]=pfargs[i].substitute(rbnutilities.getVarsFromArgs(quantvars), newquantvars);
+
+		subcconstr = (ProbFormBool)cconstr.substitute(quantvars, newquantvars);
+
+		// Now perform the original substitution
+		for (int i = 0; i<pfargs.length; i++)
+			subpfargs[i]=subpfargs[i].substitute(vars,args);
+
+		subcconstr = (ProbFormBool)subcconstr.substitute(vars,args);
+		result = new ProbFormCombFunc(mycomb.name, subpfargs, newquantvars, subcconstr);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	@Override
+	public CPModel substitute(ArgTerm[] vars, int[] args) {
+		ProbFormCombFunc result;
+		ProbFormBool subcconstr = null;
+
+		ArgTerm[] subsvars = rbnutilities.arraysubstraction(vars, rbnutilities.getVarsFromArgs(quantvars));
+		int[] subsargs = rbnutilities.CorrArraySubstraction(rbnutilities.getVarsFromArgs(subsvars), rbnutilities.getVarsFromArgs(vars), args);
+
+		// Perform substitution on pfargs
+		CPModel[]  subpfargs = new CPModel[pfargs.length];
+		for (int i = 0; i<pfargs.length; i++)
+			subpfargs[i]=pfargs[i].substitute(subsvars,subsargs);
+		//Perform substitution on cconstr
+
+		subcconstr = (ProbFormBool)cconstr.substitute(vars,args);
+
+		result = new ProbFormCombFunc(mycomb.name,subpfargs,quantvars,subcconstr);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
 
 	public  Vector makeParentVec(RelStruc A)
 			throws RBNCompatibilityException{
@@ -279,9 +387,10 @@ public class ProbFormCombFunc extends ProbForm{
 			throws RBNCompatibilityException{
 		//System.out.println("makeParentVec for " + this.asString() + ": ");
 		Vector result = new Vector();
-		ProbForm nextprobform;
+		CPModel nextprobform;
 
-		int[][] subslist = A.allTrue(cconstr,quantvars);
+		int maxInteger = maxInteger();
+		int[][] subslist = A.allTrue(cconstr, rbnutilities.getVarsFromArgs(quantvars), maxInteger);
 
 		for (int i=0; i<pfargs.length; i++)
 		{
@@ -294,6 +403,27 @@ public class ProbFormCombFunc extends ProbForm{
 		return result;
 	}
 
+	// we need to find the max integer value in the pfargs parents
+	// the minumum of the parents
+	public int maxInteger() {
+		int maxInteger=Integer.MAX_VALUE;
+		for (int i=0; i<pfargs.length; i++) {
+			TreeSet<Rel> parents = pfargs[i].parentRels();
+			for (Rel r: parents) {
+				for (Type t: r.getTypes()) {
+					if (t instanceof TypeInteger) {
+						((TypeInteger) t).getMaxInt();
+						if (maxInteger > ((TypeInteger) t).getMaxInt())
+							maxInteger = ((TypeInteger) t).getMaxInt();
+					}
+				}
+			}
+		}
+		if (maxInteger == Integer.MAX_VALUE) {
+			return 0;
+		}
+		return maxInteger;
+	}
 
 	//	public ProbForm conditionEvidence(OneStrucData instasosd)
 	//	{
@@ -309,13 +439,15 @@ public class ProbFormCombFunc extends ProbForm{
 	//	}
 
 
-	public ProbForm conditionEvidence(RelStruc A, OneStrucData inst)
+	public CPModel conditionEvidence(RelStruc A, OneStrucData inst)
 			throws RBNCompatibilityException
-			{
+	{
 		//System.out.println("condition Evidence for " + this.asString());
 		ProbForm nextcondpfarg;
 
-		int[][] subslist = A.allTrue(cconstr,quantvars);
+		int maxInteger = maxInteger();
+		int[][] subslist = A.allTrue(cconstr, rbnutilities.getVarsFromArgs(quantvars), maxInteger);
+//		int[][] subslist = A.allTrue(cconstr, rbnutilities.getVarsFromArgs(quantvars));
 
 		double[] condpfargs =new double[pfargs.length*subslist.length];
 		boolean allconstant = true;
@@ -342,12 +474,12 @@ public class ProbFormCombFunc extends ProbForm{
 			//System.out.println("returned old");
 			return this;
 		}
-			}
+	}
 
 
 	public boolean dependsOn(String variable, RelStruc A, OneStrucData data)
 			throws RBNCompatibilityException
-			{
+	{
 		Boolean result = false;
 		/* One should test whether any ground instances of the arguments depends on variable.
 		 * E.g.:
@@ -356,27 +488,30 @@ public class ProbFormCombFunc extends ProbForm{
 		 * However, when there are no a,b in A with l(a,b), and r(a) true or undetermined in the
 		 * data, then this formula (in this context) does not actually depend on #t
 		 */
-		int[][] subslist = A.allTrue(cconstr,quantvars);
+//		int[][] subslist = A.allTrue(cconstr, rbnutilities.getVarsFromArgs(quantvars));
+		int maxInteger = maxInteger();
+		int[][] subslist = A.allTrue(cconstr, rbnutilities.getVarsFromArgs(quantvars), maxInteger);
 		for (int i=0; i<pfargs.length; i++){
 			for (int j=0; j<subslist.length; j++){
 				result = (result || pfargs[i].substitute(quantvars,subslist[j]).dependsOn(variable,A,data)); 
 			}
 		}
 		return result;
-			}
+	}
 
 
 	public Object[] evaluate(RelStruc A, 
 			OneStrucData inst, 
-			String[] vars, 
-			int[] tuple, 
+			ArgTerm[] vars,
+			int[] tuple,
+			int gradindx,
 			boolean useCurrentCvals, 
 			// String[] numrelparameters,
 			boolean useCurrentPvals,
-			Hashtable<Rel,GroundAtomList> mapatoms,
+			HashMap<Rel,GroundAtomList> mapatoms,
 			boolean useCurrentMvals,
-			Hashtable<String,Object[]> evaluated,
-			Hashtable<String,Integer> params,
+			HashMap<String,Object[]> evaluated,
+			HashMap<String,Integer> params,
 			int returntype,
 			boolean valonly,
 			Profiler profiler)
@@ -436,6 +571,7 @@ public class ProbFormCombFunc extends ProbForm{
 						inst,
 						quantvars,
 						subslist[j],
+						gradindx,
 						useCurrentCvals,
 						useCurrentPvals,
 						mapatoms,
@@ -504,24 +640,24 @@ public class ProbFormCombFunc extends ProbForm{
 //			}
 //			else {
 //				long timebeforehashcreate = System.currentTimeMillis();
-//				result[1]=new Hashtable<String,Double>();
+//				result[1]=new HashMap<String,Double>();
 //				TreeSet<String> donekeys = new TreeSet<String>();
 //				for (int j=0; j<combargs.size(); j++) {
-//					for (String p: ((Hashtable<String,Double>)combargs.elementAt(j)[1]).keySet())
+//					for (String p: ((HashMap<String,Double>)combargs.elementAt(j)[1]).keySet())
 //					{
 //						if (!donekeys.contains(p)) {
 //							double[] derivs = new double[combargs.size()];
 //							/* The elements in combargs.elementAt(0),...,combargs.elementAt(j-1) had a
 //							 * 0 derivative for parameter p */
 //							for (int h=j; h<combargs.size(); h++) {
-//								Double di = ((Hashtable<String,Double>)combargs.elementAt(h)[1]).get(p);
+//								Double di = ((HashMap<String,Double>)combargs.elementAt(h)[1]).get(p);
 //								if (di==null)
 //									derivs[h]=0.0;
 //								else
 //									derivs[h]=di;
 //							}
 //							donekeys.add(p);
-//							((Hashtable<String,Double>)result[1]).put(p,mycomb.evaluateGrad(vals, derivs));
+//							((HashMap<String,Double>)result[1]).put(p,mycomb.evaluateGrad(vals, derivs));
 //						}
 //					}
 //
@@ -544,9 +680,9 @@ public class ProbFormCombFunc extends ProbForm{
 	}	
 	
 	public  double[] evalSample(RelStruc A, 
-			Hashtable<String,PFNetworkNode> atomhasht, 
+			HashMap<String,PFNetworkNode> atomhasht,
 			OneStrucData inst, 
-    		Hashtable<String,double[]> evaluated,
+    		HashMap<String,double[]> evaluated,
 			long[] timers)
 			throws RBNCompatibilityException
 	{
@@ -563,16 +699,18 @@ public class ProbFormCombFunc extends ProbForm{
 			}
 		}	
 		
-		long inittime; 
+		long inittime;
 		/* Same code as in evaluate and evaluatesTo: */
 		ProbFormBool scc = this.cconstr;
 		inittime=System.currentTimeMillis();
-		int[][] subslist = A.allTrue(scc,quantvars);
+//		int[][] subslist = A.allTrue(scc, rbnutilities.getVarsFromArgs(quantvars));
+		int maxInteger = maxInteger();
+		int[][] subslist = A.allTrue(scc, rbnutilities.getVarsFromArgs(quantvars), maxInteger);
 		timers[3]=timers[3]+System.currentTimeMillis()-inittime;
 
 		//System.out.println("evalSample for " + this.makeKey(new String[0],new int[0],false));
 
-		ProbForm groundpf;
+		CPModel groundpf;
 		double[] combargs = new double[this.pfargs.length*subslist.length];
 		int nextindex;
 		double nextvalue;
@@ -594,9 +732,9 @@ public class ProbFormCombFunc extends ProbForm{
 		return result;
 	}
 
-	public int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, Hashtable atomhasht)
+	public int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, HashMap atomhasht)
 			throws RBNCompatibilityException
-			{
+	{
 		/* First create an argument vector for the combination function
 		 * as in evaluate(...). Arguments are 1,0,-1 according to 
 		 * recursive calls on subformulas
@@ -607,7 +745,9 @@ public class ProbFormCombFunc extends ProbForm{
 		 * that satisfy the cconstr
 		 */
 
-		int[][] subslist = A.allTrue(scc,quantvars);
+//		int[][] subslist = A.allTrue(scc, rbnutilities.getVarsFromArgs(quantvars));
+		int maxInteger = maxInteger();
+		int[][] subslist = A.allTrue(scc, rbnutilities.getVarsFromArgs(quantvars), maxInteger);
 
 		/* Initialize array of arguments for combination functin */
 		int[] combargs = new int[this.pfargs.length*subslist.length];
@@ -629,7 +769,7 @@ public class ProbFormCombFunc extends ProbForm{
 		/* Now ask mycomb what it is going to do with this...
 		 */
 		return mycomb.evaluatesTo(combargs);
-			}
+	}
 
 
 	public int evaluatesTo(RelStruc A)
@@ -644,7 +784,9 @@ public class ProbFormCombFunc extends ProbForm{
 		 * generate list of all substitution tuples for quantvars
 		 * that satisfy the cconstr
 		 */
-		int[][] subslist = A.allTrue(scc,quantvars);
+		int maxInteger = maxInteger();
+		int[][] subslist = A.allTrue(scc, rbnutilities.getVarsFromArgs(quantvars), maxInteger);
+//		int[][] subslist = A.allTrue(scc, rbnutilities.getVarsFromArgs(quantvars));
 
 		/* Initialize array of arguments for combination functin */
 		int[] combargs = new int[this.pfargs.length*subslist.length];
@@ -718,65 +860,159 @@ public class ProbFormCombFunc extends ProbForm{
 	//		return result;
 	//	}
 
-	public String asString(int syntax, int depth, RelStruc A, boolean paramsAsValue,boolean usealias)
-	/* precedes string representation of formula with depth many
-	 * tabs (to obtain a multi-line output with suitable indentations).
-	 */ 
-	{
+//	public String asString(int syntax, int depth, RelStruc A, boolean paramsAsValue,boolean usealias)
+//	/* precedes string representation of formula with depth many
+//	 * tabs (to obtain a multi-line output with suitable indentations).
+//	 */
+//	{
+//		if (usealias && this.getAlias() != null)
+//			return this.getAlias();
+//		String result="";
+//		String tabstring = "";
+//		for (int i=0;i<depth;i++)
+//			tabstring = tabstring +" ";
+//
+//		int newdepth=0;
+//		String newtabstring = "";
+//
+//
+//		switch (syntax){
+//		case Primula.CLASSICSYNTAX:
+//			if (depth >= 0){
+//				newdepth = depth + mycomb.name.length();
+//				for (int i=0;i<newdepth;i++)
+//					newtabstring = newtabstring +" ";
+//				result =   mycomb.name+"{";
+//				for (int i = 0; i<pfargs.length-1; i++)
+//				{
+//					result = result +'\n' + newtabstring + " " + pfargs[i].asString(syntax, newdepth ,A,paramsAsValue,usealias) + ",";
+//				}
+//				if (pfargs.length >= 1)
+//					result = result +'\n' + newtabstring + " "+pfargs[pfargs.length-1].asString(syntax, newdepth + 1, A,paramsAsValue,usealias);
+//				result = result + '\n' + newtabstring + " " + "|" + rbnutilities.arrayToString(quantvars) + " : ";
+//				result =  result +cconstr.asString(Primula.CLASSICSYNTAX,0,A,paramsAsValue,usealias);
+//				result =  result +'\n' + newtabstring + "}";
+//			}
+//			else // depth =-1
+//			{
+//				result =   mycomb.name+"{";
+//				for (int i = 0; i<pfargs.length-1; i++)
+//				{
+//					result = result +" " + pfargs[i].asString(syntax, -1 ,A,paramsAsValue,usealias) + ",";
+//				}
+//				if (pfargs.length >= 1)
+//					result = result + " " +pfargs[pfargs.length-1].asString(syntax, -1, A,  paramsAsValue,usealias);
+//				result = result + " " + "|" + rbnutilities.arrayToString(quantvars) + " : ";
+//				result =  result +cconstr.asString(Primula.CLASSICSYNTAX,0,A,paramsAsValue,usealias) + "}";
+//			}
+//			break;
+//		case Primula.CHERRYSYNTAX:
+//			result = "COMBINE " ;
+//			if (pfargs.length >= 1)
+//				result = result  + pfargs[0].asString(syntax, depth+8 ,A,paramsAsValue,usealias);
+//			for (int i = 1; i<pfargs.length; i++)
+//			{
+//				result = result + "," +'\n' + tabstring + "        " + pfargs[i].asString(syntax, depth+8 ,A,  paramsAsValue,usealias) ;
+//			}
+//			result = result + '\n' + tabstring + "WITH " + mycomb.name;
+//			result = result + '\n' + tabstring + "FORALL " +  rbnutilities.arrayToString(quantvars);
+//			result = result + '\n' + tabstring + "WHERE " + cconstr.asString(Primula.CHERRYSYNTAX,0,A, paramsAsValue,usealias) ;
+//		}
+//		return result;
+//	}
+
+	public String asString(int syntax, int depth, RelStruc A,
+						   boolean paramsAsValue, boolean usealias) {
+
 		if (usealias && this.getAlias() != null)
 			return this.getAlias();
-		String result="";
+
+		StringBuilder sb = new StringBuilder();
+
 		String tabstring = "";
-		for (int i=0;i<depth;i++)
-			tabstring = tabstring +" ";
-
-		int newdepth=0;
-		String newtabstring = "";
-
-
-		switch (syntax){
-		case Primula.CLASSICSYNTAX:
-			if (depth >= 0){
-				newdepth = depth + mycomb.name.length();	
-				for (int i=0;i<newdepth;i++)
-					newtabstring = newtabstring +" ";
-				result =   mycomb.name+"{";
-				for (int i = 0; i<pfargs.length-1; i++)
-				{
-					result = result +'\n' + newtabstring + " " + pfargs[i].asString(syntax, newdepth ,A,paramsAsValue,usealias) + ",";
-				}
-				if (pfargs.length >= 1) 
-					result = result +'\n' + newtabstring + " "+pfargs[pfargs.length-1].asString(syntax, newdepth + 1, A,paramsAsValue,usealias);
-				result = result + '\n' + newtabstring + " " + "|" + rbnutilities.arrayToString(quantvars) + " : ";
-				result =  result +cconstr.asString(Primula.CLASSICSYNTAX,0,A,paramsAsValue,usealias);
-				result =  result +'\n' + newtabstring + "}";
-			}
-			else // depth =-1
-			{
-				result =   mycomb.name+"{";
-				for (int i = 0; i<pfargs.length-1; i++)
-				{
-					result = result +" " + pfargs[i].asString(syntax, -1 ,A,paramsAsValue,usealias) + ",";
-				}
-				if (pfargs.length >= 1) 
-					result = result + " " +pfargs[pfargs.length-1].asString(syntax, -1, A,  paramsAsValue,usealias);
-				result = result + " " + "|" + rbnutilities.arrayToString(quantvars) + " : ";
-				result =  result +cconstr.asString(Primula.CLASSICSYNTAX,0,A,paramsAsValue,usealias) + "}";
-			}
-			break;
-		case Primula.CHERRYSYNTAX:
-			result = "COMBINE " ;
-			if (pfargs.length >= 1) 
-				result = result  + pfargs[0].asString(syntax, depth+8 ,A,paramsAsValue,usealias);
-			for (int i = 1; i<pfargs.length; i++)
-			{
-				result = result + "," +'\n' + tabstring + "        " + pfargs[i].asString(syntax, depth+8 ,A,  paramsAsValue,usealias) ;
-			}
-			result = result + '\n' + tabstring + "WITH " + mycomb.name;
-			result = result + '\n' + tabstring + "FORALL " +  rbnutilities.arrayToString(quantvars);
-			result = result + '\n' + tabstring + "WHERE " + cconstr.asString(Primula.CHERRYSYNTAX,0,A, paramsAsValue,usealias) ; 
+		if (depth > 0) {
+			StringBuilder t = new StringBuilder(depth);
+			for (int i = 0; i < depth; i++) t.append(' ');
+			tabstring = t.toString();
 		}
-		return result;
+
+		switch (syntax) {
+			case Primula.CLASSICSYNTAX:
+				if (depth >= 0) {
+					int newdepth = depth + mycomb.name.length();
+					StringBuilder nt = new StringBuilder(newdepth);
+					for (int i = 0; i < newdepth; i++) nt.append(' ');
+					String newtabstring = nt.toString();
+
+					sb.append(mycomb.name).append('{');
+
+					for (int i = 0; i < pfargs.length - 1; i++) {
+						sb.append('\n')
+								.append(newtabstring)
+								.append(' ')
+								.append(pfargs[i].asString(syntax, newdepth, A, paramsAsValue, usealias))
+								.append(',');
+					}
+
+					if (pfargs.length >= 1) {
+						sb.append('\n').append(newtabstring).append(' ').append(pfargs[pfargs.length - 1].asString(syntax, newdepth + 1, A, paramsAsValue, usealias));
+					}
+
+					sb.append('\n')
+							.append(newtabstring)
+							.append(" |")
+							.append(rbnutilities.arrayToString(quantvars))
+							.append(" : ")
+							.append(cconstr.asString(Primula.CLASSICSYNTAX, 0, A, paramsAsValue, usealias))
+							.append('\n')
+							.append(newtabstring)
+							.append('}');
+
+				} else {
+					sb.append(mycomb.name).append('{');
+					for (int i = 0; i < pfargs.length - 1; i++) {
+						sb.append(' ').append(pfargs[i].asString(syntax, -1, A, paramsAsValue, usealias)).append(',');
+					}
+
+					if (pfargs.length >= 1) {
+						sb.append(' ').append(pfargs[pfargs.length - 1].asString(syntax, -1, A, paramsAsValue, usealias));
+					}
+
+					sb.append(" |").append(rbnutilities.arrayToString(quantvars)).append(" : ").append(cconstr.asString(Primula.CLASSICSYNTAX, 0, A, paramsAsValue, usealias)).append('}');
+				}
+				break;
+
+			case Primula.CHERRYSYNTAX:
+
+				sb.append("COMBINE ");
+
+				if (pfargs.length >= 1) {
+					sb.append(pfargs[0].asString(syntax, depth + 8, A, paramsAsValue, usealias));
+				}
+
+				for (int i = 1; i < pfargs.length; i++) {
+					sb.append(',')
+							.append('\n')
+							.append(tabstring)
+							.append("        ")
+							.append(pfargs[i].asString(syntax, depth + 8, A, paramsAsValue, usealias));
+				}
+
+				sb.append('\n')
+						.append(tabstring)
+						.append("WITH ")
+						.append(mycomb.name)
+						.append('\n')
+						.append(tabstring)
+						.append("FORALL ")
+						.append(rbnutilities.arrayToString(quantvars))
+						.append('\n')
+						.append(tabstring)
+						.append("WHERE ")
+						.append(cconstr.asString(Primula.CHERRYSYNTAX, 0, A, paramsAsValue, usealias));
+		}
+
+		return sb.toString();
 	}
 
 
@@ -794,49 +1030,53 @@ public class ProbFormCombFunc extends ProbForm{
 	/** Returns the number of probability formulas in the argument of this formula's
 	 * combination function
 	 */
-	public int numPFargs(){
+	public int numPFargs() {
 		return pfargs.length;
 	}
 
 	/** Returns the i'th probability formula in the argument of this formula's combination
 	 * function
 	 */
-	public ProbForm probformAt(int i){
+	public CPModel probformAt(int i) {
 		return pfargs[i];
 	}
 
 
 	/** Returns the quantvars of this combination function */
-	public String[] quantvars(){
+	public ArgTerm[] quantvars(){
 		return quantvars;
 	}
 
-	public ProbForm sEval(RelStruc A)
+	public CPModel sEval(RelStruc A)
 			throws RBNCompatibilityException
-			{
-		int[][] subslist = A.allTrue(cconstr,quantvars);
+	{
+		int maxInteger = maxInteger();
+		int[][] subslist = A.allTrue(cconstr, rbnutilities.getVarsFromArgs(quantvars), maxInteger);
+//		int[][] subslist = A.allTrue(cconstr, rbnutilities.getVarsFromArgs(quantvars));
 
-		ProbForm[]  sevalpfargs = new ProbForm[pfargs.length*subslist.length];
+		CPModel[]  sevalpfargs = new CPModel[pfargs.length*subslist.length];
 		for (int i = 0; i<pfargs.length; i++){
 			for (int j=0;j<subslist.length;j++){
 				sevalpfargs[subslist.length*i+j]=pfargs[i].substitute(quantvars,subslist[j]).sEval(A);
 			}
 		}
 
-		return new ProbFormCombFunc(mycomb,sevalpfargs,new String[0],new ProbFormBoolConstant(true));
+		return new ProbFormCombFunc(mycomb,sevalpfargs,new ArgTerm[0],new ProbFormBoolConstant(true));
 
-			}
+	}
 
 	/** Returns the set of all tuples in A that satisfy the CConstr of this formula
 	 * after the substituion vars/tuple has been performed
 	 */
-	public int[][] tuplesSatisfyingCConstr(RelStruc A,  String[] vars, int[] tuple)
+	public int[][] tuplesSatisfyingCConstr(RelStruc A,  ArgTerm[] vars, int[] tuple)
 			throws RBNCompatibilityException
-			{	
+	{
 		ProbFormBool subscc = (ProbFormBool)this.cconstr.substitute(vars,tuple);
-		return  A.allTrue(subscc,quantvars);
+		int maxInteger = maxInteger();
+		return A.allTrue(subscc, rbnutilities.getVarsFromArgs(quantvars), maxInteger);
+//		return  A.allTrue(subscc, rbnutilities.getVarsFromArgs(quantvars));
 
-			}
+	}
 
 //	public void setParameters(String[] params,  double[] values){
 //		for (int i = 0; i<pfargs.length; i++)
@@ -866,7 +1106,7 @@ public class ProbFormCombFunc extends ProbForm{
 	}
 	
 	public TreeSet<Rel> parentRels(TreeSet<String> processed){
-		String mykey = this.makeKey(null,null,true);
+		String mykey = this.makeKey((String[]) null,null,true);
 		if (processed.contains(mykey))
 			return new TreeSet<Rel>();
 		else {
@@ -876,5 +1116,10 @@ public class ProbFormCombFunc extends ProbForm{
 				result.addAll(pfargs[i].parentRels(processed));
 			return result;
 		}
+	}
+
+	@Override
+	public int numvals() {
+		return 2;
 	}
 }

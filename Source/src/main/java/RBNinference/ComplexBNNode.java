@@ -75,7 +75,7 @@ public class ComplexBNNode extends BNNode{
     	return cpmodel;
     }
     
-    public void setCPModel(ProbForm pf){
+    public void setCPModel(CPModel pf){
     	cpmodel = pf;
     }
     

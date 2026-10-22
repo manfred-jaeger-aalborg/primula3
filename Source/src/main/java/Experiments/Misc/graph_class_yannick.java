@@ -6,13 +6,15 @@ import RBNgui.Bavaria;
 import RBNgui.InferenceModule;
 import RBNgui.Primula;
 import RBNpackage.*;
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 import RBNutilities.Pair;
 import RBNutilities.rbnutilities;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Vector;
 
 public class graph_class_yannick {
@@ -99,34 +101,34 @@ public class graph_class_yannick {
         Pair p = new Pair(edgeRel, attrs_rels);
         inputs.add(p);
 
-        Vector<ProbForm> softmaxA = new Vector<>();
+        Vector<CPModel> softmaxA = new Vector<>();
         for (int i = 0; i < 2; i++) {
             softmaxA.add(new ProbFormConstant(1));
         }
-        Vector<ProbForm> softmaxX = new Vector<>();
+        Vector<CPModel> softmaxX = new Vector<>();
         for (int i = 0; i < 10; i++) {
             softmaxX.add(new ProbFormConstant(1));
         }
-        Vector<ProbForm> softmaxY = new Vector<>();
+        Vector<CPModel> softmaxY = new Vector<>();
         for (int i = 0; i < 8; i++) {
             softmaxY.add(new ProbFormConstant(1));
         }
-        Vector<ProbForm> softmaxD = new Vector<>();
+        Vector<CPModel> softmaxD = new Vector<>();
         for (int i = 0; i < 8; i++) {
             softmaxD.add(new ProbFormConstant(1));
         }
-        Vector<ProbForm> softmaxS = new Vector<>();
+        Vector<CPModel> softmaxS = new Vector<>();
         for (int i = 0; i < 5; i++) {
             softmaxS.add(new ProbFormConstant(1));
         }
 
         // Define the probabilistic relations
 //        RBNPreldef cat_predA = new RBNPreldef(new CatRel("a", 1, typeStringToArray("node",1), valStringToArray("ball,player")), new String[]{"v"},  new CatModelSoftMax(softmaxA));
-        RBNPreldef cat_predX = new RBNPreldef(new CatRel("x", 1, typeStringToArray("node",1), valStringToArray("x1,x2,x3,x4,x5,x6,x7,x8,x9,x10")), new String[]{"v"},  new CatModelSoftMax(softmaxX));
-        RBNPreldef cat_predY = new RBNPreldef(new CatRel("y", 1, typeStringToArray("node",1), valStringToArray("y1,y2,y3,y4,y5,y6,y7,y8")), new String[]{"v"},  new CatModelSoftMax(softmaxY));
-        RBNPreldef cat_predD = new RBNPreldef(new CatRel("d", 1, typeStringToArray("node",1), valStringToArray("d1,d2,d3,d4,d5,d6,d7,d8")), new String[]{"v"},  new CatModelSoftMax(softmaxD));
-        RBNPreldef cat_predS = new RBNPreldef(new CatRel("s", 1, typeStringToArray("node",1), valStringToArray("s1,s2,s3,s4,s5")), new String[]{"v"},  new CatModelSoftMax(softmaxS));
-        RBNPreldef edge_pred = new RBNPreldef(new BoolRel("edge", 2, typeStringToArray("node,node",2)), new String[]{"v", "w"},  new ProbFormConstant(0.5));
+        RBNPreldef cat_predX = new RBNPreldef(new CatRel("x", 1, typeStringToArray("node",1), valStringToArray("x1,x2,x3,x4,x5,x6,x7,x8,x9,x10")), new ArgTerm[]{new VarTerm("v")},  new CatModelSoftMax(softmaxX));
+        RBNPreldef cat_predY = new RBNPreldef(new CatRel("y", 1, typeStringToArray("node",1), valStringToArray("y1,y2,y3,y4,y5,y6,y7,y8")), new ArgTerm[]{new VarTerm("v")},  new CatModelSoftMax(softmaxY));
+        RBNPreldef cat_predD = new RBNPreldef(new CatRel("d", 1, typeStringToArray("node",1), valStringToArray("d1,d2,d3,d4,d5,d6,d7,d8")), new ArgTerm[]{new VarTerm("v")},  new CatModelSoftMax(softmaxD));
+        RBNPreldef cat_predS = new RBNPreldef(new CatRel("s", 1, typeStringToArray("node",1), valStringToArray("s1,s2,s3,s4,s5")), new ArgTerm[]{new VarTerm("v")},  new CatModelSoftMax(softmaxS));
+        RBNPreldef edge_pred = new RBNPreldef(new BoolRel("edge", 2, typeStringToArray("node,node",2)), new ArgTerm[]{new VarTerm("v"), new VarTerm("w")},  new ProbFormConstant(0.5));
 
         Vector<String> freeVars = new Vector<>();
 
@@ -201,7 +203,7 @@ public class graph_class_yannick {
             im.getMapthr().join();
 
             // collect results
-            Hashtable<Rel, int[]> bestMapVals = im.getMapthr().getBestMapVals();
+            HashMap<Rel, int[]> bestMapVals = im.getMapthr().getBestMapVals();
             // print results
             System.out.println("\nMAP INFERENCE RESULTS:\n");
             for (GroundAtomList gal: gal_vec) {

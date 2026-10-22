@@ -29,6 +29,8 @@ import RBNExceptions.*;
 import RBNinference.*;
 import RBNgui.Primula;
 import RBNLearning.Profiler;
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 
 /**
  * Abstract class representing conditional probability models. Implementing 
@@ -38,15 +40,10 @@ import RBNLearning.Profiler;
  */
 public abstract class CPModel
 {
-    
-	
 	/* An atomic representation of this probform that can be used to form keys etc. */ 
 	public ProbFormAtom alias; 
-	
 
     public abstract String asString(int syntax, int depth, RelStruc A, boolean paramsAsValue, boolean usealias);
-    
-
   
     public void setAlias(ProbFormAtom pfa) {
     	alias = pfa;
@@ -108,7 +105,7 @@ public abstract class CPModel
      * -the first component is the Double value of this formula (for ProbForm), or the array of probabilities (for CatModel).
      * -if returntype==this.RETURN_ARRAY, then the second component is an array containing the gradient with components 
      *  according to the order defined in params
-     * -if returntype==this.RETURN_SPARSE, then the second component is a Hashtable<String,double> with parameter names as keys,
+     * -if returntype==this.RETURN_SPARSE, then the second component is a HashMap<String,double> with parameter names as keys,
      *  and partial derivatives as values 
      *   
      * gradindx is the index of the categorical value for which the gradient is calculated. This is only relevant when
@@ -120,16 +117,16 @@ public abstract class CPModel
     public abstract Object[] evaluate(
 			RelStruc A,
     		OneStrucData inst, 
-    		String[] vars,
+    		ArgTerm[] vars,
     		int[] tuple,
     		int gradindx,
     		boolean useCurrentCvals, 
     		//String[] numrelparameters,
     		boolean useCurrentPvals,
-    		Hashtable<Rel,GroundAtomList> mapatoms,
+			HashMap<Rel,GroundAtomList> mapatoms,
     		boolean useCurrentMvals,
-    		Hashtable<String,Object[]> evaluated,
-    		Hashtable<String,Integer> params,
+    		HashMap<String,Object[]> evaluated,
+			HashMap<String,Integer> params,
     		int returntype,
     		boolean valonly, // true for gnn
     		Profiler profiler)
@@ -140,7 +137,7 @@ public abstract class CPModel
     		OneStrucData inst
     		)  throws RBNCompatibilityException
     {
-    	return (double)this.evaluate(A,inst,new String[0], new int[0], 0, false, false,null,false,null,null,ProbForm.RETURN_ARRAY,true,null)[0];
+    	return (double)this.evaluate(A,inst,new ArgTerm[0], new int[0], 0, false, false,null,false,null,null,ProbForm.RETURN_ARRAY,true,null)[0];
     }
     
     /** Evaluate this probform over RelStruc A. For ground atoms on which probform
@@ -152,15 +149,15 @@ public abstract class CPModel
      * For scalar cpm's returns scalar value as one-element array
      *
      */
-    public abstract double[] evalSample(RelStruc A, 
-    		Hashtable<String,PFNetworkNode> atomhasht, 
+    public abstract double[] evalSample(RelStruc A,
+    		HashMap<String,PFNetworkNode> atomhasht,
     		OneStrucData inst, 
-    		Hashtable<String,double[]> evaluated,
+    		HashMap<String,double[]> evaluated,
     		long[] timers)
 	throws RBNCompatibilityException;
 
     /** returns the free variables of the model */
-    public abstract String[] freevars();
+    public abstract ArgTerm[] freevars();
     
 //    /** returns the vector of (ground!) Atoms on which the
 //     * evaluation of the model depends
@@ -173,6 +170,17 @@ public abstract class CPModel
      */
     public abstract Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone)
 	throws RBNCompatibilityException;
+
+
+	/* FROM ProbForm: use for compatibility
+		When usesampleinst = true, then evaluation is not w.r.t.
+     * instantiation instasosd, but w.r.t. to sampleinst fields at
+     * PFNetworkNodes which are accessible via atomhasht
+     */
+	public abstract int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, HashMap<String,GroundAtom> atomhasht)
+			throws RBNCompatibilityException;
+
+	public abstract int evaluatesTo(RelStruc A) throws RBNCompatibilityException;
 
  
     /** Returns all the parameters that this Model depends on 
@@ -201,8 +209,12 @@ public abstract class CPModel
     public abstract CPModel substitute(String[] vars, int[] args); 
     
     public abstract CPModel substitute(String[] vars, String[] args);
-    
-    
+
+	public abstract CPModel substitute(String[] vars, ArgTerm[] args);
+
+	public abstract CPModel substitute(ArgTerm[] vars, ArgTerm[] args);
+
+	public abstract CPModel substitute(ArgTerm[] args, int[] args1);
 //    /**
 //     * See updateSig in RBN class
 //     * @param s
@@ -235,10 +247,25 @@ public abstract class CPModel
     		return groundalias.asString(Primula.CLASSICSYNTAX, 0, null, false, true);
     	}
     	else return this.substitute(vars,args).asString(Primula.CLASSICSYNTAX, 0, null, false, true);
-    } 
-    
-    
-    /* Returns set of relations that evaluation of this Model depends on */
+    }
+
+	public String makeKey(ArgTerm[] vars, int[] args, Boolean nosub){
+		if (nosub) {
+			if (this.alias != null)
+				return this.alias.getRelation().name();
+			if (this instanceof ProbFormAtom)
+				return ((ProbFormAtom)this).getRelation().name();
+			return this.asString(Primula.CLASSICSYNTAX, 0, null, false, true);
+		}
+		if (this.alias != null) {
+			ProbFormAtom groundalias = this.alias.substitute(vars, args);
+			return groundalias.asString(Primula.CLASSICSYNTAX, 0, null, false, true);
+		}
+		else return this.substitute(vars,args).asString(Primula.CLASSICSYNTAX, 0, null, false, true);
+	}
+
+
+	/* Returns set of relations that evaluation of this Model depends on */
     public abstract TreeSet<Rel> parentRels();
     
     /* Returns set of relations that evaluation of this Model depends on, checks in recursion whether sub-formula has already
@@ -246,6 +273,15 @@ public abstract class CPModel
     public abstract TreeSet<Rel> parentRels(TreeSet<String> processed);
     
     public abstract int numvals();
-    
+
+	@Override
+	public int hashCode() {
+		return System.identityHashCode(this);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return this == obj;
+	}
 }
 

@@ -32,7 +32,7 @@ import myio.StringOps;
 
 import java.io.*;
 import java.util.HashMap;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
 
@@ -163,12 +163,12 @@ public class Primula {
 	String[][] parameternumrels;
 	
 	/* All parameters to be optimized (RBN params and ground numerical relation atoms)
-	 * mapped to an integer index by this hashtable */
-	Hashtable<String,Integer> parameters;
+	 * mapped to an integer index by this HashMap */
+	HashMap<String,Integer> parameters;
 	
 	/*
 	 *  2d array that contains for all parameters the relevant maximum and minimum bounds
-	 *  First index is the index of a parameter according to the parameters hashtable
+	 *  First index is the index of a parameter according to the parameters HashMap
 	 */
 	double[][] minmaxbounds;
 	
@@ -344,14 +344,8 @@ public class Primula {
 			getInstFromReldata();
 		}catch (Exception ex){
 			rels = null;
-			srsfile = null;
-			if (getPrimulaGUI() != null) {
-				myprimulaGUI.rstsrc.setText("");
-				myprimulaGUI.showMessage(ex.toString());
-			}
+			showMessage(ex.toString());
 		}
-		if (getPrimulaGUI() != null)
-			getPrimulaGUI().getDatasrcfilename().setText(srsfile.getName());
 	}
 
 
@@ -361,28 +355,17 @@ public class Primula {
 		if(instasosd.isEmpty() && queryatoms.isEmpty()){
 			rbn = new RBN(input_file, this.sig);
 			rbnfile = input_file;
-			if (getPrimulaGUI() != null)
-				getPrimulaGUI().getRbnfilename().setText(rbnfile.getName());
 			Rel.resetTheColorCounters();
-			if(isEvModuleOpen)
-				evidenceModule.getInferenceModuleGUI().updateRBNRelations();
 		}
 		else{
 			try{
 				rbn = new RBN(input_file, this.sig);
 				rbnfile = input_file;
-				if (getPrimulaGUI() != null)
-					getPrimulaGUI().getRbnfilename().setText(rbnfile.getName());
 			}catch (Exception ex){
 				rbn = null;
 				rbnfile = null;
-				if (getPrimulaGUI() != null) {
-					getPrimulaGUI().getRbnfilename().setText("");
-					getPrimulaGUI().showMessage(ex.toString());
-				}
+				showMessage(ex.toString());
 			}
-			if(isEvModuleOpen)
-				evidenceModule.getInferenceModuleGUI().updateRBNRelations();
 		}
 
 
@@ -423,14 +406,6 @@ public class Primula {
 	/** Returns this Instantiation as a SparseRelStruc **/
 	public SparseRelStruc getInstantiationAsSRS(){
 		return new SparseRelStruc(rels.getNames(),instasosd.copy(),rels.getCoords(),sig);
-	}
-
-	// this function makes use of the GUI to select the parameters
-	public String[][] getParamNumRelsGUI(){
-		if (isLrnModuleOpen && learnModule.getLearnModuleGUI() != null)
-			return learnModule.getLearnModuleGUI().getSelectedNumRels();
-		else
-			return new String[0][0];
 	}
 
 	public String[][] getParamNumRels(){
@@ -529,7 +504,7 @@ public class Primula {
 		rels.addTuples(nrelparams,nrelvalues);
 	}
 
-	public void setParameters(Hashtable<String,Integer> paramidx,double[]paramvalues) {
+	public void setParameters(HashMap<String,Integer> paramidx,double[]paramvalues) {
 		for (String par: paramidx.keySet()) {
 			if (isRBNParameter(par))
 				rbn.setParameter(par, paramvalues[paramidx.get(par)]);
@@ -549,7 +524,7 @@ public class Primula {
 		return result;
 	}
 
-	public double[] getParameterVals(Hashtable<String,Integer> paramidx) {
+	public double[] getParameterVals(HashMap<String,Integer> paramidx) {
 		double[] result = new double[paramidx.size()];
 		for (String par: paramidx.keySet()) {
 			if (isRBNParameter(par))
@@ -567,20 +542,8 @@ public class Primula {
 			return false;
 	}
 
-	// this function makes use of the GUI to select the parameters
-	public Hashtable<String,Integer> makeParameterIndexGUI() {
-		this.parameters = new Hashtable<String, Integer>();
-		int pidx = 0; // the index of the next parameter added to parameters
-		for (int i = 0; i < rbnparameters.length; i++) {
-			parameters.put(rbnparameters[i], pidx);
-			pidx++;
-		}
-		String[][] parameternumrels = this.getParamNumRelsGUI();
-		return createParameterInput(pidx, parameternumrels);
-	}
-
-	public Hashtable<String,Integer> makeParameterIndex() {
-		this.parameters = new Hashtable<String, Integer>();
+	public HashMap<String,Integer> makeParameterIndex() {
+		this.parameters = new HashMap<String, Integer>();
 		int pidx = 0; // the index of the next parameter added to parameters
 		for (int i = 0; i < rbnparameters.length; i++) {
 			parameters.put(rbnparameters[i], pidx);
@@ -590,7 +553,7 @@ public class Primula {
 		return createParameterInput(pidx, parameternumrels);
 	}
 
-	public Hashtable<String,Integer> createParameterInput(int pidx, String[][] parameternumrels) {
+	public HashMap<String,Integer> createParameterInput(int pidx, String[][] parameternumrels) {
 		/* Cannot handle learning numerical input relations for
 		 * data with multiple input domains: check this and throw
 		 * exception
@@ -627,7 +590,7 @@ public class Primula {
 	public double[][] makeMinMaxBounds(){
 		/*
 		 *  Create a 2d array that contains for all parameters the relevant maximum and minimum bounds
-		 *  First index is the index of a parameter according to the parameters hashtable
+		 *  First index is the index of a parameter according to the parameters HashMap
 		 */
 		this.minmaxbounds = new double[parameters.size()][2];
 		int pidx;
@@ -704,11 +667,19 @@ public class Primula {
 	public Map<String,Object> getLoadGnnSet() { return this.load_gnn_set; }
 
 	public LearnModule openLearnModule(){
-		if(!isLrnModuleOpen || learnModule == null){
+		if(!isLrnModuleOpen && learnModule == null){
 			learnModule = new LearnModule(this);
 			isLrnModuleOpen = true;
 		}
 		return learnModule;
+	}
+
+	/** LearnModule that shows the parameters of a MAP run: also in a window, without the data tab, if there is a GUI. */
+	public LearnModule openLearnModuleForMap(){
+		LearnModule lm = openLearnModule();
+		if (myprimulaGUI != null)
+			myprimulaGUI.openLearnModuleGUI(lm).disableDataTab();
+		return lm;
 	}
 
 	public LearnModule createLearnModule() {
@@ -723,6 +694,18 @@ public class Primula {
 	public void setPrimulaGUI(PrimulaGUI myprimulaGUI) { this.myprimulaGUI = myprimulaGUI; }
 
 	public PrimulaGUI getPrimulaGUI() { return myprimulaGUI; }
+
+	/** Message to the user: in the GUI if there is one, otherwise on the console. */
+	public void showMessage(String message) {
+		if (myprimulaGUI != null) myprimulaGUI.showMessageThis(message);
+		else System.out.println(message);
+	}
+
+	/** Same as showMessage, without starting a new line. */
+	public void appendMessage(String message) {
+		if (myprimulaGUI != null) myprimulaGUI.appendMessageThis(message);
+		else System.out.print(message);
+	}
 
 	private void loadDefaults() throws RBNIllegalArgumentException {
 

@@ -1,6 +1,7 @@
 package PyManager;
-import jep.*;
 
+import RBNpackage.ProbForm;
+import jep.*;
 import java.io.StringWriter;
 import java.util.*;
 
@@ -9,177 +10,373 @@ public class TorchModelWrapper {
     private final SharedInterpreter modelInterpreter;
     private final String modelClassName;
 
+    private Object modelRef;
+
+    private int lastFlattenHash = 0;
+    private Map<String, float[]> cachedFlatXDict = null;
+    private Map<String, int[]> cachedXShapeDict = null;
+    private Map<String, int[]> cachedFlatEdgeDict = null;
+    private Map<String, Integer> cachedEdgeCounts = null;
+    private Map<String, String[]> cachedEdgeRels = null;
+
+    private Object[] cachedHomoResult = new Object[2];
+    private Object[] cachedHeteroResult = new Object[1];
+    private int lastHeteroHash = 0;
+
     public TorchModelWrapper(String modelName, String modelClassName, SharedInterpreter interpreter) {
         this.modelName = modelName;
         this.modelInterpreter = interpreter;
         this.modelClassName = modelClassName;
 
         initializePythonEnvironment();
+        cachePythonReferences();
     }
 
     private void initializePythonEnvironment() {
         try {
             modelInterpreter.exec("import torch");
             modelInterpreter.exec("from torch_geometric.data import HeteroData");
+            modelInterpreter.exec("import sys");
 
-            // Define reusable Python functions for GNN forward pass
             modelInterpreter.exec("""
-                def _get_type_and_device(model):
-                    # Determine model dtype & device from parameters or buffers (fallback to default float & cpu)
+                def _get_device(model):
                     param = next(model.parameters(), None)
-                    if param is None:
-                        buf = next(model.buffers(), None)
-                        if buf is None:
-                            model_dtype = torch.get_default_dtype()
-                            device = torch.device("cpu")
-                        else:
-                            model_dtype = buf.dtype
-                            device = buf.device
-                    else:
-                        model_dtype = param.dtype
-                        device = param.device
-                    return model_dtype, device
+                    return param.device if param is not None else torch.device("cpu")
                 
-                def forward_single_primula_(model, x_dict, edge_dict, edge_attr=None):
-                    model_dtype, device = _get_type_and_device(model)
-                
-                    xi = torch.as_tensor(list(x_dict.values())[0], dtype=model_dtype, device=device)
-                    if edge_dict and len(list(edge_dict.values())[0])>0:
-                        ei = torch.as_tensor(list(edge_dict.values())[0], dtype=torch.long, device=device)
+                def forward_single_fast_(model, flat_x, x_shape, flat_edge, num_edges, with_gradients, flat_ea, ea_shape, target_row=None):
+                    device = _get_device(model)
+                    model.eval()
+                    xi = torch.as_tensor(flat_x, dtype=torch.float32, device=device).view(x_shape[0], x_shape[1])
+                    if num_edges > 0:
+                        ei = torch.as_tensor(flat_edge, dtype=torch.long, device=device).view(2, num_edges)
                     else:
                         ei = torch.empty((2, 0), dtype=torch.long, device=device)
-                    if edge_attr is not None:
-                        ea = torch.as_tensor(list(edge_attr.values())[0], dtype=model_dtype, device=device)
-                    model.eval()
-                    with torch.no_grad():
-                        if edge_attr is not None:
-                            out = model(xi, ei, ea)
+                    
+                    ea = None
+                    if flat_ea is not None:
+                        ea = torch.as_tensor(flat_ea, dtype=torch.float32, device=device).view(ea_shape[0], ea_shape[1])
+
+                    if with_gradients:
+                        # gradients of the target node's output only: x_grads[c, k, f] = d out[target_row, c] / d x[k, f]
+                        # (and the same for edge attributes). One backward pass per class.
+                        if target_row is None or target_row < 0:
+                            raise ValueError("forward_single_fast_: gradients need the target row")
+                        with torch.enable_grad():
+                            xg = xi.detach().clone().requires_grad_(True)
+                            eag = ea.detach().clone().requires_grad_(True) if ea is not None else None
+                            out = model(xg, ei, eag) if eag is not None else model(xg, ei)
+                            row = out[target_row] if out.dim() == 2 else out[target_row:target_row + 1]
+                            inputs = [xg] if eag is None else [xg, eag]
+                            x_grads, ea_grads = [], []
+                            for c in range(row.shape[0]):
+                                g = torch.autograd.grad(row[c], inputs, retain_graph=True, allow_unused=True)
+                                x_grads.append(g[0] if g[0] is not None else torch.zeros_like(xg))
+                                if eag is not None:
+                                    ea_grads.append(g[1] if g[1] is not None else torch.zeros_like(eag))
+                        x_grads = torch.stack(x_grads).cpu().numpy()
+                        ea_grads = torch.stack(ea_grads).cpu().numpy() if eag is not None else None
+                        return out.detach().cpu().numpy(), x_grads, ea_grads
+                    else:
+                        with torch.no_grad():
+                            out = model(xi, ei, ea) if ea is not None else model(xi, ei)
+                        return out.cpu().numpy(), None, None
+
+                _hetero_device = None
+                _hetero_x_tensors = {}
+                _hetero_ei_tensors = {}
+
+                def _init_hetero_device(model):
+                    global _hetero_device
+                    if _hetero_device is None:
+                        _hetero_device = _get_device(model)
+                        model.eval()
+
+                def forward_hetero_fast_(model, flat_x_dict, x_shapes_dict, flat_edge_dict, edge_cols_dict, edge_rels):
+                    global _hetero_device, _hetero_x_tensors, _hetero_ei_tensors
+
+                    _init_hetero_device(model)
+                    device = _hetero_device
+
+                    x_dict = {}
+                    for key, flat_x in flat_x_dict.items():
+                        rows, cols = x_shapes_dict[key]
+                        cached = _hetero_x_tensors.get(key)
+                        if cached is not None and cached.shape == (rows, cols):
+                            cached.copy_(torch.as_tensor(flat_x, dtype=torch.float32).view(rows, cols))
+                            x_dict[key] = cached
                         else:
-                            out = model(xi, ei)
-                    return out.detach().numpy()
-                
-                def forward_hetero_primula_(model, x_dict, edge_dict, edge_rels):
-                    model_dtype, device = _get_type_and_device(model)
-                    data_h = HeteroData()
-                    for key, value in x_dict.items():
-                        data_h[key].x = torch.as_tensor(value, dtype=model_dtype, device=device)
-                    for key, value in edge_dict.items():
-                        edge_type = (edge_rels[key][0], key, edge_rels[key][1])
-                        if value:
-                            data_h[edge_type].edge_index = torch.as_tensor(value, dtype=torch.long, device=device)
+                            t = torch.as_tensor(flat_x, dtype=torch.float32, device=device).view(rows, cols)
+                            _hetero_x_tensors[key] = t
+                            x_dict[key] = t
+                 
+                    edge_index_dict = {}
+                    for key, flat_edge in flat_edge_dict.items():
+                        num_edges = edge_cols_dict[key]
+                        src_type, dst_type = edge_rels[key]
+                        edge_type = (src_type, key, dst_type)
+
+                        if num_edges > 0:
+                            cached = _hetero_ei_tensors.get(key)
+                            if cached is not None and cached.shape == (2, num_edges):
+                                cached.copy_(torch.as_tensor(flat_edge, dtype=torch.long).view(2, num_edges))
+                                edge_index_dict[edge_type] = cached
+                            else:
+                                t = torch.as_tensor(flat_edge, dtype=torch.long, device=device).view(2, num_edges)
+                                _hetero_ei_tensors[key] = t
+                                edge_index_dict[edge_type] = t
                         else:
-                            data_h[edge_type].edge_index = torch.empty((2, 0), dtype=torch.long, device=device)
-                    model.eval()
+                            edge_index_dict[edge_type] = torch.empty((2, 0), dtype=torch.long, device=device)
+
                     with torch.no_grad():
-                        out = model(data_h.x_dict, data_h.edge_index_dict)
-                    return out.detach().numpy()
+                        out = model(x_dict, edge_index_dict)
+                    return out.cpu().numpy()
                 """);
-            // TODO implement forward_hetero_primula_ for edge_attr support
         } catch (JepException e) {
             throw new RuntimeException("Failed to initialize Python environment", e);
         }
     }
 
-    public Object[] forward(Map<String, double[][]> xDict,
-                              Map<String, ArrayList<ArrayList<Integer>>> edgeDict,
-                              Map<String, double[][]> edge_attr,
-                              List<TorchInputSpecs> gnnInputs,
-                              boolean withgradients) {
-        // we use the same convention:
-        // result[0] is probabilities and result[1] gradients
-        Object[] result = new Object[2];
+    private void cachePythonReferences() {
         try {
-            // Set input data
-            modelInterpreter.set("x_pyGNNRBN", xDict);
-            modelInterpreter.set("edge_pyGNNRBN", edgeDict);
-            if (edge_attr.size() > 0)
-                modelInterpreter.set("edge_attr_pyGNNRBN", edge_attr);
+            modelRef = modelInterpreter.getValue(modelName);
+        } catch (JepException e) {
+            throw new RuntimeException("Failed to cache Python references", e);
+        }
+    }
 
-            if (withgradients) {
-                modelInterpreter.exec("x_dict_pyGNNRBN = x_pyGNNRBN.clone().detach().requires_grad_(True)");
-                if (edge_attr.size() > 0)
-                    modelInterpreter.exec("edge_attr_pyGNNRBN = edge_attr_pyGNNRBN.clone().detach().requires_grad_(True)");
-            }
+    private static int hashMatrixDict(Map<String, double[][]> dict) {
+        int h = 0;
+        for (double[][] m : dict.values()) {
+            h = 31 * h + Arrays.deepHashCode(m);
+        }
+        return h;
+    }
 
+    private static int hashEdgeDict(Map<String, ArrayList<ArrayList<Integer>>> dict) {
+        int h = 0;
+        for (ArrayList<ArrayList<Integer>> edges : dict.values()) {
+            if (edges == null || edges.isEmpty()) continue;
+            h = 31 * h + edges.hashCode();
+        }
+        return h;
+    }
+
+    public synchronized Object[] forward(Map<String, double[][]> xDict,
+                                         Map<String, ArrayList<ArrayList<Integer>>> edgeDict,
+                                         Map<String, double[][]> edge_attr,
+                                         List<TorchInputSpecs> gnnInputs,
+                                         boolean withgradients, Integer targetRow) {
+
+        // targetRow: row of x whose output the gradients are taken of (only used when withgradients)
+        int curHash = Objects.hash(hashMatrixDict(xDict), hashEdgeDict(edgeDict), hashMatrixDict(edge_attr), targetRow);
+        boolean reuseFlat = (curHash == lastFlattenHash);
+
+        try {
             if (xDict.size() == 1) {
-                if (edge_attr.size() > 0)
-                    modelInterpreter.exec("out_pyGNNRBN = forward_single_primula_(model=" + modelName + ", x_dict=x_pyGNNRBN, edge_dict=edge_pyGNNRBN, edge_attr=edge_attr_pyGNNRBN)");
-                else
-                    modelInterpreter.exec("out_pyGNNRBN = forward_single_primula_(model=" + modelName + ", x_dict=x_pyGNNRBN, edge_dict=edge_pyGNNRBN)");
-            } else {
-                // Here the GNN is heterogeneous
-                // Build edge relation dictionary
-                Map<String, String[]> edgeRels = new HashMap<>();
-                for (TorchInputSpecs input : gnnInputs) {
-                    edgeRels.put(
-                            input.getEdgeRelation().name(),
-                            new String[]{
-                                    input.getEdgeRelation().getTypes()[0].getName(),
-                                    input.getEdgeRelation().getTypes()[1].getName()
-                            });
+                String nodeType = xDict.keySet().iterator().next();
+                double[][] xData = xDict.get(nodeType);
+                float[] flatX;
+                int[] xShape;
+                int[] flatEdge;
+                int numEdges;
+                float[] flatEA = null;
+                int[] eaShape = null;
+
+                // reuse only if the cached result has what this call needs
+                if (reuseFlat && cachedHomoResult[0] != null && (!withgradients || cachedHomoResult[1] != null)) {
+                    return cachedHomoResult;
                 }
-                if (edge_attr.size() > 0)
-                    throw new RuntimeException("Edge attribute not jet implemented for heterogeneous GNNs");
-                modelInterpreter.set("edge_rels_pyGNNRBN", edgeRels);
-                modelInterpreter.exec("out_pyGNNRBN = forward_hetero_primula_(model=" + modelName + ", x_dict=x_pyGNNRBN, edge_dict=edge_pyGNNRBN, edge_rels=edge_rels_pyGNNRBN)");
-            }
 
-            NDArray outArray = (NDArray) modelInterpreter.getValue("out_pyGNNRBN");
-            Object raw = outArray.getData();
-            double[] flatData = PyUtils.toDoubleArray(raw);
+                flatX = flattenMatrix(xData);
+                xShape = new int[]{xData.length, xData.length > 0 ? xData[0].length : 0};
 
-            int[] outDim = outArray.getDimensions();
-            if (outDim.length == 2) {
-                int rows = outArray.getDimensions()[0];
-                int cols = outArray.getDimensions()[1];
-                result[0] = PyUtils.convertTo2D(flatData, rows, cols);
-            } else if (outDim.length == 1) {
-                result[0] = new double[][]{flatData};
+                String edgeType = edgeDict.isEmpty() ? null : edgeDict.keySet().iterator().next();
+                ArrayList<ArrayList<Integer>> edges = edgeType != null ? edgeDict.get(edgeType) : null;
+                numEdges = (edges != null && !edges.isEmpty()) ? edges.get(0).size() : 0;
+                flatEdge = flattenEdges(edges);
+
+                if (!edge_attr.isEmpty()) {
+                    String eaKey = edge_attr.keySet().iterator().next();
+                    double[][] eaData = edge_attr.get(eaKey);
+                    flatEA = flattenMatrix(eaData);
+                    eaShape = new int[]{eaData.length, eaData.length > 0 ? eaData[0].length : 0};
+                }
+
+                lastFlattenHash = curHash;
+
+                Object pythonResult = modelInterpreter.invoke(
+                        "forward_single_fast_",
+                        modelRef, flatX, xShape, flatEdge, numEdges, withgradients, flatEA, eaShape, targetRow
+                );
+
+                List<Object> pyTuple = (List<Object>) pythonResult;
+                NDArray outArray = (NDArray) pyTuple.get(0);
+                cachedHomoResult[0] = convertNDArrayTo2D(outArray);
+                correctBinaryOutput(cachedHomoResult[0], outArray.getDimensions());
+
+                // gradients: [class][row][col], see forward_single_fast_
+                cachedHomoResult[1] = null;  // never keep gradients of an older input
+                if (withgradients) {
+                    Map<String, double[][][]> gradsDict = new HashMap<>();
+                    if (pyTuple.get(1) != null) gradsDict.put("x", convertNDArrayTo3D((NDArray) pyTuple.get(1)));
+                    if (pyTuple.get(2) != null) gradsDict.put("ea", convertNDArrayTo3D((NDArray) pyTuple.get(2)));
+                    cachedHomoResult[1] = gradsDict;
+                }
+
+                return cachedHomoResult;
+
             } else {
-                throw new RuntimeException("Invalid output shape: " + Arrays.toString(outDim));
-            }
+                if (!edge_attr.isEmpty()) throw new RuntimeException("Edge attributes not implemented for hetero GNNs");
+                if (withgradients)       throw new RuntimeException("Gradients not implemented for hetero GNNs");
 
-            NDArray grad_x = null;
-            if (withgradients) {
-                modelInterpreter.exec("out_pyGNNRBN.backward()");
-                modelInterpreter.exec("grad_x_pyGNNRBN = x_pyGNNRBN.grad.cpu().numpy()");
-                grad_x = (NDArray) modelInterpreter.getValue("grad_x_pyGNNRBN");
+                if (curHash == lastHeteroHash && cachedHeteroResult[0] != null) {
+                    return cachedHeteroResult;
+                }
 
-                raw = grad_x.getData();
-                double[] flatGradX = PyUtils.toDoubleArray(raw);
-                outDim = grad_x.getDimensions();
-                if (outDim.length == 2) {
-                    int rows = grad_x.getDimensions()[0];
-                    int cols = grad_x.getDimensions()[1];
-                    result[1] = PyUtils.convertTo2D(flatGradX, rows, cols);
-                } else if (outDim.length == 1) {
-                    result[1] = new double[][]{flatGradX};
+                // Build / reuse flattened arrays
+                Object[] flatXData;
+                Object[] flatEdgeData;
+                if (reuseFlat && cachedFlatXDict != null) {
+                    flatXData  = new Object[]{cachedFlatXDict, cachedXShapeDict};
+                    flatEdgeData = new Object[]{cachedFlatEdgeDict, cachedEdgeCounts};
                 } else {
-                    throw new RuntimeException("Invalid gradient output shape: " + Arrays.toString(outDim));
+                    flatXData    = flattenXDict(xDict);
+                    flatEdgeData = flattenEdgeDict(edgeDict);
+                    cachedFlatXDict   = (Map<String, float[]>)   flatXData[0];
+                    cachedXShapeDict  = (Map<String, int[]>)      flatXData[1];
+                    cachedFlatEdgeDict= (Map<String, int[]>)      flatEdgeData[0];
+                    cachedEdgeCounts  = (Map<String, Integer>)    flatEdgeData[1];
+                    lastFlattenHash   = curHash;
                 }
-            } else
-                result[1] = null;
 
-            return result;
+                // Edge relations never change: build once and reuse
+                if (cachedEdgeRels == null) {
+                    cachedEdgeRels = buildEdgeRelations(gnnInputs);
+                }
+
+                Object pythonResult = modelInterpreter.invoke(
+                        "forward_hetero_fast_",
+                        modelRef,
+                        flatXData[0], flatXData[1],
+                        flatEdgeData[0], flatEdgeData[1],
+                        cachedEdgeRels
+                );
+
+                NDArray outArray = (NDArray) pythonResult;
+                cachedHeteroResult[0] = convertNDArrayTo2D(outArray);
+                lastHeteroHash = curHash;
+
+                return cachedHeteroResult;
+            }
+
         } catch (JepException e) {
             System.err.println("Failed forward pass: " + e);
             return null;
         }
     }
 
-    public SharedInterpreter getModelInterpreter() {
-        return modelInterpreter;
+    private static float[] flattenMatrix(double[][] matrix) {
+        final int rows = matrix.length;
+        if (rows == 0) return new float[0];
+        final int cols = matrix[0].length;
+        final float[] flat = new float[rows * cols];
+        int idx = 0;
+        for (int r = 0; r < rows; r++) {
+            final double[] row = matrix[r];
+            for (int c = 0; c < cols; c++) flat[idx++] = (float) row[c];
+        }
+        return flat;
     }
 
-
-    private void printPython(Interpreter interpreter, String var) {
-        StringWriter output = new StringWriter();
-        interpreter.set("output", output);
-        interpreter.eval("import sys");
-        interpreter.eval("sys.stdout = output");
-        interpreter.eval("print(" + var + ")");
-        System.out.println("Captured output: " + output.toString());
+    private static int[] flattenEdges(ArrayList<ArrayList<Integer>> edges) {
+        if (edges == null || edges.isEmpty()) return new int[0];
+        final ArrayList<Integer> src = edges.get(0);
+        final int numEdges = src.size();
+        if (numEdges == 0) return new int[0];
+        final ArrayList<Integer> dst = edges.get(1);
+        final int[] flat = new int[2 * numEdges];
+        for (int i = 0; i < numEdges; i++) {
+            flat[i] = src.get(i);
+            flat[numEdges + i] = dst.get(i);
+        }
+        return flat;
     }
+
+    private static Object[] flattenXDict(Map<String, double[][]> xDict) {
+        final Map<String, float[]> flatX  = new HashMap<>(xDict.size());
+        final Map<String, int[]>   shapes = new HashMap<>(xDict.size());
+        for (Map.Entry<String, double[][]> e : xDict.entrySet()) {
+            final double[][] m = e.getValue();
+            final int rows = m.length, cols = rows == 0 ? 0 : m[0].length;
+            flatX.put(e.getKey(), flattenMatrix(m));
+            shapes.put(e.getKey(), new int[]{rows, cols});
+        }
+        return new Object[]{flatX, shapes};
+    }
+
+    private static Object[] flattenEdgeDict(Map<String, ArrayList<ArrayList<Integer>>> edgeDict) {
+        final Map<String, int[]>    flatEdges = new HashMap<>(edgeDict.size());
+        final Map<String, Integer>  counts    = new HashMap<>(edgeDict.size());
+        for (Map.Entry<String, ArrayList<ArrayList<Integer>>> e : edgeDict.entrySet()) {
+            final ArrayList<ArrayList<Integer>> edges = e.getValue();
+            int num = 0;
+            int[] flat = new int[0];
+            if (edges != null && !edges.isEmpty()) {
+                final ArrayList<Integer> src = edges.get(0);
+                num = src.size();
+                if (num > 0) {
+                    final ArrayList<Integer> dst = edges.get(1);
+                    flat = new int[2 * num];
+                    for (int i = 0; i < num; i++) {
+                        flat[i] = src.get(i);
+                        flat[num + i] = dst.get(i);
+                    }
+                }
+            }
+            flatEdges.put(e.getKey(), flat);
+            counts.put(e.getKey(), num);
+        }
+        return new Object[]{flatEdges, counts};
+    }
+
+    private double[][] convertNDArrayTo2D(NDArray array) {
+        Object raw = array.getData();
+        double[] flatData = PyUtils.toDoubleArray(raw);
+        int[] dims = array.getDimensions();
+        if (dims.length == 2) return PyUtils.convertTo2D(flatData, dims[0], dims[1]);
+        if (dims.length == 1) return new double[][]{flatData};
+        throw new RuntimeException("Invalid output shape: " + Arrays.toString(dims));
+    }
+
+    private double[][][] convertNDArrayTo3D(NDArray array) {
+        double[] flat = PyUtils.toDoubleArray(array.getData());
+        int[] dims = array.getDimensions();
+        if (dims.length != 3) throw new RuntimeException("Expected 3-D gradients, got shape " + Arrays.toString(dims));
+        double[][][] out = new double[dims[0]][][];
+        int block = dims[1] * dims[2];
+        for (int c = 0; c < dims[0]; c++)
+            out[c] = PyUtils.convertTo2D(Arrays.copyOfRange(flat, c * block, (c + 1) * block), dims[1], dims[2]);
+        return out;
+    }
+
+    private void correctBinaryOutput(Object outputObj, int[] dims) {
+        if (dims.length == 2 && dims[0] == 1 && dims[1] == 2) {
+            double[][] output = (double[][]) outputObj;
+            if (output[0][0] == 1.0 || output[0][0] == 0.0) output[0][0] = 1.0 - output[0][1];
+            if (output[0][1] == 1.0 || output[0][1] == 0.0) output[0][1] = 1.0 - output[0][0];
+        }
+    }
+
+    private Map<String, String[]> buildEdgeRelations(List<TorchInputSpecs> gnnInputs) {
+        Map<String, String[]> edgeRels = new HashMap<>();
+        for (TorchInputSpecs input : gnnInputs) {
+            edgeRels.put(input.getEdgeRelation().name(),
+                    new String[]{input.getEdgeRelation().getTypes()[0].getName(), input.getEdgeRelation().getTypes()[1].getName()});
+        }
+        return edgeRels;
+    }
+
+    public SharedInterpreter getModelInterpreter() { return modelInterpreter; }
 
     @Override
     public String toString() {

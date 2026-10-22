@@ -58,23 +58,19 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 	 * the parent nodes
 	 */
 	private double[] condProb(RelStruc A,
-			Hashtable<String,PFNetworkNode> atomhasht,
+			HashMap<String,PFNetworkNode> atomhasht,
 			OneStrucData inst,
-    		Hashtable<String,double[]> evaluated,
+    		HashMap<String,double[]> evaluated,
 			long[] timers)
 			throws RBNCompatibilityException
     {
-		if (cpmodel instanceof CatGnn) {
-			if (((CatGnn) cpmodel).getGnnPy() == null)
-				((CatGnn) cpmodel).setGnnPy(gnnPy);
-		}
         double[] result = cpmodel.evalSample(A,atomhasht,inst,evaluated,timers);
         //System.out.print(" cP: " + result);
         return result;
     }
 
 
-	public  int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, Hashtable atomhasht )
+	public  int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, HashMap atomhasht )
 			throws RBNCompatibilityException
 	{
 		if (!(this.cpmodel() instanceof ProbForm))
@@ -89,7 +85,7 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 
 	public void initializeForSampling(int sampleordmode, 
 			int adaptivemode,
-			Hashtable<Rel,GroundAtomList> queryatoms,
+			HashMap<Rel,GroundAtomList> queryatoms,
 			int num_subsamples_minmax,
 			int num_subsamples_adapt){
 		super.initializeForSampling(sampleordmode,
@@ -117,10 +113,10 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 
 
 	public void sampleForward(RelStruc A,
-			Hashtable<String,PFNetworkNode> atomhasht,
+			HashMap<String,PFNetworkNode> atomhasht,
 			OneStrucData inst,
 			int adaptivemode,
-			Hashtable<String,double[]> evaluated,
+			HashMap<String,double[]> evaluated,
 			long[] timers)
 					throws RBNCompatibilityException
 					/* adaptivemode argument not used (adaptive=non-adaptive in forward sampling for ComplexPFNNodes) */
@@ -151,9 +147,9 @@ public class ComplexPFNetworkNode extends PFNetworkNode{
 	}
 
 	public  void setDistrProb(RelStruc A,
-			Hashtable<String,PFNetworkNode> atomhasht,
+			HashMap<String,PFNetworkNode> atomhasht,
 			OneStrucData inst,
-			Hashtable<String,double[]> evaluated,
+			HashMap<String,double[]> evaluated,
 			long[] timers)
 					throws RBNCompatibilityException
 	{

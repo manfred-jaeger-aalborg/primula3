@@ -24,6 +24,7 @@ package RBNpackage;
 
 import java.util.*;
 
+import RBNpackage.VarTermPackage.ArgTerm;
 import RBNutilities.*;
 
 import mymath.MyMathOps;
@@ -241,9 +242,12 @@ public class OneNumRelData extends OneRelData{
 		return this.allTrue(args, numAtomsIndex);
 	}
 
-	
+	@Override
+	public TreeSet<int[]> allTrue(ArgTerm[] args) {
+		return this.allTrue(args, numAtomsIndex);
+	}
 
-	
+
 	public Vector<String[]> allTrue(RelStruc A){
 		Vector<String[]> result = new Vector<String[]>();
 
@@ -555,4 +559,137 @@ public class OneNumRelData extends OneRelData{
 		 for (int[] k: numAtoms.keySet())
 			 System.out.println("key " + k + " value: " + numAtoms.get(k));
 	 }
+
+	 public boolean equalsData(OneNumRelData other) {
+		 if (other == null) {
+			 return false;
+		 }
+
+		 // Compare relation
+		 if (rel == null) {
+			 if (other.rel != null) {
+				 return false;
+			 }
+		 } else if (!rel.equals(other.rel)) {
+			 return false;
+		 }
+
+		 // Compare default value
+		 if (defaultval == null) {
+			 if (other.defaultval != null) {
+				 return false;
+			 }
+		 } else if (!defaultval.equals(other.defaultval)) {
+			 return false;
+		 }
+
+		 // Compare numAtoms
+		 if (numAtoms == null) {
+			 if (other.numAtoms != null) {
+				 return false;
+			 }
+		 } else if (!compareNumAtoms(numAtoms, other.numAtoms)) {
+			 return false;
+		 }
+
+		 return true;
+	 }
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
+
+		OneNumRelData other = (OneNumRelData) obj;
+
+		// Compare relation
+		if (rel == null) {
+			if (other.rel != null) {
+				return false;
+			}
+		} else if (!rel.equals(other.rel)) {
+			return false;
+		}
+
+		// Compare default value
+		if (defaultval == null) {
+			if (other.defaultval != null) {
+				return false;
+			}
+		} else if (!defaultval.equals(other.defaultval)) {
+			return false;
+		}
+
+		// Compare numAtoms
+		if (numAtoms == null) {
+			if (other.numAtoms != null) {
+				return false;
+			}
+		} else if (!compareNumAtoms(numAtoms, other.numAtoms)) {
+			return false;
+		}
+
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		int result = 17;
+		result = 31 * result + (rel != null ? rel.hashCode() : 0);
+		result = 31 * result + (defaultval != null ? defaultval.hashCode() : 0);
+		result = 31 * result + (numAtoms != null ? computeNumAtomsHashCode(numAtoms) : 0);
+		return result;
+	}
+
+	/**
+	 * Helper method to compare two TreeMaps with int[] keys and Double values
+	 */
+	private boolean compareNumAtoms(TreeMap<int[], Double> map1, TreeMap<int[], Double> map2) {
+		if (map1.size() != map2.size()) {
+			return false;
+		}
+
+		Iterator<Map.Entry<int[], Double>> it1 = map1.entrySet().iterator();
+		Iterator<Map.Entry<int[], Double>> it2 = map2.entrySet().iterator();
+
+		while (it1.hasNext() && it2.hasNext()) {
+			Map.Entry<int[], Double> entry1 = it1.next();
+			Map.Entry<int[], Double> entry2 = it2.next();
+
+			// Compare keys (int arrays)
+			if (!Arrays.equals(entry1.getKey(), entry2.getKey())) {
+				return false;
+			}
+
+			// Compare values (Doubles)
+			Double val1 = entry1.getValue();
+			Double val2 = entry2.getValue();
+
+			if (val1 == null) {
+				if (val2 != null) {
+					return false;
+				}
+			} else if (!val1.equals(val2)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Helper method to compute hash code for TreeMap with int[] keys and Double values
+	 */
+	private int computeNumAtomsHashCode(TreeMap<int[], Double> map) {
+		int hash = 1;
+		for (Map.Entry<int[], Double> entry : map.entrySet()) {
+			hash = 31 * hash + Arrays.hashCode(entry.getKey());
+			hash = 31 * hash + (entry.getValue() != null ? entry.getValue().hashCode() : 0);
+		}
+		return hash;
+	}
 }

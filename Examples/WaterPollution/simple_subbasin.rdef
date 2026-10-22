@@ -14,6 +14,7 @@
       <Rel name="SubType" arity="1" argtypes="sub" valtype="categorical" values="RES,SUB" default="?" type="predefined" color="(0,0,0)"/>
       <Rel name="LandUse" arity="1" argtypes="agr" valtype="categorical" values="CORN,COSY,PAST,SOYB" default="?" type="probabilistic" color="(0,70,0)"/>
       <Rel name="Pollution" arity="1" argtypes="sub" valtype="categorical" values="LOW,MED,HIG" default="?" type="probabilistic" color="(0,0,0)"/>
+        <Rel name="all_const" arity="1" argtypes="sub" valtype="boolean" default="?" type="probabilistic" color="(180,20,20)" />
    </Relations>
    <Data>
       <DataForInputDomain>
@@ -29,12 +30,15 @@
             <obj ind="8" name="8" coords="1088,1100"/>
             <obj ind="9" name="9" coords="1237,1140"/>
             <obj ind="10" name="10" coords="1230,1033"/>
+            <obj ind="11" name="11" coords="958,796"/>
          </Domain>
          <PredefinedRels>
             <d rel="sub" args="(0)(1)(2)" val="true"/>
             <d rel="agr" args="(3)(4)(5)(8)(9)(6)(7)(10)" val="true"/>
+            <d rel="urb" args="(11)" val="true"/>
             <d rel="downstream" args="(0,1)(1,2)" val="true"/>
             <d rel="downstream_agr" args="(3,0)(4,0)(5,1)(8,2)(9,2)(6,1)(7,1)(10,2)" val="true"/>
+            <d rel="downstream_urb" args="(11,0)" val="true"/>
             <d rel="AreaAgr" args="(3)" val="0.9"/>
             <d rel="AreaAgr" args="(4)" val="0.6"/>
             <d rel="AreaAgr" args="(5)" val="0.8"/>
@@ -43,10 +47,12 @@
             <d rel="AreaAgr" args="(6)" val="0.8"/>
             <d rel="AreaAgr" args="(7)" val="0.7"/>
             <d rel="AreaAgr" args="(10)" val="0.6"/>
+            <d rel="AreaUrb" args="(11)" val="0.1"/>
+            <d rel="LandUseUrb" args="(11)" val="FRST" />
             <d rel="SubType" args="(0)(1)(2)" val="SUB"/>
          </PredefinedRels>
          <ProbabilisticRelsCase>
-
+                <d rel="all_const" args="(0)(1)(2)" val="true" />
          </ProbabilisticRelsCase>
       </DataForInputDomain>
    </Data>

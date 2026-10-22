@@ -192,7 +192,7 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 	 * Returns integer j if state j has probability 1 regardless of parent configuration (if 
 	 * usesampleinst=true, assuming sampled states of parents). Otherwise, returns -1.
 	 */
-	public int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, Hashtable atomhasht){
+	public int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, HashMap atomhasht){
 		return evaluatesTo(usesampleinst); //Dependence on A and inst here already compiled into the cpt 
 	}
 
@@ -255,7 +255,7 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 
 	public void initializeForSampling(int sampleordmode, 
 			int adaptivemode, 
-			Hashtable<Rel,GroundAtomList> queryatoms, 
+			HashMap<Rel,GroundAtomList> queryatoms, 
 			int nsm,
 			int nsa){
 		//truesampleweight = 0;
@@ -274,10 +274,10 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 
 
 	public void sampleForward(RelStruc A,
-			Hashtable<String,PFNetworkNode>  atomhasht,
+			HashMap<String,PFNetworkNode>  atomhasht,
 			OneStrucData inst,
 			int adaptivemode,
-    		Hashtable<String,double[]> evaluated,
+    		HashMap<String,double[]> evaluated,
 			long[] timers){
 		sampleForward(A,adaptivemode);
 	}
@@ -345,9 +345,9 @@ public class SimplePFNetworkNode extends PFNetworkNode{
 
 
 	public  void setDistrProb(RelStruc A, 
-			Hashtable<String,PFNetworkNode> atomhasht,
+			HashMap<String,PFNetworkNode> atomhasht,
 			OneStrucData inst,
-    		Hashtable<String,double[]> evaluated,
+    		HashMap<String,double[]> evaluated,
 			long[] timers)
 	{
 		if (thisdistrprob == -1)

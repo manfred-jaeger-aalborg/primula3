@@ -1,6 +1,6 @@
 package RBNpackage;
 
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Vector;
 import java.util.TreeSet;
 
@@ -8,6 +8,8 @@ import java.util.TreeSet;
 import RBNExceptions.RBNCompatibilityException;
 import RBNinference.PFNetworkNode;
 import RBNLearning.Profiler;
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 
 /* This is basically a wrapper class around
  * ProbFormAtom. Needed to make ProbFormAtom available 
@@ -34,7 +36,12 @@ public class ProbFormBoolAtom extends ProbFormBool {
 		sign =s;
 		pfatom = pfatm;
 	}
-	
+
+	public ProbFormBoolAtom(Rel r, ArgTerm[] args, boolean s) {
+		sign = s;
+		pfatom = new ProbFormAtom(r, args);
+	}
+
 	@Override
 	public String asString(int syntax, int depth, RelStruc A, boolean paramsAsValue,boolean usealias){
 		String result ="";
@@ -45,7 +52,7 @@ public class ProbFormBoolAtom extends ProbFormBool {
 		return result+pfatom.asString(syntax, depth, A, paramsAsValue,usealias) ;
 	}
 	
-	@Override
+//	@Override
 //	public double evaluate(RelStruc A, 
 //			OneStrucData inst, 
 //			String[] vars, 
@@ -55,7 +62,7 @@ public class ProbFormBoolAtom extends ProbFormBool {
 //    		boolean useCurrentPvals,
 //    		GroundAtomList mapatoms,
 //    		boolean useCurrentMvals,
-//    		Hashtable<String,Double> evaluated)
+//    		HashMap<String,Double> evaluated)
 //	{			
 //		
 //		double result = pfatom.evaluate(A, inst, vars, tuple, useCurrentCvals, 
@@ -76,14 +83,15 @@ public class ProbFormBoolAtom extends ProbFormBool {
 
 	public Object[] evaluate(RelStruc A, 
 			OneStrucData inst, 
-			String[] vars, 
-			int[] tuple, 
+			ArgTerm[] vars,
+			int[] tuple,
+			int gradindx,
 			boolean useCurrentCvals, 
     		boolean useCurrentPvals,
-    		Hashtable<Rel,GroundAtomList> mapatoms,
+    		HashMap<Rel,GroundAtomList> mapatoms,
     		boolean useCurrentMvals,
-    		Hashtable<String,Object[]> evaluated,
-    		Hashtable<String,Integer>params,
+    		HashMap<String,Object[]> evaluated,
+    		HashMap<String,Integer>params,
     		int returntype,
     		boolean valonly,
     		Profiler profiler)
@@ -93,8 +101,9 @@ public class ProbFormBoolAtom extends ProbFormBool {
 		Object[] result = pfatom.evaluate(A, 
 				inst, 
 				vars, 
-				tuple, 
-				useCurrentCvals, 
+				tuple,
+				gradindx,
+				useCurrentCvals,
 				useCurrentPvals, 
 				mapatoms, 
 				useCurrentMvals, 
@@ -119,7 +128,7 @@ public class ProbFormBoolAtom extends ProbFormBool {
 	
 	@Override
 	public int evaluatesTo(RelStruc A, OneStrucData inst,
-			boolean usesampleinst, Hashtable<String,GroundAtom> atomhasht)
+			boolean usesampleinst, HashMap<String,GroundAtom> atomhasht)
 					throws RBNCompatibilityException {
 		int result =  pfatom.evaluatesTo(A,inst,usesampleinst,atomhasht);
 		if (result == -1)
@@ -145,9 +154,9 @@ public class ProbFormBoolAtom extends ProbFormBool {
 
 	@Override
 	public  double[] evalSample(RelStruc A, 
-			Hashtable<String,PFNetworkNode> atomhasht, 
+			HashMap<String,PFNetworkNode> atomhasht, 
 			OneStrucData inst, 
-    		Hashtable<String,double[]> evaluated,
+    		HashMap<String,double[]> evaluated,
 			long[] timers)
 			throws RBNCompatibilityException{
 		String key = null;
@@ -175,12 +184,12 @@ public class ProbFormBoolAtom extends ProbFormBool {
 	}
 	
 	@Override
-	public ProbForm conditionEvidence(RelStruc A, OneStrucData inst){
+	public CPModel conditionEvidence(RelStruc A, OneStrucData inst){
 		return new ProbFormBoolAtom((ProbFormAtom)pfatom.conditionEvidence(A, inst),sign);
 	}
 	
 	@Override
-	public String[] freevars() {
+	public VarTerm[] freevars() {
 		return pfatom.freevars();
 	}
 
@@ -197,8 +206,8 @@ public class ProbFormBoolAtom extends ProbFormBool {
 	}
 
 	@Override
-	public ProbForm sEval(RelStruc A) throws RBNCompatibilityException {
-		ProbForm sevalOfpfatom = pfatom.sEval(A);
+	public CPModel sEval(RelStruc A) throws RBNCompatibilityException {
+		CPModel sevalOfpfatom = pfatom.sEval(A);
 		if (sevalOfpfatom instanceof ProbFormAtom)
 			return new ProbFormBoolAtom((ProbFormAtom)pfatom.sEval(A),sign);   
 		else // sevalOfpfatom is ProbFormConstant
@@ -212,7 +221,7 @@ public class ProbFormBoolAtom extends ProbFormBool {
 	}
 
 	@Override
-	public ProbForm substitute(String[] vars, int[] args) {
+	public CPModel substitute(String[] vars, int[] args) {
 		ProbFormBoolAtom result = new ProbFormBoolAtom((ProbFormAtom)pfatom.substitute(vars,args),sign);
 		if (this.alias != null)
 			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
@@ -220,22 +229,46 @@ public class ProbFormBoolAtom extends ProbFormBool {
 	}
 
 	@Override
-	public ProbForm substitute(String[] vars, String[] args) {
+	public CPModel substitute(String[] vars, String[] args) {
 		ProbFormBoolAtom result = new ProbFormBoolAtom((ProbFormAtom)pfatom.substitute(vars,args),sign);
 		if (this.alias != null)
 			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
 		return result;
 	}
-	
+
+	@Override
+	public CPModel substitute(String[] vars, ArgTerm[] args) {
+		ProbFormBoolAtom result = new ProbFormBoolAtom((ProbFormAtom)pfatom.substitute(vars,args),sign);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	@Override
+	public CPModel substitute(ArgTerm[] vars, ArgTerm[] args) {
+		ProbFormBoolAtom result = new ProbFormBoolAtom((ProbFormAtom)pfatom.substitute(vars,args),sign);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	@Override
+	public CPModel substitute(ArgTerm[] vars, int[] args) {
+		ProbFormBoolAtom result = new ProbFormBoolAtom((ProbFormAtom)pfatom.substitute(vars,args),sign);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
 	public Rel getRelation(){
 		return pfatom.getRelation();
 	}
 	
-	public String[] getArguments(){
+	public ArgTerm[] getArguments(){
 		return pfatom.getArguments();
 	}
 
-	public ProbForm toStandardPF(boolean recursive){
+	public CPModel toStandardPF(boolean recursive){
 		return this;
 	}
 	
@@ -252,6 +285,11 @@ public class ProbFormBoolAtom extends ProbFormBool {
 	}
 	public TreeSet<Rel> parentRels(TreeSet<String> processed){
 		return pfatom.parentRels(processed);
+	}
+
+	@Override
+	public int numvals() {
+		return 2;
 	}
 
 	public ProbFormAtom getPfatom() {

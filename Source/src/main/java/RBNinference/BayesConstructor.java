@@ -32,6 +32,7 @@ import PyManager.GnnPy;
 import RBNpackage.*;
 import RBNgui.*;
 import RBNExceptions.*;
+import RBNpackage.VarTermPackage.ArgTerm;
 import RBNutilities.*;
 
 
@@ -40,8 +41,8 @@ public class BayesConstructor extends java.lang.Object {
 
 
 	private Vector<BNNode> complexnodes;
-	private Hashtable<String,BNNode> groundatomhasht;
-	private Hashtable<String,BNNode> simplenodehasht;
+	private HashMap<String,BNNode> groundatomhasht;
+	private HashMap<String,BNNode> simplenodehasht;
 //	private boolean[] isolatedzeroind;
 	private BayesNetInt bni;
 	private int numnodes = 0;
@@ -143,7 +144,7 @@ public class BayesConstructor extends java.lang.Object {
 		if (querymode == Primula.OPTION_NOT_QUERY_SPECIFIC)
 			buildInitialGAHT(evidencemode, nodetype , isolatedzeronodesmode);
 		else { // Primula.OPTION_QUERY_SPECIFIC
-			groundatomhasht = new Hashtable<String,BNNode>();
+			groundatomhasht = new HashMap<String,BNNode>();
 			Stack<BNNode> toprocess = new Stack<BNNode>();
 			
 			/* A set containing all the relations that are represented by atoms in 
@@ -155,7 +156,7 @@ public class BayesConstructor extends java.lang.Object {
 			TreeSet<Rel> relset = new TreeSet<Rel>();
 			
 			
-			/* Start by adding all queryatoms to groundatomhashtable, and also put them on stack of nodes whose parents still 
+			/* Start by adding all queryatoms to groundatomHashMap, and also put them on stack of nodes whose parents still 
 			 * have to be added
 			 */
 			for (GroundAtom ga: queryatoms.allAtoms()) {
@@ -167,7 +168,7 @@ public class BayesConstructor extends java.lang.Object {
 				}
 				
 				CPModel groundcpm = cpm.substitute(myprimula.getRBN().args(ga.rel()), ga.args());
-				String argumentnames = rbnutilities.namestring(ga.args(),strucarg);
+				String argumentnames = rbnutilities.namestring(ga.args(),strucarg, ga.rel());
 				switch (nodetype){
 				case COMPLNODE:
 					newestnode = new ComplexBNGroundAtomNode(
@@ -211,7 +212,7 @@ public class BayesConstructor extends java.lang.Object {
 						for (int[] arg : instarg.allInstantiated(br)) {
 							CPModel groundcpm = cpm.substitute(myprimula.getRBN().args(br), arg);
 							GroundAtom ga = new GroundAtom(br,arg);
-							String argumentnames = rbnutilities.namestring(ga.args(),strucarg);
+							String argumentnames = rbnutilities.namestring(ga.args(),strucarg,ga.rel());
 							switch (nodetype){
 							case COMPLNODE:
 								newestnode = new ComplexBNGroundAtomNode(
@@ -287,9 +288,9 @@ public class BayesConstructor extends java.lang.Object {
 					BNNode newestnode;
 					if (groundatomhasht.get(pga.asString())==null) {
 						CPModel ppf = myprimula.getRBN().cpmodel(pga.rel());
-						String[] args = myprimula.getRBN().arguments(pga.rel());
+						ArgTerm[] args = myprimula.getRBN().arguments(pga.rel());
 						CPModel ppf_sub = ppf.substitute(args, pga.args);
-						String argumentnames = rbnutilities.namestring(pga.args(),strucarg);
+						String argumentnames = rbnutilities.namestring(pga.args(),strucarg, pga.rel());
 						switch (nodetype){
 						case COMPLNODE:
 							newestnode = new ComplexBNGroundAtomNode(
@@ -323,13 +324,13 @@ public class BayesConstructor extends java.lang.Object {
 	private void buildInitialGAHT(int evidencemode, int nodetype ,int isolatedzeronodesmode)
 	throws RBNCompatibilityException,RBNIllegalArgumentException
 	{
-		groundatomhasht = new Hashtable<String,BNNode>();
+		groundatomhasht = new HashMap<String,BNNode>();
 
 		/* Generate all ground atoms
 		 */
 
 		Rel thisrel;
-		String[] thisvars;
+		ArgTerm[] thisvars;
 		int[] thistuple;
 		GroundAtom thisatom;
 		CPModel thispf;
@@ -349,7 +350,7 @@ public class BayesConstructor extends java.lang.Object {
 				/* Determine the domainelement names corresponding to
 				 * thistuple
 				 */ 
-				String argumentnames = rbnutilities.namestring(thistuple,strucarg);
+				String argumentnames = rbnutilities.namestring(thistuple,strucarg,thisatom.rel());
 				groundpf = thispf.substitute(thisvars,thistuple);
 
 
@@ -405,8 +406,9 @@ public class BayesConstructor extends java.lang.Object {
 		BNNode nextpar;
 		BNNode newgatn;
 		int nodeindex = 0;
-		for (Enumeration<BNNode> e=groundatomhasht.elements();e.hasMoreElements();){
-			newgatn = e.nextElement();
+		Iterator<BNNode> e = groundatomhasht.values().iterator();
+		while (e.hasNext()){
+			newgatn = e.next();
 			parvec = (Vector<GroundAtom>)parentvecs.elementAt(nodeindex);
 			for (int j=0;j<parvec.size();j++){
 				nextpar = groundatomhasht.get(((GroundAtom)parvec.elementAt(j)).asString());
@@ -420,8 +422,9 @@ public class BayesConstructor extends java.lang.Object {
 
 	private Vector<BNNode> exportnodes(int isolatedzeronodesmode){
 		Vector<BNNode> result = new Vector<BNNode>();
-		for (Enumeration<BNNode> e=groundatomhasht.elements();e.hasMoreElements();) {
-			BNNode nextn = e.nextElement();
+		Iterator<BNNode> e = groundatomhasht.values().iterator();
+		while (e.hasNext()){
+			BNNode nextn = e.next();
 			switch (isolatedzeronodesmode) {
 				case Primula.OPTION_NOT_ELIMINATE_ISOLATED_ZERO_NODES:{
 					result.add(nextn);
@@ -446,7 +449,7 @@ public class BayesConstructor extends java.lang.Object {
 	throws RBNCompatibilityException,RBNCyclicException,RBNIllegalArgumentException
 	{
 
-		myprimulaGUI.showMessage("construct PF network...");
+		showMessage("construct PF network...");
 		/* The following lines all operate on
 		 * groundatomhasht
 		 */
@@ -480,7 +483,7 @@ public class BayesConstructor extends java.lang.Object {
 		for (int i=0;i<allnodes.size();i++)
 			((BNNode)allnodes.elementAt(i)).visited[0]=false;
 		setDepths(allnodes);
-		myprimulaGUI.appendMessage("done");
+		appendMessage("done");
 
 		return new PFNetwork(myprimula,allnodes,strucarg,instarg);
 
@@ -510,7 +513,14 @@ public class BayesConstructor extends java.lang.Object {
 				}
 				msg                 += "\nClick \""+captionIgnore+"\" to ignore the Primula decompose mode and continue construction without decomposition.\nClick \"Cancel\" to abort construction.";
 
-				int result = JOptionPane.showConfirmDialog( myprimulaGUI, msg, "Model Not Decomposable", options );
+				int result;
+				if (myprimula != null && myprimula.getPrimulaGUI() != null)
+					result = JOptionPane.showConfirmDialog( myprimulaGUI, msg, "Model Not Decomposable", options );
+				else {
+					// no GUI to ask: continue without decomposition
+					showMessage("The model is not decomposable: construction continues without decomposition.");
+					result = JOptionPane.NO_OPTION;
+				}
 				if( result == JOptionPane.CANCEL_OPTION ) return false;
 				else{
 					decomposemode = Primula.OPTION_NOT_DECOMPOSE;
@@ -550,7 +560,7 @@ public class BayesConstructor extends java.lang.Object {
 			myProgressMax += estRemainder;
 			/** ... keith cascio */
 
-			myprimulaGUI.showMessage("construct CPT network...");
+			showMessage("construct CPT network...");
 			
 			
 			buildInitialGAHT(querymode, evidencemode, COMPLNODE,isolatedzeronodesmode );
@@ -642,7 +652,7 @@ public class BayesConstructor extends java.lang.Object {
 			
 			
 			if (layoutmode == Primula.OPTION_LAYOUT){
-				PrimulaGUI.appendMessage("layout...");
+				appendMessage("layout...");
 				// 	    // Set depths of nodes, includes acyclicity check
 				int[] maxlevels = setDepths(exportnodes);
 
@@ -689,7 +699,7 @@ public class BayesConstructor extends java.lang.Object {
 
 			
 			
-			PrimulaGUI.appendMessage("export...");
+			appendMessage("export...");
 
 			switch (bnsystem){
 			case Primula.OPTION_JAVABAYES: bni = new BayesNetIntBIF(bnoutputfile);break;
@@ -718,9 +728,9 @@ public class BayesConstructor extends java.lang.Object {
 			}
 
 			bni.open();
-			PrimulaGUI.appendMessage("done");
+			appendMessage("done");
 		}catch( InterruptedException interruptedexception ){
-			PrimulaGUI.appendMessage( "interrupted" );
+			appendMessage( "interrupted" );
 			return false;
 		}
 
@@ -818,14 +828,14 @@ public class BayesConstructor extends java.lang.Object {
 			if (isboolmodel) {
 			double trueval =(double)cpmodel.evaluate(A,
 					copyinst,
-					new String[0], 
+					new ArgTerm[0],
 					new int[0], 
 					0,
 					true,
 					true,
 					null,
 					false,
-					new Hashtable<String,Object[]>(),
+					new HashMap<String,Object[]>(),
 					null,
 					ProbForm.RETURN_ARRAY,
 					true,
@@ -835,14 +845,14 @@ public class BayesConstructor extends java.lang.Object {
 			if (iscatmodel) {
 				Object[] res = cpmodel.evaluate(A,
 						copyinst,
-						new String[0],
+						new ArgTerm[0],
 						new int[0],
 						0,
 						true,
 						true,
 						null,
 						false,
-						new Hashtable<String,Object[]>(),
+						new HashMap<String,Object[]>(),
 						null,
 						ProbForm.RETURN_ARRAY,
 						true,
@@ -908,9 +918,10 @@ public class BayesConstructor extends java.lang.Object {
 			break;
 		}
 		}
-		
-		for (Enumeration<BNNode> e=groundatomhasht.elements();e.hasMoreElements();){
-			currentnode = (ComplexBNGroundAtomNode)e.nextElement();
+
+		Iterator<BNNode> e=groundatomhasht.values().iterator();
+		while (e.hasNext()){
+			currentnode = (ComplexBNGroundAtomNode)e.next();
 			parvec = (Vector<GroundAtom>)parentvecs.elementAt(nodeindex);
 			nodeindex++;
 			cpmodel = currentnode.cpmodel;
@@ -920,7 +931,7 @@ public class BayesConstructor extends java.lang.Object {
 			/* turn complexnode into simplenode
 			 */
 			cpt = (double[][])makeCPT(cpmodel,strucarg,inst,parvec)[0];
-			
+
 			newgatn = new SimpleBNGroundAtomNode(atom,
 					name,
 					cpt,
@@ -936,7 +947,7 @@ public class BayesConstructor extends java.lang.Object {
 			++myProgress;//keith cascio 20060515
 		}// (Enumeration<BNNode> e=groundatomhasht.elements();e.hasMoreElements();)
 
-		
+
 		/* Second pass over groundatomhasht:
 		 * set parents and children
 		 */
@@ -959,8 +970,9 @@ public class BayesConstructor extends java.lang.Object {
 		 */
 
 		complexnodes = new Vector();
-		for (Enumeration<BNNode> e=groundatomhasht.elements();e.hasMoreElements();)
-			complexnodes.add(e.nextElement());
+		Iterator<BNNode> e=groundatomhasht.values().iterator();
+		while (e.hasNext())
+			complexnodes.add(e.next());
 
 		while (complexnodes.size() > 0)
 		{
@@ -971,7 +983,7 @@ public class BayesConstructor extends java.lang.Object {
 			 * to  complexnodes!
 			 */
 			if (evidencemode == Primula.OPTION_EVIDENCE_CONDITIONED){
-				nextnode.cpmodel = (ProbForm)nextnode.cpmodel.conditionEvidence(strucarg,instarg);
+				nextnode.cpmodel = nextnode.cpmodel.conditionEvidence(strucarg,instarg);
 			}
 
 			if (nextnode.cpmodel instanceof ProbFormConstant)
@@ -1010,16 +1022,17 @@ public class BayesConstructor extends java.lang.Object {
 		Vector<Vector<GroundAtom>> parentvecs = new Vector<Vector<GroundAtom>>(); // Vector of Vector of ground Atoms
 		Vector<GroundAtom> parvec = null;
 		BNNode newgatn;
-		for (Enumeration<BNNode> e=groundatomhasht.elements();e.hasMoreElements();){
+		Iterator<BNNode> e=groundatomhasht.values().iterator();
+		while (e.hasNext()) {
 			TreeSet<String> macrosdone = new TreeSet<String>();
 			switch (evidencemode){
 			case Primula.OPTION_NOT_EVIDENCE_CONDITIONED:{
-				newgatn = e.nextElement();
+				newgatn = e.next();
 				parvec = newgatn.cpmodel().makeParentVec(strucarg, new OneStrucData() ,macrosdone);
 				break;
 			}
 			case Primula.OPTION_EVIDENCE_CONDITIONED:{
-				newgatn = e.nextElement();
+				newgatn = e.next();
 				parvec = newgatn.cpmodel().makeParentVec(strucarg,instarg,macrosdone);
 				break;
 			}
@@ -1032,7 +1045,7 @@ public class BayesConstructor extends java.lang.Object {
 
 
 	private void substituteNode(BNNode oldnode,BNNode newnode)
-	// replaces pointers to oldnode in hashtable and
+	// replaces pointers to oldnode in HashMap and
 	// parent lists of the children of oldnode with
 	// pointers to newnode
 	{
@@ -1103,7 +1116,7 @@ public class BayesConstructor extends java.lang.Object {
 		}
 
 		Rel parrel = ((ProbFormAtom)node.cpmodel).getRelation();
-		int[] parargs = rbnutilities.stringArrayToIntArray(((ProbFormAtom)node.cpmodel).getArguments());
+		int[] parargs = rbnutilities.argTermArrayToIntArray(((ProbFormAtom)node.cpmodel).getArguments());
 		GroundAtom paratom = new GroundAtom(parrel,parargs);
 		BNNode par = groundatomhasht.get(paratom.hashCode());
 		newnode.parents.add(par);
@@ -1143,7 +1156,7 @@ public class BayesConstructor extends java.lang.Object {
 
 		// Arrays storing the probforms and their types and
 		// values (if constants)
-		ProbForm[] pf = new ProbForm[3];
+		CPModel[] pf = new CPModel[3];
 		int[] type = new int[3];
 		double value[] = {0,0,0};
 		BNNode[] parnodes = new BNNode[3];
@@ -1241,7 +1254,7 @@ public class BayesConstructor extends java.lang.Object {
 	private void processComponentOfConvComp(int i,
 			ComplexBNNode oldnode,
 			BNNode newnode,
-			ProbForm[] pf,
+			CPModel[] pf,
 			int[] type,
 			double[] vals,
 			BNNode[] pnodes,
@@ -1330,7 +1343,7 @@ public class BayesConstructor extends java.lang.Object {
 			// Now the usual case:
 
 			GroundAtom at = new GroundAtom(((ProbFormAtom)pf[i]).getRelation(),
-					rbnutilities.stringArrayToIntArray(((ProbFormAtom)pf[i]).getArguments()));
+					rbnutilities.argTermArrayToIntArray(((ProbFormAtom)pf[i]).getArguments()));
 			pnodes[i] = groundatomhasht.get(at.hashCode());
 			pnodes[i].children.add(newnode);
 			break;
@@ -1465,25 +1478,25 @@ public class BayesConstructor extends java.lang.Object {
 		newnode.children       = node.children;
 
 		Vector<BNNode> decompnodes = new Vector<BNNode>();
-		ProbForm nextpf;
+		CPModel nextpf;
 		ComplexBNNode newbnnode;
 		int ind;
 
 
-		ProbForm[] argpfs      = ((ProbFormCombFunc)node.cpmodel).getPfargs();
-		ProbFormBool    ccon        = ((ProbFormCombFunc)node.cpmodel).getCconstr();
-		String[]   qvars       = ((ProbFormCombFunc)node.cpmodel).getQuantvars();
-		int[][]    argtuples   = new int[0][0];
+		CPModel[] argpfs = ((ProbFormCombFunc)node.cpmodel).getPfargs();
+		ProbFormBool ccon = ((ProbFormCombFunc)node.cpmodel).getCconstr();
+		ArgTerm[] qvars = ((ProbFormCombFunc)node.cpmodel).getQuantvars();
+		int[][] argtuples = new int[0][0];
 		try{
-			argtuples = strucarg.allTrue(ccon,qvars);
+			argtuples = strucarg.allTrue(ccon, rbnutilities.getVarsFromArgs(qvars));
 		}
-		catch( RBNCompatibilityException e ){myprimulaGUI.showMessage(e.toString());};
+		catch( RBNCompatibilityException e ){showMessage(e.toString());};
 		for (int i=0;i<argpfs.length;i++){
 			for (int j=0;j<argtuples.length;j++){
 				nextpf = argpfs[i].substitute(qvars,argtuples[j]);
 				if (nextpf instanceof ProbFormAtom){
 					GroundAtom at = new GroundAtom(((ProbFormAtom)nextpf).getRelation(),
-							rbnutilities.stringArrayToIntArray(((ProbFormAtom)nextpf).getArguments()));
+							rbnutilities.argTermArrayToIntArray(((ProbFormAtom)nextpf).getArguments()));
 					BNNode nextdecompnode = (BNNode) groundatomhasht.get(at.hashCode());
 					if (nextdecompnode == null)
 						System.out.println("Trying to retrieve non-existent node " + at.asString(strucarg) 
@@ -2552,9 +2565,9 @@ public class BayesConstructor extends java.lang.Object {
 
 	/** Utility method for debugging **/
 	private void showGAHT(){
-		BNNode nextbnn;
-		for (Enumeration<BNNode> e=groundatomhasht.elements();e.hasMoreElements();){
-			nextbnn = e.nextElement();
+		Iterator<BNNode> iterator = groundatomhasht.values().iterator();
+		while (iterator.hasNext()) {
+			BNNode nextbnn = iterator.next();
 			System.out.println(((GroundAtomNodeInt)nextbnn).myatom().asString());
 		}
 		System.out.println();
@@ -2589,4 +2602,15 @@ public class BayesConstructor extends java.lang.Object {
 	}
 
 	public void setMyprimulaGUI(PrimulaGUI myprimulaGUI) { this.myprimulaGUI = myprimulaGUI; }
+
+	// messages through Primula (GUI or console); on the console if there is no Primula
+	private void showMessage(String message) {
+		if (myprimula != null) myprimula.showMessage(message);
+		else System.out.println(message);
+	}
+
+	private void appendMessage(String message) {
+		if (myprimula != null) myprimula.appendMessage(message);
+		else System.out.print(message);
+	}
 }

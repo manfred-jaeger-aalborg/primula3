@@ -1,13 +1,13 @@
 package RBNLearning;
 
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Vector;
 
 public abstract class Gradient {
 
     /* mapping of parameter names to integer indices. Usually same as Primula.parameters
      */
-    Hashtable<String,Integer> parameter_to_idx;
+    HashMap<String,Integer> parameter_to_idx;
 
     public class IdxPD {
         /* an instance of this class is a pair (idx,[pd]) of an integer index for a specific parameter,

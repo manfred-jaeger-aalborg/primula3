@@ -24,7 +24,7 @@
 
 package RBNpackage;
 
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Vector;
 
 import RBNutilities.rbnutilities;
@@ -177,8 +177,8 @@ public class GroundAtomList extends java.lang.Object {
      * separate GroundAtomList objects for each different relation
      * @return
      */
-    public Hashtable<Rel,GroundAtomList> asHashTable(){
-    	Hashtable<Rel,GroundAtomList> result = new Hashtable<Rel,GroundAtomList>();
+    public HashMap<Rel,GroundAtomList> asHashMap(){
+        HashMap<Rel,GroundAtomList> result = new HashMap<Rel,GroundAtomList>();
     	for (GroundAtom ga: this.atoms) {
     		GroundAtomList gal = result.get(ga.rel);
     		if (gal != null)

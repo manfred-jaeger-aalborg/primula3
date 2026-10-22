@@ -1,4 +1,6 @@
 package myio;
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 import mymath.*;
 import java.io.*;
 import java.util.*;
@@ -407,35 +409,41 @@ public class StringOps{
 		for (int i=0;i<result.length;i++)
 			result[i]=vec.elementAt(i);
 		return result;
-
 	}
-	
-	   public static int[][] intarrVectorToArray(Vector<int[]> vec){
-	        int[][] result = new int[vec.size()][];
-	        for (int i=0;i<result.length;i++)
-	        	result[i]=vec.elementAt(i);
-	        return result;
-	        }
 
-	    public static int[] intVectorToArray(Vector<Integer> vec){
-	        int[] result = new int[vec.size()];
-	        for (int i=0;i<result.length;i++)
-	        	result[i]=vec.elementAt(i);
-	        return result;
-	        }
+	public static ArgTerm[] stringVectorToArgArray(Vector<String> vec){
+		ArgTerm[] result = new ArgTerm[vec.size()];
+		for (int i=0;i<result.length;i++)
+			result[i]=new VarTerm(vec.elementAt(i));
+		return result;
+	}
 
-	    public static double[] doubleVectorToArray(Vector<Double> vec){
-	        double[] result = new double[vec.size()];
-	        for (int i=0;i<result.length;i++)
-	        	result[i]=vec.elementAt(i);
-	        return result;
-	        }
+	public static int[][] intarrVectorToArray(Vector<int[]> vec){
+		int[][] result = new int[vec.size()][];
+		for (int i=0;i<result.length;i++)
+			result[i]=vec.elementAt(i);
+		return result;
+		}
 
-		public static String[][] vectorTo2DArray(Vector<String[]> vec){
-			String[][] result = new String[vec.size()][];
-			for (int i=0;i<result.length;i++)
-				result[i]=vec.elementAt(i);
-			return result;
+	public static int[] intVectorToArray(Vector<Integer> vec){
+		int[] result = new int[vec.size()];
+		for (int i=0;i<result.length;i++)
+			result[i]=vec.elementAt(i);
+		return result;
+		}
+
+	public static double[] doubleVectorToArray(Vector<Double> vec){
+		double[] result = new double[vec.size()];
+		for (int i=0;i<result.length;i++)
+			result[i]=vec.elementAt(i);
+		return result;
+		}
+
+	public static String[][] vectorTo2DArray(Vector<String[]> vec){
+		String[][] result = new String[vec.size()][];
+		for (int i=0;i<result.length;i++)
+			result[i]=vec.elementAt(i);
+		return result;
 
 		}
 }

@@ -44,7 +44,7 @@ public class GGConstantNode extends GGCPMNode{
 	/** The name of this parameter if isUnknown = true */
 	String paramname;
 
-	public GGConstantNode(GradientGraphO gg,ProbForm pf,RelStruc A, OneStrucData data)
+	public GGConstantNode(GradientGraphO gg,CPModel pf,RelStruc A, OneStrucData data)
 	throws RBNCompatibilityException
 	{
 		super(gg,pf,A,data);

@@ -27,35 +27,37 @@ package RBNpackage;
 import java.util.*;
 
 import RBNExceptions.*;
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 import RBNutilities.*;
 import RBNgui.Primula;
 import RBNinference.PFNetworkNode;
 import RBNLearning.*;
 
 
-public class ProbFormConvComb extends ProbForm {
+public class ProbFormConvComb extends CPModel implements ProbForm{
 
 	/**
 	 * @uml.property  name="f1"
 	 * @uml.associationEnd  
 	 */
-	ProbForm F1;
+	CPModel F1;
 	/**
 	 * @uml.property  name="f2"
 	 * @uml.associationEnd  
 	 */
-	ProbForm F2;
+	CPModel F2;
 	/**
 	 * @uml.property  name="f3"
 	 * @uml.associationEnd  
 	 */
-	ProbForm F3;
+	CPModel F3;
 
 	public ProbFormConvComb()
 	{}
 
 	/** Creates new ProbFormConvComb */
-	public ProbFormConvComb(ProbForm f1, ProbForm f2, ProbForm f3) {
+	public ProbFormConvComb(CPModel f1, CPModel f2, CPModel f3) {
 //		SSymbs = rbnutilities.arraymerge(f1.SSymbs,f2.SSymbs);
 //		SSymbs = rbnutilities.arraymerge(SSymbs, f3.SSymbs);
 //		RSymbs = rbnutilities.arraymerge(f1.RSymbs,f2.RSymbs);
@@ -66,9 +68,9 @@ public class ProbFormConvComb extends ProbForm {
 	}
 
 
-	public String[] freevars()
+	public ArgTerm[] freevars()
 	{
-		String result[];
+		ArgTerm result[];
 		result = rbnutilities.arraymerge(F1.freevars(),F2.freevars());
 		result = rbnutilities.arraymerge(result,F3.freevars());
 		return result;
@@ -79,7 +81,7 @@ public class ProbFormConvComb extends ProbForm {
 		return (F1.multlinOnly() && F2.multlinOnly() && F3.multlinOnly());
 	}
 
-	public ProbForm substitute(String[] vars, int[] args)
+	public CPModel substitute(String[] vars, int[] args)
 	
 	{   
 		ProbFormConvComb result = new ProbFormConvComb(F1.substitute(vars,args),F2.substitute(vars,args),F3.substitute(vars,args));
@@ -88,8 +90,32 @@ public class ProbFormConvComb extends ProbForm {
 		return result;
 	}
 
-	public ProbForm substitute(String[] vars, String[] args)
+	public CPModel substitute(String[] vars, String[] args)
 	{
+		ProbFormConvComb result = new ProbFormConvComb(F1.substitute(vars,args),F2.substitute(vars,args),F3.substitute(vars,args));
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	@Override
+	public CPModel substitute(String[] vars, ArgTerm[] args) {
+		ProbFormConvComb result = new ProbFormConvComb(F1.substitute(vars,args),F2.substitute(vars,args),F3.substitute(vars,args));
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	@Override
+	public CPModel substitute(ArgTerm[] vars, ArgTerm[] args) {
+		ProbFormConvComb result = new ProbFormConvComb(F1.substitute(vars,args),F2.substitute(vars,args),F3.substitute(vars,args));
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	@Override
+	public CPModel substitute(ArgTerm[] vars, int[] args) {
 		ProbFormConvComb result = new ProbFormConvComb(F1.substitute(vars,args),F2.substitute(vars,args),F3.substitute(vars,args));
 		if (this.alias != null)
 			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
@@ -106,23 +132,34 @@ public class ProbFormConvComb extends ProbForm {
 	public  Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone)
 	throws RBNCompatibilityException
 	{
-		Vector<GroundAtom> atomvec1 = F1.makeParentVec(A,inst,macrosdone);
-		Vector<GroundAtom> atomvec2 = F2.makeParentVec(A,inst,macrosdone);
-		Vector<GroundAtom> atomvec3 = F3.makeParentVec(A,inst,macrosdone);
-		Vector<GroundAtom> result = atomvec1;
-		double v1,v2,v3;
-	    
-		v1=(Double)F1.evaluate(A,inst,new String[0],new int[0],false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
-		v2=(Double)F2.evaluate(A,inst,new String[0],new int[0],false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
-		v3=(Double)F3.evaluate(A,inst,new String[0],new int[0],false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
 
+		// Here need to "forget" the macrosdone, because must construct the parents for each component F1,F2,F3
+		// (with possible overlap)
+		// Since otherwise the elimination of parents of 'irrelevant' Fi may also eliminate the
+		// parents of relevant Fi
+		Vector<GroundAtom> atomvec1 = F1.makeParentVec(A,inst,new TreeSet<String>());
+		double v1=(Double)F1.evaluate(A,inst,new ArgTerm[0],new int[0],0,false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
 		if (!Double.isNaN(v1))
 			atomvec1 = new Vector<GroundAtom>();
 
-		if (v1==0)
+		Vector<GroundAtom> atomvec2;
+		Vector<GroundAtom> atomvec3;
+		double v2 = 0.0;
+		double v3 = 0.0;
+
+		if (v1==0) {
 			atomvec2 = new Vector<GroundAtom>();
-		if (v1==1)
+		} else {
+			atomvec2 = F2.makeParentVec(A, inst, new TreeSet<String>());
+			v2 = (Double) F2.evaluate(A, inst, new ArgTerm[0], new int[0], 0, false, false, null, false, null, null, ProbForm.RETURN_SPARSE, true, null)[0];
+		}
+
+		if (v1==1) {
 			atomvec3 = new Vector<GroundAtom>();
+		} else {
+			atomvec3 = F3.makeParentVec(A, inst, new TreeSet<String>());
+			v3=(Double)F3.evaluate(A,inst,new ArgTerm[0],new int[0],0,false,false,null,false,null,null,ProbForm.RETURN_SPARSE,true,null)[0];
+		}
 
 		if ((v2==v3) && !Double.isNaN(v2))
 		{
@@ -131,18 +168,18 @@ public class ProbFormConvComb extends ProbForm {
 			atomvec3 = new Vector<GroundAtom>();
 		}
 
-		result = atomvec1;
+		Vector<GroundAtom>  result = atomvec1;
 		result = rbnutilities.combineAtomVecs(result,atomvec2);
 		result = rbnutilities.combineAtomVecs(result,atomvec3);
 		return result;
 	}
 
-	public ProbForm conditionEvidence(RelStruc A, OneStrucData inst)
+	public CPModel conditionEvidence(RelStruc A, OneStrucData inst)
 	throws RBNCompatibilityException
 	{
-		ProbForm newF1 = (ProbForm)F1.conditionEvidence(A,inst);
-		ProbForm newF2 = (ProbForm)F2.conditionEvidence(A,inst);
-		ProbForm newF3 = (ProbForm)F3.conditionEvidence(A,inst);
+		CPModel newF1 = F1.conditionEvidence(A,inst);
+		CPModel newF2 = F2.conditionEvidence(A,inst);
+		CPModel newF3 = F3.conditionEvidence(A,inst);
 		if ((newF1 instanceof ProbFormConstant)&&
 				(newF2 instanceof ProbFormConstant)&&
 				(newF3 instanceof ProbFormConstant))
@@ -158,15 +195,15 @@ public class ProbFormConvComb extends ProbForm {
 //		return new ProbFormConvComb(F1.conditionEvidence(instasosd),F2.conditionEvidence(instasosd),F3.conditionEvidence(instasosd));
 //	}
 
-	public ProbForm f1(){
+	public CPModel f1(){
 		return F1;
 	}
 
-	public ProbForm f2(){
+	public CPModel f2(){
 		return F2;
 	}
 
-	public ProbForm f3(){
+	public CPModel f3(){
 		return F3;
 	}
 
@@ -190,7 +227,7 @@ public class ProbFormConvComb extends ProbForm {
 //    		boolean useCurrentPvals,
 //    		GroundAtomList mapatoms,
 //    		boolean useCurrentMvals,
-//    		Hashtable<String,Double> evaluated)
+//    		HashMap<String,Double> evaluated)
 //	throws RBNCompatibilityException
 //	{
 //		double ev1 = F1.evaluate(A,inst,vars,tuple,useCurrentCvals,numrelparameters,useCurrentPvals,
@@ -232,15 +269,16 @@ public class ProbFormConvComb extends ProbForm {
 
 	public Object[] evaluate(RelStruc A, 
 			OneStrucData inst, 
-			String[] vars, 
-			int[] tuple, 
+			ArgTerm[] vars,
+			int[] tuple,
+			int gradinx,
 			boolean useCurrentCvals, 
 			// String[] numrelparameters,
 			boolean useCurrentPvals,
-			Hashtable<Rel,GroundAtomList> mapatoms,
+			HashMap<Rel,GroundAtomList> mapatoms,
 			boolean useCurrentMvals,
-			Hashtable<String,Object[]> evaluated,
-			Hashtable<String,Integer> params,
+		    HashMap<String,Object[]> evaluated,
+			HashMap<String,Integer> params,
 			int returntype,
 			boolean valonly,
 			Profiler profiler)
@@ -251,143 +289,104 @@ public class ProbFormConvComb extends ProbForm {
 		
 		String key="";
 		if (evaluated != null) {
-			key = this.makeKey(vars,tuple,false);		
-			//System.out.print("debug: looking for " + key);
+			key = this.makeKey(vars,tuple,false);
 			Object[] d = evaluated.get(key);
 			if (d!=null) {
-				//System.out.println("debug:  yes found");
 				if (profile)
 					profiler.addTime(Profiler.NUM_EVALUATE_OLD, 1);
 				return d; 
 			}
 		}
-	//System.out.println("debug:   not found");
 
-	ProbFormConvComb subspfcf = (ProbFormConvComb)this.substitute(vars,tuple);
+		Object[] result = new Object[2];
 
-	//		String key="";
-	//		if (evaluated != null) {
-	//			key = subspfcf.makeKey(A);		
-	//			System.out.print("looking for " + key);
-	//			Object[] d = evaluated.get(key);
-	//			if (d!=null) {
-	//				System.out.println("  yes found");
-	//				return d; 
-	//			}
-	//		}
-	//		System.out.println("   not found");
+		Object[] r1= F1.evaluate(A, inst, vars, tuple, gradinx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly,profiler);
+		double r1v = (double)r1[0];
 
-	Object[] result = new Object[2];
+		Object[] r2 = null;
+		double r2v = 0;
+		Object[] r3 = null;
+		double r3v = 0;
 
-	Object[] r1= F1.evaluate(A, inst, vars, tuple, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly,profiler);
-	Object[] r2= F2.evaluate(A, inst, vars, tuple, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly,profiler);
-	Object[] r3= F3.evaluate(A, inst, vars, tuple, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly,profiler);
+		// avoid computing r2 or r3 iff we have 0 or 1 values in r1
+		if (r1v == 1) {
+			r2= F2.evaluate(A, inst, vars, tuple, gradinx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly,profiler);
+			r2v = (double)r2[0];
+			result[0] = r2v;
+		} else if (r1v == 0) {
+			r3= F3.evaluate(A, inst, vars, tuple, gradinx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly,profiler);
+			r3v = (double)r3[0];
+			result[0] = r3v;
+		} else {
+			r2 = F2.evaluate(A, inst, vars, tuple, gradinx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly, profiler);
+			r2v = (double) r2[0];
+			r3 = F3.evaluate(A, inst, vars, tuple, gradinx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly, profiler);
+			r3v = (double) r3[0];
 
-	double r1v = (double)r1[0];
-	double r2v = (double)r2[0];
-	double r3v = (double)r3[0];
+			/* The value: */
+			if (Double.isNaN(r1v)) {
+				if (r2v == r3v)
+					result[0] = r2v;
+				else
+					result[0] = Double.NaN;
+			}
 
+			if ((r1v != 0) && (Double.isNaN(r2v)))
+				result[0] = Double.NaN;
 
-	/* The value: */
-	if (Double.isNaN(r1v)) {
-		if (r2v==r3v)
-			result[0]= r2v;
-		else
-			result[0]= Double.NaN;
-	}
+			if ((r1v != 1) && (Double.isNaN(r3v)))
+				result[0] = Double.NaN;
 
-	if ((r1v != 0) && (Double.isNaN(r2v)) )
-		result[0]= Double.NaN;
+			double firstterm = 0;
+			double secondterm = 0;
 
-	if ((r1v != 1) && (Double.isNaN(r3v)) )
-		result[0]= Double.NaN;
+			if (r1v == 0 || r2v == 0)
+				firstterm = 0;
+			else firstterm = r1v * r2v;
 
-	double firstterm =0;
-	double secondterm =0;
+			if (r1v == 1 || r3v == 0)
+				secondterm = 0;
+			else secondterm = (1 - r1v) * r3v;
 
-	if (r1v==0 || r2v==0)
-		firstterm =0;
-	else firstterm = r1v*r2v;
-
-	if (r1v == 1 || r3v==0)
-		secondterm =0;
-	else secondterm = (1-r1v)*r3v;
-
-	result[0]= firstterm + secondterm;
-
-	/* The derivatives */
-	if (!valonly) {
-		Gradient r1g = (Gradient)r1[1];
-		Gradient r2g = (Gradient)r2[1];
-		Gradient r3g = (Gradient)r3[1];
-
-		result[1]=null;
-		if (returntype == ProbForm.RETURN_ARRAY)
-			result[1]=new Gradient_Array(params);
-		else
-			result[1]= new Gradient_TreeMap(params);
-
-		for (String par: params.keySet()) {
-			double pd1=r1g.get_part_deriv(par)[0];
-			double pd2=r2g.get_part_deriv(par)[0];
-			double pd3=r3g.get_part_deriv(par)[0];
-
-
-			((Gradient)result[1]).set_part_deriv(par, new double[] {pd1*r2v+r1v*pd2+(1-r1v)*pd3-pd1*r3v});
+			result[0] = firstterm + secondterm;
 		}
-//		if (returntype == ProbForm.RETURN_ARRAY) {
-//			result[1]=new double[params.size()];
-//			double[] r1g = (double[])r1[1];
-//			double[] r2g = (double[])r2[1];
-//			double[] r3g = (double[])r3[1];
-//			for (int i=0;i<params.size();i++) {
-//				((double[])result[1])[i]=r1g[i]*r2v+r1v*r2g[i]+(1-r1v)*r3g[i]-r1g[i]*r3v;
-//			}
-//		}
-//		else {
-//			result[1]=new Hashtable<String,Double>();
-//			Hashtable<String,Double> r1g = (Hashtable<String,Double>)r1[1];
-//			Hashtable<String,Double> r2g = (Hashtable<String,Double>)r2[1];
-//			Hashtable<String,Double> r3g = (Hashtable<String,Double>)r3[1];
-//
-//
-//
-//			TreeSet<String> allkeys = new TreeSet<String>(r1g.keySet());
-//			allkeys.addAll(r2g.keySet());
-//			allkeys.addAll(r3g.keySet());
-//
-//			for (String p: allkeys) {
-//				Double r1gp = r1g.get(p);
-//				Double r2gp = r2g.get(p);
-//				Double r3gp = r3g.get(p);
-//
-//				if (r1gp == null)
-//					r1gp = 0.0;
-//				if (r2gp == null)
-//					r2gp = 0.0;
-//				if (r3gp == null)
-//					r3gp = 0.0;
-//
-//				double gp=r1gp*r2v+r1v*r2gp+(1-r1v)*r3gp-r1gp*r3v;
-//				((Hashtable<String,Double>)result[1]).put(p,gp);
-//			}
-//		}
-	}
-	if (evaluated != null) {
-		//System.out.println("ProbFormConvComb: adding to evaluated: " + key + " = " + result[0] );
 
-		evaluated.put(key, result);
+		/* The derivatives */
+		if (!valonly) {
+			Gradient r1g = (Gradient) r1[1];
+			Gradient r2g = (r2 != null) ? (Gradient) r2[1] : null;
+			Gradient r3g = (r3 != null) ? (Gradient) r3[1] : null;
+
+			result[1] = (returntype == ProbForm.RETURN_ARRAY) ? new Gradient_Array(params) : new Gradient_TreeMap(params);
+
+			for (String par : params.keySet()) {
+				double pd1 = r1g.get_part_deriv(par)[0];
+				double pd2 = (r2g != null) ? r2g.get_part_deriv(par)[0] : 0;
+				double pd3 = (r3g != null) ? r3g.get_part_deriv(par)[0] : 0;
+
+				double pderiv = 0;
+				if (r2v != 0) pderiv += pd1 * r2v;
+				if (r1v != 0) pderiv += pd2 * r1v;
+				if (r1v != 1 && pd3 != 0) pderiv += (1 - r1v) * pd3;
+				if (r3v != 0 && pd1 != 0) pderiv -= pd1 * r3v;
+
+				((Gradient) result[1]).set_part_deriv(par, new double[]{pderiv});
+			}
+		}
+
+		if (evaluated != null) {
+			evaluated.put(key, result);
+		}
+
+		if (profile)
+			profiler.addTime(Profiler.NUM_EVALUATE_NEW, 1);
+		return result;
 	}
 
-	if (profile)
-		profiler.addTime(Profiler.NUM_EVALUATE_NEW, 1);
-	return result;
-	}
-
-	public  double[] evalSample(RelStruc A, 
-			Hashtable<String,PFNetworkNode> atomhasht, 
+	public  double[] evalSample(RelStruc A,
+			HashMap<String,PFNetworkNode> atomhasht,
 			OneStrucData inst, 
-    		Hashtable<String,double[]> evaluated,
+    		HashMap<String,double[]> evaluated,
 			long[] timers)
 	throws RBNCompatibilityException
 	{
@@ -433,7 +432,7 @@ public class ProbFormConvComb extends ProbForm {
 	}
 
 
-	public int evaluatesTo(RelStruc A,OneStrucData inst, boolean usesampleinst, Hashtable atomhasht)
+	public int evaluatesTo(RelStruc A,OneStrucData inst, boolean usesampleinst, HashMap atomhasht)
 	throws RBNCompatibilityException
 	{	
 		//System.out.println("evaluatesTo for " + this.asString());
@@ -494,16 +493,16 @@ public class ProbFormConvComb extends ProbForm {
 
 	}
 
-	public ProbForm sEval(RelStruc A)
+	public CPModel sEval(RelStruc A)
 	throws RBNCompatibilityException
 	{
-		ProbForm f1 = F1.sEval(A);
-		ProbForm f2 = F2.sEval(A);
-		ProbForm f3 = F3.sEval(A);
+		CPModel f1 = F1.sEval(A);
+		CPModel f2 = F2.sEval(A);
+		CPModel f3 = F3.sEval(A);
 		return new ProbFormConvComb(f1,f2,f3);
 	}
 
-	public ProbForm subPF(int i){
+	public CPModel subPF(int i){
 		switch (i){
 		case 1: return F1;
 		case 2: return F2;
@@ -546,7 +545,7 @@ public class ProbFormConvComb extends ProbForm {
 	}
 	
 	public TreeSet<Rel> parentRels(TreeSet<String> processed){
-		String mykey = this.makeKey(null,null,true);
+		String mykey = this.makeKey((String[]) null,null,true);
 		if (processed.contains(mykey))
 			return new TreeSet<Rel>();
 		else {
@@ -557,5 +556,10 @@ public class ProbFormConvComb extends ProbForm {
 			result.addAll(F3.parentRels(processed));
 			return result;
 		}
+	}
+
+	@Override
+	public int numvals() {
+		return 2;
 	}
 }

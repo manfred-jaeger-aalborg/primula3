@@ -27,28 +27,44 @@ import java.lang.*;
 import java.util.*;
 
 import PyManager.TorchInputSpecs;
-import RBNgui.Primula;
 import RBNpackage.*;
 import RBNExceptions.*;
+import RBNpackage.VarTermPackage.*;
 import mymath.*;
 
 public class rbnutilities extends java.lang.Object
 {
-    public static boolean IsInteger(String argentry)
-        /* returns true of argentry is a string
+//    public static boolean IsInteger(String argentry)
+//        /* returns true of argentry is a string
+//         * representing an integer. Needed in freevars()
+//         */
+//    {
+//    	if (argentry.length()==0) return false;
+//    	for (int i = 0; i < argentry.length(); i++)
+//    	{
+//    		if (!Character.isDigit(argentry.charAt(i)))
+//    		{
+//    			return false;
+//    		}
+//    	}
+//    	return true;
+//    }
+
+	public static boolean IsInteger(String s) {
+		/* returns true of argentry is a string
          * representing an integer. Needed in freevars()
          */
-    {
-    	if (argentry.length()==0) return false;
-    	for (int i = 0; i < argentry.length(); i++)
-    	{
-    		if (!Character.isDigit(argentry.charAt(i)))
-    		{
-    			return false;
-    		}
-    	}
-    	return true;
-    }
+		if (s == null) return false;
+		int len = s.length();
+		if (len == 0) return false;
+
+		for (int i = 0; i < len; i++) {
+			char c = s.charAt(i);
+			if ((c - '0') > 9 || (c - '0') < 0)
+				return false;
+		}
+		return true;
+	}
 
     public static boolean IsInteger(String[] args){
     	boolean result = true;
@@ -157,6 +173,68 @@ public class rbnutilities extends java.lang.Object
 	    }
         return result;
     }
+
+	public static boolean[] makePosVec(ArgTerm[] master, VarTerm[] subs){
+		boolean[] result = new boolean[master.length];
+		for (int i=0;i<master.length;i++)
+		    {
+			if (arrayContains(subs,master[i]))
+				result[i]=true;
+		    }
+		return result;
+	}
+
+	public static int[] arrayPosMerge(int[] vals1, boolean[] pos1, int[] vals2, boolean[] pos2){
+		/*
+		pos1 pos2 are 0/1 vectors of the same length that do not have 1s in the same positions.
+		vals1, vals2 are integer vectors; The length of a vals vector is equal to the number of 1s in the
+		corresponding pos vector.
+		Returns an interleaved merge of vals1 and vals2, where the order is determined by the pos vectors
+		Example:
+		vals1=[3,7] pos1=[0,1,0,1], vals2=[1], pos2=[0,0,1,0]
+		Result: [3,1,7]
+		The pos vectors can be longer than the sum of the lengths of the vals vectors  (then have shared
+		0s is some positions)
+		 */
+		int[] result = new int[vals1.length+vals2.length];
+		int next1=0;
+		int next2=0;
+		int nextout=0;
+		for (int i=0;i<pos1.length;i++){
+			if (pos1[i]){
+				result[nextout]=vals1[next1];
+				next1++;
+				nextout++;
+			}
+			else if (pos2[i]){
+				result[nextout]=vals2[next2];
+				next2++;
+				nextout++;
+			}
+		}
+		return result;
+	}
+
+
+	public static VarTerm[] arraymerge(VarTerm[] term1, VarTerm[] term2) {
+		// relies on equals() and hashCode() of the objects in the arguments
+		LinkedHashSet<VarTerm> set = new LinkedHashSet<>();
+		Collections.addAll(set, term1);
+		Collections.addAll(set, term2);
+		return set.toArray(new VarTerm[0]);
+	}
+
+	public static ArgTerm[] arraymerge(ArgTerm[] term1, ArgTerm[] term2)
+		/* takes two arrays term1 and stringarg2
+		 * and returns an array that contains
+		 * their elements without repetitions
+		 */
+	{
+		LinkedHashSet<ArgTerm> set = new LinkedHashSet<>();
+		Collections.addAll(set, term1);
+		Collections.addAll(set, term2);
+		return set.toArray(new ArgTerm[0]);
+	}
     
     
     /* Returns 0 if arr1 and arr2 are equal
@@ -205,8 +283,15 @@ public class rbnutilities extends java.lang.Object
     	}
     	return false;
     }
-    
-    public static int arrayContainsAt(String[] arr, String ii){
+
+	public static boolean arrayContains(ArgTerm[] arr, ArgTerm ii){
+		for (int i=0;i<arr.length;i++){
+			if (arr[i].equals(ii)) return true;
+		}
+		return false;
+	}
+
+	public static int arrayContainsAt(String[] arr, String ii){
     	int result = -1;
     	for (int i=0;i<arr.length;i++){
     		if (arr[i].equals(ii)) result=i;
@@ -342,7 +427,24 @@ public class rbnutilities extends java.lang.Object
     		result[stringarg1.length + i]=stringarg2[i];
     	return result;
     }
-    
+
+	public static VarTerm[] arrayConcatenate(VarTerm[] stringarg1, VarTerm[] stringarg2){
+		VarTerm[] result = new VarTerm[stringarg1.length + stringarg2.length];
+		for (int i=0;i<stringarg1.length;i++)
+			result[i]=stringarg1[i];
+		for (int i=0;i<stringarg2.length;i++)
+			result[stringarg1.length + i]=stringarg2[i];
+		return result;
+	}
+
+	public static int[] arrayConcatenate(int[] stringarg1, int[] stringarg2){
+		int[] result = new int[stringarg1.length + stringarg2.length];
+		for (int i=0;i<stringarg1.length;i++)
+			result[i]=stringarg1[i];
+		for (int i=0;i<stringarg2.length;i++)
+			result[stringarg1.length + i]=stringarg2[i];
+		return result;
+	}
     public static short[] arrayConcatenate(short[] stringarg1, short[] stringarg2){
     	short[] result = new short[stringarg1.length + stringarg2.length];
     	for (int i=0;i<stringarg1.length;i++)
@@ -353,7 +455,7 @@ public class rbnutilities extends java.lang.Object
     }
     
     
-    public static String[] arraysubstraction(String[] stringarg1, String[]stringarg2)
+    public static String[] arraysubstraction(String[] stringarg1, String[] stringarg2)
 	/* takes two arrays stringarg1 and stringarg2 
 	 * and returns an array that contains 
 	 * the elements of stringarg1 that do not 
@@ -402,8 +504,158 @@ public class rbnutilities extends java.lang.Object
       
         return result;
     }
-    
-    public static Rel[] arraysubstraction(Rel[] relarg1, Rel[]relarg2)
+
+	public static ArgTerm[] arraysubstraction(ArgTerm[] term1, ArgTerm[] term2)
+		/* takes two arrays term1 and term2
+		 * and returns an array that contains
+		 * the elements of term1 that do not
+		 * occur in term2. In the result the elements
+		 * occur in the order of their first appearance
+		 * in term1
+		 */
+	{
+		if (term1 instanceof VarTerm[] && term2 instanceof VarTerm[]) {
+			Set<VarTerm> toRemove = new HashSet<>(Arrays.asList((VarTerm[]) term2));
+			LinkedHashSet<VarTerm> set = new LinkedHashSet<>();
+			for (VarTerm t : (VarTerm[]) term1)
+				if (!toRemove.contains(new VarTerm(t.getName())))
+					set.add(t);
+			return set.toArray(new VarTerm[0]);
+		}
+		//System.out.println("Entered arraysubstraction with arguments "+ rbnutilities.arrayToString(stringarg1) + " and "+ rbnutilities.arrayToString(stringarg2));
+		ArgTerm[] result;
+		ArgTerm[] prelimarray = new ArgTerm[term1.length];
+		int counter = 0;
+		int i,j;
+		boolean insert;
+
+		for (i=0; i<term1.length; i++)
+		{
+			insert = true;
+			j = 0;
+			while (j<term2.length && insert)
+			{
+				if (term1[i].equals(term2[j])) insert = false;
+				j++;
+			}
+			// if term1[i] does not appear in term2, also check
+			// whether it already is in  prelimarray
+			if (insert)
+			{
+				while (j<counter && insert)
+				{
+					if (term1[i].equals(prelimarray[j])) insert = false;
+					j++;
+				}
+			}
+			if (insert)
+			{
+				prelimarray[counter]=term1[i];
+				counter++;
+			}
+		}
+
+		result = new ArgTerm[counter];
+		for (i=0; i<counter; i++)
+			result[i] = prelimarray[i];
+		//System.out.println("Returned "+ rbnutilities.arrayToString(result) );
+
+		return result;
+	}
+
+	public static ArgTerm[] arraysubstraction(ArgTerm[] term1, String[] term2)
+	{
+		if (term1 instanceof VarTerm[] && term2 instanceof String[]) {
+			Set<String> toRemove = new HashSet<>(Arrays.asList(term2));
+			LinkedHashSet<VarTerm> set = new LinkedHashSet<>();
+			for (VarTerm t : (VarTerm[]) term1)
+				if (!toRemove.contains(t.getName()))
+					set.add(t);
+			return set.toArray(new VarTerm[0]);
+		}
+
+		ArgTerm[] result;
+		ArgTerm[] prelimarray = new ArgTerm[term1.length];
+		int counter = 0;
+		int i,j;
+		boolean insert;
+
+		for (i=0; i<term1.length; i++)
+		{
+			insert = true;
+			j = 0;
+			while (j<term2.length && insert)
+			{
+				if (term1[i].equals(term2[j])) insert = false;
+				j++;
+			}
+			// if term1[i] does not appear in term2, also check
+			// whether it already is in  prelimarray
+			if (insert)
+			{
+				while (j<counter && insert)
+				{
+					if (term1[i].equals(prelimarray[j])) insert = false;
+					j++;
+				}
+			}
+			if (insert)
+			{
+				prelimarray[counter]= term1[i]; // only varterm can be strings
+				counter++;
+			}
+		}
+
+		result = new ArgTerm[counter];
+		for (i=0; i<counter; i++)
+			result[i] = prelimarray[i];
+
+		return result;
+	}
+
+	public static ArgTerm[] arraysubstraction(ArgTerm[] term1, int[] term2)
+	{
+		ArgTerm[] result;
+		ArgTerm[] prelimarray = new ArgTerm[term1.length];
+		int counter = 0;
+		int i,j;
+		boolean insert;
+
+		for (i=0; i<term1.length; i++)
+		{
+			insert = true;
+			j = 0;
+			while (j<term2.length && insert)
+			{
+				if (term1[i].equals(term2[j])) insert = false;
+				j++;
+			}
+			// if term1[i] does not appear in term2, also check
+			// whether it already is in  prelimarray
+			if (insert)
+			{
+				while (j<counter && insert)
+				{
+					if (term1[i].equals(prelimarray[j])) insert = false;
+					j++;
+				}
+			}
+			if (insert)
+			{
+				prelimarray[counter]= term1[i]; // only varterm can be strings
+				counter++;
+			}
+		}
+
+		result = new ArgTerm[counter];
+		for (i=0; i<counter; i++)
+			result[i] = prelimarray[i];
+
+		return result;
+	}
+
+
+	public static Rel[] arraysubstraction(Rel[] relarg1, Rel[]relarg2)
 	/* takes two arrays relarg1 and relarg2 
 	 * and returns an array that contains 
 	 * the elements of relarg1 that do not 
@@ -555,6 +807,14 @@ public class rbnutilities extends java.lang.Object
         return result;
     }
 
+	public static String arrayToString(ArgTerm argTerm[]) {
+		String result = "";
+		for (int i = 0; i<argTerm.length-1; i++)
+			result = result + argTerm[i].toString()+",";
+		if (argTerm.length > 0)
+			result = result + argTerm[argTerm.length-1].toString();
+		return result;
+	}
 
     public static String arrayToString (String arr[])
     {
@@ -939,13 +1199,28 @@ public class rbnutilities extends java.lang.Object
 	    }
 	return result;
     }
-    
-    
 
-    
-    
+	public static ArgTerm[] CorrArraySubstraction(String[] vars1, String[] vars2, ArgTerm[] args) {
+		ArgTerm[] result = new ArgTerm[vars1.length];
+		int j = 0;
+		boolean found;
+		for (int i = 0; i < vars1.length; i++) {
+			// find the position of vars1[i] in the
+			// original array and copy corresponding
+			// args - value to subsargs
+			found = false;
+			while (!found) {
+				if (vars1[i].equals(vars2[j])) {
+					result[i] = args[j];
+					found = true;
+				}
+				j++;
+			}
+		}
+		return result;
+	}
 
-    /** bv is a 0-1 vector representing integer n
+	/** bv is a 0-1 vector representing integer n
 	 * Method turns it into vector representing n+1
 	 * (if n+1 < 2^bv.length, otherwise throws exception)
 	 */
@@ -1065,17 +1340,15 @@ public class rbnutilities extends java.lang.Object
         int max = 0;
         char first;
         String rest;
-        for (int i=0;i<vars.length;i++)
-	    {
-		if (vars[i].length()==0)
-		    throw new IllegalArgumentException("Empty variable string in NewVariables");
-		first = vars[i].charAt(0);
-		if (first == 'v')
-		    {
-			rest = vars[i].substring(1,vars[i].length());
-			if (rbnutilities.IsInteger(rest))
-			    max = Math.max(max,Integer.parseInt(rest));
-		    }
+        for (int i=0;i<vars.length;i++) {
+			if (vars[i].length()==0)
+				throw new IllegalArgumentException("Empty variable string in NewVariables");
+			first = vars[i].charAt(0);
+			if (first == 'v') {
+				rest = vars[i].substring(1,vars[i].length());
+				if (rbnutilities.IsInteger(rest))
+					max = Math.max(max,Integer.parseInt(rest));
+			}
 	    }
         
         String[] result = new String[k];
@@ -1083,6 +1356,37 @@ public class rbnutilities extends java.lang.Object
             result[i]="v"+(max+1+i);
         return result;
     }
+
+	public static ArgTerm[] NewVariables(ArgTerm[] vars, int k)
+	// returns an array of k new variable names
+	// v<int+1>,v<int+2>,...,v<int+k>
+	// where int is the largest integer such that
+	// v<int> appears in vars
+	{
+		int max = 0;
+		char first;
+		String rest;
+		HashSet<String> temp = new HashSet<>();
+		for (int i = 0; i < vars.length; i++) {
+			temp.addAll(vars[i].getVariables());
+		}
+
+		for (String s : temp) {
+			if (s.length() == 0)
+				throw new IllegalArgumentException("Empty variable string in NewVariables");
+			first = s.charAt(0);
+			if (first == 'v') {
+				rest = s.substring(1, s.length());
+				if (rbnutilities.IsInteger(rest))
+					max = Math.max(max, Integer.parseInt(rest));
+			}
+		}
+
+		ArgTerm[] result = new ArgTerm[k];
+		for (int i=0;i<k;i++)
+			result[i]= new VarTerm("v"+(max+1+i));
+		return result;
+	}
     
     public static String[] NonIntOnly(String[] arguments)
         /* returns an array containing all the 
@@ -1130,6 +1434,20 @@ public class rbnutilities extends java.lang.Object
         for (int i = 0; i<numfv; i++) result[i]=prelimarray[i];
         return result;
     }
+
+	public static VarTerm[] NonIntOnly(ArgTerm[] arguments) {
+		if (arguments == null) return new VarTerm[0];
+
+		java.util.LinkedHashSet<ArgTerm> resultSet = new java.util.LinkedHashSet<>();
+		for (ArgTerm arg: arguments) {
+			for (String var : arg.getVariables()) {
+				if (!IsInteger(var))
+					resultSet.add(new VarTerm(var));
+			}
+		}
+		// convert the set back to an array
+		return resultSet.toArray(new VarTerm[0]);
+	}
 
 
     /** Example: tup=(4,2,9), perm=(3,1,2) 
@@ -1193,6 +1511,17 @@ public class rbnutilities extends java.lang.Object
     	return result;     
     }
 
+	public static int[] argTermArrayToIntArray(ArgTerm[] arr)
+	{
+		int[] result = new int[arr.length];
+		for (int i = 0; i < result.length; i++) {
+			if (IsInteger(arr[i].argEval()))
+				result[i]=Integer.parseInt(arr[i].argEval());
+			else return null;
+		}
+		return result;
+	}
+
     public static int tupleToIndex(int[] tuple, int range)
 	/* returns the index of 'tuple': i_0,i_2,...,i_(tuple.length-1)
 	 * in an enumeration of all tuples over range [0..range-1]
@@ -1244,19 +1573,18 @@ public class rbnutilities extends java.lang.Object
 
     /** Checks whether all the components in sarray that are integers match the
      * integers in iarray at the same position */
-    public static boolean integerMatch(String[] sarray, int[] iarray){
-	boolean result = true;
-	for (int i = 0; i < sarray.length  ; i++)
-	    if (IsInteger(sarray[i]) && Integer.parseInt(sarray[i])!=iarray[i])
-		result = false;
-	return result;
-	    
+    public static boolean integerMatch(String[] sarray, int[] iarray) {
+		boolean result = true;
+		for (int i = 0; i < sarray.length; i++)
+			if (IsInteger(sarray[i]) && Integer.parseInt(sarray[i])!=iarray[i])
+				result = false;
+		return result;
     }
 
     /** Returns the index of the (first occurrence) of s in sarray;
      * Returns -1 if s not in sarray
      */
-    public static int indexInArray(String[] sarray,String s){
+    public static int indexInArray(String[] sarray, String s){
 	boolean found = false;
 	int result = -1;
 	for (int i = 0; i < sarray.length && !found  ; i++){
@@ -1371,6 +1699,212 @@ public class rbnutilities extends java.lang.Object
     	}
 
     }
+
+	public static void allSatisfyingTuples(ArgTerm[] mixedvec, int[] intvec, String[] vars, TreeSet<int[]> ts, int d) {
+
+		if (intvec.length != mixedvec.length)
+			throw new IllegalArgumentException("Tuple of wrong length!");
+
+		/* Test whether the integer components in mixedvec match with intvec */
+		if (!integerMatch(mixedvec, intvec))
+			return;
+
+		/* Construct an array indexInVars of size intvec.length that for each variable
+		 * argument of mixedvec gives the index of this variable in vars.
+		 * Example: mixedvec = (1,x,y,x), vars = (y,x)
+		 * then indexInVars = (-1,1,0,1) (-1 represents a vacuous entry).
+		 *
+		 * Throws IllegalArgumentException if not all variables in mixedvec
+		 * appear in vars
+		 */
+		int[] indexInVars = new int[intvec.length];
+		for (int i = 0; i < indexInVars.length; i++)
+			indexInVars[i] = -1;
+
+		for (int i = 0; i < mixedvec.length; i++) {
+			if (!mixedvec[i].isGround()) {
+				int nextindex = rbnutilities.indexInArray(vars, mixedvec[i].argEval());
+				if (nextindex == -1)
+					throw new IllegalArgumentException("Variable not found in vars array");
+				else
+					indexInVars[i] = nextindex;
+			}
+		}
+
+		/* Now construct the 'pattern' of all tuples to be inserted into ts.
+		 * If mixedvec = (1,x,y,x), vars = (y,x), and intvec=(1,3,4,3)
+		 * then pattern = (4,3); if mixedvec = (1,x,y,x), vars = (y,x), and intvec=(1,3,4,5),
+		 * then the construction of pattern fails, and the method terminates.
+		 * If mixedvec = (1,x,y,x), vars = (y,x,z), and intvec=(1,3,4,3),
+		 * then pattern=(4,3,-1).
+		 */
+		int[] pattern = new int[vars.length];
+		int wildCardCount = pattern.length;
+		for (int i = 0; i < pattern.length; i++)
+			pattern[i] = -1;
+
+		for (int i = 0; i < intvec.length; i++) {
+			if (indexInVars[i] != -1) {
+				if (pattern[indexInVars[i]] != -1 && pattern[indexInVars[i]] != intvec[i])
+					return; // Inconsistent assignment - don't add any tuples
+				else {
+					if (pattern[indexInVars[i]] == -1)
+						wildCardCount--;
+					pattern[indexInVars[i]] = intvec[i];
+				}
+			}
+		}
+
+		/* Fill in all possible substitutions for the wildcards (-1 entries)
+		 * in pattern, and add to ts
+		 */
+		int[] nextsmalltuple;
+		int[] nextbigtuple;
+		for (int i = 0; i < Math.pow(d, wildCardCount); i++) {
+			nextsmalltuple = indexToTuple(i, wildCardCount, d);
+			nextbigtuple = new int[pattern.length];
+			int nextindex = 0;
+			for (int j = 0; j < nextbigtuple.length; j++) {
+				if (pattern[j] == -1) {
+					nextbigtuple[j] = nextsmalltuple[nextindex];
+					nextindex++;
+				} else {
+					nextbigtuple[j] = pattern[j];
+				}
+			}
+			ts.add(nextbigtuple);
+		}
+	}
+
+	// fast way to check integer
+	// https://stackoverflow.com/questions/237159/whats-the-best-way-to-check-if-a-string-represents-an-integer-in-java
+	protected static Integer tryParseInt(String s) {
+		if (s == null || s.isEmpty()) return null;
+
+		int i = 0;
+		int len = s.length();
+		int sign = 1;
+
+		if (s.charAt(0) == '-') {
+			if (len == 1) return null;
+			sign = -1;
+			i = 1;
+		}
+
+		int result = 0;
+		for (; i < len; i++) {
+			char c = s.charAt(i);
+			if (c < '0' || c > '9') return null;
+			result = result * 10 + (c - '0');
+		}
+
+		return sign * result;
+	}
+
+	public static void allSatisfyingTuples(ArgTerm[] mixedvec, int[] intvec, ArgTerm[] vars, TreeSet<int[]> ts, int d) {
+		if (intvec.length != mixedvec.length)
+			throw new IllegalArgumentException("Tuple of wrong length!");
+
+		/* Test whether the integer components in mixedvec match with
+		 * intvec */
+		for (int i = 0; i < mixedvec.length; i++) {
+			if (mixedvec[i].isGround()) {
+				String val = mixedvec[i].argEval();
+				if (val == null) return;
+				Integer intVal = tryParseInt(val);
+				if (intVal == null || intVal != intvec[i]) return;
+			}
+		}
+
+		int[] indexInVars = new int[intvec.length];
+		for (int i = 0; i < indexInVars.length; i++)
+			indexInVars[i] = -1;
+
+		for (int i = 0; i < mixedvec.length; i++) {
+			if (!mixedvec[i].isGround()) {
+				String argName = mixedvec[i].argEval();
+				int nextindex = -1;
+
+				for (int j = 0; j < vars.length; j++) {
+					if (vars[j].argEval().equals(argName)) {
+						nextindex = j;
+						break;
+					}
+				}
+
+				if (nextindex == -1)
+					throw new IllegalArgumentException("Variable " + argName + " not found in vars array");
+				else
+					indexInVars[i] = nextindex;
+			}
+		}
+		int[] pattern = new int[vars.length];
+		int wildCardCount = pattern.length;
+		for (int i = 0; i < pattern.length; i++)
+			pattern[i] = -1;
+
+		for (int i = 0; i < intvec.length; i++) {
+			if (indexInVars[i] != -1) {
+				if (pattern[indexInVars[i]] != -1 && pattern[indexInVars[i]] != intvec[i])
+					return; // Inconsistent assignment
+				else {
+					if (pattern[indexInVars[i]] == -1)
+						wildCardCount--;
+					pattern[indexInVars[i]] = intvec[i];
+				}
+			}
+		}
+
+
+		int[] nextsmalltuple;
+		int[] nextbigtuple;
+		int nextindex;
+		for (int i = 0; i < MyMathOps.intPow(d, wildCardCount); i++) {
+			nextsmalltuple = rbnutilities.indexToTuple(i, wildCardCount, d);
+			nextbigtuple = new int[pattern.length];
+			nextindex = 0;
+			for (int j = 0; j < nextbigtuple.length; j++) {
+				if (pattern[j] == -1) {
+					nextbigtuple[j] = nextsmalltuple[nextindex];
+					nextindex++;
+				} else {
+					nextbigtuple[j] = pattern[j];
+				}
+			}
+			ts.add(nextbigtuple);
+		}
+	}
+
+	/**
+	 * Helper method: Tests whether the grounded (integer) components in mixedvec
+	 * match with corresponding values in intvec
+	 */
+	private static boolean integerMatch(ArgTerm[] mixedvec, int[] intvec) {
+		for (int i = 0; i < mixedvec.length; i++) {
+			if (mixedvec[i].isGround()) {
+				int value = Integer.parseInt(mixedvec[i].argEval());
+				if (value != intvec[i])
+					return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Given an array of max possible value for each variable, find all the possible combinations
+	 */
+	public static void generate(int[] maxValues, int[] current, int index, List<int[]> results) {
+		if (index == maxValues.length) {
+			results.add(current.clone());
+			return;
+		}
+
+		// Recursive step: try every integer from 0 to max_i
+		for (int i = 0; i <= maxValues[index]; i++) {
+			current[index] = i;
+			generate(maxValues, current, index + 1, results);
+		}
+	}
 
     public static double[] normalizeDoubleArray(double[] ar){
     	double[] result = new double[ar.length];
@@ -1518,10 +2052,20 @@ public class rbnutilities extends java.lang.Object
     public static TreeSet treeSetIntersection(TreeSet ts1, TreeSet ts2) {
     	if (!ts1.comparator().getClass().equals( ts2.comparator().getClass()))
     		throw new RBNRuntimeException("Cannot intersect two tree sets with different comparators");
+		// Find the smaller of the two tree sets
+		TreeSet tssmall,tslarge;
+		if (ts1.size()<ts2.size()){
+			tssmall = ts1;
+			tslarge = ts2;
+		}
+		else{
+			tssmall = ts2;
+			tslarge = ts1;
+		}
     	TreeSet result = new TreeSet(ts1.comparator());
-		for (Iterator<int[]> it = ts1.iterator(); it.hasNext();){
+		for (Iterator<int[]> it = tssmall.iterator(); it.hasNext();){
 			Object nextel = it.next();
-			if( ts2.contains(nextel))
+			if( tslarge.contains(nextel))
 				result.add(nextel);
 		}
     	return result;
@@ -1534,17 +2078,84 @@ public class rbnutilities extends java.lang.Object
     	}
     	return result;
     }
-    
+
+	public static int getIndexOf(VarTerm[] tarr, VarTerm t)
+			/* Returns the index of the appearance of t in in tarr
+			*throws error if t does not occur in tarr
+			 */
+			throws RBNRuntimeException
+	{
+		for  (int i=0;i<tarr.length;i++) {
+		if (tarr[i].equals(t))
+			return i;
+	}
+	throw new RBNRuntimeException("Cannot find element in "+tarr);
+	}
+
+	public static int[] getIndicesOf(VarTerm[] tarr, VarTerm[] tsub){
+		int[] idxs = new int[tsub.length];
+		for (int i=0;i<tsub.length;i++)
+			idxs[i]=getIndexOf(tarr, tsub[i]);
+		return idxs;
+	}
+
+	public static VarTerm[] alignAT(ArgTerm[] master, ArgTerm[] tosort){
+				/*
+				tosort is a subset of master; Returns a permuted copy of tosort where the relative
+				order of VarTerms coincides with the order in master; Assumes all elements are distinct in each array
+				 */
+		VarTerm[] result= new VarTerm[tosort.length];
+		int nextidx =0;
+		for (int i=0;i<master.length;i++){
+			if (arrayContains(tosort,master[i])) {
+				result[nextidx] =(VarTerm) master[i];
+				nextidx++;
+			}
+		}
+		return result;
+	}
+
+	public static int[] sliceTuple(int[] tup, int[] idxs)
+	{
+		int[] result = new int[idxs.length];
+		for (int i=0;i<idxs.length;i++)
+			result[i] = tup[idxs[i]];
+		return result;
+	}
+	public static TreeSet<int[]> treeSetSlice(TreeSet<int[]> ts, VarTerm[] tsvars, VarTerm[] slicevars )
+			throws RBNRuntimeException
+	/*
+	* ts is a treeset containing int tuples that represent groundings of tsvars (length of tsvars equals length of the tuples
+	* in ts). slicevars is a subset of tsvars. Returns a treeset that contains all distinct groundings for slicevars contained
+	* in ts.
+	 */
+	{	int[] idxs = new int[slicevars.length];
+		for (int i=0;i<slicevars.length;i++)
+			idxs[i]=getIndexOf(tsvars, slicevars[i]);
+		TreeSet<int[]> result = new TreeSet<int[]>(new IntArrayComparator());
+		for (Iterator<int[]> it = ts.iterator(); it.hasNext();) {
+			result.add(  sliceTuple(it.next(),idxs));
+		}
+		return result;
+	}
+
+
     /* Returns list of domain element names corresponding to
      * the indices in idxs as a single comma-separated string
      * (used in BayesConstructor).
      */
-    public static String namestring(int[] idxs, RelStruc A) {
+    public static String namestring(int[] idxs, RelStruc A, Rel rel) {
     	String result = "";
 		if (idxs.length > 0){
-			result = result + A.nameAt(idxs[0]);
+			if (rel.getTypes()[0] instanceof TypeInteger)
+				result = result + idxs[0];
+			else
+				result = result + A.nameAt(idxs[0]);
 			for (int k=1;k<idxs.length;k++)
-				result = result + "," + A.nameAt(idxs[k]);
+				if (rel.getTypes()[k] instanceof TypeInteger)
+					result = result + "," + idxs[k];
+				else
+					result = result + "," + A.nameAt(idxs[k]);
 		}
 		return result;
     }
@@ -1570,10 +2181,10 @@ public class rbnutilities extends java.lang.Object
     	}
     	return result;
     }
-    
+
     public static String[] array_substitute(String[] arr, String[] olds , int[] news) {
     	/* Performs a substitution defined by olds/news on the array arr.
-    	 * 
+    	 *
     	 * Example: array_substiture([u,z],[x,y,z],[1,2,3]) = [u,3]
     	 * (all elements in result of type String).
     	 */
@@ -1592,6 +2203,107 @@ public class rbnutilities extends java.lang.Object
     	}
     	return result;
     }
+
+
+	/**
+	 * Performs substitution on ArgTerm array (with String replacements)
+	 * Similar to array_substitute for String[]
+	 */
+	public static ArgTerm[] array_substitute(ArgTerm[] arr, String[] olds, String[] news) {
+		if (olds.length != news.length)
+			System.out.println("calling rbnutilities.array_substitute with unmatched arguments");
+
+		ArgTerm[] newsTerms = new ArgTerm[news.length];
+		for (int i = 0; i < news.length; i++) {
+			newsTerms[i] = new VarTerm(news[i]);
+		}
+
+		ArgTerm[] result = new ArgTerm[arr.length];
+		for (int i = 0; i < arr.length; i++) {
+			ArgTerm current = arr[i];
+			for (int j = 0; j < olds.length; j++) {
+				current = current.substitute(olds[j], newsTerms[j]);
+			}
+			result[i] = current;
+		}
+		return result;
+	}
+
+	public static ArgTerm[] array_substitute(ArgTerm[] arr, String[] olds, int[] news) {
+		if (olds.length != news.length)
+			System.out.println("calling rbnutilities.array_substitute with unmatched arguments");
+
+		ArgTerm[] newsTerms = new ArgTerm[news.length];
+		for (int i = 0; i < news.length; i++) {
+			newsTerms[i] = new VarTerm(String.valueOf(news[i]));
+		}
+
+		ArgTerm[] result = new ArgTerm[arr.length];
+		for (int i = 0; i < arr.length; i++) {
+			ArgTerm current = arr[i];
+			for (int j = 0; j < olds.length; j++) {
+				current = current.substitute(olds[j], newsTerms[j]);
+			}
+			result[i] = current;
+		}
+		return result;
+	}
+
+	public static ArgTerm[] array_substitute(ArgTerm[] arr, String[] olds, ArgTerm[] news) {
+		if (olds.length != news.length)
+			System.out.println("calling rbnutilities.array_substitute with unmatched arguments");
+
+		ArgTerm[] result = new ArgTerm[arr.length];
+		for (int i = 0; i < arr.length; i++) {
+			ArgTerm current = arr[i];
+			for (int j = 0; j < olds.length; j++) {
+				current = current.substitute(olds[j], news[j]);
+			}
+			result[i] = current;
+		}
+		return result;
+	}
+
+	public static ArgTerm[] array_substitute(ArgTerm[] arr, ArgTerm[] vars, ArgTerm[] args) {
+		if (vars.length != args.length)
+			System.out.println("calling rbnutilities.array_substitute with unmatched arguments");
+
+		ArgTerm[] result = new ArgTerm[arr.length];
+		for (int i = 0; i < arr.length; i++) {
+			ArgTerm current = arr[i];
+			for (int j = 0; j < vars.length; j++) {
+				current = current.substitute(vars[j], args[j]);
+			}
+
+			result[i] = current;
+		}
+		return result;
+	}
+
+	public static ArgTerm[] array_substitute(ArgTerm[] arr, ArgTerm[] olds, int[] news) {
+		if (olds.length != news.length)
+			System.out.println("calling rbnutilities.array_substitute with unmatched arguments");
+
+		ArgTerm[] result = new ArgTerm[arr.length];
+
+		for (int i = 0; i < arr.length; i++) {
+			ArgTerm current = arr[i];
+			for (int j = 0; j < olds.length; j++) {
+				current = current.substitute(olds[j], news[j]);
+			}
+			result[i] = current;
+		}
+		return result;
+	}
+
+	private static boolean isInt(String s) {
+		try {
+			Integer.parseInt(s);
+			return true;
+		} catch (NumberFormatException e) {
+			return false;
+		}
+	}
     
     public static String asString(Vector<String> sv) {
     	String result = "";
@@ -1661,30 +2373,40 @@ public class rbnutilities extends java.lang.Object
 	
 	public static int sampledValue(double[] cpr) {
 		/* For probability vector cpr, returns the index of the value sampled
-		 * according to the cpr probabilities.
-		 * 
+		 * according to the cpr probabilities. The draw is scaled by the actual sum of cpr,
+		 * so a vector that sums to slightly less (or more) than 1, e.g. a float32
+		 * softmax from a torch model, is sampled proportionally and never runs past
+		 * the last index.
 		 */
-		int result=0;
-		double probsum =cpr[0];
-		double rand=Math.random();
-		for (int i=0; i< cpr.length && probsum<rand;i++) { 
+		double total = 0;
+		for (double p : cpr)
+			total += p;
+		double rand = Math.random() * total;
+		int result = 0;
+		double probsum = cpr[0];
+		while (probsum < rand && result < cpr.length - 1) {
 			result++;
-			probsum+=cpr[i+1];
+			probsum += cpr[result];
 		}
 		return result;
 	}
 	
 	public static int sampledValue(Double[] cpr) {
 		/* For probability vector cpr, returns the index of the value sampled
-		 * according to the cpr probabilities.
-		 * 
+		 * according to the cpr probabilities. The draw is scaled by the actual sum of cpr,
+		 * so a vector that sums to slightly less (or more) than 1 -- e.g. a float32
+		 * softmax from a torch model -- is sampled proportionally and never runs past
+		 * the last index.
 		 */
-		int result=0;
-		double probsum =cpr[0];
-		double rand=Math.random();
-		for (int i=0; i< cpr.length && probsum<rand;i++) { 
+		double total = 0;
+		for (Double p : cpr)
+			total += p;
+		double rand = Math.random() * total;
+		int result = 0;
+		double probsum = cpr[0];
+		while (probsum < rand && result < cpr.length - 1) {
 			result++;
-			probsum+=cpr[i+1];
+			probsum += cpr[result];
 		}
 		return result;
 	}
@@ -1766,5 +2488,23 @@ public class rbnutilities extends java.lang.Object
 		} catch (RBNCompatibilityException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	public static String[] getArgumentsAsString(ArgTerm[] arguments) {
+		String[] out = new String[arguments.length];
+		for (int i = 0; i < arguments.length; i++) {
+			out[i] = arguments[i].argEval();
+		}
+		return out;
+	}
+
+	// returns all the variables in an argterm array as String[]. e.g., [(t+1), a, ((c-1)+d)]: new String[]{"t","a","c","d"}
+	public static String[] getVarsFromArgs(ArgTerm[] arguments) {
+		Vector<String> out = new Vector<>();
+		for (int i = 0; i < arguments.length; i++) {
+			for (String v : arguments[i].getVariables())
+				out.add(v);
+		}
+		return out.toArray(new String[0]);
 	}
 }

@@ -201,14 +201,14 @@ public class LearnModule implements GradientGraphOptions
 		numbatches =50;
 		splitmode = RelData.SPLIT_ACROSS_DOMAINS;
 		dampingfac =0.99;
-		numchains = 10;
-//		windowsize = 20;
+		numchains = 20;
+		windowsize = 20;
 		maxfails = 5;
 		maxiterations = 200;
 		linedistancethresh = 0.0001;
 //		linelikelihoodthresh = 0.001;
-		likelihoodwindow = 5;
-		llikhoodthresh = 0.00005;
+		likelihoodwindow = 300;
+		llikhoodthresh = 0.000001;
 		gradientdistancethresh = 0.001;
 		paramratiothresh = 0.0;
 		omitrounds = 3;
@@ -294,7 +294,7 @@ public class LearnModule implements GradientGraphOptions
 	}
 
 	public int getWindowSize(){
-		return likelihoodwindow;
+		return windowsize;
 	}
 
 	public void setRestarts(Integer rs){
@@ -430,12 +430,18 @@ public class LearnModule implements GradientGraphOptions
 		data=myprimula.getReldata();
 	}
 
-	public void setParameters(Hashtable<String,Integer> params){
+	public void setParameters(HashMap<String,Integer> params){
 		parammodel.setParameters(params);
 		if (this.learnModuleGUI!=null)
 			this.learnModuleGUI.getParametertable().updateUI();
 	}
 	
+	/** Number of restarts and current estimates, shown in the GUI if there is one. */
+	public void showRestarts(String restarts){
+		if (this.learnModuleGUI!=null)
+			this.learnModuleGUI.showRestarts(restarts);
+	}
+
 	public void setParameterValues(double[] pvals, double ll){
 		parammodel.setParameterEstimates(pvals, ll);
 		if (this.learnModuleGUI!=null)
@@ -596,12 +602,6 @@ public class LearnModule implements GradientGraphOptions
 		}
 
 		lthread = new LearnThread(myprimula, data, learndata, parammodel, this);
-
-		if (this.getLearnModuleGUI() != null) {
-			lthread.setNumrestartsfield(this.getLearnModuleGUI().getTextnumrestarts());
-			lthread.setParametertable(this.getLearnModuleGUI().getParametertable());
-		}
-
 		lthread.start();
 	}
 	

@@ -27,6 +27,7 @@ import java.util.*;
 
 import RBNpackage.*;
 import RBNExceptions.*;
+import RBNpackage.VarTermPackage.ArgTerm;
 import RBNutilities.*;
 
 
@@ -56,16 +57,16 @@ public class GGSoftMaxNode extends GGCPMNode{
 
 	/** cpmsm must be ground ! */
 	public GGSoftMaxNode(GradientGraphO gg,
-			CatModelSoftMax cpmsm, 
-			Hashtable<String,GGCPMNode> allnodes, 
+			CatModelSoftMax cpmsm,
+			HashMap<String,GGCPMNode> allnodes,
 			RelStruc A, 
 			OneStrucData I,
 			int inputcaseno,
 			int observcaseno,
-			Hashtable<String,Integer> parameters,
+		 	HashMap<String,Integer> parameters,
 			boolean useCurrentPvals,
-			Hashtable<Rel,GroundAtomList> mapatoms,
-			Hashtable<String,Object[]>  evaluated )
+		 	HashMap<Rel,GroundAtomList> mapatoms,
+		 	HashMap<String,Object[]>  evaluated )
 					throws RBNCompatibilityException
 	{
 		super(gg,cpmsm,A,I);
@@ -75,11 +76,12 @@ public class GGSoftMaxNode extends GGCPMNode{
 //		current_evalofpfs = new double[cpmsm.numvals()];
 
 		for (int i = 0; i<outDim; i++){
-			ProbForm pf = cpmsm.pfAt(i);
+			CPModel pf = cpmsm.pfAt(i);
 			evalOfPFs[i]= (double)(pf.evaluate(A, 
 					I , 
-					new String[0], 
-					new int[0] , 
+					new ArgTerm[0],
+					new int[0],
+					0,
 					false,
 					useCurrentPvals,
 					mapatoms,
@@ -138,8 +140,8 @@ public class GGSoftMaxNode extends GGCPMNode{
 		double[] valsofpfs = new double[this.outDim];
 		
 		for (int i=0;i<this.outDim;i++) {
-			if (children.elementAt(i)!=null)
-				valsofpfs[i] = children.elementAt(i).evaluate(sno)[0]; // return the first element, all the children 
+			if (children.get(i)!=null)
+				valsofpfs[i] = children.get(i).evaluate(sno)[0]; // return the first element, all the children
 			                                                           // must be scalar! (scalar values for the softmax function)
 			else
 				valsofpfs[i] = evalOfPFs[i];
@@ -196,8 +198,8 @@ public class GGSoftMaxNode extends GGCPMNode{
 		for (String param: this.myparameters) {
 			double[][] childpds = new double[children.size()][];
 			for (int i=0;i<children.size();i++) {
-				if (children.elementAt(i)!=null)
-					childpds[i]=children.elementAt(i).evaluateGradient(sno).get_part_deriv(param);
+				if (children.get(i)!=null)
+					childpds[i]=children.get(i).evaluateGradient(sno).get_part_deriv(param);
 			}
 
 			double[] partderiv = new double[this.outDim];

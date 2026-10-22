@@ -1,15 +1,16 @@
 package RBNpackage;
 
-import java.util.Hashtable;
+import java.util.HashMap;
 
 import RBNExceptions.RBNCompatibilityException;
+import RBNpackage.VarTermPackage.ArgTerm;
 
 /*
  * ProbForms that are guaranteed to evaluate to 
  * a boolean value 0 or 1. Boolean expression of 
  * Boolean atoms 
  */
-public abstract class ProbFormBool extends ProbForm {
+public abstract class ProbFormBool extends CPModel implements ProbForm {
 	
 	public static final int OPERATORAND = 0;
 	public static final int OPERATOROR = 1;
@@ -24,7 +25,7 @@ public abstract class ProbFormBool extends ProbForm {
 		sign = true;
 	}
 	
-	public abstract int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, Hashtable<String,GroundAtom> atomhasht) 
+	public abstract int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, HashMap<String,GroundAtom> atomhasht)
 	throws RBNCompatibilityException;
 
     public abstract int evaluatesTo(RelStruc A) throws RBNCompatibilityException;
@@ -64,11 +65,11 @@ public abstract class ProbFormBool extends ProbForm {
 	 * interpretations of numerical atoms), and in the case of ProbFormBoolEquality
 	 * also nothing is changed
 	 */
-	public abstract ProbForm toStandardPF(boolean recursive);
+	public abstract CPModel toStandardPF(boolean recursive);
 	
 	public abstract ProbFormBool clone();
 	
 	public void setCvals(String paramname, double val) {
 	}
-	
+
 }

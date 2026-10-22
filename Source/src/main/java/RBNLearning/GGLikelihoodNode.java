@@ -123,6 +123,7 @@ public  class GGLikelihoodNode extends GGNode{
 		ssqe=0;
 		bounds = new double[2][2];
 		ugasForParam = new Hashtable<String,Vector<GGCPMNode>>();
+		small_likelihood = new double[2];
 	}
 
 	public void initllgrads(int k){
@@ -202,7 +203,7 @@ public  class GGLikelihoodNode extends GGNode{
 	 */
 	public double[] evaluate(Integer sno,
 			int smallSample,
-			Vector<GGCPMNode> batchelements,
+			ArrayList<GGCPMNode> batchelements,
 			boolean incremental,
 			boolean updatelik,
 			double[][] oldsmallls)
@@ -267,13 +268,15 @@ public  class GGLikelihoodNode extends GGNode{
 						oldlsum = SmallDouble.divide(oldlsum, smallSample*thisgg.numchains);
 					}
 					double[] ratio = SmallDouble.divide(small_likelihood_sum, oldlsum);
+//					SmallDouble.multiplyInPlace(small_likelihood, ratio);
 					small_likelihood = SmallDouble.multiply(small_likelihood, ratio);
 				}
 				else
 					small_likelihood=small_likelihood_sum.clone();
+				return small_likelihood;
 			}
 
-			return small_likelihood;
+			return small_likelihood_sum;
 		}
 
 		/*
@@ -303,8 +306,9 @@ public  class GGLikelihoodNode extends GGNode{
 					childlik = 1 - childval[0];
 			}
 
-			if (!this.depends_on_sample || (this.depends_on_sample && sno!=null)) 
-				local_small_likelihood=SmallDouble.multiply(local_small_likelihood, childlik);
+			if (!this.depends_on_sample || (this.depends_on_sample && sno!=null))
+				SmallDouble.multiplyInPlace(local_small_likelihood, childlik);
+//				local_small_likelihood=SmallDouble.multiply(local_small_likelihood, childlik);
 		}
 
 
@@ -421,7 +425,7 @@ public  class GGLikelihoodNode extends GGNode{
 	 * batchelements contains the children that are 
 	 * used (as a current data batch).
 	 */
-	private double[][] evaluateSmallGrad(Integer sno, Vector<GGCPMNode> batchelements)
+	private double[][] evaluateSmallGrad(Integer sno, ArrayList<GGCPMNode> batchelements)
 			throws RBNNaNException
 	{
 
@@ -438,7 +442,7 @@ public  class GGLikelihoodNode extends GGNode{
 
 			small_gradient=new double[thisgg.numberOfParameters()][2];
 			for (int i=0;i<thisgg.windowsize*thisgg.numchains;i++) 
-				SmallDouble.addArray(small_gradient, small_gradients_for_samples[i]);
+				small_gradient = SmallDouble.addArray(small_gradient, small_gradients_for_samples[i]);
 			small_gradient = SmallDouble.divide(small_gradient, thisgg.windowsize*thisgg.numchains );		
 
 			return small_gradient;
@@ -479,7 +483,10 @@ public  class GGLikelihoodNode extends GGNode{
 
 					if (!child.isBoolean()) {
 						childlik = childval[childinst];
-						childgrad_at_value=idpd.getPd()[childinst];
+						if (idpd.getPd().length > 1)
+							childgrad_at_value=idpd.getPd()[childinst];
+						else
+							childgrad_at_value=idpd.getPd()[0];
 
 					} else {
 						if (childinst==1) {

@@ -21,7 +21,7 @@ public class MapThread extends GGThread {
 	boolean running;
     private GnnPy gnnPy;
 //    private final boolean gnnIntegration;
-	private Hashtable<Rel,int[]> bestMapVals;
+	private HashMap<Rel,int[]> bestMapVals;
 	private double[] bestLikelihood;
 
     public boolean isSampling;
@@ -45,16 +45,12 @@ public class MapThread extends GGThread {
 		 * there are any free parameters in the model
 		 */
 		if (gg.parameters().size() > 0){
-			myLearnModule = myprimula.openLearnModule();
-			if (myprimula.getPrimulaGUI() != null) {
-				LearnModuleGUI myLearnModuleGUI = myprimula.getPrimulaGUI().openLearnModuleGUI(myLearnModule);
-				myLearnModuleGUI.disableDataTab();
-			}
+			myLearnModule = myprimula.openLearnModuleForMap();
 			myLearnModule.setParameters(gg.parameters());
 			gg.setLearnModule(myLearnModule);
 		}
 
-		Hashtable<Rel,int[]> newmapvals = new Hashtable<>();
+		HashMap<Rel,int[]> newmapvals = new HashMap<>();
 		
 		int maxrestarts = myinfmodule.getMAPRestarts();
 		int currentRestarts = 1;
@@ -64,6 +60,7 @@ public class MapThread extends GGThread {
 
 		double averageTimeRestarts = 0;
 		double bestTimeRestarts = Double.POSITIVE_INFINITY;
+		long startMap = System.currentTimeMillis();
 		while (running && ((maxrestarts == -1) || (currentRestarts <= maxrestarts))) {
 			long startrestart = System.currentTimeMillis();
 			try {
@@ -105,14 +102,16 @@ public class MapThread extends GGThread {
 				throw new RuntimeException(e);
 			}
 		}
+		long endMap = System.currentTimeMillis();
+		System.out.println("MAP search finished in " + (endMap - startMap) / 1000.0 + " s");
 		System.out.println("Average time for " + (currentRestarts-1) + " restarts: " + (averageTimeRestarts / (currentRestarts-1) / 1000.0) + " s");
-		System.out.println("Best time for " + (currentRestarts-1) + " restarts: " + (bestTimeRestarts / 1000.0) + " s");
-
 		System.out.println("Best log-likelihood found: " + oldll);
+		gg.bestll = oldll;
 
 		// save res as pickle
-		String path = "/Users/lz50rg/Dev/football/res.pkl";
-		// createInputs(onsd, path);
+//		String path = "/Users/lz50rg/Dev/dinga/fairmofsyncondition/res.pkl";
+//		String path = "/Users/lz50rg/Dev/RSE/res.pkl";
+//		createInputs(onsd, path);
 
         this.isSampling = false;
 	}
@@ -210,7 +209,7 @@ public class MapThread extends GGThread {
 		return this.running;
 	}
 
-	public Hashtable<Rel, int[]> getBestMapVals() {
+	public HashMap<Rel, int[]> getBestMapVals() {
 		return bestMapVals;
 	}
 

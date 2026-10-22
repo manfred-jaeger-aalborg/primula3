@@ -61,4 +61,17 @@ public class TypeRel extends Type{
 	public String getName(){
 		return typerel.name.name;
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) return false;
+		if (!(obj instanceof TypeRel)) return false;
+		TypeRel tr = (TypeRel) obj;
+		return this.typerel.equals(tr.typerel);
+	}
+
+	@Override
+	public int hashCode() {
+		return typerel.hashCode();
+	}
 }

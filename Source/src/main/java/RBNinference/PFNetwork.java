@@ -47,16 +47,16 @@ public class PFNetwork{
 	private Vector<PFNetworkNode> allnodes; 
 
 	/** 
-	 * Hashtable makes nodes accessible by their atom
+	 * HashMap makes nodes accessible by their atom
 	 * (needed when evaluating probability 
 	 * formulas)
 	 *
 	 */
-	private Hashtable<String,PFNetworkNode> atomhasht;
+	private HashMap<String,PFNetworkNode> atomhasht;
 
 	private RelStruc A; // Current underlying RelStruc
 	private OneStrucData inst;
-	private Hashtable<Rel,PFNetworkNode[]> queryPFNnodes; // Contains the PFNnodes corresponding to 
+	private HashMap<Rel,PFNetworkNode[]> queryPFNnodes; // Contains the PFNnodes corresponding to 
 	// to queryatoms (for each relation, in the same order as in InferenceModule.queryatoms)
 	private Vector sampleord; // Vector of the uninstantiated nodes in the order in 
 	// which they are to be sampled
@@ -293,7 +293,7 @@ public class PFNetwork{
 			int adaptivemode, 
 			boolean[] samplelogmode,
 			int numpar, 
-			Hashtable<Rel,GroundAtomList> queryatoms, 
+			HashMap<Rel,GroundAtomList> queryatoms, 
 			int num_subsamples_minmax,
 			int num_subsamples_adapt,
 			BufferedWriter logwriter)
@@ -309,7 +309,7 @@ public class PFNetwork{
 		allsampleweight_subsample = new double[num_subsamples_minmax][2];
 		makeSimple(numpar,inst,A);
 		sEval(A);
-		atomhasht = new Hashtable<String,PFNetworkNode>(allnodes.size(),(float)1.0);
+		atomhasht = new HashMap<String,PFNetworkNode>(allnodes.size(),(float)1.0);
 		for (int i=0;i<allnodes.size();i++)
 			atomhasht.put(atomAt(i).asString(),allnodes.elementAt(i));
 
@@ -398,7 +398,7 @@ public class PFNetwork{
 
 		/* Create queryPFNnodes */
 		if (queryatoms != null) {
-			queryPFNnodes = new Hashtable<Rel,PFNetworkNode[]>();
+			queryPFNnodes = new HashMap<Rel,PFNetworkNode[]>();
 			String nextatomstring;
 			for (Rel r: queryatoms.keySet()) {
 				GroundAtomList gal = queryatoms.get(r);
@@ -570,8 +570,8 @@ public class PFNetwork{
 			((PFNetworkNode)allnodes.elementAt(i)).initializeForNextSample();
 		}
 		
-		Hashtable<String,double[]> evaluated = new Hashtable<String,double[]>();
-		//Hashtable<String,Double> evaluated = null;
+		HashMap<String,double[]> evaluated = new HashMap<String,double[]>();
+		//HashMap<String,Double> evaluated = null;
 		
 		for (int i=0;i<sampleord.size() && !badsample;i++){
 			nextpfnn = (PFNetworkNode)sampleord.elementAt(i);

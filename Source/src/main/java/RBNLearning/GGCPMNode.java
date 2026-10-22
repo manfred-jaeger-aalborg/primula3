@@ -34,7 +34,7 @@ public abstract class GGCPMNode extends GGNode{
 
 	TreeSet<GGCPMNode> parents;
 	TreeSet<GGNode> ancestors; // Includes the likelihood node
-
+	ArrayList<GGNode> ancestorsNoLL; // DO NOT includes the likelihood node
 
 	//String probformasstring;
 
@@ -77,12 +77,12 @@ public abstract class GGCPMNode extends GGNode{
 	/* If this is an Upper Ground Atom Node: the set of all IndicatorMaxNodes on whose value 
 	 * this node depends. Otherwise null.
 	 */
-	private Vector<GGAtomMaxNode> mymaxindicators;
+	private ArrayList<GGAtomMaxNode> mymaxindicators;
 
 	/* If this is an Upper Ground Atom Node: the set of all IndicatorSumNodes on whose value 
 	 * this node depends. Otherwise null.
 	 */
-	private Vector<GGAtomSumNode> mysumindicators;
+	private ArrayList<GGAtomSumNode> mysumindicators;
 
 
 
@@ -105,8 +105,8 @@ public abstract class GGCPMNode extends GGNode{
 		myindicator = null;
 		myatom ="";
 		instval = null;
-		mymaxindicators = new Vector<GGAtomMaxNode>();
-		mysumindicators = new Vector<GGAtomSumNode>();	
+		mymaxindicators = new ArrayList<GGAtomMaxNode>();
+		mysumindicators = new ArrayList<GGAtomSumNode>();
 		isuga = false;
 		outDim = cpm.numvals();
 		//		dependsOnParam = new boolean[gg.numberOfParameters()];
@@ -121,17 +121,17 @@ public abstract class GGCPMNode extends GGNode{
 
 	public static GGCPMNode constructGGPFN(GradientGraphO gg,
 			CPModel cpm, 
-			Hashtable<String,GGCPMNode> allnodes, 
+			HashMap<String,GGCPMNode> allnodes,
 			RelStruc A, 
 			OneStrucData I,
 			int inputcaseno,
 			int observcaseno,
-			Hashtable<String,Integer> parameters,
+			HashMap<String,Integer> parameters,
 			boolean useCurrentPvals,
 			boolean isuga,
 			String uganame,
-			Hashtable<Rel,GroundAtomList> mapatoms,
-			Hashtable<String,Object[]>  evaluated )
+		    HashMap<Rel,GroundAtomList> mapatoms,
+			HashMap<String,Object[]>  evaluated )
 					throws RuntimeException,RBNCompatibilityException
 	{
 
@@ -155,7 +155,7 @@ public abstract class GGCPMNode extends GGNode{
 		 */
 		if ((cpm instanceof ProbFormBoolAtom) && ((ProbFormBoolAtom)cpm).sign()==false){
 			((ProbFormBoolAtom)cpm).toggleSign();
-			cpm = new ProbFormConvComb((ProbForm)cpm,new ProbFormConstant(0), new ProbFormConstant(1));
+			cpm = new ProbFormConvComb(cpm,new ProbFormConstant(0), new ProbFormConstant(1));
 		}
 
 		if (!isuga) {
@@ -173,10 +173,10 @@ public abstract class GGCPMNode extends GGNode{
 					// then not be identified as an rbn parameter, because it receives an uga key.
 					// Therefore, turn the pf into auxiliary conv. comb. formula (1:pf,0) which will then be 
 					// handled by subsequent case.
-					cpm = new ProbFormConvComb(new ProbFormConstant(1.0),(ProbForm)cpm,new ProbFormConstant(0.0));
+					cpm = new ProbFormConvComb(new ProbFormConstant(1.0),cpm,new ProbFormConstant(0.0));
 				}
 				else {
-					result =  new GGConstantNode(gg,(ProbForm)cpm,A,I);
+					result =  new GGConstantNode(gg,cpm,A,I);
 					String pname = ((ProbFormConstant)cpm).getParamName();
 					if (pname !="") {
 						((GGConstantNode)result).setCurrentParamVal(gg.myPrimula.getRBN().getParameterValue(pname));
@@ -190,9 +190,9 @@ public abstract class GGCPMNode extends GGNode{
 				if (gg.mapatoms != null && 
 						gg.mapatoms(((ProbFormAtom)cpm).getRelation()) != null && 
 						gg.mapatoms(((ProbFormAtom)cpm).getRelation()).contains(((ProbFormAtom)cpm).atom()))
-					result =  new GGAtomMaxNode(gg,(ProbForm)cpm,A,I,inputcaseno,observcaseno);
+					result =  new GGAtomMaxNode(gg,cpm,A,I,inputcaseno,observcaseno);
 				else
-					result =  new GGAtomSumNode(gg,(ProbForm)cpm,A,I,inputcaseno,observcaseno);
+					result =  new GGAtomSumNode(gg,cpm,A,I,inputcaseno,observcaseno);
 			}
 			if ((cpm instanceof ProbFormAtom && ((ProbFormAtom)cpm).getRelation().ispredefined() )
 					|| 
@@ -206,31 +206,31 @@ public abstract class GGCPMNode extends GGNode{
 					double pfvalue =0 ;
 					if (cpm instanceof ProbFormAtom){
 						pfvalue = A.valueOf( ((ProbFormAtom)cpm).getRelation(), 
-								rbnutilities.stringArrayToIntArray(((ProbFormAtom)cpm).getArguments()));
+								rbnutilities.argTermArrayToIntArray(((ProbFormAtom)cpm).getArguments()));
 					}
 					if (cpm instanceof ProbFormBoolAtom){
 						pfvalue = A.truthValueOf( ((ProbFormAtom)cpm).getRelation(), 
-								rbnutilities.stringArrayToIntArray(((ProbFormAtom)cpm).getArguments()));
+								rbnutilities.argTermArrayToIntArray(((ProbFormAtom)cpm).getArguments()));
 						if (!((ProbFormBool)cpm).sign())
 							pfvalue = Math.abs(1-pfvalue);
 					}
 					cpm=pfconst;
-					result = new GGConstantNode(gg,(ProbForm)cpm,A,I);
+					result = new GGConstantNode(gg,cpm,A,I);
 					((GGConstantNode)result).setCurrentParamVal(pfvalue);;
 				}
 
 			}
 			if (cpm instanceof ProbFormConvComb)
-				result =  new GGConvCombNode(gg,(ProbForm)cpm,allnodes,A,I,inputcaseno,observcaseno,parameters,
+				result =  new GGConvCombNode(gg,cpm,allnodes,A,I,inputcaseno,observcaseno,parameters,
 						useCurrentPvals,mapatoms,evaluated);
 			if (cpm instanceof CatModelSoftMax)
 				result =  new GGSoftMaxNode(gg,(CatModelSoftMax)cpm,allnodes,A,I,inputcaseno,observcaseno,parameters,
 						useCurrentPvals,mapatoms,evaluated);
 			if (cpm instanceof ProbFormCombFunc)
-				result =  new GGCombFuncNode(gg,(ProbForm)cpm,allnodes,A,I,inputcaseno,observcaseno,parameters,
+				result =  new GGCombFuncNode(gg,cpm,allnodes,A,I,inputcaseno,observcaseno,parameters,
 						useCurrentPvals,mapatoms,evaluated);
 			if (cpm instanceof ProbFormBoolComposite){
-				ProbForm pfstandard = ((ProbFormBoolComposite) cpm).toStandardPF(false);
+				CPModel pfstandard = ((ProbFormBoolComposite) cpm).toStandardPF(false);
 				if (pfstandard instanceof ProbFormCombFunc)
 					result =  new GGCombFuncNode(gg,pfstandard,allnodes,A,I,inputcaseno,observcaseno,parameters,
 							useCurrentPvals,mapatoms,evaluated);
@@ -239,20 +239,24 @@ public abstract class GGCPMNode extends GGNode{
 							useCurrentPvals,mapatoms,evaluated);
 			}
 			if (cpm instanceof ProbFormBoolConstant){
-				result = new GGConstantNode(gg,(ProbForm)cpm,A,I);
+				result = new GGConstantNode(gg,cpm,A,I);
 				((GGConstantNode)result).setCurrentParamVal(((ProbFormBoolConstant)cpm).value());
 			}
 			if (cpm instanceof ProbFormBoolEquality){
-				result = new GGConstantNode(gg,(ProbForm)cpm,A,I);
+				result = new GGConstantNode(gg,cpm,A,I);
 				((GGConstantNode)result).setCurrentParamVal(((ProbFormBoolEquality)cpm).evaluate(A,I));
 			}
 			if (cpm instanceof ProbFormBoolAtomEquality) {
-				result = new GGAtomEqualityNode(gg,(ProbForm)cpm,allnodes,A,I,inputcaseno,observcaseno,parameters,
+				result = new GGAtomEqualityNode(gg,cpm,allnodes,A,I,inputcaseno,observcaseno,parameters,
 						useCurrentPvals,mapatoms,evaluated);
 
 			}
 
-			if (cpm instanceof CatGnn) {
+			if (cpm instanceof ProbFormBoolVarComparison) {
+				result = new GGConstantNode(gg,cpm,A,I);
+				((GGConstantNode)result).setCurrentParamVal(((ProbFormBoolVarComparison)cpm).evaluate(A,I));
+			}
+			if (cpm instanceof CatGnn || cpm instanceof CatGnnBool) {
 				result = new GGGnnNode(gg,cpm,allnodes,A,I,inputcaseno,observcaseno,parameters,useCurrentPvals,mapatoms,evaluated);
 			}
 
@@ -369,10 +373,10 @@ public abstract class GGCPMNode extends GGNode{
 		mysumindicators.add(addthis);
 	}
 
-	public Vector<GGAtomMaxNode> getMaxIndicators(){
+	public ArrayList<GGAtomMaxNode> getMaxIndicators(){
 		return mymaxindicators;
 	}
-	public Vector<GGAtomSumNode> getSumIndicators(){
+	public ArrayList<GGAtomSumNode> getSumIndicators(){
 		return mysumindicators;
 	}
 
@@ -410,6 +414,7 @@ public abstract class GGCPMNode extends GGNode{
 
 
 	public abstract boolean isBoolean();
+
 	public TreeSet<GGCPMNode> parents(){
 		return parents;
 	}
@@ -422,18 +427,28 @@ public abstract class GGCPMNode extends GGNode{
 	 * in the Graph
 	 * @return
 	 */
-	public TreeSet<GGNode> ancestors(){
+	public TreeSet<GGNode> ancestors(boolean includeLL){
 		TreeSet<GGNode> result = new TreeSet<GGNode>();
 		for (GGCPMNode nextggn:parents){
 			result.add((GGCPMNode)nextggn);
 			nextggn.collectAncestors(result);
 		}
-		result.add(thisgg.llnode);
+		if (includeLL)
+			result.add(thisgg.llnode);
+		return result;
+	}
+
+	public ArrayList<GGNode> ancestorsNoLL(){
+		ArrayList<GGNode> result = new ArrayList<>();
+		for (GGCPMNode nextggn:parents){
+			result.add((GGCPMNode)nextggn);
+			nextggn.collectAncestorsNoLL(result);
+		}
 		return result;
 	}
 
 	public void setAncestors(){
-		ancestors = ancestors();
+		ancestors = ancestors(true);
 	}
 
 	public void deleteAncestors(){
@@ -449,13 +464,34 @@ public abstract class GGCPMNode extends GGNode{
 		}
 	}
 
+	private void collectAncestorsNoLL(ArrayList<GGNode> ancests){
+		for (GGCPMNode nextggn: parents){
+			if (!ancests.contains(nextggn)){
+				ancests.add(nextggn);
+				nextggn.collectAncestorsNoLL(ancests);
+			}
+		}
+	}
+
 	public void resetUpstream(Integer sno) {
 		if (ancestors == null) 
-			ancestors = ancestors();
+			ancestors = ancestors(true);
 
 		for (GGNode anc: ancestors) {
 			anc.resetValue(sno);
 			anc.resetGradient(sno);
+		}
+	}
+
+	// we do not reset/evaluate the likelihoodnode
+	public void resetUpstreamNoLL(Integer sno, boolean resetGrad) {
+		if (ancestorsNoLL == null)
+			ancestorsNoLL = ancestorsNoLL();
+
+		for (GGNode anc: ancestorsNoLL) {
+			anc.resetValue(sno);
+			if (resetGrad)
+				anc.resetGradient(sno);
 		}
 	}
 
@@ -470,6 +506,14 @@ public abstract class GGCPMNode extends GGNode{
 		resetUpstream(sno);
 
 		for (GGNode anc: ancestors)
+			anc.evaluate(sno);
+	}
+
+	// as reEvaluateUpstream, but without including also the likelihood node
+	public void reEvaluateUpstreamNoLL(Integer sno, boolean resetGrad){
+		resetUpstreamNoLL(sno, resetGrad);
+
+		for (GGNode anc: ancestorsNoLL)
 			anc.evaluate(sno);
 	}
 

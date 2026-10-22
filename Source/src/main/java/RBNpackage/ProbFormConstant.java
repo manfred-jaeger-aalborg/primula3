@@ -28,7 +28,8 @@ import java.util.*;
 
 import RBNLearning.*;
 import RBNinference.PFNetworkNode;
-
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 
 
 /** A ProbFormConstant represents a numerical constant. The formula can
@@ -44,7 +45,7 @@ import RBNinference.PFNetworkNode;
  * String identifiers of unknown Bernoulli constants start with '#'. Identifiers
  * of general constants start with '$'
  */
-public class ProbFormConstant extends ProbForm
+public class ProbFormConstant extends CPModel implements ProbForm
 {
 	public static int CONSTANT_BERNOULLI =0;
 	public static int CONSTANT_GENERAL =1;
@@ -95,9 +96,9 @@ public class ProbFormConstant extends ProbForm
 			ctype=CONSTANT_GENERAL;
 	}
 
-	public String[] freevars()
+	public VarTerm[] freevars()
 	{
-		String[] result = new String[0];
+		VarTerm[] result = new VarTerm[0];
 		return result;
 	}
 
@@ -105,7 +106,7 @@ public class ProbFormConstant extends ProbForm
 		return true;
 	}
 
-	public ProbForm substitute(String[] vars, int[] args)
+	public CPModel substitute(String[] vars, int[] args)
 	{
 		ProbFormConstant result;
 		if (paramname == "")
@@ -119,7 +120,7 @@ public class ProbFormConstant extends ProbForm
 		return result;
 	}
 
-	public ProbForm substitute(String[] vars, String[] args)
+	public CPModel substitute(String[] vars, String[] args)
 	{
 		if (paramname == "")
 			return new ProbFormConstant(cval);
@@ -132,7 +133,43 @@ public class ProbFormConstant extends ProbForm
 		}
 	}
 
-	public ProbForm conditionEvidence(RelStruc A, OneStrucData inst)
+	@Override
+	public CPModel substitute(String[] vars, ArgTerm[] args) {
+		if (paramname == "")
+			return new ProbFormConstant(cval);
+
+		ProbFormConstant result = new ProbFormConstant(paramname);
+		result.setCvals(paramname, cval);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	@Override
+	public CPModel substitute(ArgTerm[] vars, ArgTerm[] args) {
+		if (paramname == "")
+			return new ProbFormConstant(cval);
+
+		ProbFormConstant result = new ProbFormConstant(paramname);
+		result.setCvals(paramname, cval);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	@Override
+	public CPModel substitute(ArgTerm[] vars, int[] args) {
+		if (paramname == "")
+			return new ProbFormConstant(cval);
+
+		ProbFormConstant result = new ProbFormConstant(paramname);
+		result.setCvals(paramname, cval);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	public CPModel conditionEvidence(RelStruc A, OneStrucData inst)
 	{
 		return this;
 	}
@@ -167,7 +204,7 @@ public class ProbFormConstant extends ProbForm
 //    		boolean useCurrentPvals,
 //    		GroundAtomList mapatoms,
 //    		boolean useCurrentMvals,
-//    		Hashtable<String,Double> evaluated)
+//    		HashMap<String,Double> evaluated)
 //	{
 //		if (paramname != "" && !useCurrentCvals && rbnutilities.arrayContains(parameters, paramname))
 //			return Double.NaN;
@@ -178,15 +215,16 @@ public class ProbFormConstant extends ProbForm
 
 	public Object[] evaluate(RelStruc A, 
 			OneStrucData inst, 
-			String[] vars, 
-			int[] tuple, 
+			ArgTerm[] vars,
+			int[] tuple,
+			int gradindx,
 			boolean useCurrentCvals, 
     		// String[] numrelparameters,
     		boolean useCurrentPvals,
-    		Hashtable<Rel,GroundAtomList> mapatoms,
+    		HashMap<Rel,GroundAtomList> mapatoms,
     		boolean useCurrentMvals,
-    		Hashtable<String,Object[]> evaluated,
-    		Hashtable<String,Integer> params,
+    		HashMap<String,Object[]> evaluated,
+    		HashMap<String,Integer> params,
     		int returntype,
     		boolean valonly,
     		Profiler profiler)
@@ -214,9 +252,9 @@ public class ProbFormConstant extends ProbForm
 //					((double[])result[1])[i]=1.0;
 //			}
 //			else {
-//				result[1] = new Hashtable<String,Double>();
+//				result[1] = new HashMap<String,Double>();
 //				if (paramname != "")
-//					((Hashtable<String,Double>)result[1]).put(paramname,1.0);
+//					((HashMap<String,Double>)result[1]).put(paramname,1.0);
 //			}
 		}
 
@@ -225,9 +263,9 @@ public class ProbFormConstant extends ProbForm
 	}
 	
 	public  double[] evalSample(RelStruc A, 
-			Hashtable<String,PFNetworkNode> atomhasht, 
+			HashMap<String,PFNetworkNode> atomhasht, 
 			OneStrucData inst, 
-    		Hashtable<String,double[]> evaluated,
+    		HashMap<String,double[]> evaluated,
 			long[] timers){
 		return new double[] {cval};
 	}
@@ -240,11 +278,11 @@ public class ProbFormConstant extends ProbForm
 			return -1;
 	}
 
-	public  int evaluatesTo(RelStruc A,OneStrucData inst, boolean usesampleinst, Hashtable atomhasht){
+	public  int evaluatesTo(RelStruc A,OneStrucData inst, boolean usesampleinst, HashMap atomhasht){
 		return evaluatesTo(A);
 	}
 
-	public ProbForm sEval(RelStruc A){
+	public CPModel sEval(RelStruc A){
 		return this;
 	}
 
@@ -311,5 +349,9 @@ public class ProbFormConstant extends ProbForm
 	public TreeSet<Rel> parentRels(TreeSet<String> processed){
 		return new TreeSet<Rel>();	
 	}
-	
+
+	@Override
+	public int numvals() {
+		return 2;
+	}
 }

@@ -1,6 +1,6 @@
 package RBNLearning;
 
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Vector;
 
 public class Gradient_Array extends Gradient{
@@ -11,7 +11,7 @@ public class Gradient_Array extends Gradient{
      */
     double[][] gradient;
 
-    public Gradient_Array(Hashtable<String,Integer> params){
+    public Gradient_Array(HashMap<String,Integer> params){
         parameter_to_idx = params;
         gradient = new double[params.size()][];
     }

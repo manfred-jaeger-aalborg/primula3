@@ -1,12 +1,15 @@
 package RBNpackage;
 
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.HashMap;
 import java.util.Vector;
 import java.util.TreeSet;
 
 import RBNExceptions.RBNCompatibilityException;
 import RBNLearning.*;
 import RBNinference.PFNetworkNode;
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 import RBNutilities.rbnutilities;
 
 /* A conjunction or disjunction of subformulas contained in the
@@ -72,7 +75,7 @@ public class ProbFormBoolComposite extends ProbFormBool {
 //			boolean useCurrentPvals,
 //    		GroundAtomList mapatoms,
 //    		boolean useCurrentMvals,
-//    		Hashtable<String,Double> evaluated) 
+//    		HashMap<String,Double> evaluated) 
 //    	throws RBNCompatibilityException {
 //		
 //		double result =0;
@@ -98,16 +101,17 @@ public class ProbFormBoolComposite extends ProbFormBool {
 //	}
 
 	public Object[] evaluate(RelStruc A, 
-			OneStrucData inst, 
-			String[] vars, 
-			int[] tuple, 
+			OneStrucData inst,
+			ArgTerm[] vars,
+			int[] tuple,
+			int gradindx,
 			boolean useCurrentCvals, 
     		// String[] numrelparameters,
     		boolean useCurrentPvals,
-    		Hashtable<Rel,GroundAtomList> mapatoms,
+    		HashMap<Rel,GroundAtomList> mapatoms,
     		boolean useCurrentMvals,
-    		Hashtable<String,Object[]> evaluated,
-    		Hashtable<String,Integer> params,
+    		HashMap<String,Object[]> evaluated,
+    		HashMap<String,Integer> params,
     		int returntype,
     		boolean valonly,
     		Profiler profiler){
@@ -127,7 +131,7 @@ public class ProbFormBoolComposite extends ProbFormBool {
 			case ProbFormBool.OPERATORAND:
 				result[0]=1.0;
 				for (int i=0;(i<components.length && (double)result[0] != 0);i++) {
-					double nextfac = (double)components[i].evaluate(A,inst,vars,tuple,useCurrentCvals,useCurrentPvals,
+					double nextfac = (double)components[i].evaluate(A,inst,vars,tuple,gradindx,useCurrentCvals,useCurrentPvals,
 							mapatoms,useCurrentMvals,evaluated,params,returntype,valonly,null)[0];
 					if (nextfac==0)
 						result[0]=0.0; // This allows to overwrite a previous result[0] = NaN with a clean 0
@@ -139,7 +143,7 @@ public class ProbFormBoolComposite extends ProbFormBool {
 			case ProbFormBool.OPERATOROR:
 				result[0]=0.0;
 				for (int i=0;(i<components.length && (double)result[0]<1);i++)
-					result[0] = Math.max((double)result[0],(double)components[i].evaluate(A,inst,vars,tuple,useCurrentCvals,useCurrentPvals,
+					result[0] = Math.max((double)result[0],(double)components[i].evaluate(A,inst,vars,tuple,gradindx,useCurrentCvals,useCurrentPvals,
 							mapatoms,useCurrentMvals,evaluated,params,returntype,valonly,null)[0]);
 			}
 			if (!sign)
@@ -152,9 +156,9 @@ public class ProbFormBoolComposite extends ProbFormBool {
 	
 	
 	public double[] evalSample(RelStruc A, 
-			Hashtable<String,PFNetworkNode>  atomhasht,
+			HashMap<String,PFNetworkNode> atomhasht,
 			OneStrucData inst, 
-    		Hashtable<String,double[]> evaluated,
+    		HashMap<String,double[]> evaluated,
 			long[] timers) 
 		throws RBNCompatibilityException {
 		
@@ -192,7 +196,7 @@ public class ProbFormBoolComposite extends ProbFormBool {
 
 	@Override
 	public int evaluatesTo(RelStruc A, OneStrucData inst,
-			boolean usesampleinst, Hashtable atomhasht)
+			boolean usesampleinst, HashMap atomhasht)
 					throws RBNCompatibilityException {
 		boolean evalTo0 = false;
 		boolean evalTo1 = false;
@@ -275,8 +279,8 @@ public class ProbFormBoolComposite extends ProbFormBool {
 	}
 
 	@Override
-	public String[] freevars() {
-		String[] result = components[0].freevars();
+	public ArgTerm[] freevars() {
+		ArgTerm[] result = components[0].freevars();
 		for (int i=1;i<components.length;i++)
 			result = rbnutilities.arraymerge(result,components[i].freevars());
 		return result;
@@ -305,7 +309,7 @@ public class ProbFormBoolComposite extends ProbFormBool {
 
 
 	@Override
-	public ProbForm sEval(RelStruc A) 
+	public CPModel sEval(RelStruc A)
 			throws RBNCompatibilityException {
 
 		int evalto = evaluatesTo(A);
@@ -330,7 +334,7 @@ public class ProbFormBoolComposite extends ProbFormBool {
 	}
 
 	@Override
-	public ProbForm substitute(String[] vars, int[] args) {
+	public CPModel substitute(String[] vars, int[] args) {
 		ProbFormBool[] substarray = new ProbFormBool[components.length];
 		for (int i=0;i<components.length;i++)
 			substarray[i]=(ProbFormBool)components[i].substitute(vars,args);
@@ -341,7 +345,40 @@ public class ProbFormBoolComposite extends ProbFormBool {
 	}
 
 	@Override
-	public ProbForm substitute(String[] vars, String[] args) {
+	public CPModel substitute(String[] vars, String[] args) {
+		ProbFormBool[] substarray = new ProbFormBool[components.length];
+		for (int i=0;i<components.length;i++)
+			substarray[i]=(ProbFormBool)components[i].substitute(vars,args);
+		ProbFormBoolComposite result = new ProbFormBoolComposite(substarray,operator,sign);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	@Override
+	public CPModel substitute(String[] vars, ArgTerm[] args) {
+		ProbFormBool[] substarray = new ProbFormBool[components.length];
+		for (int i=0;i<components.length;i++)
+			substarray[i]=(ProbFormBool)components[i].substitute(vars,args);
+		ProbFormBoolComposite result = new ProbFormBoolComposite(substarray,operator,sign);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	@Override
+	public CPModel substitute(ArgTerm[] vars, ArgTerm[] args) {
+		ProbFormBool[] substarray = new ProbFormBool[components.length];
+		for (int i=0;i<components.length;i++)
+			substarray[i]=(ProbFormBool)components[i].substitute(vars,args);
+		ProbFormBoolComposite result = new ProbFormBoolComposite(substarray,operator,sign);
+		if (this.alias != null)
+			result.setAlias((ProbFormAtom)this.alias.substitute(vars, args));
+		return result;
+	}
+
+	@Override
+	public CPModel substitute(ArgTerm[] vars, int[] args) {
 		ProbFormBool[] substarray = new ProbFormBool[components.length];
 		for (int i=0;i<components.length;i++)
 			substarray[i]=(ProbFormBool)components[i].substitute(vars,args);
@@ -363,7 +400,7 @@ public class ProbFormBoolComposite extends ProbFormBool {
 		return operator;
 	}
 	
-	public ProbForm toStandardPF(boolean recursive){
+	public CPModel toStandardPF(boolean recursive){
 		/* returns a ProbFormCombFunc or ProbFormConvComb
 		 * If sign == true:
 		 *     operator == and: return (n-or{negated components}:0,1)
@@ -377,7 +414,7 @@ public class ProbFormBoolComposite extends ProbFormBool {
 		 */
 		
 		
-		ProbForm[] pfargs = new ProbForm[components.length];
+		CPModel[] pfargs = new CPModel[components.length];
 		for (int i=0;i<components.length;i++){
 			if (operator==ProbFormBool.OPERATORAND){
 				if (recursive)
@@ -395,7 +432,7 @@ public class ProbFormBoolComposite extends ProbFormBool {
 					pfargs[i]= components[i].clone();   
 			}
 		}
-		ProbFormCombFunc pfcomb = new ProbFormCombFunc("n-or",pfargs,new String[0],new ProbFormBoolConstant(true));
+		ProbFormCombFunc pfcomb = new ProbFormCombFunc("n-or",pfargs,new ArgTerm[0],new ProbFormBoolConstant(true));
 		if ( (sign && operator==ProbFormBool.OPERATOROR) || ( !sign && operator==ProbFormBool.OPERATORAND)) {
 			return pfcomb;		
 		}
@@ -425,7 +462,7 @@ public class ProbFormBoolComposite extends ProbFormBool {
 	}
 	
 	public TreeSet<Rel> parentRels(TreeSet<String> processed){
-		String mykey = this.makeKey(null,null,true);
+		String mykey = this.makeKey((String[]) null,null,true);
 		if (processed.contains(mykey))
 			return new TreeSet<Rel>();
 		else {
@@ -435,5 +472,10 @@ public class ProbFormBoolComposite extends ProbFormBool {
 				result.addAll(components[i].parentRels(processed));
 			return result;
 		}
+	}
+
+	@Override
+	public int numvals() {
+		return 2;
 	}
 }

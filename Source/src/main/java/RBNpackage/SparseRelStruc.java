@@ -25,6 +25,7 @@ package RBNpackage;
 
 import java.util.*;
 import RBNExceptions.*;
+import RBNpackage.VarTermPackage.*;
 import RBNutilities.*;
 
 
@@ -118,14 +119,11 @@ public class SparseRelStruc extends RelStruc {
 	// 	}
 	//     }
 
-
-	/* Overrides the default implementation
-	 */
-	public int[][] allTrue(ProbFormBool cc,String[] vars)// the elements of vars must be distinct!
-	throws IllegalArgumentException,RBNCompatibilityException
+	public int[][] allTrue(ProbFormBool cc, String[] vars)// the elements of vars must be distinct!
+			throws IllegalArgumentException,RBNCompatibilityException
 	{
 
-		TreeSet<int[]> prelimResult = allTrueAsTreeSet(cc,vars);
+		TreeSet<int[]> prelimResult = allTrueAsTreeSet(cc, vars);
 
 		int[][] result = new int[prelimResult.size()][vars.length];
 		Iterator<int[]> it = prelimResult.iterator();
@@ -136,7 +134,60 @@ public class SparseRelStruc extends RelStruc {
 			result[index]=nextIntArr;
 			index++;
 		}
-		return result;   
+		return result;
+	}
+
+	/* Overrides the default implementation
+	 */
+	public int[][] allTrue(ProbFormBool cc, String[] vars, int maxInteger)// the elements of vars must be distinct!
+			throws IllegalArgumentException,RBNCompatibilityException
+	{
+
+		TreeSet<int[]> prelimResult = allTrueAsTreeSet(cc, vars, maxInteger);
+
+		int[][] result = new int[prelimResult.size()][vars.length];
+		Iterator<int[]> it = prelimResult.iterator();
+		int index = 0;
+		int[] nextIntArr;
+		while (it.hasNext()){
+			nextIntArr=it.next();
+			result[index]=nextIntArr;
+			index++;
+		}
+		return result;
+	}
+
+	public int[][] allTrue(ProbFormBool cc, ArgTerm[] vars, int maxInteger)
+			throws IllegalArgumentException, RBNCompatibilityException {
+
+		TreeSet<int[]> prelimResult = allTrueAsTreeSet(cc, vars, maxInteger);
+
+		int[][] result = new int[prelimResult.size()][vars.length];
+		Iterator<int[]> it = prelimResult.iterator();
+		int index = 0;
+		while (it.hasNext()) {
+			result[index++] = it.next();
+		}
+		return result;
+	}
+	/* Overrides the default implementation
+	 */
+	public int[][] allTrue(ProbFormBool cc, ArgTerm[] vars)// the elements of vars must be distinct!
+			throws IllegalArgumentException,RBNCompatibilityException
+	{
+
+		TreeSet<int[]> prelimResult = allTrueAsTreeSet(cc, vars);
+
+		int[][] result = new int[prelimResult.size()][vars.length];
+		Iterator<int[]> it = prelimResult.iterator();
+		int index = 0;
+		int[] nextIntArr;
+		while (it.hasNext()){
+			nextIntArr=it.next();
+			result[index]=nextIntArr;
+			index++;
+		}
+		return result;
 	}
 
 
@@ -343,10 +394,45 @@ public class SparseRelStruc extends RelStruc {
 //		return result;
 //	}
 
-	public TreeSet<int[]> allTrueAsTreeSet(ProbFormBool cc,String[] vars)
+	private static boolean isInfinite(Map<String, Integer> coeffs) {
+		boolean hasPos = false;
+		boolean hasNeg = false;
+		for (int c : coeffs.values()) {
+			if (c > 0) hasPos = true;
+			if (c < 0) hasNeg = true;
+		}
+		return hasPos && hasNeg;
+	}
+
+	public TreeSet<int[]> allTrueAsTreeSet(ProbFormBool cc, String[] vars, int maxInteger)
+			throws IllegalArgumentException, RBNCompatibilityException {
+
+		ArgTerm[] argTermVars = new ArgTerm[vars.length];
+		for (int i = 0; i < vars.length; i++) {
+			argTermVars[i] = new VarTerm(vars[i]);
+		}
+		return allTrueAsTreeSet(cc, argTermVars, maxInteger);
+	}
+
+	public TreeSet<int[]> allTrueAsTreeSet(ProbFormBool cc, String[] vars)
+			throws IllegalArgumentException, RBNCompatibilityException {
+
+		ArgTerm[] argTermVars = new ArgTerm[vars.length];
+		for (int i = 0; i < vars.length; i++) {
+			argTermVars[i] = new VarTerm(vars[i]);
+		}
+		return allTrueAsTreeSet(cc, argTermVars);
+	}
+
+	public TreeSet<int[]> allTrueAsTreeSet(ProbFormBool cc, ArgTerm[] vars)
+			throws IllegalArgumentException, RBNCompatibilityException {
+		return allTrueAsTreeSet(cc, vars, dom);
+	}
+
+	public TreeSet<int[]> allTrueAsTreeSet(ProbFormBool cc, ArgTerm[] vars, int maxInteger)
 			throws IllegalArgumentException,RBNCompatibilityException
-			{
-		//System.out.println("allTrueAsTreeSet for " + cc.asString());
+	{
+		//System.out.print("allTrueAsTreeSet for " + cc.asString(0,0,this,true,true) + " ... ");
 		TreeSet<int[]> result = new TreeSet<int[]>(new IntArrayComparator());
 
 		if (cc instanceof ProbFormBoolConstant){
@@ -358,51 +444,229 @@ public class SparseRelStruc extends RelStruc {
 		{
 			Vector<int[]> alltrue;
 			Rel crel = ((ProbFormBoolAtom) cc).getRelation();
-			String[] args = ((ProbFormBoolAtom) cc).getArguments();
-			if (RelStruc.isOrdRel(crel)){
-				alltrue = mydata.allTrueOrdRel(crel, args);
-			}
-			else 
+			ArgTerm[] args = ((ProbFormBoolAtom) cc).getArguments();
+			if (RelStruc.isOrdRel(crel)) {
+				alltrue = mydata.allTrueOrdRel(crel, rbnutilities.getArgumentsAsString(args));
+			} else
 				//alltrue = mydata.allTrue(crel);
-				alltrue=mydata.allTrue(crel,args);
-			for (int i = 0;i<alltrue.size();i++)
-				rbnutilities.allSatisfyingTuples(args, alltrue.elementAt(i), vars, result , dom);
+				alltrue = mydata.allTrue(crel, args);
+			for (int i = 0; i < alltrue.size(); i++)
+				rbnutilities.allSatisfyingTuples(args, alltrue.elementAt(i), vars, result, dom);
+
 		};
 
 		if (cc instanceof ProbFormBoolEquality)
 		{
-			int[][] alltrue = new int[dom][2];
-			for (int i=0;i<dom;i++){
-				alltrue[i][0]=i;
-				alltrue[i][1]=i;
+			boolean hasIntTerm = false;
+			for (ArgTerm term : ((ProbFormBoolEquality) cc).terms()) {
+				if (term instanceof IntOp) {
+					hasIntTerm = true;
+					break;
+				}
 			}
-			for (int i = 0;i<alltrue.length;i++)
-				rbnutilities.allSatisfyingTuples(((ProbFormBoolEquality)cc).terms(), alltrue[i], vars, result ,  dom);
-		}
-		if (cc instanceof ProbFormBoolComposite)
-		{
-			for (int i=0;i < ((ProbFormBoolComposite)cc).numComponents();i++){
-				TreeSet<int[]> nexttreeset = allTrueAsTreeSet(((ProbFormBoolComposite) cc).componentAt(i),vars);
-				if (i==0)
-					result = nexttreeset;
-				else{
-					switch (((ProbFormBoolComposite) cc).operator()){
-					case ProbFormBool.OPERATOROR:
-						result.addAll(nexttreeset);
-						break;
-					case ProbFormBool.OPERATORAND:
-						if (!result.isEmpty()){
-//							TreeSet<int[]> intersection = new TreeSet<int[]>(new IntArrayComparator());
-//
-//							for (Iterator<int[]> it = result.iterator(); it.hasNext();){
-//								int[] nexttup = it.next();
-//								if( nexttreeset.contains(nexttup))
-//									intersection.add(nexttup);
-//							}
-							result= (TreeSet<int[]>)rbnutilities.treeSetIntersection(result, nexttreeset);
+
+			if (hasIntTerm) {
+				// A very inefficient way to get all of the solutions
+				ArgTerm term1 = ((ProbFormBoolEquality) cc).term1();
+				ArgTerm term2 = ((ProbFormBoolEquality) cc).term2();
+
+				LinearForm diff = term1.linearize().subtract(term2.linearize());
+				if (isInfinite(diff.getCoefficients()))
+					throw new RBNCompatibilityException("Infinite solutions in " + cc.asString(0, 0, null, false, false));
+
+				int range = maxInteger + 1;
+				Set<String> eqVarNames = new HashSet<>();
+				eqVarNames.addAll(term1.getVariables());
+				eqVarNames.addAll(term2.getVariables());
+
+				List<Integer> eqVarIndices   = new ArrayList<>();
+				List<Integer> wildcardIndices = new ArrayList<>();
+				for (int j = 0; j < vars.length; j++) {
+					if (eqVarNames.contains(vars[j].argEval()))
+						eqVarIndices.add(j);
+					else
+						wildcardIndices.add(j);
+				}
+
+				int numEqVars = eqVarIndices.size();
+				int numWildcards = wildcardIndices.size();
+
+				for (int i = 0; i < mymath.MyMathOps.intPow(range, numEqVars); i++) {
+					int[] eqTuple = rbnutilities.indexToTuple(i, numEqVars, range);
+
+					ArgTerm subLeft  = term1;
+					ArgTerm subRight = term2;
+					for (int j = 0; j < numEqVars; j++) {
+						subLeft = subLeft.substitute(vars[eqVarIndices.get(j)], eqTuple[j]);
+						subRight = subRight.substitute(vars[eqVarIndices.get(j)], eqTuple[j]);
+					}
+
+					if (subLeft.isGround() && subRight.isGround()) {
+						int v1 = Integer.parseInt(subLeft.argEval());
+						int v2 = Integer.parseInt(subRight.argEval());
+						if (v1 == v2) {
+							for (int w = 0; w < mymath.MyMathOps.intPow(dom, numWildcards); w++) {
+								int[] wildcardTuple = rbnutilities.indexToTuple(w, numWildcards, dom);
+								int[] fullTuple = new int[vars.length];
+								for (int j = 0; j < numEqVars; j++)
+									fullTuple[eqVarIndices.get(j)] = eqTuple[j];
+								for (int j = 0; j < numWildcards; j++)
+									fullTuple[wildcardIndices.get(j)] = wildcardTuple[j];
+								result.add(fullTuple);
+							}
 						}
 					}
 				}
+			} else {
+				int[][] alltrue = new int[dom][2];
+				for (int i = 0; i < dom; i++) {
+					alltrue[i][0] = i;
+					alltrue[i][1] = i;
+				}
+				for (int i = 0; i < alltrue.length; i++)
+					rbnutilities.allSatisfyingTuples(((ProbFormBoolEquality) cc).terms(), alltrue[i], vars, result, dom);
+			}
+		}
+//		if (cc instanceof ProbFormBoolVarComparison) {
+//
+//			ArgTerm left = ((ProbFormBoolVarComparison) cc).getLeft();
+//			ArgTerm right = ((ProbFormBoolVarComparison) cc).getRight();
+//			String op = ((ProbFormBoolVarComparison) cc).op();
+//
+//			for (int i = 0; i < mymath.MyMathOps.intPow(dom, vars.length); i++) {
+//				int[] tuple = rbnutilities.indexToTuple(i, vars.length, dom);
+//
+//				ArgTerm subLeft = left;
+//				ArgTerm subRight = right;
+//				for (int j = 0; j < vars.length; j++) {
+//					subLeft = subLeft.substitute(vars[j], tuple[j]);
+//					subRight = subRight.substitute(vars[j], tuple[j]);
+//				}
+//
+//				if (subLeft.isGround() && subRight.isGround()) {
+//					int v1 = Integer.parseInt(subLeft.argEval());
+//					int v2 = Integer.parseInt(subRight.argEval());
+//					boolean tv = op.equals("<") ? v1 < v2 : v1 > v2;
+//					if (tv) result.add(tuple);
+//				}
+//			}
+//
+//		}
+		if (cc instanceof ProbFormBoolVarComparison) {
+			ArgTerm left = ((ProbFormBoolVarComparison) cc).getLeft();
+			ArgTerm right = ((ProbFormBoolVarComparison) cc).getRight();
+			String op = ((ProbFormBoolVarComparison) cc).op();
+
+			int range = maxInteger + 1;
+
+			Set<String> cmpVarNames = new HashSet<>();
+			cmpVarNames.addAll(left.getVariables());
+			cmpVarNames.addAll(right.getVariables());
+
+			List<Integer> cmpIndices = new ArrayList<>();
+			List<Integer> wildcardIndices = new ArrayList<>();
+			for (int j = 0; j < vars.length; j++) {
+				if (cmpVarNames.contains(vars[j].argEval())) cmpIndices.add(j);
+				else wildcardIndices.add(j);
+			}
+
+			int numCmp = cmpIndices.size();
+			int numWildcards = wildcardIndices.size();
+
+			for (int i = 0; i < mymath.MyMathOps.intPow(range, numCmp); i++) {
+				int[] cmpTuple = rbnutilities.indexToTuple(i, numCmp, range);
+
+				ArgTerm subLeft = left;
+				ArgTerm subRight = right;
+				for (int j = 0; j < numCmp; j++) {
+					subLeft = subLeft.substitute(vars[cmpIndices.get(j)], cmpTuple[j]);
+					subRight = subRight.substitute(vars[cmpIndices.get(j)], cmpTuple[j]);
+				}
+
+				if (subLeft.isGround() && subRight.isGround()) {
+					int v1 = Integer.parseInt(subLeft.argEval());
+					int v2 = Integer.parseInt(subRight.argEval());
+					boolean tv = switch (op) {
+						case "<" -> v1 < v2;
+						case ">" -> v1 > v2;
+						default -> throw new RBNCompatibilityException("Unknown comparison operator: " + op);
+					};
+					if (tv) {
+						for (int w = 0; w < mymath.MyMathOps.intPow(dom, numWildcards); w++) {
+							int[] wildcardTuple = rbnutilities.indexToTuple(w, numWildcards, dom);
+							int[] fullTuple = new int[vars.length];
+							for (int j = 0; j < numCmp; j++)
+								fullTuple[cmpIndices.get(j)] = cmpTuple[j];
+							for (int j = 0; j < numWildcards; j++)
+								fullTuple[wildcardIndices.get(j)] = wildcardTuple[j];
+							result.add(fullTuple);
+						}
+					}
+				}
+			}
+		}
+		if (cc instanceof ProbFormBoolComposite)
+		{
+			switch (((ProbFormBoolComposite) cc).operator()) {
+				case ProbFormBool.OPERATOROR:
+					for (int i = 0; i < ((ProbFormBoolComposite) cc).numComponents(); i++) {
+						result.addAll(allTrueAsTreeSet(((ProbFormBoolComposite) cc).componentAt(i), vars, maxInteger));
+					}
+					break;
+				case ProbFormBool.OPERATORAND:
+					VarTerm[] varsdone = new VarTerm[0]; // Subset of vars for which groundings have already been computed
+					boolean[] posdone = null;
+					TreeSet<int[]> intsfordone = new TreeSet<int[]>(new IntArrayComparator()) ;
+					TreeSet<int[]> newints;
+
+					for (int i = 0; i < ((ProbFormBoolComposite) cc).numComponents(); i++) {
+						ProbFormBool pfb = ((ProbFormBoolComposite) cc).componentAt(i);
+						VarTerm[] fvars = (VarTerm[]) pfb.freevars();
+						/* Maintain consisten variable orderings with the top level vars argument*/
+						fvars=rbnutilities.alignAT(vars,fvars);
+
+						VarTerm[] newvar = (VarTerm[]) rbnutilities.arraysubstraction(fvars,varsdone);
+						boolean[] newpos = rbnutilities.makePosVec( vars, newvar);
+						VarTerm[] commonvar = (VarTerm[]) rbnutilities.arraysubstraction(fvars, newvar);
+						int[] indxs = rbnutilities.getIndicesOf(varsdone, commonvar);
+
+						HashMap<int[],TreeSet<int[]>> tuplesdone = new HashMap<int[],TreeSet<int[]>>();
+						TreeSet<int[]> newintsfordone = new TreeSet<int[]>(new IntArrayComparator()) ;
+
+						if (i==0){
+							varsdone=fvars;
+							posdone=rbnutilities.makePosVec( vars,varsdone);
+							intsfordone= allTrueAsTreeSet((ProbFormBool) pfb, fvars, maxInteger);
+						}
+						else {
+							for (int[] nextint : intsfordone) {
+								int[] commonint = rbnutilities.sliceTuple(nextint, indxs);
+								if (newvar.length==0) {
+									if (pfb.substitute(commonvar,commonint).evaluatesTo(this)==1)
+										newintsfordone.add(nextint);
+
+								}
+								else {
+									if (tuplesdone.containsKey(commonint))
+										newints = tuplesdone.get(commonint);
+									else {
+										newints = allTrueAsTreeSet((ProbFormBool) pfb.substitute(commonvar, commonint), newvar, maxInteger);
+										tuplesdone.put(commonint, newints);
+									}
+									for (int[] addint : newints)
+										newintsfordone.add(rbnutilities.arrayPosMerge(nextint, posdone, addint,newpos ));
+								}
+							}
+							varsdone = rbnutilities.arrayConcatenate(varsdone, newvar);
+							varsdone=rbnutilities.alignAT(vars,varsdone);
+							posdone=rbnutilities.makePosVec(vars,varsdone);
+							intsfordone = newintsfordone;
+						}
+					}
+					result = intsfordone;
+					break;
+
+
 			}
 		}
 		if (cc.sign() == false)
@@ -416,8 +680,9 @@ public class SparseRelStruc extends RelStruc {
 			}
 			result = notresult;
 		}
+		//System.out.println("returning " + result.size() + " tuples");
 		return result;
-			}
+	}
 
 	//	private void printTS(TreeSet ts){
 	//		Iterator it = ts.iterator();
@@ -436,9 +701,6 @@ public class SparseRelStruc extends RelStruc {
 		else
 			throw new IllegalArgumentException("Index out of bounds");
 	}
-
-
-
 
 	/** returns this node's attributes and tuples **/
 	public Vector[] getAttrBoolRelsAndTuples(int node){

@@ -1,23 +1,25 @@
 package RBNpackage;
 
-import PyManager.GnnPy;
-import PyManager.TorchInputRels;
-import PyManager.TorchInputSpecs;
-import PyManager.TorchModelWrapper;
+import PyManager.*;
 import RBNExceptions.RBNCompatibilityException;
-import RBNExceptions.RBNIllegalArgumentException;
+import RBNLearning.GGCPMNode;
+import RBNLearning.Gradient_Array;
+import RBNLearning.Gradient_TreeMap;
 import RBNLearning.Profiler;
 import RBNinference.PFNetworkNode;
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
 import RBNutilities.rbnutilities;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class CatGnn extends CPModel {
     // the order of attributes need to be respected! this order will be used for the gnn encoding
     private ArrayList<ArrayList<Rel>> input_attr;
     private ArrayList edge_attr;
-    private String argument;
+    ArgTerm[] arguments;
 
     // true if we use one-hot encoding for the features representation
     private boolean oneHotEncoding;
@@ -26,32 +28,61 @@ public class CatGnn extends CPModel {
     private String gnnId;
     String configModelPath;
     List<TorchInputSpecs> gnnInputs;
-    List<TorchInputRels> gnnCombinedClauses;
-    List<TorchInputRels> gnnGroundCombinedClauses;
+
+    TypedTorchPf typedTorchPf;
 
     // if is set to true, means that the GNN is for categorical output, if false is boolean
     private boolean categorical;
     private int numvals;
     private static boolean isInitialized = false;
-    // this variable is used to set the inference for node or graph classification. Keyword: "node" or "graph"
-    private String gnn_inference;
-    private int numLayers;
-    private TorchModelWrapper torchModel;
-    private Vector<String> freeVals;
 
-    public CatGnn(String argument, String gnnId, int numLayers, int numvals, ArrayList input_attr, ArrayList edge_attr, String gnn_inference, boolean oneHotEncoding) {
-        this.argument = argument;
+    Type[] outTypes;
+
+    private RelStruc lastDictA = null;
+    private OneStrucData lastDictInst = null;
+    private int lastDictInstHash = 0;
+    private int[] lastDictTuple = null;
+    private Object[] lastDicts = null;
+
+    private long dictVersion = 0;
+    private long cachedDictVersion = -1;
+
+    private Map<String, Map<Integer, Integer>> nodeMappingByType;
+
+    private boolean optimizeForInput;
+
+    // buildInputDicts result for this ground atom, reused across samples (see evalSample)
+    private Object[] sampleDicts = null;
+    private RelStruc sampleDictsA = null;
+    private int sampleDictsInstHash = 0;
+    private List<XUpdate> xUpdates = null; // pending sampled-value writes into x_dict, see updateXDictFromAtomhasht
+
+    private static Map<String, double[][]> copyMatrices(Map<String, double[][]> src) {
+        Map<String, double[][]> copy = new HashMap<>();
+        for (Map.Entry<String, double[][]> e : src.entrySet()) {
+            double[][] m = e.getValue();
+            double[][] c = new double[m.length][];
+            for (int i = 0; i < m.length; i++) c[i] = m[i].clone();
+            copy.put(e.getKey(), c);
+        }
+        return copy;
+    }
+
+    private static final Map<Long, Object[]> sharedDictCache = new ConcurrentHashMap<>();
+    private static final Map<Long, Boolean> sharedEvalInputs = new ConcurrentHashMap<>();
+
+    public CatGnn(ArgTerm[] arguments, String gnnId, int numLayers, int numvals, ArrayList input_attr, ArrayList edge_attr, String gnn_inference, boolean oneHotEncoding) {
+        this.arguments = arguments;
         this.gnnId = gnnId;
         this.categorical = true;
         this.numvals = numvals;
-        this.numLayers = numLayers;
         this.input_attr = input_attr;
         this.edge_attr = edge_attr;
         this.oneHotEncoding = oneHotEncoding;
-        this.gnn_inference = gnn_inference;
         isInitialized = false;
     }
-    public CatGnn(String configModelPath, Vector<String> freeVals, int numVals, List<TorchInputSpecs> inputs, List<TorchInputRels> combinedClauses, boolean withGnnPy) {
+
+    public CatGnn(String configModelPath, ArgTerm[] arguments, int numVals, List<TorchInputSpecs> inputs, TypedTorchPf typedTorchPf, Type[] outTypes, boolean optimOneInp, boolean withGnnPy) {
         File f = new File(configModelPath);
         // get a file name without extension
         int lastIndexOfDot = f.getName().lastIndexOf('.');
@@ -60,16 +91,15 @@ public class CatGnn extends CPModel {
         else
             this.gnnId = f.getName().substring(0, lastIndexOfDot);
 
-        this.argument = "";
-        this.freeVals = freeVals;
-        if (!freeVals.isEmpty())
-            this.argument = freeVals.get(0);
+        this.arguments = arguments.clone();
 
         this.categorical = true;
         this.configModelPath = f.getParent();
         this.numvals = numVals;
         this.gnnInputs = inputs;
-        this.gnnCombinedClauses = combinedClauses;
+        this.typedTorchPf = typedTorchPf;
+        this.outTypes = outTypes;
+        this.nodeMappingByType = new HashMap<>();
 
         this.oneHotEncoding = true; // this for now it is always true, later we need to add this to the RBN specification
 
@@ -77,16 +107,683 @@ public class CatGnn extends CPModel {
             this.gnnPy = new GnnPy(this, f.getParent());
 
         isInitialized = false;
+        optimizeForInput = optimOneInp;
     }
-    public CatGnn(String argument, GnnPy gnnpy) {
-        this.argument = argument;
-        this.gnnPy = gnnpy;
+
+    //eval-result holder
+    private record InputEntry(List<int[]> argNodes, double evalValue, int pfIdx) {}
+
+    private long sharedDictKey(RelStruc A, OneStrucData inst) {
+        return  Objects.hash(gnnInputs.hashCode(), A.hashCode(), inst.hashCode());
+    }
+
+    public Object[] buildInputDicts(RelStruc A,
+                                    OneStrucData inst,
+                                    ArgTerm[] vars,
+                                    int[] tuple,
+                                    int gradindx,
+                                    boolean useCurrentCvals,
+                                    boolean useCurrentPvals,
+                                    HashMap<Rel, GroundAtomList> mapatoms,
+                                    boolean useCurrentMvals,
+                                    HashMap<String, Object[]> evaluated,
+                                    HashMap<String, Integer> params,
+                                    int returntype,
+                                    boolean valonly,
+                                    Profiler profiler)
+            throws RBNCompatibilityException {
+        return buildInputDicts(A, inst, vars, tuple, gradindx, useCurrentCvals, useCurrentPvals, mapatoms,
+                useCurrentMvals, evaluated, params, returntype, valonly, profiler, false);
+    }
+
+    /**
+     * stopAtUnknown: return null as soon as an input sent to the GNN evaluates to NaN (depends on
+     * atoms that are not known yet), instead of keeping the NaN in the matrices. evaluate uses this;
+     * evalSample keeps the NaNs because sampling fills them in afterwards.
+     */
+    // very similar logic to GGGnnNode
+    public Object[] buildInputDicts(RelStruc A,
+                                    OneStrucData inst,
+                                    ArgTerm[] vars,
+                                    int[] tuple,
+                                    int gradindx,
+                                    boolean useCurrentCvals,
+                                    boolean useCurrentPvals,
+                                    HashMap<Rel, GroundAtomList> mapatoms,
+                                    boolean useCurrentMvals,
+                                    HashMap<String, Object[]> evaluated,
+                                    HashMap<String, Integer> params,
+                                    int returntype,
+                                    boolean valonly,
+                                    Profiler profiler,
+                                    boolean stopAtUnknown)
+            throws RBNCompatibilityException {
+
+        if (isOptimizeForOneInput()) {
+            long key = sharedDictKey(A, inst);
+            Object[] cached = sharedDictCache.get(key);
+            if (cached != null) {
+                // restore nodeMappingByType so getNodeIndexIfPresent works on this instance
+                Map<String, Map<Integer, Integer>> sharedMapping = (Map<String, Map<Integer, Integer>>) cached[3];
+                this.nodeMappingByType = sharedMapping;
+                // x_dict, edge_dict, edgeAttr_dict
+                Object[] result = new Object[]{cached[0], cached[1], cached[2]};
+                return result;
+            }
+        }
+
+        if (isCacheValid(A, inst, tuple)) {
+            return lastDicts;
+        }
+
+        Map<String, Integer> nextIndexByType = new HashMap<>();
+
+        // Collected in insertion order and only ever iterated to fill the matrices below
+        // Edges reached by more than one layer are de-duplicated when edge_dict is built
+        Map<String, List<InputEntry>> evalEdge = new HashMap<>();
+        Map<String, List<InputEntry>> evalNode = new HashMap<>();
+        Map<String, List<InputEntry>> evalEdgeAttr = new HashMap<>();
+
+        // EDGES build subgraph topology, assign compact indices
+        // first we start with the edges that are affected by the GNN layer(s)
+        // the edges with the corresponding evaluated values are saved in evalEdge
+        for (String pftype : typedTorchPf.getTypedNames()) {
+            for (TorchInputPf tip : typedTorchPf.getCombines(pftype)) {
+                int[][] subslist = tip.tuplesSatisfyingCConstr(A, new ArgTerm[0], new int[0]);
+
+                for (int pi = 0; pi < tip.getPfargsEdge().length; pi++) {
+                    CPModel edgePf = tip.getPfargsEdgeAt(pi);
+                    for (int[] sub : subslist) {
+                        CPModel ground = edgePf.substitute(tip.getQuantvars(), sub);
+                        List<int[]> argNodes = resolveEdgeArgIds(ground);
+                        if (argNodes == null) continue;
+
+                        // assign new compact indices for both endpoints
+                        if (!remapEdgeToCompact(argNodes, edgePf, nodeMappingByType, nextIndexByType, true))
+                            continue;
+
+                        // evaluate the current edge
+                        double val = evalGroundPf(ground, A, inst, vars, tuple, gradindx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly, profiler);
+                        if (stopAtUnknown && Double.isNaN(val)) return null;
+
+                        String edgeRelKey = edgePf instanceof ProbFormAtom ePfa ? ePfa.getRelation().name() : pftype;
+                        evalEdge.computeIfAbsent(edgeRelKey, k -> new ArrayList<>()).add(new InputEntry(argNodes, val, pi));
+                    }
+                }
+            }
+        }
+
+        // Build edge_dict, the structure that python will use, one entry per edge relation name
+        Map<String, ArrayList<ArrayList<Integer>>> edge_dict = new HashMap<>();
+        for (TorchInputSpecs spec : gnnInputs) {
+            if (spec.getEdgeRelation() != null)
+                edge_dict.computeIfAbsent(spec.getEdgeRelation().name(), k -> {
+                    ArrayList<ArrayList<Integer>> el = new ArrayList<>();
+                    el.add(new ArrayList<>()); el.add(new ArrayList<>()); return el;
+                });
+        }
+        for (Map.Entry<String, List<InputEntry>> eEntry : evalEdge.entrySet()) {
+            String edgeKey = eEntry.getKey();
+            ArrayList<Integer> srcs = new ArrayList<>(), dsts = new ArrayList<>();
+            // the same edge can be reached by several layers: send it once
+            Set<Long> seen = new HashSet<>();
+            for (InputEntry e : eEntry.getValue())
+                for (int[] ep : e.argNodes())
+                    if (ep.length == 2 && ep[0] >= 0 && ep[1] >= 0 && seen.add(((long) ep[0] << 32) | ep[1])) {
+                        srcs.add(ep[0]); dsts.add(ep[1]);
+                    }
+            ArrayList<ArrayList<Integer>> el = new ArrayList<>();
+            el.add(srcs); el.add(dsts);
+            edge_dict.put(edgeKey, el);
+        }
+
+        // NODES only for nodes already in the subgraph
+        // the evaluated nodes will be saved in evalNode hashmap
+        boolean hasNonIntegerNodePf = false;
+        for (String pftype : typedTorchPf.getTypedNames()) {
+            for (TorchInputPf tip : typedTorchPf.getCombines(pftype)) {
+                int[][] subslist = tip.tuplesSatisfyingCConstr(A, new ArgTerm[0], new int[0]);
+
+                for (int pi = 0; pi < tip.getPfargsNode().length; pi++) {
+                    CPModel nodePf = tip.getPfargsNodeAt(pi);
+                    for (int[] sub : subslist) {
+                        CPModel ground = nodePf.substitute(tip.getQuantvars(), sub);
+                        List<int[]> argNodes = resolveNodeArgIds(ground, nodePf, sub, tip.getQuantvars(), A, arguments);
+                        if (argNodes == null) continue;
+
+                        // if an atom that has an integer type does not map that atom (for example, integer time can be used for time index, and not as node refernce)
+                        // the mapping is used to create the sub-graph: (original node) -> (new subgraph node starting from zero)
+                        boolean skipRemap = false;
+                        if (nodePf instanceof ProbFormAtom) {
+                            // atom with 1 rel
+                            if (((ProbFormAtom) nodePf).getRelation().getTypes().length == 1 &&
+                                    ((ProbFormAtom) nodePf).getRelation().getTypes()[0] instanceof TypeInteger) {
+                                skipRemap = true;
+                            }
+                        }
+
+                        if (!skipRemap) {
+                            hasNonIntegerNodePf = true;
+                            // look-up only, skip if node not in subgraph
+                            if (!remapNodeToCompact(argNodes, pftype, nodeMappingByType, nextIndexByType, true))
+                                continue;
+                        }
+
+                        double val = evalGroundPf(ground, A, inst, vars, tuple, gradindx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly, profiler);
+
+                        if (stopAtUnknown && Double.isNaN(val)) return null;
+                        evalNode.computeIfAbsent(pftype.intern(), k -> new ArrayList<>()).add(new InputEntry(argNodes, val, pi));
+                    }
+                }
+            }
+        }
+
+        // isolated nodes
+        if (nodeMappingByType.isEmpty() && this.arguments.length > 0) {
+            try {
+                int nodeId = Integer.parseInt(this.arguments[0].argEval());
+                for (String pftype : typedTorchPf.getTypedNames()) {
+                    if (!hasNonIntegerNodePf) continue;
+
+                    getOrAssignIdx(nodeMappingByType, nextIndexByType, pftype, nodeId);
+
+                    for (TorchInputPf tip : typedTorchPf.getCombines(pftype)) {
+                        int[][] subslist = tip.tuplesSatisfyingCConstr(A, new ArgTerm[0], new int[0]);
+                        for (int pi = 0; pi < tip.getPfargsNode().length; pi++) {
+                            CPModel nodePf = tip.getPfargsNodeAt(pi);
+
+                            if (nodePf instanceof ProbFormAtom pfa &&
+                                    pfa.getRelation().getTypes().length == 1 &&
+                                    pfa.getRelation().getTypes()[0] instanceof TypeInteger)
+                                continue;
+
+                            for (int[] sub : subslist) {
+                                CPModel ground = nodePf.substitute(tip.getQuantvars(), sub);
+                                List<int[]> argNodes = resolveNodeArgIds(ground, nodePf, sub, tip.getQuantvars(), A, arguments);
+                                if (argNodes == null) continue;
+
+                                if (!remapNodeToCompact(argNodes, pftype, nodeMappingByType, nextIndexByType, false))
+                                    continue;
+                                double val = evalGroundPf(ground, A, inst, vars, tuple, gradindx,
+                                        useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals,
+                                        evaluated, params, returntype, valonly, profiler);
+
+                                if (stopAtUnknown && Double.isNaN(val)) return null;
+                                evalNode.computeIfAbsent(pftype.intern(), k -> new ArrayList<>())
+                                        .add(new InputEntry(argNodes, val, pi));
+                            }
+                        }
+                    }
+                }
+            } catch (NumberFormatException ignored) {
+                throw new RuntimeException("Failed to parse node id from arguments: " + Arrays.toString(this.arguments));
+            }
+        }
+
+        // EDGE ATTRIBUTES
+        for (String pftype : typedTorchPf.getTypedNames()) {
+            for (TorchInputPf tip : typedTorchPf.getCombines(pftype)) {
+                if (tip.getPfargsEdgeAttr().length == 0) continue;
+                int[][] subslist = tip.tuplesSatisfyingCConstr(A, new ArgTerm[0], new int[0]);
+
+                for (int pi = 0; pi < tip.getPfargsEdgeAttr().length; pi++) {
+                    CPModel eaPf = tip.getPfargsEdgeAttrAt(pi);
+                    for (int[] sub : subslist) {
+                        CPModel ground = eaPf.substitute(tip.getQuantvars(), sub);
+                        List<int[]> argNodes = resolveEdgeAttrArgIds(ground, tip, sub);
+                        if (argNodes == null) continue;
+
+                        if (!remapEdgeAttrToCompact(argNodes, pftype, nodeMappingByType))
+                            continue;
+
+                        double val = evalGroundPf(ground, A, inst, vars, tuple, gradindx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly, profiler);
+
+                        if (stopAtUnknown && Double.isNaN(val)) return null;
+                        evalEdgeAttr.computeIfAbsent(pftype.intern(), k -> new ArrayList<>()).add(new InputEntry(argNodes, val, pi));
+                    }
+                }
+            }
+        }
+        // once we have collected all the dependencies and relations for the subgraph, write the data for python
+        // Build x_dict
+        Map<String, double[][]> x_dict = new HashMap<>();
+        for (TorchInputSpecs spec : gnnInputs) {
+//            @SuppressWarnings("unchecked")
+            List<Rel> attrs = (List<Rel>) spec.getNodeAttributes();
+            if (attrs == null || attrs.isEmpty()) continue;
+
+            String pftype = spec.getType();
+            int uniqueNodes = Math.max(1, nextIndexByType.getOrDefault(pftype, 0));
+            int[] starts = colStarts(attrs, oneHotEncoding);
+            int numCols = totalCols(attrs, oneHotEncoding);
+            double[][] mat = new double[uniqueNodes][numCols];
+
+            for (InputEntry e : evalNode.getOrDefault(pftype, Collections.emptyList())) {
+                double value = e.evalValue();
+                if (Double.isNaN(value)) continue;
+
+                int argNode = e.argNodes().get(0)[0];
+                Rel r = attrs.get(e.pfIdx());
+                int col = starts[e.pfIdx()];
+                double cell = 1.0;
+
+                if (r instanceof CatRel && value >= 0)
+                    col = (int) (value + starts[e.pfIdx()]);
+                else if (r.valtype() == Rel.NUMERIC || r.valtype() == Rel.BOOLEAN)
+                    cell = value;
+
+                if (r.getTypes().length == 1 && r.getTypes()[0] instanceof TypeInteger) {
+                    // if a node has an integer type do not map that node
+                    for (int i = 0; i < mat.length; i++) {
+                        mat[i][col] = cell;
+                    }
+                } else {
+                    if (argNode < 0) for (int row = 0; row < uniqueNodes; row++) mat[row][col] = cell;
+                    else mat[argNode][col] = cell;
+                }
+            }
+            x_dict.put(pftype, mat);
+        }
+
+        // Build edgeAttr_dict
+        Map<String, double[][]> edgeAttr_dict = new HashMap<>();
+        for (TorchInputSpecs spec : gnnInputs) {
+            @SuppressWarnings("unchecked")
+            List<Rel> attrs = (List<Rel>) spec.getEdgeAttributes();
+            if (attrs == null || attrs.isEmpty()) continue;
+
+            String pftype = spec.getType();
+            String edgeKey = spec.getEdgeRelation().name();
+            ArrayList<ArrayList<Integer>> edgeList = edge_dict.get(edgeKey);
+
+            int numEdges = Math.max(1, edgeList != null && !edgeList.isEmpty() ? edgeList.get(0).size() : 0);
+            int[] starts = colStarts(attrs, oneHotEncoding);
+            int numCols = totalCols(attrs, oneHotEncoding);
+            double[][] mat = new double[numEdges][numCols];
+
+            for (InputEntry e : evalEdgeAttr.getOrDefault(pftype, Collections.emptyList())) {
+                double value = e.evalValue();
+                if (Double.isNaN(value)) continue;
+
+                int[] endpoints = e.argNodes().get(0);
+                Rel r = attrs.get(e.pfIdx());
+                int col = starts[e.pfIdx()];
+                double cell = 1.0;
+
+                if (r instanceof CatRel)
+                    col = (int) (value + starts[e.pfIdx()]);
+                else if (r.valtype() == Rel.NUMERIC || r.valtype() == Rel.BOOLEAN)
+                    cell = value;
+
+                if (endpoints.length < 2 || endpoints[0] < 0)
+                    for (int row = 0; row < numEdges; row++) mat[row][col] = cell;
+                else {
+                    int edgeRow = findEdgeRow(edge_dict, edgeKey, endpoints[0], endpoints[1]);
+                    if (edgeRow >= 0) mat[edgeRow][col] = cell;
+                }
+            }
+            edgeAttr_dict.put(pftype, mat);
+        }
+
+        Object[] result = new Object[]{x_dict, edge_dict, edgeAttr_dict};
+        if (isOptimizeForOneInput()) {
+            Object[] toCache = new Object[]{x_dict, edge_dict, edgeAttr_dict, nodeMappingByType};
+            sharedDictCache.put(sharedDictKey(A, inst), toCache);
+        }
+
+        // store cache
+        lastDicts = result;
+        lastDictA = A;
+        lastDictInst = inst;
+        lastDictInstHash = inst != null ? inst.hashCode() : 0;
+        lastDictTuple = tuple;
+        cachedDictVersion = dictVersion;
+        return result;
+    }
+
+
+    /**
+     * Evaluate a fully-grounded CPModel eagerly
+     */
+    private static double evalGroundPf(CPModel ground, RelStruc A,
+        OneStrucData inst,
+        ArgTerm[] vars,
+        int[] tuple,
+        int gradindx,
+        boolean useCurrentCvals,
+        boolean useCurrentPvals,
+        HashMap<Rel, GroundAtomList> mapatoms,
+        boolean useCurrentMvals,
+        HashMap<String, Object[]> evaluated,
+        HashMap<String, Integer> params,
+        int returntype,
+        boolean valonly,
+        Profiler profiler) {
+
+        try {
+            Object[] res = ground.evaluate(A, inst, vars, tuple, gradindx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly, profiler);
+            return (double) res[0];
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to evaluate grounded ProbForm: " + ground, e);
+//            return Double.NaN;
+        }
+    }
+
+    /**
+     * Returns raw (src, dst) node-id pairs for a grounded edge pf.
+     */
+    private static List<int[]> resolveEdgeArgIds(CPModel ground)
+            throws RBNCompatibilityException {
+
+        if (ground instanceof ProbFormAtom pfa) {
+            if (pfa.getArguments().length != 2)
+                throw new RBNCompatibilityException("Edge ProbFormAtom must have exactly 2 arguments");
+
+            ArgTerm[] args = pfa.getArguments();
+            return List.of(new int[]{
+                    Integer.parseInt(args[0].argEval()),
+                    Integer.parseInt(args[1].argEval())});
+        }
+        if (ground instanceof ProbFormBoolComposite composite) {
+            List<int[]> result = new ArrayList<>();
+            for (int i = 0; i < composite.numComponents(); i++)
+                if (composite.componentAt(i) instanceof ProbFormBoolAtom atom) {
+                    ArgTerm[] args = atom.getArguments();
+                    result.add(new int[]{
+                            Integer.parseInt(args[0].argEval()),
+                            Integer.parseInt(args[1].argEval())});
+                }
+            return result;
+        }
+        return null;
+    }
+
+    /**
+     * Returns the single raw node id for a grounded node-feature pf.
+     */
+    private static List<int[]> resolveNodeArgIds(CPModel ground, CPModel pf, int[] sub, ArgTerm[] qv, RelStruc A, ArgTerm[] queryArgs) throws RBNCompatibilityException {
+        int nodeId=-1;
+        if (ground instanceof ProbFormAtom pfa) {
+            ArgTerm[] args = pfa.getArguments();
+            Type[] types = pfa.getRelation().getTypes();
+            List<Integer> nodeIds = new ArrayList<>();
+            for (int i = 0; i < args.length; i++) {
+                if (!(types[i] instanceof TypeInteger)) {  // not Integer
+                    nodeIds.add(Integer.parseInt(args[i].argEval()));
+                }
+            }
+            if (nodeIds.size() == 1)
+                return List.of(new int[]{nodeIds.get(0)});
+
+            nodeId = pfa.getArguments().length == 1 ? Integer.parseInt(pfa.getArguments()[0].argEval()) : -1;
+        } else if (ground instanceof ProbFormMacroCall pmc && pf instanceof ProbFormMacroCall pmcPf) {
+            // the node is one of the macro arguments, see macroNodeId
+            Integer id = macroNodeId(pmc, pmcPf, qv);
+            if (id == null) return null; // not about one node: skip
+            nodeId = id;
+        } else if (ground instanceof ProbFormConstant) {
+            nodeId = -1; // broadcast
+        } else {
+            // any other formula, the variable that stays free in the formula is the node   
+            Integer id = nodeOfFeature(pf, qv, sub, queryArgs);
+            if (id != null) nodeId = id;
+            else if (ground instanceof ProbFormCombFunc && sub.length == 2) nodeId = resolveReferringArgId(ground, pf, qv, sub, A);
+            else return null;
+        }
+        return List.of(new int[]{nodeId});
+    }
+
+    /**
+     * Raw node id of a NODEFEAT formula that is not a plain atom. The formula describes one node, like
+     * the attribute it stands for, so that node is the one FORALL variable left free in it/
+     * Null if several FORALL variables are free: the formula is not about a single node.
+     */
+    public static Integer nodeOfFeature(CPModel pf, ArgTerm[] qv, int[] sub, ArgTerm[] queryArgs) {
+        Set<String> free = new HashSet<>();
+        for (ArgTerm t : pf.freevars()) free.add(t.argEval());
+        Integer nodeId = null;
+        for (int i = 0; i < qv.length; i++) {
+            if (!free.contains(qv[i].argEval())) continue;
+            if (nodeId != null) return null;
+            nodeId = sub[i];
+        }
+        return nodeId != null ? nodeId : queryNodeId(queryArgs);
+    }
+
+    /**
+     * Raw node id of a macro call used as NODEFEAT, i.e. which argument is the node the feature describes.
+     * ground: the grounded call, pf: the same call before grounding, qv: the FORALL variables of the clause.
+     *   1. arguments declared [Integer] in the macro head are never the node
+     *   2. of the others, the FORALL variable:          @triple(v,n) FORALL n  -> n
+     *   3. no FORALL variable among them, the first:    @double(v)             -> v
+     *   4. all arguments [Integer]: -1 (broadcast)
+     *   5. several different FORALL variables: null (not about one node)
+     */
+    public static Integer macroNodeId(ProbFormMacroCall ground, ProbFormMacroCall pf, ArgTerm[] qv) {
+        Type[] types = pf.macro().types();
+        ArgTerm[] args = pf.args();
+
+        // 1.
+        List<Integer> candidates = new ArrayList<>();
+        for (int i = 0; i < args.length; i++)
+            if (!(types[i] instanceof TypeInteger)) candidates.add(i);
+        if (candidates.isEmpty()) return -1; // 4.
+
+        // 2. and 5.
+        Integer chosen = null;
+        for (int i : candidates)
+            for (ArgTerm q : qv)
+                if (q.argEval().equals(args[i].argEval())) {
+                    if (chosen != null && !args[chosen].argEval().equals(args[i].argEval())) return null;
+                    chosen = i;
+                }
+        // 3.
+        if (chosen == null) chosen = candidates.get(0);
+        return Integer.parseInt(ground.args()[chosen].argEval());
+    }
+
+    /** Raw node id of the query atom, e.g. 1 for CAT(1); -1 if it has no arguments. Only the first argument is used. */
+    public static int queryNodeId(ArgTerm[] queryArgs) {
+        return queryArgs.length == 0 ? -1 : Integer.parseInt(queryArgs[0].argEval());
+    }
+
+    /**
+     * Mirror of GGGnnNode.resolveReferringArg — picks which index in a 2-tuple is "this node".
+     */
+    private static int resolveReferringArgId(CPModel ground, CPModel pf, ArgTerm[] qv, int[] sub, RelStruc A) {
+        String groundStr = ground.asString(0, 0, A, false, false);
+        ArgTerm[] qv00 = {qv[0], qv[0]};
+        String g0Str = pf.substitute(qv00, sub).asString(0, 0, A, false, false);
+
+        if (g0Str.equals(groundStr)) {
+            ArgTerm[] qv11 = {new VarTerm(qv[0].argEval() + qv[0].argEval()), new VarTerm(qv[0].argEval() + qv[0].argEval())};
+
+            String g1Str = pf.substitute(qv11, sub).asString(0, 0, A, false, false);
+            return g0Str.equals(g1Str) ? -1 : sub[0];
+        }
+        return sub[1];
+    }
+
+    /**
+     * Raw (src, dst) of a grounded EDGEATTR pf: the edge of the clause's EDGEGRAPH atom with the same
+     * FORALL values sub, e.g. edge(n,v), n=2, v=1 -> (2,1). -1 (all edges) if that edge is not one edge.
+     */
+    public static List<int[]> resolveEdgeAttrArgIds(CPModel ground, TorchInputPf tip, int[] sub) throws RBNCompatibilityException {
+        List<int[]> allEdges = List.of(new int[]{-1});
+        if (ground instanceof ProbFormConstant || tip.getPfargsEdge().length != 1) return allEdges;
+
+        CPModel groundEdgeAtom = tip.getPfargsEdgeAt(0).substitute(tip.getQuantvars(), sub);
+        List<int[]> edge = resolveEdgeArgIds(groundEdgeAtom);
+        return edge != null && edge.size() == 1 ? edge : allEdges;
+    }
+
+    /**
+     * Assigns or looks up compact indices for both endpoints of every argNode pair.
+     */
+    private static boolean remapEdgeToCompact(
+            List<int[]> argNodes, CPModel pf,
+            Map<String, Map<Integer, Integer>> nodeMapping,
+            Map<String, Integer> nextIndex,
+            boolean assignNewIndices) {
+
+        int compIdx = 0;
+        for (int[] argNode : argNodes) {
+            if (argNode[0] < 0) {
+                compIdx++;
+                continue;
+            }
+
+            if (pf instanceof ProbFormAtom pfa && pfa.getArguments().length == 2) {
+                String t0 = pfa.getRelation().getTypes()[0].getName();
+                String t1 = pfa.getRelation().getTypes()[1].getName();
+                argNode[0] = assignNewIndices
+                        ? getOrAssignIdx(nodeMapping, nextIndex, t0, argNode[0])
+                        : lookupOrMinusOne(nodeMapping, t0, argNode[0]);
+                argNode[1] = assignNewIndices
+                        ? getOrAssignIdx(nodeMapping, nextIndex, t1, argNode[1])
+                        : lookupOrMinusOne(nodeMapping, t1, argNode[1]);
+
+            } else if (pf instanceof ProbFormBoolComposite composite
+                    && composite.componentAt(compIdx) instanceof ProbFormBoolAtom atom) {
+                String t0 = atom.getRelation().getTypes()[0].getName();
+                String t1 = atom.getRelation().getTypes()[1].getName();
+                argNode[0] = assignNewIndices
+                        ? getOrAssignIdx(nodeMapping, nextIndex, t0, argNode[0])
+                        : lookupOrMinusOne(nodeMapping, t0, argNode[0]);
+                argNode[1] = assignNewIndices
+                        ? getOrAssignIdx(nodeMapping, nextIndex, t1, argNode[1])
+                        : lookupOrMinusOne(nodeMapping, t1, argNode[1]);
+            }
+
+            if (argNode[0] < 0 || argNode[1] < 0) return false;
+            compIdx++;
+        }
+        return true;
+    }
+
+    /**
+     * Assigns or looks up compact indices for node-feature argNodes.
+     * Mirrors the {@code NODE} branch of {@code GGGnnNode.remapToCompactIndices}.
+     */
+    private static boolean remapNodeToCompact(
+            List<int[]> argNodes, String pftype,
+            Map<String, Map<Integer, Integer>> nodeMapping,
+            Map<String, Integer> nextIndex,
+            boolean assignNewIndices) {
+
+        for (int[] argNode : argNodes) {
+            if (argNode[0] < 0) continue;
+            if (assignNewIndices) {
+                argNode[0] = getOrAssignIdx(nodeMapping, nextIndex, pftype, argNode[0]);
+            } else {
+                Integer mapped = lookupOrNull(nodeMapping, pftype, argNode[0]);
+                if (mapped == null) return false; // node not in subgraph, skip
+                argNode[0] = mapped;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Looks up compact src/dst indices for an edge-attribute tuple.
+     * Returns {@code false} if either endpoint is absent from the subgraph.
+     * Mirrors the {@code EDGE_ATTR} branch of {@code GGGnnNode.remapToCompactIndices}.
+     */
+    private static boolean remapEdgeAttrToCompact(List<int[]> argNodes, String pftype, Map<String, Map<Integer, Integer>> nodeMapping) {
+
+        for (int[] argNode : argNodes) {
+            if (argNode.length == 2 && argNode[0] >= 0) {
+                Integer src = lookupOrNull(nodeMapping, pftype, argNode[0]);
+                Integer dst = lookupOrNull(nodeMapping, pftype, argNode[1]);
+                if (src == null || dst == null) return false;
+                argNode[0] = src;
+                argNode[1] = dst;
+            }
+        }
+        return true;
+    }
+
+
+    private static int getOrAssignIdx(Map<String, Map<Integer, Integer>> nodeMapping,
+                                      Map<String, Integer> nextIndex,
+                                      String type, int nodeId) {
+        String t = type.intern();
+        return nodeMapping.computeIfAbsent(t, k -> new HashMap<>())
+                .computeIfAbsent(nodeId, id -> {
+                    int n = nextIndex.getOrDefault(t, 0);
+                    nextIndex.put(t, n + 1);
+                    return n;
+                });
+    }
+
+    private static Integer lookupOrNull(Map<String, Map<Integer, Integer>> nodeMapping, String type, int nodeId) {
+        Map<Integer, Integer> m = nodeMapping.get(type);
+        return m != null ? m.get(nodeId) : null;
+    }
+
+    private static int lookupOrMinusOne(Map<String, Map<Integer, Integer>> nodeMapping, String type, int nodeId) {
+        Integer v = lookupOrNull(nodeMapping, type, nodeId);
+        return v != null ? v : -1;
+    }
+
+    private static int[] colStarts(List<Rel> attrs, boolean oneHot) {
+        int[] starts = new int[attrs.size()];
+        int col = 0;
+        for (int i = 0; i < attrs.size(); i++) {
+            starts[i] = col;
+            Rel r = attrs.get(i);
+            col += (oneHot && r instanceof CatRel) ? (int) r.numvals() : 1;
+        }
+        return starts;
+    }
+
+    private static int totalCols(List<Rel> attrs, boolean oneHot) {
+        int col = 0;
+        for (Rel r : attrs)
+            col += (oneHot && r instanceof CatRel) ? (int) r.numvals() : 1;
+        return col;
+    }
+
+    private static int findEdgeRow(Map<String, ArrayList<ArrayList<Integer>>> edge_dict, String edgeKey, int src, int dst) {
+        ArrayList<ArrayList<Integer>> edgeList = edge_dict.get(edgeKey);
+        if (edgeList == null || edgeList.size() < 2) return -1;
+        ArrayList<Integer> sources = edgeList.get(0), dests = edgeList.get(1);
+        for (int i = 0; i < sources.size(); i++)
+            if (sources.get(i) == src && dests.get(i) == dst) return i;
+        return -1;
+    }
+
+    private boolean isCacheValid(RelStruc A, OneStrucData inst, int[] tuple) {
+        if (lastDicts == null) return false;
+        if (cachedDictVersion != dictVersion) return false;
+        if (lastDictA != A) return false;
+        if (!Arrays.equals(lastDictTuple, tuple)) return false;
+
+        int instHash = (inst != null) ? inst.hashCode() : 0;
+        if (lastDictInstHash != instHash) return false;
+
+        if (lastDictInst != null && lastDictInst == inst) return true;
+
+        return true;
+    }
+
+    public void invalidateDictCache() {
+        dictVersion++;
+        if (isOptimizeForOneInput()) {
+            sharedDictCache.clear();
+        }
+    }
+
+    public Integer getNodeIndexIfPresent(String type, int nodeId) {
+        Map<Integer, Integer> mapping = nodeMappingByType.get(type);
+        // if nodeMappingByType is null, then the node is not in the subgraph, return 0 (must be only one node)
+        return mapping != null ? mapping.get(nodeId) : 0;
     }
 
     @Override
     public String asString(int syntax, int depth, RelStruc A, boolean paramsAsValue, boolean usealias) {
         StringBuilder sb = new StringBuilder();
-        sb.append("GNN("+this.argument+")=");
+        sb.append("GNN("+Arrays.toString(this.arguments)+")=");
         sb.append("[");
         sb.append(gnnPy.getTorchModel().toString()+", ");
         if (gnnInputs != null && !gnnInputs.isEmpty()) {
@@ -100,7 +797,7 @@ public class CatGnn extends CPModel {
     }
 
     @Override
-    public ProbForm conditionEvidence(RelStruc A, OneStrucData inst) throws RBNCompatibilityException {
+    public CPModel conditionEvidence(RelStruc A, OneStrucData inst) throws RBNCompatibilityException {
         // RAF: This is not required for gnn since it does not have direct dependencies
         System.out.println("conditionEvidence code");
         return null;
@@ -115,92 +812,381 @@ public class CatGnn extends CPModel {
     @Override
     public Object[] evaluate(RelStruc A,
                              OneStrucData inst,
-                             String[] vars,
+                             ArgTerm[] vars,
                              int[] tuple,
                              int gradindx,
                              boolean useCurrentCvals,
                              boolean useCurrentPvals,
-                             Hashtable<Rel, GroundAtomList> mapatoms,
+                             HashMap<Rel, GroundAtomList> mapatoms,
                              boolean useCurrentMvals,
-                             Hashtable<String, Object[]> evaluated,
-                             Hashtable<String, Integer> params,
+                             HashMap<String, Object[]> evaluated,
+                             HashMap<String, Integer> params,
                              int returntype,
                              boolean valonly,
                              Profiler profiler)
             throws RBNCompatibilityException {
 
-        // CHECK IF THIS DOES NOT BREAK INFERENCE WITH MAP or MCMC
+        // remove this later!
+        if (isOptimizeForOneInput()) {
+            long key = sharedDictKey(A, inst);
+            Boolean cached = sharedEvalInputs.get(key);
+            if (cached != null && cached) {
+                return new Object[]{Double.NaN};
+            }
 
-        for (TorchInputRels inps: gnnGroundCombinedClauses) {
-            Object[] res = inps.evaluate(A, inst, vars, tuple, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly, profiler);
-            // if res[0] contains NaN return res
-            if (res[0] instanceof double[]) {
-                double[] values = (double[]) res[0];
-                for (double value : values) {
-                    if (Double.isNaN(value)) {
-                        return res;
+            if (cached == null) {
+                for (TorchInputPf inps : getTypedTorchPf().getCombines()) {
+                    Object[] res = inps.evaluate(A, inst, vars, tuple, gradindx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly, profiler);
+                    // if res[0] contains NaN return res
+                    if (res[0] instanceof Double) {
+                        if (Double.isNaN((Double) res[0])) {
+                            return res;
+                        }
                     }
                 }
             }
-
+            sharedEvalInputs.put(key, false);
         }
 
-        // exhaustive check if all the elements have a value before evaluate the gnn
-//        for (Rel parent: parentRels()) {
-//            try {
-//                int[][] alltuple = A.allTypedTuples(parent.getTypes());
-//                for (int[] tuple2: alltuple) {
-//                    int val = inst.truthValueOf(parent, tuple2);
-//                    // if a tuple still does not have a value, return the NaN array
-//                    if (val==-1) {
-//                        Object[] result = new Object[2];
-//                        result[0] = new double[this.numvals()];
-//                        Arrays.fill((double[]) result[0], Double.NaN);
-//                        return result;
-//                    }
-//                }
-//            } catch (RBNIllegalArgumentException e) {
-//                throw new RuntimeException(e);
-//            }
-//        }
+        CatGnn subCatGnn;
+        if (this instanceof CatGnnBool)
+            subCatGnn = (CatGnnBool)this.substitute(vars, tuple);
+        else
+            subCatGnn = (CatGnn)this.substitute(vars, tuple);
 
-        Object[] res = gnnPy.evaluate_gnnHetero(A, inst, this, valonly);
-        if (this.numvals() == 1) {
-            double[] trueProb = (double[]) res[0];
-            double[] resultArray =  new double[] {1-trueProb[0],trueProb[0]};
-            res[0] = resultArray;
+        // an input sent to the GNN depends on unknown atoms: so does the output
+        Object[] dicts = subCatGnn.buildInputDicts(A, inst, vars, tuple, gradindx, useCurrentCvals, useCurrentPvals, mapatoms, useCurrentMvals, evaluated, params, returntype, valonly, profiler, true);
+        if (dicts == null) return undefinedResult();
+
+        Object[] res = gnnPy.evaluate_gnnHetero(
+                (Map<String, double[][]>) dicts[0],
+                (Map<String, ArrayList<ArrayList<Integer>>>) dicts[1],
+                (Map<String, double[][]>) dicts[2], subCatGnn, valonly);
+
+        double[] out = (double[]) res[0];
+        if (this.numvals() == 1 || out.length == 1) {
+            double p = trueColumn(out);
+            res[0] = new double[]{1 - p, p};
         }
+
+        if (numvals != ((double[])res[0]).length) {
+            System.out.println("Updated numvals: " + numvals + " -> " + ((double[])res[0]).length + " for " + this);
+            numvals = ((double[]) res[0]).length;
+        }
+
+        if (!valonly) {
+            res[1] = null;
+            if (returntype == ProbForm.RETURN_ARRAY)
+                res[1] = new Gradient_Array(params);
+            else
+                res[1] = new Gradient_TreeMap(params);
+        }
+
         return res;
     }
 
-    @Override
-    public double[] evalSample(RelStruc A, Hashtable<String, PFNetworkNode> atomhasht, OneStrucData inst, Hashtable<String,double[]> evaluated, long[] timers) throws RBNCompatibilityException {
-        if (!isInitialized) {
-            this.gnnPy.initGnnData(this, A, inst);
-            isInitialized = true;
-        }
-        double[] resGnn = gnnPy.evalSample_gnn(this, atomhasht);
-        if (this.numvals() == 1) {
-            double[] resultArray =  new double[] {1-resGnn[0],resGnn[0]};
-            return resultArray;
-        }
-        return resGnn;
+    /** "Depends on unknown atoms": one NaN per value, like CatModelSoftMax (a boolean GNN gives 2 values too). */
+    private Object[] undefinedResult() {
+        double[] nan = new double[Math.max(2, numvals)];
+        Arrays.fill(nan, Double.NaN);
+        return new Object[]{nan, null};
     }
 
     @Override
-    public String[] freevars() {
-        System.out.println("freevars code");
-        return rbnutilities.NonIntOnly(new String[]{this.argument}); // convert
+    public double[] evalSample(RelStruc A, HashMap<String, PFNetworkNode> atomhasht,
+                               OneStrucData inst, HashMap<String, double[]> evaluated,
+                               long[] timers) throws RBNCompatibilityException {
+
+        CatGnn subCatGnn;
+        if (this instanceof CatGnnBool)
+            subCatGnn = (CatGnnBool) this.substitute(new ArgTerm[0], new int[0]);
+        else
+            subCatGnn = (CatGnn) this.substitute(new ArgTerm[0], new int[0]);
+
+        // buildInputDicts only depends on A and inst (structure + evidence), which
+        // don't change while sampling -- sampled values live in atomhasht and are
+        // filled in by updateXDictFromAtomhasht below. So build once per atom and
+        // reuse; copy the matrices since the update step writes into them.
+        int instHash = inst.hashCode();
+        if (sampleDicts == null || sampleDictsA != A || sampleDictsInstHash != instHash) {
+            Object[] built = subCatGnn.buildInputDicts(
+                    A, inst,
+                    new ArgTerm[0], new int[0],
+                    0, true, true, null, true,
+                    new HashMap<>(), new HashMap<>(),
+                    ProbForm.RETURN_ARRAY, true, null);
+            sampleDicts = new Object[]{built[0], built[1], built[2], subCatGnn.nodeMappingByType};
+            sampleDictsA = A;
+            sampleDictsInstHash = instHash;
+            xUpdates = null;
+        }
+        subCatGnn.nodeMappingByType = (Map<String, Map<Integer, Integer>>) sampleDicts[3];
+
+        Map<String, double[][]> x_dict = copyMatrices((Map<String, double[][]>) sampleDicts[0]);
+        Map<String, ArrayList<ArrayList<Integer>>> edge_dict = (Map<String, ArrayList<ArrayList<Integer>>>) sampleDicts[1];
+        Map<String, double[][]> edgeAttr_dict = copyMatrices((Map<String, double[][]>) sampleDicts[2]);
+
+        Map<Rel, List<PFNetworkNode>> byRel = new HashMap<>();
+        for (PFNetworkNode node : atomhasht.values())
+            byRel.computeIfAbsent(node.myatom().rel(), k -> new ArrayList<>()).add(node);
+
+        updateXDictFromAtomhasht(x_dict, subCatGnn, byRel, A, atomhasht, inst, evaluated);
+        // edge dict form sampling ?
+        updateEdgeAttrDictFromAtomhasht(edgeAttr_dict, edge_dict, subCatGnn, byRel, A, atomhasht, inst, evaluated);
+
+        Object[] res = gnnPy.evaluate_gnnHetero(x_dict, edge_dict, edgeAttr_dict, subCatGnn, true);
+
+        double[] out = (double[]) res[0];
+        if (this.numvals() == 1) {
+            double p = trueColumn(out);
+            return new double[]{1 - p, p};
+        }
+        return out;
+    }
+
+    /**
+     * 1 column = P(true)
+     * 2 columns = [P(false), P(true)]
+     */
+    public static double trueColumn(double[] out) {
+        if (out.length == 1) return out[0];
+        if (out.length == 2) return out[1];
+        throw new IllegalArgumentException("A Boolean GNN must return 1 or 2 columns, got " + out.length);
+    }
+
+    // One x_dict write for a feature that is unknown given A/inst, i.e. read from the sample.
+    // numVals > 0: one-hot block of that width, 0: single value.
+    // row: compact row, -1 = all rows, -2 = evaluate but don't write (node not in subgraph).
+    private record XUpdate(String pftype, CPModel ground, int colStart, int numVals, int row) {}
+
+    private void updateXDictFromAtomhasht(
+            Map<String, double[][]> x_dict,
+            CatGnn subCatGnn,
+            Map<Rel, List<PFNetworkNode>> byRel,
+            RelStruc A,
+            HashMap<String, PFNetworkNode> atomhasht,
+            OneStrucData inst,
+            HashMap<String, double[]> evaluated) throws RBNCompatibilityException {
+
+        // Which features are unknown and where they go only depends on A/inst, so it
+        // is worked out once (reset together with sampleDicts); only the sampled
+        // values are re-read here.
+        if (xUpdates == null)
+            xUpdates = collectXUpdates(x_dict, subCatGnn, A, inst);
+
+        for (XUpdate u : xUpdates) {
+            double reseval = u.ground().evalSample(A, atomhasht, inst, evaluated, null)[0];
+            if (u.row() == -2) continue;
+
+            double[][] mat = x_dict.get(u.pftype());
+            int from = u.row() == -1 ? 0 : u.row();
+            int to = u.row() == -1 ? mat.length : u.row() + 1;
+            for (int i = from; i < to; i++) {
+                if (u.numVals() > 0) {
+                    for (int j = 0; j < u.numVals(); j++) mat[i][u.colStart() + j] = 0.0;
+                    mat[i][u.colStart() + (int) reseval] = 1.0;
+                } else {
+                    mat[i][u.colStart()] = reseval;
+                }
+            }
+        }
+    }
+
+    private List<XUpdate> collectXUpdates(Map<String, double[][]> x_dict, CatGnn subCatGnn,
+                                          RelStruc A, OneStrucData inst) throws RBNCompatibilityException {
+        List<XUpdate> updates = new ArrayList<>();
+        TreeSet<Rel> parentRels = subCatGnn.parentRels();
+        boolean oneHot = subCatGnn.isOneHotEncoding();
+
+        for (TorchInputSpecs spec : subCatGnn.getGnnInputs()) {
+            List<Rel> nodeAttrs = (List<Rel>) spec.getNodeAttributes();
+            if (nodeAttrs == null || nodeAttrs.isEmpty()) continue;
+
+            String pftype = spec.getType();
+            if (x_dict.get(pftype) == null) continue;
+
+            Map<Integer, Integer> mapping = subCatGnn.nodeMappingByType.get(pftype);
+            if (mapping == null) continue;
+
+            int[] starts = colStarts(nodeAttrs, oneHot);
+
+            for (TorchInputPf tip : typedTorchPf.getCombines(pftype)) {
+                int[][] subslist = tip.tuplesSatisfyingCConstr(A, new ArgTerm[0], new int[0]);
+
+                for (int ai = 0; ai < tip.getPfargsNode().length && ai < nodeAttrs.size(); ai++) {
+                    Rel rel = nodeAttrs.get(ai);
+                    CPModel nodePf = tip.getPfargsNodeAt(ai);
+
+                    // Only update features that depend on
+                    TreeSet<Rel> par = nodePf.parentRels();
+                    boolean found = false;
+                    for (Rel r : par) {
+                        if (parentRels.contains(r)) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) continue;
+
+                    int colStart = starts[ai];
+                    boolean isInteger = rel.getTypes().length == 1 && rel.getTypes()[0].getName().equals("Integer");
+                    int numVals = (rel instanceof CatRel && oneHot) ? (int) rel.numvals() : 0;
+
+                    for (int[] sub : subslist) {
+                        CPModel ground = nodePf.substitute(tip.getQuantvars(), sub);
+
+                        // Skip if known
+                        try {
+                            Object[] res = ground.evaluate(
+                                    A, inst, new ArgTerm[0], new int[0],
+                                    0, true, true, null, true,
+                                    new HashMap<>(), new HashMap<>(),
+                                    ProbForm.RETURN_ARRAY, true, null);
+                            if (!Double.isNaN((double) res[0])) continue;
+                        } catch (Exception ignored) {
+                        }
+
+                        int row;
+                        if (isInteger) {
+                            row = -1; // Integer-typed attribute is global, broadcast to all rows
+                        } else {
+                            // Resolve this grounded pf's node id to a compact matrix row
+                            List<int[]> argNodes = resolveNodeArgIds(ground, nodePf, sub, tip.getQuantvars(), A, arguments);
+                            if (argNodes == null) {
+                                row = -2;
+                            } else {
+                                int rawNodeId = argNodes.get(0)[0];
+                                if (rawNodeId < 0) {
+                                    row = -1; // broadcast (unknown node), write to all rows
+                                } else {
+                                    Integer compactIdx = mapping.get(rawNodeId);
+                                    row = (compactIdx == null) ? -2 : compactIdx; // -2: node not in subgraph
+                                }
+                            }
+                        }
+                        updates.add(new XUpdate(pftype, ground, colStart, numVals, row));
+                    }
+                }
+            }
+        }
+        return updates;
+    }
+
+    private void updateEdgeAttrDictFromAtomhasht(
+            Map<String, double[][]> edgeAttr_dict,
+            Map<String, ArrayList<ArrayList<Integer>>> edge_dict,
+            CatGnn subCatGnn,
+            Map<Rel, List<PFNetworkNode>> byRel,
+            RelStruc A,
+            HashMap<String, PFNetworkNode> atomhasht,
+            OneStrucData inst,
+            HashMap<String, double[]> evaluated) throws RBNCompatibilityException {
+
+        TreeSet<Rel> parentRels = subCatGnn.parentRels();
+        boolean oneHot = subCatGnn.isOneHotEncoding();
+
+        for (TorchInputSpecs spec : subCatGnn.getGnnInputs()) {
+            List<Rel> edgeAttrs = (List<Rel>) spec.getEdgeAttributes();
+            if (edgeAttrs == null || edgeAttrs.isEmpty()) continue;
+
+            String pftype = spec.getType();
+            String edgeKey = spec.getEdgeRelation().name();
+            double[][] mat = edgeAttr_dict.get(pftype);
+            if (mat == null) continue;
+
+            ArrayList<ArrayList<Integer>> edgeList = edge_dict.get(edgeKey);
+            if (edgeList == null || edgeList.size() < 2) continue;
+
+            int[] starts = colStarts(edgeAttrs, oneHot);
+
+            for (TorchInputPf tip : typedTorchPf.getCombines(pftype)) {
+                int[][] subslist = tip.tuplesSatisfyingCConstr(A, new ArgTerm[0], new int[0]);
+
+                for (int ai = 0; ai < tip.getPfargsEdgeAttr().length && ai < edgeAttrs.size(); ai++) {
+                    Rel rel = edgeAttrs.get(ai);
+                    CPModel eaPf = tip.getPfargsEdgeAttrAt(ai);
+
+                    // Only update features whose parents are sampled
+                    TreeSet<Rel> par = eaPf.parentRels();
+                    boolean found = false;
+                    for (Rel r : par) {
+                        if (parentRels.contains(r)) { found = true; break; }
+                    }
+                    if (!found) continue;
+
+                    int colStart = starts[ai];
+
+                    for (int[] sub : subslist) {
+                        CPModel ground = eaPf.substitute(tip.getQuantvars(), sub);
+
+                        // Skip if already determined (not NaN) — check on the grounded pf
+                        try {
+                            Object[] res = ground.evaluate(
+                                    A, inst, new ArgTerm[0], new int[0],
+                                    0, true, true, null, true,
+                                    new HashMap<>(), new HashMap<>(),
+                                    ProbForm.RETURN_ARRAY, true, null);
+                            if (!Double.isNaN((double) res[0])) continue;
+                        } catch (Exception ignored) {}
+
+                        double reseval = ground.evalSample(A, atomhasht, inst, evaluated, null)[0];
+
+                        // Resolve edge endpoints for this grounded pf
+                        List<int[]> argNodes = resolveEdgeAttrArgIds(ground, tip, sub);
+                        if (argNodes == null) continue;
+                        int[] endpoints = argNodes.get(0);
+
+                        if (endpoints.length < 2 || endpoints[0] < 0) {
+                            // Unknown endpoints — broadcast to all edge rows
+                            int numEdges = edgeList.get(0).size();
+                            for (int edgeRow = 0; edgeRow < numEdges; edgeRow++) {
+                                if (rel instanceof CatRel && oneHot) {
+                                    int numVals = (int) rel.numvals();
+                                    for (int j = 0; j < numVals; j++) mat[edgeRow][colStart + j] = 0.0;
+                                    mat[edgeRow][colStart + (int) reseval] = 1.0;
+                                } else {
+                                    mat[edgeRow][colStart] = reseval;
+                                }
+                            }
+                        } else {
+                            // Map raw node ids to compact indices, then find edge row
+                            Integer compactSrc = lookupOrNull(subCatGnn.nodeMappingByType, pftype, endpoints[0]);
+                            Integer compactDst = lookupOrNull(subCatGnn.nodeMappingByType, pftype, endpoints[1]);
+                            if (compactSrc == null || compactDst == null) continue;
+
+                            int edgeRow = findEdgeRow(edge_dict, edgeKey, compactSrc, compactDst);
+                            if (edgeRow < 0) continue;
+
+                            if (rel instanceof CatRel && oneHot) {
+                                int numVals = (int) rel.numvals();
+                                for (int j = 0; j < numVals; j++) mat[edgeRow][colStart + j] = 0.0;
+                                mat[edgeRow][colStart + (int) reseval] = 1.0;
+                            } else {
+                                mat[edgeRow][colStart] = reseval;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public ArgTerm[] freevars() {
+        Vector<ArgTerm> freevars = new Vector<>();
+        for (TorchInputPf inps: getTypedTorchPf().getCombines()) {
+            ArgTerm[] res = inps.getCconstr().freevars();
+            freevars.addAll(Arrays.asList(res));
+        }
+        return freevars.toArray(new ArgTerm[0]);
     }
 
     @Override
     public Vector<GroundAtom> makeParentVec(RelStruc A, OneStrucData inst, TreeSet<String> macrosdone) throws RBNCompatibilityException {
         Vector result = new Vector();
-        for (TorchInputRels inps: gnnGroundCombinedClauses) {
-
-            ProbForm nextprobform;
-
-            int[][] subslist = A.allTrue(inps.getCconstr(), inps.getQuantvars());
+        for (TorchInputPf inps: getTypedTorchPf().getCombines()) {
+            CPModel nextprobform;
+            int[][] subslist = A.allTrue(inps.getCconstr(), inps.getQuantvars(), maxInteger());
 
             for (int i = 0; i < inps.getPfargs().length; i++) {
                 for (int j = 0; j < subslist.length; j++) {
@@ -210,6 +1196,36 @@ public class CatGnn extends CPModel {
             }
         }
         return result;
+    }
+
+    public int maxInteger() {
+        int maxInteger=Integer.MAX_VALUE;
+        for (TorchInputPf inps: getTypedTorchPf().getCombines()) {
+            TreeSet<Rel> parents = inps.parentRels();
+            for (Rel r: parents) {
+                for (Type t: r.getTypes()) {
+                    if (t instanceof TypeInteger) {
+                        ((TypeInteger) t).getMaxInt();
+                        if (maxInteger > ((TypeInteger) t).getMaxInt())
+                            maxInteger = ((TypeInteger) t).getMaxInt();
+                    }
+                }
+            }
+        }
+        if (maxInteger == Integer.MAX_VALUE) {
+            return 0;
+        }
+        return maxInteger;
+    }
+
+    @Override
+    public int evaluatesTo(RelStruc A, OneStrucData inst, boolean usesampleinst, HashMap<String, GroundAtom> atomhasht) throws RBNCompatibilityException {
+        return 0;
+    }
+
+    @Override
+    public int evaluatesTo(RelStruc A) throws RBNCompatibilityException {
+        return 0;
     }
 
     @Override
@@ -237,20 +1253,20 @@ public class CatGnn extends CPModel {
 
     @Override
     public CPModel substitute(String[] vars, int[] args) {
-        List<TorchInputRels> newgnnInputs = new ArrayList<>();
-        for (TorchInputRels torchInput: gnnCombinedClauses) {
-            TorchInputRels newnewInput = torchInput.substitute(vars, args);
-            newgnnInputs.add(newnewInput);
-        }
+        TypedTorchPf newpf = this.typedTorchPf.substitute(vars, args);
 
-        CatGnn result = new CatGnn(this.configModelPath, this.freeVals, this.numvals, this.gnnInputs, this.gnnCombinedClauses, false);
-        result.gnnGroundCombinedClauses = newgnnInputs;
+        CatGnn result;
+        if (this instanceof CatGnnBool)
+            result = new CatGnnBool(this.configModelPath, this.arguments, this.gnnInputs, newpf, this.outTypes, false);
+        else
+            result = new CatGnn(this.configModelPath, this.arguments, this.numvals, this.gnnInputs, newpf, this.outTypes, this.isOptimizeForOneInput(), false);
+
         result.setGnnPy(this.getGnnPy());
 
-        if (vars.length == 0)
-            result.argument = Arrays.toString(new String[0]);
-        else
-            result.argument = rbnutilities.array_substitute(vars, new String[]{argument}, args)[0];
+        if (vars.length != 0)
+            result.arguments = rbnutilities.array_substitute(arguments, vars, args);
+//        else
+//            result.argument = Arrays.toString(new String[0]);
 
         if (this.alias != null)
             result.setAlias(this.alias.substitute(vars, args));
@@ -260,8 +1276,90 @@ public class CatGnn extends CPModel {
 
     @Override
     public CPModel substitute(String[] vars, String[] args) {
-        System.out.println("substitute code 2");
-        return null;
+        TypedTorchPf newpf = this.typedTorchPf.substitute(vars, args);
+
+        CatGnn result;
+        if (this instanceof CatGnnBool)
+            result = new CatGnnBool(this.configModelPath, this.arguments, this.gnnInputs, newpf, this.outTypes, false);
+        else
+            result = new CatGnn(this.configModelPath, this.arguments, this.numvals, this.gnnInputs, newpf, this.outTypes, this.isOptimizeForOneInput(), false);
+
+        result.setGnnPy(this.getGnnPy());
+
+        if (vars.length != 0)
+            result.arguments = rbnutilities.array_substitute(arguments, vars, args);
+
+
+        if (this.alias != null)
+            result.setAlias(this.alias.substitute(vars, args));
+
+        return result;
+    }
+
+    @Override
+    public CPModel substitute(String[] vars, ArgTerm[] args) {
+        TypedTorchPf newpf = this.typedTorchPf.substitute(vars, args);
+
+        CatGnn result;
+        if (this instanceof CatGnnBool)
+            result = new CatGnnBool(this.configModelPath, this.arguments, this.gnnInputs, newpf, this.outTypes, false);
+        else
+            result = new CatGnn(this.configModelPath, this.arguments, this.numvals, this.gnnInputs, newpf, this.outTypes, this.isOptimizeForOneInput(), false);
+
+        result.setGnnPy(this.getGnnPy());
+
+        if (vars.length != 0)
+            result.arguments = rbnutilities.array_substitute(arguments, vars, args);
+
+
+        if (this.alias != null)
+            result.setAlias(this.alias.substitute(vars, args));
+
+        return result;
+    }
+
+    @Override
+    public CPModel substitute(ArgTerm[] vars, ArgTerm[] args) {
+        TypedTorchPf newpf = this.typedTorchPf.substitute(vars, args);
+
+        CatGnn result;
+        if (this instanceof CatGnnBool)
+            result = new CatGnnBool(this.configModelPath, this.arguments, this.gnnInputs, newpf, this.outTypes, false);
+        else
+            result = new CatGnn(this.configModelPath, this.arguments, this.numvals, this.gnnInputs, newpf, this.outTypes, this.isOptimizeForOneInput(), false);
+
+        result.setGnnPy(this.getGnnPy());
+
+        if (vars.length != 0)
+            result.arguments = rbnutilities.array_substitute(arguments, vars, args);
+
+
+        if (this.alias != null)
+            result.setAlias(this.alias.substitute(vars, args));
+
+        return result;
+    }
+
+    @Override
+    public CPModel substitute(ArgTerm[] vars, int[] args) {
+        TypedTorchPf newpf = this.typedTorchPf.substitute(vars, args);
+
+        CatGnn result;
+        if (this instanceof CatGnnBool)
+            result = new CatGnnBool(this.configModelPath, this.arguments, this.gnnInputs, newpf, this.outTypes, false);
+        else
+            result = new CatGnn(this.configModelPath, this.arguments, this.numvals, this.gnnInputs, newpf, this.outTypes, this.isOptimizeForOneInput(), false);
+
+        result.setGnnPy(this.getGnnPy());
+
+        if (vars.length != 0)
+            result.arguments = rbnutilities.array_substitute(arguments, vars, args);
+
+
+        if (this.alias != null)
+            result.setAlias(this.alias.substitute(vars, args));
+
+        return result;
     }
 
     @Override
@@ -271,9 +1369,8 @@ public class CatGnn extends CPModel {
 
     @Override
     public TreeSet<Rel> parentRels() {
-//        System.out.println("parentRels code 1");
         TreeSet<Rel> result = new TreeSet<Rel>();
-        for (TorchInputRels inps: gnnCombinedClauses) {
+        for (TorchInputPf inps: getTypedTorchPf().getCombines()) {
             result.addAll(inps.parentRels());
         }
         return result;
@@ -281,13 +1378,16 @@ public class CatGnn extends CPModel {
 
     @Override
     public TreeSet<Rel> parentRels(TreeSet<String> processed) {
-        System.out.println("parentRels code 2");
         TreeSet<Rel> result = new TreeSet<Rel>();
-        assert !processed.isEmpty(); // when it is used?
-        for (TorchInputRels inps: gnnCombinedClauses) {
+        assert !processed.isEmpty();
+        for (TorchInputPf inps: getTypedTorchPf().getCombines()) {
             result.addAll(inps.parentRels());
         }
         return result;
+    }
+
+    public TypedTorchPf getTypedTorchPf() {
+        return typedTorchPf;
     }
 
     @Override
@@ -307,8 +1407,8 @@ public class CatGnn extends CPModel {
         return this.gnnInputs;
     }
 
-    public String getArgument() {
-        return argument;
+    public ArgTerm[] getArguments() {
+        return arguments;
     }
 
     public String getGnnId() {
@@ -321,7 +1421,9 @@ public class CatGnn extends CPModel {
 
     public boolean isBoolean() { return !categorical; }
 
-    public List<TorchInputRels> getGnnGroundCombinedClauses() {
-        return gnnGroundCombinedClauses;
+    public Type[] getOutTypes() { return outTypes; }
+
+    public boolean isOptimizeForOneInput() {
+        return optimizeForInput;
     }
 }

@@ -47,6 +47,7 @@ import RBNinference.BayesConstructor;
 import RBNinference.MapThread;
 import RBNinference.PFNetwork;
 import RBNinference.SampleThread;
+import RBNpackage.VarTermPackage.ArgTerm;
 import RBNutilities.rbnutilities;
 import edu.ucla.belief.ace.Control;
 
@@ -144,7 +145,7 @@ public class InferenceModule implements GradientGraphOptions {
 	 * @uml.property  name="queryatoms"
 	 * @uml.associationEnd  multiplicity="(1 1)"
 	 */
-	Hashtable<Rel,GroundAtomList> queryatoms;
+	HashMap<Rel,GroundAtomList> queryatoms;
 
 //	/**
 //	 * Maps a string representation of a query atom to a two-part index:
@@ -152,9 +153,9 @@ public class InferenceModule implements GradientGraphOptions {
 //	 * queryatomsScrollists), the second
 //	 * is the index for this tuple in that table
 //	 */
-//	private Hashtable<String,int[]> groundAtomIndex;
+//	private HashMap<String,int[]> groundAtomIndex;
 
-	public Hashtable<Rel, GroundAtomList> getQueryatoms() {
+	public HashMap<Rel, GroundAtomList> getQueryatoms() {
 		return queryatoms;
 	}
 
@@ -162,7 +163,7 @@ public class InferenceModule implements GradientGraphOptions {
 	 * Maps a relation (identified by its name) to the index of the query atoms
 	 * for this relation in the queryatomsScrolllists
 	 */
-	Hashtable<String,Integer> relIndex = new Hashtable<String,Integer>();
+	HashMap<String,Integer> relIndex = new HashMap<String,Integer>();
 	/**
 	 * Vector of relations defining their order in queryatomsScrolllists:
 	 *
@@ -279,19 +280,19 @@ public class InferenceModule implements GradientGraphOptions {
 	 */
 	protected String logfilename = "";
 	private Observer valueObserver;
-	private String modelPath;
-	private String scriptPath;
-	private String scriptName;
-	private String pythonHome;
+
 	List<MapThread> threads;
 	int num_threads;
 	// set the Map Seach Algorithm used during map inference
 	protected int mapSearchAlg;
 	private int batchSearchSize;
+	private int maxIterSA;
 	private int sampleSizeScoring;
 	// the number of iteration for the greedy search algorithm
 	private int numIterGreedyMap;
 	private int lookaheadSearch;
+	private boolean scoreNegative;
+	private int candidateSampleSize;
 
 	/**
 	 * @uml.property  name="settingssamplingwindowopen"
@@ -318,16 +319,19 @@ public class InferenceModule implements GradientGraphOptions {
 		windowsize = 2;
 		numrestarts = 1;
 		batchSearchSize = 1;
+		maxIterSA = 100;
 		sampleSizeScoring = 0;
 		lookaheadSearch = 3;
+		candidateSampleSize = 0;
+		scoreNegative = true;
 
 		readElementNames();
 		readRBNRelations();
 
 		updateInstantiationList();
 
-		queryatoms=myprimula.queryatoms.asHashTable();
-		relIndex = new Hashtable<String,Integer>();
+		queryatoms=myprimula.queryatoms.asHashMap();
+		relIndex = new HashMap<>();
 		relList = new Vector<Rel>();
 		int idx =0;
 
@@ -338,7 +342,7 @@ public class InferenceModule implements GradientGraphOptions {
 			idx++;
 		}
 
-		this.numIterGreedyMap = 1;
+		this.numIterGreedyMap = myprimula.getReldata().caseAt(0).inputDomain().domSize();
 		this.mapSearchAlg = 2;
 	}
 
@@ -379,7 +383,7 @@ public class InferenceModule implements GradientGraphOptions {
 				this.queryatoms,
 				samplelogmode,
 				logwriter);
-
+//		sampthr.setDaemon(true);
 		sampthr.start();
 		return sampthr;
 	}
@@ -389,7 +393,30 @@ public class InferenceModule implements GradientGraphOptions {
         sampthr.setRunning(false);
     }
 
-    public void setQueryAtoms(Hashtable<Rel,GroundAtomList> atomsList) {
+	public void closeInference() {
+		if (sampthr != null && sampthr.isAlive()) {
+			sampthr.setRunning(false);
+			sampthr.interrupt();
+
+			try {
+				sampthr.join(1000);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+		}
+		if (mapthr != null && mapthr.isAlive()) {
+			mapthr.setRunning(false);
+			mapthr.interrupt();
+			try {
+				mapthr.join(1000);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+		}
+		System.out.println("Inference Module shut down");
+	}
+
+    public void setQueryAtoms(HashMap<Rel,GroundAtomList> atomsList) {
         this.queryatoms = atomsList;
     }
 
@@ -418,15 +445,11 @@ public class InferenceModule implements GradientGraphOptions {
 			RelData evidence = new RelData(myprimula.getRels(),myprimula.getInstantiation());
 			int mode;
 
-			Hashtable<String,Integer> parameters = new Hashtable<>();
-			if (inferenceModuleGUI != null)
-				parameters = myprimula.makeParameterIndexGUI();
-			else {
-				parameters = myprimula.makeParameterIndex();
-			}
+			// the numeric relations to learn are set with myprimula.setParamNumRels (the GUI sets its selection)
+			HashMap<String,Integer> parameters = myprimula.makeParameterIndex();
 
 //			String[] rbnparams = myprimula.getRBN().parameters();
-//			Hashtable<String,Integer> rbnparamidx = new Hashtable<String,Integer>();
+//			HashMap<String,Integer> rbnparamidx = new HashMap<String,Integer>();
 //			for (int i=0;i<rbnparams.length;i++)
 //				rbnparamidx.put(rbnparams[i], i);
 
@@ -443,13 +466,17 @@ public class InferenceModule implements GradientGraphOptions {
 					queryatoms,
 					mode,
 					true);
-			((GradientGraphO) gg).setNumChains(numchains);
+			if (numchains > 0)
+				((GradientGraphO) gg).setNumChains(numchains);
 			((GradientGraphO) gg).setWindowSize(windowsize);
 			((GradientGraphO) gg).setMapSearchAlg(mapSearchAlg);
 			((GradientGraphO) gg).setBatchSearchSize(batchSearchSize);
 			((GradientGraphO) gg).setSampleSizeScoring(sampleSizeScoring);
 			((GradientGraphO) gg).setLookaheadSearch(lookaheadSearch);
-			((GradientGraphO) gg).load_gnn_settings(myprimula.getLoadGnnSet());
+			((GradientGraphO) gg).setMaxIterSA(maxIterSA);
+			((GradientGraphO) gg).setNumIterGreedyMap(numIterGreedyMap);
+			((GradientGraphO) gg).setScoreNegative(scoreNegative);
+			((GradientGraphO) gg).setCandidateSampleSize(candidateSampleSize);
 			mapthr = new MapThread(this, myprimula, (GradientGraphO) gg);
 			mapthr.start();
 
@@ -541,6 +568,35 @@ public class InferenceModule implements GradientGraphOptions {
 		return rbnutilities.cartesProd(elementsForCoordinate);
 	}
 
+	protected int[][] allMatchingTuples(int[] tuple, int integerPos){
+		Vector<int[]> elementsForCoordinate = new Vector<int[]>();
+		int[] nextComponent;
+		String stringAtTupleIndex;
+		for(int i=0; i<tuple.length; i++){
+			if (i != integerPos) {
+				stringAtTupleIndex = (String) elementNamesListModel.elementAt(tuple[i]);
+				if (stringAtTupleIndex.equals("*")) {
+					nextComponent = new int[myprimula.getRels().domSize()];
+					for (int j = 0; j < nextComponent.length; j++)
+						nextComponent[j] = j;
+				} else if (stringAtTupleIndex.startsWith("[")) {
+					String attrname = stringAtTupleIndex.substring(1, stringAtTupleIndex.length() - 2);
+					Vector<int[]> elementsOfAttr = myprimula.getRels().allTrue(myprimula.sig.getRelByName(attrname));
+					/* Turn vector of int[1] into int[]:*/
+					nextComponent = rbnutilities.intArrVecToArr(elementsOfAttr);
+				} else { /* tuple[i] is the domain element with index i */
+					nextComponent = new int[1];
+					nextComponent[0] = tuple[i];
+				}
+			} else {
+				nextComponent = new int[1];
+				nextComponent[0] = tuple[i];
+			}
+			elementsForCoordinate.add(nextComponent);
+		}
+		return rbnutilities.cartesProd(elementsForCoordinate);
+	}
+
 	private int[][] allMatchingTuples(String[] strtuple){
 		Vector<int[]> elementsForCoordinate = new Vector<int[]>();
 		int[] nextComponent;
@@ -579,9 +635,15 @@ public class InferenceModule implements GradientGraphOptions {
 			if (temp.rel.arity > 0) {
 				for (int j = 0; j < nodes.length; ++j) {
 					if (j + 1 < nodes.length) {
-						names = names + elementNamesListModel.elementAt(nodes[j]) + ", ";
+						if (temp.rel.getTypes()[j] instanceof TypeInteger)
+							names = names + nodes[j] + ", ";
+						else
+							names = names + elementNamesListModel.elementAt(nodes[j]) + ", ";
 					} else {  //last item
-						names = names + elementNamesListModel.elementAt(nodes[j]);
+						if (temp.rel.getTypes()[j] instanceof TypeInteger)
+							names = names + nodes[j];
+						else
+							names = names + elementNamesListModel.elementAt(nodes[j]);
 					}
 				}
 			}
@@ -1027,7 +1089,7 @@ public class InferenceModule implements GradientGraphOptions {
 		for (Rel r : sig.getProbRels()) {
 			System.out.println("Evaluate relation " + r.name() + " for " + rdata.cases().size() + " input domains");
 			CPModel cpm = rbn.cpmodel(r);
-			String[] varargs = rbn.args(r);
+			ArgTerm[] varargs = rbn.args(r);
 
 			double[] result = new double[2];
 
@@ -1035,7 +1097,7 @@ public class InferenceModule implements GradientGraphOptions {
 				RelStruc A = rdoi.inputDomain();
 				for (OneStrucData osd: rdoi.allOneStrucData()) {
 
-					Hashtable<String,Object[]> evaluated = new Hashtable<String,Object[]>();
+					HashMap<String,Object[]> evaluated = new HashMap<String,Object[]>();
 
 					if (r instanceof BoolRel) {
 						double prob =0;
@@ -1407,6 +1469,8 @@ public class InferenceModule implements GradientGraphOptions {
 
 	public int getBatchSearchSize() { return this.batchSearchSize; }
 	public void setBatchSearchSize(int batchSearchSize) { this.batchSearchSize = batchSearchSize; }
+	public void setMaxIterSA(int maxitersa) { this.maxIterSA = maxitersa; }
+	public int getMaxIterSA() { return this.maxIterSA; }
 
 	public int getSampleSizeScoring() { return sampleSizeScoring; }
 
@@ -1436,6 +1500,10 @@ public class InferenceModule implements GradientGraphOptions {
 		this.inferenceModuleGUI = inferenceModuleGUI;
 	}
 
+	public void setCandidateSampleSize(int candidateSampleSize) { this.candidateSampleSize = candidateSampleSize; }
+
+	public void setScoreNegative(boolean scoreNegative) { this.scoreNegative = scoreNegative; }
+
 	public void addQueryAtom(Rel rel, GroundAtomList atstoadd, Integer idx) {
 		idx=relIndex.size();
 		relIndex.put(rel.name(), (Integer)idx);
@@ -1447,9 +1515,9 @@ public class InferenceModule implements GradientGraphOptions {
 	}
 	public void deleteQueryAtoms() {
 		queryModels=new Vector<QueryTableModel>();
-		queryatoms = new Hashtable<Rel, GroundAtomList>();
+		queryatoms = new HashMap<Rel, GroundAtomList>();
 		relList = new Vector<Rel>();
-		relIndex = new Hashtable<String,Integer>();
+		relIndex = new HashMap<String,Integer>();
 	}
 
 	public Primula getPrimula() {

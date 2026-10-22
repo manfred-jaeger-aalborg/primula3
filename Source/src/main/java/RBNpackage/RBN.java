@@ -29,6 +29,7 @@ import java.util.*;
 
 import PyManager.GnnPy;
 import RBNio.*;
+import RBNpackage.VarTermPackage.ArgTerm;
 import RBNutilities.rbnutilities;
 import RBNExceptions.*;
 
@@ -80,19 +81,9 @@ public class RBN extends java.lang.Object {
 		elements = rbn.elements;
 		prelements = rbn.prelements;
 		macroelements = rbn.macroelements;
-//		gnnPy = null;
+		if (elements != null)
+			MacroTypes.infer(this);
 
-		// if an element is CatGnn set the GnnPy object in RBN and link it to all the CatGnn rels
-//		for (RBNElement r: elements) {
-//			if (r.cpmod() instanceof CatGnn) {
-//				CatGnn catGnn = (CatGnn) r.cpmod();
-//				if (this.gnnPy==null) // if null create object
-//					this.gnnPy = new GnnPy();
-//				catGnn.setGnnPy(this.gnnPy);
-//				gnnPy.loadTorchModel(catGnn, r.rel().toString(), catGnn.getConfigModelPath()); // load the model
-//			}
-//		}
-		
 		/* Initialize parameters with 0.5 values*/
 		String[] allparams = this.parameters();
 		
@@ -126,15 +117,15 @@ public class RBN extends java.lang.Object {
     		return macroelements;
     	}
     	
-    	public String[] arguments_prels_At(int i){
+    	public ArgTerm[] arguments_prels_At(int i){
     		return prelements[i].arguments();
     	}
 
-    	public String[] arguments_element_At(int i){
+    	public ArgTerm[] arguments_element_At(int i){
     		return elements[i].arguments();
     	}
     	
-    	public String[] arguments(Rel r) {
+    	public ArgTerm[] arguments(Rel r) {
     		int ind = indexOf(r);
     		if (ind >= 0)
     			return arguments_prels_At(ind);
@@ -222,7 +213,7 @@ public class RBN extends java.lang.Object {
 //    	}
 
     	/** Returns the argument tuple for the ProbForm for r */
-    	public String[] args(Rel r){
+    	public ArgTerm[] args(Rel r){
     		int ind = indexOf(r);
     		if (ind >= 0)
     			return arguments_prels_At(ind);
@@ -277,12 +268,12 @@ public class RBN extends java.lang.Object {
     			for (int i=0;i<elements.length;i++){
     				filwrt.write(NameAt(i));
     				filwrt.write("(");
-    				String[] args = arguments_element_At(i);
+    				ArgTerm[] args = arguments_element_At(i);
     				Type[] types = typesAt(i);
     				for (int j=0;j<args.length;j++){
     					if (!(types[j] instanceof TypeDomain))
     						filwrt.write("[" + types[j].getName() + "]");
-    					filwrt.write(args[j]);
+    					filwrt.write(args[j].argEval());
     					if (j<args.length-1)
     						filwrt.write(",");
     				}

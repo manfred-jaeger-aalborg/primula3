@@ -5,7 +5,7 @@ from torch_geometric.nn import GCNConv, SAGEConv, HeteroConv
 from torch_geometric.utils import normalize_edge_index
 
 class HeteroGraph(nn.Module):
-    def __init__(self, in_sub, in_hru_agr, in_hru_urb, hidden_dims, out_dims, num_layers=3, dropout=0.5, sage_aggr='sum', batch_norm=False):
+    def __init__(self, in_sub, in_hru_agr, in_hru_urb, hidden_dims, out_dims, num_layers=3, dropout=0.5, sage_aggr='sum', layer_norm=False):
         super().__init__()
         self.num_layers = num_layers
         self.dropout = nn.Dropout(dropout)
@@ -13,7 +13,7 @@ class HeteroGraph(nn.Module):
         self.norms = nn.ModuleList()
         self.res_proj = nn.ModuleList()
         self.heteroAggr = 'sum'
-        self.batch_norm = batch_norm
+        self.layer_norm = layer_norm
 
         self.out_dim_sub = hidden_dims * 1
         if self.heteroAggr == 'cat':
@@ -24,22 +24,22 @@ class HeteroGraph(nn.Module):
                 conv_dict = {
                     ('sub', 'downstream', 'sub'): SAGEConv(in_sub, hidden_dims, aggr=sage_aggr),
                     ('agr', 'downstream_agr', 'sub'): SAGEConv((in_hru_agr, in_sub), hidden_dims, aggr=sage_aggr),
-                    ('sub', 'upstream_agr', 'agr'): SAGEConv((in_sub, in_hru_agr), hidden_dims),
+                    # ('sub', 'upstream_agr', 'agr'): SAGEConv((in_sub, in_hru_agr), hidden_dims),
                     ('urb', 'downstream_urb', 'sub'): SAGEConv((in_hru_urb, in_sub), hidden_dims, aggr=sage_aggr),
-                    ('sub', 'upstream_urb', 'urb'): SAGEConv((in_sub, in_hru_urb), hidden_dims)
+                    # ('sub', 'upstream_urb', 'urb'): SAGEConv((in_sub, in_hru_urb), hidden_dims)
                 }
             else:
                 conv_dict = {
                     ('sub', 'downstream', 'sub'): SAGEConv(self.out_dim_sub, hidden_dims),
                     ('agr', 'downstream_agr', 'sub'): SAGEConv((in_hru_agr, self.out_dim_sub), hidden_dims, aggr=sage_aggr),
-                    ('sub', 'upstream_agr', 'agr'): SAGEConv((self.out_dim_sub, in_hru_agr), hidden_dims),
+                    # ('sub', 'upstream_agr', 'agr'): SAGEConv((self.out_dim_sub, in_hru_agr), hidden_dims),
                     ('urb', 'downstream_urb', 'sub'): SAGEConv((in_hru_urb, self.out_dim_sub), hidden_dims, aggr=sage_aggr),
-                    ('sub', 'upstream_urb', 'urb'): SAGEConv((self.out_dim_sub, in_hru_urb), hidden_dims)
+                    # ('sub', 'upstream_urb', 'urb'): SAGEConv((self.out_dim_sub, in_hru_urb), hidden_dims)
                 }
 
             self.layers.append(HeteroConv(conv_dict, aggr=self.heteroAggr))
-            if self.batch_norm:
-                self.norms.append(nn.BatchNorm1d(self.out_dim_sub))
+            if self.layer_norm:
+                self.norms.append(nn.LayerNorm(hidden_dims))
             else:
                 self.norms.append(nn.Identity())
 
@@ -62,9 +62,9 @@ class HeteroGraph(nn.Module):
         return F.softmax(out, dim=1)
 
 def load_model():
-    model = HeteroGraph(in_sub= 2, in_hru_agr=5, in_hru_urb=10, hidden_dims=20, out_dims=3, num_layers=2, batch_norm=True).to("cpu")
+    model = HeteroGraph(in_sub=2, in_hru_agr=5, in_hru_urb=10, hidden_dims=32, out_dims=3, num_layers=2, layer_norm=True).to("cpu")
     model.load_state_dict(torch.load(
-        '/Users/lz50rg/Dev/primula-workspace/primula3/Examples/WaterPollution/model_l21e5_bn.pt',
+        '/Users/lz50rg/Dev/NeSy-for-graph-data/water-hawqs-github/weights-models/model_l21e5_bn.pt',
         map_location="cpu",
         weights_only=True
     ))

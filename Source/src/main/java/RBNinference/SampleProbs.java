@@ -87,13 +87,13 @@ public class SampleProbs extends Observable{
 		
 	}
 	
-	private Hashtable<Rel,p_v_vals> all_p_v_vals;
+	private HashMap<Rel,p_v_vals> all_p_v_vals;
 	private int size;
 	private double weight;
 
 
-	public SampleProbs(Hashtable<Rel,GroundAtomList> qatoms){
-		all_p_v_vals = new Hashtable<Rel,p_v_vals>();
+	public SampleProbs(HashMap<Rel,GroundAtomList> qatoms){
+		all_p_v_vals = new HashMap<Rel,p_v_vals>();
 		for (Rel r: qatoms.keySet()) {
 			all_p_v_vals.put(r,new p_v_vals(qatoms.get(r).size(),(int)r.numvals()));
 		}

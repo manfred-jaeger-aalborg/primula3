@@ -1,5 +1,8 @@
 package RBNpackage;
 
+import RBNpackage.VarTermPackage.ArgTerm;
+import RBNpackage.VarTermPackage.VarTerm;
+
 public class RBNMacro extends RBNElement{
 	
 	/* Can only have a ProbForm (not other CPModel) on the right side.
@@ -14,15 +17,15 @@ public class RBNMacro extends RBNElement{
 	 * 
 	 */
 	
-	public RBNMacro(BoolRel r, ProbForm pf) {
+	public RBNMacro(BoolRel r, CPModel pf) {
 		super(r,pf);
 	}
 	
-	public RBNMacro(BoolRel r, String[] args, ProbForm pf) {
+	public RBNMacro(BoolRel r, ArgTerm[] args, CPModel pf) {
 		super(r,args,pf);
 	}
-	
-	public RBNMacro(String name, String[] args, ProbForm pf) {
-		super(new BoolRel(name,args.length),args,pf);
-	}
+
+//	public RBNMacro(String name, String[] args, CPModel pf) {
+//		super(new BoolRel(name,args.length),args,pf);
+//	}
 }
