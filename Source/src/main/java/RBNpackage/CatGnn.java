@@ -863,10 +863,10 @@ public class CatGnn extends CPModel {
                 (Map<String, ArrayList<ArrayList<Integer>>>) dicts[1],
                 (Map<String, double[][]>) dicts[2], subCatGnn, valonly);
 
-        if (((double[])res[0]).length == 1) {
-            double[] trueProb = (double[]) res[0];
-            double[] resultArray =  new double[] {1-trueProb[0],trueProb[0]};
-            res[0] = resultArray;
+        double[] out = (double[]) res[0];
+        if (this.numvals() == 1 || out.length == 1) {
+            double p = trueColumn(out);
+            res[0] = new double[]{1 - p, p};
         }
 
         if (numvals != ((double[])res[0]).length) {
@@ -936,17 +936,22 @@ public class CatGnn extends CPModel {
 
         Object[] res = gnnPy.evaluate_gnnHetero(x_dict, edge_dict, edgeAttr_dict, subCatGnn, true);
 
-        double[] resGnn;
-        if (((double[])res[0]).length == 1) {
-            double[] trueProb = (double[]) res[0];
-            resGnn = new double[]{trueProb[0]};
-        } else {
-            resGnn = (double[]) res[0];
+        double[] out = (double[]) res[0];
+        if (this.numvals() == 1) {
+            double p = trueColumn(out);
+            return new double[]{1 - p, p};
         }
+        return out;
+    }
 
-        if (this.numvals() == 1)
-            return new double[]{1 - resGnn[0], resGnn[0]};
-        return resGnn;
+    /**
+     * 1 column = P(true)
+     * 2 columns = [P(false), P(true)]
+     */
+    public static double trueColumn(double[] out) {
+        if (out.length == 1) return out[0];
+        if (out.length == 2) return out[1];
+        throw new IllegalArgumentException("A Boolean GNN must return 1 or 2 columns, got " + out.length);
     }
 
     // One x_dict write for a feature that is unknown given A/inst, i.e. read from the sample.

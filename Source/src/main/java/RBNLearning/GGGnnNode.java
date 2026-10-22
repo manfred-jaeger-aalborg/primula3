@@ -487,6 +487,8 @@ public class GGGnnNode extends GGCPMNode {
                 result = cachedResult;
             } else {
                 result = gnnPy.GGevaluate_gnnHetero(getXDict(), getEdgeDict(), getEdgeAttrDict(), cpmgnn, this);
+                if (result != null && isBoolean())
+                    result = new double[]{CatGnn.trueColumn(result)};
                 cachedResult = (result != null) ? result.clone() : null;
                 cachedVersion = inputVersion;
             }
@@ -535,8 +537,10 @@ public class GGGnnNode extends GGCPMNode {
         Map<String, double[][]> grads = (Map<String, double[][]>) outres[1];
 
         for (String param : myparameters)
-            if (grads.containsKey(param))
-                result.set_part_deriv(param, grads.get(param)[0]);
+            if (grads.containsKey(param)) {
+                double[] pd = grads.get(param)[0];
+                result.set_part_deriv(param, isBoolean() ? new double[]{CatGnn.trueColumn(pd)} : pd);
+            }
 
         is_evaluated_grad_for_samples[idx] = true;
         return result;
