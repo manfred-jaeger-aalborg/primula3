@@ -42,6 +42,10 @@ public class ProbFormBoolAtomEquality extends ProbFormBool {
         sign = s;
     }
 
+    public Object[] getArgs() {
+        return new Object[]{arg1, arg2};
+    }
+
     @Override
     public int evaluatesTo(RelStruc A, OneStrucData inst,
                            boolean usesampleinst, HashMap<String, GroundAtom> atomhasht)

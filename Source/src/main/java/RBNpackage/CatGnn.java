@@ -330,7 +330,7 @@ public class CatGnn extends CPModel {
                     CPModel eaPf = tip.getPfargsEdgeAttrAt(pi);
                     for (int[] sub : subslist) {
                         CPModel ground = eaPf.substitute(tip.getQuantvars(), sub);
-                        List<int[]> argNodes = resolveEdgeAttrArgIds(ground, sub);
+                        List<int[]> argNodes = resolveEdgeAttrArgIds(ground, tip, sub);
                         if (argNodes == null) continue;
 
                         if (!remapEdgeAttrToCompact(argNodes, pftype, nodeMappingByType))
@@ -605,12 +605,16 @@ public class CatGnn extends CPModel {
     }
 
     /**
-     * Returns raw endpoint ids for a grounded edge-attribute pf.
+     * Raw (src, dst) of a grounded EDGEATTR pf: the edge of the clause's EDGEGRAPH atom with the same
+     * FORALL values sub, e.g. edge(n,v), n=2, v=1 -> (2,1). -1 (all edges) if that edge is not one edge.
      */
-    private static List<int[]> resolveEdgeAttrArgIds(CPModel ground, int[] sub) {
-        if (ground instanceof ProbFormConstant) return List.of(new int[]{-1});
-        if (sub.length == 2) return List.of(new int[]{sub[0], sub[1]});
-        return List.of(new int[]{-1});
+    public static List<int[]> resolveEdgeAttrArgIds(CPModel ground, TorchInputPf tip, int[] sub) throws RBNCompatibilityException {
+        List<int[]> allEdges = List.of(new int[]{-1});
+        if (ground instanceof ProbFormConstant || tip.getPfargsEdge().length != 1) return allEdges;
+
+        CPModel groundEdgeAtom = tip.getPfargsEdgeAt(0).substitute(tip.getQuantvars(), sub);
+        List<int[]> edge = resolveEdgeArgIds(groundEdgeAtom);
+        return edge != null && edge.size() == 1 ? edge : allEdges;
     }
 
     /**
@@ -1123,7 +1127,7 @@ public class CatGnn extends CPModel {
                         double reseval = ground.evalSample(A, atomhasht, inst, evaluated, null)[0];
 
                         // Resolve edge endpoints for this grounded pf
-                        List<int[]> argNodes = resolveEdgeAttrArgIds(ground, sub);
+                        List<int[]> argNodes = resolveEdgeAttrArgIds(ground, tip, sub);
                         if (argNodes == null) continue;
                         int[] endpoints = argNodes.get(0);
 

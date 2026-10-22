@@ -211,7 +211,7 @@ public class GGGnnNode extends GGCPMNode {
             CPModel groundsubpf = nextsubpf.substitute(quantvars, tuple);
 
             // take the argument of the specific atom
-            List<int[]> argNodes = resolveArgNodes(mode, groundsubpf, nextsubpf, tuple, quantvars);
+            List<int[]> argNodes = resolveArgNodes(mode, groundsubpf, nextsubpf, tip, tuple, quantvars);
             // since the graph for the specific node can be a sub graph, we need to reconstruct the indexes for the edges
             // returns false when a required node is absent from the subgraph
             if (!remapToCompactIndices(mode, argNodes, pftype, nextsubpf, assignNewIndices)) {
@@ -315,11 +315,11 @@ public class GGGnnNode extends GGCPMNode {
 
     // one function that will delegate which resolve to take
     // we need different methods for each different atom and type
-    private List<int[]> resolveArgNodes(Mode mode, CPModel groundsubpf, CPModel nextsubpf, int[] tuple, ArgTerm[] quantvars)
+    private List<int[]> resolveArgNodes(Mode mode, CPModel groundsubpf, CPModel nextsubpf, TorchInputPf tip, int[] tuple, ArgTerm[] quantvars)
             throws RBNCompatibilityException {
         return switch (mode) {
             case NODE -> resolveNodeArgs(groundsubpf, nextsubpf, tuple, quantvars);
-            case EDGE_ATTR -> resolveEdgeAttrArgs(groundsubpf, tuple);
+            case EDGE_ATTR -> CatGnn.resolveEdgeAttrArgIds(groundsubpf, tip, tuple);
             case EDGE -> resolveEdgeArgs(groundsubpf);
         };
     }
@@ -373,17 +373,6 @@ public class GGGnnNode extends GGCPMNode {
         if (g0Str.equals(groundStr))
             return g0Str.equals(g1Str) ? -1 : tuple[0];
         return tuple[1];
-    }
-
-    private List<int[]> resolveEdgeAttrArgs(CPModel groundsubpf, int[] tuple) {
-        if (groundsubpf instanceof ProbFormConstant)
-            return List.of(new int[]{-1});
-
-        // For any 2-argument form, store the raw node ids as (src, dst)
-        if (tuple.length == 2)
-            return List.of(new int[]{tuple[0], tuple[1]});
-
-        return List.of(new int[]{-1});
     }
 
     private List<int[]> resolveEdgeArgs(CPModel groundsubpf) throws RBNCompatibilityException {

@@ -81,6 +81,8 @@ public class RBN extends java.lang.Object {
 		elements = rbn.elements;
 		prelements = rbn.prelements;
 		macroelements = rbn.macroelements;
+		if (elements != null)
+			MacroTypes.infer(this);
 
 		/* Initialize parameters with 0.5 values*/
 		String[] allparams = this.parameters();
