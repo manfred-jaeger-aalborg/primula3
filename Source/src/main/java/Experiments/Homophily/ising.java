@@ -45,7 +45,7 @@ public class ising {
     public static void main(String[] args) {
 
 //        String[] Ns = new String[]{"16", "32", "64"};
-        String[] Ns = new String[]{"128"};
+        String[] Ns = new String[]{"32"};
         long[] timers = new long[Ns.length];
         for (int nIdx = 0; nIdx < Ns.length; nIdx++) {
             String N = "64";
@@ -70,13 +70,13 @@ public class ising {
             Primula primula = new Primula();
 
 //            File srsfile = new File("/Users/lz50rg/Dev/homophily/experiments/ising/rdef/ising_" + N + "_" + J + "_" + Jb + "_" + temp + "_" + "4.rdef");
-//            File srsfile = new File("/Users/lz50rg/Dev/NeSy-for-graph-data/hetero-hom-experiments/ising/rdef/ising_" + Ns[nIdx] + "_-0.5_0.0_0.4_" + ((Nint*Nint)-1) + "_nodeconst_HP.rdef");
-            File srsfile = new File("/Users/lz50rg/Dev/NeSy-for-graph-data/hetero-hom-experiments/ising/rdef/ising_128_0.5_0.0_0.4_16383_nodeconst_HP_noisy.rdef");
+            File srsfile = new File("/Users/lz50rg/Dev/NeSy-for-graph-data/hetero-hom-experiments/ising/rdef/ising_" + Ns[nIdx] + "_0.5_0.0_0.4_4_nodeconst_HP.rdef");
+//            File srsfile = new File("/Users/lz50rg/Dev/NeSy-for-graph-data/hetero-hom-experiments/ising/rdef/ising_128_0.5_0.0_0.4_16383_nodeconst_HP_noisy.rdef");
 //            System.out.println(srsfile);
             primula.loadSparseRelFile(srsfile);
 
-            File rbnfile = new File("/Users/lz50rg/Dev/primula-workspace/primula3/Examples/GNN-homophily/Ising/ising_rbn_2path.rbn");
-//            File rbnfile = new File("/Users/lz50rg/Dev/primula-workspace/primula3/Examples/GNN-homophily/Ising/ising.rbn");
+//            File rbnfile = new File("/Users/lz50rg/Dev/primula-workspace/primula3/Examples/GNN-homophily/Ising/ising_rbn_2path.rbn");
+            File rbnfile = new File("/Users/lz50rg/Dev/primula-workspace/primula3/Examples/GNN-homophily/Ising/ising.rbn");
 //            File rbnfile = new File("/Users/lz50rg/Dev/primula-workspace/primula3/Examples/GNN-homophily/Ising/ising_rbn_2path.rbn");
 
             primula.loadRBNFunction(rbnfile);
